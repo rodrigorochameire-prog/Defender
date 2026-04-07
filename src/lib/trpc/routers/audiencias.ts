@@ -1343,6 +1343,47 @@ export const audienciasRouter = router({
       }
 
       if (depoentes.length === 0) {
+        // ── Detect "empty analysis" loop: if the worker has completed a job
+        // for this processo in the last hour and still produced 0 depoentes,
+        // it almost certainly means the Drive folder is empty (no PDFs to
+        // analyze). Re-enqueueing would loop forever. Surface a distinct
+        // status so the user knows to download the autos first.
+        const [recentJob] = await db
+          .select({
+            id: analysisJobs.id,
+            status: analysisJobs.status,
+            completedAt: analysisJobs.completedAt,
+          })
+          .from(analysisJobs)
+          .where(
+            and(
+              eq(analysisJobs.processoId, processo.id),
+              eq(analysisJobs.status, "completed"),
+              gte(
+                analysisJobs.completedAt,
+                new Date(Date.now() - 60 * 60 * 1000),
+              ),
+            ),
+          )
+          .orderBy(desc(analysisJobs.completedAt))
+          .limit(1);
+
+        if (recentJob) {
+          return {
+            audienciaId,
+            assistidoNome,
+            testemunhas: [],
+            pdfPath: null,
+            cleanedCount,
+            documentsMissing: true as const,
+            jobQueued: null as null | {
+              id: number;
+              created: boolean;
+              status: "pending";
+            },
+          };
+        }
+
         // ── Step D: enqueue a worker job instead of failing.
         // The Mac Mini worker (worker.sh) polls `analysis_jobs` and runs
         // `claude -p` with the preparar-audiencia skill, then writes
@@ -1360,6 +1401,7 @@ export const audienciasRouter = router({
           testemunhas: [],
           pdfPath: null,
           cleanedCount,
+          documentsMissing: false as const,
           jobQueued: {
             id: job.jobId,
             created: job.created,
@@ -1479,6 +1521,7 @@ export const audienciasRouter = router({
         testemunhas: testemunhasResult,
         pdfPath,
         cleanedCount,
+        documentsMissing: false as const,
         jobQueued: null as null | {
           id: number;
           created: boolean;

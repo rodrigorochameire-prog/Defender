@@ -38,7 +38,7 @@ type StatusPrep = "completo" | "parcial" | "pendente";
 interface ProgressItem {
   audienciaId: number;
   assistidoNome: string;
-  status: "done" | "unchanged" | "current" | "waiting" | "failed" | "queued";
+  status: "done" | "unchanged" | "current" | "waiting" | "failed" | "queued" | "no-docs";
   testemunhasCount?: number;
   newCount?: number;
   enrichedCount?: number;
@@ -74,6 +74,8 @@ function progressIcon(status: ProgressItem["status"]) {
       return <XCircle className="h-4 w-4 text-rose-500" />;
     case "queued":
       return <Sparkles className="h-4 w-4 text-violet-500" />;
+    case "no-docs":
+      return <AlertTriangle className="h-4 w-4 text-amber-500" />;
     case "current":
       return <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />;
     case "waiting":
@@ -270,6 +272,32 @@ export function PrepararAudienciasModal() {
         const result = await prepararMutation.mutateAsync({
           audienciaId: aud.id,
         });
+
+        // ── Documents missing: worker rodou recente mas produziu 0 deps,
+        // provavelmente pasta do Drive vazia. Não re-enfileirar (loop) —
+        // marcar como "no-docs" para o usuário tomar ação manual.
+        if (result.documentsMissing) {
+          newResults.push({
+            audienciaId: aud.id,
+            assistidoNome: result.assistidoNome,
+            success: true,
+            testemunhas: [],
+            naoIntimadas: [],
+          });
+          setProgressItems((prev) =>
+            prev.map((item, idx) =>
+              idx === i
+                ? {
+                    ...item,
+                    status: "no-docs" as const,
+                    cleanedCount: result.cleanedCount ?? 0,
+                  }
+                : item
+            )
+          );
+          setResults([...newResults]);
+          continue;
+        }
 
         // ── Step D: when the mutation enqueued a worker job (no analysis
         // yet), surface it as "queued" — not done, not failed.
@@ -611,6 +639,7 @@ export function PrepararAudienciasModal() {
                       item.status === "unchanged" && "bg-zinc-50/50",
                       item.status === "failed" && "bg-rose-50",
                       item.status === "queued" && "bg-violet-50",
+                      item.status === "no-docs" && "bg-amber-50",
                       item.status === "waiting" && "bg-white",
                     )}
                   >
@@ -699,6 +728,14 @@ export function PrepararAudienciasModal() {
                         {item.jobQueued?.created ? "fila criada" : "fila já existe"}
                       </Badge>
                     )}
+                    {item.status === "no-docs" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0 border-amber-300 text-amber-700 shrink-0"
+                      >
+                        sem PDFs
+                      </Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -737,6 +774,7 @@ export function PrepararAudienciasModal() {
               {(() => {
                 const queuedItems = progressItems.filter((p) => p.status === "queued");
                 const unchangedItems = progressItems.filter((p) => p.status === "unchanged");
+                const noDocsItems = progressItems.filter((p) => p.status === "no-docs");
                 const failed = results.filter((r) => !r.success);
                 const preparedItems = progressItems.filter((p) => p.status === "done");
                 return (
@@ -759,6 +797,12 @@ export function PrepararAudienciasModal() {
                         <span className="flex items-center gap-1.5 text-violet-700 font-medium">
                           <Sparkles className="h-5 w-5 text-violet-500" />
                           {queuedItems.length} em fila
+                        </span>
+                      )}
+                      {noDocsItems.length > 0 && (
+                        <span className="flex items-center gap-1.5 text-amber-700 font-medium">
+                          <AlertTriangle className="h-5 w-5 text-amber-500" />
+                          {noDocsItems.length} sem PDFs
                         </span>
                       )}
                       {failed.length > 0 && (
@@ -814,6 +858,30 @@ export function PrepararAudienciasModal() {
                           Pode deixar este modal aberto. Quando o worker terminar cada análise,
                           a extração de depoentes acontece automaticamente — não precisa clicar
                           de novo.
+                        </p>
+                      </div>
+                    )}
+
+                    {noDocsItems.length > 0 && (
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 space-y-2">
+                        <div className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Audiências sem documentos no Drive
+                        </div>
+                        <div className="space-y-1">
+                          {noDocsItems.map((q) => (
+                            <div
+                              key={q.audienciaId}
+                              className="text-xs text-amber-800 bg-amber-100/50 rounded px-2 py-1"
+                            >
+                              <div className="font-medium">{q.assistidoNome}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-amber-600 italic">
+                          O worker rodou recentemente mas não encontrou PDFs do processo na pasta
+                          do Drive. Baixe os autos via PJe (skill <code>/pje-download</code>) e
+                          rode &quot;Preparar Audiências&quot; novamente.
                         </p>
                       </div>
                     )}
