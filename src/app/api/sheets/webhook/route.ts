@@ -52,6 +52,7 @@ const SHEETS_LABEL_TO_STATUS: Record<string, { status: string; substatus: string
   "7 - SIGAD":              { status: "7_PROTOCOLADO", substatus: "7 - Sigad" },
   "7 - CIÊNCIA":            { status: "7_CIENCIA",     substatus: null },
   "7 - RESOLVIDO":          { status: "CONCLUIDO",     substatus: "7 - Resolvido" },
+  "7 - EXCLU\u00CDDO":         { status: "CONCLUIDO",     substatus: "7 - Excluído" },
   "7 - CONSTITUIU ADVOGADO":{ status: "CONCLUIDO",     substatus: "7 - Constituiu advogado" },
   "7 - SEM ATUAÇÃO":        { status: "7_SEM_ATUACAO", substatus: null },
   "7 - PETICIONAMENTO INTERMEDIÁRIO": { status: "7_PROTOCOLADO", substatus: "7 - Peticionamento intermediário" },

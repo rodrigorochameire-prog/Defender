@@ -158,6 +158,7 @@ export const VALID_SHEET_LABELS = new Set([
   "6 - Documentos", "6 - Testemunhas",
   "7 - Protocolado", "7 - Peticionamento intermediário", "7 - Sigad",
   "7 - Ciência", "7 - Constituiu advogado", "7 - Sem atuação", "7 - Resolvido",
+  "7 - Excluído",
 ]);
 
 // Mapeamento DB status → label padrão da planilha
@@ -448,6 +449,8 @@ const STATUS_COLORS: Record<string, RGBColor> = {
   "7 - Protocolado":        { red: 0.790, green: 0.920, blue: 0.790 },
   "7 - Sigad":              { red: 0.760, green: 0.905, blue: 0.760 },
   "7 - Resolvido":          { red: 0.730, green: 0.890, blue: 0.730 },
+  //    Excluído: cinza pastel — distingue visualmente de "resolvido positivo"
+  "7 - Excluído":           { red: 0.870, green: 0.870, blue: 0.870 },
 };
 
 /** Cores dos atos por categoria — paleta pastel muito suave */
