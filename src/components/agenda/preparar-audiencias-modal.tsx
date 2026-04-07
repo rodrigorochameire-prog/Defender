@@ -640,7 +640,7 @@ export function PrepararAudienciasModal() {
                         </div>
                         <p className="text-[10px] text-violet-600 italic">
                           Quando o worker terminar (alguns minutos), reabra este modal e clique em
-                          "Preparar Audiências" para extrair os depoentes.
+                          &quot;Preparar Audiências&quot; para extrair os depoentes.
                         </p>
                       </div>
                     )}
