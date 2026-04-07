@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
@@ -41,6 +42,7 @@ interface ProgressItem {
   testemunhasCount?: number;
   newCount?: number;
   enrichedCount?: number;
+  cleanedCount?: number;
   alertCount?: number;
   errorMessage?: string;
   /** When the mutation enqueued a worker job because analysis_data was empty. */
@@ -163,6 +165,7 @@ export function PrepararAudienciasModal() {
           const enrichedCount = result.testemunhas.filter(
             (t) => t.status === "ENRIQUECIDA",
           ).length;
+          const cleanedCount = result.cleanedCount ?? 0;
           const naoIntimadas = result.testemunhas.filter(
             (t) => t.status === "ARROLADA" || t.status === "NAO_LOCALIZADA",
           );
@@ -172,16 +175,32 @@ export function PrepararAudienciasModal() {
                 ? {
                     ...item,
                     status:
-                      newCount + enrichedCount > 0 ? "done" : "unchanged",
+                      newCount + enrichedCount + cleanedCount > 0
+                        ? "done"
+                        : "unchanged",
                     testemunhasCount: result.testemunhas.length,
                     newCount,
                     enrichedCount,
+                    cleanedCount,
                     alertCount: naoIntimadas.length,
                     jobQueued: undefined,
                   }
                 : item,
             ),
           );
+
+          // ── Toast: aviso de sucesso quando o auto-refresh dispara
+          // (a UI atualiza silenciosamente, então o toast garante que o
+          // defensor perceba que algo aconteceu)
+          if (newCount + enrichedCount + cleanedCount > 0) {
+            const parts: string[] = [];
+            if (newCount) parts.push(`${newCount} nova${newCount > 1 ? "s" : ""}`);
+            if (enrichedCount) parts.push(`${enrichedCount} enriquec.`);
+            if (cleanedCount) parts.push(`${cleanedCount} limpa${cleanedCount > 1 ? "s" : ""}`);
+            toast.success(
+              `${result.assistidoNome}: ${parts.join(" · ")}`,
+            );
+          }
         } catch (err) {
           setProgressItems((prev) =>
             prev.map((item) =>
@@ -294,7 +313,8 @@ export function PrepararAudienciasModal() {
         const enrichedCount = result.testemunhas.filter(
           (t) => t.status === "ENRIQUECIDA"
         ).length;
-        const changed = newCount + enrichedCount > 0;
+        const cleanedCount = result.cleanedCount ?? 0;
+        const changed = newCount + enrichedCount + cleanedCount > 0;
 
         newResults.push({
           audienciaId: aud.id,
@@ -316,6 +336,7 @@ export function PrepararAudienciasModal() {
                   testemunhasCount: result.testemunhas.length,
                   newCount,
                   enrichedCount,
+                  cleanedCount,
                   alertCount: naoIntimadas.length,
                 }
               : item
@@ -634,6 +655,14 @@ export function PrepararAudienciasModal() {
                             className="text-[10px] px-1 py-0 border-emerald-300 text-emerald-600"
                           >
                             +{item.enrichedCount} enriquec.
+                          </Badge>
+                        )}
+                        {item.cleanedCount !== undefined && item.cleanedCount > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-1 py-0 border-sky-300 text-sky-600"
+                          >
+                            ♻ {item.cleanedCount} limpa{item.cleanedCount !== 1 ? "s" : ""}
                           </Badge>
                         )}
                         {item.status === "unchanged" && (

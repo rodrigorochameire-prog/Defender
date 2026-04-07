@@ -1298,6 +1298,50 @@ export const audienciasRouter = router({
       const { audiencia, processo, assistidoNome, resumoCaso, depoentes } =
         await computePreparacao(audienciaId);
 
+      // ── Self-healing cleanup: every run, sweep out any testemunha rows that
+      // never should have been inserted in the first place — the defendido
+      // himself, or obvious placeholder names ("a confirmar", "equipe", etc.).
+      // This catches garbage left over from old code paths and from manual
+      // misuse, without ever touching legitimate edits.
+      const existingForAudience = await db
+        .select({ id: testemunhas.id, nome: testemunhas.nome })
+        .from(testemunhas)
+        .where(eq(testemunhas.audienciaId, audienciaId));
+
+      const assistidoNorm = _normalizeName(assistidoNome);
+      const polluted: number[] = [];
+      for (const row of existingForAudience) {
+        const n = _normalizeName(row.nome);
+        // Defendido check: exact match or strong token overlap
+        if (assistidoNorm && n === assistidoNorm) {
+          polluted.push(row.id);
+          continue;
+        }
+        if (assistidoNorm && assistidoNorm !== "nao identificado") {
+          const aTokens = assistidoNorm.split(" ").filter((t) => t.length >= 3);
+          const dTokens = n.split(" ").filter((t) => t.length >= 3);
+          if (aTokens.length && dTokens.length) {
+            const overlap = aTokens.filter((t) => dTokens.includes(t)).length;
+            if (overlap >= 2 || overlap === Math.min(aTokens.length, dTokens.length)) {
+              polluted.push(row.id);
+              continue;
+            }
+          }
+        }
+        // Placeholder check
+        if (_isPlaceholder(row.nome)) {
+          polluted.push(row.id);
+        }
+      }
+
+      let cleanedCount = 0;
+      if (polluted.length > 0) {
+        await db
+          .delete(testemunhas)
+          .where(inArray(testemunhas.id, polluted));
+        cleanedCount = polluted.length;
+      }
+
       if (depoentes.length === 0) {
         // ── Step D: enqueue a worker job instead of failing.
         // The Mac Mini worker (worker.sh) polls `analysis_jobs` and runs
@@ -1315,6 +1359,7 @@ export const audienciasRouter = router({
           assistidoNome,
           testemunhas: [],
           pdfPath: null,
+          cleanedCount,
           jobQueued: {
             id: job.jobId,
             created: job.created,
@@ -1433,6 +1478,7 @@ export const audienciasRouter = router({
         assistidoNome,
         testemunhas: testemunhasResult,
         pdfPath,
+        cleanedCount,
         jobQueued: null as null | {
           id: number;
           created: boolean;
