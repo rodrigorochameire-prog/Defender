@@ -193,6 +193,7 @@ const SUBSTATUS_NORMALIZE: Record<string, string> = {
   amanda: "4 - Amanda",
   emilly: "4 - Emilly",
   monitorar: "4 - Monitorar",
+  triagem: "5 - Triagem",
   fila: "5 - Triagem",
   documentos: "6 - Documentos",
   testemunhas: "6 - Testemunhas",

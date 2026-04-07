@@ -1027,7 +1027,7 @@ export const demandasRouter = router({
           }
 
           // 5. Mapear status (normalizar para lowercase antes do lookup)
-          const statusKey = (row.status || "analisar").toLowerCase().replace(/\s+/g, "_").trim();
+          const statusKey = (row.status || "triagem").toLowerCase().replace(/\s+/g, "_").trim();
 
           // Statuses de conclusão mantêm seu DB status; todos os demais são forçados
           // para "5_TRIAGEM" (coluna Triagem), independente do substatus escolhido.
@@ -1043,7 +1043,7 @@ export const demandasRouter = router({
           const reuPreso = row.estadoPrisional === "preso";
 
           // Salvar substatus granular (elaborar, revisar, buscar, etc.) para display
-          const substatus = statusKey || null;
+          const substatus = (row.status || "triagem").toLowerCase().trim() || null;
 
           if (existingDemanda) {
             // Se atualizarExistentes está ativo, atualizar a demanda existente
@@ -1453,6 +1453,13 @@ export const demandasRouter = router({
         .set(updateData)
         .where(accessCondition)
         .returning({ id: demandas.id });
+
+      // Sync updated demandas to Google Sheets (fire-and-forget)
+      for (const row of atualizados) {
+        buildDemandaSync(row.id).then((d) => {
+          if (d) sheetsPush(d).catch(console.error);
+        }).catch(console.error);
+      }
 
       return { updated: atualizados.length };
     }),
