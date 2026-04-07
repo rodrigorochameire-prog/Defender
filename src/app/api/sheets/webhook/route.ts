@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
-import { registerConflict, logSyncAction, classifySync } from "@/lib/services/sync-engine";
+import { logSyncAction, classifySync } from "@/lib/services/sync-engine";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
 const CAMPO_MAP: Record<string, string> = {
@@ -124,32 +124,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, skipped: "banco_to_sheet_only" });
   }
 
-  // Verificar se banco mudou desde último sync
-  const currentDemanda = await db.query.demandas.findFirst({
-    where: eq(demandas.id, demandaId),
-    columns: { status: true, substatus: true, providencias: true, updatedAt: true, syncedAt: true },
-  });
-
-  if (currentDemanda) {
-    const syncedAt = currentDemanda.syncedAt ?? new Date(0);
-    const bancoMudou = currentDemanda.updatedAt > syncedAt;
-
-    if (bancoMudou) {
-      // Banco mudou desde último sync — verificar se é conflito real
-      // (valores diferentes = conflito, valores iguais = ok)
-      const valorAtualBanco = String((currentDemanda as any)[campoDb] ?? "");
-      const valorNovoPlanilha = String(valor);
-
-      if (valorAtualBanco !== valorNovoPlanilha) {
-        await registerConflict(
-          demandaId, campoDb,
-          valorAtualBanco, valorNovoPlanilha,
-          currentDemanda.updatedAt, new Date(),
-        );
-        return NextResponse.json({ ok: true, conflict: true, field: campoDb });
-      }
-    }
-  }
+  // A planilha é a fonte de verdade para campos bidirecionais (status,
+  // providencias, prazo, etc.). Sempre aplicamos o valor vindo da planilha.
+  //
+  // Antes havia detecção de conflito baseada em comparar `updatedAt > syncedAt`
+  // e strings raw. Isso produzia falso-positivo em 100% dos casos:
+  //   - `updatedAt` é tocado em toda escrita, então sempre > syncedAt
+  //   - Para `status`, banco guarda enum ("2_ATENDER") e planilha manda label
+  //     ("2 - Atender") — strings nunca iguais → todo edit virava "conflito"
+  //   - O Apps Script não envia o valor ANTERIOR, então não há como detectar
+  //     conflito real (quem editou o banco depois da última leitura da planilha)
+  //
+  // Resultado: nenhum edit da planilha chegava ao banco. Por isso a sync_log
+  // estava cheia de `CONFLITO_RESOLVIDO` e zero entradas de origem `PLANILHA`.
+  //
+  // A detecção de conflito foi removida. Se algum dia quisermos reintroduzir,
+  // o Apps Script precisa enviar `oldValue` para comparar corretamente.
   // --- FIM DETECÇÃO DE CONFLITO ---
 
   // 4. Aplica a mudança com skipSheetSync (evita loop)
