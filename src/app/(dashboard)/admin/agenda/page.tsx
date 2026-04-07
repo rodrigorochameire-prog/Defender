@@ -822,22 +822,98 @@ export default function AgendaPage() {
     }
   }, [eventos]);
 
-  // Handlers
-  const handleSaveNewEvento = (eventoData: EventoFormData) => {
-    const mesAtual = format(new Date(), "yyyy-MM");
-    const escalaAtual = escalaConfig.escalas.find((e: any) => e.mes === mesAtual);
-    let responsavel = "def-1";
+  // Mutation para criar evento no calendário
+  const createCalendarEvent = trpc.calendar.create.useMutation({
+    onSuccess: () => {
+      toast.success("Evento criado com sucesso!");
+      utils.calendar.list.invalidate();
+      utils.audiencias.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar evento", { description: error.message });
+    },
+  });
 
-    if (escalaAtual) {
-      const atribuicaoKey = eventoData.atribuicao
-        .toLowerCase()
-        .replace(/ /g, "-")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-      responsavel = escalaAtual.atribuicoes[atribuicaoKey] || "def-1";
+  // Mapeamentos form → schema do calendar router
+  const TIPO_TO_EVENT_TYPE: Record<string, string> = {
+    audiencia: "audiencia",
+    reuniao: "reuniao",
+    prazo: "prazo",
+    atendimento: "atendimento",
+    diligencia: "visita",
+    plantao: "custom",
+    compromisso: "custom",
+  };
+  const PRIORIDADE_MAP: Record<string, "low" | "normal" | "high" | "urgent"> = {
+    baixa: "low",
+    media: "normal",
+    alta: "high",
+    urgente: "urgent",
+  };
+  const STATUS_MAP: Record<string, "scheduled" | "completed" | "cancelled"> = {
+    confirmado: "scheduled",
+    pendente: "scheduled",
+    reagendado: "scheduled",
+    concluido: "completed",
+    cancelado: "cancelled",
+  };
+  const RECORRENCIA_MAP: Record<string, "daily" | "weekly" | "biweekly" | "monthly" | "yearly" | undefined> = {
+    nenhuma: undefined,
+    diaria: "daily",
+    semanal: "weekly",
+    quinzenal: "biweekly",
+    mensal: "monthly",
+    anual: "yearly",
+  };
+
+  // Handlers
+  const handleSaveNewEvento = async (eventoData: EventoFormData) => {
+    // Combina data + hora local em ISO datetime (string aceita pelo schema dateTimeSchema)
+    const buildIso = (data: string, hora: string) => {
+      const h = hora && /^\d{2}:\d{2}$/.test(hora) ? hora : "00:00";
+      return new Date(`${data}T${h}:00`).toISOString();
+    };
+
+    if (!eventoData.data) {
+      toast.error("Data é obrigatória");
+      return;
     }
 
-    toast.success("Evento criado com sucesso!");
+    // Tenta resolver processoId/assistidoId pelo número do processo digitado
+    let processoId: number | undefined;
+    let assistidoId: number | undefined;
+    if (eventoData.processo?.trim()) {
+      try {
+        const matches = await utils.processos.list.fetch({ search: eventoData.processo.trim() });
+        const match = matches?.find((p) => p.numeroAutos === eventoData.processo.trim()) || matches?.[0];
+        if (match) {
+          processoId = match.id;
+          assistidoId = match.assistido?.id ?? undefined;
+        }
+      } catch {
+        // segue sem vínculo se a busca falhar
+      }
+    }
+
+    const recurrenceType = RECORRENCIA_MAP[eventoData.recorrencia];
+
+    await createCalendarEvent.mutateAsync({
+      title: eventoData.titulo,
+      description: eventoData.descricao || undefined,
+      eventDate: buildIso(eventoData.data, eventoData.horarioInicio),
+      endDate: eventoData.horarioFim ? buildIso(eventoData.data, eventoData.horarioFim) : undefined,
+      eventType: TIPO_TO_EVENT_TYPE[eventoData.tipo] || "custom",
+      processoId,
+      assistidoId,
+      isAllDay: !eventoData.horarioInicio,
+      location: eventoData.local || undefined,
+      notes: eventoData.observacoes || undefined,
+      priority: PRIORIDADE_MAP[eventoData.prioridade] || "normal",
+      status: STATUS_MAP[eventoData.status] || "scheduled",
+      isRecurring: !!recurrenceType,
+      recurrenceType,
+      recurrenceInterval: 1,
+    });
   };
 
   const handleEditEvento = (evento: any) => {
