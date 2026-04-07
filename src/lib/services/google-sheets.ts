@@ -646,11 +646,27 @@ export async function readSheet(title: string): Promise<string[][]> {
 /**
  * Encontra a linha de uma demanda pelo ID. Retorna índice 1-based ou null.
  */
-export function findRowById(rows: string[][], id: number): number | null {
+export function findRowById(rows: string[][], id: number, numeroAutos?: string): number | null {
+  // 1. Busca exata por __id__ (coluna A)
   for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
     if (String(rows[i]?.[COL.ID - 1]) === String(id)) {
       const row = i + 1; // 1-indexed
-      return row >= DATA_START_ROW ? row : null; // Nunca retornar header rows
+      return row >= DATA_START_ROW ? row : null;
+    }
+  }
+  // 2. Fallback: busca por número de autos (coluna F) — para planilhas criadas manualmente
+  if (numeroAutos) {
+    const autosNorm = numeroAutos.replace(/\s/g, "");
+    for (let i = DATA_START_ROW - 1; i < rows.length; i++) {
+      const cellAutos = (rows[i]?.[COL.AUTOS - 1] ?? "").replace(/\s/g, "");
+      if (cellAutos && cellAutos === autosNorm) {
+        const row = i + 1;
+        if (row >= DATA_START_ROW) {
+          // Preencher o __id__ para futuras buscas
+          rows[i][COL.ID - 1] = String(id);
+          return row;
+        }
+      }
     }
   }
   return null;
@@ -704,7 +720,7 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
   try {
     await ensureSheet(sheetName);
     const rows = await readSheet(sheetName);
-    const rowIndex = findRowById(rows, demanda.id);
+    const rowIndex = findRowById(rows, demanda.id, demanda.numeroAutos);
 
     if (rowIndex) {
       // Linha existe — verificar se o status na planilha difere do que vamos escrever
