@@ -1,9 +1,304 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
+import { analysisJobs } from "@/lib/db/schema";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
+import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/preparacao-audiencia";
+
+// ==========================================
+// Shared analysis helper used by both
+// `previewPreparacao` (query, dry-run) and
+// `prepararAudiencia` (mutation, persisting).
+// ==========================================
+
+type TestemunhaTipo = "DEFESA" | "ACUSACAO" | "COMUM" | "INFORMANTE" | "PERITO" | "VITIMA";
+
+type RawDep = {
+  nome?: string;
+  papel?: string;
+  tipo?: string;
+  resumo?: string;
+  endereco?: string;
+  telefones?: string[];
+  observacoes?: string;
+  perguntas?: string[];
+  pontos_favoraveis?: string[] | string;
+  pontos_desfavoraveis?: string[] | string;
+};
+
+interface PreparedDepoente {
+  nome: string;
+  tipo: TestemunhaTipo;
+  endereco: string | null;
+  resumo: string | null;
+  perguntasSugeridas: string | null;
+  pontosFavoraveis: string | null;
+  pontosDesfavoraveis: string | null;
+  observacoes: string | null;
+}
+
+interface PreparacaoComputed {
+  audiencia: typeof audiencias.$inferSelect;
+  processo: typeof processos.$inferSelect;
+  assistidoNome: string;
+  resumoCaso: string | null;
+  depoentes: PreparedDepoente[];
+}
+
+const _normalizeName = (s: string): string =>
+  (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
+const _placeholderPatterns: RegExp[] = [
+  /\ba\s+confirmar\b/,
+  /\ba\s+identificar\b/,
+  /\bn[aã]o\s+identificad/,
+  /\bn[aã]o\s+localizad/,
+  /\bdesconhecid/,
+  /\bequipe\b/,
+  /\btestemunhas?\s+n[aã]o\b/,
+  /\bv[ií]tima\s+(a\s+)?confirmar\b/,
+  /^\s*sem\s+nome\s*$/,
+  /^\s*\?+\s*$/,
+  /^\s*-+\s*$/,
+];
+
+const _isPlaceholder = (nome: string): boolean => {
+  const n = _normalizeName(nome);
+  if (n.length < 3) return true;
+  return _placeholderPatterns.some((re) => re.test(n));
+};
+
+const _mapPapelToTipo = (papel: string): TestemunhaTipo => {
+  const p = (papel || "").toLowerCase().replace(/\s+/g, "_");
+  if (p === "testemunha_acusacao" || p === "acusacao") return "ACUSACAO";
+  if (p === "testemunha_defesa" || p === "defesa") return "DEFESA";
+  if (p === "vitima" || p === "vítima") return "VITIMA";
+  if (p === "policial_condutor" || p === "policial") return "ACUSACAO";
+  if (p === "perito") return "PERITO";
+  if (p === "informante") return "INFORMANTE";
+  if (p === "testemunha") return "COMUM";
+  if (p === "reu" || p === "réu") return "COMUM";
+  return "COMUM";
+};
+
+const _joinList = (v: string[] | string | undefined | null): string | null => {
+  if (!v) return null;
+  if (Array.isArray(v)) return v.length ? v.map((s) => `• ${s}`).join("\n") : null;
+  return v.trim() || null;
+};
+
+/**
+ * Enqueue a `preparar-audiencia` analysis job for the worker (Mac Mini),
+ * unless one is already pending or running for this processo. Returns the
+ * job id and a flag indicating whether it was created or already existed.
+ *
+ * The prompt mirrors the format used by /api/analyze and the existing rows
+ * in `analysis_jobs`, so worker.sh handles it identically without changes.
+ */
+async function ensureAnalysisJob(
+  processoId: number,
+  numeroAutos: string,
+  assistidoNome: string,
+): Promise<{ jobId: number; created: boolean }> {
+  // 1. Check for an existing pending or running job — avoid duplicates.
+  const [existingJob] = await db
+    .select({ id: analysisJobs.id, status: analysisJobs.status })
+    .from(analysisJobs)
+    .where(
+      and(
+        eq(analysisJobs.processoId, processoId),
+        inArray(analysisJobs.status, ["pending", "running"]),
+      ),
+    )
+    .orderBy(desc(analysisJobs.createdAt))
+    .limit(1);
+
+  if (existingJob) {
+    return { jobId: existingJob.id, created: false };
+  }
+
+  // 2. Build the prompt — same template as the worker already understands.
+  const prompt = `Você é o Defensor Público responsável pela preparação da audiência criminal do processo ${numeroAutos}, em desfavor de ${assistidoNome}.
+
+Examine TODOS os documentos do caso disponíveis no Drive (denúncia, inquérito, decisões, depoimentos prévios) e produza uma análise estruturada com FOCO PRINCIPAL em IDENTIFICAR TODOS OS DEPOENTES.
+
+OBJETIVO PRINCIPAL: extrair a lista completa e exaustiva de pessoas arroladas como testemunhas (de acusação E de defesa), a vítima, peritos, e os policiais condutores da prisão/investigação. Esses são os depoentes da audiência.
+
+Para cada depoente, forneça nome completo, papel processual exato, e breve resumo (do depoimento se já houve, ou do papel se ainda não depôs). Quando possível, inclua endereço e telefone.
+
+Adicionalmente, produza resumo estratégico, achados-chave, recomendações e inconsistências.`;
+
+  // 3. Insert and bump processo.analysis_status to "queued" so the agenda
+  //    badge reflects the work-in-progress state.
+  const [created] = await db
+    .insert(analysisJobs)
+    .values({
+      processoId,
+      skill: "preparar-audiencia",
+      prompt,
+      status: "pending",
+    })
+    .returning({ id: analysisJobs.id });
+
+  await db
+    .update(processos)
+    .set({ analysisStatus: "queued" })
+    .where(eq(processos.id, processoId));
+
+  return { jobId: created.id, created: true };
+}
+
+async function computePreparacao(audienciaId: number): Promise<PreparacaoComputed> {
+  const [audiencia] = await db
+    .select()
+    .from(audiencias)
+    .where(eq(audiencias.id, audienciaId))
+    .limit(1);
+
+  if (!audiencia) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Audiência ${audienciaId} não encontrada`,
+    });
+  }
+
+  const [processo] = await db
+    .select()
+    .from(processos)
+    .where(eq(processos.id, audiencia.processoId))
+    .limit(1);
+
+  if (!processo) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Processo ${audiencia.processoId} não encontrado`,
+    });
+  }
+
+  let assistidoNome = "Não identificado";
+  if (audiencia.assistidoId) {
+    const [assistido] = await db
+      .select({ nome: assistidos.nome })
+      .from(assistidos)
+      .where(eq(assistidos.id, audiencia.assistidoId))
+      .limit(1);
+    if (assistido) assistidoNome = assistido.nome;
+  }
+
+  let analysisData = processo.analysisData as Record<string, any> | string | null;
+  if (typeof analysisData === "string") {
+    try {
+      analysisData = JSON.parse(analysisData) as Record<string, any>;
+    } catch {
+      analysisData = null;
+    }
+  }
+  const ad = analysisData as Record<string, any> | null;
+
+  const collect = (arr: unknown): RawDep[] =>
+    Array.isArray(arr) ? (arr as RawDep[]) : [];
+
+  const sources: Array<{ label: string; items: RawDep[] }> = [
+    { label: "depoimentos", items: collect(ad?.depoimentos) },
+    { label: "painelDepoentes", items: collect(ad?.painelDepoentes) },
+    { label: "payload.depoimentos", items: collect(ad?.payload?.depoimentos) },
+    { label: "payload.perguntas_por_testemunha", items: collect(ad?.payload?.perguntas_por_testemunha) },
+    {
+      label: "pessoas",
+      items: collect(ad?.pessoas).filter((p) => {
+        const papel = (p.papel ?? "").toLowerCase();
+        return (
+          papel.startsWith("testemunha") ||
+          papel === "vitima" ||
+          papel === "vítima" ||
+          papel === "informante" ||
+          papel === "policial_condutor"
+        );
+      }),
+    },
+  ];
+
+  const picked = sources.find((s) => s.items.length > 0);
+  let raws: RawDep[] = picked?.items ?? [];
+
+  // Filter defendido + placeholders
+  const assistidoNormalized = _normalizeName(assistidoNome);
+  const isDefendido = (nome: string): boolean => {
+    if (!assistidoNormalized || assistidoNormalized === "nao identificado") return false;
+    const n = _normalizeName(nome);
+    if (n === assistidoNormalized) return true;
+    const aTokens = assistidoNormalized.split(" ").filter((t) => t.length >= 3);
+    const dTokens = n.split(" ").filter((t) => t.length >= 3);
+    if (aTokens.length === 0 || dTokens.length === 0) return false;
+    const overlap = aTokens.filter((t) => dTokens.includes(t)).length;
+    return overlap >= 2 || overlap === Math.min(aTokens.length, dTokens.length);
+  };
+
+  raws = raws.filter((d) => {
+    if (!d.nome) return false;
+    if (_isPlaceholder(d.nome)) return false;
+    if (isDefendido(d.nome)) return false;
+    return true;
+  });
+
+  // Dedup by normalized name, keep richest
+  const richness = (d: RawDep): number =>
+    (d.resumo?.length ?? 0) +
+    (d.endereco?.length ?? 0) +
+    (Array.isArray(d.perguntas) ? d.perguntas.length * 30 : 0) +
+    (d.observacoes?.length ?? 0);
+
+  const dedupMap = new Map<string, RawDep>();
+  for (const dep of raws) {
+    const key = _normalizeName(dep.nome ?? "");
+    if (!key) continue;
+    const existing = dedupMap.get(key);
+    if (!existing || richness(dep) > richness(existing)) {
+      dedupMap.set(key, dep);
+    }
+  }
+  raws = Array.from(dedupMap.values());
+
+  const depoentes: PreparedDepoente[] = raws
+    .filter((d): d is RawDep & { nome: string } => !!d.nome)
+    .map((dep) => {
+      const tipo = _mapPapelToTipo(dep.papel ?? dep.tipo ?? "");
+      const perguntasSugeridas = _joinList(dep.perguntas);
+      const pontosFavoraveis = _joinList(dep.pontos_favoraveis);
+      const pontosDesfavoraveis = _joinList(dep.pontos_desfavoraveis);
+      const telefonesText =
+        Array.isArray(dep.telefones) && dep.telefones.length
+          ? `Telefones: ${dep.telefones.join(", ")}`
+          : null;
+      const observacoes =
+        [dep.observacoes?.trim() || null, telefonesText].filter(Boolean).join("\n") || null;
+
+      return {
+        nome: dep.nome,
+        tipo,
+        endereco: dep.endereco?.trim() || null,
+        resumo: dep.resumo?.trim() || null,
+        perguntasSugeridas,
+        pontosFavoraveis,
+        pontosDesfavoraveis,
+        observacoes,
+      };
+    });
+
+  const resumoCaso =
+    (ad?.resumo as string | undefined) ??
+    (ad?.payload?.resumo_fato as string | undefined) ??
+    null;
+
+  return { audiencia, processo, assistidoNome, resumoCaso, depoentes };
+}
 
 export const audienciasRouter = router({
   // Listar audiências
@@ -553,7 +848,9 @@ export const audienciasRouter = router({
 
       // 6. Batch-fetch existing audiências for duplicate detection (1 query instead of N)
       // Build all dataHora + processo combos to check
-      const allDataHoras = eventos.map(e => new Date(`${e.data}T${e.horarioInicio}:00`));
+      // Force BRT (-03:00) so the Date is unambiguous regardless of server TZ
+      // (Vercel runs in UTC; without the offset "08:30" would be parsed as 08:30 UTC = 05:30 BRT).
+      const allDataHoras = eventos.map(e => new Date(`${e.data}T${e.horarioInicio}:00-03:00`));
       const existingAudiencias = await db
         .select({
           id: audiencias.id,
@@ -600,8 +897,8 @@ export const audienciasRouter = router({
         const assistidosCriados: number[] = [];
 
         for (const evento of eventos) {
-          // Construir data/hora completa
-          const dataHora = new Date(`${evento.data}T${evento.horarioInicio}:00`);
+          // Construir data/hora completa (forçar BRT — ver comentário no allDataHoras acima)
+          const dataHora = new Date(`${evento.data}T${evento.horarioInicio}:00-03:00`);
 
           // Check duplicate from pre-fetched map (0 queries instead of 1)
           const dupKey = `${evento.processo}|${dataHora.toISOString()}`;
@@ -874,6 +1171,100 @@ export const audienciasRouter = router({
     }),
 
   // ==========================================
+  // PIPELINE: Estado da preparação (testemunhas + PDF)
+  // ==========================================
+
+  getPreparacao: protectedProcedure
+    .input(z.object({ audienciaId: z.number() }))
+    .query(async ({ input }) => {
+      const { audienciaId } = input;
+
+      const lista = await db
+        .select({
+          id: testemunhas.id,
+          nome: testemunhas.nome,
+          tipo: testemunhas.tipo,
+          status: testemunhas.status,
+          endereco: testemunhas.endereco,
+          resumoDepoimento: testemunhas.resumoDepoimento,
+          pontosFavoraveis: testemunhas.pontosFavoraveis,
+          pontosDesfavoraveis: testemunhas.pontosDesfavoraveis,
+          perguntasSugeridas: testemunhas.perguntasSugeridas,
+          observacoes: testemunhas.observacoes,
+        })
+        .from(testemunhas)
+        .where(eq(testemunhas.audienciaId, audienciaId))
+        .orderBy(asc(testemunhas.tipo), asc(testemunhas.nome));
+
+      return {
+        audienciaId,
+        testemunhas: lista,
+        total: lista.length,
+      };
+    }),
+
+  // ==========================================
+  // PIPELINE: Status do job de análise (worker)
+  // ==========================================
+  // Returns the most recent analysis_jobs row for a processo, so the UI
+  // can show "em fila / processando / concluído / falhou" badges and
+  // know when to refetch the preparação.
+
+  getAnalysisJobStatus: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [job] = await db
+        .select({
+          id: analysisJobs.id,
+          status: analysisJobs.status,
+          createdAt: analysisJobs.createdAt,
+          startedAt: analysisJobs.startedAt,
+          completedAt: analysisJobs.completedAt,
+          error: analysisJobs.error,
+        })
+        .from(analysisJobs)
+        .where(eq(analysisJobs.processoId, input.processoId))
+        .orderBy(desc(analysisJobs.createdAt))
+        .limit(1);
+
+      return job ?? null;
+    }),
+
+  // ==========================================
+  // PIPELINE: Preview da preparação (dry-run)
+  // ==========================================
+
+  previewPreparacao: protectedProcedure
+    .input(z.object({ audienciaId: z.number() }))
+    .query(async ({ input }) => {
+      const computed = await computePreparacao(input.audienciaId);
+
+      // Mark which depoentes already exist in the DB so the UI can show
+      // "novo" vs "já existente" badges in the preview.
+      const existingRows = await db
+        .select({ id: testemunhas.id, nome: testemunhas.nome })
+        .from(testemunhas)
+        .where(eq(testemunhas.audienciaId, input.audienciaId));
+
+      const existingNorm = new Set(existingRows.map((r) => _normalizeName(r.nome)));
+
+      return {
+        audienciaId: input.audienciaId,
+        assistidoNome: computed.assistidoNome,
+        processoNumero: computed.processo.numeroAutos,
+        atribuicao: computed.processo.atribuicao,
+        resumoCaso: computed.resumoCaso,
+        total: computed.depoentes.length,
+        depoentes: computed.depoentes.map((d) => ({
+          ...d,
+          status: existingNorm.has(_normalizeName(d.nome))
+            ? ("JA_EXISTENTE" as const)
+            : ("NOVO" as const),
+        })),
+      };
+    }),
+
+  // ==========================================
   // PIPELINE: Preparar audiência (popular testemunhas)
   // ==========================================
 
@@ -885,83 +1276,49 @@ export const audienciasRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { audienciaId } = input;
+      const { audiencia, processo, assistidoNome, resumoCaso, depoentes } =
+        await computePreparacao(audienciaId);
 
-      // 1. Fetch audiência
-      const [audiencia] = await db
-        .select()
-        .from(audiencias)
-        .where(eq(audiencias.id, audienciaId))
-        .limit(1);
+      if (depoentes.length === 0) {
+        // ── Step D: enqueue a worker job instead of failing.
+        // The Mac Mini worker (worker.sh) polls `analysis_jobs` and runs
+        // `claude -p` with the preparar-audiencia skill, then writes
+        // depoimentos[] back into processos.analysis_data. The user can
+        // re-click "Preparar Audiências" once the job completes.
+        const job = await ensureAnalysisJob(
+          processo.id,
+          processo.numeroAutos ?? "—",
+          assistidoNome,
+        );
 
-      if (!audiencia) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Audiência ${audienciaId} não encontrada`,
-        });
-      }
-
-      // 2. Fetch linked processo (for analysisData)
-      const [processo] = await db
-        .select()
-        .from(processos)
-        .where(eq(processos.id, audiencia.processoId))
-        .limit(1);
-
-      if (!processo) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `Processo ${audiencia.processoId} não encontrado`,
-        });
-      }
-
-      // 3. Fetch linked assistido (for name)
-      let assistidoNome = "Não identificado";
-      if (audiencia.assistidoId) {
-        const [assistido] = await db
-          .select({ nome: assistidos.nome })
-          .from(assistidos)
-          .where(eq(assistidos.id, audiencia.assistidoId))
-          .limit(1);
-        if (assistido) {
-          assistidoNome = assistido.nome;
-        }
-      }
-
-      // 4. Extract depoimentos from analysisData
-      const analysisData = processo.analysisData as Record<string, any> | null;
-      const depoimentos: Array<{ nome: string; papel: string; resumo?: string }> =
-        analysisData?.depoimentos ?? analysisData?.testemunhas ?? [];
-
-      if (!Array.isArray(depoimentos) || depoimentos.length === 0) {
         return {
           audienciaId,
           assistidoNome,
           testemunhas: [],
+          pdfPath: null,
+          jobQueued: {
+            id: job.jobId,
+            created: job.created,
+            status: "pending" as const,
+          },
         };
       }
 
-      // 5. Map papel to tipo enum
-      const mapPapelToTipo = (papel: string): "DEFESA" | "ACUSACAO" | "COMUM" | "INFORMANTE" | "PERITO" | "VITIMA" => {
-        const p = (papel || "").toLowerCase().replace(/\s+/g, "_");
-        if (p === "testemunha_acusacao" || p === "acusacao") return "ACUSACAO";
-        if (p === "testemunha_defesa" || p === "defesa") return "DEFESA";
-        if (p === "vitima" || p === "vítima") return "VITIMA";
-        if (p === "policial_condutor" || p === "policial") return "ACUSACAO";
-        if (p === "perito") return "PERITO";
-        if (p === "informante") return "INFORMANTE";
-        return "COMUM";
-      };
-
       const testemunhasResult: Array<{ nome: string; tipo: string; status: string }> = [];
+      const pdfDepoentes: PreparacaoDepoente[] = [];
 
-      for (const dep of depoimentos) {
-        if (!dep.nome) continue;
-
-        const tipo = mapPapelToTipo(dep.papel);
-
-        // 6. Check if testemunha already exists (same audienciaId + nome)
+      for (const dep of depoentes) {
+        // Check if testemunha already exists (same audienciaId + nome)
         const [existing] = await db
-          .select({ id: testemunhas.id })
+          .select({
+            id: testemunhas.id,
+            endereco: testemunhas.endereco,
+            resumoDepoimento: testemunhas.resumoDepoimento,
+            perguntasSugeridas: testemunhas.perguntasSugeridas,
+            pontosFavoraveis: testemunhas.pontosFavoraveis,
+            pontosDesfavoraveis: testemunhas.pontosDesfavoraveis,
+            observacoes: testemunhas.observacoes,
+          })
           .from(testemunhas)
           .where(
             and(
@@ -971,23 +1328,84 @@ export const audienciasRouter = router({
           )
           .limit(1);
 
+        let action: "ARROLADA" | "ENRIQUECIDA" | "JA_EXISTENTE" = "ARROLADA";
+
         if (!existing) {
-          // 7. Insert with status ARROLADA
           await db.insert(testemunhas).values({
             processoId: audiencia.processoId,
             audienciaId,
             nome: dep.nome,
-            tipo,
+            tipo: dep.tipo,
             status: "ARROLADA",
-            resumoDepoimento: dep.resumo || null,
+            endereco: dep.endereco,
+            resumoDepoimento: dep.resumo,
+            perguntasSugeridas: dep.perguntasSugeridas,
+            pontosFavoraveis: dep.pontosFavoraveis,
+            pontosDesfavoraveis: dep.pontosDesfavoraveis,
+            observacoes: dep.observacoes,
           });
+          action = "ARROLADA";
+        } else {
+          // Upsert enrichment: fill empty columns from the new analysis,
+          // never overwriting fields the defensor may have edited manually.
+          const isEmpty = (s: string | null | undefined) => !s || !s.trim();
+          const patch: Record<string, string | null> = {};
+          if (isEmpty(existing.endereco) && dep.endereco) patch.endereco = dep.endereco;
+          if (isEmpty(existing.resumoDepoimento) && dep.resumo) patch.resumoDepoimento = dep.resumo;
+          if (isEmpty(existing.perguntasSugeridas) && dep.perguntasSugeridas)
+            patch.perguntasSugeridas = dep.perguntasSugeridas;
+          if (isEmpty(existing.pontosFavoraveis) && dep.pontosFavoraveis)
+            patch.pontosFavoraveis = dep.pontosFavoraveis;
+          if (isEmpty(existing.pontosDesfavoraveis) && dep.pontosDesfavoraveis)
+            patch.pontosDesfavoraveis = dep.pontosDesfavoraveis;
+          if (isEmpty(existing.observacoes) && dep.observacoes)
+            patch.observacoes = dep.observacoes;
+
+          if (Object.keys(patch).length > 0) {
+            await db.update(testemunhas).set(patch).where(eq(testemunhas.id, existing.id));
+            action = "ENRIQUECIDA";
+          } else {
+            action = "JA_EXISTENTE";
+          }
         }
 
         testemunhasResult.push({
           nome: dep.nome,
-          tipo,
-          status: existing ? "JA_EXISTENTE" : "ARROLADA",
+          tipo: dep.tipo,
+          status: action,
         });
+
+        pdfDepoentes.push({
+          nome: dep.nome,
+          tipo: dep.tipo,
+          endereco: dep.endereco,
+          resumo: dep.resumo,
+          perguntas_sugeridas: dep.perguntasSugeridas,
+          pontos_favoraveis: dep.pontosFavoraveis,
+          pontos_desfavoraveis: dep.pontosDesfavoraveis,
+          observacoes: dep.observacoes,
+        });
+      }
+
+      // ── A5: Generate institutional PDF in the assistido's Drive folder.
+      // Env-gated; on Vercel / when Drive isn't mounted this is a no-op.
+      let pdfPath: string | null = null;
+      try {
+        const pdfResult = await gerarPreparacaoAudienciaPdf({
+          atribuicao: (processo.atribuicao as string | null) ?? "SUBSTITUICAO",
+          assistido: assistidoNome,
+          processo: processo.numeroAutos ?? "—",
+          audiencia: {
+            data: audiencia.dataAudiencia,
+            tipo: audiencia.tipo ?? null,
+            local: audiencia.local ?? null,
+          },
+          resumo_caso: resumoCaso,
+          depoentes: pdfDepoentes,
+        });
+        if (pdfResult) pdfPath = pdfResult.pdfPath;
+      } catch (err) {
+        console.warn("[prepararAudiencia] PDF generation failed:", err);
       }
 
       // 8. Return result
@@ -995,6 +1413,12 @@ export const audienciasRouter = router({
         audienciaId,
         assistidoNome,
         testemunhas: testemunhasResult,
+        pdfPath,
+        jobQueued: null as null | {
+          id: number;
+          created: boolean;
+          status: "pending";
+        },
       };
     }),
 

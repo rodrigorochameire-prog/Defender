@@ -11,7 +11,7 @@ import {
 import type { Depoente, RegistroAudienciaData } from "../types";
 
 export type StatusAudiencia = "concluida" | "redesignada" | "suspensa";
-export type TabKey = "geral" | "briefing" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro" | "midia";
+export type TabKey = "rapido" | "geral" | "briefing" | "preparacao" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro" | "midia";
 
 interface UseRegistroFormProps {
   evento: any;
@@ -411,5 +411,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     handleUpdateDepoente,
     toggleSection,
     toggleDepoenteDetails,
+    setRegistro,
+    audienciaId,
   };
 }
