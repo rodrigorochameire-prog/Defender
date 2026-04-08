@@ -3,9 +3,14 @@ import { db } from "@/lib/db";
 import { userMicrosoftTokens, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+// Escopos mínimos necessários para o fluxo do OMBUDS:
+// - Files.ReadWrite: leitura/escrita no drive do próprio usuário logado (suficiente
+//   para o caso de uso — não precisamos mexer em drives de outros usuários nem no
+//   SharePoint, então Files.ReadWrite.All foi removido por princípio de menor privilégio)
+// - offline_access: permite refresh tokens (caso contrário o acesso dura ~1h)
+// - User.Read: pra pegar email/displayName ao salvar os tokens (Graph /me)
 const SCOPES = [
   "Files.ReadWrite",
-  "Files.ReadWrite.All",
   "offline_access",
   "User.Read",
 ];
