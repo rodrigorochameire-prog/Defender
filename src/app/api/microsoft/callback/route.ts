@@ -37,14 +37,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Aceita NEXTAUTH_SECRET ou AUTH_SECRET — mesma convenção de auth/route.ts
-    const rawSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-    if (!rawSecret) {
-      return NextResponse.redirect(
-        new URL("/admin/settings/drive?ms_error=secret_not_configured", request.url)
-      );
-    }
-    const secret = new TextEncoder().encode(rawSecret);
+    const secret = new TextEncoder().encode(
+      process.env.NEXTAUTH_SECRET || "fallback-secret-change-me"
+    );
     const { payload } = await jwtVerify(cookie, secret);
 
     if (payload.state !== stateParam) {

@@ -3,14 +3,9 @@ import { db } from "@/lib/db";
 import { userMicrosoftTokens, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-// Escopos mínimos necessários para o fluxo do OMBUDS:
-// - Files.ReadWrite: leitura/escrita no drive do próprio usuário logado (suficiente
-//   para o caso de uso — não precisamos mexer em drives de outros usuários nem no
-//   SharePoint, então Files.ReadWrite.All foi removido por princípio de menor privilégio)
-// - offline_access: permite refresh tokens (caso contrário o acesso dura ~1h)
-// - User.Read: pra pegar email/displayName ao salvar os tokens (Graph /me)
 const SCOPES = [
   "Files.ReadWrite",
+  "Files.ReadWrite.All",
   "offline_access",
   "User.Read",
 ];
@@ -32,12 +27,7 @@ function getTenantId(): string {
 }
 
 function getRedirectUri(): string {
-  // Aceita NEXTAUTH_URL (convenção NextAuth legado) ou NEXT_PUBLIC_APP_URL
-  // (nome usado no projeto atual). Fallback para dev local.
-  const base =
-    process.env.NEXTAUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000";
+  const base = process.env.NEXTAUTH_URL || "http://localhost:3000";
   return `${base}/api/microsoft/callback`;
 }
 
