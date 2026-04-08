@@ -538,6 +538,31 @@ export type AnalysisJob = typeof analysisJobs.$inferSelect;
 export type InsertAnalysisJob = typeof analysisJobs.$inferInsert;
 
 // ==========================================
+// PJE DOWNLOAD JOBS (Scraping Worker Queue)
+// ==========================================
+
+export const pjeDownloadJobs = pgTable("pje_download_jobs", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processo_id").notNull().references(() => processos.id),
+  numeroProcesso: text("numero_processo").notNull(),
+  atribuicao: varchar("atribuicao", { length: 30 }).notNull(),
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  pdfPath: text("pdf_path"),
+  pdfBytes: integer("pdf_bytes"),
+  error: text("error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => ({
+  statusIdx: index("pje_download_jobs_status_idx").on(table.status),
+  processoIdx: index("pje_download_jobs_processo_idx").on(table.processoId),
+}));
+
+export type PjeDownloadJob = typeof pjeDownloadJobs.$inferSelect;
+export type InsertPjeDownloadJob = typeof pjeDownloadJobs.$inferInsert;
+
+// ==========================================
 // SCAN INTIMAÇÕES JOBS (Worker Queue)
 // ==========================================
 
