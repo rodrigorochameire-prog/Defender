@@ -280,6 +280,186 @@ def find_processo_autos_url(page: Page, numero: str) -> str:
 
 
 # ------------------------------------------------------------------
+# Phase 2 — force PDF download via CDP (cross-origin)
+# ------------------------------------------------------------------
+
+DOWNLOAD_BINARY_URL = "https://pje.tjba.jus.br/pje/downloadBinario.seam"
+
+
+def download_autos_pdf(
+    context: BrowserContext,
+    autos_page_url: str,
+    out_path: str,
+) -> int:
+    """Open the autos page and force-download the consolidated PDF.
+
+    PJe opens the PDF in a new window served from a cross-origin host;
+    normal Playwright download events don't fire. We cascade through three
+    strategies adapted from the proven legacy pje_download_autos.py:
+
+      A) context.route("**/downloadBinario**") — intercept + route.fetch()
+      B) context.request.get() — API request with shared cookies
+      C) requests.Session() with cookies extracted from context
+
+    Returns number of bytes written. Raises RuntimeError on failure.
+    """
+    import requests as _requests
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    # ----------------------------------------------------------------
+    # Strategy A: context.route intercept on downloadBinario
+    # ----------------------------------------------------------------
+    _log("Phase2 strategy A: context.route intercept")
+    captured: dict[str, Any] = {"data": None, "done": False}
+
+    def handle_route(route: Any) -> None:
+        if captured["done"]:
+            try:
+                route.abort()
+            except Exception:
+                pass
+            return
+        try:
+            response = route.fetch()
+            body = response.body()
+            ct = response.headers.get("content-type", "")
+            url_lower = route.request.url.lower()
+            is_pdf = "pdf" in ct or "octet" in ct or url_lower.endswith(".pdf")
+            if is_pdf and len(body) > 5_000:
+                captured["data"] = body
+                captured["done"] = True
+                route.abort()
+            elif len(body) > 50_000:
+                # Large response even without PDF content-type — save it
+                captured["data"] = body
+                captured["done"] = True
+                route.abort()
+            else:
+                try:
+                    route.fulfill(response=response)
+                except Exception:
+                    route.abort()
+        except Exception as e:
+            _log(f"route handler error: {e}")
+            try:
+                route.abort()
+            except Exception:
+                pass
+
+    context.route("**/downloadBinario**", handle_route)
+    try:
+        # If the autos URL IS the downloadBinario URL, navigate directly to it
+        # Otherwise open a new page and navigate
+        autos_page = context.new_page()
+        try:
+            _log(f"navigating to autos URL: {autos_page_url}")
+            autos_page.goto(autos_page_url, wait_until="domcontentloaded", timeout=60_000)
+            time.sleep(3)
+            autos_page.screenshot(path="/tmp/pje-debug-autos.png")
+            _log("screenshot saved to /tmp/pje-debug-autos.png")
+
+            # If the page itself is the PDF or triggers a download via iframe
+            # Wait up to 60s for the route intercept to fire
+            waited = 0
+            while not captured["done"] and waited < 60:
+                time.sleep(2)
+                waited += 2
+                if waited % 10 == 0:
+                    _log(f"waiting for route intercept... {waited}s")
+        finally:
+            try:
+                autos_page.close()
+            except Exception:
+                pass
+    finally:
+        try:
+            context.unroute("**/downloadBinario**")
+        except Exception:
+            pass
+
+    if captured["data"] and len(captured["data"]) >= MIN_PDF_BYTES:
+        _log(f"strategy A: captured {len(captured['data'])} bytes")
+        out.write_bytes(captured["data"])
+        return len(captured["data"])
+
+    # ----------------------------------------------------------------
+    # Strategy B: context.request.get() with shared cookies
+    # ----------------------------------------------------------------
+    _log("Phase2 strategy B: context.request.get()")
+    try:
+        # The autos URL itself may be downloadBinario — try it first
+        for url_to_try in [autos_page_url, DOWNLOAD_BINARY_URL]:
+            if "downloadBinario" not in url_to_try and url_to_try != autos_page_url:
+                continue
+            try:
+                _log(f"strategy B: GET {url_to_try}")
+                response = context.request.get(url_to_try, timeout=120_000)
+                body = response.body()
+                ct = response.headers.get("content-type", "")
+                _log(f"strategy B: {response.status} {len(body)} bytes ct={ct!r}")
+                if len(body) >= MIN_PDF_BYTES:
+                    out.write_bytes(body)
+                    return len(body)
+            except Exception as e:
+                _log(f"strategy B GET {url_to_try}: {e}")
+
+        # Also try the canonical downloadBinario URL with cookies set
+        _log(f"strategy B: GET {DOWNLOAD_BINARY_URL}")
+        response = context.request.get(DOWNLOAD_BINARY_URL, timeout=120_000)
+        body = response.body()
+        ct = response.headers.get("content-type", "")
+        _log(f"strategy B canonical: {response.status} {len(body)} bytes ct={ct!r}")
+        if len(body) >= MIN_PDF_BYTES:
+            out.write_bytes(body)
+            return len(body)
+    except Exception as e:
+        _log(f"strategy B failed: {e}")
+
+    # ----------------------------------------------------------------
+    # Strategy C: requests.Session() with extracted cookies
+    # ----------------------------------------------------------------
+    _log("Phase2 strategy C: requests.Session()")
+    try:
+        cookies = context.cookies()
+        session = _requests.Session()
+        for c in cookies:
+            session.cookies.set(
+                c["name"], c["value"],
+                domain=c.get("domain", "pje.tjba.jus.br"),
+                path=c.get("path", "/"),
+            )
+        session.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            ),
+            "Referer": "https://pje.tjba.jus.br/pje/Painel/painel_usuario/advogado.seam",
+        })
+
+        for url_to_try in [autos_page_url, DOWNLOAD_BINARY_URL]:
+            try:
+                _log(f"strategy C: GET {url_to_try}")
+                resp = session.get(url_to_try, timeout=120, stream=True)
+                content_type = resp.headers.get("content-type", "")
+                _log(f"strategy C: HTTP {resp.status_code} {len(resp.content)} bytes ct={content_type!r}")
+                if resp.status_code == 200 and len(resp.content) >= MIN_PDF_BYTES:
+                    out.write_bytes(resp.content)
+                    return len(resp.content)
+            except Exception as e:
+                _log(f"strategy C GET {url_to_try}: {e}")
+    except Exception as e:
+        _log(f"strategy C failed: {e}")
+
+    raise RuntimeError(
+        f"all strategies failed to download PDF from {autos_page_url} — "
+        f"check /tmp/pje-debug-autos.png for the page state"
+    )
+
+
+# ------------------------------------------------------------------
 # CLI scaffold (Phase 1 + Phase 2 implementation lands in Tasks 4 and 5)
 # ------------------------------------------------------------------
 
@@ -297,9 +477,51 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.cmd == "download":
-        # Real implementation lands in Task 4 + Task 5
-        print(json.dumps({"status": "not_implemented"}))
-        return 2
+        cpf = os.environ.get("PJE_CPF", "").strip()
+        senha = os.environ.get("PJE_SENHA", "").strip()
+        if not cpf or not senha:
+            print(json.dumps({"status": "failed", "error": "PJE_CPF/PJE_SENHA not set"}))
+            return 1
+
+        try:
+            cfg = resolve_pje_config(args.atribuicao)
+        except ValueError as e:
+            print(json.dumps({"status": "failed", "error": str(e)}))
+            return 1
+
+        out_path = str(Path(args.out_dir) / build_pdf_filename(args.numero))
+
+        if not args.force and has_recent_pdf(args.out_dir, args.numero):
+            print(json.dumps({
+                "status": "skipped",
+                "reason": "pdf_already_exists",
+                "pdf_path": out_path,
+            }))
+            return 0
+
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(accept_downloads=True)
+                page = context.new_page()
+                try:
+                    login(page, cpf, senha)
+                    autos_url = find_processo_autos_url(page, args.numero)
+                    bytes_written = download_autos_pdf(context, autos_url, out_path)
+                    print(json.dumps({
+                        "status": "completed",
+                        "pdf_path": out_path,
+                        "pdf_bytes": bytes_written,
+                        "atribuicao": args.atribuicao,
+                        "drive_subfolder": cfg["drive_subfolder"],
+                    }))
+                    return 0
+                finally:
+                    browser.close()
+        except Exception as e:
+            _log(f"download FAILED: {type(e).__name__}: {e}")
+            print(json.dumps({"status": "failed", "error": str(e)[:500]}))
+            return 1
 
     return 1
 
