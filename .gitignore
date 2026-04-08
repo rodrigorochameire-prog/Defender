@@ -3,6 +3,10 @@ node_modules/
 .pnpm-store/
 pnpm-lock.yaml
 
+# Python
+__pycache__/
+*.pyc
+
 # Next.js
 .next/
 out/
