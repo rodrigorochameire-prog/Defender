@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,7 @@ type StatusPrep = "completo" | "parcial" | "pendente";
 interface ProgressItem {
   audienciaId: number;
   assistidoNome: string;
+  processoId?: number;
   status: "done" | "unchanged" | "current" | "waiting" | "failed" | "queued" | "no-docs";
   testemunhasCount?: number;
   newCount?: number;
@@ -107,9 +108,36 @@ export function PrepararAudienciasModal() {
       { enabled: open },
     );
   const prepararMutation = trpc.audiencias.prepararAudiencia.useMutation();
+  const enqueuePjeDownload = trpc.pje.enqueueDownload.useMutation();
 
   const pendentes = audiencias?.filter((a) => a.statusPrep !== "completo") ?? [];
   const totalPendentes = pendentes.length;
+
+  // IDs de processos que estão com status "no-docs" na lista de progresso
+  const processoIdsMissing = useMemo(
+    () =>
+      progressItems
+        .filter((p) => p.status === "no-docs")
+        .map((p) => p.processoId)
+        .filter((id): id is number => typeof id === "number"),
+    [progressItems],
+  );
+
+  const pjeJobsQuery = trpc.pje.listJobsForProcessos.useQuery(
+    { processoIds: processoIdsMissing },
+    {
+      enabled: processoIdsMissing.length > 0,
+      refetchInterval: 20_000,
+    },
+  );
+
+  const pjeJobsByProcesso = useMemo(() => {
+    const map = new Map<number, { status: string; error: string | null }>();
+    for (const job of pjeJobsQuery.data ?? []) {
+      map.set(job.processoId, { status: job.status, error: job.error });
+    }
+    return map;
+  }, [pjeJobsQuery.data]);
 
   // ---------------------------------------------------------------------------
   // Auto-refresh polling: when there are queued jobs from the previous run,
@@ -245,6 +273,7 @@ export function PrepararAudienciasModal() {
     const items: ProgressItem[] = pendentes.map((a, i) => ({
       audienciaId: a.id,
       assistidoNome: a.assistidoNome,
+      processoId: a.processoId ?? undefined,
       status: i === 0 ? ("current" as const) : ("waiting" as const),
     }));
     setProgressItems(items);
@@ -869,19 +898,58 @@ export function PrepararAudienciasModal() {
                           Audiências sem documentos no Drive
                         </div>
                         <div className="space-y-1">
-                          {noDocsItems.map((q) => (
-                            <div
-                              key={q.audienciaId}
-                              className="text-xs text-amber-800 bg-amber-100/50 rounded px-2 py-1"
-                            >
-                              <div className="font-medium">{q.assistidoNome}</div>
-                            </div>
-                          ))}
+                          {noDocsItems.map((q) => {
+                            const job = q.processoId != null ? pjeJobsByProcesso.get(q.processoId) : undefined;
+                            const status = job?.status;
+                            return (
+                              <div
+                                key={q.audienciaId}
+                                className="flex items-center justify-between gap-2 text-xs text-amber-800 bg-amber-100/50 rounded px-2 py-1.5"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{q.assistidoNome}</div>
+                                  {status && (
+                                    <div className="text-[10px] text-amber-700">
+                                      {status === "pending" && "Na fila de download..."}
+                                      {status === "running" && "Baixando do PJe..."}
+                                      {status === "completed" && "Baixado — análise em fila"}
+                                      {status === "skipped" && "PDF já existe"}
+                                      {status === "failed" && `Falhou: ${(job?.error ?? "erro").slice(0, 80)}`}
+                                    </div>
+                                  )}
+                                </div>
+                                {q.processoId != null && !status && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const res = await enqueuePjeDownload.mutateAsync({
+                                        processoId: q.processoId!,
+                                      });
+                                      if (res.status === "queued") {
+                                        toast.success(`Download enfileirado (job #${res.jobId})`);
+                                        pjeJobsQuery.refetch();
+                                      } else if (res.status === "already_queued") {
+                                        toast.info("Já está na fila");
+                                        pjeJobsQuery.refetch();
+                                      } else if (res.status === "unsupported_atribuicao") {
+                                        toast.error(`Atribuição não suportada em V1: ${res.atribuicao}`);
+                                      } else {
+                                        toast.error("Processo não encontrado");
+                                      }
+                                    }}
+                                    disabled={enqueuePjeDownload.isPending}
+                                    className="shrink-0 text-[10px] px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                                  >
+                                    Baixar do PJe
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                         <p className="text-[10px] text-amber-600 italic">
-                          O worker rodou recentemente mas não encontrou PDFs do processo na pasta
-                          do Drive. Baixe os autos via PJe (skill <code>/pje-download</code>) e
-                          rode &quot;Preparar Audiências&quot; novamente.
+                          Disponível para Júri e VVD Camaçari. O worker baixa os autos do PJe e
+                          dispara a análise automaticamente em seguida.
                         </p>
                       </div>
                     )}
