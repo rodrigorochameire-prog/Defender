@@ -31,8 +31,8 @@ import {
 /** Colunas principais do Kanban (4) */
 export type KanbanColumn = "triagem" | "em_andamento" | "concluida" | "arquivado";
 
-/** Sub-grupos dentro de "Em Andamento" (3) */
-export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida";
+/** Sub-grupos dentro de "Em Andamento" (4) */
+export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida" | "delegacoes";
 
 /** Todos os grupos de status (granular) */
 export type StatusGroup =
@@ -40,6 +40,7 @@ export type StatusGroup =
   | "preparacao"
   | "diligencias"
   | "saida"
+  | "delegacoes"
   | "concluida"
   | "arquivado";
 
@@ -67,7 +68,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
     label: "Em Andamento",
     color: "#E8C87A",
     icon: Activity,
-    subGroups: ["preparacao", "diligencias", "saida"],
+    subGroups: ["preparacao", "diligencias", "saida", "delegacoes"],
   },
   concluida: {
     label: "Concluída",
@@ -107,6 +108,11 @@ export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
     color: "#D4A574",   // Laranja pastel
     icon: Send,
   },
+  delegacoes: {
+    label: "Delegações",
+    color: "#B8A4C9",   // Lilás pastel
+    icon: UserPlus,
+  },
 };
 
 /** Seções visuais dentro de cada sub-grupo (para o Kanban expandido) */
@@ -133,6 +139,8 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   ],
   saida: [
     { label: "Protocolar", icon: Send, statuses: ["protocolar"] },
+  ],
+  delegacoes: [
     { label: "Delegação", icon: UserPlus, statuses: ["emilly", "amanda", "taissa"] },
   ],
 };
@@ -161,6 +169,11 @@ export const STATUS_GROUPS: Record<StatusGroup, { label: string; color: string; 
     label: "Saída",
     color: "#D4A574",  // Laranja pastel
     icon: Send,
+  },
+  delegacoes: {
+    label: "Delegações",
+    color: "#B8A4C9",  // Lilás pastel
+    icon: UserPlus,
   },
   concluida: {
     label: "Concluída",
@@ -200,6 +213,7 @@ export const GROUP_TO_COLUMN: Record<StatusGroup, KanbanColumn> = {
   preparacao: "em_andamento",
   diligencias: "em_andamento",
   saida: "em_andamento",
+  delegacoes: "em_andamento",
   concluida: "concluida",
   arquivado: "arquivado",
 };
@@ -236,11 +250,13 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   diligenciar: { label: "Diligenciar", group: "diligencias", icon: FileText },
   oficiar:     { label: "Oficiar",     group: "diligencias", icon: Mail },
 
-  // === SAÍDA (4) — 2 seções: Protocolar, Delegação ===
+  // === SAÍDA (1) ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
-  emilly:     { label: "Emilly",     group: "saida", icon: UserPlus },
-  amanda:     { label: "Amanda",     group: "saida", icon: UserPlus },
-  taissa:     { label: "Taissa",     group: "saida", icon: UserPlus },
+
+  // === DELEGAÇÕES (3) ===
+  emilly:     { label: "Emilly",     group: "delegacoes", icon: UserPlus },
+  amanda:     { label: "Amanda",     group: "delegacoes", icon: UserPlus },
+  taissa:     { label: "Taissa",     group: "delegacoes", icon: UserPlus },
 
   // Monitorar fica em Preparação (acompanhamento ativo)
   monitorar:  { label: "Monitorar",  group: "preparacao", icon: Eye },
@@ -400,10 +416,10 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    // Saída — Delegação
-    { value: "emilly", label: "Emilly", group: "saida" },
-    { value: "amanda", label: "Amanda", group: "saida" },
-    { value: "taissa", label: "Taissa", group: "saida" },
+    // Delegações
+    { value: "emilly", label: "Emilly", group: "delegacoes" },
+    { value: "amanda", label: "Amanda", group: "delegacoes" },
+    { value: "taissa", label: "Taissa", group: "delegacoes" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },
@@ -429,6 +445,7 @@ export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
   { key: "saida", label: "Saída", short: "Saída" },
+  { key: "delegacoes", label: "Delegações", short: "Deleg." },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 

@@ -137,6 +137,7 @@ export function WorkflowStatus({
     preparacao: [],
     diligencias: [],
     saida: [],
+    delegacoes: [],
     concluida: [],
     arquivado: [],
   };

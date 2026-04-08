@@ -434,7 +434,7 @@ function EmAndamentoExpanded({
   onDragEnd?: () => void;
 }) {
   // Only show non-empty sub-groups
-  const visibleSubGroups = (["preparacao", "diligencias", "saida"] as EmAndamentoSubGroup[])
+  const visibleSubGroups = (["preparacao", "diligencias", "saida", "delegacoes"] as EmAndamentoSubGroup[])
     .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
 
   if (visibleSubGroups.length === 0) {
@@ -714,7 +714,7 @@ export function KanbanPremium({
   selectedAtribuicoes = [],
   showArchived = false,
 }: KanbanPremiumProps) {
-  const [emAndamentoExpanded, setEmAndamentoExpanded] = useState(false);
+  const [emAndamentoExpanded, setEmAndamentoExpanded] = useState(true);
 
   // Drag state for column highlight
   const [draggedDemandaId, setDraggedDemandaId] = useState<string | null>(null);
@@ -740,6 +740,7 @@ export function KanbanPremium({
       preparacao: [],
       diligencias: [],
       saida: [],
+      delegacoes: [],
     };
 
     for (const d of demandas) {
@@ -757,6 +758,7 @@ export function KanbanPremium({
         if (group === "preparacao") subs.preparacao.push(d);
         else if (group === "diligencias") subs.diligencias.push(d);
         else if (group === "saida") subs.saida.push(d);
+        else if (group === "delegacoes") subs.delegacoes.push(d);
         else subs.preparacao.push(d);
       }
     }
@@ -783,7 +785,7 @@ export function KanbanPremium({
 
   // Count non-empty sub-groups for grid sizing
   const nonEmptySubGroupCount = useMemo(() => {
-    return (["preparacao", "diligencias", "saida"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "saida", "delegacoes"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0).length;
   }, [subGroupDemandas]);
 
@@ -811,7 +813,7 @@ export function KanbanPremium({
 
   // Mobile: non-empty sub-groups
   const mobileVisibleSubGroups = useMemo(() => {
-    return (["preparacao", "diligencias", "saida"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "saida", "delegacoes"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
   }, [subGroupDemandas]);
 
@@ -828,6 +830,7 @@ export function KanbanPremium({
     preparacao: subGroupDemandas.preparacao.length,
     diligencias: subGroupDemandas.diligencias.length,
     saida: subGroupDemandas.saida.length,
+    delegacoes: subGroupDemandas.delegacoes.length,
   }), [subGroupDemandas]);
 
   // Ensure mobileActiveSubGroup is valid when sub-groups change
