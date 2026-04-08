@@ -277,7 +277,7 @@ async function sheetsGet(path: string): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -289,11 +289,32 @@ async function sheetsGet(path: string): Promise<unknown> {
   return res.json();
 }
 
+/**
+ * Executa fetch com retry em 429 (rate limit) e 5xx (transient).
+ * Backoff exponencial + jitter: 500ms, 1s, 2s, 4s.
+ */
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  const MAX_RETRIES = 4;
+  let lastRes: Response | null = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok) return res;
+    // Retry apenas em 429 e 5xx
+    if (res.status !== 429 && res.status < 500) return res;
+    lastRes = res;
+    if (attempt < MAX_RETRIES) {
+      const delay = 500 * Math.pow(2, attempt) + Math.random() * 250;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  return lastRes!;
+}
+
 async function sheetsPost(path: string, body: unknown): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -314,7 +335,7 @@ async function sheetsPut(path: string, body: unknown): Promise<unknown> {
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
 
-  const res = await fetch(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -361,13 +382,26 @@ export async function getSheets(): Promise<Array<{ sheetId: number; title: strin
   }));
 }
 
+// Cache de abas — evita hitar getSheets() a cada pushDemanda.
+// TTL curto (60s) para ainda pegar abas criadas externamente em resync longo.
+let sheetsCache: { data: Array<{ sheetId: number; title: string }>; expiresAt: number } | null = null;
+async function getSheetsCached(): Promise<Array<{ sheetId: number; title: string }>> {
+  if (sheetsCache && sheetsCache.expiresAt > Date.now()) return sheetsCache.data;
+  const data = await getSheets();
+  sheetsCache = { data, expiresAt: Date.now() + 60_000 };
+  return data;
+}
+function invalidateSheetsCache() { sheetsCache = null; }
+
 /**
  * Cria uma aba se não existir. Retorna o sheetId.
  */
 async function ensureSheet(title: string): Promise<number> {
-  const sheets = await getSheets();
+  const sheets = await getSheetsCached();
   const existing = sheets.find((s) => s.title === title);
   if (existing) return existing.sheetId;
+  // Vai criar — invalida cache antes da próxima chamada
+  invalidateSheetsCache();
 
   const result = await sheetsPost(":batchUpdate", {
     requests: [
@@ -745,7 +779,8 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
 
     return { pushed: true, conflict: false };
   } catch (err) {
-    console.error(`[Sheets] Erro ao sincronizar demanda ${demanda.id}:`, err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[Sheets] FAIL push demanda id=${demanda.id} sheet="${sheetName}" autos="${demanda.numeroAutos}" → ${msg}`);
     return { pushed: false, conflict: false };
   }
 }
