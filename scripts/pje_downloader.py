@@ -44,6 +44,20 @@ SUPPORTED_ATRIBUICOES = {
 }
 
 MIN_PDF_BYTES = 10 * 1024  # 10KB — anything smaller is a PJe error page
+PDF_MAGIC = b"%PDF-"
+
+
+def is_valid_pdf(data: bytes) -> bool:
+    """True if `data` starts with the PDF magic bytes and is large enough.
+
+    Size alone is not enough: PJe sometimes returns a 40KB HTML error page
+    (Painel do Defensor) when the navigation goes wrong, which passed the
+    MIN_PDF_BYTES check before V1.1.
+    """
+    return (
+        len(data) >= MIN_PDF_BYTES
+        and data[: len(PDF_MAGIC)] == PDF_MAGIC
+    )
 
 
 def resolve_pje_config(atribuicao: str) -> dict[str, str]:
@@ -72,7 +86,11 @@ def build_pdf_filename(numero_processo: str) -> str:
 
 
 def has_recent_pdf(drive_dir: str, numero_processo: str) -> bool:
-    """Return True if an existing, valid-size autos PDF is already in drive_dir."""
+    """Return True if a valid PDF for this processo is already in drive_dir.
+
+    Checks both file size AND the %PDF- magic bytes — V1.0 only checked size,
+    which let 40KB HTML error pages pass as "already downloaded".
+    """
     d = Path(drive_dir)
     if not d.is_dir():
         return False
@@ -80,7 +98,11 @@ def has_recent_pdf(drive_dir: str, numero_processo: str) -> bool:
     pattern = f"Autos - {safe} - *.pdf"
     for pdf in d.glob(pattern):
         try:
-            if pdf.stat().st_size >= MIN_PDF_BYTES:
+            if pdf.stat().st_size < MIN_PDF_BYTES:
+                continue
+            with pdf.open("rb") as f:
+                head = f.read(len(PDF_MAGIC))
+            if head == PDF_MAGIC:
                 return True
         except OSError:
             continue
@@ -379,10 +401,15 @@ def download_autos_pdf(
         except Exception:
             pass
 
-    if captured["data"] and len(captured["data"]) >= MIN_PDF_BYTES:
-        _log(f"strategy A: captured {len(captured['data'])} bytes")
+    if captured["data"] and is_valid_pdf(captured["data"]):
+        _log(f"strategy A: captured {len(captured['data'])} bytes (valid PDF)")
         out.write_bytes(captured["data"])
         return len(captured["data"])
+    elif captured["data"]:
+        _log(
+            f"strategy A: captured {len(captured['data'])} bytes but NOT a PDF "
+            f"(magic={captured['data'][:8]!r}) — discarding, trying next strategy"
+        )
 
     # ----------------------------------------------------------------
     # Strategy B: context.request.get() with shared cookies
@@ -399,9 +426,12 @@ def download_autos_pdf(
                 body = response.body()
                 ct = response.headers.get("content-type", "")
                 _log(f"strategy B: {response.status} {len(body)} bytes ct={ct!r}")
-                if len(body) >= MIN_PDF_BYTES:
+                if is_valid_pdf(body):
+                    _log(f"strategy B: valid PDF from {url_to_try}")
                     out.write_bytes(body)
                     return len(body)
+                elif len(body) >= MIN_PDF_BYTES:
+                    _log(f"strategy B: large body but not a PDF (magic={body[:8]!r}) — skip")
             except Exception as e:
                 _log(f"strategy B GET {url_to_try}: {e}")
 
@@ -411,9 +441,12 @@ def download_autos_pdf(
         body = response.body()
         ct = response.headers.get("content-type", "")
         _log(f"strategy B canonical: {response.status} {len(body)} bytes ct={ct!r}")
-        if len(body) >= MIN_PDF_BYTES:
+        if is_valid_pdf(body):
+            _log("strategy B canonical: valid PDF")
             out.write_bytes(body)
             return len(body)
+        elif len(body) >= MIN_PDF_BYTES:
+            _log(f"strategy B canonical: large body but not a PDF (magic={body[:8]!r}) — skip")
     except Exception as e:
         _log(f"strategy B failed: {e}")
 
@@ -445,9 +478,12 @@ def download_autos_pdf(
                 resp = session.get(url_to_try, timeout=120, stream=True)
                 content_type = resp.headers.get("content-type", "")
                 _log(f"strategy C: HTTP {resp.status_code} {len(resp.content)} bytes ct={content_type!r}")
-                if resp.status_code == 200 and len(resp.content) >= MIN_PDF_BYTES:
+                if resp.status_code == 200 and is_valid_pdf(resp.content):
+                    _log(f"strategy C: valid PDF from {url_to_try}")
                     out.write_bytes(resp.content)
                     return len(resp.content)
+                elif resp.status_code == 200 and len(resp.content) >= MIN_PDF_BYTES:
+                    _log(f"strategy C: large body but not a PDF (magic={resp.content[:8]!r}) — skip")
             except Exception as e:
                 _log(f"strategy C GET {url_to_try}: {e}")
     except Exception as e:

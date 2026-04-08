@@ -286,12 +286,14 @@ export function PrepararAudienciasModal() {
       setCurrentIndex(i);
       const aud = pendentes[i];
 
-      // Update progress items to reflect current
+      // Update progress items to reflect current: only touch the CURRENT
+      // index (and leave past/future alone). Past iterations already set
+      // their own final status (done/unchanged/no-docs/queued/failed), and
+      // blanket-overwriting them to "done" here destroys those states.
       setProgressItems((prev) =>
-        prev.map((item, idx) => ({
-          ...item,
-          status: idx < i ? "done" as const : idx === i ? "current" as const : "waiting" as const,
-        }))
+        prev.map((item, idx) =>
+          idx === i ? { ...item, status: "current" as const } : item
+        )
       );
 
       try {

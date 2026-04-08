@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
+import { analysisJobs } from "@/lib/db/schema/core";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
@@ -1378,25 +1379,42 @@ export const audienciasRouter = router({
         // it almost certainly means the Drive folder is empty (no PDFs to
         // analyze). Re-enqueueing would loop forever. Surface a distinct
         // status so the user knows to download the autos first.
-        const [recentJob] = await db
-          .select({
-            id: claudeCodeTasks.id,
-            status: claudeCodeTasks.status,
-            completedAt: claudeCodeTasks.completedAt,
-          })
+        // Fix A (2026-04-08): accept recent completions from EITHER queue.
+        // The daemon migration to claude_code_tasks was partial — the legacy
+        // ~/ombuds-worker/worker.sh still processes analysis_jobs, and the
+        // pje-worker.sh (PJe download pipeline) also enqueues there. Checking
+        // only claude_code_tasks missed legitimate "worker ran, no PDFs" cases.
+        // Use a 24h window rather than 1h — the worker may have run hours
+        // ago and the "empty analysis" signal is still valid. Stale but
+        // non-ancient completions are trustworthy evidence of Drive emptiness.
+        const recentCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const [recentClaudeTask] = await db
+          .select({ completedAt: claudeCodeTasks.completedAt })
           .from(claudeCodeTasks)
           .where(
             and(
               eq(claudeCodeTasks.processoId, processo.id),
               eq(claudeCodeTasks.status, "completed"),
-              gte(
-                claudeCodeTasks.completedAt,
-                new Date(Date.now() - 60 * 60 * 1000),
-              ),
+              gte(claudeCodeTasks.completedAt, recentCutoff),
             ),
           )
           .orderBy(desc(claudeCodeTasks.completedAt))
           .limit(1);
+
+        const [recentAnalysisJob] = await db
+          .select({ completedAt: analysisJobs.completedAt })
+          .from(analysisJobs)
+          .where(
+            and(
+              eq(analysisJobs.processoId, processo.id),
+              eq(analysisJobs.status, "completed"),
+              gte(analysisJobs.completedAt, recentCutoff),
+            ),
+          )
+          .orderBy(desc(analysisJobs.completedAt))
+          .limit(1);
+
+        const recentJob = recentClaudeTask ?? recentAnalysisJob;
 
         if (recentJob) {
           return {
