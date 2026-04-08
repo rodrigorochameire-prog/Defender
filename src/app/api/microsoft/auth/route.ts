@@ -21,10 +21,18 @@ export async function GET(request: NextRequest) {
     returnTo
   );
 
-  // Store state + codeVerifier in a short-lived signed JWT cookie
-  const secret = new TextEncoder().encode(
-    process.env.NEXTAUTH_SECRET || "fallback-secret-change-me"
-  );
+  // Store state + codeVerifier in a short-lived signed JWT cookie.
+  // Aceita NEXTAUTH_SECRET ou AUTH_SECRET (nome usado no projeto atual).
+  // Falha alto se nenhum dos dois estiver definido — melhor erro 500 do que
+  // cookie assinado com fallback previsível.
+  const rawSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+  if (!rawSecret) {
+    return NextResponse.json(
+      { error: "NEXTAUTH_SECRET/AUTH_SECRET não configurado" },
+      { status: 500 }
+    );
+  }
+  const secret = new TextEncoder().encode(rawSecret);
   const jwt = await new SignJWT({
     state,
     codeVerifier,
