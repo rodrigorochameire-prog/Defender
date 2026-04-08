@@ -19,7 +19,6 @@ import { eq, isNull } from "drizzle-orm";
 import {
   reorderSheet,
   getSheetName,
-  statusParaLabel,
   type DemandaParaSync,
 } from "@/lib/services/google-sheets";
 
@@ -28,12 +27,90 @@ function getWebhookSecret(): string {
 }
 
 /**
- * Extrai o prefixo numérico do label ("5 - Triagem" → 5).
- * Fallback 99 para labels desconhecidos.
+ * Rank posicional exato que reflete a ordem visual do kanban de
+ * src/config/demanda-status.ts (STATUS_OPTIONS_BY_COLUMN).
+ *
+ * Duplicado aqui para manter a route pure-data (evita importar React).
+ * Se a ordem no kanban mudar, atualizar os dois lugares.
  */
-function labelPrefix(label: string): number {
-  const m = label.match(/^(\d+)/);
-  return m ? parseInt(m[1], 10) : 99;
+const STATUS_RANK: Record<string, number> = {
+  // === TRIAGEM ===
+  urgente: 10,
+  triagem: 11,
+  fila: 11, // alias legado
+  // === EM ANDAMENTO — Preparação ===
+  elaborar: 20,
+  elaborando: 21,
+  analisar: 22,
+  relatorio: 23,
+  relatório: 23,
+  monitorar: 24,
+  revisar: 25,
+  revisando: 26,
+  // === EM ANDAMENTO — Diligências ===
+  atender: 30,
+  documentos: 31,
+  testemunhas: 32,
+  investigar: 33,
+  buscar: 34,
+  diligenciar: 35,
+  oficiar: 36,
+  // === EM ANDAMENTO — Saída ===
+  protocolar: 40,
+  // === EM ANDAMENTO — Delegações ===
+  emilly: 50,
+  amanda: 51,
+  taissa: 52,
+  "estagio_-_taissa": 52,
+  // === CONCLUÍDA ===
+  protocolado: 70,
+  sigad: 71,
+  ciencia: 72,
+  ciência: 72,
+  resolvido: 73,
+  constituiu_advogado: 74,
+  sem_atuacao: 75,
+  // === ARQUIVADO ===
+  arquivado: 90,
+};
+
+/** Mapeia status DB enum → rank quando o substatus não ajuda */
+const DB_STATUS_FALLBACK_RANK: Record<string, number> = {
+  URGENTE: 10,
+  "5_TRIAGEM": 11,
+  "2_ATENDER": 30,       // default diligencias/atender
+  "4_MONITORAR": 24,     // preparacao/monitorar
+  "7_PROTOCOLADO": 70,
+  "7_CIENCIA": 72,
+  "7_SEM_ATUACAO": 75,
+  CONCLUIDO: 73,
+  ARQUIVADO: 90,
+};
+
+/**
+ * Normaliza substatus (remove prefixo numérico "2 - ", lowercase, sem acentos).
+ * Ex: "2 - Elaborar" → "elaborar"
+ */
+function normalizeSubstatus(substatus: string | null | undefined): string | null {
+  if (!substatus) return null;
+  const withoutPrefix = substatus.replace(/^\d+\s*-\s*/, "");
+  return withoutPrefix
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_")
+    .trim();
+}
+
+function computeRank(status: string | null, substatus: string | null): number {
+  const normalized = normalizeSubstatus(substatus);
+  if (normalized && STATUS_RANK[normalized] !== undefined) {
+    return STATUS_RANK[normalized];
+  }
+  if (status && DB_STATUS_FALLBACK_RANK[status] !== undefined) {
+    return DB_STATUS_FALLBACK_RANK[status];
+  }
+  return 99;
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -73,7 +150,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ordemManual: number | null;
     createdAt: Date;
     prazo: string | null;
-    labelPrefix: number;
+    rank: number;
   };
   const bySheet = new Map<string, Enriched[]>();
 
@@ -96,22 +173,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       delegadoNome: r.delegadoNome ?? null,
     };
 
-    const label = statusParaLabel(r.status, r.substatus);
     const enriched: Enriched = {
       ...sync,
       ordemManual: r.ordemManual,
       createdAt: r.createdAt,
       prazo: r.prazo,
-      labelPrefix: labelPrefix(label),
+      rank: computeRank(r.status, r.substatus),
     };
 
     if (!bySheet.has(sheetName)) bySheet.set(sheetName, []);
     bySheet.get(sheetName)!.push(enriched);
   }
 
-  // Sort key: [labelPrefix ASC, ordemManual ASC NULLS LAST, createdAt DESC, prazo ASC NULLS LAST]
+  // Sort key: [rank ASC, ordemManual ASC NULLS LAST, createdAt DESC, prazo ASC NULLS LAST]
   const cmp = (a: Enriched, b: Enriched): number => {
-    if (a.labelPrefix !== b.labelPrefix) return a.labelPrefix - b.labelPrefix;
+    if (a.rank !== b.rank) return a.rank - b.rank;
 
     const ao = a.ordemManual;
     const bo = b.ordemManual;
