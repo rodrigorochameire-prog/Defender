@@ -125,11 +125,11 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
     { label: "Analisar", icon: FileSearch, statuses: ["analisar"] },
     { label: "Elaborar", icon: Edit, statuses: ["elaborar", "elaborando"] },
     { label: "Relatório", icon: ClipboardList, statuses: ["relatorio"] },
-    { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
     { label: "Revisar", icon: FileCheck, statuses: ["revisar", "revisando"] },
   ],
   diligencias: [
     { label: "Atender", icon: User, statuses: ["atender"] },
+    { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
     { label: "Buscar", icon: Search, statuses: ["buscar"] },
     { label: "Diligenciar", icon: FileText, statuses: ["diligenciar"] },
     { label: "Investigar", icon: Eye, statuses: ["investigar"] },
@@ -258,8 +258,8 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   amanda:     { label: "Amanda",     group: "delegacoes", icon: UserPlus },
   taissa:     { label: "Taissa",     group: "delegacoes", icon: UserPlus },
 
-  // Monitorar fica em Preparação (acompanhamento ativo)
-  monitorar:  { label: "Monitorar",  group: "preparacao", icon: Eye },
+  // Monitorar fica em Diligências (acompanhamento ativo de diligências externas)
+  monitorar:  { label: "Monitorar",  group: "diligencias", icon: Eye },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -307,7 +307,7 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   // Triagem → triagem, Atender sem substatus → diligências, Monitorar → monitorar
   if (s === "5_TRIAGEM") return "triagem";
   if (s === "2_ATENDER") return "diligencias";
-  if (s === "4_MONITORAR") return "preparacao";
+  if (s === "4_MONITORAR") return "diligencias";
 
   return "triagem";
 }
@@ -362,7 +362,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
   const dbMap: Record<string, StatusConfig> = {
     "5_triagem":      { label: "Triagem",      group: "triagem",      icon: Inbox },
     "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
-    "4_monitorar":    { label: "Monitorar",    group: "preparacao",   icon: Eye },
+    "4_monitorar":    { label: "Monitorar",    group: "diligencias",  icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
     "7_ciencia":      { label: "Ciência",      group: "concluida", icon: Eye },
     "7_sem_atuacao":  { label: "Sem atuação",  group: "concluida", icon: XCircle },
@@ -401,13 +401,12 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "elaborando", label: "Elaborando", group: "preparacao" },
     { value: "analisar", label: "Analisar", group: "preparacao" },
     { value: "relatorio", label: "Relatório", group: "preparacao" },
-    // Preparação — Monitorar
-    { value: "monitorar", label: "Monitorar", group: "preparacao" },
     // Preparação — Revisar
     { value: "revisar", label: "Revisar", group: "preparacao" },
     { value: "revisando", label: "Revisando", group: "preparacao" },
     // Diligências
     { value: "atender", label: "Atender", group: "diligencias" },
+    { value: "monitorar", label: "Monitorar", group: "diligencias" },
     { value: "documentos", label: "Documentos", group: "diligencias" },
     { value: "testemunhas", label: "Testemunhas", group: "diligencias" },
     { value: "investigar", label: "Investigar", group: "diligencias" },

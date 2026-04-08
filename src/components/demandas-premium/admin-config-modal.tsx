@@ -43,7 +43,6 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
   const [statusList, setStatusList] = useState<StatusConfig[]>([
     // Triagem
     { value: "triagem", label: "Triagem", group: "triagem", color: "#A1A1AA" },
-    { value: "atender", label: "Atender", group: "triagem", color: "#A1A1AA" },
     { value: "urgente", label: "Urgente", group: "triagem", color: "#D4A4A4" },
     // Preparação
     { value: "elaborar", label: "Elaborar", group: "preparacao", color: "#E8C87A" },
@@ -52,15 +51,17 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
     { value: "relatorio", label: "Relatório", group: "preparacao", color: "#E8C87A" },
     { value: "revisar", label: "Revisar", group: "preparacao", color: "#E8C87A" },
     { value: "revisando", label: "Revisando", group: "preparacao", color: "#E8C87A" },
-    // Diligências
+    // Diligências (inclui atender e monitorar — ambos azul)
+    { value: "atender", label: "Atender", group: "diligencias", color: "#8DB4D2" },
+    { value: "monitorar", label: "Monitorar", group: "diligencias", color: "#8DB4D2" },
     { value: "documentos", label: "Documentos", group: "diligencias", color: "#8DB4D2" },
     { value: "testemunhas", label: "Testemunhas", group: "diligencias", color: "#8DB4D2" },
     { value: "investigar", label: "Investigar", group: "diligencias", color: "#8DB4D2" },
     { value: "buscar", label: "Buscar", group: "diligencias", color: "#8DB4D2" },
+    { value: "diligenciar", label: "Diligenciar", group: "diligencias", color: "#8DB4D2" },
     { value: "oficiar", label: "Oficiar", group: "diligencias", color: "#8DB4D2" },
     // Saída
     { value: "protocolar", label: "Protocolar", group: "saida", color: "#D4A574" },
-    { value: "monitorar", label: "Monitorar", group: "saida", color: "#D4A574" },
     // Delegações
     { value: "emilly", label: "Emilly", group: "delegacoes", color: "#B8A4C9" },
     { value: "amanda", label: "Amanda", group: "delegacoes", color: "#B8A4C9" },

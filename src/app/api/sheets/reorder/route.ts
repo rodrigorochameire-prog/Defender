@@ -44,17 +44,17 @@ const STATUS_RANK: Record<string, number> = {
   analisar: 22,
   relatorio: 23,
   relatório: 23,
-  monitorar: 24,
   revisar: 25,
   revisando: 26,
   // === EM ANDAMENTO — Diligências ===
   atender: 30,
-  documentos: 31,
-  testemunhas: 32,
-  investigar: 33,
-  buscar: 34,
-  diligenciar: 35,
-  oficiar: 36,
+  monitorar: 31,
+  documentos: 32,
+  testemunhas: 33,
+  investigar: 34,
+  buscar: 35,
+  diligenciar: 36,
+  oficiar: 37,
   // === EM ANDAMENTO — Saída ===
   protocolar: 40,
   // === EM ANDAMENTO — Delegações ===
@@ -79,7 +79,7 @@ const DB_STATUS_FALLBACK_RANK: Record<string, number> = {
   URGENTE: 10,
   "5_TRIAGEM": 11,
   "2_ATENDER": 30,       // default diligencias/atender
-  "4_MONITORAR": 24,     // preparacao/monitorar
+  "4_MONITORAR": 31,     // diligencias/monitorar
   "7_PROTOCOLADO": 70,
   "7_CIENCIA": 72,
   "7_SEM_ATUACAO": 75,
