@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, and, isNull, ilike } from "drizzle-orm";
+import { eq, and, isNull, ilike, inArray } from "drizzle-orm";
 
 // Mapeamento: nome da aba → atribuição do banco
 const SHEET_TO_ATRIBUICAO: Record<string, string> = {
@@ -88,24 +88,57 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   try {
     // 3. Resolve defensor
+    // Aceita admin OU defensor (Rodrigo é admin mas atua como defensor titular).
+    // Sem fallback "primeiro defensor encontrado": era não-determinístico
+    // (LIMIT 1 sem ORDER BY) e atribuía silenciosamente demandas ao defensor errado.
     let defensorId: number | null = null;
 
     if (defensorEmail) {
       const [defensor] = await db
         .select({ id: users.id })
         .from(users)
-        .where(eq(users.email, defensorEmail))
+        .where(
+          and(
+            eq(users.email, defensorEmail),
+            inArray(users.role as never, ["defensor", "admin"] as never),
+          ),
+        )
         .limit(1);
       defensorId = defensor?.id ?? null;
     }
 
+    // Fallback explícito: env CRON_DEFENSOR_ID (defensor padrão configurado).
+    // Não há mais "primeiro defensor da tabela" — esse comportamento causava
+    // bug onde 84+ demandas foram atribuídas para a defensora errada por estar
+    // fisicamente primeiro no heap quando o webhook não trazia email válido.
     if (!defensorId) {
-      const [firstDefensor] = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.role as never, "defensor" as never))
-        .limit(1);
-      defensorId = firstDefensor?.id ?? null;
+      const envDefault = process.env.CRON_DEFENSOR_ID
+        ? parseInt(process.env.CRON_DEFENSOR_ID, 10)
+        : null;
+      if (envDefault && !isNaN(envDefault)) {
+        const [exists] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.id, envDefault))
+          .limit(1);
+        defensorId = exists?.id ?? null;
+      }
+    }
+
+    if (!defensorId) {
+      console.error(
+        `[Sheets Create] Defensor não resolvido — defensorEmail=${defensorEmail ?? "(vazio)"}, ` +
+          `CRON_DEFENSOR_ID=${process.env.CRON_DEFENSOR_ID ?? "(não configurado)"}. ` +
+          `Demanda NÃO criada: ${nomeStr} / ${numeroAutos}`,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Defensor não resolvido. Apps Script deve enviar defensorEmail válido " +
+            "(role='defensor' ou 'admin'), ou configurar CRON_DEFENSOR_ID no env.",
+        },
+        { status: 400 },
+      );
     }
 
     // 4. Find or create assistido
