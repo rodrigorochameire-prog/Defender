@@ -821,10 +821,18 @@ export const demandasRouter = router({
         try {
           // Validar que assistido não é uma data serializada (bug Apps Script)
           const nomeAssistido = String(row.assistido ?? "").trim();
-          const nomePareceDada = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s/.test(nomeAssistido) ||
-            /^\d{4}-\d{2}-\d{2}T/.test(nomeAssistido);
-          if (nomePareceDada) {
+          const pareceData = (v: string) =>
+            /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s/.test(v) || /^\d{4}-\d{2}-\d{2}T/.test(v);
+          if (pareceData(nomeAssistido)) {
             results.errors.push(`${nomeAssistido}: nome do assistido parece ser uma data — ignorando`);
+            results.skipped++;
+            continue;
+          }
+
+          // Guard: ato não pode ser uma data serializada (bug Apps Script — causou incidente 2026-03-20)
+          const atoRaw = String(row.ato ?? "").trim();
+          if (pareceData(atoRaw)) {
+            results.errors.push(`${nomeAssistido}: campo 'ato' parece ser uma data serializada ("${atoRaw.slice(0, 40)}…") — provável desalinhamento de colunas`);
             results.skipped++;
             continue;
           }
@@ -904,7 +912,15 @@ export const demandasRouter = router({
           assistidoIdsImportados.add(assistido.id);
 
           // 2. Buscar ou criar processo por número
-          const processoNumero = row.processoNumero?.trim() || "";
+          // Guard: processoNumero deve ser CNJ válido (senão cai no fluxo "SN-<timestamp>").
+          // Sem isso, valores como "Manifestação"/"Habeas Corpus" vazavam para numero_autos
+          // quando colunas da planilha desalinhavam (incidente 2026-03-20).
+          const CNJ_REGEX = /^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$/;
+          const processoNumeroRaw = row.processoNumero?.trim() || "";
+          const processoNumero = CNJ_REGEX.test(processoNumeroRaw) ? processoNumeroRaw : "";
+          if (processoNumeroRaw && !processoNumero) {
+            results.errors.push(`${nomeAssistido}: processoNumero "${processoNumeroRaw}" não é CNJ válido — processo criado sem número`);
+          }
           let processo;
 
           // Determinar área e atribuição com base no input
