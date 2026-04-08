@@ -728,26 +728,12 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
     const rows = await readSheet(sheetName);
     const rowIndex = findRowById(rows, demanda.id, demanda.numeroAutos);
 
-    if (rowIndex) {
-      // Linha existe — verificar se o status na planilha difere do que vamos escrever
-      const existingRow = rows[rowIndex - 1];
-      const planilhaStatus = existingRow?.[COL.STATUS - 1] ?? "";
-      const bancoStatus = statusParaLabel(demanda.status, demanda.substatus);
-
-      if (planilhaStatus && planilhaStatus !== bancoStatus) {
-        // Possível conflito — registrar e NÃO sobrescrever
-        const { registerConflict } = await import("./sync-engine");
-        await registerConflict(
-          demanda.id, "status",
-          bancoStatus, planilhaStatus,
-          new Date(), new Date(),
-        );
-        console.log(`[Sheets] Conflito detectado para demanda ${demanda.id}: banco="${bancoStatus}" planilha="${planilhaStatus}"`);
-        return { pushed: false, conflict: true };
-      }
-    }
-
-    // Sem conflito — escrever normalmente
+    // Regra: OMBUDS é a fonte da verdade. pushDemanda SEMPRE sobrescreve
+    // o que estiver na planilha. A detecção de conflito aqui estava bloqueando
+    // updates legítimos do usuário quando a planilha tinha valor antigo
+    // (conflitos ficavam órfãos em sync_log, resolvido_em NULL).
+    // A detecção bidirecional (quando ambos mudaram) permanece no poller
+    // Inngest (src/lib/inngest/functions.ts), que é o lugar correto para ela.
     const rowData = demandaToRow(demanda);
     const targetRow = rowIndex ?? Math.max(rows.length + 1, DATA_START_ROW);
     const range = `${sheetName}!A${targetRow}:${colToLetter(HEADERS.length)}${targetRow}`;
