@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
-import { analysisJobs } from "@/lib/db/schema";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
@@ -94,34 +94,60 @@ const _joinList = (v: string[] | string | undefined | null): string | null => {
   return v.trim() || null;
 };
 
+// Map processo.atribuicao → skill alias (see .claude/skills-cowork/SKILL_ALIASES.json).
+// This picks the atribuição-specific skill (juri/vvd/ep) so the daemon loads the
+// richest references/ for the case type, instead of the generic analise-audiencias.
+function atribuicaoToPrepararAudienciaSkill(atribuicao: string | null | undefined): string {
+  switch (atribuicao) {
+    case "JURI_CAMACARI":
+    case "JURI":
+    case "GRUPO_JURI":
+      return "preparar-audiencia-juri";
+    case "VVD_CAMACARI":
+    case "VVD":
+      return "preparar-audiencia-vvd";
+    case "EXECUCAO_PENAL":
+    case "EXECUCAO":
+      return "preparar-audiencia-ep";
+    case "SUBSTITUICAO":
+    case "SUBSTITUICAO_CIVEL":
+      return "preparar-audiencia-criminal";
+    default:
+      return "preparar-audiencia"; // legacy fallback → analise-audiencias
+  }
+}
+
 /**
- * Enqueue a `preparar-audiencia` analysis job for the worker (Mac Mini),
- * unless one is already pending or running for this processo. Returns the
- * job id and a flag indicating whether it was created or already existed.
+ * Enqueue a `preparar-audiencia` task for the worker (Mac Mini),
+ * unless one is already pending or processing for this processo. Returns the
+ * task id and a flag indicating whether it was created or already existed.
  *
- * The prompt mirrors the format used by /api/analyze and the existing rows
- * in `analysis_jobs`, so worker.sh handles it identically without changes.
+ * Inserts into `claude_code_tasks` — the canonical queue processed by
+ * scripts/claude-code-daemon.mjs. Migrated from analysis_jobs (2026-04).
  */
-async function ensureAnalysisJob(
+async function ensureClaudeCodeTask(
   processoId: number,
+  assistidoId: number,
   numeroAutos: string,
   assistidoNome: string,
+  atribuicao: string | null | undefined,
+  createdBy: number,
 ): Promise<{ jobId: number; created: boolean }> {
-  // 1. Check for an existing pending or running job — avoid duplicates.
-  const [existingJob] = await db
-    .select({ id: analysisJobs.id, status: analysisJobs.status })
-    .from(analysisJobs)
+  // 1. Check for an existing pending or processing task — avoid duplicates.
+  const [existingTask] = await db
+    .select({ id: claudeCodeTasks.id, status: claudeCodeTasks.status })
+    .from(claudeCodeTasks)
     .where(
       and(
-        eq(analysisJobs.processoId, processoId),
-        inArray(analysisJobs.status, ["pending", "running"]),
+        eq(claudeCodeTasks.processoId, processoId),
+        inArray(claudeCodeTasks.status, ["pending", "processing"]),
       ),
     )
-    .orderBy(desc(analysisJobs.createdAt))
+    .orderBy(desc(claudeCodeTasks.createdAt))
     .limit(1);
 
-  if (existingJob) {
-    return { jobId: existingJob.id, created: false };
+  if (existingTask) {
+    return { jobId: existingTask.id, created: false };
   }
 
   // 2. Build the prompt — same template as the worker already understands.
@@ -137,15 +163,19 @@ Adicionalmente, produza resumo estratégico, achados-chave, recomendações e in
 
   // 3. Insert and bump processo.analysis_status to "queued" so the agenda
   //    badge reflects the work-in-progress state.
+  const skill = atribuicaoToPrepararAudienciaSkill(atribuicao);
+
   const [created] = await db
-    .insert(analysisJobs)
+    .insert(claudeCodeTasks)
     .values({
+      assistidoId,
       processoId,
-      skill: "preparar-audiencia",
+      skill,
       prompt,
       status: "pending",
+      createdBy,
     })
-    .returning({ id: analysisJobs.id });
+    .returning({ id: claudeCodeTasks.id });
 
   await db
     .update(processos)
@@ -1225,7 +1255,7 @@ export const audienciasRouter = router({
   // ==========================================
   // PIPELINE: Status do job de análise (worker)
   // ==========================================
-  // Returns the most recent analysis_jobs row for a processo, so the UI
+  // Returns the most recent claude_code_tasks row for a processo, so the UI
   // can show "em fila / processando / concluído / falhou" badges and
   // know when to refetch the preparação.
 
@@ -1234,16 +1264,16 @@ export const audienciasRouter = router({
     .query(async ({ input }) => {
       const [job] = await db
         .select({
-          id: analysisJobs.id,
-          status: analysisJobs.status,
-          createdAt: analysisJobs.createdAt,
-          startedAt: analysisJobs.startedAt,
-          completedAt: analysisJobs.completedAt,
-          error: analysisJobs.error,
+          id: claudeCodeTasks.id,
+          status: claudeCodeTasks.status,
+          createdAt: claudeCodeTasks.createdAt,
+          startedAt: claudeCodeTasks.startedAt,
+          completedAt: claudeCodeTasks.completedAt,
+          error: claudeCodeTasks.erro,
         })
-        .from(analysisJobs)
-        .where(eq(analysisJobs.processoId, input.processoId))
-        .orderBy(desc(analysisJobs.createdAt))
+        .from(claudeCodeTasks)
+        .where(eq(claudeCodeTasks.processoId, input.processoId))
+        .orderBy(desc(claudeCodeTasks.createdAt))
         .limit(1);
 
       return job ?? null;
@@ -1293,7 +1323,7 @@ export const audienciasRouter = router({
       skipDownload: z.boolean().optional(),
       skipAnalysis: z.boolean().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { audienciaId } = input;
       const { audiencia, processo, assistidoNome, resumoCaso, depoentes } =
         await computePreparacao(audienciaId);
@@ -1350,22 +1380,22 @@ export const audienciasRouter = router({
         // status so the user knows to download the autos first.
         const [recentJob] = await db
           .select({
-            id: analysisJobs.id,
-            status: analysisJobs.status,
-            completedAt: analysisJobs.completedAt,
+            id: claudeCodeTasks.id,
+            status: claudeCodeTasks.status,
+            completedAt: claudeCodeTasks.completedAt,
           })
-          .from(analysisJobs)
+          .from(claudeCodeTasks)
           .where(
             and(
-              eq(analysisJobs.processoId, processo.id),
-              eq(analysisJobs.status, "completed"),
+              eq(claudeCodeTasks.processoId, processo.id),
+              eq(claudeCodeTasks.status, "completed"),
               gte(
-                analysisJobs.completedAt,
+                claudeCodeTasks.completedAt,
                 new Date(Date.now() - 60 * 60 * 1000),
               ),
             ),
           )
-          .orderBy(desc(analysisJobs.completedAt))
+          .orderBy(desc(claudeCodeTasks.completedAt))
           .limit(1);
 
         if (recentJob) {
@@ -1384,15 +1414,18 @@ export const audienciasRouter = router({
           };
         }
 
-        // ── Step D: enqueue a worker job instead of failing.
-        // The Mac Mini worker (worker.sh) polls `analysis_jobs` and runs
-        // `claude -p` with the preparar-audiencia skill, then writes
-        // depoimentos[] back into processos.analysis_data. The user can
-        // re-click "Preparar Audiências" once the job completes.
-        const job = await ensureAnalysisJob(
+        // ── Step D: enqueue a worker task instead of failing.
+        // scripts/claude-code-daemon.mjs subscribes to claude_code_tasks via
+        // Supabase Realtime and runs `claude -p` with the preparar-audiencia
+        // skill, then writes depoimentos[] back into processos.analysis_data.
+        // The user can re-click "Preparar Audiências" once the task completes.
+        const job = await ensureClaudeCodeTask(
           processo.id,
+          processo.assistidoId,
           processo.numeroAutos ?? "—",
           assistidoNome,
+          processo.atribuicao,
+          ctx.user.id,
         );
 
         return {

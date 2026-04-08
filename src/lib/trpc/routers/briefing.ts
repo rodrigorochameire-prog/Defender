@@ -16,7 +16,8 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { testemunhas, depoimentosAnalise, driveFiles, audiencias, processos, assistidos, casePersonas, demandas } from "@/lib/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 import {
   pythonBackend,
   type TestemunhaInfo,
@@ -1223,28 +1224,58 @@ Elabore a estratégia de defesa com este formato JSON:
 
       const briefing = lines.join("\n");
 
-      // 3. Mapear funcionalidade → tipo
-      const funcToTipo: Record<string, string> = {
-        relatorio_juri: "juri",
-        preparar_audiencia: "audiencia",
-        analise_criminal: "criminal",
-        analise_vvd: "vvd",
-        analise_ep: "execucao_penal",
-        gerar_peca: "peca",
-        briefing_completo: "briefing",
+      // 3. Mapear funcionalidade → skill que o daemon reconhece.
+      // Resolvidos pelo SKILL_ALIASES ou direto como diretório em .claude/skills-cowork/.
+      const funcToSkill: Record<string, string> = {
+        relatorio_juri: "analise-juri",        // → juri (alias)
+        preparar_audiencia: "preparar-audiencia", // → analise-audiencias (alias)
+        analise_criminal: "criminal-comum",    // dir direto
+        analise_vvd: "vvd",                    // dir direto
+        analise_ep: "execucao-penal",          // dir direto
+        gerar_peca: "gerar-peca",              // → dpe-ba-pecas (alias)
+        briefing_completo: "analise-autos",    // → analise-audiencias (alias)
       };
-      const tipo = funcToTipo[input.funcionalidade] ?? "juri";
+      const skill = funcToSkill[input.funcionalidade] ?? "analise-autos";
 
-      // 4. Criar tarefa no banco (worker local vai processar)
-      const [task] = await db.execute<{ id: number }>(
-        `INSERT INTO cowork_tasks (assistido_id, processo_id, tipo, funcionalidade, status, briefing, created_by)
-         VALUES (${input.assistidoId}, ${input.processoId}, '${tipo}', '${input.funcionalidade}', 'pending', '${briefing.replace(/'/g, "''")}', '${ctx.user?.id ?? 0}')
-         RETURNING id`
-      );
+      // 4. Dedup: se já existe task pendente para este processo, retornar a existente.
+      const [existing] = await db
+        .select({ id: claudeCodeTasks.id })
+        .from(claudeCodeTasks)
+        .where(
+          and(
+            eq(claudeCodeTasks.processoId, input.processoId),
+            inArray(claudeCodeTasks.status, ["pending", "processing"]),
+          ),
+        )
+        .limit(1);
+
+      if (existing) {
+        return {
+          success: true,
+          taskId: existing.id,
+          existing: true,
+          message: `Análise já em andamento para este processo. Acompanhe na aba Inteligência.`,
+        };
+      }
+
+      // 5. Criar tarefa em claude_code_tasks (fila canônica — processada pelo
+      // scripts/claude-code-daemon.mjs). Migrado de cowork_tasks em 2026-04.
+      const [newTask] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          assistidoId: input.assistidoId,
+          processoId: input.processoId,
+          skill,
+          prompt: briefing,
+          instrucaoAdicional: `Funcionalidade: ${input.funcionalidade}`,
+          status: "pending",
+          createdBy: ctx.user.id,
+        })
+        .returning({ id: claudeCodeTasks.id });
 
       return {
         success: true,
-        taskId: (task as unknown as { id: number }).id,
+        taskId: newTask!.id,
         message: `Tarefa criada. O worker local vai processar com claude -p ($0). Acompanhe na aba Inteligência.`,
       };
     }),

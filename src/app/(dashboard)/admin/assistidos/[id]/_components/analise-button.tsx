@@ -1,13 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc/client";
-import { getSupabaseClient } from "@/lib/supabase/client";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useSkillTask } from "@/hooks/use-skill-task";
 
 const ATRIB_COLORS: Record<string, { bg: string; hover: string; shadow: string }> = {
   JURI_CAMACARI: { bg: "bg-emerald-600", hover: "hover:bg-emerald-700", shadow: "hover:shadow-emerald-500/20" },
@@ -29,8 +26,6 @@ interface AnaliseButtonProps {
   onComplete?: () => void;
 }
 
-type ButtonState = "idle" | "analyzing" | "completed";
-
 export function AnaliseButton({
   assistidoId,
   processoId,
@@ -40,98 +35,24 @@ export function AnaliseButton({
   onComplete,
 }: AnaliseButtonProps) {
   const colors = (atribuicao && ATRIB_COLORS[atribuicao]) || DEFAULT_COLOR;
-  const [state, setState] = useState<ButtonState>("idle");
-  const [etapa, setEtapa] = useState("");
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
 
-  const criarTask = trpc.analise.criarTask.useMutation({
-    onSuccess(data) {
-      if (data.existing) {
-        toast("Análise já em andamento");
-        return;
-      }
-
-      setState("analyzing");
-      setEtapa("Iniciando...");
-      subscribeToTask(data.taskId);
+  const { state, etapa, trigger, isSubmitting } = useSkillTask({
+    onComplete: () => {
+      toast.success("Análise concluída");
+      onComplete?.();
     },
-    onError(error) {
-      toast.error(`Erro ao iniciar análise: ${error.message}`);
-      setState("idle");
+    onError: (msg) => {
+      toast.error(`Erro na análise: ${msg}`);
     },
   });
 
-  const subscribeToTask = useCallback((taskId: number) => {
-    const supabase = getSupabaseClient();
-
-    // Clean up any existing subscription
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
-
-    const channel = supabase
-      .channel(`analise-task-${taskId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "claude_code_tasks",
-          filter: `id=eq.${taskId}`,
-        },
-        (payload) => {
-          const newRow = payload.new as Record<string, unknown>;
-          const status = newRow.status as string;
-          const etapaAtual = (newRow.etapa as string) || "";
-
-          if (status === "processing") {
-            setEtapa(etapaAtual);
-          }
-
-          if (status === "completed") {
-            setState("completed");
-            setEtapa("");
-            toast.success("Análise concluída");
-            onCompleteRef.current?.();
-
-            // Return to idle after brief success display
-            setTimeout(() => setState("idle"), 2000);
-          }
-
-          if (status === "failed") {
-            const erro = (newRow.erro as string) || "Erro desconhecido";
-            toast.error(`Erro na análise: ${erro}`);
-            setState("idle");
-            setEtapa("");
-          }
-        },
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-  }, []);
-
-  // Cleanup subscription on unmount
-  useEffect(() => {
-    return () => {
-      if (channelRef.current) {
-        const supabase = getSupabaseClient();
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, []);
-
   function handleClick() {
     if (state !== "idle") return;
-
-    criarTask.mutate({
+    trigger({
       assistidoId,
       processoId,
       casoId,
-      skill: "analise-autos",
+      skill: "analise-assistido",
     });
   }
 
@@ -147,7 +68,7 @@ export function AnaliseButton({
     );
   }
 
-  if (state === "analyzing") {
+  if (state === "pending" || state === "processing") {
     return (
       <div className="flex items-center gap-3">
         <Button
@@ -167,13 +88,13 @@ export function AnaliseButton({
   return (
     <Button
       onClick={handleClick}
-      disabled={disabled || criarTask.isPending}
+      disabled={disabled || isSubmitting}
       className={cn(
         "text-white gap-1.5 shadow-sm hover:shadow-md transition-all duration-200 text-xs h-8 px-3",
         colors.bg, colors.hover, colors.shadow
       )}
     >
-      {criarTask.isPending ? (
+      {isSubmitting ? (
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <Sparkles className="w-3.5 h-3.5" />

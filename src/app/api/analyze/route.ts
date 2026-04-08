@@ -1,24 +1,31 @@
 /**
  * POST /api/analyze
  *
- * Enfileira um job de análise IA na tabela analysis_jobs.
+ * Enfileira um job de análise IA na tabela claude_code_tasks (fila canônica).
  *
  * Fluxo:
  * 1. Recebe processoId + skill opcional
- * 2. Busca dados do processo e assistido no banco
- * 3. Carrega Padrão Defender v2 + skill da atribuição + paleta
- * 4. Monta prompt completo com contexto + instruções premium
- * 5. Insere job na fila (status "pending")
- * 6. Atualiza processos.analysis_status = "queued"
- * 7. Retorna confirmação
+ * 2. Autentica via session JWT (createdBy é obrigatório)
+ * 3. Busca dados do processo e assistido no banco
+ * 4. Carrega Padrão Defender v2 + skill da atribuição + paleta
+ * 5. Monta prompt premium com contexto + instruções Tier 1-8
+ * 6. Dedup: se já há task pending/processing para este processo, retorna a existente
+ * 7. Insere em claude_code_tasks (processada pelo claude-code-daemon.mjs)
+ * 8. Atualiza processos.analysis_status = "queued"
+ * 9. Retorna { success, taskId, assistido, ... }
+ *
+ * Migração: antes usava analysis_jobs (processado por ~/ombuds-worker/worker.sh).
+ * Agora unificado em claude_code_tasks para alinhar com analise.criarTask (tRPC).
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { processos, assistidos, analysisJobs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { processos, assistidos } from "@/lib/db/schema";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
+import { eq, and, inArray } from "drizzle-orm";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { getSession } from "@/lib/auth/session";
 
 // ==========================================
 // PADRÃO DEFENDER — CONFIGURAÇÃO POR ATRIBUIÇÃO
@@ -757,6 +764,12 @@ orientação ao defendido, requerimentos orais prontos, cenários, providências
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth: createdBy é notNull em claude_code_tasks
+    const user = await getSession();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { processoId, skill = "analise-autos" } = body;
 
@@ -774,6 +787,7 @@ export async function POST(req: NextRequest) {
         comarca: processos.comarca,
         classeProcessual: processos.classeProcessual,
         assistidoId: processos.assistidoId,
+        casoId: processos.casoId,
       })
       .from(processos)
       .where(eq(processos.id, processoId))
@@ -794,7 +808,35 @@ export async function POST(req: NextRequest) {
 
     const assistidoNome = assist[0]?.nome ?? "Assistido";
 
-    // Montar prompt premium com Padrão Defender
+    // Dedup: se já existe task pending/processing para este processo, retornar a existente.
+    // Mesmo padrão usado em analise.criarTask (tRPC) — evita duplicar enfileiramento.
+    const [existing] = await db
+      .select({ id: claudeCodeTasks.id })
+      .from(claudeCodeTasks)
+      .where(
+        and(
+          eq(claudeCodeTasks.processoId, p.id),
+          inArray(claudeCodeTasks.status, ["pending", "processing"]),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      const cfg = ATRIBUICAO_CONFIG[p.atribuicao] ?? DEFAULT_CONFIG;
+      return NextResponse.json({
+        success: true,
+        taskId: existing.id,
+        existing: true,
+        message: `Análise já em andamento para ${assistidoNome} (${p.numeroAutos}).`,
+        skill,
+        atribuicao: cfg.label,
+        palette: cfg.palette.dark,
+        processo: p.numeroAutos,
+        assistido: assistidoNome,
+      });
+    }
+
+    // Montar prompt premium com Padrão Defender + skill + schema Tier 1-8
     const prompt = await buildPremiumPrompt(skill, p.atribuicao, assistidoNome, {
       id: p.id,
       numeroAutos: p.numeroAutos,
@@ -803,15 +845,21 @@ export async function POST(req: NextRequest) {
       classeProcessual: p.classeProcessual,
     });
 
-    // Inserir job na fila
-    await db.insert(analysisJobs).values({
-      processoId: p.id,
-      skill,
-      prompt,
-      status: "pending",
-    });
+    // Inserir na fila canônica (processada pelo claude-code-daemon.mjs)
+    const [newTask] = await db
+      .insert(claudeCodeTasks)
+      .values({
+        assistidoId: p.assistidoId,
+        processoId: p.id,
+        casoId: p.casoId ?? null,
+        skill,
+        prompt,
+        status: "pending",
+        createdBy: user.id,
+      })
+      .returning({ id: claudeCodeTasks.id });
 
-    // Atualizar status do processo para "queued"
+    // Atualizar status do processo para "queued" (sinal para a UI)
     await db
       .update(processos)
       .set({ analysisStatus: "queued" })
@@ -821,6 +869,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      taskId: newTask!.id,
       message: `Análise Padrão Defender enfileirada para ${assistidoNome} (${p.numeroAutos}).`,
       skill,
       atribuicao: config.label,
