@@ -786,6 +786,47 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
 }
 
 /**
+ * Reescreve uma aba inteira com as demandas já ordenadas pelo caller.
+ * Usado pelo /api/sheets/reorder para reordenar bloco-a-bloco por status.
+ *
+ * Estratégia:
+ * 1. Limpa todas as linhas de dados (DATA_START_ROW em diante)
+ * 2. Escreve todas as demandas em um único PUT (batch)
+ *
+ * Não toca no título, separador e header (rows 1-3).
+ */
+export async function reorderSheet(
+  sheetName: string,
+  sortedDemandas: DemandaParaSync[],
+): Promise<{ written: number }> {
+  if (!getSpreadsheetId()) {
+    console.warn("[Sheets] reorderSheet: GOOGLE_SHEETS_SPREADSHEET_ID não configurado");
+    return { written: 0 };
+  }
+  if (MANUAL_SHEETS.has(sheetName)) return { written: 0 };
+
+  await ensureSheet(sheetName);
+
+  const lastCol = colToLetter(HEADERS.length);
+  // 1. Clear data rows (keep title + separator + headers intactos)
+  const clearRange = `${sheetName}!A${DATA_START_ROW}:${lastCol}`;
+  await sheetsPost(`/values/${encodeURIComponent(clearRange)}:clear`, {});
+
+  if (sortedDemandas.length === 0) return { written: 0 };
+
+  // 2. Write all rows em um único PUT
+  const values = sortedDemandas.map(demandaToRow);
+  const endRow = DATA_START_ROW + values.length - 1;
+  const writeRange = `${sheetName}!A${DATA_START_ROW}:${lastCol}${endRow}`;
+  await sheetsPut(
+    `/values/${encodeURIComponent(writeRange)}?valueInputOption=USER_ENTERED`,
+    { values },
+  );
+
+  return { written: values.length };
+}
+
+/**
  * Remove a linha de uma demanda da planilha.
  */
 export async function removeDemanda(
