@@ -77,6 +77,7 @@ import { analiseRouter } from "./analise";
 import { feedbacksRouter } from "./feedbacks";
 import { instanciaSuperiorRouter } from "./instancia-superior";
 import { systemRouter } from "./system";
+import { pjeRouter } from "./pje";
 
 
 export const appRouter = router({
@@ -367,6 +368,11 @@ export const appRouter = router({
   // SISTEMA (daemon health, observabilidade)
   // ==========================================
   system: systemRouter,
+
+  // ==========================================
+  // PJE DOWNLOAD (scraping worker queue)
+  // ==========================================
+  pje: pjeRouter,
 });
 
 export type AppRouter = typeof appRouter;
