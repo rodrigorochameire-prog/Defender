@@ -4,11 +4,17 @@
  * Sincroniza demandas ↔ Google Sheets.
  * App tem precedência em conflitos.
  *
- * Autenticação: Service Account (GOOGLE_SERVICE_ACCOUNT_KEY)
- * Planilha: GOOGLE_SHEETS_SPREADSHEET_ID
+ * Autenticação padrão: Service Account (GOOGLE_SERVICE_ACCOUNT_KEY)
+ * Planilha padrão: GOOGLE_SHEETS_SPREADSHEET_ID
+ *
+ * Multi-tenant: use `withSheetsAuth({ getToken, spreadsheetId }, async () => { ... })`
+ * para rodar operações contra a planilha de outro usuário (OAuth per-user).
+ * O contexto é isolado por execução via AsyncLocalStorage — seguro para
+ * chamadas concorrentes no mesmo processo.
  */
 
 import { GoogleAuth } from "google-auth-library";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 // ==========================================
 // CONFIGURAÇÃO
@@ -19,6 +25,44 @@ function getSpreadsheetId(): string {
   return (process.env.GOOGLE_SHEETS_SPREADSHEET_ID ?? "").trim();
 }
 const SHEETS_API_BASE = "https://sheets.googleapis.com/v4/spreadsheets";
+
+// ==========================================
+// AUTH CONTEXT — multi-tenant via AsyncLocalStorage
+// ==========================================
+
+export interface SheetsAuthContext {
+  /** Retorna um access token válido (OAuth user ou service account). */
+  getToken: () => Promise<string | null>;
+  /** ID da planilha alvo. */
+  spreadsheetId: string;
+}
+
+const authStorage = new AsyncLocalStorage<SheetsAuthContext>();
+
+/**
+ * Executa `fn` com um contexto de auth alternativo. Qualquer chamada interna
+ * a sheetsGet/Post/Put, ensureSheet, formatSheet, pushDemanda, reorderSheet
+ * etc. dentro do callback usa esse contexto em vez do service account padrão.
+ *
+ * Thread-safe: AsyncLocalStorage isola por execução, seguro para N usuários
+ * simultâneos no mesmo processo.
+ */
+export async function withSheetsAuth<T>(
+  ctx: SheetsAuthContext,
+  fn: () => Promise<T>,
+): Promise<T> {
+  return authStorage.run(ctx, fn);
+}
+
+/** Resolve o contexto de auth — user override ou fallback service account. */
+function getAuthContext(): SheetsAuthContext {
+  const userCtx = authStorage.getStore();
+  if (userCtx) return userCtx;
+  return {
+    getToken: getServiceAccountToken,
+    spreadsheetId: getSpreadsheetId(),
+  };
+}
 
 // Layout VVD:
 // Row 1: Título (ex: "Demandas - Tribunal do Júri")
@@ -231,7 +275,7 @@ export interface SyncStats {
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
-async function getToken(): Promise<string | null> {
+async function getServiceAccountToken(): Promise<string | null> {
   if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
     return cachedToken.token;
   }
@@ -274,10 +318,12 @@ async function getToken(): Promise<string | null> {
 // ==========================================
 
 async function sheetsGet(path: string): Promise<unknown> {
+  const { getToken, spreadsheetId } = getAuthContext();
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
+  if (!spreadsheetId) throw new Error("Sem spreadsheetId no contexto");
 
-  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${spreadsheetId}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -311,10 +357,12 @@ async function fetchWithRetry(url: string, init: RequestInit): Promise<Response>
 }
 
 async function sheetsPost(path: string, body: unknown): Promise<unknown> {
+  const { getToken, spreadsheetId } = getAuthContext();
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
+  if (!spreadsheetId) throw new Error("Sem spreadsheetId no contexto");
 
-  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${spreadsheetId}${path}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -332,10 +380,12 @@ async function sheetsPost(path: string, body: unknown): Promise<unknown> {
 }
 
 async function sheetsPut(path: string, body: unknown): Promise<unknown> {
+  const { getToken, spreadsheetId } = getAuthContext();
   const token = await getToken();
   if (!token) throw new Error("Sem token de autenticação");
+  if (!spreadsheetId) throw new Error("Sem spreadsheetId no contexto");
 
-  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${getSpreadsheetId()}${path}`, {
+  const res = await fetchWithRetry(`${SHEETS_API_BASE}/${spreadsheetId}${path}`, {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -382,21 +432,27 @@ export async function getSheets(): Promise<Array<{ sheetId: number; title: strin
   }));
 }
 
-// Cache de abas — evita hitar getSheets() a cada pushDemanda.
+// Cache de abas por spreadsheetId — evita hitar getSheets() a cada pushDemanda.
 // TTL curto (60s) para ainda pegar abas criadas externamente em resync longo.
-let sheetsCache: { data: Array<{ sheetId: number; title: string }>; expiresAt: number } | null = null;
+// Chave por spreadsheetId para isolar corretamente entre usuários em contexto multi-tenant.
+const sheetsCacheByFile = new Map<string, { data: Array<{ sheetId: number; title: string }>; expiresAt: number }>();
 async function getSheetsCached(): Promise<Array<{ sheetId: number; title: string }>> {
-  if (sheetsCache && sheetsCache.expiresAt > Date.now()) return sheetsCache.data;
+  const { spreadsheetId } = getAuthContext();
+  const cached = sheetsCacheByFile.get(spreadsheetId);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
   const data = await getSheets();
-  sheetsCache = { data, expiresAt: Date.now() + 60_000 };
+  sheetsCacheByFile.set(spreadsheetId, { data, expiresAt: Date.now() + 60_000 });
   return data;
 }
-function invalidateSheetsCache() { sheetsCache = null; }
+function invalidateSheetsCache() {
+  const { spreadsheetId } = getAuthContext();
+  sheetsCacheByFile.delete(spreadsheetId);
+}
 
 /**
  * Cria uma aba se não existir. Retorna o sheetId.
  */
-async function ensureSheet(title: string): Promise<number> {
+export async function ensureSheet(title: string): Promise<number> {
   const sheets = await getSheetsCached();
   const existing = sheets.find((s) => s.title === title);
   if (existing) return existing.sheetId;
@@ -756,7 +812,7 @@ export function getSheetName(atribuicao: string): string {
  * registra o conflito via sync-engine e NÃO sobrescreve.
  */
 export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: boolean; conflict: boolean }> {
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     console.warn("[Sheets] GOOGLE_SHEETS_SPREADSHEET_ID não configurado — sync ignorado");
     return { pushed: false, conflict: false };
   }
@@ -806,7 +862,7 @@ export async function reorderSheet(
   sheetName: string,
   sortedDemandas: DemandaParaSync[],
 ): Promise<{ written: number }> {
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     console.warn("[Sheets] reorderSheet: GOOGLE_SHEETS_SPREADSHEET_ID não configurado");
     return { written: 0 };
   }
@@ -840,7 +896,7 @@ export async function removeDemanda(
   demandaId: number,
   atribuicao: string
 ): Promise<void> {
-  if (!getSpreadsheetId()) return;
+  if (!getAuthContext().spreadsheetId) return;
 
   const sheetName = getSheetName(atribuicao);
   if (MANUAL_SHEETS.has(sheetName)) return; // VVD é manual
@@ -868,7 +924,7 @@ export async function removeDemanda(
  * Insere ou atualiza uma sessão de plenário na aba "Plenários".
  */
 export async function pushPlenario(plenario: PlenarioParaSync): Promise<void> {
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     console.warn("[Sheets] GOOGLE_SHEETS_SPREADSHEET_ID não configurado — sync plenário ignorado");
     return;
   }
@@ -911,7 +967,7 @@ export async function pushPlenario(plenario: PlenarioParaSync): Promise<void> {
  * Reescreve toda a aba com dados atuais.
  */
 export async function syncAllPlenarios(plenarios: PlenarioParaSync[]): Promise<{ synced: number; errors: string[] }> {
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     return { synced: 0, errors: ["GOOGLE_SHEETS_SPREADSHEET_ID não configurado"] };
   }
 
@@ -973,7 +1029,7 @@ export async function moveDemanda(
   demanda: DemandaParaSync,
   atribuicaoAntiga: string
 ): Promise<void> {
-  if (!getSpreadsheetId()) return;
+  if (!getAuthContext().spreadsheetId) return;
   await removeDemanda(demanda.id, atribuicaoAntiga);
   await pushDemanda(demanda);
 }
@@ -987,7 +1043,7 @@ export async function syncAll_DEPRECATED(demandas: DemandaParaSync[]): Promise<S
   console.warn("[Sheets] ⚠️ syncAll_DEPRECATED chamado! Use pushDemanda() individualmente.");
   const stats: SyncStats = { inserted: 0, updated: 0, removed: 0, errors: [] };
 
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     stats.errors.push("GOOGLE_SHEETS_SPREADSHEET_ID não configurado");
     return stats;
   }
@@ -1057,7 +1113,7 @@ export async function syncAll_DEPRECATED(demandas: DemandaParaSync[]): Promise<S
  * Verifica se a integração está configurada e acessível.
  */
 export async function testConnection(): Promise<{ ok: boolean; error?: string; sheets?: string[] }> {
-  if (!getSpreadsheetId()) {
+  if (!getAuthContext().spreadsheetId) {
     return { ok: false, error: "GOOGLE_SHEETS_SPREADSHEET_ID não configurado" };
   }
 
