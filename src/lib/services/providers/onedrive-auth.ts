@@ -27,7 +27,12 @@ function getTenantId(): string {
 }
 
 function getRedirectUri(): string {
-  const base = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Aceita NEXTAUTH_URL (convenção NextAuth legado) ou NEXT_PUBLIC_APP_URL
+  // (nome usado no projeto atual). Fallback para dev local.
+  const base =
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
   return `${base}/api/microsoft/callback`;
 }
 
