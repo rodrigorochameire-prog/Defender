@@ -32,7 +32,7 @@ import {
 export type KanbanColumn = "triagem" | "em_andamento" | "concluida" | "arquivado";
 
 /** Sub-grupos dentro de "Em Andamento" (4) */
-export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida" | "delegacoes";
+export type EmAndamentoSubGroup = "preparacao" | "diligencias" | "saida" | "acompanhar";
 
 /** Todos os grupos de status (granular) */
 export type StatusGroup =
@@ -40,7 +40,7 @@ export type StatusGroup =
   | "preparacao"
   | "diligencias"
   | "saida"
-  | "delegacoes"
+  | "acompanhar"
   | "concluida"
   | "arquivado";
 
@@ -68,7 +68,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
     label: "Em Andamento",
     color: "#E8C87A",
     icon: Activity,
-    subGroups: ["preparacao", "diligencias", "saida", "delegacoes"],
+    subGroups: ["preparacao", "diligencias", "saida", "acompanhar"],
   },
   concluida: {
     label: "Concluída",
@@ -108,10 +108,10 @@ export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
     color: "#D4A574",   // Laranja pastel
     icon: Send,
   },
-  delegacoes: {
-    label: "Delegações",
+  acompanhar: {
+    label: "Acompanhar",
     color: "#B8A4C9",   // Lilás pastel
-    icon: UserPlus,
+    icon: Eye,
   },
 };
 
@@ -129,7 +129,6 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   ],
   diligencias: [
     { label: "Atender", icon: User, statuses: ["atender"] },
-    { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
     { label: "Buscar", icon: Search, statuses: ["buscar"] },
     { label: "Diligenciar", icon: FileText, statuses: ["diligenciar"] },
     { label: "Investigar", icon: Eye, statuses: ["investigar"] },
@@ -140,7 +139,8 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   saida: [
     { label: "Protocolar", icon: Send, statuses: ["protocolar"] },
   ],
-  delegacoes: [
+  acompanhar: [
+    { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
     { label: "Delegação", icon: UserPlus, statuses: ["emilly", "amanda", "taissa"] },
   ],
 };
@@ -170,10 +170,10 @@ export const STATUS_GROUPS: Record<StatusGroup, { label: string; color: string; 
     color: "#D4A574",  // Laranja pastel
     icon: Send,
   },
-  delegacoes: {
-    label: "Delegações",
+  acompanhar: {
+    label: "Acompanhar",
     color: "#B8A4C9",  // Lilás pastel
-    icon: UserPlus,
+    icon: Eye,
   },
   concluida: {
     label: "Concluída",
@@ -213,7 +213,7 @@ export const GROUP_TO_COLUMN: Record<StatusGroup, KanbanColumn> = {
   preparacao: "em_andamento",
   diligencias: "em_andamento",
   saida: "em_andamento",
-  delegacoes: "em_andamento",
+  acompanhar: "em_andamento",
   concluida: "concluida",
   arquivado: "arquivado",
 };
@@ -253,13 +253,11 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   // === SAÍDA (1) ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
 
-  // === DELEGAÇÕES (3) ===
-  emilly:     { label: "Emilly",     group: "delegacoes", icon: UserPlus },
-  amanda:     { label: "Amanda",     group: "delegacoes", icon: UserPlus },
-  taissa:     { label: "Taissa",     group: "delegacoes", icon: UserPlus },
-
-  // Monitorar fica em Diligências (acompanhamento ativo de diligências externas)
-  monitorar:  { label: "Monitorar",  group: "diligencias", icon: Eye },
+  // === ACOMPANHAR (4) — monitorar + delegações ===
+  monitorar:  { label: "Monitorar",  group: "acompanhar", icon: Eye },
+  emilly:     { label: "Emilly",     group: "acompanhar", icon: UserPlus },
+  amanda:     { label: "Amanda",     group: "acompanhar", icon: UserPlus },
+  taissa:     { label: "Taissa",     group: "acompanhar", icon: UserPlus },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -307,7 +305,7 @@ export function mapDbStatusToGroup(dbStatus: string | null | undefined, substatu
   // Triagem → triagem, Atender sem substatus → diligências, Monitorar → monitorar
   if (s === "5_TRIAGEM") return "triagem";
   if (s === "2_ATENDER") return "diligencias";
-  if (s === "4_MONITORAR") return "diligencias";
+  if (s === "4_MONITORAR") return "acompanhar";
 
   return "triagem";
 }
@@ -362,7 +360,7 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
   const dbMap: Record<string, StatusConfig> = {
     "5_triagem":      { label: "Triagem",      group: "triagem",      icon: Inbox },
     "2_atender":      { label: "Atender",      group: "diligencias",  icon: User },
-    "4_monitorar":    { label: "Monitorar",    group: "diligencias",  icon: Eye },
+    "4_monitorar":    { label: "Monitorar",    group: "acompanhar",   icon: Eye },
     "7_protocolado":  { label: "Protocolado",  group: "concluida", icon: CheckCircle2 },
     "7_ciencia":      { label: "Ciência",      group: "concluida", icon: Eye },
     "7_sem_atuacao":  { label: "Sem atuação",  group: "concluida", icon: XCircle },
@@ -406,7 +404,6 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "revisando", label: "Revisando", group: "preparacao" },
     // Diligências
     { value: "atender", label: "Atender", group: "diligencias" },
-    { value: "monitorar", label: "Monitorar", group: "diligencias" },
     { value: "documentos", label: "Documentos", group: "diligencias" },
     { value: "testemunhas", label: "Testemunhas", group: "diligencias" },
     { value: "investigar", label: "Investigar", group: "diligencias" },
@@ -415,10 +412,11 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    // Delegações
-    { value: "emilly", label: "Emilly", group: "delegacoes" },
-    { value: "amanda", label: "Amanda", group: "delegacoes" },
-    { value: "taissa", label: "Taissa", group: "delegacoes" },
+    // Acompanhar — Monitorar + Delegações
+    { value: "monitorar", label: "Monitorar", group: "acompanhar" },
+    { value: "emilly", label: "Emilly", group: "acompanhar" },
+    { value: "amanda", label: "Amanda", group: "acompanhar" },
+    { value: "taissa", label: "Taissa", group: "acompanhar" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },
@@ -444,7 +442,7 @@ export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
   { key: "saida", label: "Saída", short: "Saída" },
-  { key: "delegacoes", label: "Delegações", short: "Deleg." },
+  { key: "acompanhar", label: "Acompanhar", short: "Acomp." },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 

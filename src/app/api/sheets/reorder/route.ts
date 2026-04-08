@@ -48,20 +48,20 @@ const STATUS_RANK: Record<string, number> = {
   revisando: 26,
   // === EM ANDAMENTO — Diligências ===
   atender: 30,
-  monitorar: 31,
-  documentos: 32,
-  testemunhas: 33,
-  investigar: 34,
-  buscar: 35,
-  diligenciar: 36,
-  oficiar: 37,
+  documentos: 31,
+  testemunhas: 32,
+  investigar: 33,
+  buscar: 34,
+  diligenciar: 35,
+  oficiar: 36,
   // === EM ANDAMENTO — Saída ===
   protocolar: 40,
-  // === EM ANDAMENTO — Delegações ===
-  emilly: 50,
-  amanda: 51,
-  taissa: 52,
-  "estagio_-_taissa": 52,
+  // === EM ANDAMENTO — Acompanhar (monitorar + delegações) ===
+  monitorar: 50,
+  emilly: 51,
+  amanda: 52,
+  taissa: 53,
+  "estagio_-_taissa": 53,
   // === CONCLUÍDA ===
   protocolado: 70,
   sigad: 71,
@@ -79,7 +79,7 @@ const DB_STATUS_FALLBACK_RANK: Record<string, number> = {
   URGENTE: 10,
   "5_TRIAGEM": 11,
   "2_ATENDER": 30,       // default diligencias/atender
-  "4_MONITORAR": 31,     // diligencias/monitorar
+  "4_MONITORAR": 50,     // acompanhar/monitorar
   "7_PROTOCOLADO": 70,
   "7_CIENCIA": 72,
   "7_SEM_ATUACAO": 75,

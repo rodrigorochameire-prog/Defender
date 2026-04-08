@@ -54,7 +54,7 @@ const QUICK_TRANSITIONS: Record<StatusGroup, string[]> = {
   preparacao: ["protocolar", "revisar", "documentos"],
   diligencias: ["elaborar", "protocolar", "analisar"],
   saida: ["protocolado", "monitorar"],
-  delegacoes: ["protocolado", "monitorar"],
+  acompanhar: ["protocolado", "ciencia"],
   concluida: ["arquivado"],
   arquivado: [],
 };

@@ -1653,7 +1653,7 @@ export default function Demandas() {
   }, []);
 
   // Função de comparação por coluna
-  const STATUS_GROUP_ORDER = ["triagem", "preparacao", "diligencias", "saida", "delegacoes", "concluida", "arquivado"];
+  const STATUS_GROUP_ORDER = ["triagem", "preparacao", "diligencias", "saida", "acompanhar", "concluida", "arquivado"];
 
   function compareByColumn(a: any, b: any, column: string): number {
     switch (column) {

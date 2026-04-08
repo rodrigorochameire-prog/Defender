@@ -51,9 +51,8 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
     { value: "relatorio", label: "Relatório", group: "preparacao", color: "#E8C87A" },
     { value: "revisar", label: "Revisar", group: "preparacao", color: "#E8C87A" },
     { value: "revisando", label: "Revisando", group: "preparacao", color: "#E8C87A" },
-    // Diligências (inclui atender e monitorar — ambos azul)
+    // Diligências
     { value: "atender", label: "Atender", group: "diligencias", color: "#8DB4D2" },
-    { value: "monitorar", label: "Monitorar", group: "diligencias", color: "#8DB4D2" },
     { value: "documentos", label: "Documentos", group: "diligencias", color: "#8DB4D2" },
     { value: "testemunhas", label: "Testemunhas", group: "diligencias", color: "#8DB4D2" },
     { value: "investigar", label: "Investigar", group: "diligencias", color: "#8DB4D2" },
@@ -62,10 +61,11 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
     { value: "oficiar", label: "Oficiar", group: "diligencias", color: "#8DB4D2" },
     // Saída
     { value: "protocolar", label: "Protocolar", group: "saida", color: "#D4A574" },
-    // Delegações
-    { value: "emilly", label: "Emilly", group: "delegacoes", color: "#B8A4C9" },
-    { value: "amanda", label: "Amanda", group: "delegacoes", color: "#B8A4C9" },
-    { value: "taissa", label: "Taissa", group: "delegacoes", color: "#B8A4C9" },
+    // Acompanhar (monitorar + delegações)
+    { value: "monitorar", label: "Monitorar", group: "acompanhar", color: "#B8A4C9" },
+    { value: "emilly", label: "Emilly", group: "acompanhar", color: "#B8A4C9" },
+    { value: "amanda", label: "Amanda", group: "acompanhar", color: "#B8A4C9" },
+    { value: "taissa", label: "Taissa", group: "acompanhar", color: "#B8A4C9" },
     // Concluída
     { value: "protocolado", label: "Protocolado", group: "concluida", color: "#84CC9B" },
     { value: "ciencia", label: "Ciência", group: "concluida", color: "#84CC9B" },
@@ -326,7 +326,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     <option value="preparacao">Preparação</option>
                     <option value="diligencias">Diligências</option>
                     <option value="saida">Saída</option>
-                    <option value="delegacoes">Delegações</option>
+                    <option value="acompanhar">Acompanhar</option>
                     <option value="concluida">Concluída</option>
                     <option value="arquivado">Arquivado</option>
                   </select>

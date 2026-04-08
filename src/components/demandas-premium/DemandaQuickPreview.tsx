@@ -128,7 +128,7 @@ const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
   { key: "saida", label: "Saída", short: "Saída" },
-  { key: "delegacoes", label: "Delegações", short: "Deleg." },
+  { key: "acompanhar", label: "Acompanhar", short: "Acomp." },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 
