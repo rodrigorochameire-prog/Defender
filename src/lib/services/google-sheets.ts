@@ -435,32 +435,39 @@ async function ensureSheet(title: string): Promise<number> {
 type RGBColor = { red: number; green: number; blue: number };
 
 /**
- * Cores dos status — paleta suave com gradação lógica dentro de cada grupo.
- * Grupo 2: amarelo-claro (iniciais) → laranja-suave (avançados)
- * Grupo 4: lilás-pastel com gradação por pessoa
- * Grupo 7: verde-pastel com gradação por finalidade
+ * Cores dos status — paleta alinhada com os grupos do kanban OMBUDS:
+ *   - Triagem: cinza pastel
+ *   - Preparação: amber pastel (gradação analisar → revisar)
+ *   - Diligências: azul pastel (gradação atender → investigar)
+ *   - Saída: laranja pastel
+ *   - Acompanhar: lilás pastel
+ *   - Concluída: verde-menta pastel
+ *   - Arquivado: cinza escuro
+ *
+ * Mantém gradação sutil dentro de cada grupo pra diferenciar substatus.
  */
 const STATUS_COLORS: Record<string, RGBColor> = {
   // ── 1 · Urgente — rosa-claro (pastel, não agressivo) ──
   "1 - Urgente":            { red: 0.976, green: 0.800, blue: 0.800 },
 
-  // ── 2 · Andamento — gradação creme-claro → pêssego-suave ──
-  //    Iniciais (triagem): quase branco com toque amarelo
+  // ── 2 · PREPARAÇÃO — amber pastel (creme → pêssego suave) ──
   "2 - Analisar":           { red: 1.0,   green: 0.965, blue: 0.850 },
-  "2 - Buscar":             { red: 1.0,   green: 0.955, blue: 0.830 },
-  "2 - Diligenciar":        { red: 1.0,   green: 0.945, blue: 0.810 },
   "2 - Relatório":          { red: 1.0,   green: 0.945, blue: 0.810 },
-  "2 - Investigar":         { red: 1.0,   green: 0.935, blue: 0.785 },
-  //    Em trabalho: tom intermediário
-  "2 - Atender":            { red: 1.0,   green: 0.920, blue: 0.760 },
-  "2 - Elaborar":           { red: 1.0,   green: 0.905, blue: 0.730 },
-  "2 - Elaborando":         { red: 1.0,   green: 0.890, blue: 0.700 },
-  //    Revisão/protocolo: pêssego (mais quente, mas ainda suave)
-  "2 - Revisar":            { red: 1.0,   green: 0.875, blue: 0.675 },
-  "2 - Revisando":          { red: 1.0,   green: 0.860, blue: 0.650 },
+  "2 - Elaborar":           { red: 1.0,   green: 0.920, blue: 0.760 },
+  "2 - Elaborando":         { red: 1.0,   green: 0.905, blue: 0.730 },
+  "2 - Revisar":            { red: 1.0,   green: 0.885, blue: 0.690 },
+  "2 - Revisando":          { red: 1.0,   green: 0.870, blue: 0.660 },
+
+  // ── 2 · DILIGÊNCIAS — azul-gelo pastel (gradação atender → investigar) ──
+  "2 - Atender":            { red: 0.893, green: 0.945, blue: 0.972 },
+  "2 - Buscar":             { red: 0.865, green: 0.930, blue: 0.965 },
+  "2 - Diligenciar":        { red: 0.838, green: 0.918, blue: 0.958 },
+  "2 - Investigar":         { red: 0.810, green: 0.905, blue: 0.950 },
+
+  // ── 3 · SAÍDA — laranja pastel ──
   "3 - Protocolar":         { red: 0.996, green: 0.840, blue: 0.620 },
 
-  // ── 4 · Monitorar — lavanda-pastel muito suave ──
+  // ── 4 · ACOMPANHAR — lilás pastel (monitorar + delegações) ──
   "4 - Monitorar":          { red: 0.940, green: 0.920, blue: 0.988 },
   "4 - Estágio - Taissa":   { red: 0.925, green: 0.900, blue: 0.982 },
   "4 - Amanda":             { red: 0.910, green: 0.878, blue: 0.975 },
@@ -470,7 +477,7 @@ const STATUS_COLORS: Record<string, RGBColor> = {
   "5 - Triagem":             { red: 0.935, green: 0.935, blue: 0.935 },
   "5 - Suspensa":            { red: 0.880, green: 0.880, blue: 0.880 },
 
-  // ── 6 · Preparação — azul-gelo pastel ──
+  // ── 6 · DILIGÊNCIAS (continuação) — azul-gelo pastel ──
   "6 - Documentos":         { red: 0.878, green: 0.937, blue: 0.965 },
   "6 - Testemunhas":        { red: 0.898, green: 0.949, blue: 0.975 },
 
