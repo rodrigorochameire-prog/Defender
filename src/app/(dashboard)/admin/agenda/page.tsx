@@ -1494,8 +1494,8 @@ export default function AgendaPage() {
           </div>
         </div>
 
-        {/* Row 2: Pills | Month Nav | ViewMode + Tools */}
-        <div className="flex items-center gap-2 px-5 pt-3 pb-3 mt-3 border-t border-white/[0.06]">
+        {/* Row 2: Pills | Month Nav | ViewMode + Tools — bottomRow glass */}
+        <div className="flex items-center gap-2 mx-3 mt-3 mb-3 px-3.5 py-2.5 rounded-lg bg-white/[0.06]">
           {/* AtribuicaoPills dark variant */}
           <AtribuicaoPills
             variant="dark"
