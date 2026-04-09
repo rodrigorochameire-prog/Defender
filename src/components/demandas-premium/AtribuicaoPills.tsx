@@ -64,7 +64,7 @@ export function AtribuicaoPills({
   variant = "light",
 }: AtribuicaoPillsProps) {
   const isDark = variant === "dark";
-  const filtered = options.filter((o) => o.value !== "Todas");
+  const filtered = options.filter((o) => o.value !== "Todas" && o.value !== "all" && o.label !== "Todas");
 
   const handleClick = (value: string) => {
     if (singleSelect) {

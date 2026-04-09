@@ -207,11 +207,11 @@ const AGENDA_VIEW_OPTIONS: ViewModeOption[] = [
 // Opções de atribuição para AtribuicaoPills no charcoal header
 const AGENDA_ATRIBUICAO_PILL_OPTIONS = [
   { value: "all", label: "Todas" },
-  { value: "VVD", label: "VVD" },
-  { value: "JURI", label: "Júri" },
-  { value: "EXECUCAO", label: "Execução" },
-  { value: "SUBSTITUICAO", label: "Substituição" },
-  { value: "SUBSTITUICAO_CIVEL", label: "Cível" },
+  { value: "VVD", label: "Violência Doméstica" },
+  { value: "JURI", label: "Tribunal do Júri" },
+  { value: "EXECUCAO", label: "Execução Penal" },
+  { value: "SUBSTITUICAO", label: "Substituição Criminal" },
+  { value: "SUBSTITUICAO_CIVEL", label: "Curadoria Especial" },
 ];
 
 // Função para gerar escalas padrão
@@ -1509,7 +1509,11 @@ export default function AgendaPage() {
               }
             }}
             onClear={() => setAreaFilters(new Set(["all"]))}
-            counts={countByArea}
+            counts={Object.fromEntries(
+              AGENDA_ATRIBUICAO_PILL_OPTIONS
+                .filter(o => o.value !== "all")
+                .map(o => [o.label, countByArea[o.value] ?? 0])
+            )}
             singleSelect
             compact
           />
