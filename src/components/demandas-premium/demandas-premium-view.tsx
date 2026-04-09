@@ -714,6 +714,7 @@ export default function Demandas() {
   const reordenarMutation = trpc.demandas.reordenar.useMutation();
 
   const exportToSheetsMutation = trpc.demandas.exportToSheets.useMutation();
+  const reorderSheetsMutation = trpc.demandas.reorderSheets.useMutation();
 
   const batchUpdateMutation = trpc.demandas.batchUpdate.useMutation({
     onSuccess: (result) => {
@@ -1326,6 +1327,28 @@ export default function Demandas() {
     setIsSelectMode(false);
     setSelectedIds(new Set());
     lastSelectedIndex.current = null;
+  };
+
+  const handleReorderSheets = async () => {
+    setIsSettingsDropdownOpen(false);
+    const toastId = toast.loading("Reordenando planilha...");
+    try {
+      const result = await reorderSheetsMutation.mutateAsync(undefined);
+      toast.dismiss(toastId);
+      const withErrors = result.sheets.filter((s) => s.error);
+      if (withErrors.length > 0) {
+        toast.warning(
+          `Reordenado com ${withErrors.length} erro(s): ${withErrors.map((s) => s.sheet).join(", ")}`,
+        );
+      } else {
+        toast.success(
+          `Planilha reordenada: ${result.totalWritten} linhas em ${result.sheets.length} aba(s)`,
+        );
+      }
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(`Falha ao reordenar: ${err?.message ?? "erro desconhecido"}`);
+    }
   };
 
   const handleExportSheets = async () => {
@@ -2212,6 +2235,13 @@ export default function Demandas() {
                         <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Exportando...</>
                       ) : (
                         <><Table2 className="w-3.5 h-3.5 text-emerald-600" /> Exportar para Google Sheets</>
+                      )}
+                    </button>
+                    <button onClick={handleReorderSheets} disabled={reorderSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                      {reorderSheetsMutation.isPending ? (
+                        <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Reordenando...</>
+                      ) : (
+                        <><ArrowUpDown className="w-3.5 h-3.5 text-emerald-600" /> Reordenar planilha agora</>
                       )}
                     </button>
                     <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />

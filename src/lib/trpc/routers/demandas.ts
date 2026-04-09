@@ -7,7 +7,22 @@ import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, no
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
-import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, getSheetName, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { inngest } from "@/lib/inngest/client";
+
+/**
+ * Dispara o Inngest de reorder debounced (30s) para a aba afetada.
+ * Fire-and-forget — nunca bloqueia a mutação.
+ */
+function triggerReorder(atribuicao: string | null | undefined, reason: string, demandaId?: number): void {
+  const sheetName = atribuicao ? getSheetName(atribuicao) : "__all__";
+  inngest
+    .send({
+      name: "sheets/reorder.requested",
+      data: { sheetName, reason, demandaId },
+    })
+    .catch((err) => console.error("[demandas] falha ao enfileirar reorder:", err));
+}
 
 /**
  * Monta o objeto DemandaParaSync buscando dados relacionados.
@@ -435,7 +450,9 @@ export const demandasRouter = router({
 
       // Sync Google Sheets (fire-and-forget — não bloqueia resposta)
       buildDemandaSync(novaDemanda.id).then((d) => {
-        if (d) sheetsPush(d).catch(console.error);
+        if (!d) return;
+        sheetsPush(d).catch(console.error);
+        triggerReorder(d.atribuicao, "create", novaDemanda.id);
       }).catch(console.error);
 
       return novaDemanda;
@@ -563,8 +580,11 @@ export const demandasRouter = router({
         if (atribuicao) {
           // Atribuição mudou — move de aba
           sheetsMove(d, atribuicao).catch(console.error);
+          // Reordena tanto a aba de origem quanto a de destino
+          triggerReorder(d.atribuicao, "move", id);
         } else {
           sheetsPush(d).catch(console.error);
+          triggerReorder(d.atribuicao, "update", id);
         }
       }).catch(console.error);
 
@@ -624,6 +644,7 @@ export const demandasRouter = router({
           .then(([proc]) => {
             if (proc?.atribuicao) {
               sheetsRemove(excluido.id, proc.atribuicao).catch(console.error);
+              triggerReorder(proc.atribuicao, "delete", excluido.id);
             }
           })
           .catch(console.error);
@@ -1461,11 +1482,28 @@ export const demandasRouter = router({
       // Sync updated demandas to Google Sheets (fire-and-forget)
       for (const row of atualizados) {
         buildDemandaSync(row.id).then((d) => {
-          if (d) sheetsPush(d).catch(console.error);
+          if (!d) return;
+          sheetsPush(d).catch(console.error);
+          triggerReorder(d.atribuicao, "bulk", row.id);
         }).catch(console.error);
       }
 
       return { updated: atualizados.length };
+    }),
+
+  // Reordenar planilha manualmente (sync imediato — bypass do debounce)
+  reorderSheets: protectedProcedure
+    .input(
+      z
+        .object({
+          sheetName: z.string().optional(),
+        })
+        .optional(),
+    )
+    .mutation(async ({ input }) => {
+      const { reorderAllSheets } = await import("@/lib/services/sheets-reorder");
+      const result = await reorderAllSheets(input?.sheetName);
+      return result;
     }),
 
   // Exportar demandas para Google Sheets

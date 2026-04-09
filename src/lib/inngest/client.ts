@@ -193,6 +193,15 @@ export type InngestEvents = {
     };
   };
 
+  // Google Sheets — reorder debounced (30s after last demanda mutation)
+  "sheets/reorder.requested": {
+    data: {
+      sheetName?: string; // aba específica (ex: "Júri") ou undefined = todas
+      reason?: string;    // "create" | "update" | "delete" | "move" | "bulk" | "manual"
+      demandaId?: number;
+    };
+  };
+
   // Transcription (async via Inngest to avoid Vercel timeout)
   "drive/transcribe.file": {
     data: {

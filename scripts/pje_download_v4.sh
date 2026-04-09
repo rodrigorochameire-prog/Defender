@@ -230,7 +230,7 @@ for round in $(seq 1 30); do
 
   ab open "https://pje.tjba.jus.br/pje/AreaDeDownload/listView.seam" > /dev/null
   sleep 10
-  local S=$(snap)
+  S=$(snap)
 
   STILL_WAITING=()
   for NUM in "${REMAINING[@]}"; do
@@ -241,19 +241,19 @@ for round in $(seq 1 30); do
       STILL_WAITING+=("$NUM"); continue
     fi
 
-    local STATUS=$(echo "$S" | grep -A5 "\"$NUM\"" | grep -o 'Sucesso\|Processando\|Fila\|Erro' | head -1)
+    STATUS=$(echo "$S" | grep -A5 "\"$NUM\"" | grep -o 'Sucesso\|Processando\|Fila\|Erro' | head -1)
 
     if [ "$STATUS" = "Sucesso" ]; then
       echo -n "  $NUM: "
-      local BTN=$(echo "$S" | grep -A10 "\"$NUM\"" | grep 'button.*ui-btn' | grep -v disabled | sed -n 's/.*ref=\(e[0-9]*\).*/\1/p' | head -1)
+      BTN=$(echo "$S" | grep -A10 "\"$NUM\"" | grep 'button.*ui-btn' | grep -v disabled | sed -n 's/.*ref=\(e[0-9]*\).*/\1/p' | head -1)
       [ -z "$BTN" ] && { echo "no btn"; STILL_WAITING+=("$NUM"); continue; }
 
       ab click "@$BTN" > /dev/null; sleep 10
-      local URL=$(ab_eval "window.location.href")
+      URL=$(ab_eval "window.location.href")
 
       if echo "$URL" | grep -q "amazonaws\|s3\."; then
         curl -sL "$URL" -o "$PDF" --max-time 300
-        local SZ=$(stat -f%z "$PDF" 2>/dev/null || echo 0)
+        SZ=$(stat -f%z "$PDF" 2>/dev/null || echo 0)
         if [ "$SZ" -gt 10000 ]; then
           echo "OK ($((SZ / 1024))KB)"; DOWNLOADED=$((DOWNLOADED+1))
         else

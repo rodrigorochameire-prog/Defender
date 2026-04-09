@@ -4,19 +4,34 @@
 
 ## Paleta de Cores por Atribuição
 
-| Atribuição | Cor-tema (hex) | Fundo suave | Cor clara (sutil) |
+| Atribuição | Cor-tema (hex) | Fundo suave | Cor clara (sutil) | Tailwind ref |
+|---|---|---|---|---|
+| Tribunal do Júri | `1A5C36` | `EAF5EE` | `A8D5B5` | green |
+| Grupo Especial do Júri | `EA580C` | `FFF7ED` | `FDBA74` | orange |
+| VVD / Maria da Penha | `92400E` | `FFFBEB` | `FCD34D` | amber/yellow |
+| Execução Penal | `1E3A8A` | `EEF4FF` | `93C5FD` | blue |
+| Criminal Comum | `991B1B` | `FFF0F0` | `FCA5A5` | red |
+| Substituição | `9333EA` | `FAF5FF` | `C4B5FD` | purple |
+| APF / Plantão | `374151` | `F1F5F9` | `94A3B8` | slate |
+
+### Correspondência com `src/config/atribuicoes.ts` (OMBUDS)
+
+| Atribuição | Hex no OMBUDS | Cor-tema no relatório | Relação |
 |---|---|---|---|
-| Tribunal do Júri | `1A5C36` | `EAF5EE` | `A8D5B5` |
-| VVD / Maria da Penha | `92400E` | `FFFBEB` | `FCD34D` |
-| Execução Penal | `1E3A8A` | `EEF4FF` | `93C5FD` |
-| Criminal Comum | `991B1B` | `FFF0F0` | `FCA5A5` |
-| APF / Plantão | `374151` | `F1F5F9` | `94A3B8` |
+| Tribunal do Júri | `#16A34A` (green-600) | `1A5C36` (green-800) | Versão escura para fundo de banner |
+| Grupo Especial do Júri | `#EA580C` (orange-600) | `EA580C` (orange-600) | Mesma |
+| Violência Doméstica | `#CA8A04` (yellow-600) | `92400E` (amber-900) | Versão escura para fundo de banner |
+| Execução Penal | `#2563EB` (blue-600) | `1E3A8A` (blue-800) | Versão escura para fundo de banner |
+| Criminal Geral | `#DC2626` (red-600) | `991B1B` (red-800) | Versão escura para fundo de banner |
+| Substituição | `#9333EA` (purple-600) | `9333EA` (purple-600) | Mesma |
+
+> **Regra**: No OMBUDS (UI web), usar a cor-600 de `atribuicoes.ts`. Nos documentos .docx (relatórios/peças), usar a cor-tema escura desta tabela para banners e a cor clara para fundos suaves.
 
 ## Estrutura Visual Obrigatória
 
 ### 1. Banner principal
 - Tabela 1 coluna, fundo na **cor-tema** da atribuição
-- **Linha 1**: Verdana 13pt, bold, branco, centralizado — ex: `⚖  DOSSIÊ ESTRATÉGICO DE DEFESA`
+- **Linha 1**: Verdana 13pt, bold, branco, centralizado — ex: `DOSSIÊ ESTRATÉGICO DE DEFESA`
 - **Linha 2** (mesma célula): Verdana 9pt, **cor clara**, centralizado — fase processual · atribuição · DPE-BA
 
 ### 2. Tabela de identificação (4 colunas)

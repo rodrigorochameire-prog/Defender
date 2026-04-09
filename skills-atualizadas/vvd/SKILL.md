@@ -64,26 +64,18 @@ Cada arquivo em `references/` contém o prompt completo extraído do Gemini Gem 
 
 ## Integração OMBUDS — `_analise_ia.json`
 
-> Campos comuns, regras de preenchimento e localização: [`_shared/schema-base.md`](../_shared/schema-base.md).
+> Schema v2.0 completo: ver a skill principal em `skills-plugin/.../vvd/SKILL.md` ou `.claude/skills-cowork/vvd/SKILL.md`.
+> Campos comuns e regras de preenchimento: [`_shared/schema-base.md`](../_shared/schema-base.md).
 
-### Payload específico da VVD
+O schema v2.0 usa estrutura rica e aninhada com objetos para `assistido`, `processo`, `ofendida`, `medidas_protetivas_vigentes`, `historico_violencia`, `dinamica_relacional`, arrays de `testemunhas_acusacao`, `testemunhas_defesa`, `provas_materiais`, `teses_defesa`, `vulnerabilidades_acusacao`, `avaliacao_de_risco`, e campos `pedido_principal`, `pedidos_subsidiarios`, `pendencias_diligencia_pre_aij`.
 
-```json
-{
-  "payload": {
-    "tipo_peca": "<nome da peça gerada>",
-    "tipo_violencia": "<fisica|psicologica|moral|patrimonial|sexual|multipla>",
-    "mpu_vigente": "<sim|nao|revogada|null>",
-    "mpu_desvio_finalidade": "<true|false|null>",
-    "relacao_partes": "<ex-companheiros|conjuges|namorados|pai_filha|outro>",
-    "teses_subsidiarias": [],
-    "pedidos": [],
-    "orientacao_ao_assistido": "<orientação de postura e pontos a enfatizar>"
-  }
-}
-```
+### Campos VVD-específicos dentro do schema v2.0
 
-> `mpu_desvio_finalidade`: marcar `true` quando houver indícios de instrumentalização da MPU para fins patrimoniais/possessórios.
+- `medidas_protetivas_vigentes.vigencia_atual_confirmada` — status da MPU
+- `historico_violencia.agressao_durante_gravidez` — sim/não/não informado
+- `historico_violencia.filhos_presenciaram_violencia` — sim/não/não informado
+- `dinamica_relacional.disputa_patrimonial_paralela` — `true` quando houver indícios de instrumentalização da MPU para fins patrimoniais/possessórios
+- `dinamica_relacional.motivacoes_extrajuridicas_identificadas` — array de motivações
 
 ### Valores de `tipo`
 `vvd_ra` · `vvd_apelacao` · `vvd_contrarrazoes` · `vvd_alegacoes_finais` · `vvd_revogacao_mpu` · `vvd_atualizacao_endereco` · `vvd_analise_audiencia` · `vvd_analise_ra` · `vvd_cota_juntada`

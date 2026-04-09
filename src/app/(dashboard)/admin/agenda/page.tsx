@@ -588,7 +588,6 @@ export default function AgendaPage() {
   const [isBuscaRegistrosModalOpen, setIsBuscaRegistrosModalOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState<EventoFormData | null>(null);
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
-  const [eventDetailSheetEvento, setEventDetailSheetEvento] = useState<any | null>(null);
   // Quick-create: pre-filled date/time from clicking an empty slot
   const [quickCreateData, setQuickCreateData] = useState<{ data?: string; horarioInicio?: string } | null>(null);
 
@@ -1140,12 +1139,12 @@ export default function AgendaPage() {
     setIsRegistroModalOpen(true);
   };
 
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   const handleEventClick = (evento: any) => {
-    if (evento.tipo === "audiencia" || evento.tipo === "reuniao") {
-      handleOpenRegistro(evento);
-    } else {
-      handleEditEvento(evento);
-    }
+    // 1 clique → abre Sheet lateral (leitura rápida)
+    setSelectedEvento(evento);
+    setIsSheetOpen(true);
   };
 
   // Filtros e ordenação
@@ -1646,7 +1645,7 @@ export default function AgendaPage() {
                   onStatusChange={handleStatusChange}
                   onClick={(e) => {
                     setSelectedEvento(e);
-                    setIsDetailModalOpen(true);
+                    setIsSheetOpen(true);
                   }}
                   onExportCowork={(e) => {
                     if (!e.assistidoId) return;
@@ -1698,7 +1697,7 @@ export default function AgendaPage() {
             eventos={eventos} 
             onEventClick={(evento) => {
               setSelectedEvento(evento);
-              setIsDetailModalOpen(true);
+              setIsSheetOpen(true);
             }}
           />
         </div>
@@ -1721,7 +1720,7 @@ export default function AgendaPage() {
               onEditEvento={handleEditEvento}
               onDeleteEvento={handleDeleteEvento}
               onStatusChange={handleStatusChange}
-              onEventDoubleClick={(evento) => setEventDetailSheetEvento(evento)}
+              onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
               headerRight={calendarHeaderRight}
             />
           ) : viewMode === "week" ? (
@@ -1962,14 +1961,14 @@ export default function AgendaPage() {
         onImport={handleImportPJe}
       />
 
-      {/* Event Detail Sheet — duplo clique no calendário */}
+      {/* Event Detail Sheet — 1 clique no evento */}
       <EventDetailSheet
-        evento={eventDetailSheetEvento}
-        open={!!eventDetailSheetEvento}
-        onClose={() => setEventDetailSheetEvento(null)}
-        onEdit={(evento) => {
-          setEventDetailSheetEvento(null);
-          handleEditEvento(evento);
+        evento={selectedEvento}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        onOpenRegistro={() => {
+          setIsSheetOpen(false);
+          setIsRegistroModalOpen(true);
         }}
       />
 

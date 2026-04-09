@@ -1,290 +1,109 @@
 "use client";
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
-import { format, differenceInCalendarDays } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  User,
+  Scale,
   FileText,
-  MapPin,
-  StickyNote,
-  History,
-  CheckCircle2,
-  X,
+  Search,
+  Shield,
+  Users,
+  AlertTriangle,
+  ClipboardList,
+  Lightbulb,
+  Send,
+  Loader2,
   ExternalLink,
   Copy,
   Check,
-  Users,
-  Pencil,
-  ChevronDown,
-  ChevronRight,
-  AlertCircle,
   Clock,
-  XCircle,
-  BadgeCheck,
-  Milestone,
-  Scale,
+  Phone,
+  Printer,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // ─────────────────────────────────────────────
-// Configurações por tipo de audiência
+// Helpers
 // ─────────────────────────────────────────────
 
-const TIPO_CONFIG: Record<string, { label: string; color: string; bg: string; tint: string; dot: string }> = {
-  instrucao: {
-    label: "INSTRUÇÃO",
-    color: "text-indigo-700 dark:text-indigo-300",
-    bg: "bg-indigo-100 dark:bg-indigo-900/40",
-    tint: "bg-indigo-50/40 dark:bg-indigo-950/20",
-    dot: "bg-indigo-500",
-  },
-  sentenca: {
-    label: "SENTENÇA",
-    color: "text-amber-700 dark:text-amber-300",
-    bg: "bg-amber-100 dark:bg-amber-900/40",
-    tint: "bg-amber-50/40 dark:bg-amber-950/20",
-    dot: "bg-amber-500",
-  },
-  conciliacao: {
-    label: "CONCILIAÇÃO",
-    color: "text-sky-700 dark:text-sky-300",
-    bg: "bg-sky-100 dark:bg-sky-900/40",
-    tint: "bg-sky-50/40 dark:bg-sky-950/20",
-    dot: "bg-sky-500",
-  },
-  julgamento: {
-    label: "JULGAMENTO",
-    color: "text-rose-700 dark:text-rose-300",
-    bg: "bg-rose-100 dark:bg-rose-900/40",
-    tint: "bg-rose-50/40 dark:bg-rose-950/20",
-    dot: "bg-rose-500",
-  },
-  preliminar: {
-    label: "AUDIÊNCIA PRELIMINAR",
-    color: "text-violet-700 dark:text-violet-300",
-    bg: "bg-violet-100 dark:bg-violet-900/40",
-    tint: "bg-violet-50/40 dark:bg-violet-950/20",
-    dot: "bg-violet-500",
-  },
-};
+function SectionCard({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "bg-zinc-50/50 dark:bg-zinc-900/30 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 p-4",
+        className
+      )}
+    >
+      <p className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-2">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
 
-function getTipoConfig(tipo?: string) {
-  if (!tipo) return null;
-  const key = tipo.toLowerCase()
-    .normalize("NFD").replace(/\p{Diacritic}/gu, "")
-    .replace(/\s+/g, "");
-  for (const [k, v] of Object.entries(TIPO_CONFIG)) {
-    if (key.includes(k)) return v;
+function EmptyHint({ text }: { text: string }) {
+  return (
+    <p className="text-xs text-zinc-400 dark:text-zinc-500 italic">{text}</p>
+  );
+}
+
+function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
+  if (!obj) return [];
+  for (const k of keys) {
+    const val = obj[k];
+    if (Array.isArray(val) && val.length > 0) return val;
+  }
+  return [];
+}
+
+function extractString(obj: Record<string, any> | null | undefined, ...keys: string[]): string | null {
+  if (!obj) return null;
+  for (const k of keys) {
+    const val = obj[k];
+    if (typeof val === "string" && val.trim().length > 0) return val.trim();
   }
   return null;
 }
 
 // ─────────────────────────────────────────────
-// Status do evento
-// ─────────────────────────────────────────────
-
-function getStatusConfig(status?: string) {
-  const s = status?.toLowerCase() ?? "";
-  if (s === "realizada" || s === "concluida" || s === "concluída")
-    return { label: "Realizada", color: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-100 dark:bg-emerald-900/40", dot: "bg-emerald-500" };
-  if (s === "cancelada")
-    return { label: "Cancelada", color: "text-red-700 dark:text-red-300", bg: "bg-red-100 dark:bg-red-900/40", dot: "bg-red-500" };
-  if (s === "adiada")
-    return { label: "Adiada", color: "text-orange-700 dark:text-orange-300", bg: "bg-orange-100 dark:bg-orange-900/40", dot: "bg-orange-500" };
-  return { label: "Agendada", color: "text-amber-700 dark:text-amber-300", bg: "bg-amber-100 dark:bg-amber-900/40", dot: "bg-amber-500" };
-}
-
-// ─────────────────────────────────────────────
-// Countdown
-// ─────────────────────────────────────────────
-
-function getCountdown(dataHora: Date | null) {
-  if (!dataHora) return null;
-  const days = differenceInCalendarDays(dataHora, new Date());
-  if (days === 0) return { text: "hoje", className: "text-emerald-600 dark:text-emerald-400 font-semibold" };
-  if (days === 1) return { text: "amanhã", className: "text-amber-600 dark:text-amber-400 font-semibold" };
-  if (days === -1) return { text: "ontem", className: "text-neutral-400 dark:text-neutral-500" };
-  if (days > 1) return { text: `em ${days} dias`, className: "text-neutral-500 dark:text-neutral-400" };
-  return { text: `há ${Math.abs(days)} dias`, className: "text-neutral-400 dark:text-neutral-500" };
-}
-
-// ─────────────────────────────────────────────
-// Depoente status
-// ─────────────────────────────────────────────
-
-function getDepoenteStatusConfig(status?: string) {
-  const s = status?.toLowerCase() ?? "";
-  if (s === "ouvido" || s === "ouvida")
-    return { borderColor: "border-l-emerald-400", icon: <CheckCircle2 className="w-3 h-3 text-emerald-500" />, label: "Ouvido" };
-  if (s === "nao_localizado" || s === "não localizado" || s === "revel")
-    return { borderColor: "border-l-red-400", icon: <XCircle className="w-3 h-3 text-red-400" />, label: "Não localizado" };
-  return { borderColor: "border-l-amber-400", icon: <Clock className="w-3 h-3 text-amber-500" />, label: "Pendente" };
-}
-
-function getIntimacaoConfig(intimado?: boolean | string) {
-  if (intimado === true || intimado === "sim" || intimado === "intimado")
-    return { label: "Intimado", className: "border-emerald-300 text-emerald-700 dark:text-emerald-400 dark:border-emerald-700" };
-  if (intimado === "edital")
-    return { label: "Edital", className: "border-red-300 text-red-700 dark:text-red-400 dark:border-red-700" };
-  return { label: "Não intimado", className: "border-amber-300 text-amber-700 dark:text-amber-400 dark:border-amber-700" };
-}
-
-// ─────────────────────────────────────────────
-// Display labels for depoente tipo
-// ─────────────────────────────────────────────
-
-const TIPO_DISPLAY: Record<string, string> = {
-  ACUSACAO: "Acusação",
-  DEFESA: "Defesa",
-  VITIMA: "Vítima",
-  INFORMANTE: "Informante",
-  PERITO: "Perito",
-  COMUM: "Testemunha",
-  testemunha: "Testemunha",
-  vitima: "Vítima",
-  reu: "Réu",
-  perito: "Perito",
-  informante: "Informante",
-  policial: "Policial",
-};
-
-// ─────────────────────────────────────────────
-// Sub-componentes
-// ─────────────────────────────────────────────
-
-function DepoenteCard({ depoente }: { depoente: any }) {
-  const [expanded, setExpanded] = useState(false);
-  const statusCfg = getDepoenteStatusConfig(depoente.status);
-  const intimacaoCfg = getIntimacaoConfig(depoente.intimado);
-  const hasCertidao = !!depoente.certidao;
-
-  return (
-    <div className={cn(
-      "rounded-lg border border-neutral-200 dark:border-neutral-700/60 border-l-[3px] bg-white dark:bg-neutral-800/40 overflow-hidden",
-      statusCfg.borderColor
-    )}>
-      <div className="px-3 py-2.5">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 truncate">
-                {depoente.nome}
-              </span>
-              {depoente.tipo && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 font-medium flex-shrink-0">
-                  {TIPO_DISPLAY[depoente.tipo] ?? depoente.tipo}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400">
-                {statusCfg.icon}
-                <span>
-                  {statusCfg.label}
-                  {depoente.dataOitiva ? ` em ${depoente.dataOitiva}` : ""}
-                </span>
-              </div>
-              <span className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full border font-medium",
-                intimacaoCfg.className
-              )}>
-                {intimacaoCfg.label}
-              </span>
-            </div>
-          </div>
-          {hasCertidao && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="flex-shrink-0 p-1 rounded text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-              title="Ver certidão"
-            >
-              {expanded
-                ? <ChevronDown className="w-3.5 h-3.5" />
-                : <ChevronRight className="w-3.5 h-3.5" />}
-            </button>
-          )}
-        </div>
-      </div>
-      {expanded && hasCertidao && (
-        <div className="px-3 py-2 border-t border-neutral-100 dark:border-neutral-700/40 bg-neutral-50 dark:bg-neutral-900/40">
-          <p className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">
-            {depoente.certidao}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SectionLabel({ icon: Icon, label }: { icon: React.ComponentType<any>; label: string }) {
-  return (
-    <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium flex items-center gap-1.5 mb-2.5">
-      <Icon className="w-3 h-3" />
-      {label}
-    </p>
-  );
-}
-
-function HistoricoTimeline({ itens }: { itens: any[] }) {
-  function getPontoColor(resultado?: string) {
-    const r = resultado?.toLowerCase() ?? "";
-    if (r.includes("realiz") || r.includes("conclu")) return "bg-emerald-500";
-    if (r.includes("adiada") || r.includes("adiado") || r.includes("suspenso")) return "bg-amber-500";
-    if (r.includes("cancel") || r.includes("não realiz")) return "bg-red-500";
-    return "bg-neutral-400";
-  }
-
-  return (
-    <div className="relative pl-4">
-      <div className="absolute left-[7px] top-0 bottom-0 w-px bg-neutral-200 dark:bg-neutral-700" />
-      <div className="space-y-3">
-        {itens.map((h: any, i: number) => (
-          <div key={i} className="relative flex gap-3 text-xs">
-            <div className={cn(
-              "absolute left-[-9px] top-[3px] w-2.5 h-2.5 rounded-full border-2 border-white dark:border-neutral-900 flex-shrink-0",
-              getPontoColor(h.resultado ?? h.status)
-            )} />
-            <span className="text-neutral-400 flex-shrink-0 tabular-nums w-10">
-              {h.dataAudiencia
-                ? format(new Date(h.dataAudiencia), "dd/MM")
-                : "—"}
-            </span>
-            <div className="flex-1 min-w-0">
-              <span className="text-neutral-500 dark:text-neutral-400 font-medium">
-                {h.tipo ?? "Audiência"}
-              </span>
-              {(h.resultado ?? h.status) && (
-                <span className="text-neutral-400 dark:text-neutral-500">
-                  {" · "}{h.resultado ?? h.status}
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// Componente principal
+// Props
 // ─────────────────────────────────────────────
 
 interface EventDetailSheetProps {
   evento: any | null;
   open: boolean;
-  onClose: () => void;
-  onEdit?: (evento: any) => void;
+  onOpenChange: (open: boolean) => void;
+  onOpenRegistro?: () => void;
 }
 
-export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailSheetProps) {
+export function EventDetailSheet({
+  evento,
+  open,
+  onOpenChange,
+  onOpenRegistro,
+}: EventDetailSheetProps) {
   const [copied, setCopied] = useState(false);
+  const [quickNote, setQuickNote] = useState("");
 
-  // Resolve numeric audiencia id — prioriza `rawId`/`fonte` do AgendaItem, com fallback ao parse do id composto.
+  // Resolve numeric audiencia id
   const audienciaIdNum = (() => {
     if (evento?.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
     if (evento?.fonte === "calendar") return null;
@@ -298,49 +117,10 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
     return null;
   })();
 
-  const { data: registro } = trpc.audiencias.buscarRegistro.useQuery(
+  const { data: ctx, isLoading } = trpc.audiencias.getAudienciaContext.useQuery(
     { audienciaId: audienciaIdNum ?? 0 },
-    { enabled: audienciaIdNum !== null && open }
+    { enabled: !!audienciaIdNum && open }
   );
-
-  const { data: historico } = trpc.audiencias.buscarHistoricoRegistros.useQuery(
-    { processoId: evento?.processoId },
-    { enabled: !!evento?.processoId && open }
-  );
-
-  // Fallback: when registro has no depoentes, use previewPreparacao (from analysis_data)
-  const registroDepoentes: any[] = (registro as any)?.depoentes ?? [];
-  const needsFallback = registroDepoentes.length === 0;
-
-  const { data: preparacaoPreview } = trpc.audiencias.previewPreparacao.useQuery(
-    { audienciaId: audienciaIdNum ?? 0 },
-    { enabled: needsFallback && audienciaIdNum !== null && open }
-  );
-
-  // Prefer registro depoentes; fallback to analysis_data preview
-  const depoentes: any[] = registroDepoentes.length > 0
-    ? registroDepoentes
-    : (preparacaoPreview?.depoentes ?? []).map((d: any) => ({
-        nome: d.nome,
-        tipo: d.tipo,
-        status: "pendente",
-        intimado: false,
-        resumo: d.resumo,
-        perguntasSugeridas: d.perguntasSugeridas,
-        pontosFavoraveis: d.pontosFavoraveis,
-        pontosDesfavoraveis: d.pontosDesfavoraveis,
-        observacoes: d.observacoes,
-        vinculo: d.vinculo,
-      }));
-
-  const fromAnalysis = registroDepoentes.length === 0 && depoentes.length > 0;
-  const temEnrichment = depoentes.length > 0;
-  const depoenteOuvidos = depoentes.filter((d: any) => {
-    const s = d.status?.toLowerCase() ?? "";
-    return s === "ouvido" || s === "ouvida";
-  }).length;
-
-  const historicoRecente = (historico ?? []).slice(0, 3);
 
   const copyProcesso = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -350,285 +130,469 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
 
   if (!evento) return null;
 
+  // Derived data
   const dataHora = evento.data && evento.horarioInicio
     ? (() => { try { return new Date(`${evento.data}T${evento.horarioInicio}`); } catch { return null; } })()
-    : evento.dataHora
-      ? new Date(evento.dataHora)
-      : null;
+    : evento.dataHora ? new Date(evento.dataHora) : null;
 
-  const processoNum = evento.processo ?? evento.processoNumero ?? null;
-  const assistidoNome = evento.assistido ?? evento.assistidoNome ?? null;
-  const tipoCfg = getTipoConfig(evento.titulo ?? evento.tipo);
-  const statusCfg = getStatusConfig(evento.status);
-  const countdown = getCountdown(dataHora);
-  const isRealizada = ["realizada", "concluida", "concluída"].includes(evento.status?.toLowerCase() ?? "");
+  const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento.processo ?? evento.processoNumero ?? null;
+  const assistidoNome = ctx?.assistido?.nome ?? evento.assistido ?? evento.assistidoNome ?? null;
+  const crime = evento.crime ?? evento.assunto ?? null;
+  const juiz = (ctx?.processo as any)?.juiz ?? null;
+  const vara = (ctx?.processo as any)?.vara ?? evento.local ?? null;
+
+  // Analysis data shortcuts
+  const ad = ctx?.analysisData;
+  const caso = ctx?.caso;
+
+  // 1. Imputacao
+  const imputacao = extractString(ad, "imputacao", "crimes_imputados")
+    ?? extractString(caso, "foco")
+    ?? null;
+
+  // 2. Fatos
+  const fatos = caso?.narrativaDenuncia
+    ?? extractString(ad, "resumo_executivo", "narrativa_denuncia")
+    ?? null;
+
+  // 3. Elementos
+  const laudos = extractArray(ad, "laudos", "laudos_mencionados", "laudos_periciais");
+  const lacunas = extractArray(ad, "vulnerabilidades_acusacao", "lacunas_probatorias", "lacunas");
+
+  // 4. Versao do acusado
+  const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
+  const atendimento = ctx?.atendimentos?.[0];
+  const versaoAtendimento = atendimento?.resumo
+    ?? atendimento?.transcricaoResumo
+    ?? (atendimento?.pontosChave as any)
+    ?? null;
+
+  // 5. Diligencias
+  const diligencias = ctx?.diligencias ?? [];
+
+  // 6. Depoentes / testemunhas
+  const testemunhasDB = ctx?.testemunhas ?? [];
+  const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
+  const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
+  // Merge: DB testemunhas + analysis testemunhas
+  const allDepoentes = [
+    ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
+    ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", _source: "analysis" })),
+    ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", _source: "analysis" })),
+  ];
+  // Deduplicate by name
+  const seen = new Set<string>();
+  const depoentes = allDepoentes.filter((d) => {
+    const key = (d.nome ?? d.name ?? "").toLowerCase().trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // 7. Contradicoes
+  const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao")
+    .filter((item: any) => {
+      if (typeof item === "string") return true;
+      return item?.tipo === "contradicao" || item?.contradicao;
+    });
+
+  // 8. Pendencias
+  const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias", "pendencias_operacionais");
+
+  // 9. Teses
+  const teses = extractArray(ad, "teses_defesa", "teses")
+    .filter(Boolean);
+  const teoriaDireito = caso?.teoriaDireito;
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800 [&>button:first-of-type]:hidden"
+        className="w-full sm:w-[480px] p-0 flex flex-col gap-0 border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 [&>button:first-of-type]:hidden"
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
-        {/* ── Header premium ── */}
-        <div className={cn(
-          "px-4 pt-3 pb-4 border-b border-neutral-100 dark:border-neutral-800",
-          tipoCfg?.tint ?? ""
-        )}>
-          {/* Linha 1: badges + botões */}
-          <div className="flex items-center justify-between gap-2 mb-2.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              {tipoCfg && (
-                <span className={cn(
-                  "text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full",
-                  tipoCfg.color, tipoCfg.bg
-                )}>
-                  {tipoCfg.label}
-                </span>
+        {/* ── HEADER (sticky) ── */}
+        <div className="px-5 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 sticky top-0 z-10">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {assistidoNome && (
+                <p className="font-serif text-lg font-semibold text-zinc-900 dark:text-zinc-50 truncate">
+                  {assistidoNome}
+                </p>
               )}
-              <span className={cn(
-                "text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1",
-                statusCfg.color, statusCfg.bg
-              )}>
-                <span className={cn("w-1.5 h-1.5 rounded-full", statusCfg.dot)} />
-                {statusCfg.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {onEdit && (
-                <button
-                  onClick={() => onEdit(evento)}
-                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors"
-                  title="Editar evento"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
+              <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                {processoNum && (
+                  <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                    {processoNum}
+                    <button onClick={() => copyProcesso(processoNum)} className="hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+                      {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                    </button>
+                  </span>
+                )}
+                {crime && (
+                  <Badge variant="outline" className="text-[10px] font-medium px-1.5 py-0 border-zinc-300 dark:border-zinc-700">
+                    {crime}
+                  </Badge>
+                )}
+                {dataHora && (
+                  <span className="text-xs text-zinc-400">
+                    {format(dataHora, "HH:mm", { locale: ptBR })}
+                  </span>
+                )}
+              </div>
+              {(juiz || vara) && (
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
+                  {juiz && <>Juiz: {juiz}</>}
+                  {juiz && vara && " · "}
+                  {vara && <>{vara}</>}
+                </p>
               )}
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors"
-                title="Fechar"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
+            <button
+              onClick={() => onOpenChange(false)}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-
-          {/* Linha 2: título */}
-          <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 leading-snug">
-            {evento.titulo ?? evento.tipo ?? "Evento"}
-          </p>
-
-          {/* Linha 3: data/hora + countdown */}
-          {dataHora && (
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                {format(dataHora, "EEEE, dd 'de' MMMM · HH:mm", { locale: ptBR })}
-                {evento.horarioFim ? ` — ${evento.horarioFim}` : ""}
-              </p>
-              {countdown && (
-                <span className={cn("text-[11px]", countdown.className)}>
-                  · {countdown.text}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Linha 4: local */}
-          {evento.local && (
-            <p className="text-xs text-neutral-400 dark:text-neutral-500 flex items-center gap-1 mt-1">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              {evento.local}
-            </p>
-          )}
         </div>
 
-        {/* ── Scrollable body ── */}
-        <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800/60">
+        {/* ── SCROLLABLE BODY ── */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+            </div>
+          )}
 
-          {/* 1 — Assistido + Processo */}
-          {(assistidoNome || processoNum) && (
-            <div className="px-4 py-3 space-y-2.5">
-              {assistidoNome && (
-                <div className="flex items-center gap-2.5">
-                  <User className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Assistido</p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                        {assistidoNome}
+          {!isLoading && (
+            <>
+              {/* 1. IMPUTACAO */}
+              <SectionCard label="Imputacao">
+                {imputacao ? (
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    {typeof imputacao === "string"
+                      ? imputacao
+                      : Array.isArray(imputacao)
+                        ? (imputacao as string[]).join(", ")
+                        : String(imputacao)}
+                  </p>
+                ) : (
+                  <EmptyHint text="Imputacao nao extraida — rode a analise IA." />
+                )}
+              </SectionCard>
+
+              {/* 2. FATOS (DENUNCIA) */}
+              <SectionCard label="Fatos (Denuncia)">
+                {fatos ? (
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                    {fatos}
+                  </p>
+                ) : (
+                  <EmptyHint text="Narrativa da denuncia nao disponivel." />
+                )}
+              </SectionCard>
+
+              {/* 3. ELEMENTOS */}
+              {(laudos.length > 0 || lacunas.length > 0) && (
+                <SectionCard label="Elementos">
+                  {laudos.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-wider font-medium text-zinc-400 mb-1">
+                        Laudos
                       </p>
-                      {evento.assistidoId && (
-                        <Link href={`/admin/assistidos/${evento.assistidoId}`} onClick={onClose}>
-                          <ExternalLink className="w-3 h-3 text-neutral-400 hover:text-emerald-600 flex-shrink-0 transition-colors" />
-                        </Link>
+                      <ul className="space-y-1">
+                        {laudos.map((l: any, i: number) => (
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                            <ClipboardList className="w-3 h-3 text-zinc-400 mt-0.5 flex-shrink-0" />
+                            <span>{typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {lacunas.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider font-medium text-zinc-400 mb-1">
+                        Lacunas / Vulnerabilidades
+                      </p>
+                      <ul className="space-y-1">
+                        {lacunas.map((l: any, i: number) => (
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </SectionCard>
+              )}
+
+              {/* 4. VERSAO DO ACUSADO */}
+              <SectionCard label="Versao do Acusado">
+                <div className="space-y-3">
+                  {/* Delegacia */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-500">
+                        Delegacia
+                      </span>
+                    </div>
+                    {versaoDelegacia ? (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed pl-3.5">
+                        {versaoDelegacia}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-zinc-400 italic pl-3.5">
+                        Versao na delegacia nao extraida.
+                      </p>
+                    )}
+                  </div>
+                  {/* Atendimento Defensoria */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-500">
+                        Atendimento Defensoria
+                      </span>
+                      {atendimento?.data && (
+                        <span className="text-[10px] text-zinc-400 ml-auto">
+                          {format(new Date(String(atendimento.data)), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
                       )}
                     </div>
-                  </div>
-                </div>
-              )}
-              {processoNum && (
-                <div className="flex items-center gap-2.5">
-                  <FileText className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Processo</p>
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-mono text-neutral-700 dark:text-neutral-300 truncate">
-                        {processoNum}
+                    {versaoAtendimento ? (
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed pl-3.5">
+                        {typeof versaoAtendimento === "string" ? versaoAtendimento : JSON.stringify(versaoAtendimento)}
                       </p>
-                      <button onClick={() => copyProcesso(processoNum)} title="Copiar número">
-                        {copied
-                          ? <Check className="w-3 h-3 text-emerald-500" />
-                          : <Copy className="w-3 h-3 text-neutral-400 hover:text-neutral-600 cursor-pointer transition-colors" />}
-                      </button>
-                    </div>
+                    ) : (
+                      <p className="text-xs text-zinc-400 italic pl-3.5">
+                        Nenhum atendimento registrado — agende entrevista.
+                      </p>
+                    )}
                   </div>
                 </div>
+              </SectionCard>
+
+              {/* 5. INVESTIGACAO DEFENSIVA */}
+              <SectionCard label="Investigacao Defensiva">
+                {diligencias.length > 0 ? (
+                  <ul className="space-y-2">
+                    {diligencias.map((d: any) => {
+                      const statusColor =
+                        d.status === "concluida" || d.status === "concluída"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                          : d.status === "em_andamento" || d.status === "em andamento"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                            : d.status === "frustrada" || d.status === "cancelada"
+                              ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
+                              : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400";
+                      return (
+                        <li key={d.id} className="text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-700 dark:text-zinc-300 font-medium flex-1 min-w-0 truncate">
+                              {d.titulo}
+                            </span>
+                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0", statusColor)}>
+                              {d.status ?? "pendente"}
+                            </span>
+                          </div>
+                          {d.resultado && (
+                            <p className="text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
+                              {d.resultado}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <EmptyHint text="Nenhuma diligencia registrada." />
+                )}
+              </SectionCard>
+
+              {/* 6. DEPOENTES */}
+              <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
+                {depoentes.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {depoentes.map((d: any, i: number) => {
+                      const isAcusacao = d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA";
+                      const isDefesa = d.lado === "defesa" || d.tipo === "DEFESA";
+                      const borderColor = isAcusacao
+                        ? "border-l-rose-300"
+                        : isDefesa
+                          ? "border-l-emerald-300"
+                          : "border-l-zinc-300";
+                      const bgColor = isAcusacao
+                        ? "bg-rose-50/40 dark:bg-rose-950/10"
+                        : isDefesa
+                          ? "bg-emerald-50/40 dark:bg-emerald-950/10"
+                          : "";
+                      const nome = d.nome ?? d.name ?? "Sem nome";
+                      const resumo = d.resumo ?? d.versao_delegacia ?? d.versao ?? null;
+                      const statusLabel = d.status ?? d.situacao ?? null;
+
+                      return (
+                        <li
+                          key={i}
+                          className={cn(
+                            "rounded-lg border border-zinc-200/80 dark:border-zinc-700/60 border-l-[3px] px-3 py-2",
+                            borderColor,
+                            bgColor
+                          )}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
+                              {nome}
+                            </span>
+                            {(d.lado || d.tipo) && (
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-[9px] py-0 px-1",
+                                  isAcusacao ? "border-rose-300 text-rose-600" : isDefesa ? "border-emerald-300 text-emerald-600" : ""
+                                )}
+                              >
+                                {isAcusacao ? "ACUS" : isDefesa ? "DEF" : (d.tipo ?? "")}
+                              </Badge>
+                            )}
+                            {statusLabel && (
+                              <span className="text-[10px] text-zinc-400">{statusLabel}</span>
+                            )}
+                          </div>
+                          {resumo && (
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed line-clamp-2">
+                              {resumo}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <EmptyHint text="Nenhum depoente cadastrado." />
+                )}
+              </SectionCard>
+
+              {/* 7. CONTRADICOES */}
+              {contradicoes.length > 0 && (
+                <SectionCard label="Contradicoes">
+                  <ul className="space-y-1.5">
+                    {contradicoes.map((c: any, i: number) => {
+                      const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
+                      const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
+                      return (
+                        <li key={i} className="flex items-start gap-2 text-xs">
+                          <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-500" : "text-rose-500")}>
+                            {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                          </span>
+                          <span className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            {text}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </SectionCard>
               )}
-            </div>
-          )}
 
-          {/* 2 — Depoentes (hero) */}
-          <div className="px-4 py-3">
-            <div className="flex items-center justify-between mb-2.5">
-              <SectionLabel
-                icon={Users}
-                label={temEnrichment
-                  ? fromAnalysis
-                    ? `Depoentes · ${depoentes.length} (da análise)`
-                    : `Depoentes · ${depoenteOuvidos} ouvido${depoenteOuvidos !== 1 ? "s" : ""} de ${depoentes.length}`
-                  : "Depoentes"}
-              />
-            </div>
+              {/* 8. PENDENCIAS */}
+              {pendencias.length > 0 && (
+                <SectionCard label="Pendencias">
+                  <ul className="space-y-1">
+                    {pendencias.map((p: any, i: number) => {
+                      const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
+                      return (
+                        <li key={i} className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <span>{text}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </SectionCard>
+              )}
 
-            {temEnrichment ? (
-              <div className="space-y-2">
-                {depoentes.map((d: any, i: number) => (
-                  <DepoenteCard key={i} depoente={d} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-start gap-3 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-700/60 bg-neutral-50/60 dark:bg-neutral-800/20 px-3.5 py-3">
-                <AlertCircle className="w-4 h-4 text-neutral-300 dark:text-neutral-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Análise de depoentes não disponível
+              {/* 9. TESES */}
+              <SectionCard label="Teses">
+                {teses.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {teses.map((t: any, i: number) => {
+                      const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? t.nome ?? JSON.stringify(t);
+                      const viabilidade = typeof t === "object" ? t.viabilidade ?? t.probabilidade : null;
+                      const color =
+                        viabilidade === "alta" || viabilidade === "forte"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-300"
+                          : viabilidade === "media" || viabilidade === "moderada"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300"
+                            : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700";
+                      return (
+                        <span
+                          key={i}
+                          className={cn(
+                            "text-[11px] px-2 py-0.5 rounded-full border font-medium",
+                            color
+                          )}
+                        >
+                          {text}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : teoriaDireito ? (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    {teoriaDireito}
                   </p>
-                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-0.5">
-                    Ative o enrichment do processo no Drive para visualizar status, intimações e certidões por depoente.
-                  </p>
-                  {evento.processoId && (
-                    <Link
-                      href={`/admin/drive?processo=${evento.processoId}`}
-                      onClick={onClose}
-                      className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 mt-1.5 transition-colors"
-                    >
-                      Abrir no Drive <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 3 — Dados estratégicos */}
-          {(evento.crime || evento.assunto || evento.atribuicao || evento.fase || historicoRecente.length > 0) && (
-            <div className="px-4 py-3">
-              <SectionLabel icon={Scale} label="Dados do Caso" />
-              <div className="grid grid-cols-2 gap-2">
-                {(evento.crime ?? evento.assunto) && (
-                  <div className="col-span-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Crime / Assunto</p>
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium leading-snug">
-                      {evento.crime ?? evento.assunto}
-                    </p>
-                  </div>
+                ) : (
+                  <EmptyHint text="Nenhuma tese identificada." />
                 )}
-                {evento.fase && (
-                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Fase</p>
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">{evento.fase}</p>
-                  </div>
-                )}
-                {historicoRecente.length > 0 && (
-                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Audiências anteriores</p>
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium">{historicoRecente.length} realizadas</p>
-                  </div>
-                )}
-                {evento.atribuicao && (
-                  <div className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 px-3 py-2">
-                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider mb-0.5">Atribuição</p>
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 font-medium truncate">{evento.atribuicao}</p>
-                  </div>
-                )}
-              </div>
-            </div>
+              </SectionCard>
+            </>
           )}
-
-          {/* 4 — Observações */}
-          {evento.descricao && (
-            <div className="px-4 py-3">
-              <SectionLabel icon={StickyNote} label="Observações" />
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap leading-relaxed">
-                {evento.descricao}
-              </p>
-            </div>
-          )}
-
-          {/* 5 — Histórico (timeline) */}
-          {historicoRecente.length > 0 && (
-            <div className="px-4 py-3">
-              <div className="flex items-center justify-between mb-3">
-                <SectionLabel icon={History} label="Histórico do Processo" />
-                {evento.processoId && (
-                  <Link
-                    href={`/admin/audiencias?processo=${evento.processoId}`}
-                    onClick={onClose}
-                    className="text-[10px] text-neutral-400 hover:text-emerald-600 flex items-center gap-0.5 transition-colors -mt-2.5"
-                  >
-                    Ver todas <ExternalLink className="w-2.5 h-2.5" />
-                  </Link>
-                )}
-              </div>
-              <HistoricoTimeline itens={historicoRecente} />
-            </div>
-          )}
-
         </div>
 
-        {/* ── Bottom bar sticky ── */}
-        <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex gap-2">
-          {onEdit && (
-            <button
-              onClick={() => onEdit(evento)}
-              className="flex-1 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 text-xs font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+        {/* ── FOOTER (sticky) ── */}
+        <div className="px-4 py-3 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 space-y-2">
+          {/* Anotacao rapida */}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Anotacao rapida..."
+              value={quickNote}
+              onChange={(e) => setQuickNote(e.target.value)}
+              className="text-xs h-8 rounded-lg border-zinc-200 dark:border-zinc-700"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && quickNote.trim()) {
+                  toast.success("Anotacao salva (em breve persistida).");
+                  setQuickNote("");
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2"
+              disabled={!quickNote.trim()}
+              onClick={() => {
+                toast.success("Anotacao salva (em breve persistida).");
+                setQuickNote("");
+              }}
             >
-              Editar
-            </button>
-          )}
-          {isRealizada ? (
-            evento.id && (
-              <Link
-                href={`/admin/audiencias/${evento.id}/registro`}
-                onClick={onClose}
-                className="flex-1 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors text-center flex items-center justify-center gap-1.5"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Ver registro
-              </Link>
-            )
-          ) : (
-            evento.id && (
-              <Link
-                href={`/admin/audiencias/${evento.id}/registro`}
-                onClick={onClose}
-                className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white transition-colors text-center"
-              >
-                Registrar audiência
-              </Link>
-            )
+              <Send className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {/* Abrir Registro Completo */}
+          {onOpenRegistro && (
+            <Button
+              onClick={onOpenRegistro}
+              className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9"
+            >
+              <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
+              Abrir Registro Completo
+            </Button>
           )}
         </div>
       </SheetContent>

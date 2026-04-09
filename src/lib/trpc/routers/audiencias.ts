@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
-import { claudeCodeTasks } from "@/lib/db/schema/casos";
+import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
 import { analysisJobs } from "@/lib/db/schema/core";
+import { atendimentos } from "@/lib/db/schema/agenda";
+import { diligencias, anotacoes } from "@/lib/db/schema/investigacao";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
@@ -473,6 +475,141 @@ export const audienciasRouter = router({
         .limit(1);
 
       return audiencia || null;
+    }),
+
+  // ==========================================
+  // CONTEXTO COMPLETO — alimenta Sheet + Modal
+  // ==========================================
+  getAudienciaContext: protectedProcedure
+    .input(z.object({ audienciaId: z.number() }))
+    .query(async ({ input }) => {
+      // 1. Audiência + processo + assistido
+      const [aud] = await db
+        .select()
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId))
+        .limit(1);
+      if (!aud) return null;
+
+      const [proc] = await db.select().from(processos).where(eq(processos.id, aud.processoId)).limit(1);
+      const [assist] = aud.assistidoId
+        ? await db.select().from(assistidos).where(eq(assistidos.id, aud.assistidoId)).limit(1)
+        : [null];
+
+      // 2. Caso vinculado (narrativa_denuncia, teoria_fatos/provas/direito)
+      const [caso] = assist
+        ? await db
+            .select({
+              id: casos.id,
+              narrativaDenuncia: casos.narrativaDenuncia,
+              teoriaFatos: casos.teoriaFatos,
+              teoriaProvas: casos.teoriaProvas,
+              teoriaDireito: casos.teoriaDireito,
+              foco: casos.foco,
+              status: casos.status,
+              fase: casos.fase,
+            })
+            .from(casos)
+            .where(eq(casos.assistidoId, assist.id))
+            .limit(1)
+        : [null];
+
+      // 3. Atendimentos (versão do réu no atendimento)
+      const atendimentosResult = assist
+        ? await db
+            .select({
+              id: atendimentos.id,
+              data: atendimentos.dataAtendimento,
+              tipo: atendimentos.tipo,
+              resumo: atendimentos.resumo,
+              transcricaoResumo: atendimentos.transcricaoResumo,
+              pontosChave: atendimentos.pontosChave,
+              assunto: atendimentos.assunto,
+            })
+            .from(atendimentos)
+            .where(
+              proc
+                ? or(
+                    eq(atendimentos.processoId, proc.id),
+                    eq(atendimentos.assistidoId, assist.id)
+                  )
+                : eq(atendimentos.assistidoId, assist.id)
+            )
+            .orderBy(desc(atendimentos.dataAtendimento))
+            .limit(5)
+        : [];
+
+      // 4. Diligências (investigação defensiva)
+      const diligenciasResult = proc
+        ? await db
+            .select({
+              id: diligencias.id,
+              titulo: diligencias.titulo,
+              tipo: diligencias.tipo,
+              status: diligencias.status,
+              resultado: diligencias.resultado,
+              nomePessoaAlvo: diligencias.nomePessoaAlvo,
+              prioridade: diligencias.prioridade,
+            })
+            .from(diligencias)
+            .where(
+              and(
+                or(
+                  eq(diligencias.processoId, proc.id),
+                  assist ? eq(diligencias.assistidoId, assist.id) : undefined
+                ),
+                isNull(diligencias.deletedAt)
+              )
+            )
+            .orderBy(desc(diligencias.createdAt))
+            .limit(10)
+        : [];
+
+      // 5. Anotações relevantes
+      const anotacoesResult = proc
+        ? await db
+            .select({
+              id: anotacoes.id,
+              conteudo: anotacoes.conteudo,
+              tipo: anotacoes.tipo,
+              importante: anotacoes.importante,
+              createdAt: anotacoes.createdAt,
+            })
+            .from(anotacoes)
+            .where(eq(anotacoes.processoId, proc.id))
+            .orderBy(desc(anotacoes.createdAt))
+            .limit(5)
+        : [];
+
+      // 6. Testemunhas cadastradas
+      const testemunhasResult = proc
+        ? await db
+            .select()
+            .from(testemunhas)
+            .where(eq(testemunhas.processoId, proc.id))
+        : [];
+
+      // 7. Analysis data (parsed)
+      let analysisData: Record<string, any> | null = null;
+      if (proc?.analysisData) {
+        try {
+          analysisData = typeof proc.analysisData === "string"
+            ? JSON.parse(proc.analysisData)
+            : proc.analysisData as Record<string, any>;
+        } catch { /* ignore */ }
+      }
+
+      return {
+        audiencia: aud,
+        processo: proc,
+        assistido: assist,
+        caso,
+        atendimentos: atendimentosResult,
+        diligencias: diligenciasResult,
+        anotacoes: anotacoesResult,
+        testemunhas: testemunhasResult,
+        analysisData,
+      };
     }),
 
   // Próximas audiências (para dashboard)

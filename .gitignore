@@ -93,3 +93,4 @@ logs/
 
 # Cowork skills (copied from Desktop, not tracked)
 .claude/skills-cowork/
+*.docx

@@ -212,7 +212,7 @@ def _open_peticionar(page: Page):
         }
         return false;
     }""")
-    time.sleep(8)
+    time.sleep(15)
 
     iframe_el = page.query_selector("iframe")
     if not iframe_el:
@@ -222,18 +222,17 @@ def _open_peticionar(page: Page):
     if not frame:
         raise RuntimeError("Could not get content frame from PETICIONAR iframe")
 
-    frame.wait_for_selector('input[id*="numeroSequencial"]', timeout=15_000)
+    frame.wait_for_selector('input[id*="numeroSequencial"]', timeout=60_000)
     return frame
 
 
-def find_processo_autos_url(page: Page, numero: str) -> str:
-    """Search for a process via the PETICIONAR tab (no CAPTCHA path) and return
-    the URL of the 'Autos digitais' page.
+def _search_peticionar(page: Page, numero: str):
+    """Search for a processo in the PETICIONAR tab and return (frame, row_info).
 
-    Uses the same iframe approach as the legacy pje_download_autos.py to avoid
-    the CAPTCHA that appears on the direct ConsultaProcesso route.
-
-    Raises RuntimeError if the process can't be found.
+    row_info is a dict with keys:
+      - id_processo: PJe internal processo ID (int as str)
+      - has_autos_link: bool — True if "Autos Digitais" link exists (Júri)
+      - link_id: DOM id of the Autos Digitais link (if present)
     """
     _log(f"searching for processo {numero}")
     parts = _parse_numero(numero)
@@ -241,14 +240,12 @@ def find_processo_autos_url(page: Page, numero: str) -> str:
     frame = _open_peticionar(page)
     _log("PETICIONAR frame loaded")
 
-    # Clear any previous search
     try:
         frame.click('input[id*="clearButton"]', timeout=3_000)
         time.sleep(2)
     except Exception:
         pass
 
-    # Fill the split number fields via JS (avoid React/JSF change event issues)
     frame.evaluate("""(p) => {
         document.querySelector('input[id*="numeroSequencial"]').value = p.seq;
         document.querySelector('input[id*="Verificador"]').value = p.dig;
@@ -262,43 +259,285 @@ def find_processo_autos_url(page: Page, numero: str) -> str:
     found = frame.evaluate("() => !!document.querySelector('tr.rich-table-row')")
     if not found:
         frame.screenshot(path="/tmp/pje-debug-results.png")
+        raise RuntimeError(f"processo {numero} not found — screenshot at /tmp/pje-debug-results.png")
+
+    _log("process found in results")
+
+    row_info = frame.evaluate("""() => {
+        var row = document.querySelector('tr.rich-table-row');
+        if (!row) return null;
+        // Extract idProcesso from onclick of first link
+        var firstLink = row.querySelector('a');
+        var onclick = firstLink ? (firstLink.getAttribute('onclick') || '') : '';
+        var idMatch = onclick.match(/idProcesso[':]+\\s*(\\d+)/);
+        var idProcesso = idMatch ? idMatch[1] : null;
+        // Check for Autos Digitais link
+        var autosLink = row.querySelector('a[title="Autos Digitais"]');
+        if (!autosLink) {
+            var links = row.querySelectorAll('a');
+            for (var i = 0; i < links.length; i++) {
+                if (links[i].querySelector('.fa-external-link, .fa-external-link-alt')) {
+                    autosLink = links[i];
+                    break;
+                }
+            }
+        }
+        if (autosLink && !autosLink.id) autosLink.id = 'autosDigitais_' + Date.now();
+        return {
+            id_processo: idProcesso,
+            has_autos_link: !!autosLink,
+            link_id: autosLink ? autosLink.id : null,
+        };
+    }""")
+    _log(f"row_info: {row_info}")
+    return frame, row_info
+
+
+def _navigate_to_autos_via_peticionar(
+    page: Page, context: BrowserContext, numero: str,
+    frame: Any = None, row_info: dict | None = None,
+):
+    """For VVD: click Peticionar → popup → navigate to listProcessoCompleto.
+
+    VVD's PETICIONAR search only shows a "Peticionar" button (no Autos Digitais).
+    Clicking it opens a popup at peticaoPopUp.seam with a valid `ca` token.
+    We reuse that `ca` to navigate to listProcessoCompleto.seam, which shows
+    the full autos with a "Download autos do processo" button.
+
+    Returns the popup Page object positioned at the autos page.
+    """
+    if frame is None or row_info is None:
+        frame, row_info = _search_peticionar(page, numero)
+    id_processo = row_info.get("id_processo")
+    if not id_processo:
+        raise RuntimeError(f"could not extract idProcesso for {numero}")
+
+    _log(f"VVD path: clicking Peticionar to get ca token (idProcesso={id_processo})")
+
+    with context.expect_page(timeout=15_000) as popup_info:
+        frame.evaluate("""() => {
+            var a = document.querySelector('tr.rich-table-row a');
+            a.onclick ? a.onclick(new Event('click')) : a.click();
+        }""")
+    popup = popup_info.value
+    popup.wait_for_load_state("domcontentloaded", timeout=60_000)
+    time.sleep(3)
+
+    ca_match = re.search(r"ca=([a-f0-9]+)", popup.url)
+    if not ca_match:
+        raise RuntimeError(f"no ca token in popup URL: {popup.url}")
+    ca = ca_match.group(1)
+    _log(f"VVD path: got ca token ({ca[:20]}...)")
+
+    autos_url = (
+        f"https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/Detalhe/"
+        f"listProcessoCompleto.seam?id={id_processo}&ca={ca}"
+    )
+    _log(f"VVD path: navigating to autos page")
+    popup.goto(autos_url, wait_until="domcontentloaded", timeout=60_000)
+    time.sleep(5)
+
+    if "error.seam" in popup.url:
         raise RuntimeError(
-            f"processo {numero} not found in search results — screenshot at /tmp/pje-debug-results.png"
+            f"VVD autos page redirected to error.seam — "
+            f"ca token may be invalid for listProcessoCompleto"
         )
 
-    _log("process found in results, clicking Autos Digitais")
+    _log(f"VVD path: autos page loaded — {popup.title()}")
+    return popup
 
-    # Click the 'Autos Digitais' link — it may open a popup
-    # Try the titled link first, then fall back to the fa-external-link icon
+
+def _download_from_autos_page(
+    context: BrowserContext,
+    autos_page: Page,
+    out_path: str,
+) -> int:
+    """Download the full autos PDF from the listProcessoCompleto page.
+
+    Clicks the "Download autos do processo" dropdown button and intercepts
+    the downloadBinario response. This is the VVD path — the autos page
+    was reached via _navigate_to_autos_via_peticionar().
+
+    Returns bytes written. Raises RuntimeError on failure.
+    """
+    import requests as _requests
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    _log("VVD download: setting up downloadBinario route intercept")
+    captured: dict[str, Any] = {"data": None, "done": False, "seen": []}
+
+    def handle_route(route: Any) -> None:
+        if captured["done"]:
+            try:
+                route.abort()
+            except Exception:
+                pass
+            return
+        try:
+            response = route.fetch(timeout=180_000)
+            body = response.body() if callable(getattr(response, "body", None)) else response.body
+            ct = (response.headers.get("content-type") or "").lower()
+            captured["seen"].append(f"{response.status} ct={ct} len={len(body)}")
+            if is_valid_pdf(body):
+                _log(f"VVD download: captured PDF ({len(body)} bytes)")
+                captured["data"] = body
+                captured["done"] = True
+                try:
+                    route.abort()
+                except Exception:
+                    pass
+            else:
+                _log(f"VVD download: downloadBinario not PDF (len={len(body)}, magic={body[:8]!r})")
+                try:
+                    route.fulfill(response=response)
+                except Exception:
+                    try:
+                        route.abort()
+                    except Exception:
+                        pass
+        except Exception as e:
+            _log(f"VVD download route error: {e}")
+            try:
+                route.abort()
+            except Exception:
+                pass
+
+    # Also listen to ALL responses for any PDF content-type (VVD download may
+    # use a different URL than downloadBinario, e.g. reportCertidaoPDF.seam)
+    def on_any_response(response: Any) -> None:
+        if captured["done"]:
+            return
+        try:
+            url = response.url
+            ct = (response.headers.get("content-type") or "").lower()
+            if "application/pdf" in ct or "downloadbinario" in url.lower():
+                body = response.body()
+                captured["seen"].append(f"RESP {response.status} ct={ct} len={len(body)} {url[:80]}")
+                if is_valid_pdf(body):
+                    _log(f"VVD download: captured PDF from {url[:80]} ({len(body)} bytes)")
+                    captured["data"] = body
+                    captured["done"] = True
+        except Exception:
+            pass
+    autos_page.on("response", on_any_response)
+
+    # NOTE: We do NOT use context.route for VVD — the PJe download uses a
+    # timer (iniciarTemporizadorDownload) that polls downloadBinario.seam
+    # and expects the response to go through normally. If we intercept with
+    # context.route, the timer's JS callback never fires and the retry loop
+    # breaks. Instead, we listen passively on the response event.
     try:
-        with page.context.expect_page(timeout=12_000) as popup_info:
-            frame.evaluate("""() => {
-                var link = document.querySelector('a[title="Autos Digitais"]');
-                if (!link) {
-                    var links = document.querySelectorAll('a');
-                    for (var i = 0; i < links.length; i++) {
-                        if (links[i].querySelector('.fa-external-link')) {
-                            link = links[i];
-                            break;
-                        }
-                    }
+        # Click "Download autos do processo" button
+        _log("VVD download: clicking Download autos button")
+        clicked = autos_page.evaluate("""() => {
+            // Find the download dropdown toggle
+            var links = document.querySelectorAll('a');
+            for (var i = 0; i < links.length; i++) {
+                if ((links[i].getAttribute('title') || '').indexOf('Download autos') !== -1) {
+                    links[i].click();
+                    return 'dropdown';
                 }
-                if (link) {
-                    if (link.onclick) link.onclick(new Event('click'));
-                    else link.click();
-                }
-            }""")
-        autos_page = popup_info.value
-        autos_page.wait_for_load_state("domcontentloaded", timeout=60_000)
-    except Exception:
-        # Popup didn't open — URL may be in the iframe itself or same page
-        _log("no popup detected, checking iframe/page URL")
+            }
+            return null;
+        }""")
+        _log(f"VVD download: clicked {clicked}")
         time.sleep(3)
-        autos_page = page
 
-    url = autos_page.url
-    _log(f"autos page URL: {url}")
-    return url
+        # After opening dropdown, click the red DOWNLOAD input button.
+        # It's an <input> with onclick="iniciarTemporizadorDownload()" which
+        # triggers an A4J.AJAX.Submit that generates the PDF server-side,
+        # then navigates to downloadBinario.seam to fetch it.
+        time.sleep(2)
+        dl_result = autos_page.evaluate("""() => {
+            // Look for the input with onclick containing iniciarTemporizadorDownload
+            var inputs = document.querySelectorAll('input');
+            for (var i = 0; i < inputs.length; i++) {
+                var onclick = inputs[i].getAttribute('onclick') || '';
+                if (onclick.indexOf('iniciarTemporizadorDownload') !== -1) {
+                    inputs[i].click();
+                    return 'clicked via iniciarTemporizadorDownload';
+                }
+            }
+            // Fallback: any input/button with value "Download"
+            var all = document.querySelectorAll('input, button');
+            for (var i = 0; i < all.length; i++) {
+                var v = (all[i].value || all[i].textContent || '').trim();
+                if (/^download$/i.test(v)) {
+                    all[i].click();
+                    return 'clicked via value match';
+                }
+            }
+            return 'DOWNLOAD button not found';
+        }""")
+        _log(f"VVD download: {dl_result}")
+
+        # Log all non-static requests to see what the timer polls
+        all_reqs = []
+        def log_req(req):
+            url = req.url
+            if not any(x in url for x in ['.css', '.woff', '.gif', '.png', '.ico', 'spacer', '.svg']):
+                all_reqs.append(f"{req.method} {url[:120]}")
+        autos_page.on("request", log_req)
+
+        # Wait for PDF capture
+        waited = 0
+        while not captured["done"] and waited < 180:
+            time.sleep(2)
+            waited += 2
+            if waited % 20 == 0:
+                _log(f"VVD download: waiting for PDF... {waited}s")
+
+        try:
+            autos_page.screenshot(path="/tmp/pje-debug-vvd-download.png")
+        except Exception:
+            pass
+    finally:
+        try:
+            autos_page.remove_listener("response", on_any_response)
+        except Exception:
+            pass
+        try:
+            autos_page.remove_listener("request", log_req)
+        except Exception:
+            pass
+
+    if captured["data"] and is_valid_pdf(captured["data"]):
+        _log(f"VVD download: writing {len(captured['data'])} bytes")
+        out.write_bytes(captured["data"])
+        return len(captured["data"])
+
+    if captured["seen"]:
+        _log(f"VVD download: saw {len(captured['seen'])} responses, none valid:")
+        for s in captured["seen"][:10]:
+            _log(f"  - {s}")
+    if all_reqs:
+        _log(f"VVD download: {len(all_reqs)} requests made during wait:")
+        for r in all_reqs[:30]:
+            _log(f"  - {r}")
+
+    # Fallback: try context.request.get with cookies
+    _log("VVD download: fallback — context.request.get(downloadBinario)")
+    try:
+        resp = context.request.get(DOWNLOAD_BINARY_URL, timeout=180_000)
+        body = resp.body()
+        ct = resp.headers.get("content-type", "")
+        _log(f"VVD fallback: {resp.status} {len(body)} bytes ct={ct!r}")
+        if is_valid_pdf(body):
+            out.write_bytes(body)
+            return len(body)
+    except Exception as e:
+        _log(f"VVD fallback failed: {e}")
+
+    raise RuntimeError(
+        "VVD download: all strategies failed — check /tmp/pje-debug-vvd-download.png"
+    )
+
+
+def find_processo_autos_url(page: Page, numero: str) -> str:
+    """Legacy compat — returns the downloadBinario URL."""
+    return DOWNLOAD_BINARY_URL
 
 
 # ------------------------------------------------------------------
@@ -310,20 +549,27 @@ DOWNLOAD_BINARY_URL = "https://pje.tjba.jus.br/pje/downloadBinario.seam"
 
 def download_autos_pdf(
     context: BrowserContext,
-    autos_page_url: str,
+    page: Page,
+    frame: Any,
+    link_id: str,
     out_path: str,
 ) -> int:
-    """Open the autos page and force-download the consolidated PDF.
+    """Trigger 'Autos Digitais' from the PETICIONAR frame and capture the PDF.
 
-    PJe opens the PDF in a new window served from a cross-origin host;
-    normal Playwright download events don't fire. We cascade through three
-    strategies adapted from the proven legacy pje_download_autos.py:
+    The A4J.AJAX.Submit onclick on the Autos Digitais link POSTs form data to
+    set server state (idProcessoSelecionado) and then navigates an iframe to
+    /pje/downloadBinario.seam. We intercept that navigation via context.route
+    and grab the binary body. This is the proven flow from legacy
+    pje_download_autos.py and works for BOTH Júri and VVD — the old
+    pje_downloader flow failed on VVD because it clicked the wrong link
+    ('Peticionar', which opens peticaoPopUp.seam — the petition editor).
 
-      A) context.route("**/downloadBinario**") — intercept + route.fetch()
-      B) context.request.get() — API request with shared cookies
-      C) requests.Session() with cookies extracted from context
+    Cascades through three strategies:
+      A) context.route('**/downloadBinario**') — click link, intercept nav
+      B) context.request.get(DOWNLOAD_BINARY_URL) — after clicking to set state
+      C) requests.Session() with cookies — same idea, plain HTTP fallback
 
-    Returns number of bytes written. Raises RuntimeError on failure.
+    Returns bytes written. Raises RuntimeError on failure.
     """
     import requests as _requests
 
@@ -331,10 +577,10 @@ def download_autos_pdf(
     out.parent.mkdir(parents=True, exist_ok=True)
 
     # ----------------------------------------------------------------
-    # Strategy A: context.route intercept on downloadBinario
+    # Strategy A: context.route + A4J click
     # ----------------------------------------------------------------
-    _log("Phase2 strategy A: context.route intercept")
-    captured: dict[str, Any] = {"data": None, "done": False}
+    _log("Phase2 strategy A: context.route('**/downloadBinario**') + A4J click")
+    captured: dict[str, Any] = {"data": None, "done": False, "seen": []}
 
     def handle_route(route: Any) -> None:
         if captured["done"]:
@@ -344,27 +590,41 @@ def download_autos_pdf(
                 pass
             return
         try:
-            response = route.fetch()
-            body = response.body()
-            ct = response.headers.get("content-type", "")
-            url_lower = route.request.url.lower()
-            is_pdf = "pdf" in ct or "octet" in ct or url_lower.endswith(".pdf")
-            if is_pdf and len(body) > 5_000:
+            response = route.fetch(timeout=180_000)
+            # Playwright APIResponse.body() returns bytes (method, not attribute)
+            body = response.body() if callable(getattr(response, "body", None)) else response.body
+            ct = (response.headers.get("content-type") or "").lower()
+            captured["seen"].append(f"{response.status} ct={ct} len={len(body)}")
+            if is_valid_pdf(body):
+                _log(f"strategy A: captured valid PDF ({len(body)} bytes, ct={ct})")
                 captured["data"] = body
                 captured["done"] = True
-                route.abort()
-            elif len(body) > 50_000:
-                # Large response even without PDF content-type — save it
+                try:
+                    route.abort()
+                except Exception:
+                    pass
+            elif len(body) >= 50_000 and (b"<html" not in body[:2048].lower()):
+                _log(f"strategy A: non-PDF magic but large binary ({len(body)} bytes) — saving")
                 captured["data"] = body
                 captured["done"] = True
-                route.abort()
+                try:
+                    route.abort()
+                except Exception:
+                    pass
             else:
+                _log(
+                    f"strategy A: downloadBinario response not a PDF "
+                    f"(len={len(body)}, magic={body[:8]!r}) — letting through"
+                )
                 try:
                     route.fulfill(response=response)
                 except Exception:
-                    route.abort()
+                    try:
+                        route.abort()
+                    except Exception:
+                        pass
         except Exception as e:
-            _log(f"route handler error: {e}")
+            _log(f"strategy A route error: {e}")
             try:
                 route.abort()
             except Exception:
@@ -372,81 +632,79 @@ def download_autos_pdf(
 
     context.route("**/downloadBinario**", handle_route)
     try:
-        # If the autos URL IS the downloadBinario URL, navigate directly to it
-        # Otherwise open a new page and navigate
-        autos_page = context.new_page()
+        # Fire the A4J onclick for the Autos Digitais link. This triggers
+        # an iframe navigation to downloadBinario.seam which our route will
+        # intercept.
         try:
-            _log(f"navigating to autos URL: {autos_page_url}")
-            autos_page.goto(autos_page_url, wait_until="domcontentloaded", timeout=60_000)
-            time.sleep(3)
-            autos_page.screenshot(path="/tmp/pje-debug-autos.png")
-            _log("screenshot saved to /tmp/pje-debug-autos.png")
+            frame.evaluate(f"""() => {{
+                var link = document.getElementById({json.dumps(link_id)});
+                if (link && link.onclick) {{
+                    link.onclick(new Event('click'));
+                }} else if (link) {{
+                    link.click();
+                }}
+            }}""")
+        except Exception as e:
+            _log(f"strategy A click failed: {e}")
 
-            # If the page itself is the PDF or triggers a download via iframe
-            # Wait up to 60s for the route intercept to fire
-            waited = 0
-            while not captured["done"] and waited < 60:
-                time.sleep(2)
-                waited += 2
-                if waited % 10 == 0:
-                    _log(f"waiting for route intercept... {waited}s")
-        finally:
-            try:
-                autos_page.close()
-            except Exception:
-                pass
+        # Give the nav time — autos PDFs can be big (60s+ server-side assembly)
+        waited = 0
+        while not captured["done"] and waited < 180:
+            time.sleep(2)
+            waited += 2
+            if waited % 20 == 0:
+                _log(f"strategy A: waiting for downloadBinario... {waited}s")
+
+        # Save debug screenshot regardless
+        try:
+            page.screenshot(path="/tmp/pje-debug-autos.png", full_page=True)
+        except Exception:
+            pass
     finally:
         try:
-            context.unroute("**/downloadBinario**")
+            context.unroute("**/downloadBinario**", handle_route)
         except Exception:
             pass
 
-    if captured["data"] and is_valid_pdf(captured["data"]):
-        _log(f"strategy A: captured {len(captured['data'])} bytes (valid PDF)")
+    if captured["data"] and (is_valid_pdf(captured["data"]) or len(captured["data"]) >= 50_000):
+        _log(f"strategy A: writing {len(captured['data'])} bytes")
         out.write_bytes(captured["data"])
         return len(captured["data"])
-    elif captured["data"]:
-        _log(
-            f"strategy A: captured {len(captured['data'])} bytes but NOT a PDF "
-            f"(magic={captured['data'][:8]!r}) — discarding, trying next strategy"
-        )
+    if captured["seen"]:
+        _log(f"strategy A saw {len(captured['seen'])} downloadBinario responses, none usable:")
+        for s in captured["seen"][:10]:
+            _log(f"  - {s}")
+    else:
+        _log("strategy A: no downloadBinario responses observed")
 
     # ----------------------------------------------------------------
-    # Strategy B: context.request.get() with shared cookies
+    # Strategy B: click to set state, then context.request.get()
     # ----------------------------------------------------------------
-    _log("Phase2 strategy B: context.request.get()")
+    _log("Phase2 strategy B: context.request.get(DOWNLOAD_BINARY_URL)")
     try:
-        # The autos URL itself may be downloadBinario — try it first
-        for url_to_try in [autos_page_url, DOWNLOAD_BINARY_URL]:
-            if "downloadBinario" not in url_to_try and url_to_try != autos_page_url:
-                continue
-            try:
-                _log(f"strategy B: GET {url_to_try}")
-                response = context.request.get(url_to_try, timeout=120_000)
-                body = response.body()
-                ct = response.headers.get("content-type", "")
-                _log(f"strategy B: {response.status} {len(body)} bytes ct={ct!r}")
-                if is_valid_pdf(body):
-                    _log(f"strategy B: valid PDF from {url_to_try}")
-                    out.write_bytes(body)
-                    return len(body)
-                elif len(body) >= MIN_PDF_BYTES:
-                    _log(f"strategy B: large body but not a PDF (magic={body[:8]!r}) — skip")
-            except Exception as e:
-                _log(f"strategy B GET {url_to_try}: {e}")
-
-        # Also try the canonical downloadBinario URL with cookies set
-        _log(f"strategy B: GET {DOWNLOAD_BINARY_URL}")
-        response = context.request.get(DOWNLOAD_BINARY_URL, timeout=120_000)
+        # Re-fire the onclick so the server state (idProcessoSelecionado)
+        # is set for THIS session — strategy A may have already set it, but
+        # being defensive is cheap.
+        try:
+            frame.evaluate(f"""() => {{
+                var link = document.getElementById({json.dumps(link_id)});
+                if (link && link.onclick) link.onclick(new Event('click'));
+            }}""")
+        except Exception:
+            pass
+        time.sleep(5)
+        response = context.request.get(DOWNLOAD_BINARY_URL, timeout=180_000)
         body = response.body()
         ct = response.headers.get("content-type", "")
-        _log(f"strategy B canonical: {response.status} {len(body)} bytes ct={ct!r}")
+        _log(f"strategy B: {response.status} {len(body)} bytes ct={ct!r}")
         if is_valid_pdf(body):
-            _log("strategy B canonical: valid PDF")
+            _log("strategy B: valid PDF")
             out.write_bytes(body)
             return len(body)
-        elif len(body) >= MIN_PDF_BYTES:
-            _log(f"strategy B canonical: large body but not a PDF (magic={body[:8]!r}) — skip")
+        elif len(body) >= 50_000 and b"<html" not in body[:2048].lower():
+            _log(f"strategy B: large binary ({len(body)} bytes) — saving")
+            out.write_bytes(body)
+            return len(body)
     except Exception as e:
         _log(f"strategy B failed: {e}")
 
@@ -455,6 +713,15 @@ def download_autos_pdf(
     # ----------------------------------------------------------------
     _log("Phase2 strategy C: requests.Session()")
     try:
+        try:
+            frame.evaluate(f"""() => {{
+                var link = document.getElementById({json.dumps(link_id)});
+                if (link && link.onclick) link.onclick(new Event('click'));
+            }}""")
+        except Exception:
+            pass
+        time.sleep(5)
+
         cookies = context.cookies()
         session = _requests.Session()
         for c in cookies:
@@ -471,27 +738,22 @@ def download_autos_pdf(
             ),
             "Referer": "https://pje.tjba.jus.br/pje/Painel/painel_usuario/advogado.seam",
         })
-
-        for url_to_try in [autos_page_url, DOWNLOAD_BINARY_URL]:
-            try:
-                _log(f"strategy C: GET {url_to_try}")
-                resp = session.get(url_to_try, timeout=120, stream=True)
-                content_type = resp.headers.get("content-type", "")
-                _log(f"strategy C: HTTP {resp.status_code} {len(resp.content)} bytes ct={content_type!r}")
-                if resp.status_code == 200 and is_valid_pdf(resp.content):
-                    _log(f"strategy C: valid PDF from {url_to_try}")
-                    out.write_bytes(resp.content)
-                    return len(resp.content)
-                elif resp.status_code == 200 and len(resp.content) >= MIN_PDF_BYTES:
-                    _log(f"strategy C: large body but not a PDF (magic={resp.content[:8]!r}) — skip")
-            except Exception as e:
-                _log(f"strategy C GET {url_to_try}: {e}")
+        resp = session.get(DOWNLOAD_BINARY_URL, timeout=180, stream=True)
+        ct = resp.headers.get("content-type", "")
+        _log(f"strategy C: HTTP {resp.status_code} {len(resp.content)} bytes ct={ct!r}")
+        if resp.status_code == 200 and is_valid_pdf(resp.content):
+            _log("strategy C: valid PDF")
+            out.write_bytes(resp.content)
+            return len(resp.content)
+        elif resp.status_code == 200 and len(resp.content) >= 50_000 and b"<html" not in resp.content[:2048].lower():
+            out.write_bytes(resp.content)
+            return len(resp.content)
     except Exception as e:
         _log(f"strategy C failed: {e}")
 
     raise RuntimeError(
-        f"all strategies failed to download PDF from {autos_page_url} — "
-        f"check /tmp/pje-debug-autos.png for the page state"
+        "all download strategies failed — check /tmp/pje-debug-autos.png "
+        "for the page state"
     )
 
 
@@ -537,13 +799,46 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(accept_downloads=True)
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=["--disable-blink-features=AutomationControlled"],
+                )
+                context = browser.new_context(
+                    accept_downloads=True,
+                    viewport={"width": 1400, "height": 900},
+                    locale="pt-BR",
+                )
+                # Auto-accept any JS confirm/alert dialogs (Autos Digitais
+                # sometimes triggers a "Download em andamento" confirm).
+                context.add_init_script(
+                    "window.confirm = () => true; window.alert = () => true;"
+                )
                 page = context.new_page()
+                page.on("dialog", lambda d: d.accept())
+                context.on(
+                    "page",
+                    lambda new_page: new_page.on("dialog", lambda d: d.accept()),
+                )
                 try:
                     login(page, cpf, senha)
-                    autos_url = find_processo_autos_url(page, args.numero)
-                    bytes_written = download_autos_pdf(context, autos_url, out_path)
+                    frame, row_info = _search_peticionar(page, args.numero)
+                    if row_info.get("has_autos_link"):
+                        # Júri path: click Autos Digitais link directly
+                        _log("Júri path: clicking Autos Digitais link")
+                        link_id = row_info["link_id"]
+                        bytes_written = download_autos_pdf(
+                            context, page, frame, link_id, out_path
+                        )
+                    else:
+                        # VVD path: popup → ca → listProcessoCompleto → Download
+                        _log("VVD path: no Autos Digitais link, using popup route")
+                        autos_popup = _navigate_to_autos_via_peticionar(
+                            page, context, args.numero,
+                            frame=frame, row_info=row_info,
+                        )
+                        bytes_written = _download_from_autos_page(
+                            context, autos_popup, out_path
+                        )
                     print(json.dumps({
                         "status": "completed",
                         "pdf_path": out_path,

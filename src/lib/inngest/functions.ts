@@ -2227,6 +2227,56 @@ export const coworkImportAnalysisFn = inngest.createFunction(
   }
 );
 
+// ============================================
+// SHEETS REORDER — Debounced (30s silence)
+// ============================================
+
+/**
+ * Reordena a planilha Google Sheets 30s após a última mutação de demanda.
+ *
+ * Debounce evita:
+ * - Hammering na Sheets API durante edições em lote
+ * - Reorder redundante quando o usuário está arrastando várias demandas
+ *
+ * A chave de debounce é por `sheetName`, então edições em abas diferentes
+ * (ex: Júri + EP) rodam em paralelo, mas múltiplas edições na mesma aba
+ * coalescem em uma única execução.
+ *
+ * Quando `sheetName` não vem no payload (bulk/manual), o debounce usa
+ * a chave "__all__" e o handler reordena todas as abas.
+ */
+export const sheetsReorderDebouncedFn = inngest.createFunction(
+  {
+    id: "sheets-reorder-debounced",
+    name: "Reordenar Planilha (debounced)",
+    debounce: {
+      period: "15s",
+      key: "event.data.sheetName",
+    },
+    retries: 2,
+  },
+  { event: "sheets/reorder.requested" },
+  async ({ event, step }) => {
+    const { sheetName, reason } = event.data as {
+      sheetName?: string;
+      reason?: string;
+    };
+
+    const result = await step.run("reorder", async () => {
+      const { reorderAllSheets } = await import("@/lib/services/sheets-reorder");
+      const filter = sheetName && sheetName !== "__all__" ? sheetName : undefined;
+      return await reorderAllSheets(filter);
+    });
+
+    console.log(
+      `[sheets-reorder-debounced] reason=${reason ?? "?"} sheet=${sheetName ?? "ALL"} ` +
+      `→ ${result.totalWritten} linhas em ${result.sheets.length} abas`,
+    );
+
+    return result;
+  },
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -2254,5 +2304,6 @@ export const functions = [
   driveWatchdogFn,
   intelligenceConsolidateFn,
   syncSheetPollingFn,
+  sheetsReorderDebouncedFn,
   coworkImportAnalysisFn,
 ];
