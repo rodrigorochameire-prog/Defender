@@ -48,6 +48,7 @@ import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompact
 import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { arrayMove } from "@dnd-kit/sortable";
 // KPICardPremium/KPIGrid removed — stats now inline in charcoal header
+import { useProfissional } from "@/contexts/profissional-context";
 import {
   ListTodo,
   Plus,
@@ -578,6 +579,8 @@ function DemandaGridCard({
 }
 
 export default function Demandas() {
+  const { profissionalAtivo, isVisaoGeral } = useProfissional();
+  const profissionalAtivoId = profissionalAtivo.id;
   const [searchTerm, setSearchTerm] = useState("");
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
@@ -784,6 +787,9 @@ export default function Demandas() {
       substatus: d.substatus || null,
       photoUrl: d.assistido?.photoUrl || null,
       updatedAt: d.updatedAt ? new Date(d.updatedAt).toISOString() : null,
+      // Responsável e criador (para filtro por profissional)
+      responsavelId: d.responsavelId ?? d.processo?.responsavelId ?? null,
+      criadoPorId: d.criadoPorId ?? null,
       // Rastreamento de importação
       importBatchId: d.importBatchId || null,
       ordemOriginal: d.ordemOriginal ?? null,
@@ -1602,6 +1608,12 @@ export default function Demandas() {
   // Filtrar demandas
   const demandasFiltradas = useMemo(() => {
     return demandas.filter((demanda) => {
+      // Filtro por profissional ativo (R/J/Geral)
+      const matchProfissional = isVisaoGeral || (
+        demanda.responsavelId === profissionalAtivoId ||
+        demanda.criadoPorId === profissionalAtivoId ||
+        !demanda.responsavelId // Sem responsável = todos veem
+      );
       const matchArchived = showArchived ? demanda.arquivado : !demanda.arquivado;
       const processosText = demanda.processos.map((p) => `${p.tipo} ${p.numero}`).join(" ");
       const matchSearch =
@@ -1639,6 +1651,7 @@ export default function Demandas() {
         selectedStatusGroup.includes(getStatusConfig(demanda.status).group);
 
       return (
+        matchProfissional &&
         matchArchived &&
         matchSearch &&
         matchPrazoFilter &&
@@ -1648,7 +1661,7 @@ export default function Demandas() {
         matchTipoAto
       );
     });
-  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived]);
+  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived, profissionalAtivoId, isVisaoGeral]);
 
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {

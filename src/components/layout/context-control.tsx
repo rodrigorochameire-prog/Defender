@@ -309,15 +309,15 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-md transition-all duration-200",
-              "hover:scale-105 hover:shadow-lg",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
+              "w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200",
+              "hover:ring-2 hover:ring-neutral-300 dark:hover:ring-neutral-600",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400",
               defensorAtual.cor
             )}>
               {defensorAtual.inicial}
             </button>
           </PopoverTrigger>
-          <PopoverContent side="right" align="start" sideOffset={28} className="w-72 p-0 bg-[#141416]/95 backdrop-blur-xl shadow-2xl shadow-black/50 border border-white/[0.08] rounded-xl overflow-hidden">
+          <PopoverContent side="right" align="start" sideOffset={16} className="w-64 p-0 bg-popover border border-border shadow-lg rounded-xl overflow-hidden">
             <ContextPopoverContent
               defensor={defensor}
               atribuicao={atribuicao}
@@ -332,75 +332,54 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
             />
           </PopoverContent>
         </Popover>
-
-        {/* Indicadores visuais compactos */}
-        {workspace && (
-          <div className="flex gap-1 mt-2">
-            <div className={cn("w-1.5 h-1.5 rounded-full", workspaceAtual.cor.replace("text-", "bg-"))} />
-          </div>
-        )}
       </div>
     );
   }
 
-  // Versao expandida - linha unica elegante (TEMA ESCURO)
+  // Versao expandida - discreta e compacta
   return (
     <div className="px-3 py-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button className={cn(
-            "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200",
-            "bg-gradient-to-r from-white/50 to-white/30 dark:from-white/[0.04] dark:to-white/[0.02]",
-            "border border-black/[0.06] dark:border-white/[0.06]",
-            "hover:border-emerald-400/30 dark:hover:border-emerald-600/40",
-            "hover:shadow-md hover:shadow-emerald-100/50 dark:hover:shadow-emerald-900/10",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
+            "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-150",
+            "bg-neutral-50 dark:bg-neutral-900/50",
+            "border border-neutral-200/60 dark:border-neutral-700/40",
+            "hover:border-neutral-300 dark:hover:border-neutral-600",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400",
             "group"
           )}>
             {/* Avatar Defensor */}
             <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0",
+              "w-7 h-7 rounded-md flex items-center justify-center font-bold text-[11px] flex-shrink-0",
               defensorAtual.cor
             )}>
               {defensorAtual.inicial}
             </div>
 
-            {/* Info */}
+            {/* Nome */}
             <div className="flex-1 min-w-0 text-left">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold text-foreground truncate">
-                  {defensorAtual.nome}
+              <span className="text-[11px] font-semibold text-foreground truncate block">
+                {defensorAtual.nomeCurto.split(' ').slice(0, 2).join(' ')}
+              </span>
+              {isCriminalGeral && (
+                <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                  <Building2 className="w-2.5 h-2.5" />
+                  Vara Criminal
                 </span>
-                {isCriminalGeral && (
-                  <>
-                    <span className="text-[10px] text-muted-foreground">|</span>
-                    <div className="flex items-center gap-0.5 text-muted-foreground">
-                      <Building2 className="w-3 h-3" />
-                      <span className="text-[10px] font-semibold">Vara Criminal</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              {workspace && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <workspaceAtual.icon className={cn("w-2.5 h-2.5", workspaceAtual.cor)} />
-                  <span className="text-[9px] text-muted-foreground truncate">
-                    {workspaceAtual.nome}
-                  </span>
-                </div>
               )}
             </div>
 
-            {/* Chevron */}
-            <Settings2 className={cn(
-              "w-4 h-4 text-muted-foreground transition-all duration-200 flex-shrink-0",
-              "group-hover:text-foreground",
+            {/* Ícone sutil */}
+            <ChevronRight className={cn(
+              "w-3.5 h-3.5 text-muted-foreground/50 transition-transform duration-150 flex-shrink-0",
+              "group-hover:text-muted-foreground",
               open && "rotate-90"
             )} />
           </button>
         </PopoverTrigger>
 
-        <PopoverContent align="start" sideOffset={12} className="w-72 p-0 bg-[#141416]/95 backdrop-blur-xl shadow-2xl shadow-black/50 border border-white/[0.08] rounded-xl overflow-hidden">
+        <PopoverContent align="start" sideOffset={8} className="w-64 p-0 bg-popover border border-border shadow-lg rounded-xl overflow-hidden">
           <ContextPopoverContent
             defensor={defensor}
             atribuicao={atribuicao}
@@ -463,108 +442,110 @@ function ContextPopoverContent({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-white/[0.06] text-emerald-400/70">
-          <Eye className="h-3.5 w-3.5" />
-        </div>
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
-          Defensor
-        </span>
+      <div className="px-3 pt-3 pb-1.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Perfil ativo
+        </p>
       </div>
 
-      <div className="mx-3 h-px bg-white/[0.06] mb-2" />
-
-      {/* Defensores Principais (Juri/EP/VVD) */}
+      {/* Defensores Principais (Juri/EP/VVD) — inline compacto */}
       <div className="px-3 pb-2">
-        <div className="flex gap-2">
-          {juriEpVvdDefensores.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => updateDefensor(d.id)}
-              className={cn(
-                "flex-1 py-2.5 px-2 rounded-xl transition-all duration-200 text-center",
-                defensor === d.id
-                  ? "bg-emerald-500/12 ring-1 ring-emerald-500/30"
-                  : "bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.06]"
-              )}
-            >
-              <div className={cn(
-                "w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm mx-auto mb-1.5 shadow-md",
-                defensor === d.id ? "ring-2 ring-emerald-500/20" : "",
-                d.cor
-              )}>
-                {d.inicial}
-              </div>
-              <p className={cn(
-                "text-[10px] leading-tight",
-                defensor === d.id
-                  ? "font-semibold text-emerald-300"
-                  : "font-medium text-muted-foreground"
-              )}>
-                {d.nomeCurto.split(' ').slice(0, 2).join(' ')}
-              </p>
-            </button>
-          ))}
+        <div className="flex gap-1.5">
+          {juriEpVvdDefensores.map((d) => {
+            const isActive = defensor === d.id;
+            return (
+              <button
+                key={d.id}
+                onClick={() => updateDefensor(d.id)}
+                className={cn(
+                  "flex-1 py-2 px-1.5 rounded-lg transition-all duration-150 text-center",
+                  isActive
+                    ? "bg-neutral-100 dark:bg-neutral-800 ring-1 ring-neutral-300 dark:ring-neutral-600"
+                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                )}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-md flex items-center justify-center font-bold text-xs mx-auto mb-1",
+                  isActive && "ring-2 ring-neutral-400 dark:ring-neutral-500",
+                  d.cor
+                )}>
+                  {d.inicial}
+                </div>
+                <p className={cn(
+                  "text-[10px] leading-tight truncate",
+                  isActive ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+                )}>
+                  {d.nomeCurto.split(' ').slice(0, 2).join(' ')}
+                </p>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Visao Geral */}
+        {/* Visao Geral — botão com ícone de olho */}
         {geralOption && (
           <button
             onClick={() => updateDefensor(geralOption.id)}
             className={cn(
-              "w-full py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 mt-2",
+              "w-full py-2 px-3 rounded-lg transition-all duration-150 flex items-center gap-2.5 mt-1.5",
               defensor === geralOption.id
-                ? "bg-emerald-500/12 ring-1 ring-emerald-500/30"
-                : "bg-white/[0.04] hover:bg-white/[0.08] ring-1 ring-white/[0.06]"
+                ? "bg-neutral-100 dark:bg-neutral-800 ring-1 ring-neutral-300 dark:ring-neutral-600"
+                : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
             )}
           >
             <Eye className={cn(
-              "w-5 h-5",
-              defensor === geralOption.id ? "text-emerald-400" : "text-muted-foreground"
+              "w-4 h-4 flex-shrink-0",
+              defensor === geralOption.id ? "text-foreground" : "text-muted-foreground"
             )} />
-            <p className={cn(
-              "text-sm font-semibold",
-              defensor === geralOption.id ? "text-emerald-300" : "text-foreground/80"
+            <span className={cn(
+              "text-xs",
+              defensor === geralOption.id ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
             )}>
-              Visão Geral
-            </p>
+              Ver todos os colegas
+            </span>
+            {defensor === geralOption.id && (
+              <Check className="w-3.5 h-3.5 text-foreground ml-auto flex-shrink-0" />
+            )}
           </button>
         )}
 
         {/* Varas Criminais - Seção colapsável para admin */}
         {varasCriminaisDefensores.length > 0 && (
-          <Collapsible className="mt-3">
-            <CollapsibleTrigger className="w-full pt-2 border-t border-white/[0.06] flex items-center justify-between group">
+          <Collapsible className="mt-2">
+            <CollapsibleTrigger className="w-full pt-2 border-t border-border flex items-center justify-between group">
               <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <Settings2 className="w-3 h-3" />
-                Modo Admin
+                Outros defensores
               </p>
               <ChevronRight className="w-3 h-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <div className="flex gap-2">
-                {varasCriminaisDefensores.map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() => updateDefensor(d.id)}
-                    className={cn(
-                      "flex-1 py-1.5 px-2 rounded-lg transition-all duration-200 text-center",
-                      defensor === d.id
-                        ? "bg-white/[0.08] ring-1 ring-white/[0.1]"
-                        : "bg-white/[0.03] hover:bg-white/[0.06] ring-1 ring-white/[0.04]"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
-                      d.cor
-                    )}>
-                      {d.inicial}
-                    </div>
-                    <p className="text-[9px] font-medium text-muted-foreground truncate">
-                      {d.nomeCurto}
-                    </p>
-                  </button>
-                ))}
+            <CollapsibleContent className="pt-1.5">
+              <div className="flex gap-1.5">
+                {varasCriminaisDefensores.map((d) => {
+                  const isActive = defensor === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => updateDefensor(d.id)}
+                      className={cn(
+                        "flex-1 py-1.5 px-1.5 rounded-md transition-all duration-150 text-center",
+                        isActive
+                          ? "bg-neutral-100 dark:bg-neutral-800 ring-1 ring-neutral-300 dark:ring-neutral-600"
+                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
+                        d.cor
+                      )}>
+                        {d.inicial}
+                      </div>
+                      <p className="text-[9px] font-medium text-muted-foreground truncate">
+                        {d.nomeCurto}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -572,24 +553,23 @@ function ContextPopoverContent({
       </div>
 
       {/* Secao: Visao Integrada */}
-      <div className="mx-3 h-px bg-white/[0.06]" />
+      <div className="mx-3 h-px bg-border" />
       <div className="p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-muted-foreground" />
+            <Eye className="w-3.5 h-3.5 text-muted-foreground" />
             <div>
-              <p className="text-xs font-medium text-foreground">
-                Visao Integrada
+              <p className="text-[11px] font-medium text-foreground">
+                Visão Integrada
               </p>
-              <p className="text-[10px] text-muted-foreground">
-                Incluir todos os registros
+              <p className="text-[9px] text-muted-foreground">
+                Incluir registros de todos
               </p>
             </div>
           </div>
           <Switch
             checked={visaoIntegrada}
             onCheckedChange={updateVisaoIntegrada}
-            className="data-[state=checked]:bg-emerald-600"
           />
         </div>
       </div>
