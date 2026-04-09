@@ -384,12 +384,14 @@ export function DemandasView() {
   const { selectedDefensorId } = useDefensor();
 
   // Buscar demandas reais do banco
-  const { data: rawDemandas, isLoading } = trpc.demandas.list.useQuery({
+  const queryInput = {
     status: statusFilter !== "all" ? statusFilter : undefined,
     search: filter || undefined,
     defensorId: selectedDefensorId ?? undefined,
     limit: 100,
-  });
+  };
+  console.log("[DemandasView] Query input:", JSON.stringify(queryInput));
+  const { data: rawDemandas, isLoading } = trpc.demandas.list.useQuery(queryInput);
 
   // Normalizar dados do banco para o formato da view
   const allDemandas: DemandaView[] = useMemo(() => {
