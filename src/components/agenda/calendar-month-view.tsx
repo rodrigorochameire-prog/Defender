@@ -5,8 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
-import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from "@/components/ui/popover";
-import { buscarHistoricoPorProcesso, buscarHistoricoPorAssistido } from "@/lib/data/historico-audiencias";
 import {
   format,
   startOfMonth,
@@ -27,30 +25,20 @@ import {
   ChevronRight,
   Gavel,
   Users,
-  Clock,
   Calendar as CalendarIcon,
-  MapPin,
   AlertTriangle,
   Home,
   Lock,
   Folder,
   RefreshCw,
   Shield,
-  CheckCircle2,
   FileText,
   History,
   XCircle,
   CalendarX2,
-  Edit3,
-  Trash2,
-  ExternalLink,
-  User,
-  Copy,
   Scale,
-  X,
   Plus,
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface CalendarMonthViewProps {
   eventos: any[];
@@ -228,24 +216,10 @@ function EventoCompacto({
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;
 
-  // Controlled popover — on mobile, bypass and go directly to event
-  const [popoverOpen, setPopoverOpen] = useState(false);
-
   return (
-    <Popover
-      open={popoverOpen}
-      onOpenChange={(newOpen) => {
-        if (newOpen && typeof window !== "undefined" && window.innerWidth < 640) {
-          onEventClick(evento);
-          return;
-        }
-        setPopoverOpen(newOpen);
-      }}
-    >
-      <PopoverTrigger asChild>
         <button
-          onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => { e.stopPropagation(); setPopoverOpen(false); onEventDoubleClick?.(evento); }}
+          onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
+          onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
           className={`group w-full text-left rounded-xl transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
             eventoCancelado ? "opacity-45" : ""
           }`}
@@ -310,195 +284,6 @@ function EventoCompacto({
             ) : null}
           </div>
         </button>
-      </PopoverTrigger>
-      
-      <PopoverContent
-        className="w-[340px] p-0 border border-neutral-200/80 dark:border-neutral-800/80 shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-neutral-900"
-        side="right"
-        align="start"
-        collisionPadding={16}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* ── Seção 1: Header — tipo + ações ── */}
-        <div className="flex items-center gap-3 px-4 pt-3.5 pb-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundColor: eventoCancelado ? undefined : `${displayColor}15` }}
-          >
-            <AtribIcon
-              className={`w-4 h-4 ${eventoCancelado ? "text-neutral-400 dark:text-neutral-500" : ""}`}
-              style={eventoCancelado ? undefined : { color: displayColor }}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            {eventoCancelado && (
-              <div className="flex items-center gap-1.5 mb-0.5">
-                {(evento.status === "cancelado" || evento.status === "cancelada") ? (
-                  <XCircle className="w-3 h-3 text-rose-500" />
-                ) : (
-                  <CalendarX2 className="w-3 h-3 text-amber-500" />
-                )}
-                <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-500">
-                  {(evento.status === "cancelado" || evento.status === "cancelada") ? "Cancelada" : "Redesignada"}
-                </span>
-              </div>
-            )}
-            <h4
-              className={`font-semibold text-[13px] leading-tight ${
-                eventoCancelado
-                  ? "text-neutral-400 dark:text-neutral-500 line-through"
-                  : "text-neutral-900 dark:text-neutral-100"
-              }`}
-            >
-              {tipoCompleto}
-            </h4>
-            {temAdvogado && !eventoCancelado && (
-              <div className="flex items-center gap-1 mt-1">
-                <Scale className="w-3 h-3 text-rose-500" />
-                <span className="text-[10px] font-medium text-rose-600 dark:text-rose-400">
-                  Advogado constituído
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            {onEditEvento && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onEditEvento(evento); }}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                title="Editar"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {onDeleteEvento && (
-              <button
-                onClick={(e) => { e.stopPropagation(); if (confirm("Excluir este evento?")) onDeleteEvento(evento.id); }}
-                className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                title="Excluir"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-            <PopoverClose
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              title="Fechar"
-            >
-              <X className="w-3.5 h-3.5" />
-            </PopoverClose>
-          </div>
-        </div>
-
-        {/* ── Seção 2: Assistido — destaque com fundo ── */}
-        {evento.assistido && (
-          <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800">
-            <div className="flex items-center gap-2.5">
-              <User className="w-4 h-4 text-neutral-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Assistido</p>
-                {evento.assistidoId ? (
-                  <a
-                    href={`/admin/assistidos/${evento.assistidoId}`}
-                    className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline leading-tight block"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {evento.assistido}
-                  </a>
-                ) : (
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 leading-tight">
-                    {evento.assistido}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Seção 3: Dados — processo, horário, local ── */}
-        <div className="px-4 pt-1 pb-3 space-y-2">
-          {evento.processo && (
-            <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4 text-neutral-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Processo</p>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-mono text-neutral-700 dark:text-neutral-300 truncate">{evento.processo}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(evento.processo); toast.success("Número copiado!"); }}
-                    className="p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer shrink-0"
-                    title="Copiar"
-                  >
-                    <Copy className="w-3 h-3 text-neutral-400" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2.5">
-            <Clock className="w-4 h-4 text-neutral-400 shrink-0" />
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Horário</p>
-              <span className={`text-xs font-semibold ${eventoCancelado ? "text-neutral-400 line-through" : "text-neutral-900 dark:text-neutral-100"}`}>
-                {evento.horarioInicio}{evento.horarioFim && ` – ${evento.horarioFim}`}
-              </span>
-            </div>
-          </div>
-
-          {evento.local && (
-            <div className="flex items-center gap-2.5">
-              <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 leading-none mb-0.5">Local</p>
-                <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate block">{evento.local}</span>
-              </div>
-            </div>
-          )}
-
-          {hasRegistro && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 mt-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Registro documentado</span>
-            </div>
-          )}
-        </div>
-
-        {/* ── Seção 4: Footer ── */}
-        <div className="px-4 pt-2 pb-1 border-t border-neutral-100 dark:border-neutral-800/50">
-          {onEventDoubleClick && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setPopoverOpen(false); onEventDoubleClick(evento); }}
-              className="w-full text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 py-1.5 mb-2 transition-colors flex items-center justify-center gap-1"
-            >
-              Ver mais detalhes <ExternalLink className="w-3 h-3" />
-            </button>
-          )}
-          <div className="flex items-center gap-2 pb-1">
-            <Button
-              size="sm"
-              className="flex-1 h-9 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 cursor-pointer"
-              onClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
-            >
-              {hasRegistro ? (
-                <><ExternalLink className="w-3.5 h-3.5 mr-1.5" />Ver Registro</>
-              ) : (
-                <><FileText className="w-3.5 h-3.5 mr-1.5" />Registrar</>
-              )}
-            </Button>
-            {onEditEvento && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-9 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onEditEvento(evento); }}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
 
