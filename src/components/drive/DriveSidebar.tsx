@@ -92,6 +92,28 @@ function getAttrConnectorGradient(color: string) {
   }
 }
 
+function getAttrActiveColor(color: string) {
+  switch (color) {
+    case "emerald": return "text-emerald-500";
+    case "rose": return "text-rose-500";
+    case "amber": return "text-amber-500";
+    case "sky": return "text-sky-500";
+    case "orange": return "text-orange-500";
+    default: return "text-zinc-500";
+  }
+}
+
+function getAttrActiveBg(color: string) {
+  switch (color) {
+    case "emerald": return "bg-emerald-50 dark:bg-emerald-950/20";
+    case "rose": return "bg-rose-50 dark:bg-rose-950/20";
+    case "amber": return "bg-amber-50 dark:bg-amber-950/20";
+    case "sky": return "bg-sky-50 dark:bg-sky-950/20";
+    case "orange": return "bg-orange-50 dark:bg-orange-950/20";
+    default: return "bg-zinc-100 dark:bg-zinc-800/50";
+  }
+}
+
 // --- Subfolder List ---
 
 function AtribuicaoSubfolders({
@@ -212,13 +234,13 @@ function AtribuicaoSubfolders({
                 className={cn(
                   "flex items-center gap-2 w-full text-left px-2.5 py-1.5 transition-all duration-200 rounded-lg group/subitem relative cursor-pointer",
                   isActive
-                    ? "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-800 dark:text-zinc-200 font-medium"
+                    ? `${getAttrActiveBg(color)} text-zinc-800 dark:text-zinc-200 font-medium`
                     : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 hover:text-zinc-800 dark:hover:text-zinc-200"
                 )}
               >
                 <FolderOpen className={cn(
                   "h-3.5 w-3.5 shrink-0 transition-all duration-200",
-                  isActive ? "text-emerald-500" : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
+                  isActive ? getAttrActiveColor(color) : "text-zinc-400 dark:text-zinc-500 group-hover/subitem:text-zinc-600 dark:group-hover/subitem:text-zinc-300"
                 )} />
                 <span className="truncate text-xs">{folder.name}</span>
                 {isRecent && (
