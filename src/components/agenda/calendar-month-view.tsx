@@ -239,7 +239,7 @@ function EventoCompacto({
         <button
           onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
-          className={`group w-full text-left rounded-lg transition-all duration-200 overflow-hidden cursor-pointer relative bg-white/[0.8] border border-neutral-200/50 hover:bg-white hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 ${
+          className={`group w-full text-left rounded-md transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/80 hover:bg-neutral-100 ${
             eventoCancelado ? "opacity-45" : ""
           }`}
         >
@@ -430,11 +430,11 @@ export function CalendarMonthView({
         </div>
 
         {/* Corpo - Dias do Mês */}
-        <div className="bg-neutral-200/30 rounded-lg overflow-hidden">
+        <div>
           {rows.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7 gap-px"
+              className="grid grid-cols-7"
             >
               {week.map((date, dayIndex) => {
                 const dayEvents = getEventosForDate(date);
@@ -450,14 +450,12 @@ export function CalendarMonthView({
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
                       group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 transition-all duration-150 cursor-pointer
+                      border-r border-b border-neutral-100 dark:border-neutral-800
                       ${isOtherMonth
-                        ? "bg-neutral-100/[0.35]"
-                        : isDayToday
-                          ? "bg-white/[0.95] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
-                          : hasEvents
-                            ? "bg-white/[0.85] shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
-                            : "bg-white/[0.55]"
+                        ? "bg-neutral-50/50 dark:bg-neutral-900/30"
+                        : "bg-white dark:bg-neutral-900"
                       }
+                      ${isDayToday ? "shadow-[inset_0_0_0_1.5px_#1a1a1a] dark:shadow-[inset_0_0_0_1.5px_#e5e5e5] z-[1] relative" : ""}
                       ${isCurrentMonth && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"}
                     `}
                   >
@@ -465,12 +463,14 @@ export function CalendarMonthView({
                     <div className="flex items-start justify-between mb-2">
                       <span
                         className={`
-                          text-xs sm:text-sm font-semibold w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
+                          text-xs sm:text-sm w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
                           ${isDayToday
-                            ? "bg-neutral-900 text-white"
+                            ? "bg-neutral-900 text-white font-bold"
                             : isOtherMonth
-                              ? "text-neutral-300"
-                              : "text-neutral-500"
+                              ? "text-neutral-300 font-medium"
+                              : hasEvents
+                                ? "text-neutral-600 font-bold"
+                                : "text-neutral-400 font-medium"
                           }
                         `}
                       >
