@@ -47,6 +47,8 @@ interface AtribuicaoPillsProps {
   singleSelect?: boolean;
   /** Compact mode: no counts, labels hidden on small screens */
   compact?: boolean;
+  /** Visual variant — "light" for white/neutral backgrounds, "dark" for charcoal headers */
+  variant?: "light" | "dark";
 }
 
 export function AtribuicaoPills({
@@ -59,7 +61,9 @@ export function AtribuicaoPills({
   className,
   singleSelect = false,
   compact = false,
+  variant = "light",
 }: AtribuicaoPillsProps) {
+  const isDark = variant === "dark";
   const filtered = options.filter((o) => o.value !== "Todas");
 
   const handleClick = (value: string) => {
@@ -75,7 +79,12 @@ export function AtribuicaoPills({
   return (
     <div className={className ?? "flex items-center gap-1"}>
       {/* Switch container — segmented control style */}
-      <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60">
+      <div className={cn(
+          "inline-flex items-center gap-0 p-[3px] rounded-full border",
+          isDark
+            ? "bg-white/[0.05] border-white/[0.06]"
+            : "bg-neutral-200/60 dark:bg-neutral-800 border-neutral-300/70 dark:border-neutral-700/60"
+        )}>
         {filtered.map((opt) => {
           const isActive = selectedValues.includes(opt.value);
           const hex = ATRIBUICAO_COLORS[opt.label] || DEFAULT_HEX;
@@ -95,14 +104,16 @@ export function AtribuicaoPills({
               )}
               style={
                 isActive
-                  ? { backgroundColor: hex }
-                  : { color: "#9ca3af" }
+                  ? isDark
+                    ? { backgroundColor: `${hex}40`, color: "white" }
+                    : { backgroundColor: hex }
+                  : { color: isDark ? "rgba(255,255,255,0.35)" : "#9ca3af" }
               }
             >
               {Icon && (
                 <Icon
                   className="w-[16px] h-[16px] flex-shrink-0"
-                  style={{ color: isActive ? "#fff" : "#71717a" }}
+                  style={{ color: isActive ? "#fff" : isDark ? "rgba(255,255,255,0.35)" : "#71717a" }}
                 />
               )}
               {isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}
@@ -111,8 +122,8 @@ export function AtribuicaoPills({
                   className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   style={
                     isActive
-                      ? { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" }
-                      : { color: "#9ca3af" }
+                      ? { backgroundColor: "rgba(255,255,255,0.25)", color: isDark ? "rgba(255,255,255,0.6)" : "#fff" }
+                      : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
                   }
                 >
                   {count}
