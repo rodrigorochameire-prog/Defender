@@ -20,6 +20,7 @@ type RawDep = {
   nome?: string;
   papel?: string;
   tipo?: string;
+  vinculo?: string;
   resumo?: string;
   endereco?: string;
   telefones?: string[];
@@ -32,6 +33,7 @@ type RawDep = {
 interface PreparedDepoente {
   nome: string;
   tipo: TestemunhaTipo;
+  vinculo?: string | null;
   endereco: string | null;
   resumo: string | null;
   perguntasSugeridas: string | null;
@@ -78,14 +80,26 @@ const _isPlaceholder = (nome: string): boolean => {
 
 const _mapPapelToTipo = (papel: string): TestemunhaTipo => {
   const p = (papel || "").toLowerCase().replace(/\s+/g, "_");
-  if (p === "testemunha_acusacao" || p === "acusacao") return "ACUSACAO";
-  if (p === "testemunha_defesa" || p === "defesa") return "DEFESA";
-  if (p === "vitima" || p === "vítima") return "VITIMA";
-  if (p === "policial_condutor" || p === "policial") return "ACUSACAO";
-  if (p === "perito") return "PERITO";
+  // Acusação
+  if (p === "testemunha_acusacao" || p === "acusacao" || p === "testemunha_de_acusação"
+      || p === "testemunha_de_acusacao") return "ACUSACAO";
+  // Defesa
+  if (p === "testemunha_defesa" || p === "defesa" || p === "testemunha_de_defesa") return "DEFESA";
+  // Vítima / Ofendida
+  if (p === "vitima" || p === "vítima" || p === "ofendida" || p === "ofendido") return "VITIMA";
+  // Policial (qualquer variante)
+  if (p.includes("policial") || p.includes("pm_") || p === "pm"
+      || p.includes("condutor") || p.includes("militar")) return "ACUSACAO";
+  // Investigador / Delegado (tratados como acusação)
+  if (p.includes("investigador") || p.includes("ipc") || p.includes("delegad")) return "ACUSACAO";
+  // Perito
+  if (p === "perito" || p.includes("perit")) return "PERITO";
+  // Informante
   if (p === "informante") return "INFORMANTE";
-  if (p === "testemunha") return "COMUM";
-  if (p === "reu" || p === "réu") return "COMUM";
+  // Testemunha genérica
+  if (p.includes("testemunha")) return "COMUM";
+  // Réu não deve virar testemunha — filtrar antes. Se chegou aqui, default.
+  if (p === "reu" || p === "réu" || p === "defendido") return "COMUM";
   return "COMUM";
 };
 
@@ -239,8 +253,14 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
   // Merge testemunhas_acusacao + testemunhas_defesa (from _analise_ia.json VVD/Júri skill)
   // into a unified list with papel/tipo tagged so downstream mapping works.
   const mergedTestemunhas: RawDep[] = [
-    ...collect(ad?.testemunhas_acusacao).map((t) => ({ ...t, papel: t.papel ?? t.tipo ?? "ACUSACAO" })),
-    ...collect(ad?.testemunhas_defesa).map((t) => ({ ...t, papel: t.papel ?? t.tipo ?? "DEFESA" })),
+    ...collect(ad?.testemunhas_acusacao).map((t) => ({
+      ...t,
+      papel: t.papel ?? t.tipo ?? t.vinculo ?? "ACUSACAO",
+    })),
+    ...collect(ad?.testemunhas_defesa).map((t) => ({
+      ...t,
+      papel: t.papel ?? t.tipo ?? t.vinculo ?? "DEFESA",
+    })),
   ];
 
   const sources: Array<{ label: string; items: RawDep[] }> = [
@@ -252,13 +272,19 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
     {
       label: "pessoas",
       items: collect(ad?.pessoas).filter((p) => {
-        const papel = (p.papel ?? "").toLowerCase();
+        const papel = (p.papel ?? p.vinculo ?? "").toLowerCase();
         return (
           papel.startsWith("testemunha") ||
           papel === "vitima" ||
           papel === "vítima" ||
+          papel === "ofendida" ||
+          papel === "ofendido" ||
           papel === "informante" ||
-          papel === "policial_condutor"
+          papel.includes("policial") ||
+          papel.includes("pm") ||
+          papel.includes("condutor") ||
+          papel.includes("investigador") ||
+          papel.includes("perit")
         );
       }),
     },
@@ -341,6 +367,7 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
       return {
         nome: dep.nome,
         tipo,
+        vinculo: dep.vinculo?.trim() || dep.papel?.trim() || null,
         endereco: dep.endereco?.trim() || null,
         resumo: dep.resumo?.trim() || null,
         perguntasSugeridas,
