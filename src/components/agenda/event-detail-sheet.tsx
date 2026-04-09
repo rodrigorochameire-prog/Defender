@@ -134,6 +134,25 @@ function getIntimacaoConfig(intimado?: boolean | string) {
 }
 
 // ─────────────────────────────────────────────
+// Display labels for depoente tipo
+// ─────────────────────────────────────────────
+
+const TIPO_DISPLAY: Record<string, string> = {
+  ACUSACAO: "Acusação",
+  DEFESA: "Defesa",
+  VITIMA: "Vítima",
+  INFORMANTE: "Informante",
+  PERITO: "Perito",
+  COMUM: "Testemunha",
+  testemunha: "Testemunha",
+  vitima: "Vítima",
+  reu: "Réu",
+  perito: "Perito",
+  informante: "Informante",
+  policial: "Policial",
+};
+
+// ─────────────────────────────────────────────
 // Sub-componentes
 // ─────────────────────────────────────────────
 
@@ -157,7 +176,7 @@ function DepoenteCard({ depoente }: { depoente: any }) {
               </span>
               {depoente.tipo && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 font-medium flex-shrink-0">
-                  {depoente.tipo}
+                  {TIPO_DISPLAY[depoente.tipo] ?? depoente.tipo}
                 </span>
               )}
             </div>
@@ -289,13 +308,39 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
     { enabled: !!evento?.processoId && open }
   );
 
-  const depoentes: any[] = (registro as any)?.depoentes ?? [];
-  const historicoRecente = (historico ?? []).slice(0, 3);
+  // Fallback: when registro has no depoentes, use previewPreparacao (from analysis_data)
+  const registroDepoentes: any[] = (registro as any)?.depoentes ?? [];
+  const needsFallback = registroDepoentes.length === 0;
+
+  const { data: preparacaoPreview } = trpc.audiencias.previewPreparacao.useQuery(
+    { audienciaId: audienciaIdNum ?? 0 },
+    { enabled: needsFallback && audienciaIdNum !== null && open }
+  );
+
+  // Prefer registro depoentes; fallback to analysis_data preview
+  const depoentes: any[] = registroDepoentes.length > 0
+    ? registroDepoentes
+    : (preparacaoPreview?.depoentes ?? []).map((d: any) => ({
+        nome: d.nome,
+        tipo: d.tipo,
+        status: "pendente",
+        intimado: false,
+        resumo: d.resumo,
+        perguntasSugeridas: d.perguntasSugeridas,
+        pontosFavoraveis: d.pontosFavoraveis,
+        pontosDesfavoraveis: d.pontosDesfavoraveis,
+        observacoes: d.observacoes,
+        vinculo: d.vinculo,
+      }));
+
+  const fromAnalysis = registroDepoentes.length === 0 && depoentes.length > 0;
   const temEnrichment = depoentes.length > 0;
   const depoenteOuvidos = depoentes.filter((d: any) => {
     const s = d.status?.toLowerCase() ?? "";
     return s === "ouvido" || s === "ouvida";
   }).length;
+
+  const historicoRecente = (historico ?? []).slice(0, 3);
 
   const copyProcesso = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -450,7 +495,9 @@ export function EventDetailSheet({ evento, open, onClose, onEdit }: EventDetailS
               <SectionLabel
                 icon={Users}
                 label={temEnrichment
-                  ? `Depoentes · ${depoenteOuvidos} ouvido${depoenteOuvidos !== 1 ? "s" : ""} de ${depoentes.length}`
+                  ? fromAnalysis
+                    ? `Depoentes · ${depoentes.length} (da análise)`
+                    : `Depoentes · ${depoenteOuvidos} ouvido${depoenteOuvidos !== 1 ? "s" : ""} de ${depoentes.length}`
                   : "Depoentes"}
               />
             </div>
