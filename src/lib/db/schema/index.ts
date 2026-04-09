@@ -48,5 +48,8 @@ export * from "./defensoria";
 export * from "./instancia-superior";
 export * from "./system";
 
+// Audit log
+export * from "./audit";
+
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";

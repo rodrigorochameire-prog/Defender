@@ -6,6 +6,7 @@ import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
+import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, getSheetName, type DemandaParaSync } from "@/lib/services/google-sheets";
 import { inngest } from "@/lib/inngest/client";
@@ -448,6 +449,16 @@ export const demandasRouter = router({
         })
         .returning();
 
+      // Audit log
+      logAudit({
+        userId: ctx.user.id,
+        userName: ctx.user.name,
+        entityType: "demanda",
+        entityId: novaDemanda.id,
+        action: "create",
+        metadata: { ato: input.ato, assistidoId: input.assistidoId, processoId: input.processoId },
+      });
+
       // Sync Google Sheets (fire-and-forget — não bloqueia resposta)
       buildDemandaSync(novaDemanda.id).then((d) => {
         if (!d) return;
@@ -513,6 +524,9 @@ export const demandasRouter = router({
         whereCondition = and(eq(demandas.id, id), inArray(demandas.defensorId, defensoresVisiveis));
       }
 
+      // Buscar estado anterior para audit log
+      const [anterior] = await db.select().from(demandas).where(eq(demandas.id, id));
+
       const [atualizado] = await db
         .update(demandas)
         .set(updateData)
@@ -523,6 +537,25 @@ export const demandasRouter = router({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Demanda não encontrada ou você não tem permissão para editá-la",
+        });
+      }
+
+      // Audit log
+      if (anterior) {
+        const changes = diffFields(
+          anterior as unknown as Record<string, unknown>,
+          data as Record<string, unknown>,
+          ["status", "prioridade", "ato", "providencias", "reuPreso", "substatus"]
+        );
+        const isStatusChange = data.status && data.status !== anterior.status;
+        logAudit({
+          userId: ctx.user.id,
+          userName: ctx.user.name,
+          entityType: "demanda",
+          entityId: id,
+          action: isStatusChange ? "status_change" : "update",
+          changes: changes ?? undefined,
+          metadata: isStatusChange ? { oldStatus: anterior.status, newStatus: data.status } : undefined,
         });
       }
 
@@ -627,13 +660,23 @@ export const demandasRouter = router({
         .set({ deletedAt: new Date() })
         .where(whereCondition)
         .returning();
-      
+
       if (!excluido) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Demanda não encontrada ou você não tem permissão para excluí-la",
         });
       }
+
+      // Audit log
+      logAudit({
+        userId: ctx.user.id,
+        userName: ctx.user.name,
+        entityType: "demanda",
+        entityId: input.id,
+        action: "delete",
+        metadata: { ato: excluido.ato, assistidoId: excluido.assistidoId },
+      });
 
       // Sync Google Sheets — remove da planilha (fire-and-forget)
       if (excluido.processoId) {
@@ -1136,6 +1179,16 @@ export const demandasRouter = router({
             } as Record<string, unknown> : undefined,
             // createdAt usa defaultNow() — momento real da importação
           }).returning();
+
+          // Audit log da importação
+          logAudit({
+            userId: ctx.user.id,
+            userName: ctx.user.name,
+            entityType: "demanda",
+            entityId: insertedDemanda.id,
+            action: "import",
+            metadata: { importBatchId: row.importBatchId, ato: row.ato, assistido: row.nomeAssistido },
+          });
 
           // 7. Criar audiência quando a intimação é de audiência
           // Nota: NÃO criar calendar_event aqui — `audiencias` é a única fonte
