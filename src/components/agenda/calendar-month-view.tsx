@@ -239,13 +239,13 @@ function EventoCompacto({
         <button
           onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
-          className={`group w-full text-left rounded-md transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/80 hover:bg-neutral-100 ${
-            eventoCancelado ? "opacity-45" : ""
+          className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
+            eventoCancelado ? "opacity-40" : ""
           }`}
         >
           {/* Left attribution bar */}
           <div
-            className="absolute left-0 top-1 bottom-1 w-[2.5px] rounded-r-sm opacity-70"
+            className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-50"
             style={{ backgroundColor: displayColor }}
           />
 
@@ -450,13 +450,13 @@ export function CalendarMonthView({
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
                       group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 transition-all duration-150 cursor-pointer
-                      border-r border-b border-neutral-100 dark:border-neutral-800
+                      border-r border-b border-neutral-100/60 dark:border-neutral-800/40
                       ${isOtherMonth
-                        ? "bg-neutral-50/50 dark:bg-neutral-900/30"
+                        ? "bg-neutral-50/30 dark:bg-neutral-900/20"
                         : "bg-white dark:bg-neutral-900"
                       }
-                      ${isDayToday ? "shadow-[inset_0_0_0_1.5px_#1a1a1a] dark:shadow-[inset_0_0_0_1.5px_#e5e5e5] z-[1] relative" : ""}
-                      ${isCurrentMonth && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"}
+                      ${isDayToday ? "shadow-[inset_0_0_0_1px_#a1a1aa] dark:shadow-[inset_0_0_0_1px_#525252] z-[1] relative" : ""}
+                      ${isCurrentMonth && !isDayToday && "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30"}
                     `}
                   >
                     {/* Número do Dia */}
@@ -465,12 +465,12 @@ export function CalendarMonthView({
                         className={`
                           text-xs sm:text-sm w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
                           ${isDayToday
-                            ? "bg-neutral-900 text-white font-bold"
+                            ? "bg-neutral-700 text-white font-semibold"
                             : isOtherMonth
-                              ? "text-neutral-300 font-medium"
+                              ? "text-neutral-300/70 font-normal"
                               : hasEvents
-                                ? "text-neutral-600 font-bold"
-                                : "text-neutral-400 font-medium"
+                                ? "text-neutral-600 font-semibold"
+                                : "text-neutral-400/80 font-normal"
                           }
                         `}
                       >
