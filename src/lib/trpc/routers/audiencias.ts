@@ -236,7 +236,15 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
   const collect = (arr: unknown): RawDep[] =>
     Array.isArray(arr) ? (arr as RawDep[]) : [];
 
+  // Merge testemunhas_acusacao + testemunhas_defesa (from _analise_ia.json VVD/Júri skill)
+  // into a unified list with papel/tipo tagged so downstream mapping works.
+  const mergedTestemunhas: RawDep[] = [
+    ...collect(ad?.testemunhas_acusacao).map((t) => ({ ...t, papel: t.papel ?? t.tipo ?? "ACUSACAO" })),
+    ...collect(ad?.testemunhas_defesa).map((t) => ({ ...t, papel: t.papel ?? t.tipo ?? "DEFESA" })),
+  ];
+
   const sources: Array<{ label: string; items: RawDep[] }> = [
+    { label: "testemunhas_acusacao+defesa", items: mergedTestemunhas },
     { label: "depoimentos", items: collect(ad?.depoimentos) },
     { label: "painelDepoentes", items: collect(ad?.painelDepoentes) },
     { label: "payload.depoimentos", items: collect(ad?.payload?.depoimentos) },
