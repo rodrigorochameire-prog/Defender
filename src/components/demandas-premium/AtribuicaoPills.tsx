@@ -85,6 +85,31 @@ export function AtribuicaoPills({
             ? "bg-white/[0.05] border-white/[0.06]"
             : "bg-neutral-200/60 dark:bg-neutral-800 border-neutral-300/70 dark:border-neutral-700/60"
         )}>
+        {/* Botão "Todas" — ativo quando all selecionado ou nenhum filtro específico */}
+        {!singleSelect && (() => {
+          const allOption = options.find((o) => o.value === "all" || o.value === "Todas" || o.label === "Todas");
+          if (!allOption) return null;
+          const isAllActive = selectedValues.includes("all") || selectedValues.includes("Todas") || selectedValues.length === 0;
+          return (
+            <button
+              onClick={() => onClear()}
+              className={cn(
+                "flex items-center gap-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer px-3 py-1.5",
+                isAllActive && "shadow-sm"
+              )}
+              style={
+                isAllActive
+                  ? isDark
+                    ? { backgroundColor: "rgba(255,255,255,0.1)", color: "white" }
+                    : { backgroundColor: "#e5e5e5", color: "#1a1a1a" }
+                  : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
+              }
+            >
+              {allOption.label}
+            </button>
+          );
+        })()}
+
         {filtered.map((opt) => {
           const isActive = selectedValues.includes(opt.value);
           const hex = ATRIBUICAO_COLORS[opt.label] || DEFAULT_HEX;
