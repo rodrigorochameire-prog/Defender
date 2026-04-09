@@ -19,7 +19,12 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       {/* Briefing Section (original content) */}
-      <BriefingSection evento={evento} />
+      <BriefingSection
+        evento={evento}
+        audienciaId={audienciaId ?? undefined}
+        processoId={evento?.processoId ?? evento?.processo?.id}
+        casoId={evento?.casoId}
+      />
 
       {/* Preparacao Section (collapsible, absorbed from tab-preparacao) */}
       <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
