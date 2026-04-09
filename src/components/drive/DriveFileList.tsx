@@ -121,7 +121,7 @@ function SortHeader({
     <button
       onClick={() => onSort(sortKey)}
       className={cn(
-        "flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-150",
+        "flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-widest transition-colors duration-150",
         isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400",
         className
       )}
@@ -186,14 +186,17 @@ function FileRow({ file }: { file: DriveFile }) {
 
   const typeLabel = getFileTypeLabel(file.mimeType, file.isFolder);
   const sizeStr = !file.isFolder && file.fileSize ? formatFileSize(file.fileSize) : "";
-  const subtitle = [typeLabel !== "Pasta" ? typeLabel : null, sizeStr, dateStr].filter(Boolean).join(" · ");
+  // Subtitle now only shows type (size and date are in columns)
+  const subtitle = file.isFolder
+    ? `Pasta${sizeStr ? ` · ${sizeStr}` : ""}`
+    : typeLabel !== "Arquivo" ? typeLabel : "";
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors",
-        "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/30",
+        "group flex items-center gap-3 px-3 py-3 cursor-pointer transition-all duration-150",
+        "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/30 hover:-translate-y-0.5 hover:shadow-md",
         isSelected && "bg-emerald-50/60 dark:bg-emerald-950/10",
       )}
     >
@@ -229,22 +232,32 @@ function FileRow({ file }: { file: DriveFile }) {
         )}
       </div>
 
-      {/* Status indicator: dot or IA badge */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {isIA ? (
+      {/* Size column */}
+      <div className="w-20 text-right shrink-0 flex items-center gap-1 justify-end">
+        {/* Status indicator inline with size */}
+        {!file.isFolder && (
           <>
-            <Lightbulb className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-[10px] text-zinc-400">IA</span>
+            {isIA ? (
+              <Lightbulb className="w-3 h-3 text-zinc-400 shrink-0" />
+            ) : file.enrichmentStatus === "completed" ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Enriquecido" />
+            ) : (file.enrichmentStatus === "pending" || file.enrichmentStatus === "processing") ? (
+              <span className={cn("w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0", file.enrichmentStatus === "processing" && "animate-pulse")} title={file.enrichmentStatus === "processing" ? "Processando" : "Pendente"} />
+            ) : null}
           </>
-        ) : !file.isFolder && file.enrichmentStatus === "completed" ? (
-          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Enriquecido" />
-        ) : !file.isFolder && (file.enrichmentStatus === "pending" || file.enrichmentStatus === "processing") ? (
-          <span className={cn("w-2 h-2 rounded-full bg-amber-500", file.enrichmentStatus === "processing" && "animate-pulse")} title={file.enrichmentStatus === "processing" ? "Processando" : "Pendente"} />
-        ) : null}
+        )}
+        <span className="text-[11px] text-zinc-400">
+          {file.isFolder ? "\u2014" : sizeStr || "\u2014"}
+        </span>
       </div>
 
+      {/* Date column */}
+      <span className="w-24 text-right text-[11px] text-zinc-400 font-mono shrink-0">
+        {dateStr || "\u2014"}
+      </span>
+
       {/* Actions menu (hover only) */}
-      <div className="w-7 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
+      <div className="w-8 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
         {!file.isFolder ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -356,28 +369,38 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
 
   return (
     <div>
-      {/* Sort header row */}
-      <div className="flex items-center gap-3 px-3 py-1.5 mb-1">
-        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-          <Checkbox
-            checked={allSelected}
-            onCheckedChange={handleSelectAll}
-            className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-          />
+      {/* Card wrapper with column headers + file rows */}
+      <div className="bg-white dark:bg-zinc-900/40 rounded-xl border border-zinc-200/80 dark:border-zinc-800/50 overflow-hidden">
+        {/* Column headers */}
+        <div className="h-7 px-3 flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800/30">
+          {/* Checkbox spacer */}
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={allSelected}
+              onCheckedChange={handleSelectAll}
+              className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+            />
+          </div>
+          {/* Icon spacer */}
+          <div className="w-9 shrink-0" />
+          {/* Name column */}
+          <div className="flex-1 min-w-0">
+            <SortHeader label="Nome" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-[9px]" />
+          </div>
+          {/* Size column */}
+          <SortHeader label="Tamanho" sortKey="size" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="w-20 text-right justify-end text-[9px]" />
+          {/* Date column */}
+          <SortHeader label="Modificado" sortKey="date" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="w-24 text-right justify-end text-[9px]" />
+          {/* Menu spacer */}
+          <div className="w-8 shrink-0" />
         </div>
-        <div className="w-9" />
-        <div className="flex-1 min-w-0">
-          <SortHeader label="Nome" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
-        </div>
-        <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="w-16 shrink-0" />
-        <div className="w-7" />
-      </div>
 
-      {/* Card wrapper with all file rows */}
-      <div className="bg-white dark:bg-zinc-900/40 rounded-xl border border-zinc-200/80 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/40 overflow-hidden">
-        {sortedFiles.map((file) => (
-          <FileRow key={file.id} file={file} />
-        ))}
+        {/* File rows */}
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/40">
+          {sortedFiles.map((file) => (
+            <FileRow key={file.id} file={file} />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -161,7 +161,7 @@ export function DriveContentArea() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-100 dark:bg-zinc-950">
       {/* Filters Row + Transcrever Todos */}
       <div className="px-4 pt-3 pb-2 shrink-0 flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
