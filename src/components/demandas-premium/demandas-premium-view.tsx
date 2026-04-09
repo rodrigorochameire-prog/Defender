@@ -31,6 +31,7 @@ import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { useDefensor } from "@/contexts/defensor-context";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
@@ -663,7 +664,10 @@ export default function Demandas() {
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
   // ==========================================
-  const demandasQuery = trpc.demandas.list.useQuery({});
+  const { selectedDefensorId } = useDefensor();
+  const demandasQuery = trpc.demandas.list.useQuery({
+    defensorId: selectedDefensorId ?? undefined,
+  });
   const { data: demandasDB = EMPTY_DEMANDAS, isLoading: loadingDemandas } = useOfflineQuery(
     demandasQuery,
     getOfflineDemandas,
