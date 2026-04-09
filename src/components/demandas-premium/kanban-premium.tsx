@@ -99,7 +99,7 @@ function KanbanCard({
   isDragging: isBeingDragged,
   onDragStart,
   onDragEnd,
-  showAtribBadge = true,
+  showAtribBadge = false,
 }: {
   demanda: KanbanDemanda;
   group: StatusGroup;
@@ -182,7 +182,7 @@ function KanbanCard({
     >
       {/* Left bar — group color */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-l-xl"
+        className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-l-xl opacity-50"
         style={{ backgroundColor: groupColor }}
       />
 

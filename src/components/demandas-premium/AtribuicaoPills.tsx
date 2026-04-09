@@ -105,9 +105,9 @@ export function AtribuicaoPills({
               style={
                 isActive
                   ? isDark
-                    ? { backgroundColor: `${hex}40`, color: "white" }
+                    ? { backgroundColor: `${hex}25`, color: "white" }
                     : { backgroundColor: hex }
-                  : { color: isDark ? "rgba(255,255,255,0.35)" : "#9ca3af" }
+                  : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
               }
             >
               {Icon && (

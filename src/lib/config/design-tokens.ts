@@ -83,7 +83,7 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  container: "rounded-xl bg-gradient-to-br from-[#292930] to-[#202025] shadow-lg shadow-black/10 ring-1 ring-white/[0.04]",
+  container: "rounded-xl bg-gradient-to-br from-[#38383f] to-[#2c2c32] shadow-md shadow-black/5 ring-1 ring-white/[0.05]",
   text: "text-white font-serif text-lg font-semibold tracking-tight",
   label: "text-white/30 text-[9px] uppercase tracking-wider",
   value: "text-white/80 font-mono tracking-wide",

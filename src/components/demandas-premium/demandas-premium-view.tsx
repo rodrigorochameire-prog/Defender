@@ -2017,7 +2017,7 @@ export default function Demandas() {
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0f0f11] overflow-x-hidden">
       {/* ====== CHARCOAL HEADER ====== */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3")}>
+      <div className={"rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 bg-gradient-to-br from-[#3a3a42] to-[#2e2e35] shadow-md shadow-black/5 ring-1 ring-white/[0.04]"}>
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-2.5">
