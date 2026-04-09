@@ -243,10 +243,10 @@ function EventoCompacto({
             eventoCancelado ? "opacity-45" : ""
           }`}
         >
-          {/* Left status bar */}
+          {/* Left attribution bar */}
           <div
-            className="absolute left-0 top-1 bottom-1 w-[2.5px] rounded-r-sm"
-            style={{ backgroundColor: getChipStatusColor(evento.status) }}
+            className="absolute left-0 top-1 bottom-1 w-[2.5px] rounded-r-sm opacity-70"
+            style={{ backgroundColor: displayColor }}
           />
 
           {/* Conteúdo do card */}
@@ -263,7 +263,7 @@ function EventoCompacto({
 
               <span
                 className={`text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0 ${eventoCancelado ? "line-through" : ""}`}
-                style={{ color: eventoCancelado ? COR_EVENTO_CANCELADO : getChipStatusColor(evento.status) }}
+                style={{ color: displayColor }}
               >
                 {evento.horarioInicio}
               </span>
