@@ -41,9 +41,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
     historico: form.registrosAnteriores.length,
   };
 
-  const visibleTabs = tabConfig.filter(
-    (tab) => tab.key !== "historico" || form.registrosAnteriores.length > 0
-  );
+  // Histórico sempre visível — inclui o registro atual salvo + anteriores
+  const visibleTabs = tabConfig;
 
   // Completude badge calculation: how many of 5 key fields are filled
   const completudeItems = [
@@ -278,7 +277,11 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               )}
 
               {form.activeTab === "historico" && (
-                  <TabHistorico registrosAnteriores={form.registrosAnteriores} />
+                  <TabHistorico
+                    registrosAnteriores={form.registrosAnteriores}
+                    registroAtual={form.registro}
+                    statusAtual={form.statusAudiencia}
+                  />
               )}
           </div>
         </div>

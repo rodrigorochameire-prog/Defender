@@ -11,9 +11,15 @@ import { getDepoenteStyle } from "../constants";
 
 interface TabHistoricoProps {
   registrosAnteriores: any[];
+  registroAtual?: any;
+  statusAtual?: string;
 }
 
-export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
+export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }: TabHistoricoProps) {
+  // Monta lista: registro atual (se tiver dados) + anteriores
+  const hasCurrentData = registroAtual && (registroAtual.resultado || registroAtual.anotacoesGerais || (registroAtual.depoentes?.length ?? 0) > 0);
+  const totalCount = registrosAnteriores.length + (hasCurrentData ? 1 : 0);
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
       {/* Header */}
@@ -27,11 +33,59 @@ export function TabHistorico({ registrosAnteriores }: TabHistoricoProps) {
               Histórico de Audiências
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              {registrosAnteriores.length} registro{registrosAnteriores.length !== 1 ? "s" : ""} encontrado{registrosAnteriores.length !== 1 ? "s" : ""}
+              {totalCount} registro{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
+              {hasCurrentData && " (inclui registro atual)"}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Registro Atual (se houver dados) */}
+      {hasCurrentData && (
+        <div className="bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Registro Atual</span>
+            {statusAtual && (
+              <Badge variant="outline" className="text-[10px] ml-auto border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400">
+                {statusAtual === "concluida" ? "Concluída" : statusAtual === "redesignada" ? "Redesignada" : statusAtual === "suspensa" ? "Suspensa" : statusAtual}
+              </Badge>
+            )}
+          </div>
+          <div className="space-y-2 text-xs text-neutral-700 dark:text-neutral-300">
+            {registroAtual.resultado && (
+              <p><span className="font-semibold">Resultado:</span> {registroAtual.resultado}</p>
+            )}
+            {registroAtual.depoentes?.length > 0 && (
+              <p><span className="font-semibold">Depoentes:</span> {registroAtual.depoentes.map((d: any) => d.nome).join(", ")}</p>
+            )}
+            {registroAtual.manifestacaoMP && (
+              <p><span className="font-semibold">MP:</span> {registroAtual.manifestacaoMP}</p>
+            )}
+            {registroAtual.manifestacaoDefesa && (
+              <p><span className="font-semibold">Defesa:</span> {registroAtual.manifestacaoDefesa}</p>
+            )}
+            {registroAtual.decisaoJuiz && (
+              <p><span className="font-semibold">Decisão Juiz:</span> {registroAtual.decisaoJuiz}</p>
+            )}
+            {registroAtual.anotacoesGerais && (
+              <p><span className="font-semibold">Anotações:</span> {registroAtual.anotacoesGerais}</p>
+            )}
+            {registroAtual.encaminhamentos && (
+              <p><span className="font-semibold">Encaminhamentos:</span> {registroAtual.encaminhamentos}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Sem registros */}
+      {totalCount === 0 && (
+        <div className="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 p-8 text-center">
+          <BookOpen className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Nenhum registro ainda</p>
+          <p className="text-xs text-neutral-500 mt-1">Preencha os campos nas abas Depoentes, Anotações e Resultado, depois clique Salvar Registro.</p>
+        </div>
+      )}
 
       {/* Timeline */}
       <div className="space-y-4 relative">
