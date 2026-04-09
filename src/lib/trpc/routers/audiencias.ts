@@ -491,95 +491,95 @@ export const audienciasRouter = router({
         .limit(1);
       if (!aud) return null;
 
-      const [proc] = await db.select().from(processos).where(eq(processos.id, aud.processoId)).limit(1);
-      const [assist] = aud.assistidoId
-        ? await db.select().from(assistidos).where(eq(assistidos.id, aud.assistidoId)).limit(1)
-        : [null];
+      const procRows = await db.select().from(processos).where(eq(processos.id, aud.processoId)).limit(1);
+      const proc = procRows[0] ?? null;
+
+      let assist: typeof assistidos.$inferSelect | null = null;
+      if (aud.assistidoId) {
+        const assistRows = await db.select().from(assistidos).where(eq(assistidos.id, aud.assistidoId)).limit(1);
+        assist = assistRows[0] ?? null;
+      }
 
       // 2. Caso vinculado (narrativa_denuncia, teoria_fatos/provas/direito)
-      const [caso] = assist
-        ? await db
-            .select({
-              id: casos.id,
-              narrativaDenuncia: casos.narrativaDenuncia,
-              teoriaFatos: casos.teoriaFatos,
-              teoriaProvas: casos.teoriaProvas,
-              teoriaDireito: casos.teoriaDireito,
-              foco: casos.foco,
-              status: casos.status,
-              fase: casos.fase,
-            })
-            .from(casos)
-            .where(eq(casos.assistidoId, assist.id))
-            .limit(1)
-        : [null];
+      let caso: { id: number; narrativaDenuncia: string | null; teoriaFatos: string | null; teoriaProvas: string | null; teoriaDireito: string | null; foco: string | null; status: string | null; fase: string | null } | null = null;
+      if (assist) {
+        const casoRows = await db
+          .select({
+            id: casos.id,
+            narrativaDenuncia: casos.narrativaDenuncia,
+            teoriaFatos: casos.teoriaFatos,
+            teoriaProvas: casos.teoriaProvas,
+            teoriaDireito: casos.teoriaDireito,
+            foco: casos.foco,
+            status: casos.status,
+            fase: casos.fase,
+          })
+          .from(casos)
+          .where(eq(casos.assistidoId, assist.id))
+          .limit(1);
+        caso = casoRows[0] ?? null;
+      }
 
       // 3. Atendimentos (versão do réu no atendimento)
-      const atendimentosResult = assist
-        ? await db
-            .select({
-              id: atendimentos.id,
-              data: atendimentos.dataAtendimento,
-              tipo: atendimentos.tipo,
-              resumo: atendimentos.resumo,
-              transcricaoResumo: atendimentos.transcricaoResumo,
-              pontosChave: atendimentos.pontosChave,
-              assunto: atendimentos.assunto,
-            })
-            .from(atendimentos)
-            .where(
-              proc
-                ? or(
-                    eq(atendimentos.processoId, proc.id),
-                    eq(atendimentos.assistidoId, assist.id)
-                  )
-                : eq(atendimentos.assistidoId, assist.id)
-            )
-            .orderBy(desc(atendimentos.dataAtendimento))
-            .limit(5)
-        : [];
+      let atendimentosResult: any[] = [];
+      if (assist) {
+        const conditions = proc
+          ? or(eq(atendimentos.processoId, proc.id), eq(atendimentos.assistidoId, assist.id))
+          : eq(atendimentos.assistidoId, assist.id);
+        atendimentosResult = await db
+          .select({
+            id: atendimentos.id,
+            data: atendimentos.dataAtendimento,
+            tipo: atendimentos.tipo,
+            resumo: atendimentos.resumo,
+            transcricaoResumo: atendimentos.transcricaoResumo,
+            pontosChave: atendimentos.pontosChave,
+            assunto: atendimentos.assunto,
+          })
+          .from(atendimentos)
+          .where(conditions)
+          .orderBy(desc(atendimentos.dataAtendimento))
+          .limit(5);
+      }
 
       // 4. Diligências (investigação defensiva)
-      const diligenciasResult = proc
-        ? await db
-            .select({
-              id: diligencias.id,
-              titulo: diligencias.titulo,
-              tipo: diligencias.tipo,
-              status: diligencias.status,
-              resultado: diligencias.resultado,
-              nomePessoaAlvo: diligencias.nomePessoaAlvo,
-              prioridade: diligencias.prioridade,
-            })
-            .from(diligencias)
-            .where(
-              and(
-                or(
-                  eq(diligencias.processoId, proc.id),
-                  assist ? eq(diligencias.assistidoId, assist.id) : undefined
-                ),
-                isNull(diligencias.deletedAt)
-              )
-            )
-            .orderBy(desc(diligencias.createdAt))
-            .limit(10)
-        : [];
+      let diligenciasResult: any[] = [];
+      if (proc) {
+        const diligConditions = assist
+          ? and(or(eq(diligencias.processoId, proc.id), eq(diligencias.assistidoId, assist.id)), isNull(diligencias.deletedAt))
+          : and(eq(diligencias.processoId, proc.id), isNull(diligencias.deletedAt));
+        diligenciasResult = await db
+          .select({
+            id: diligencias.id,
+            titulo: diligencias.titulo,
+            tipo: diligencias.tipo,
+            status: diligencias.status,
+            resultado: diligencias.resultado,
+            nomePessoaAlvo: diligencias.nomePessoaAlvo,
+            prioridade: diligencias.prioridade,
+          })
+          .from(diligencias)
+          .where(diligConditions)
+          .orderBy(desc(diligencias.createdAt))
+          .limit(10);
+      }
 
       // 5. Anotações relevantes
-      const anotacoesResult = proc
-        ? await db
-            .select({
-              id: anotacoes.id,
-              conteudo: anotacoes.conteudo,
-              tipo: anotacoes.tipo,
-              importante: anotacoes.importante,
-              createdAt: anotacoes.createdAt,
-            })
-            .from(anotacoes)
-            .where(eq(anotacoes.processoId, proc.id))
-            .orderBy(desc(anotacoes.createdAt))
-            .limit(5)
-        : [];
+      let anotacoesResult: any[] = [];
+      if (proc) {
+        anotacoesResult = await db
+          .select({
+            id: anotacoes.id,
+            conteudo: anotacoes.conteudo,
+            tipo: anotacoes.tipo,
+            importante: anotacoes.importante,
+            createdAt: anotacoes.createdAt,
+          })
+          .from(anotacoes)
+          .where(eq(anotacoes.processoId, proc.id))
+          .orderBy(desc(anotacoes.createdAt))
+          .limit(5);
+      }
 
       // 6. Testemunhas cadastradas
       const testemunhasResult = proc

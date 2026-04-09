@@ -117,9 +117,9 @@ export function EventDetailSheet({
     return null;
   })();
 
-  const { data: ctx, isLoading } = trpc.audiencias.getAudienciaContext.useQuery(
+  const { data: ctx, isLoading, error: ctxError } = trpc.audiencias.getAudienciaContext.useQuery(
     { audienciaId: audienciaIdNum ?? 0 },
-    { enabled: !!audienciaIdNum && open }
+    { enabled: !!audienciaIdNum && open, retry: false }
   );
 
   const copyProcesso = (num: string) => {
