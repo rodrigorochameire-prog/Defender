@@ -1501,9 +1501,16 @@ export default function AgendaPage() {
             variant="dark"
             options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
             selectedValues={Array.from(areaFilters)}
-            onToggle={handleAreaFilterToggle}
+            onToggle={(key) => {
+              if (key === "all" || areaFilters.has(key)) {
+                setAreaFilters(new Set(["all"]));
+              } else {
+                setAreaFilters(new Set([key]));
+              }
+            }}
             onClear={() => setAreaFilters(new Set(["all"]))}
             counts={countByArea}
+            singleSelect
             compact
           />
 
