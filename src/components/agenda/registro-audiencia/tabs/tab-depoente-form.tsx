@@ -317,14 +317,82 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <button type="button" onClick={() => onUpdate({ ...depoente, intimado: !depoente.intimado })} className={cn("px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", depoente.intimado ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900" : "bg-neutral-200 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-300")}>
-              {depoente.intimado ? "Intimado" : "Não intim."}
+            {/* Lado (acusação/defesa) */}
+            {depoente.lado && (
+              <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold", depoente.lado === "acusacao" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400")}>
+                {depoente.lado === "acusacao" ? "ACUS" : "DEF"}
+              </span>
+            )}
+            {/* Status intimação */}
+            <button type="button" onClick={() => {
+              const cycle: Array<Depoente["statusIntimacao"]> = ["intimado", "nao-intimado", "frustrada", "mp-desistiu", "dispensado", "pendente"];
+              const curr = depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado");
+              const next = cycle[(cycle.indexOf(curr) + 1) % cycle.length]!;
+              onUpdate({ ...depoente, statusIntimacao: next, intimado: next === "intimado" });
+            }} className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", {
+              "bg-emerald-600 text-white": (depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado")) === "intimado",
+              "bg-neutral-300 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300": (depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado")) === "nao-intimado",
+              "bg-amber-500 text-white": depoente.statusIntimacao === "frustrada",
+              "bg-rose-600 text-white": depoente.statusIntimacao === "mp-desistiu",
+              "bg-sky-500 text-white": depoente.statusIntimacao === "dispensado",
+              "bg-neutral-500 text-white": depoente.statusIntimacao === "pendente",
+            })}>
+              {{ intimado: "Intimado", "nao-intimado": "Não intim.", frustrada: "Frustrada", "mp-desistiu": "MP desistiu", dispensado: "Dispensado", pendente: "Pendente" }[(depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado"))] || "Não intim."}
             </button>
+            {/* Já ouvido */}
+            <button type="button" onClick={() => {
+              const cycle: Array<NonNullable<Depoente["jaOuvido"]>> = ["nenhum", "delegacia", "audiencia-anterior", "ambos"];
+              const curr = depoente.jaOuvido || "nenhum";
+              const next = cycle[(cycle.indexOf(curr) + 1) % cycle.length]!;
+              onUpdate({ ...depoente, jaOuvido: next });
+            }} className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", {
+              "bg-neutral-200 dark:bg-neutral-800 text-neutral-500": !depoente.jaOuvido || depoente.jaOuvido === "nenhum",
+              "bg-blue-500 text-white": depoente.jaOuvido === "delegacia",
+              "bg-violet-500 text-white": depoente.jaOuvido === "audiencia-anterior",
+              "bg-indigo-600 text-white": depoente.jaOuvido === "ambos",
+            })}>
+              {{ nenhum: "1ª vez", delegacia: "Ouvido DP", "audiencia-anterior": "Ouvido AIJ", ambos: "DP+AIJ" }[depoente.jaOuvido || "nenhum"]}
+            </button>
+            {/* Presente na audiência atual */}
             <button type="button" onClick={() => onUpdate({ ...depoente, presente: !depoente.presente })} className={cn("px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", depoente.presente ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}>
               {depoente.presente ? "Presente" : "Ausente"}
             </button>
           </div>
         </div>
+
+        {/* Depoimentos anteriores (delegacia / audiência anterior) — read-only se importado */}
+        {(depoente.depoimentoDelegacia || depoente.depoimentoAnterior || depoente.pontosFortes || depoente.pontosFracos) && (
+          <div className="space-y-1.5 mx-1 mb-1">
+            {depoente.depoimentoDelegacia && (
+              <div className="rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 p-2.5">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 dark:text-blue-400 mb-1">Relato na Delegacia</p>
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{depoente.depoimentoDelegacia}</p>
+              </div>
+            )}
+            {depoente.depoimentoAnterior && (
+              <div className="rounded-lg bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200/60 dark:border-violet-800/40 p-2.5">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-violet-600 dark:text-violet-400 mb-1">Depoimento em Audiência Anterior</p>
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{depoente.depoimentoAnterior}</p>
+              </div>
+            )}
+            {(depoente.pontosFortes || depoente.pontosFracos) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                {depoente.pontosFortes && (
+                  <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 p-2.5">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Pontos Fortes (Defesa)</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{depoente.pontosFortes}</p>
+                  </div>
+                )}
+                {depoente.pontosFracos && (
+                  <div className="rounded-lg bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 p-2.5">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-rose-600 dark:text-rose-400 mb-1">Pontos Fracos / Riscos</p>
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{depoente.pontosFracos}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Type-specific fields */}
         {(depoente.tipo === "testemunha" || depoente.tipo === "informante") && (

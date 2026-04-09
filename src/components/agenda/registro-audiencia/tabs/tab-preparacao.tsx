@@ -128,18 +128,22 @@ export function TabPreparacao({
       id: `prep-${i}-${t.nome}`,
       nome: t.nome,
       tipo: tipoToDepoenteTipo(t.tipo ?? "COMUM"),
+      lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
       intimado: false,
       presente: false,
+      statusIntimacao: "pendente" as const,
+      jaOuvido: (t.resumo ? "delegacia" : "nenhum") as Depoente["jaOuvido"],
+      depoimentoDelegacia: t.resumo ?? "",
+      depoimentoAnterior: "",
+      pontosFortes: t.pontosFavoraveis ?? "",
+      pontosFracos: t.pontosDesfavoraveis ?? "",
       estrategiaInquiricao: t.perguntasSugeridas ?? "",
       perguntasDefesa: "",
       depoimentoLiteral: "",
-      analisePercepcoes:
-        [t.resumo, t.pontosFavoraveis, t.pontosDesfavoraveis]
-          .filter(Boolean)
-          .join("\n\n") || "",
+      analisePercepcoes: t.observacoes ?? "",
     }));
     onImportarParaDepoentes?.(depoentes);
-    toast.success(`${depoentes.length} depoente(s) importado(s) para a aba Depoentes`);
+    toast.success(`${depoentes.length} depoente(s) importado(s) com relatos e pontos fortes/fracos`);
   };
 
   return (

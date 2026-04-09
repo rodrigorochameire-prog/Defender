@@ -2,8 +2,16 @@ export interface Depoente {
   id: string;
   nome: string;
   tipo: "testemunha" | "vitima" | "reu" | "perito" | "informante" | "policial";
+  lado?: "acusacao" | "defesa";
   intimado: boolean;
   presente: boolean;
+  statusIntimacao?: "intimado" | "nao-intimado" | "frustrada" | "mp-desistiu" | "dispensado" | "pendente";
+  motivoAusencia?: string;
+  jaOuvido?: "delegacia" | "audiencia-anterior" | "ambos" | "nenhum";
+  depoimentoDelegacia?: string;
+  depoimentoAnterior?: string;
+  pontosFortes?: string;
+  pontosFracos?: string;
   estrategiaInquiricao: string;
   perguntasDefesa: string;
   depoimentoLiteral: string;
