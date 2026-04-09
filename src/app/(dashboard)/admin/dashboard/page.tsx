@@ -303,6 +303,7 @@ export default function DashboardJuriPage() {
   } = useProfissional();
 
   const profissionalAtivoId = profissionalAtivo.id as ProfissionalId;
+  const defensorUserId = profissionalAtivo.userId;
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
@@ -435,18 +436,14 @@ export default function DashboardJuriPage() {
 
   const demandasFiltradas = useMemo(() => {
     if (isVisaoGeral) return demandas;
-    return demandas.filter((d: any) =>
-      d.responsavelId === profissionalAtivoId ||
-      d.criadoPorId === profissionalAtivoId ||
-      !d.responsavelId
-    );
-  }, [demandas, profissionalAtivoId, isVisaoGeral]);
+    return demandas.filter((d: any) => d.defensorId === defensorUserId);
+  }, [demandas, defensorUserId, isVisaoGeral]);
 
   const jurisFiltrados = useMemo(() => {
     if (isVisaoGeral) return juris;
     if (atribuicaoAtual === "JURI_EP") return juris;
-    return juris.filter((j: any) => j.responsavelId === profissionalAtivoId);
-  }, [juris, profissionalAtivoId, atribuicaoAtual, isVisaoGeral]);
+    return juris.filter((j: any) => j.defensorId === defensorUserId);
+  }, [juris, defensorUserId, atribuicaoAtual, isVisaoGeral]);
 
   const isLoading = loadingDemandas || loadingAssistidos || loadingCasos || loadingJuris;
 

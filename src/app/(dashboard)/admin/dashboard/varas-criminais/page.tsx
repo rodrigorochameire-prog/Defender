@@ -108,6 +108,7 @@ export default function DashboardVarasCriminaisPage() {
   } = useProfissional();
 
   const profissionalAtivoId = profissionalAtivo.id as ProfissionalId;
+  const defensorUserId = profissionalAtivo.userId;
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
@@ -215,12 +216,8 @@ export default function DashboardVarasCriminaisPage() {
 
   // Demandas filtradas (apenas do profissional ativo)
   const minhasDemandas = useMemo(() => {
-    return demandas.filter((d: any) => 
-      d.responsavelId === profissionalAtivoId || 
-      d.criadoPorId === profissionalAtivoId || 
-      !d.responsavelId
-    );
-  }, [demandas, profissionalAtivoId]);
+    return demandas.filter((d: any) => d.defensorId === defensorUserId);
+  }, [demandas, defensorUserId]);
 
   // Demandas compartilhadas comigo
   const demandasCompartilhadas = useMemo(() => {
@@ -233,10 +230,10 @@ export default function DashboardVarasCriminaisPage() {
 
   // Minhas audiências
   const minhasAudiencias = useMemo(() => {
-    return audiencias.filter((a: any) => 
-      a.responsavelId === profissionalAtivoId || !a.responsavelId
+    return audiencias.filter((a: any) =>
+      a.defensorId === defensorUserId || !a.defensorId
     );
-  }, [audiencias, profissionalAtivoId]);
+  }, [audiencias, defensorUserId]);
 
   // ==========================================
   // ESTATÍSTICAS

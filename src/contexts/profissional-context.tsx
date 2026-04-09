@@ -13,6 +13,7 @@ export type Atribuicao = "JURI_EP" | "VVD" | null;
 
 export interface Profissional {
   id: number;
+  userId: number | null;
   nome: string;
   nomeCurto: string | null;
   email: string | null;
@@ -24,6 +25,7 @@ export interface Profissional {
 
 export interface ProfissionalConfig {
   id: ProfissionalId;
+  userId: number | null; // users.id — usado para comparar com demandas.defensorId
   nome: string;
   nomeCurto: string;
   grupo: GrupoTrabalho;
@@ -38,6 +40,7 @@ export interface ProfissionalConfig {
 export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
   1: {
     id: 1,
+    userId: 1,
     nome: "Dr. Rodrigo",
     nomeCurto: "Rodrigo",
     grupo: "juri_ep_vvd",
@@ -47,6 +50,7 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
   },
   2: {
     id: 2,
+    userId: 4,
     nome: "Dra. Juliane",
     nomeCurto: "Juliane",
     grupo: "juri_ep_vvd",
@@ -56,6 +60,7 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
   },
   3: {
     id: 3,
+    userId: 2,
     nome: "Dra. Cristiane",
     nomeCurto: "Cristiane",
     grupo: "varas_criminais",
@@ -66,6 +71,7 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
   },
   4: {
     id: 4,
+    userId: 3,
     nome: "Dr. Danilo",
     nomeCurto: "Danilo",
     grupo: "varas_criminais",
@@ -76,6 +82,7 @@ export const PROFISSIONAIS_CONFIG: Record<number, ProfissionalConfig> = {
   },
   0: {
     id: 0,
+    userId: null,
     nome: "Visão Geral",
     nomeCurto: "Geral",
     grupo: "todos",
@@ -103,6 +110,7 @@ function dbToProfissionalConfig(prof: Profissional, index: number): Profissional
     const fallback = PROFISSIONAIS_CONFIG[prof.id];
     return {
       ...fallback,
+      userId: prof.userId ?? fallback.userId,
       nome: prof.nome || fallback.nome,
       nomeCurto: prof.nomeCurto || fallback.nomeCurto,
       grupo: (prof.grupo as GrupoTrabalho) || fallback.grupo,
@@ -116,6 +124,7 @@ function dbToProfissionalConfig(prof: Profissional, index: number): Profissional
 
   return {
     id: prof.id,
+    userId: prof.userId ?? null,
     nome: prof.nome,
     nomeCurto: prof.nomeCurto || (prof.nome ?? "").split(" ").pop() || prof.nome || "",
     grupo: (prof.grupo as GrupoTrabalho) || "varas_criminais",
@@ -356,14 +365,9 @@ export function useProfissional() {
 // ============================================
 
 export function demandaPertenceAoProfissional(
-  demanda: { responsavelId?: number | null; criadoPorId?: number | null },
-  profissionalId: ProfissionalId
+  demanda: { defensorId?: number | null },
+  userId: number | null
 ): boolean {
-  if (profissionalId === 0) return true; // Geral vê tudo
-
-  return (
-    demanda.responsavelId === profissionalId ||
-    demanda.criadoPorId === profissionalId ||
-    !demanda.responsavelId // Sem responsável = todos veem
-  );
+  if (userId === null) return true; // Geral vê tudo
+  return demanda.defensorId === userId;
 }
