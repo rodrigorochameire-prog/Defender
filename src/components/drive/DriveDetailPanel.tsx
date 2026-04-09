@@ -171,10 +171,10 @@ function SectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors duration-150"
+      className="flex items-center gap-2 w-full px-4 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors duration-150"
     >
-      <Icon className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
-      <span className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider flex-1">
+      <Icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+      <span className="text-[9px] uppercase tracking-widest font-semibold text-zinc-400 dark:text-zinc-600 flex-1">
         {title}
       </span>
       {badge && (
@@ -183,9 +183,9 @@ function SectionHeader({
         </span>
       )}
       {isOpen ? (
-        <ChevronDown className="h-3 w-3 text-neutral-400 dark:text-neutral-600 shrink-0" />
+        <ChevronDown className="h-3 w-3 text-zinc-400 dark:text-zinc-600 shrink-0" />
       ) : (
-        <ChevronRight className="h-3 w-3 text-neutral-400 dark:text-neutral-600 shrink-0" />
+        <ChevronRight className="h-3 w-3 text-zinc-400 dark:text-zinc-600 shrink-0" />
       )}
     </button>
   );
@@ -1877,8 +1877,8 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* ─── Header ─── */}
-      <div className="flex items-center gap-2 h-12 px-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
+      {/* Header */}
+      <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-100 dark:border-zinc-800/60 shrink-0">
         <div className="flex-1 min-w-0">
           {isRenaming ? (
             <InlineRename
@@ -1888,7 +1888,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
             />
           ) : (
             <p
-              className="text-sm font-medium text-neutral-900 dark:text-neutral-200 truncate"
+              className="font-serif text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate leading-tight"
               title={file.name}
             >
               {file.name}
@@ -1898,17 +1898,17 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0"
+          className="h-7 w-7 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
           onClick={() => ctx.closeDetailPanel()}
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* ─── Scrollable Content ─── */}
+      {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Actions Row — above preview for quick access */}
-        <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-neutral-200/50 dark:border-neutral-800/50">
+        {/* Actions Row */}
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/60">
           <ActionRow
             file={file}
             isFavorited={isFavorited}
@@ -1992,7 +1992,7 @@ function DetailPanelContent({ file }: { file: DriveFile }) {
         </div>
 
         {/* Collapsible Sections */}
-        <div className="divide-y divide-neutral-200/50 dark:divide-neutral-800/50">
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
           {isPdf && (
             <PecasProcessuaisSection
               file={file}
@@ -2121,28 +2121,28 @@ export function DriveDetailPanel() {
       <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
         <SheetContent
           side="right"
-          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 p-0"
+          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
         >
           <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
           {/* Header skeleton */}
-          <div className="flex items-center gap-2 h-12 px-4 border-b border-neutral-200 dark:border-neutral-800">
-            <Skeleton className="h-4 flex-1 bg-neutral-200 dark:bg-neutral-800 rounded" />
-            <Skeleton className="h-7 w-7 bg-neutral-200 dark:bg-neutral-800 rounded" />
+          <div className="flex items-center gap-2 h-12 px-4 border-b border-zinc-100 dark:border-zinc-800/60">
+            <Skeleton className="h-4 flex-1 bg-zinc-100 dark:bg-zinc-800 rounded" />
+            <Skeleton className="h-7 w-7 bg-zinc-100 dark:bg-zinc-800 rounded" />
           </div>
           {/* Actions skeleton */}
-          <div className="px-4 pt-3 pb-2 border-b border-neutral-200/50 dark:border-neutral-800/50 flex gap-2">
+          <div className="px-4 pt-3 pb-2 border-b border-zinc-100 dark:border-zinc-800/60 flex gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-8 w-8 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <Skeleton key={i} className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded" />
             ))}
           </div>
           {/* Preview skeleton */}
           <div className="p-4 space-y-3">
-            <Skeleton className="h-[300px] w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg" />
+            <Skeleton className="h-[300px] w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-3/4 bg-neutral-200 dark:bg-neutral-800 rounded" />
-              <Skeleton className="h-4 w-1/2 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <Skeleton className="h-4 w-3/4 bg-zinc-100 dark:bg-zinc-800 rounded" />
+              <Skeleton className="h-4 w-1/2 bg-zinc-100 dark:bg-zinc-800 rounded" />
             </div>
-            <Skeleton className="h-20 w-full bg-neutral-200 dark:bg-neutral-800 rounded" />
+            <Skeleton className="h-20 w-full bg-zinc-100 dark:bg-zinc-800 rounded" />
           </div>
         </SheetContent>
       </Sheet>
@@ -2153,7 +2153,7 @@ export function DriveDetailPanel() {
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 p-0"
+        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
       >
         <SheetTitle className="sr-only">{file.name}</SheetTitle>
         <DetailPanelContent file={file as any} />

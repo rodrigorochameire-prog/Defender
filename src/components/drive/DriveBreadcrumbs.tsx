@@ -19,20 +19,20 @@ export function DriveBreadcrumbs() {
     : null;
 
   return (
-    <div className="flex items-center gap-1 h-9 sm:h-10 px-3 sm:px-4 border-b border-neutral-200/50 dark:border-border/50 bg-neutral-50/50 dark:bg-card/50 shrink-0 overflow-x-auto scrollbar-none">
-      {/* ─── Back Button ─── */}
+    <div className="flex items-center gap-1.5 h-10 px-4 border-b border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 shrink-0 overflow-x-auto scrollbar-none">
+      {/* Back Button */}
       {ctx.breadcrumbPath.length > 0 && (
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 mr-1 text-neutral-400 hover:text-neutral-700 dark:text-muted-foreground dark:hover:text-foreground/80 shrink-0"
+          className="h-6 w-6 mr-1 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
           onClick={() => ctx.navigateBack()}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
       )}
 
-      {/* ─── Atribuicao Root ─── */}
+      {/* Atribuicao Root */}
       {atribuicao && (
         <>
           <button
@@ -40,24 +40,21 @@ export function DriveBreadcrumbs() {
               ctx.setSelectedAtribuicao(ctx.selectedAtribuicao);
             }}
             className={cn(
-              "flex items-center gap-1.5 text-sm font-medium transition-colors duration-150 shrink-0",
+              "flex items-center gap-1.5 text-[11px] transition-colors duration-150 shrink-0",
               ctx.breadcrumbPath.length === 0
-                ? "text-neutral-900 dark:text-foreground cursor-default"
-                : "text-neutral-500 hover:text-neutral-900 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
+                ? "font-semibold text-zinc-700 dark:text-zinc-300 cursor-default"
+                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
             )}
           >
-            <span
-              className={cn("h-2 w-2 rounded-full shrink-0", atribuicao.dotClass)}
-            />
             <span>{atribuicao.label}</span>
           </button>
           {ctx.breadcrumbPath.length > 0 && (
-            <ChevronRight className="h-3.5 w-3.5 text-neutral-300 dark:text-muted-foreground/50 shrink-0 mx-0.5" />
+            <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-700 shrink-0 mx-0.5" />
           )}
         </>
       )}
 
-      {/* ─── Path Segments ─── */}
+      {/* Path Segments */}
       {ctx.breadcrumbPath.map((segment, index) => {
         const isLast = index === ctx.breadcrumbPath.length - 1;
 
@@ -70,16 +67,16 @@ export function DriveBreadcrumbs() {
                 }
               }}
               className={cn(
-                "text-sm transition-colors duration-150 max-w-[200px] truncate",
+                "text-[11px] transition-colors duration-150 max-w-[200px] truncate",
                 isLast
-                  ? "text-neutral-900 dark:text-foreground font-medium cursor-default"
-                  : "text-neutral-500 hover:text-neutral-900 dark:text-muted-foreground dark:hover:text-foreground cursor-pointer"
+                  ? "font-semibold text-zinc-700 dark:text-zinc-300 cursor-default"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
               )}
             >
               {segment.name}
             </button>
             {!isLast && (
-              <ChevronRight className="h-3.5 w-3.5 text-neutral-300 dark:text-muted-foreground/50 shrink-0 mx-0.5" />
+              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-700 shrink-0 mx-0.5" />
             )}
           </div>
         );

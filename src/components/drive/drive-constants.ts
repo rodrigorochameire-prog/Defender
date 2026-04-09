@@ -1,5 +1,5 @@
 import {
-  Scale, Shield, Lock, Zap, Users,
+  Scale, ShieldCheck, Lock, ArrowLeftRight, Users,
   FileText, FileImage, FileAudio, FileVideo,
   File, FolderOpen, FileSpreadsheet, FileCode,
   Inbox, BookOpen,
@@ -25,7 +25,7 @@ export const DRIVE_ATRIBUICOES = [
   {
     key: "VVD",
     label: "Violencia Domestica",
-    icon: Shield,
+    icon: ShieldCheck,
     folderId: ATRIBUICAO_FOLDER_IDS.VVD,
     color: "amber",
     bgClass: "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400",
@@ -51,7 +51,7 @@ export const DRIVE_ATRIBUICOES = [
   {
     key: "SUBSTITUICAO",
     label: "Substituicao",
-    icon: Zap,
+    icon: ArrowLeftRight,
     folderId: ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO,
     color: "rose",
     bgClass: "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400",

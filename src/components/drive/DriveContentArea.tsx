@@ -161,8 +161,8 @@ export function DriveContentArea() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-      {/* ─── Filters Row + Transcrever Todos ─── */}
+    <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+      {/* Filters Row + Transcrever Todos */}
       <div className="px-4 pt-3 pb-2 shrink-0 flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-0">
           <DriveFilters />
@@ -188,7 +188,7 @@ export function DriveContentArea() {
         )}
       </div>
 
-      {/* ─── File List / Grid / Compact ─── */}
+      {/* File List / Grid / Compact */}
       <div className="flex-1 overflow-y-auto p-4">
         {ctx.viewMode === "list" ? (
           <DriveFileList files={filteredFiles as any[]} isLoading={isLoading} />
@@ -199,7 +199,14 @@ export function DriveContentArea() {
         )}
       </div>
 
-      {/* ─── Batch Actions (floating) ─── */}
+      {/* Footer */}
+      <div className="h-9 px-4 flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 shrink-0">
+        <span className="text-[10px] text-zinc-400">
+          {filteredFiles.length} arquivo{filteredFiles.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Batch Actions (floating) */}
       <DriveBatchActions files={filteredFiles as any[]} />
     </div>
   );

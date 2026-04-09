@@ -324,13 +324,13 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
   }
 
   return (
-    <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+    <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
       {/* Back button */}
       {ctx.breadcrumbPath.length > 0 && (
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 mr-0.5 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0"
+          className="h-6 w-6 mr-0.5 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
           onClick={() => ctx.navigateBack()}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -343,17 +343,16 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
           <button
             onClick={() => ctx.setSelectedAtribuicao(ctx.selectedAtribuicao)}
             className={cn(
-              "flex items-center gap-1 text-xs font-medium transition-colors shrink-0",
+              "flex items-center gap-1 text-[11px] transition-colors shrink-0",
               ctx.breadcrumbPath.length === 0
-                ? "text-neutral-800 dark:text-neutral-200 cursor-default"
-                : "text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer"
+                ? "text-zinc-700 dark:text-zinc-300 font-semibold cursor-default"
+                : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
             )}
           >
-            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
             <span>{atribuicao.label}</span>
           </button>
           {ctx.breadcrumbPath.length > 0 && (
-            <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+            <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-700 shrink-0" />
           )}
         </>
       )}
@@ -363,13 +362,12 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
         const isLast = index === ctx.breadcrumbPath.length - 1;
         const isDeep = ctx.breadcrumbPath.length > 3 && index < ctx.breadcrumbPath.length - 2 && index > 0;
         if (isDeep) return null;
-        // Show ellipsis when path is deep and this is the first hidden segment's position
         const showEllipsis = ctx.breadcrumbPath.length > 3 && index === 1 && !isLast;
         if (showEllipsis) {
           return (
             <div key={segment.id} className="flex items-center gap-0.5 shrink-0">
-              <span className="text-xs text-neutral-400 dark:text-neutral-600 px-0.5">...</span>
-              <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-600 px-0.5">...</span>
+              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-700 shrink-0" />
             </div>
           );
         }
@@ -381,16 +379,16 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
             <button
               onClick={() => { if (!isLast) ctx.navigateToBreadcrumb(index); }}
               className={cn(
-                "text-xs transition-colors duration-150 max-w-[160px] truncate",
+                "text-[11px] transition-colors duration-150 max-w-[160px] truncate",
                 isLast
-                  ? "text-neutral-800 dark:text-neutral-200 font-medium cursor-default"
-                  : "text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 cursor-pointer"
+                  ? "font-semibold text-zinc-700 dark:text-zinc-300 cursor-default"
+                  : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
               )}
             >
               {segment.name}
             </button>
             {!isLast && (
-              <ChevronRight className="h-3 w-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+              <ChevronRight className="h-3 w-3 text-zinc-300 dark:text-zinc-700 shrink-0" />
             )}
           </div>
         );
@@ -398,8 +396,8 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
 
       {/* File count */}
       {fileCount != null && fileCount > 0 && (
-        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums ml-1.5 shrink-0">
-          {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
+        <span className="text-[10px] text-zinc-400 font-mono ml-1.5 shrink-0">
+          · {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
         </span>
       )}
     </div>
@@ -463,25 +461,25 @@ function ExpandableSearch() {
 
   return (
     <div className="relative flex items-center">
-      <Search className="absolute left-2 h-3 w-3 text-neutral-400 pointer-events-none" />
+      <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
       <input
         ref={inputRef}
         type="text"
         value={localSearch}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
-        placeholder="Buscar..."
+        placeholder="Buscar arquivos, assistidos, processos..."
         className={cn(
-          "h-7 w-40 pl-7 pr-7 rounded-md text-xs",
-          "bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/80 dark:border-neutral-700/40",
-          "text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-500",
+          "h-8 w-56 pl-8 pr-7 rounded-lg text-xs",
+          "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
+          "text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400",
           "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
           "transition-all duration-200"
         )}
       />
       <button
         onClick={handleClose}
-        className="absolute right-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+        className="absolute right-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
       >
         <X className="h-3 w-3" />
       </button>
@@ -693,7 +691,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex items-center gap-1.5 h-10 px-4 border-b border-neutral-200/50 dark:border-neutral-800/50 shrink-0">
+      <div className="flex items-center gap-1.5 h-14 px-4 border-b border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-950 shrink-0">
         {/* Mobile hamburger spacer */}
         <div className="w-8 lg:hidden" />
 
@@ -750,7 +748,7 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
           </ProcessingQueuePanel>
 
           {/* Separator */}
-          <div className="h-4 w-px bg-neutral-200/80 dark:bg-neutral-700/50 mx-0.5" />
+          <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5" />
 
           {/* View Mode Cycle Button */}
           <ViewModeCycleButton />

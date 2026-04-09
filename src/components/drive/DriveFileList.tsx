@@ -4,9 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useDriveContext } from "./DriveContext";
 import {
-  getFileIcon,
   formatFileSize,
-  getEnrichmentBadge,
   DRIVE_ATRIBUICOES,
 } from "./drive-constants";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,9 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FolderOpen, ChevronUp, ChevronDown, MoreVertical, ExternalLink, Pencil, FolderInput, Download, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { FolderOpen, ChevronUp, ChevronDown, MoreVertical, ExternalLink, Pencil, FolderInput, Download, Trash2, Lightbulb } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { MoveFileModal } from "./MoveFileModal";
@@ -71,16 +67,32 @@ function getAtribuicaoForFolder(folderId: string) {
   return DRIVE_ATRIBUICOES.find((a) => a.folderId === folderId) ?? null;
 }
 
+function getFileFormatIcon(mimeType: string | null, name: string): { label: string; bgClass: string; textClass: string; fontSize: string } {
+  if (!mimeType) return { label: "?", bgClass: "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700/50", textClass: "text-zinc-500 dark:text-zinc-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("pdf")) return { label: "PDF", bgClass: "bg-red-50 dark:bg-red-950/40 border-red-200/80 dark:border-red-900/30", textClass: "text-red-500 dark:text-red-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("image")) return { label: "IMG", bgClass: "bg-violet-50 dark:bg-violet-950/40 border-violet-200/80 dark:border-violet-900/30", textClass: "text-violet-500 dark:text-violet-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("audio")) return { label: "MP3", bgClass: "bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200/80 dark:border-cyan-900/30", textClass: "text-cyan-500 dark:text-cyan-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("video")) return { label: "VID", bgClass: "bg-pink-50 dark:bg-pink-950/40 border-pink-200/80 dark:border-pink-900/30", textClass: "text-pink-500 dark:text-pink-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("document") || mimeType.includes("word") || mimeType.includes("msword")) return { label: "DOC", bgClass: "bg-blue-50 dark:bg-blue-950/40 border-blue-200/80 dark:border-blue-900/30", textClass: "text-blue-500 dark:text-blue-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) return { label: "XLS", bgClass: "bg-green-50 dark:bg-green-950/40 border-green-200/80 dark:border-green-900/30", textClass: "text-green-500 dark:text-green-400", fontSize: "text-[10px]" };
+  if (mimeType === "text/markdown" || name.endsWith(".md")) return { label: "MD", bgClass: "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700/50", textClass: "text-zinc-500 dark:text-zinc-400", fontSize: "text-[10px]" };
+  if (mimeType.includes("json") || name.endsWith(".json")) return { label: "JSON", bgClass: "bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/30", textClass: "text-amber-600 dark:text-amber-400", fontSize: "text-[9px]" };
+  return { label: "FILE", bgClass: "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700/50", textClass: "text-zinc-500 dark:text-zinc-400", fontSize: "text-[9px]" };
+}
+
+function isAIFile(name: string, enrichmentStatus: string | null): boolean {
+  return name.includes("_analise_ia") || name.includes("_ia.json") || (name.includes("Relatorio") && name.includes("analise"));
+}
+
 // ─── Skeleton Row ───────────────────────────────────────────────────
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-2.5 px-3 h-11 animate-pulse">
-      <div className="w-3.5 h-3.5 rounded bg-neutral-200/50 dark:bg-neutral-700/50" />
-      <div className="w-7 h-7 rounded-md bg-neutral-200/50 dark:bg-neutral-700/50" />
-      <div className="flex-1 space-y-1">
-        <div className="h-3 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/3" />
-        <div className="h-2.5 bg-neutral-200/50 dark:bg-neutral-700/50 rounded w-1/4" />
+    <div className="flex items-center gap-3 px-3 py-3 animate-pulse">
+      <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3.5 bg-zinc-100 dark:bg-zinc-800 rounded w-2/5" />
+        <div className="h-2.5 bg-zinc-100 dark:bg-zinc-800 rounded w-1/4" />
       </div>
     </div>
   );
@@ -110,7 +122,7 @@ function SortHeader({
       onClick={() => onSort(sortKey)}
       className={cn(
         "flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider transition-colors duration-150",
-        isActive ? "text-neutral-700 dark:text-neutral-300" : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-400",
+        isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400",
         className
       )}
     >
@@ -122,24 +134,15 @@ function SortHeader({
   );
 }
 
-// ─── Column widths (shared between header and rows) ─────────────────
-const COL = {
-  type: "w-[72px] shrink-0",
-  size: "w-[80px] shrink-0",
-  date: "w-[88px] shrink-0",
-  status: "w-[88px] shrink-0",
-} as const;
-
-// ─── File Row with Columns ──────────────────────────────────────────
+// ─── File Row ──────────────────────────────────────────────────────
 
 function FileRow({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
   const utils = trpc.useUtils();
   const [showMoveModal, setShowMoveModal] = useState(false);
   const isSelected = ctx.selectedFileIds.has(file.id);
-  const Icon = file.isFolder ? FolderOpen : getFileIcon(file.mimeType);
-  const enrichment = getEnrichmentBadge(file.enrichmentStatus);
-  const atribuicao = getAtribuicaoForFolder(file.driveFolderId);
+  const formatIcon = file.isFolder ? null : getFileFormatIcon(file.mimeType, file.name);
+  const isIA = !file.isFolder && isAIFile(file.name, file.enrichmentStatus);
 
   const deleteFile = trpc.drive.deleteFile.useMutation({
     onSuccess: () => { toast.success("Arquivo excluido"); utils.drive.files.invalidate(); },
@@ -161,23 +164,24 @@ function FileRow({ file }: { file: DriveFile }) {
     const d = file.lastModifiedTime || file.createdAt;
     if (!d) return "";
     try {
-      return formatDistanceToNow(new Date(d), { addSuffix: false, locale: ptBR });
+      const date = new Date(d);
+      return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
     } catch {
       return "";
     }
   }, [file.lastModifiedTime, file.createdAt]);
 
   const typeLabel = getFileTypeLabel(file.mimeType, file.isFolder);
+  const sizeStr = !file.isFolder && file.fileSize ? formatFileSize(file.fileSize) : "";
+  const subtitle = [typeLabel !== "Pasta" ? typeLabel : null, sizeStr, dateStr].filter(Boolean).join(" · ");
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-2.5 px-3 h-10 cursor-pointer transition-colors duration-150",
-        "border-b border-neutral-100/80 dark:border-neutral-800/40 last:border-0",
-        "hover:bg-neutral-50 dark:hover:bg-neutral-800/50",
-        file.isFolder && "bg-neutral-50/30 dark:bg-neutral-800/20",
-        isSelected && "bg-emerald-50/80 dark:bg-emerald-500/8 border-emerald-100 dark:border-emerald-500/10",
+        "group flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors",
+        "hover:bg-zinc-50/80 dark:hover:bg-zinc-800/30",
+        isSelected && "bg-emerald-50/60 dark:bg-emerald-950/10",
       )}
     >
       {/* Checkbox */}
@@ -185,66 +189,54 @@ function FileRow({ file }: { file: DriveFile }) {
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => ctx.toggleFileSelection(file.id)}
-          className="h-3.5 w-3.5 border-neutral-300 dark:border-neutral-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+          className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
         />
       </div>
 
-      {/* Icon with atribuicao dot */}
-      <div className="relative shrink-0">
-        <div className={cn(
-          "w-7 h-7 rounded-md flex items-center justify-center",
-          file.isFolder ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-neutral-100 dark:bg-neutral-800",
-        )}>
-          <Icon className={cn(
-            "w-3.5 h-3.5",
-            file.isFolder ? "text-emerald-600 dark:text-emerald-500" : "text-neutral-400",
-          )} />
-        </div>
-        {atribuicao && (
-          <span className={cn("absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-1 ring-white dark:ring-neutral-900", atribuicao.dotClass)} />
-        )}
+      {/* Format icon */}
+      <div className="shrink-0">
+        {file.isFolder ? (
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/30 flex items-center justify-center">
+            <FolderOpen className="w-4 h-4 text-emerald-500" />
+          </div>
+        ) : formatIcon ? (
+          <div className={cn("w-9 h-9 rounded-lg border flex items-center justify-center", formatIcon.bgClass)}>
+            <span className={cn("font-bold", formatIcon.textClass, formatIcon.fontSize)}>{formatIcon.label}</span>
+          </div>
+        ) : null}
       </div>
 
-      {/* Name */}
+      {/* Name + subtitle */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] text-neutral-800 dark:text-neutral-200 truncate leading-tight" title={file.name}>
+        <p className="text-[13px] font-medium text-zinc-800 dark:text-zinc-200 truncate" title={file.name}>
           {file.name}
         </p>
-      </div>
-
-      {/* Type */}
-      <span className={cn(COL.type, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate")}>
-        {typeLabel}
-      </span>
-
-      {/* Size */}
-      <span className={cn(COL.size, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate tabular-nums")}>
-        {!file.isFolder && file.fileSize ? formatFileSize(file.fileSize) : "—"}
-      </span>
-
-      {/* Date */}
-      <span className={cn(COL.date, "text-[11px] text-neutral-400 dark:text-neutral-500 truncate")}>
-        {dateStr || "—"}
-      </span>
-
-      {/* Status / Enrichment */}
-      <div className={cn(COL.status)}>
-        {!file.isFolder && enrichment.label ? (
-          <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full border", enrichment.class)}>
-            {enrichment.label}
-          </span>
-        ) : (
-          <span className="text-[11px] text-neutral-300 dark:text-neutral-700">—</span>
+        {subtitle && (
+          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">{subtitle}</p>
         )}
       </div>
 
-      {/* Actions */}
+      {/* Status indicator: dot or IA badge */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {isIA ? (
+          <>
+            <Lightbulb className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-[10px] text-zinc-400">IA</span>
+          </>
+        ) : !file.isFolder && file.enrichmentStatus === "completed" ? (
+          <span className="w-2 h-2 rounded-full bg-emerald-500" title="Enriquecido" />
+        ) : !file.isFolder && (file.enrichmentStatus === "pending" || file.enrichmentStatus === "processing") ? (
+          <span className={cn("w-2 h-2 rounded-full bg-amber-500", file.enrichmentStatus === "processing" && "animate-pulse")} title={file.enrichmentStatus === "processing" ? "Processando" : "Pendente"} />
+        ) : null}
+      </div>
+
+      {/* Actions menu (hover only) */}
       <div className="w-7 shrink-0 flex justify-center" onClick={(e) => e.stopPropagation()}>
         {!file.isFolder ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all">
-                <MoreVertical className="h-3.5 w-3.5 text-neutral-400" />
+              <button className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-white/60 dark:hover:bg-zinc-800 transition-all">
+                <MoreVertical className="h-4 w-4 text-zinc-400" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -333,12 +325,8 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
 
   if (isLoading) {
     return (
-      <div>
-        <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-neutral-200/60 dark:border-neutral-800/40">
-          <div className="w-3.5" /><div className="w-7" />
-          <div className="flex-1 h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-16" />
-        </div>
-        {Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} />)}
+      <div className="bg-white dark:bg-zinc-900/40 rounded-xl border border-zinc-200/80 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/40 overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
     );
   }
@@ -346,39 +334,38 @@ export function DriveFileList({ files, isLoading }: DriveFileListProps) {
   if (sortedFiles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FolderOpen className="w-10 h-10 text-neutral-300 dark:text-neutral-600 mb-2" />
-        <p className="text-[12px] text-neutral-500 font-medium">Nenhum arquivo nesta pasta</p>
-        <p className="text-[11px] text-neutral-400 mt-0.5">Sincronize ou faca upload</p>
+        <FolderOpen className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mb-2" />
+        <p className="text-[12px] text-zinc-500 font-medium">Nenhum arquivo nesta pasta</p>
+        <p className="text-[11px] text-zinc-400 mt-0.5">Sincronize ou faca upload</p>
       </div>
     );
   }
 
   return (
     <div>
-      {/* Table Header */}
-      <div className="flex items-center gap-2.5 px-3 py-1.5 border-b border-neutral-200/60 dark:border-neutral-800/40 bg-neutral-50/50 dark:bg-neutral-900/30 sticky top-0 z-10">
+      {/* Sort header row */}
+      <div className="flex items-center gap-3 px-3 py-1.5 mb-1">
         <div onClick={(e) => e.stopPropagation()} className="shrink-0">
           <Checkbox
             checked={allSelected}
             onCheckedChange={handleSelectAll}
-            className="h-3.5 w-3.5 border-neutral-300 dark:border-neutral-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+            className="h-3.5 w-3.5 border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
           />
         </div>
-        <div className="w-7" />
+        <div className="w-9" />
         <div className="flex-1 min-w-0">
           <SortHeader label="Nome" sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} />
         </div>
-        <SortHeader label="Tipo" sortKey="type" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.type} />
-        <SortHeader label="Tamanho" sortKey="size" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.size} />
-        <SortHeader label="Data" sortKey="date" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.date} />
-        <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className={COL.status} />
+        <SortHeader label="Status" sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="w-16 shrink-0" />
         <div className="w-7" />
       </div>
 
-      {/* Rows */}
-      {sortedFiles.map((file) => (
-        <FileRow key={file.id} file={file} />
-      ))}
+      {/* Card wrapper with all file rows */}
+      <div className="bg-white dark:bg-zinc-900/40 rounded-xl border border-zinc-200/80 dark:border-zinc-800/50 divide-y divide-zinc-100 dark:divide-zinc-800/40 overflow-hidden">
+        {sortedFiles.map((file) => (
+          <FileRow key={file.id} file={file} />
+        ))}
+      </div>
     </div>
   );
 }
