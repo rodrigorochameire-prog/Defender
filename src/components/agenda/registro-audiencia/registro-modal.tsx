@@ -4,22 +4,16 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-// motion/AnimatePresence removed — exit animations were stalling tab switches
 import {
-  FileText, Users, Notebook, MessageSquare, Eye, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2, HardDrive, Wand2, Zap,
+  Users, Notebook, BookOpen,
+  Sparkles, Gavel, X, Save, CheckCircle2,
 } from "lucide-react";
-import { BriefingSection } from "@/components/briefing";
 import { useRegistroForm } from "./hooks/use-registro-form";
-import { TabGeral } from "./tabs/tab-geral";
-import { TabRapido } from "./tabs/tab-rapido";
-import { TabPreparacao } from "./tabs/tab-preparacao";
+import { TabBriefing } from "./tabs/tab-briefing";
 import { TabDepoentes } from "./tabs/tab-depoentes";
 import { TabAnotacoes } from "./tabs/tab-anotacoes";
-import { TabManifestacoes } from "./tabs/tab-manifestacoes";
-import { TabRegistro } from "./tabs/tab-registro";
+import { TabResultado } from "./tabs/tab-resultado";
 import { TabHistorico } from "./tabs/tab-historico";
-import { TabMidia } from "./tabs/tab-midia";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
 
@@ -32,16 +26,11 @@ interface RegistroAudienciaModalProps {
 }
 
 const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
-  { key: "rapido", label: "Rápido", icon: Zap },
-  { key: "geral", label: "Geral", icon: FileText },
   { key: "briefing", label: "Briefing", icon: Sparkles },
-  { key: "preparacao", label: "Preparação", icon: Wand2 },
   { key: "depoentes", label: "Depoentes", icon: Users, countKey: "depoentes" },
-  { key: "anotacoes", label: "Anotações", icon: Notebook },
-  { key: "manifestacoes", label: "Manifestações", icon: MessageSquare },
-  { key: "midia", label: "Mídia", icon: HardDrive },
-  { key: "registro", label: "Registro", icon: Eye },
-  { key: "historico", label: "Histórico", icon: BookOpen, countKey: "historico" },
+  { key: "anotacoes", label: "Anotacoes", icon: Notebook },
+  { key: "resultado", label: "Resultado", icon: CheckCircle2 },
+  { key: "historico", label: "Historico", icon: BookOpen, countKey: "historico" },
 ];
 
 export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCriarNovoEvento }: RegistroAudienciaModalProps) {
@@ -56,15 +45,24 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
     (tab) => tab.key !== "historico" || form.registrosAnteriores.length > 0
   );
 
+  // Completude badge calculation: how many of 5 key fields are filled
+  const completudeItems = [
+    form.statusAudiencia, // always truthy since it has a default
+    form.registro.resultado,
+    form.registro.assistidoCompareceu !== undefined,
+    form.registro.anotacoesGerais,
+    form.registro.depoentes.length > 0,
+  ].filter(Boolean).length;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-none w-[98vw] md:w-[98vw] h-[98vh] flex flex-col overflow-hidden bg-white dark:bg-neutral-950 p-0 gap-0" hideClose>
-        <DialogTitle className="sr-only">Registro de Audiência Judicial</DialogTitle>
+        <DialogTitle className="sr-only">Registro de Audiencia Judicial</DialogTitle>
         <DialogDescription className="sr-only">
-          Sistema para registro de audiências com gestão de depoentes.
+          Sistema para registro de audiencias com gestao de depoentes.
         </DialogDescription>
 
-        {/* Header - Padrão Defender */}
+        {/* Header - Padrao Defender */}
         <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -101,16 +99,16 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                   return assistidoName;
                 })()}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-[10px] md:text-xs text-muted-foreground truncate">
-                  {new Date(evento.data).toLocaleDateString("pt-BR")} • {evento.horarioInicio}
+                  {new Date(evento.data).toLocaleDateString("pt-BR")} {evento.horarioInicio && `\u2022 ${evento.horarioInicio}`}
                   {evento.processo && (() => {
                     const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
                     const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
                     if (processoId) {
                       return (
                         <>
-                          {" • "}
+                          {" \u2022 "}
                           <Link
                             href={`/admin/processos/${processoId}`}
                             target="_blank"
@@ -122,7 +120,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                         </>
                       );
                     }
-                    return ` • ${processoDisplay}`;
+                    return ` \u2022 ${processoDisplay}`;
                   })()}
                 </p>
                 {evento.atribuicao && (
@@ -130,9 +128,30 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     {evento.atribuicao}
                   </Badge>
                 )}
+                {/* Inline Juiz / Promotor fields */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] text-muted-foreground">Juiz:</span>
+                  <input
+                    type="text"
+                    value={form.juiz}
+                    onChange={(e) => form.setJuiz(e.target.value)}
+                    placeholder="Nome do juiz"
+                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] text-muted-foreground">MP:</span>
+                  <input
+                    type="text"
+                    value={form.promotor}
+                    onChange={(e) => form.setPromotor(e.target.value)}
+                    placeholder="Nome do promotor"
+                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+                  />
+                </div>
                 {form.registroSalvo && form.ultimoSalvamento && (
                   <span className="text-[9px] text-muted-foreground">
-                    • Último salvamento: {form.ultimoSalvamento}
+                    Ultimo salvamento: {form.ultimoSalvamento}
                   </span>
                 )}
               </div>
@@ -193,53 +212,12 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
         {/* Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4">
-              {form.activeTab === "rapido" && (
-                  <TabRapido
-                    registro={form.registro}
-                    updateRegistro={form.updateRegistro}
-                    statusAudiencia={form.statusAudiencia}
-                    setStatusAudiencia={form.setStatusAudiencia}
-                    handleUpdateDepoente={form.handleUpdateDepoente}
-                    handleSubmit={form.handleSubmit}
-                    registroSalvo={form.registroSalvo}
-                  />
-              )}
-
-              {form.activeTab === "geral" && (
-                  <TabGeral
-                    registro={form.registro}
-                    updateRegistro={form.updateRegistro}
-                    statusAudiencia={form.statusAudiencia}
-                    setStatusAudiencia={form.setStatusAudiencia}
-                    decretoRevelia={form.decretoRevelia}
-                    setDecretoRevelia={form.setDecretoRevelia}
-                    testemunhaIntimada={form.testemunhaIntimada}
-                    setTestemunhaIntimada={form.setTestemunhaIntimada}
-                    parteInsistiu={form.parteInsistiu}
-                    setParteInsistiu={form.setParteInsistiu}
-                    depoentesRedesignacao={form.depoentesRedesignacao}
-                    setDepoentesRedesignacao={form.setDepoentesRedesignacao}
-                    novaDataPopoverOpen={form.novaDataPopoverOpen}
-                    setNovaDataPopoverOpen={form.setNovaDataPopoverOpen}
-                    novoHorarioPopoverOpen={form.novoHorarioPopoverOpen}
-                    setNovoHorarioPopoverOpen={form.setNovoHorarioPopoverOpen}
-                    evento={evento}
-                  />
-              )}
-
               {form.activeTab === "briefing" && (
-                <div className="max-w-5xl mx-auto">
-                  <BriefingSection evento={evento} />
-                </div>
-              )}
-
-              {form.activeTab === "preparacao" && (
-                <TabPreparacao
-                  audienciaId={form.audienciaId}
+                <TabBriefing
                   evento={evento}
+                  audienciaId={form.audienciaId}
                   onImportarParaDepoentes={(depoentes) => {
                     form.setRegistro((prev) => {
-                      // Merge by name (case-insensitive) — keep existing entries.
                       const existingNames = new Set(
                         prev.depoentes.map((d) => d.nome.trim().toLowerCase()),
                       );
@@ -277,31 +255,24 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                   <TabAnotacoes registro={form.registro} updateRegistro={form.updateRegistro} />
               )}
 
-              {form.activeTab === "manifestacoes" && (
-                  <TabManifestacoes registro={form.registro} updateRegistro={form.updateRegistro} />
-              )}
-
-              {form.activeTab === "midia" && (
-                  <TabMidia
-                    assistidoId={(() => {
-                      const aid = evento.assistido?.id ?? evento.assistidoId;
-                      return typeof aid === "number" ? aid : undefined;
-                    })()}
-                    processoId={(() => {
-                      const pid = evento.processo?.id ?? evento.processoId;
-                      return typeof pid === "number" ? pid : undefined;
-                    })()}
-                    assistidoNome={typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome}
-                  />
-              )}
-
-              {form.activeTab === "registro" && (
-                  <TabRegistro
+              {form.activeTab === "resultado" && (
+                  <TabResultado
                     registro={form.registro}
+                    updateRegistro={form.updateRegistro}
                     statusAudiencia={form.statusAudiencia}
-                    completude={form.completude}
+                    setStatusAudiencia={form.setStatusAudiencia}
+                    decretoRevelia={form.decretoRevelia}
+                    setDecretoRevelia={form.setDecretoRevelia}
+                    testemunhaIntimada={form.testemunhaIntimada}
+                    setTestemunhaIntimada={form.setTestemunhaIntimada}
+                    parteInsistiu={form.parteInsistiu}
+                    setParteInsistiu={form.setParteInsistiu}
                     depoentesRedesignacao={form.depoentesRedesignacao}
-                    setActiveTab={form.setActiveTab}
+                    setDepoentesRedesignacao={form.setDepoentesRedesignacao}
+                    novaDataPopoverOpen={form.novaDataPopoverOpen}
+                    setNovaDataPopoverOpen={form.setNovaDataPopoverOpen}
+                    novoHorarioPopoverOpen={form.novoHorarioPopoverOpen}
+                    setNovoHorarioPopoverOpen={form.setNovoHorarioPopoverOpen}
                     evento={evento}
                   />
               )}
@@ -314,8 +285,25 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
 
         {/* Footer */}
         <div className="border-t border-neutral-200 dark:border-border p-2 md:p-3 bg-neutral-50 dark:bg-muted/50 flex flex-col sm:flex-row items-center justify-between gap-2 flex-shrink-0">
-          <div className="text-xs text-neutral-500">
-            {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
+          <div className="flex items-center gap-3 text-xs text-neutral-500">
+            <span>
+              {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
+            </span>
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 border-neutral-300 dark:border-neutral-700 text-neutral-500"
+            >
+              {completudeItems}/5 preenchidos
+            </Badge>
+            {form.isDirty && (
+              <span className="text-[10px] text-amber-600 dark:text-amber-400">Alteracoes nao salvas</span>
+            )}
+            {form.autoSaveStatus === "saving" && (
+              <span className="text-[10px] text-neutral-400">Salvando...</span>
+            )}
+            {form.autoSaveStatus === "saved" && (
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400">Auto-salvo</span>
+            )}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button

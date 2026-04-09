@@ -581,6 +581,8 @@ export const audienciasRouter = router({
     .input(z.object({
       audienciaId: z.number(),
       registro: z.any(), // RegistroAudienciaData as JSON
+      juiz: z.string().optional(),
+      promotor: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const registroData = input.registro as Record<string, unknown>;
@@ -591,6 +593,8 @@ export const audienciasRouter = router({
           status: registroData.realizada ? "realizada" : "reagendada",
           resultado: (registroData.resultado as string) || null,
           anotacoes: (registroData.anotacoesGerais as string) || null,
+          juiz: input.juiz ?? undefined,
+          promotor: input.promotor ?? undefined,
           updatedAt: new Date(),
         })
         .where(eq(audiencias.id, input.audienciaId))

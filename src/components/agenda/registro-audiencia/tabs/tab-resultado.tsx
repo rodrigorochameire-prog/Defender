@@ -20,12 +20,13 @@ import {
   Gavel,
   X,
   Scale,
+  Send,
 } from "lucide-react";
 import { resultadoOptionsPorAtribuicao, motivoNaoRealizacaoOptions, getDepoenteStyle } from "../constants";
 import type { StatusAudiencia } from "../hooks/use-registro-form";
 import type { Depoente, RegistroAudienciaData } from "../types";
 
-interface TabGeralProps {
+interface TabResultadoProps {
   registro: RegistroAudienciaData;
   updateRegistro: (partial: Partial<RegistroAudienciaData>) => void;
   statusAudiencia: StatusAudiencia;
@@ -33,7 +34,7 @@ interface TabGeralProps {
   decretoRevelia: boolean | null;
   setDecretoRevelia: (v: boolean | null) => void;
   evento: any;
-  // Redesignação
+  // Redesignacao
   testemunhaIntimada: string;
   setTestemunhaIntimada: (v: string) => void;
   parteInsistiu: string;
@@ -57,7 +58,7 @@ const statusOptions: {
 }[] = [
   {
     key: "concluida",
-    label: "Concluída",
+    label: "Concluida",
     icon: CheckCircle2,
     activeBg: "bg-emerald-50 dark:bg-emerald-950/30",
     activeText: "text-emerald-700 dark:text-emerald-400",
@@ -81,7 +82,7 @@ const statusOptions: {
   },
 ];
 
-export function TabGeral({
+export function TabResultado({
   registro,
   updateRegistro,
   statusAudiencia,
@@ -99,17 +100,17 @@ export function TabGeral({
   setNovaDataPopoverOpen,
   novoHorarioPopoverOpen,
   setNovoHorarioPopoverOpen,
-}: TabGeralProps) {
+}: TabResultadoProps) {
   const resultadosDisponiveis = resultadoOptionsPorAtribuicao[evento.atribuicao] || resultadoOptionsPorAtribuicao["Criminal Geral"];
 
   return (
     <div className="space-y-3 max-w-5xl mx-auto">
-      {/* ── Status + Comparecimento ── */}
+      {/* -- Status + Comparecimento -- */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Status — segmented control */}
+        {/* Status -- segmented control */}
         <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
           <p className="text-[10px] uppercase tracking-wider font-semibold mb-2 text-neutral-400 dark:text-neutral-500">
-            Status da Audiência
+            Status da Audiencia
           </p>
           <div className="flex rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
             {statusOptions.map((s, idx) => {
@@ -141,7 +142,7 @@ export function TabGeral({
           </div>
         </div>
 
-        {/* Comparecimento — segmented control */}
+        {/* Comparecimento -- segmented control */}
         <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
           <p className="text-[10px] uppercase tracking-wider font-semibold mb-2 text-neutral-400 dark:text-neutral-500">
             Comparecimento do Assistido
@@ -175,7 +176,7 @@ export function TabGeral({
             </button>
           </div>
 
-          {/* Revelia — inline toggle */}
+          {/* Revelia -- inline toggle */}
           {!registro.assistidoCompareceu && (
             <div className="mt-2.5 flex items-center gap-2.5 animate-in fade-in-50 slide-in-from-top-2">
               <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 whitespace-nowrap">
@@ -206,7 +207,7 @@ export function TabGeral({
                   )}
                 >
                   <X className="w-3 h-3 shrink-0" />
-                  Não decretou
+                  Nao decretou
                 </button>
               </div>
             </div>
@@ -214,7 +215,7 @@ export function TabGeral({
         </div>
       </div>
 
-      {/* ── Redesignação ── */}
+      {/* -- Redesignacao -- */}
       {statusAudiencia === "redesignada" && (
         <div className="space-y-3 animate-in fade-in-50 slide-in-from-top-2">
           {/* Motivo */}
@@ -222,10 +223,10 @@ export function TabGeral({
             <div className="flex items-center gap-2 mb-2.5">
               <AlertTriangle className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
               <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">
-                Motivo da Redesignação
+                Motivo da Redesignacao
               </p>
               <Badge variant="outline" className="ml-auto text-[9px] px-1.5 py-0 border-neutral-300 dark:border-neutral-700 text-neutral-500">
-                Obrigatório
+                Obrigatorio
               </Badge>
             </div>
             <div className="flex flex-wrap gap-1.5 mb-2.5">
@@ -253,7 +254,7 @@ export function TabGeral({
             <Textarea
               value={registro.motivoRedesignacao || ""}
               onChange={(e) => updateRegistro({ motivoRedesignacao: e.target.value })}
-              placeholder="Detalhe o motivo da redesignação (opcional)"
+              placeholder="Detalhe o motivo da redesignacao (opcional)"
               rows={2}
               className="text-sm bg-white dark:bg-neutral-950"
             />
@@ -298,7 +299,7 @@ export function TabGeral({
                   </div>
                 )}
 
-                {/* Intimada + Parte insistiu — side by side */}
+                {/* Intimada + Parte insistiu -- side by side */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   <div>
                     <p className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 text-neutral-400 dark:text-neutral-500">
@@ -306,8 +307,8 @@ export function TabGeral({
                     </p>
                     <div className="flex rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
                       {[
-                        { value: "nao-intimada", label: "Não intimada" },
-                        { value: "nao-compareceu", label: "Intimada, não compareceu" },
+                        { value: "nao-intimada", label: "Nao intimada" },
+                        { value: "nao-compareceu", label: "Intimada, nao compareceu" },
                       ].map((opt, idx) => (
                         <button
                           key={opt.value}
@@ -333,7 +334,7 @@ export function TabGeral({
                     </p>
                     <div className="flex rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
                       {[
-                        { value: "mp", label: "Ministério Público" },
+                        { value: "mp", label: "Ministerio Publico" },
                         { value: "defesa", label: "Defesa" },
                       ].map((opt, idx) => (
                         <button
@@ -358,12 +359,12 @@ export function TabGeral({
             )}
           </div>
 
-          {/* Nova Data e Horário */}
+          {/* Nova Data e Horario */}
           <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
             <div className="flex items-center gap-2 mb-2.5">
               <Calendar className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
               <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">
-                Nova Data e Horário
+                Nova Data e Horario
               </p>
               <span className="ml-auto text-[10px] text-neutral-400 dark:text-neutral-500">Opcional</span>
             </div>
@@ -400,7 +401,7 @@ export function TabGeral({
                 </Popover>
               </div>
               <div>
-                <Label className="text-xs font-semibold mb-1.5 block text-neutral-600 dark:text-neutral-400">Novo Horário</Label>
+                <Label className="text-xs font-semibold mb-1.5 block text-neutral-600 dark:text-neutral-400">Novo Horario</Label>
                 <input
                   type="time"
                   value={registro.horarioRedesignacao || ""}
@@ -430,17 +431,17 @@ export function TabGeral({
         </div>
       )}
 
-      {/* ── Resultado ── */}
+      {/* -- Resultado -- */}
       {statusAudiencia === "concluida" && (
         <>
           <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
             <div className="flex items-center gap-2 mb-2.5">
               <Scale className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
               <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">
-                Resultado da Audiência
+                Resultado da Audiencia
               </p>
               <Badge variant="outline" className="ml-auto text-[9px] px-1.5 py-0 border-neutral-300 dark:border-neutral-700 text-neutral-500">
-                Obrigatório
+                Obrigatorio
               </Badge>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -467,19 +468,19 @@ export function TabGeral({
             </div>
           </div>
 
-          {/* Tipo de Extinção */}
+          {/* Tipo de Extincao */}
           {registro.resultado === "extincao" && (
             <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3 animate-in fade-in-50 slide-in-from-top-2">
               <div className="flex items-center gap-2 mb-2">
                 <X className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
                 <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">
-                  Tipo de Extinção
+                  Tipo de Extincao
                 </p>
               </div>
               <Textarea
                 value={registro.tipoExtincao || ""}
                 onChange={(e) => updateRegistro({ tipoExtincao: e.target.value })}
-                placeholder="Especifique qual foi o tipo de extinção"
+                placeholder="Especifique qual foi o tipo de extincao"
                 rows={3}
                 className="text-sm bg-white dark:bg-neutral-950"
               />
@@ -487,6 +488,23 @@ export function TabGeral({
           )}
         </>
       )}
+
+      {/* -- Encaminhamentos (from tab-manifestacoes) -- */}
+      <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Send className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">
+            Encaminhamentos
+          </p>
+        </div>
+        <Textarea
+          value={registro.encaminhamentos}
+          onChange={(e) => updateRegistro({ encaminhamentos: e.target.value })}
+          placeholder="Encaminhamentos pos-audiencia..."
+          rows={4}
+          className="text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800"
+        />
+      </div>
     </div>
   );
 }

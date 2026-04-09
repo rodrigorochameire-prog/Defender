@@ -11,7 +11,7 @@ import {
 import type { Depoente, RegistroAudienciaData } from "../types";
 
 export type StatusAudiencia = "concluida" | "redesignada" | "suspensa";
-export type TabKey = "rapido" | "geral" | "briefing" | "preparacao" | "depoentes" | "manifestacoes" | "anotacoes" | "historico" | "registro" | "midia";
+export type TabKey = "briefing" | "depoentes" | "anotacoes" | "resultado" | "historico";
 
 interface UseRegistroFormProps {
   evento: any;
@@ -92,7 +92,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     dataRegistro: new Date().toISOString(),
   });
 
-  const [activeTab, setActiveTab] = useState<TabKey>("geral");
+  const [activeTab, setActiveTab] = useState<TabKey>("resultado");
   const [editandoDepoente, setEditandoDepoente] = useState<Depoente | null>(null);
   const [novoDepoenteNome, setNovoDepoenteNome] = useState("");
   const [novoDepoenteTipo, setNovoDepoenteTipo] = useState<Depoente["tipo"]>("testemunha");
@@ -115,6 +115,14 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   // Popover states
   const [novaDataPopoverOpen, setNovaDataPopoverOpen] = useState(false);
   const [novoHorarioPopoverOpen, setNovoHorarioPopoverOpen] = useState(false);
+
+  // Juiz / Promotor inline header fields
+  const [juiz, setJuiz] = useState(evento.juiz || "");
+  const [promotor, setPromotor] = useState(evento.promotor || "");
+
+  // Auto-save state
+  const [isDirty, setIsDirty] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   // Track whether we already loaded from DB to avoid overwriting user edits
   const dbLoadedRef = useRef(false);
@@ -178,6 +186,44 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   }, [isOpen, evento.id, audienciaId]);
 
   // ==========================================
+  // Auto-save every 30s when dirty
+  // ==========================================
+  useEffect(() => {
+    if (!isOpen || !audienciaId) return;
+    const timer = setInterval(() => {
+      if (isDirty && !salvarMutation.isPending) {
+        setAutoSaveStatus("saving");
+        const registroComVinculo: RegistroAudienciaData = {
+          ...registro,
+          historicoId: registro.historicoId || `HIST-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          processoId: evento.processo?.id || evento.processoId,
+          casoId: evento.caso?.id || evento.casoId,
+          assistidoId: evento.assistido?.id || evento.assistidoId,
+        };
+        salvarMutation.mutate(
+          {
+            audienciaId,
+            registro: registroComVinculo,
+            juiz: juiz || undefined,
+            promotor: promotor || undefined,
+          },
+          {
+            onSuccess: () => {
+              setIsDirty(false);
+              setAutoSaveStatus("saved");
+              setTimeout(() => setAutoSaveStatus("idle"), 3000);
+            },
+            onError: () => {
+              setAutoSaveStatus("idle");
+            },
+          },
+        );
+      }
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [isOpen, audienciaId, isDirty, registro, juiz, promotor, salvarMutation.isPending, evento]);
+
+  // ==========================================
   // Submit handler (async for DB persistence)
   // ==========================================
   const handleSubmit = useCallback(async () => {
@@ -208,6 +254,8 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
         await salvarMutation.mutateAsync({
           audienciaId,
           registro: registroComVinculo,
+          juiz: juiz || undefined,
+          promotor: promotor || undefined,
         });
       } else {
         // Fallback to in-memory store for local events
@@ -277,6 +325,8 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
 
       onSave(registroComVinculo);
 
+      setIsDirty(false);
+      setAutoSaveStatus("idle");
       const isAtualizacao = registroSalvo;
       setRegistroSalvo(true);
       setUltimoSalvamento(
@@ -345,6 +395,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
 
   const updateRegistro = useCallback((partial: Partial<RegistroAudienciaData>) => {
     setRegistro((prev) => ({ ...prev, ...partial }));
+    setIsDirty(true);
   }, []);
 
   const toggleSection = useCallback((section: string) => {
@@ -389,6 +440,10 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     novaDataPopoverOpen,
     novoHorarioPopoverOpen,
     completude,
+    juiz,
+    promotor,
+    isDirty,
+    autoSaveStatus,
 
     // Setters
     setActiveTab,
@@ -402,6 +457,8 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     setDepoentesRedesignacao,
     setNovaDataPopoverOpen,
     setNovoHorarioPopoverOpen,
+    setJuiz,
+    setPromotor,
 
     // Actions
     updateRegistro,
