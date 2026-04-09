@@ -213,8 +213,8 @@ function FileRow({ file }: { file: DriveFile }) {
             <FolderOpen className={cn("w-4 h-4", getAttrColor(ctx.selectedAtribuicao).icon)} />
           </div>
         ) : formatIcon ? (
-          <div className={cn("w-9 h-9 rounded-lg border flex items-center justify-center", formatIcon.bgClass)}>
-            <span className={cn("font-bold", formatIcon.textClass, formatIcon.fontSize)}>{formatIcon.label}</span>
+          <div className={cn("w-7 h-7 rounded-md flex items-center justify-center", formatIcon.bgClass.replace(/border-[^ ]+/g, ""))}>
+            <span className={cn("font-bold text-[8px]", formatIcon.textClass)}>{formatIcon.label}</span>
           </div>
         ) : null}
       </div>
