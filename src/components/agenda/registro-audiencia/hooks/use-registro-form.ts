@@ -70,6 +70,12 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   // Save mutation
   const salvarMutation = trpc.audiencias.salvarRegistro.useMutation();
 
+  // Auto-populate: load preview when depoentes are empty
+  const { data: preparacaoData } = trpc.audiencias.previewPreparacao.useQuery(
+    { audienciaId: audienciaId ?? 0 },
+    { enabled: isOpen && audienciaId !== null }
+  );
+
   // ==========================================
   // Local state
   // ==========================================
@@ -126,6 +132,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
 
   // Track whether we already loaded from DB to avoid overwriting user edits
   const dbLoadedRef = useRef(false);
+  const autoPopulatedRef = useRef(false);
 
   // ==========================================
   // Load saved registro from DB when modal opens
@@ -143,6 +150,65 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
       dbLoadedRef.current = true;
     }
   }, [savedRegistro, isOpen]);
+
+  // ==========================================
+  // Auto-populate depoentes from analysis_data when registro is empty
+  // ==========================================
+  useEffect(() => {
+    if (!isOpen || autoPopulatedRef.current) return;
+    if (!preparacaoData || preparacaoData.total === 0) return;
+
+    // Only auto-populate if depoentes are currently empty
+    const currentDepoentes = registro.depoentes;
+    if (currentDepoentes.length > 0) {
+      autoPopulatedRef.current = true;
+      return;
+    }
+
+    // Wait for DB load to complete first
+    if (audienciaId !== null && !dbLoadedRef.current && savedRegistro === undefined) return;
+
+    const isPolicial = (t: any) => {
+      const v = ((t as any).vinculo ?? "").toLowerCase();
+      return v.includes("policial") || v.includes("pm ") || v.includes("condutor")
+        || v.includes("investigador") || /^(cb|sd|sgt|cap|ten|ipc|del)\b/i.test(t.nome ?? "");
+    };
+
+    const mapTipo = (tipo: string, t: any): Depoente["tipo"] => {
+      if (isPolicial(t)) return "policial";
+      switch (tipo) {
+        case "VITIMA": return "vitima";
+        case "INFORMANTE": return "informante";
+        case "PERITO": return "perito";
+        default: return "testemunha";
+      }
+    };
+
+    const imported: Depoente[] = preparacaoData.depoentes.map((t, i) => ({
+      id: `auto-${i}-${t.nome}`,
+      nome: t.nome,
+      tipo: mapTipo(t.tipo ?? "COMUM", t),
+      lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
+      intimado: false,
+      presente: false,
+      statusIntimacao: "pendente" as const,
+      jaOuvido: (t.resumo ? "delegacia" : "nenhum") as Depoente["jaOuvido"],
+      depoimentoDelegacia: t.resumo ?? "",
+      depoimentoAnterior: "",
+      pontosFortes: t.pontosFavoraveis ?? "",
+      pontosFracos: t.pontosDesfavoraveis ?? "",
+      estrategiaInquiricao: t.perguntasSugeridas ?? "",
+      perguntasDefesa: "",
+      depoimentoLiteral: "",
+      analisePercepcoes: t.observacoes ?? "",
+    }));
+
+    if (imported.length > 0) {
+      setRegistro((prev) => ({ ...prev, depoentes: imported }));
+      setIsDirty(true);
+      autoPopulatedRef.current = true;
+    }
+  }, [isOpen, preparacaoData, registro.depoentes, savedRegistro, audienciaId]);
 
   // ==========================================
   // Load historico from DB
@@ -182,6 +248,7 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
       setRegistroSalvo(false);
       setUltimoSalvamento(null);
       dbLoadedRef.current = false;
+      autoPopulatedRef.current = false;
     }
   }, [isOpen, evento.id, audienciaId]);
 
