@@ -225,8 +225,26 @@ export const briefingRouter = router({
         }
       }
 
-      // 6. Se não há arquivos, retornar aviso
-      if (arquivosProcessados.length === 0) {
+      // 6. Gerar briefing a partir do analysis_data do processo
+      // (substitui a chamada ao Python backend que não está implementado)
+      // `processo` já foi carregado no passo 5 acima
+
+      const ad = (() => {
+        let raw = processo?.analysisData as Record<string, any> | string | null;
+        if (typeof raw === "string") { try { raw = JSON.parse(raw); } catch { raw = null; } }
+        return raw as Record<string, any> | null;
+      })();
+
+      // Monta testemunhas do briefing a partir do analysis_data
+      const collectArr = (v: unknown): any[] => Array.isArray(v) ? v : [];
+
+      const allTestemunhas = [
+        ...collectArr(ad?.testemunhas_acusacao).map((t: any) => ({ ...t, _lado: "ACUSACAO" })),
+        ...collectArr(ad?.testemunhas_defesa).map((t: any) => ({ ...t, _lado: "DEFESA" })),
+      ];
+
+      // Se não temos analysis_data E não temos arquivos, avisar
+      if (!ad && arquivosProcessados.length === 0) {
         return {
           success: true,
           testemunhas: testemunhasInfo.map((t) => ({
@@ -239,49 +257,71 @@ export const briefingRouter = router({
             perguntas_sugeridas: [],
           })),
           laudos: [],
-          relatorios: [],
           antecedentes: [],
           correlacoes: [],
-          resumo_geral:
-            "Nenhum documento encontrado na pasta do processo.",
-          cenario_probatorio: undefined,
+          resumo_geral: "Nenhum documento ou análise encontrados para este processo.",
           tese_principal_sugerida: undefined,
           teses_subsidiarias: [],
-          estrategia_recomendada:
-            "Faça upload dos documentos do processo (denúncia, laudos, termos de depoimento, vídeos de audiências).",
+          estrategia_recomendada: "Faça upload dos documentos ou rode a análise IA primeiro.",
           riscos_identificados: [],
           oportunidades_defesa: [],
           ordem_inquiricao_sugerida: testemunhasInfo.map((t) => t.nome),
         };
       }
 
-      // 7. Chamar backend Python para gerar briefing completo
-      // O backend vai:
-      // - Extrair conteúdo dos arquivos (Docling/OCR/Speech-to-Text)
-      // - Classificar documentos por tipo (laudo, depoimento, etc.)
-      // - Analisar laudos periciais
-      // - Buscar antecedentes de réu, vítima e testemunhas
-      // - Correlacionar provas (laudos vs depoimentos)
-      // - Identificar testemunhas e analisar depoimentos
-      // - Gerar estratégia e teses defensivas
-      try {
-        const result = await pythonBackend.briefingAudiencia({
-          processo_id: input.processoId,
-          caso_id: input.casoId,
-          audiencia_id: input.audienciaId,
-          testemunhas: testemunhasInfo,
-          arquivos: arquivosProcessados,
-          pessoas: pessoas,
-        });
+      // Construir briefing a partir do analysis_data
+      const testemunhasBriefing = allTestemunhas.length > 0
+        ? allTestemunhas.map((t: any) => ({
+            nome: t.nome || "Desconhecido",
+            tipo: t._lado || "COMUM",
+            arquivos_encontrados: [] as { nome: string; tipo: string }[],
+            versao_delegacia: t.depoimento_delegacia || t.resumo || t.trecho_chave || t.obs_critica || undefined,
+            versao_juizo: t.depoimento_judicial || t.versao_juizo || undefined,
+            contradicoes: collectArr(t.contradicoes),
+            pontos_fortes: collectArr(t.pontos_fortes || t.valor_estrategico ? [t.valor_estrategico] : []),
+            pontos_fracos: collectArr(t.pontos_fracos || t.obs_critica ? [t.obs_critica] : []),
+            perguntas_sugeridas: collectArr(t.perguntas || t.estrategia ? [t.estrategia] : []),
+            credibilidade_score: t.credibilidade_score,
+            credibilidade_justificativa: t.credibilidade_justificativa,
+          }))
+        : testemunhasInfo.map((t) => ({
+            nome: t.nome,
+            tipo: t.tipo,
+            arquivos_encontrados: [],
+            contradicoes: [],
+            pontos_fortes: [],
+            pontos_fracos: [],
+            perguntas_sugeridas: [],
+          }));
 
-        return result;
-      } catch (error) {
-        console.error("Erro ao gerar briefing:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erro ao gerar briefing. Tente novamente.",
-        });
-      }
+      // Extrair teses e estratégia do analysis_data
+      const tesesDefesa = collectArr(ad?.teses_defesa);
+      const vulnerabilidades = collectArr(ad?.vulnerabilidades_acusacao);
+      const pedidoPrincipal = ad?.pedido_principal;
+      const pendencias = collectArr(ad?.pendencias_diligencia_pre_aij);
+
+      // Resumo geral
+      const resumoGeral = ad?.resumo_executivo
+        || ad?.cenario_realista_aij_2026_04_09
+        || (tesesDefesa.length > 0
+          ? `Análise identificou ${tesesDefesa.length} tese(s) defensiva(s) e ${vulnerabilidades.length} vulnerabilidade(s) da acusação. ${arquivosProcessados.length} documento(s) vinculado(s) no Drive.`
+          : "Análise disponível no banco. Abra a Preparação para importar depoentes.");
+
+      return {
+        success: true,
+        testemunhas: testemunhasBriefing,
+        laudos: [],
+        antecedentes: [],
+        correlacoes: [],
+        resumo_geral: resumoGeral,
+        cenario_probatorio: ad?.cenario_probatorio || undefined,
+        tese_principal_sugerida: typeof tesesDefesa[0] === "string" ? tesesDefesa[0] : (tesesDefesa[0] as any)?.tese || pedidoPrincipal || undefined,
+        teses_subsidiarias: tesesDefesa.slice(1).map((t: any) => typeof t === "string" ? t : t?.tese || JSON.stringify(t)),
+        estrategia_recomendada: ad?.estrategia_recomendada || (pendencias.length > 0 ? `Pendências: ${pendencias.join("; ")}` : undefined),
+        riscos_identificados: vulnerabilidades.map((v: any) => typeof v === "string" ? v : JSON.stringify(v)),
+        oportunidades_defesa: tesesDefesa.map((t: any) => typeof t === "string" ? t : t?.tese || t?.nome || JSON.stringify(t)),
+        ordem_inquiricao_sugerida: allTestemunhas.map((t: any) => t.nome).filter(Boolean),
+      };
     }),
 
   /**
