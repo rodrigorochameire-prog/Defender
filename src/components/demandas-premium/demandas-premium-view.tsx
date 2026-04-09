@@ -40,13 +40,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/demandas-premium/PageHeader";
+import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
 import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { arrayMove } from "@dnd-kit/sortable";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
+// KPICardPremium/KPIGrid removed — stats now inline in charcoal header
 import {
   ListTodo,
   Plus,
@@ -113,6 +114,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  BarChart3,
+  List,
   type LucideIcon,
 } from "lucide-react";
 
@@ -128,6 +131,12 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
 
 // Stable empty array to prevent useEffect infinite loop from inline `= []` default
 const EMPTY_DEMANDAS: any[] = [];
+
+const DEMANDAS_VIEW_OPTIONS: ViewModeOption[] = [
+  { value: "kanban", label: "Kanban", icon: LayoutGrid },
+  { value: "planilha", label: "Tabela", icon: Table2 },
+  { value: "lista", label: "Lista", icon: List },
+];
 
 // Mapeamento de status do banco (enum) para status da UI
 const DB_STATUS_TO_UI: Record<string, string> = {
@@ -1994,326 +2003,128 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0f0f11] overflow-x-hidden">
-      {/* Header — Title + Actions */}
-      <div className="px-5 py-2.5 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80 space-y-2">
-        {/* Row 1: Icon + Title + Search/Config + Stats + Nova */}
-        <div className="flex items-center gap-3">
-          {/* Icon + Title */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-[10px] bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center shrink-0">
-              <ClipboardList className="w-[18px] h-[18px] text-white dark:text-neutral-900" />
+      {/* ====== CHARCOAL HEADER ====== */}
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3")}>
+        {/* Row 1: Title + inline stats + actions */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center">
+              <LayoutGrid className="w-[15px] h-[15px] text-white/50" />
             </div>
-            <div className="min-w-0 hidden sm:block">
-              <h1 className="font-serif text-[17px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">Demandas</h1>
-              <p className="text-[10px] text-neutral-400 leading-tight">Gestão de intimações e providências</p>
+            <h1 className="text-white text-[17px] font-semibold tracking-tight">Demandas</h1>
+            <div className="flex items-center gap-1.5 ml-2">
+              {(() => {
+                const total = demandas.filter(d => !d.arquivado).length;
+                const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
+                return (
+                  <>
+                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white/60 tabular-nums">
+                      {total} total
+                    </span>
+                    {urgent > 0 && (
+                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 tabular-nums">
+                        {urgent} urgentes
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
-
-          {/* Spacer */}
-          <div className="flex-1 min-w-0" />
-
-          {/* Stats — triagem / andamento / concluída */}
-          <div className="hidden md:flex items-center gap-1 shrink-0">
-            {(() => {
-              const total = demandas.filter(d => !d.arquivado).length;
-              const concluida = demandas.filter(d => d.arquivado || d.status === "CONCLUIDO" || d.status === "ARQUIVADO").length;
-              const triagem = demandas.filter(d => !d.arquivado && ["TRIAGEM", "5_TRIAGEM", "ATENDER", "URGENTE"].includes(d.status?.toUpperCase?.() || "")).length;
-              const andamento = total - triagem - concluida;
-              return (
-                <>
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{triagem}</span> triagem
-                  </span>
-                  <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-700/60" />
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{andamento}</span> andamento
-                  </span>
-                  <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-700/60" />
-                  <span className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5">
-                    <span className="font-bold tabular-nums text-neutral-800 dark:text-neutral-100">{concluida}</span> concluída
-                  </span>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Right: Search + Filtros + Settings grouped, then Nova */}
-          <div className="flex items-center gap-2 shrink-0">
-          <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60">
-            {/* 1. Search — expandable */}
-            {isMobileSearchOpen ? (
-              <div className="flex-1 min-w-0 relative animate-in slide-in-from-right-2 duration-200">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
-                <Input
-                  ref={mobileSearchRef}
-                  placeholder="Buscar assistido, processo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onBlur={() => { if (!searchTerm) setIsMobileSearchOpen(false); }}
-                  autoFocus
-                  className="pl-8 pr-7 h-8 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700/80 focus:border-emerald-400 rounded-lg w-48 sm:w-56"
-                />
-                <button onClick={() => { setSearchTerm(""); setIsMobileSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
-                  <X className="w-3 h-3 text-neutral-400 hover:text-neutral-600" />
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => { setIsMobileSearchOpen(true); setTimeout(() => mobileSearchRef.current?.focus(), 100); }}
-                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer ${
-                  searchTerm ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-neutral-700 shadow-sm" : "text-neutral-400 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700"
-                }`}
-                title="Buscar"
-              >
-                <Search className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {/* 2. Filtros — unified dropdown with Sort, Group, View, Column Filters, Preso, Archive */}
-            <div className="relative">
-              <button
-                onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors cursor-pointer relative ${
-                  isFiltersExpanded || selectedStatusGroup || selectedEstadoPrisional || selectedTipoAto || groupBy || showColumnFilters || showArchived
-                    ? "text-emerald-600 dark:text-emerald-400 bg-white dark:bg-neutral-700 shadow-sm"
-                    : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700"
-                }`}
-                title="Filtros e opções de visualização"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                {(() => {
-                  const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
-                  return count > 0 ? (
-                    <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 text-white text-[8px] font-bold flex items-center justify-center">{count}</span>
-                  ) : null;
-                })()}
-              </button>
-              {isFiltersExpanded && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsFiltersExpanded(false)} />
-                  <div className="absolute right-0 top-full mt-2 z-50 bg-white/95 dark:bg-[#141416]/95 backdrop-blur-xl border border-neutral-200/80 dark:border-white/[0.08] rounded-xl shadow-2xl shadow-black/10 dark:shadow-black/40 py-1.5 min-w-[220px] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200">
-                    {/* Sort */}
-                    <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Ordenar</span>
-                    </div>
-                    {[
-                      { key: "recentes", label: "Importação ↓" },
-                      { key: "status", label: "Status" },
-                      { key: "prazo", label: "Prazo" },
-                      { key: "assistido", label: "Assistido (A-Z)" },
-                      { key: "ato", label: "Ato" },
-                    ].map(opt => (
-                      <button key={opt.key} onClick={() => setSortStack([{ column: opt.key, direction: "asc" }])}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${sortStack[0]?.column === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                      >
-                        {sortStack[0]?.column === opt.key && <span className="text-emerald-500">✓</span>}
-                        <span>{opt.label}</span>
-                      </button>
-                    ))}
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
-                    {/* Group By */}
-                    <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Agrupar</span>
-                    </div>
-                    {[
-                      { key: null as "status" | "atribuicao" | null, label: "Sem agrupamento" },
-                      { key: "status" as const, label: "Por Status" },
-                      { key: "atribuicao" as const, label: "Por Atribuição" },
-                    ].map(opt => (
-                      <button key={opt.key ?? "none"} onClick={() => { setGroupBy(opt.key); setCollapsedGroups(new Set()); if (opt.key) localStorage.setItem("defender_demandas_groupby", opt.key); else localStorage.removeItem("defender_demandas_groupby"); }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${groupBy === opt.key ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                      >
-                        {groupBy === opt.key && <span className="text-emerald-500">✓</span>}
-                        <span>{opt.label}</span>
-                      </button>
-                    ))}
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
-                    {/* View Mode */}
-                    <div className="px-3 py-1.5">
-                      <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Vista</span>
-                    </div>
-                    {[
-                      { mode: "compact" as const, label: "Planilha", icon: Rows3 },
-                      { mode: "grid" as const, label: "Grid", icon: LayoutGrid },
-                      { mode: "cards" as const, label: "Cards", icon: LayoutList },
-                    ].map(({ mode, label, icon: Icon }) => (
-                      <button key={mode} onClick={() => { setViewMode(mode); localStorage.setItem("defender_demandas_view_mode", mode); }}
-                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${viewMode === mode ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                        <span>{label}</span>
-                        {viewMode === mode && <span className="ml-auto text-emerald-500">✓</span>}
-                      </button>
-                    ))}
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
-                    {/* Toggle options */}
-                    <button onClick={() => setShowColumnFilters(!showColumnFilters)}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showColumnFilters ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                    >
-                      <Table2 className="w-3.5 h-3.5" />
-                      <span>Filtros por coluna</span>
-                      {showColumnFilters && <span className="ml-auto text-emerald-500">✓</span>}
-                    </button>
-                    <button onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${selectedEstadoPrisional === "preso" ? "text-rose-700 dark:text-rose-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Apenas presos</span>
-                      {selectedEstadoPrisional === "preso" && <span className="ml-auto text-rose-500">✓</span>}
-                    </button>
-                    <button onClick={() => setShowArchived(!showArchived)}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors cursor-pointer ${showArchived ? "text-amber-700 dark:text-amber-400 font-semibold" : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"}`}
-                    >
-                      <Archive className="w-3.5 h-3.5" />
-                      <span>Ver arquivados</span>
-                      {showArchived && <span className="ml-auto text-amber-500">✓</span>}
-                    </button>
-                    {/* Advanced filters section */}
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1.5" />
-                    <div className="px-2 py-1">
-                      <FilterSectionsCompact
-                        selectedPrazoFilter={selectedPrazoFilter}
-                        setSelectedPrazoFilter={setSelectedPrazoFilter}
-                        selectedAtribuicao={selectedAtribuicoes[0] || null}
-                        setSelectedAtribuicao={(v: string | null) => setSelectedAtribuicoes(v ? [v] : [])}
-                        selectedEstadoPrisional={selectedEstadoPrisional}
-                        setSelectedEstadoPrisional={setSelectedEstadoPrisional}
-                        selectedTipoAto={selectedTipoAto}
-                        setSelectedTipoAto={setSelectedTipoAto}
-                        selectedStatusGroup={selectedStatusGroup}
-                        setSelectedStatusGroup={setSelectedStatusGroup}
-                        atribuicaoOptions={atribuicaoOptions}
-                        atribuicaoIcons={atribuicaoIcons}
-                        atribuicaoColors={atribuicaoColors}
-                        atoOptions={atoOptionsFiltered}
-                        isExpanded={true}
-                        onToggleExpand={() => {}}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* 3. Settings — Import, Export, Infográficos, Duplicatas, Config */}
-            <div className="relative">
-              <button
-                onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
-                className="h-7 w-7 flex items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-white dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                title="Configurações e importação"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-              {isSettingsDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsSettingsDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl shadow-lg py-1 min-w-[180px]">
-                    <button onClick={() => { setIsAdminConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Settings className="w-3.5 h-3.5 text-neutral-400" /> Configurações
-                    </button>
-                    <button onClick={() => { setIsChartConfigModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <BarChartIcon className="w-3.5 h-3.5 text-neutral-400" /> Infográficos
-                    </button>
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />
-                    <button onClick={() => { setIsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar Excel
-                    </button>
-                    <button onClick={() => { setIsPJeImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar PJe
-                    </button>
-                    <button onClick={() => { setIsSheetsImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar Sheets
-                    </button>
-                    <button onClick={() => { setIsSEEUImportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Importar SEEU
-                    </button>
-                    <button onClick={() => { setIsExportModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Upload className="w-3.5 h-3.5 text-neutral-400" /> Exportar
-                    </button>
-                    <button onClick={handleExportSheets} disabled={exportToSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                      {exportToSheetsMutation.isPending ? (
-                        <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Exportando...</>
-                      ) : (
-                        <><Table2 className="w-3.5 h-3.5 text-emerald-600" /> Exportar para Google Sheets</>
-                      )}
-                    </button>
-                    <button onClick={handleReorderSheets} disabled={reorderSheetsMutation.isPending} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                      {reorderSheetsMutation.isPending ? (
-                        <><Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" /> Reordenando...</>
-                      ) : (
-                        <><ArrowUpDown className="w-3.5 h-3.5 text-emerald-600" /> Reordenar planilha agora</>
-                      )}
-                    </button>
-                    <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />
-                    <button onClick={() => { setIsDuplicatesModalOpen(true); setIsSettingsDropdownOpen(false); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer">
-                      <Copy className="w-3.5 h-3.5 text-amber-500" /> Encontrar Duplicatas
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-          </div>{/* close grouped icons container */}
-
-            {/* 4. Nova Demanda — primary action */}
-            <Button
-              size="sm"
-              onClick={() => setIsCreateModalOpen(true)}
-              title="Nova Demanda"
-              className="h-8 px-3.5 ml-0.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline ml-1">Nova</span>
-            </Button>
+              <Download className="w-3 h-3" /> Importar
+            </button>
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer"
+            >
+              <Upload className="w-3 h-3" /> Exportar
+            </button>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-[10px] font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3 h-3" /> Nova
+            </button>
           </div>
         </div>
 
-      </div>
+        {/* Row 2: Pills + Search | ViewMode + Tools */}
+        <div className="flex items-center gap-2 px-5 pt-3 pb-3 mt-3 border-t border-white/[0.06]">
+          <AtribuicaoPills
+            variant="dark"
+            options={atribuicaoOptions}
+            selectedValues={selectedAtribuicoes}
+            onToggle={handleSingleAtribuicaoSelect}
+            onClear={() => {}}
+            singleSelect
+            compact
+            counts={atribuicaoCounts}
+          />
 
-      {/* Filter bar — Atribuição + View tabs (outside header) */}
-      <div className="mx-3 sm:mx-5 md:mx-8 my-3 px-3 py-2.5 flex items-center gap-2 overflow-x-auto scrollbar-none bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80">
-        <AtribuicaoPills
-          options={atribuicaoOptions}
-          selectedValues={selectedAtribuicoes}
-          onToggle={handleSingleAtribuicaoSelect}
-          onClear={() => {}}
-          singleSelect
-          compact
-        />
+          <div className="relative flex-1 max-w-[200px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar nome, processo..."
+              className="w-full bg-white/[0.05] border border-white/[0.06] rounded-lg py-1.5 pl-7 pr-3 text-[10px] text-white/60 placeholder:text-white/20 outline-none focus:bg-white/[0.1] focus:border-white/[0.15] transition-all"
+            />
+          </div>
 
-        <div className="flex-1 min-w-2" />
+          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
 
-        {/* View tabs — Kanban/Planilha/Prazos/Analytics */}
-        <div className="inline-flex items-center gap-0 p-[3px] rounded-full bg-neutral-200/60 dark:bg-neutral-800 border border-neutral-300/70 dark:border-neutral-700/60 shrink-0">
-          {[
-            { key: "kanban" as const, label: "Kanban", icon: Layers },
-            { key: "planilha" as const, label: "Planilha", icon: Table2 },
-            { key: "prazos" as const, label: "Prazos", icon: Clock },
-            { key: "analytics" as const, label: "Analytics", icon: BarChartIcon },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setActiveTab(tab.key);
-                  if (tab.key === "planilha" && viewMode === "cards") {
-                    setViewMode("compact");
-                    localStorage.setItem("defender_demandas_view_mode", "compact");
-                  }
-                }}
-                title={tab.label}
-                className={cn(
-                  "flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer w-7 h-7",
-                  isActive
-                    ? "bg-neutral-700 dark:bg-neutral-300 text-white dark:text-neutral-900 shadow-sm"
-                    : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 hover:bg-white dark:hover:bg-neutral-700"
-                )}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-              </button>
-            );
-          })}
+          <ViewModeDropdown
+            options={DEMANDAS_VIEW_OPTIONS}
+            value={activeTab}
+            onChange={(v) => setActiveTab(v as any)}
+            variant="dark"
+          />
+
+          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
+
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className="relative w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              title="Filtros"
+            >
+              <Filter className="w-[13px] h-[13px] text-white/30" />
+              {(() => {
+                const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+                return count > 0 ? (
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </span>
+                ) : null;
+              })()}
+            </button>
+            <button
+              onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
+              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              title="Ordenar"
+            >
+              <ArrowUpDown className="w-[13px] h-[13px] text-white/30" />
+            </button>
+            <button
+              onClick={() => setIsAdminConfigModalOpen(true)}
+              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              title="Configurações"
+            >
+              <Settings className="w-[13px] h-[13px] text-white/30" />
+            </button>
+            <button
+              onClick={() => setIsChartConfigModalOpen(true)}
+              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              title="Gráficos"
+            >
+              <BarChart3 className="w-[13px] h-[13px] text-white/30" />
+            </button>
+          </div>
         </div>
       </div>
 
