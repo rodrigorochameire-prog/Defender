@@ -136,6 +136,19 @@ function SortHeader({
 
 // ─── File Row ──────────────────────────────────────────────────────
 
+function getAttrColor(atrib: string | null) {
+  const a = DRIVE_ATRIBUICOES.find((x) => x.key === atrib);
+  const c = a?.color ?? "emerald";
+  const map: Record<string, { bg: string; icon: string }> = {
+    emerald: { bg: "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/30", icon: "text-emerald-500" },
+    amber: { bg: "bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/30", icon: "text-amber-500" },
+    sky: { bg: "bg-sky-50 dark:bg-sky-950/40 border-sky-200/80 dark:border-sky-900/30", icon: "text-sky-500" },
+    rose: { bg: "bg-rose-50 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/30", icon: "text-rose-500" },
+    orange: { bg: "bg-orange-50 dark:bg-orange-950/40 border-orange-200/80 dark:border-orange-900/30", icon: "text-orange-500" },
+  };
+  return map[c] ?? map.emerald;
+}
+
 function FileRow({ file }: { file: DriveFile }) {
   const ctx = useDriveContext();
   const utils = trpc.useUtils();
@@ -196,8 +209,8 @@ function FileRow({ file }: { file: DriveFile }) {
       {/* Format icon */}
       <div className="shrink-0">
         {file.isFolder ? (
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/30 flex items-center justify-center">
-            <FolderOpen className="w-4 h-4 text-emerald-500" />
+          <div className={cn("w-9 h-9 rounded-lg border flex items-center justify-center", getAttrColor(ctx.selectedAtribuicao).bg)}>
+            <FolderOpen className={cn("w-4 h-4", getAttrColor(ctx.selectedAtribuicao).icon)} />
           </div>
         ) : formatIcon ? (
           <div className={cn("w-9 h-9 rounded-lg border flex items-center justify-center", formatIcon.bgClass)}>
