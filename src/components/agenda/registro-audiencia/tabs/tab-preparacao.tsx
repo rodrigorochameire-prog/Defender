@@ -124,24 +124,35 @@ export function TabPreparacao({
 
   const handleImportar = () => {
     if (!data || data.total === 0) return;
-    const depoentes: Depoente[] = data.depoentes.map((t, i) => ({
-      id: `prep-${i}-${t.nome}`,
-      nome: t.nome,
-      tipo: tipoToDepoenteTipo(t.tipo ?? "COMUM"),
-      lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
-      intimado: false,
-      presente: false,
-      statusIntimacao: "pendente" as const,
-      jaOuvido: (t.resumo ? "delegacia" : "nenhum") as Depoente["jaOuvido"],
-      depoimentoDelegacia: t.resumo ?? "",
-      depoimentoAnterior: "",
-      pontosFortes: t.pontosFavoraveis ?? "",
-      pontosFracos: t.pontosDesfavoraveis ?? "",
-      estrategiaInquiricao: t.perguntasSugeridas ?? "",
-      perguntasDefesa: "",
-      depoimentoLiteral: "",
-      analisePercepcoes: t.observacoes ?? "",
-    }));
+    const depoentes: Depoente[] = data.depoentes.map((t, i) => {
+      // Detect policial from vinculo or nome patterns
+      const vinculoLower = ((t as any).vinculo ?? "").toLowerCase();
+      const isPolicial = vinculoLower.includes("policial") || vinculoLower.includes("pm ")
+        || vinculoLower.includes("condutor") || vinculoLower.includes("investigador")
+        || /^(cb|sd|sgt|cap|ten|ipc|del)\b/i.test(t.nome ?? "");
+
+      let tipo: Depoente["tipo"] = tipoToDepoenteTipo(t.tipo ?? "COMUM");
+      if (isPolicial) tipo = "policial";
+
+      return {
+        id: `prep-${i}-${t.nome}`,
+        nome: t.nome,
+        tipo,
+        lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
+        intimado: false,
+        presente: false,
+        statusIntimacao: "pendente" as const,
+        jaOuvido: (t.resumo ? "delegacia" : "nenhum") as Depoente["jaOuvido"],
+        depoimentoDelegacia: t.resumo ?? "",
+        depoimentoAnterior: "",
+        pontosFortes: t.pontosFavoraveis ?? "",
+        pontosFracos: t.pontosDesfavoraveis ?? "",
+        estrategiaInquiricao: t.perguntasSugeridas ?? "",
+        perguntasDefesa: "",
+        depoimentoLiteral: "",
+        analisePercepcoes: t.observacoes ?? "",
+      };
+    });
     onImportarParaDepoentes?.(depoentes);
     toast.success(`${depoentes.length} depoente(s) importado(s) com relatos e pontos fortes/fracos`);
   };
