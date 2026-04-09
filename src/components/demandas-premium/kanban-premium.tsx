@@ -33,6 +33,7 @@ import {
   type StatusGroup,
 } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
+import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -98,6 +99,7 @@ function KanbanCard({
   isDragging: isBeingDragged,
   onDragStart,
   onDragEnd,
+  showAtribBadge = true,
 }: {
   demanda: KanbanDemanda;
   group: StatusGroup;
@@ -107,6 +109,7 @@ function KanbanCard({
   isDragging?: boolean;
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
+  showAtribBadge?: boolean;
 }) {
   const rawStatus = demanda.substatus || demanda.status || "triagem";
   const statusCfg = getStatusConfig(rawStatus);
@@ -165,11 +168,11 @@ function KanbanCard({
       onDragEnd={() => onDragEnd?.()}
       className={`
         relative group/kcard cursor-grab active:cursor-grabbing
-        rounded-lg bg-white dark:bg-neutral-900
-        border border-neutral-200/80 dark:border-neutral-800/80
-        hover:shadow-md hover:shadow-neutral-200/50 dark:hover:shadow-black/20
-        hover:border-emerald-300/50 dark:hover:border-emerald-700/40
-        hover:-translate-y-[1px]
+        rounded-xl bg-white/[0.78] backdrop-blur-sm
+        border border-neutral-200/60 dark:border-neutral-800/60
+        hover:bg-white/95 dark:hover:bg-neutral-900/95
+        hover:shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:hover:shadow-black/20
+        hover:-translate-y-0.5
         transition-all duration-200
         overflow-hidden
         ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
@@ -179,7 +182,7 @@ function KanbanCard({
     >
       {/* Left bar — group color */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+        className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-l-xl"
         style={{ backgroundColor: groupColor }}
       />
 
@@ -205,6 +208,21 @@ function KanbanCard({
               <Flame className="w-2.5 h-2.5" />
             </span>
           )}
+          {showAtribBadge && demanda.atribuicao && (() => {
+            const atribColor = ATRIBUICAO_COLORS[demanda.atribuicao as string] || "#71717a";
+            return (
+              <span
+                className="text-[7px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shrink-0"
+                style={{
+                  color: atribColor,
+                  borderColor: `${atribColor}33`,
+                  backgroundColor: `${atribColor}12`,
+                }}
+              >
+                {demanda.atribuicao}
+              </span>
+            );
+          })()}
         </div>
 
         {/* Row 2: Ato */}
@@ -1026,6 +1044,7 @@ export function KanbanPremium({
               <div
                 key={col}
                 className={`flex flex-col min-w-0 rounded-xl transition-all duration-200 ${isRegularDropTarget ? "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1" : ""}`}
+                style={{ opacity: col === "concluida" ? 0.5 : 1 }}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
                 onDrop={(e) => {
