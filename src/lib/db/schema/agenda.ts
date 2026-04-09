@@ -109,6 +109,7 @@ export const calendarEvents = pgTable("calendar_events", {
   recurrenceCount: integer("recurrence_count"),
   recurrenceDays: varchar("recurrence_days", { length: 50 }),
   parentEventId: integer("parent_event_id"),
+  workspaceId: integer("workspace_id"),
   deletedAt: timestamp("deleted_at"),
   createdById: integer("created_by_id")
     .notNull()
@@ -123,6 +124,7 @@ export const calendarEvents = pgTable("calendar_events", {
   index("calendar_events_status_idx").on(table.status),
   index("calendar_events_deleted_at_idx").on(table.deletedAt),
   index("calendar_events_date_range_idx").on(table.eventDate, table.endDate),
+  index("calendar_events_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type CalendarEvent = typeof calendarEvents.$inferSelect;

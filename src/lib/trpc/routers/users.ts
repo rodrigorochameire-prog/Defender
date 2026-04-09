@@ -3,7 +3,8 @@ import crypto from "crypto";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, users, processos, assistidos, userInvitations, comarcas } from "@/lib/db";
 import { TRPCError } from "@trpc/server";
-import { eq, desc, sql, and, ne, ilike, or } from "drizzle-orm";
+import { eq, desc, sql, and, ne, ilike, or, type SQL } from "drizzle-orm";
+import { getWorkspaceScope } from "../workspace";
 import { Errors, safeAsync } from "@/lib/errors";
 import { idSchema, emailSchema, nameSchema, phoneSchema } from "@/lib/validations";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -174,6 +175,25 @@ export const usersRouter = router({
         }));
       }, "Erro ao listar defensores");
     }),
+
+  /**
+   * Lista defensores do workspace (para o DefensorSwitcher)
+   */
+  workspaceDefensores: protectedProcedure.query(async ({ ctx }) => {
+    const { workspaceId } = getWorkspaceScope(ctx.user);
+    const conditions: (SQL<unknown> | undefined)[] = [
+      or(eq(users.role, "defensor"), eq(users.role, "admin")),
+      eq(users.approvalStatus, "approved"),
+    ];
+    if (workspaceId) {
+      conditions.push(eq(users.workspaceId, workspaceId));
+    }
+    return db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(and(...conditions))
+      .orderBy(users.name);
+  }),
 
   /**
    * Lista usuários pendentes de aprovação

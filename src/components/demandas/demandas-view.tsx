@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { 
-  AlertCircle, CheckCircle2, Clock, Send, Archive, 
+import {
+  AlertCircle, CheckCircle2, Clock, Send, Archive,
   Lock, MoreHorizontal, FileText, Calendar, Search,
   Grid3x3, List, Columns3, Plus, Download, Upload,
-  Filter, ArrowUpDown, Eye, Edit, Trash2
+  Filter, ArrowUpDown, Eye, Edit, Trash2, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger 
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -22,8 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { trpc } from "@/lib/trpc/client";
+import { useDefensor } from "@/contexts/defensor-context";
 
-// --- CONFIGURAÇÃO DE STATUS (Lógica Gamificada) ---
+// --- CONFIGURAÇÃO DE STATUS (valores reais do banco) ---
 const STATUS_CONFIG: Record<string, {
   label: string;
   rowColor: string;
@@ -31,43 +33,43 @@ const STATUS_CONFIG: Record<string, {
   icon: React.ElementType;
   order: number;
 }> = {
-  "urgente": { 
-    label: "URGENTE", 
-    rowColor: "bg-red-50 dark:bg-red-950/20 border-l-4 border-l-red-500", 
-    badgeColor: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800", 
+  "URGENTE": {
+    label: "URGENTE",
+    rowColor: "bg-red-50 dark:bg-red-950/20 border-l-4 border-l-red-500",
+    badgeColor: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800",
     icon: AlertCircle,
     order: 1
   },
-  "protocolar": { 
-    label: "PROTOCOLAR", 
-    rowColor: "bg-orange-50 dark:bg-orange-950/20 border-l-4 border-l-orange-500", 
-    badgeColor: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-800", 
+  "7_PROTOCOLADO": {
+    label: "PROTOCOLAR",
+    rowColor: "bg-orange-50 dark:bg-orange-950/20 border-l-4 border-l-orange-500",
+    badgeColor: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/50 dark:text-orange-400 dark:border-orange-800",
     icon: Send,
     order: 2
   },
-  "a_fazer": { 
-    label: "A FAZER", 
-    rowColor: "bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-l-yellow-500", 
-    badgeColor: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-400 dark:border-yellow-800", 
+  "2_ATENDER": {
+    label: "A FAZER",
+    rowColor: "bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-l-yellow-500",
+    badgeColor: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/50 dark:text-yellow-400 dark:border-yellow-800",
     icon: FileText,
     order: 3
   },
-  "monitorar": { 
-    label: "MONITORAR", 
-    rowColor: "bg-neutral-50 dark:bg-muted/50 border-l-4 border-l-neutral-400",
-    badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
+  "4_MONITORAR": {
+    label: "MONITORAR",
+    rowColor: "bg-blue-50 dark:bg-blue-950/20 border-l-4 border-l-blue-500",
+    badgeColor: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-800",
     icon: Clock,
     order: 4
   },
-  "triagem": {
-    label: "TRIAGEM",
+  "5_FILA": {
+    label: "FILA",
     rowColor: "bg-purple-50 dark:bg-purple-950/20 border-l-4 border-l-purple-500",
     badgeColor: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-400 dark:border-purple-800",
     icon: Archive,
     order: 5
   },
-  "concluido": { 
-    label: "CONCLUÍDO", 
+  "CONCLUIDO": {
+    label: "CONCLUIDO",
     rowColor: "bg-stone-100 dark:bg-muted border-l-4 border-l-stone-300",
     badgeColor: "bg-stone-100 text-stone-500 border-stone-200 dark:bg-muted dark:text-muted-foreground dark:border-border",
     icon: CheckCircle2,
@@ -75,74 +77,22 @@ const STATUS_CONFIG: Record<string, {
   },
 };
 
-// Dados de Exemplo
-const MOCK_DEMANDAS = [
-  { 
-    id: 1, 
-    status: "urgente", 
-    preso: true, 
-    data: "12/01/2026", 
-    assistido: "Carlos Alberto Silva", 
-    autos: "0004567-89.2024.8.05.0000", 
-    ato: "Habeas Corpus", 
-    providencia: "Liminar indeferida. Preparar recurso ordinário com urgência." 
-  },
-  { 
-    id: 2, 
-    status: "protocolar", 
-    preso: false, 
-    data: "10/01/2026", 
-    assistido: "Maria de Lourdes", 
-    autos: "8001234-56.2023.8.05.0000", 
-    ato: "Alegações Finais", 
-    providencia: "Peça pronta no drive. Falta apenas protocolar." 
-  },
-  { 
-    id: 3, 
-    status: "a_fazer", 
-    preso: true, 
-    data: "14/01/2026", 
-    assistido: "José Santos", 
-    autos: "0009999-11.2024.8.05.0000", 
-    ato: "Resposta à Acusação", 
-    providencia: "Verificar vídeos da audiência de custódia." 
-  },
-  { 
-    id: 4, 
-    status: "concluido", 
-    preso: false, 
-    data: "05/01/2026", 
-    assistido: "Ana Paula Souza", 
-    autos: "1234567-00.2022.8.05.0000", 
-    ato: "Relaxamento", 
-    providencia: "Alvará expedido." 
-  },
-  { 
-    id: 5, 
-    status: "monitorar", 
-    preso: false, 
-    data: "18/01/2026", 
-    assistido: "Pedro Oliveira", 
-    autos: "5555555-22.2024.8.05.0000", 
-    ato: "Recurso em Sentido Estrito", 
-    providencia: "Aguardando julgamento no TJ." 
-  },
-  { 
-    id: 6, 
-    status: "triagem",
-    preso: false, 
-    data: "20/01/2026", 
-    assistido: "Mariana Costa", 
-    autos: "7777777-33.2024.8.05.0000", 
-    ato: "Contestação", 
-    providencia: "Aguardando documentos do cliente." 
-  },
-];
+// Tipo normalizado para a view
+interface DemandaView {
+  id: number;
+  status: string;
+  preso: boolean;
+  data: string;
+  assistido: string;
+  autos: string;
+  ato: string;
+  providencia: string;
+}
 
 type ViewMode = "lista" | "grid" | "kanban";
 
 // --- COMPONENTE: LISTA VIEW ---
-function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; onEdit: (id: number) => void }) {
+function DemandasLista({ demandas, onEdit }: { demandas: DemandaView[]; onEdit: (id: number) => void }) {
   return (
     <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-card">
       {/* Cabeçalho */}
@@ -157,21 +107,21 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
       <div className="divide-y divide-border/30">
         {/* Linhas */}
         {demandas.map((item) => {
-        const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["a_fazer"];
+        const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["2_ATENDER"];
         const StatusIcon = config.icon;
 
         return (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
             className={cn(
               "group grid grid-cols-12 gap-4 p-5 items-center hover:bg-muted/30 transition-colors duration-200",
               "border-l-4",
-              item.status === "urgente" && "border-l-red-500",
-              item.status === "protocolar" && "border-l-orange-500",
-              item.status === "a_fazer" && "border-l-yellow-500",
-              item.status === "monitorar" && "border-l-blue-500",
-              item.status === "triagem" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-neutral-300"
+              item.status === "URGENTE" && "border-l-red-500",
+              item.status === "7_PROTOCOLADO" && "border-l-orange-500",
+              item.status === "2_ATENDER" && "border-l-yellow-500",
+              item.status === "4_MONITORAR" && "border-l-blue-500",
+              item.status === "5_FILA" && "border-l-purple-500",
+              item.status === "CONCLUIDO" && "border-l-neutral-300"
             )}
           >
             {/* 1. Status + Data */}
@@ -190,7 +140,7 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
               <div className="flex items-center gap-2">
                 <span className={cn(
                   "font-semibold text-base text-foreground truncate",
-                  item.status === "concluido" && "line-through text-muted-foreground"
+                  item.status === "CONCLUIDO" && "line-through text-muted-foreground"
                 )}>
                   {item.assistido}
                 </span>
@@ -246,24 +196,24 @@ function DemandasLista({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; o
 }
 
 // --- COMPONENTE: GRID VIEW ---
-function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; onEdit: (id: number) => void }) {
+function DemandasGrid({ demandas, onEdit }: { demandas: DemandaView[]; onEdit: (id: number) => void }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {demandas.map((item) => {
-        const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["a_fazer"];
+        const config = STATUS_CONFIG[item.status] || STATUS_CONFIG["2_ATENDER"];
         const StatusIcon = config.icon;
 
         return (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
             className={cn(
               "rounded-xl border bg-card p-5 shadow-card hover:shadow-card-hover transition-all duration-200 cursor-pointer border-l-4",
-              item.status === "urgente" && "border-l-red-500",
-              item.status === "protocolar" && "border-l-orange-500",
-              item.status === "a_fazer" && "border-l-yellow-500",
-              item.status === "monitorar" && "border-l-blue-500",
-              item.status === "triagem" && "border-l-purple-500",
-              item.status === "concluido" && "border-l-neutral-300 dark:border-l-border opacity-75"
+              item.status === "URGENTE" && "border-l-red-500",
+              item.status === "7_PROTOCOLADO" && "border-l-orange-500",
+              item.status === "2_ATENDER" && "border-l-yellow-500",
+              item.status === "4_MONITORAR" && "border-l-blue-500",
+              item.status === "5_FILA" && "border-l-purple-500",
+              item.status === "CONCLUIDO" && "border-l-neutral-300 dark:border-l-border opacity-75"
             )}
           >
             {/* Header */}
@@ -282,7 +232,7 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
             {/* Assistido */}
             <h3 className={cn(
               "font-serif font-semibold text-lg text-foreground mb-2",
-              item.status === "concluido" && "line-through text-muted-foreground"
+              item.status === "CONCLUIDO" && "line-through text-muted-foreground"
             )}>
               {item.assistido}
             </h3>
@@ -324,9 +274,9 @@ function DemandasGrid({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; on
 }
 
 // --- COMPONENTE: KANBAN VIEW ---
-function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; onEdit: (id: number) => void }) {
+function DemandasKanban({ demandas, onEdit }: { demandas: DemandaView[]; onEdit: (id: number) => void }) {
   const columns = useMemo(() => {
-    const grouped: Record<string, typeof MOCK_DEMANDAS> = {};
+    const grouped: Record<string, DemandaView[]> = {};
     Object.keys(STATUS_CONFIG).forEach(status => {
       grouped[status] = demandas.filter(d => d.status === status);
     });
@@ -344,12 +294,12 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
             {/* Column Header */}
             <div className={cn(
               "p-3 rounded-t-xl border-b-4",
-              status === "urgente" && "border-b-red-500 bg-red-50 dark:bg-red-950/20",
-              status === "protocolar" && "border-b-orange-500 bg-orange-50 dark:bg-orange-950/20",
-              status === "a_fazer" && "border-b-yellow-500 bg-yellow-50 dark:bg-yellow-950/20",
-              status === "monitorar" && "border-b-blue-500 bg-blue-50 dark:bg-blue-950/20",
-              status === "triagem" && "border-b-purple-500 bg-purple-50 dark:bg-purple-950/20",
-              status === "concluido" && "border-b-stone-300 bg-stone-100 dark:bg-muted"
+              status === "URGENTE" && "border-b-red-500 bg-red-50 dark:bg-red-950/20",
+              status === "7_PROTOCOLADO" && "border-b-orange-500 bg-orange-50 dark:bg-orange-950/20",
+              status === "2_ATENDER" && "border-b-yellow-500 bg-yellow-50 dark:bg-yellow-950/20",
+              status === "4_MONITORAR" && "border-b-blue-500 bg-blue-50 dark:bg-blue-950/20",
+              status === "5_FILA" && "border-b-purple-500 bg-purple-50 dark:bg-purple-950/20",
+              status === "CONCLUIDO" && "border-b-stone-300 bg-stone-100 dark:bg-muted"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -375,7 +325,7 @@ function DemandasKanban({ demandas, onEdit }: { demandas: typeof MOCK_DEMANDAS; 
                   <div className="flex items-start justify-between mb-2">
                     <h4 className={cn(
                       "font-serif font-semibold text-sm text-foreground",
-                      status === "concluido" && "line-through text-muted-foreground"
+                      status === "CONCLUIDO" && "line-through text-muted-foreground"
                     )}>
                       {item.assistido}
                     </h4>
@@ -431,45 +381,60 @@ export function DemandasView() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { selectedDefensorId } = useDefensor();
 
-  // Filtrar e ordenar
+  // Buscar demandas reais do banco
+  const { data: rawDemandas, isLoading } = trpc.demandas.list.useQuery({
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    search: filter || undefined,
+    defensorId: selectedDefensorId ?? undefined,
+    limit: 100,
+  });
+
+  // Normalizar dados do banco para o formato da view
+  const allDemandas: DemandaView[] = useMemo(() => {
+    if (!rawDemandas) return [];
+    return rawDemandas.map((d: any) => ({
+      id: d.id,
+      status: d.status || "5_FILA",
+      preso: d.reuPreso ?? false,
+      data: d.prazo ? new Date(d.prazo).toLocaleDateString("pt-BR") : d.dataEntrada ? new Date(d.dataEntrada).toLocaleDateString("pt-BR") : "",
+      assistido: d.assistido?.nome || "Sem assistido",
+      autos: d.processo?.numeroAutos || "",
+      ato: d.ato || "",
+      providencia: d.providencias || "",
+    }));
+  }, [rawDemandas]);
+
+  // Ordenar por prioridade
   const filteredDemandas = useMemo(() => {
-    let result = [...MOCK_DEMANDAS];
-
-    // Filtro de texto
-    if (filter) {
-      result = result.filter(d => 
-        d.assistido.toLowerCase().includes(filter.toLowerCase()) ||
-        d.ato.toLowerCase().includes(filter.toLowerCase()) ||
-        d.autos.includes(filter)
-      );
-    }
-
-    // Filtro de status
-    if (statusFilter !== "all") {
-      result = result.filter(d => d.status === statusFilter);
-    }
-
-    // Ordenar por ordem de prioridade
+    const result = [...allDemandas];
     result.sort((a, b) => {
       const orderA = STATUS_CONFIG[a.status]?.order || 999;
       const orderB = STATUS_CONFIG[b.status]?.order || 999;
       return orderA - orderB;
     });
-
     return result;
-  }, [filter, statusFilter]);
+  }, [allDemandas]);
 
   const handleEdit = (_id: number) => {
     // TODO: Implementar navegação ou modal
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
       {/* Estatísticas Rápidas - PROPORCIONAIS */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-muted/10 rounded-xl border-2 border-border/30">
         {Object.entries(STATUS_CONFIG).map(([key, config]) => {
-          const count = MOCK_DEMANDAS.filter(d => d.status === key).length;
+          const count = allDemandas.filter(d => d.status === key).length;
           const StatusIcon = config.icon;
           
           return (

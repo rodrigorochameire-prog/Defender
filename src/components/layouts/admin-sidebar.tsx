@@ -32,6 +32,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ContextControl } from "@/components/layout/context-control";
+import { DefensorSwitcher } from "@/components/layout/defensor-switcher";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { ChatPanel } from "@/components/shared/chat-panel";
 import { chatPanelActions } from "@/hooks/use-chat-panel";
@@ -1667,6 +1668,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         <SidebarContent className="px-0 py-0 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {/* Painel de Contexto - Seletor de Defensor */}
           <ContextControl collapsed={isCollapsed} />
+
+          {/* Seletor de Defensor */}
+          <DefensorSwitcher collapsed={isCollapsed} />
 
           <div className="px-3 pb-5">
             {/* 1. Principal (Dashboard, Demandas, Agenda) - Colapsável com ícone Home */}

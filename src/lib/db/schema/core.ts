@@ -61,6 +61,7 @@ export const users = pgTable("users", {
   sheetsSpreadsheetId: varchar("sheets_spreadsheet_id", { length: 100 }),
   sheetsSpreadsheetUrl: text("sheets_spreadsheet_url"),
   sheetsSyncEnabled: boolean("sheets_sync_enabled").default(false),
+  workspaceId: integer("workspace_id"),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -72,6 +73,7 @@ export const users = pgTable("users", {
   index("users_comarca_id_idx").on(table.comarcaId),
   index("users_supervisor_id_idx").on(table.supervisorId),
   index("users_nucleo_idx").on(table.nucleo),
+  index("users_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type User = typeof users.$inferSelect;
@@ -137,6 +139,7 @@ export const assistidos = pgTable("assistidos", {
     confidence: number;
   } | null>(),
   comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
+  workspaceId: integer("workspace_id"),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -146,9 +149,10 @@ export const assistidos = pgTable("assistidos", {
   index("assistidos_status_prisional_idx").on(table.statusPrisional),
   index("assistidos_defensor_id_idx").on(table.defensorId),
   index("assistidos_deleted_at_idx").on(table.deletedAt),
-index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
+  index("assistidos_atribuicao_primaria_idx").on(table.atribuicaoPrimaria),
   index("assistidos_analysis_status_idx").on(table.analysisStatus),
   index("assistidos_comarca_id_idx").on(table.comarcaId),
+  index("assistidos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Assistido = typeof assistidos.$inferSelect;
@@ -197,6 +201,7 @@ export const processos = pgTable("processos", {
   localDoFatoLat: numeric("local_do_fato_lat", { precision: 10, scale: 7 }),
   localDoFatoLng: numeric("local_do_fato_lng", { precision: 10, scale: 7 }),
 
+  workspaceId: integer("workspace_id"),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -213,6 +218,7 @@ export const processos = pgTable("processos", {
   index("processos_analysis_status_idx").on(table.analysisStatus),
   index("processos_comarca_id_idx").on(table.comarcaId),
   index("processos_local_fato_geo_idx").on(table.localDoFatoLat, table.localDoFatoLng),
+  index("processos_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Processo = typeof processos.$inferSelect;
@@ -271,6 +277,7 @@ export const demandas = pgTable("demandas", {
     id_documento_pje?: string;
     vara?: string;
   }>(),
+  workspaceId: integer("workspace_id"),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -287,6 +294,7 @@ export const demandas = pgTable("demandas", {
   index("demandas_deleted_at_idx").on(table.deletedAt),
   index("demandas_caso_id_idx").on(table.casoId),
   index("demandas_import_batch_id_idx").on(table.importBatchId),
+  index("demandas_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type Demanda = typeof demandas.$inferSelect;

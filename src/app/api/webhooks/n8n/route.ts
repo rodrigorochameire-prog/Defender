@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { demandas, processos, assistidos, calendarEvents, movimentacoes } from "@/lib/db/schema";
+import { demandas, processos, assistidos, calendarEvents, movimentacoes, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+
+// Resolver workspaceId a partir do defensorId
+async function getWorkspaceIdFromDefensor(defensorId: number | null | undefined): Promise<number | null> {
+  if (!defensorId) return null;
+  const [user] = await db.select({ workspaceId: users.workspaceId })
+    .from(users)
+    .where(eq(users.id, Number(defensorId)))
+    .limit(1);
+  return user?.workspaceId ?? null;
+}
 
 /**
  * Webhook endpoint para integrações com n8n
@@ -130,12 +140,18 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     prioridade,
     providencias,
     defensorId,
+    workspaceId: explicitWorkspaceId,
     reuPreso,
   } = data;
 
   if (!processoId || !assistidoId || !ato) {
     throw new Error("Missing required fields: processoId, assistidoId, ato");
   }
+
+  // Resolver workspaceId: explícito > derivado do defensor
+  const workspaceId = explicitWorkspaceId
+    ? Number(explicitWorkspaceId)
+    : await getWorkspaceIdFromDefensor(defensorId ? Number(defensorId) : null);
 
   const [demanda] = await db.insert(demandas).values({
     processoId: Number(processoId),
@@ -148,6 +164,7 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     prioridade: (prioridade as "NORMAL" | "ALTA" | "URGENTE" | "REU_PRESO") || "NORMAL",
     providencias: providencias ? String(providencias) : null,
     defensorId: defensorId ? Number(defensorId) : null,
+    workspaceId,
     reuPreso: Boolean(reuPreso),
   }).returning();
 
@@ -214,6 +231,16 @@ async function handleSyncCalendarEvent(data: Record<string, unknown>) {
 
   // Verificar se já existe evento com esse googleEventId
   // Por enquanto, sempre cria um novo
+  const {
+    defensorId: eventDefensorId,
+    workspaceId: eventExplicitWorkspaceId,
+  } = data;
+
+  // Resolver workspaceId para eventos
+  const eventWorkspaceId = eventExplicitWorkspaceId
+    ? Number(eventExplicitWorkspaceId)
+    : await getWorkspaceIdFromDefensor(eventDefensorId ? Number(eventDefensorId) : null);
+
   const [event] = await db.insert(calendarEvents).values({
     title: String(title),
     description: description ? String(description) : null,
@@ -224,7 +251,8 @@ async function handleSyncCalendarEvent(data: Record<string, unknown>) {
     assistidoId: assistidoId ? Number(assistidoId) : null,
     location: location ? String(location) : null,
     notes: googleEventId ? `Google Event ID: ${googleEventId}` : null,
-    createdById: 1, // TODO: usar um usuário de sistema
+    createdById: eventDefensorId ? Number(eventDefensorId) : 1,
+    workspaceId: eventWorkspaceId,
   }).returning();
 
   return { eventId: event.id };
@@ -242,11 +270,17 @@ async function handleCreateAssistido(data: Record<string, unknown>) {
     nomeContato,
     endereco,
     defensorId,
+    workspaceId: explicitWorkspaceId,
   } = data;
 
   if (!nome) {
     throw new Error("Missing required field: nome");
   }
+
+  // Resolver workspaceId: explícito > derivado do defensor
+  const workspaceId = explicitWorkspaceId
+    ? Number(explicitWorkspaceId)
+    : await getWorkspaceIdFromDefensor(defensorId ? Number(defensorId) : null);
 
   const [assistido] = await db.insert(assistidos).values({
     nome: String(nome),
@@ -259,6 +293,7 @@ async function handleCreateAssistido(data: Record<string, unknown>) {
     nomeContato: nomeContato ? String(nomeContato) : null,
     endereco: endereco ? String(endereco) : null,
     defensorId: defensorId ? Number(defensorId) : null,
+    workspaceId,
   }).returning();
 
   return { assistidoId: assistido.id };

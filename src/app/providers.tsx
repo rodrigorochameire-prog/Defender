@@ -7,6 +7,7 @@ import superjson from "superjson";
 import { trpc } from "@/lib/trpc/client";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { AssignmentProvider } from "@/contexts/assignment-context";
+import { DefensorProvider } from "@/contexts/defensor-context";
 import { ProfissionalProvider } from "@/contexts/profissional-context";
 import { ProcessingQueueProvider } from "@/contexts/processing-queue";
 import { Toaster } from "sonner";
@@ -109,6 +110,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AssignmentProvider>
+            <DefensorProvider>
             <ProfissionalProvider>
               <ProcessingQueueProvider>
               <Suspense fallback={<LoadingSpinner />}>
@@ -125,6 +127,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               />
             </ProcessingQueueProvider>
             </ProfissionalProvider>
+          </DefensorProvider>
           </AssignmentProvider>
         </ThemeProvider>
       </QueryClientProvider>
