@@ -40,39 +40,60 @@ export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }
         </div>
       </div>
 
-      {/* Registro Atual (se houver dados) */}
+      {/* Registro Atual (se houver dados) — mesmo formato rico dos anteriores */}
       {hasCurrentData && (
-        <div className="bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 p-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="rounded-xl border-2 border-emerald-300 dark:border-emerald-700 overflow-hidden">
+          <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-3 border-b border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Registro Atual</span>
+            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Registro Atual</span>
             {statusAtual && (
-              <Badge variant="outline" className="text-[10px] ml-auto border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400">
+              <Badge className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
                 {statusAtual === "concluida" ? "Concluída" : statusAtual === "redesignada" ? "Redesignada" : statusAtual === "suspensa" ? "Suspensa" : statusAtual}
               </Badge>
             )}
           </div>
-          <div className="space-y-2 text-xs text-neutral-700 dark:text-neutral-300">
+          <div className="p-4 space-y-4 bg-white dark:bg-neutral-950">
+            {/* Resultado */}
             {registroAtual.resultado && (
-              <p><span className="font-semibold">Resultado:</span> {registroAtual.resultado}</p>
+              <InfoBlock icon={Gavel} label="Resultado" borderColor="border-l-emerald-500">
+                <Badge variant="outline" className="text-xs capitalize mt-1">{registroAtual.resultado}</Badge>
+              </InfoBlock>
             )}
+
+            {/* Depoentes com detalhe completo */}
             {registroAtual.depoentes?.length > 0 && (
-              <p><span className="font-semibold">Depoentes:</span> {registroAtual.depoentes.map((d: any) => d.nome).join(", ")}</p>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  Depoentes ({registroAtual.depoentes.length})
+                </Label>
+                {registroAtual.depoentes.map((dep: any) => (
+                  <DepoenteCard key={dep.id || dep.nome} dep={dep} />
+                ))}
+              </div>
             )}
-            {registroAtual.manifestacaoMP && (
-              <p><span className="font-semibold">MP:</span> {registroAtual.manifestacaoMP}</p>
+
+            {/* Manifestações */}
+            {(registroAtual.manifestacaoMP || registroAtual.manifestacaoDefesa || registroAtual.decisaoJuiz) && (
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Manifestações e Decisões</Label>
+                {registroAtual.manifestacaoMP && (
+                  <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-rose-400"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.manifestacaoMP}</p></InfoBlock>
+                )}
+                {registroAtual.manifestacaoDefesa && (
+                  <InfoBlock icon={Gavel} label="Defesa" borderColor="border-l-emerald-500"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.manifestacaoDefesa}</p></InfoBlock>
+                )}
+                {registroAtual.decisaoJuiz && (
+                  <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-blue-500"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.decisaoJuiz}</p></InfoBlock>
+                )}
+              </div>
             )}
-            {registroAtual.manifestacaoDefesa && (
-              <p><span className="font-semibold">Defesa:</span> {registroAtual.manifestacaoDefesa}</p>
-            )}
-            {registroAtual.decisaoJuiz && (
-              <p><span className="font-semibold">Decisão Juiz:</span> {registroAtual.decisaoJuiz}</p>
+
+            {registroAtual.encaminhamentos && (
+              <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-neutral-400"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.encaminhamentos}</p></InfoBlock>
             )}
             {registroAtual.anotacoesGerais && (
-              <p><span className="font-semibold">Anotações:</span> {registroAtual.anotacoesGerais}</p>
-            )}
-            {registroAtual.encaminhamentos && (
-              <p><span className="font-semibold">Encaminhamentos:</span> {registroAtual.encaminhamentos}</p>
+              <InfoBlock icon={Gavel} label="Anotações" borderColor="border-l-neutral-400"><p className="text-xs text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">{registroAtual.anotacoesGerais}</p></InfoBlock>
             )}
           </div>
         </div>
@@ -204,70 +225,9 @@ export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }
                       Depoentes ({reg.depoentes.length})
                     </Label>
                     <div className="space-y-2.5">
-                      {reg.depoentes.map((dep: any) => {
-                        const style = getDepoenteStyle(dep.tipo);
-                        const temConteudo = dep.estrategiaInquiricao || dep.perguntasDefesa || dep.depoimentoLiteral || dep.analisePercepcoes;
-
-                        return (
-                          <div key={dep.id} className={`rounded-lg border ${style.border} overflow-hidden`}>
-                            <div className={`p-2.5 border-b border-neutral-200 dark:border-neutral-800 ${style.bg}`}>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Badge className={`${style.bg} ${style.text} text-[10px] px-1.5 py-0.5`}>{style.label}</Badge>
-                                  <span className={`text-sm font-semibold ${style.text}`}>{dep.nome}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  {dep.intimado !== undefined && (
-                                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">
-                                      <Mail className="w-2.5 h-2.5 mr-0.5" />
-                                      {dep.intimado ? "Intimado" : "Não Intimado"}
-                                    </Badge>
-                                  )}
-                                  {dep.presente !== undefined && (
-                                    <Badge
-                                      className={
-                                        dep.presente
-                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] px-1.5 py-0"
-                                          : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[9px] px-1.5 py-0"
-                                      }
-                                    >
-                                      {dep.presente ? (
-                                        <><Check className="w-2.5 h-2.5 mr-0.5" />Presente</>
-                                      ) : (
-                                        <><XCircle className="w-2.5 h-2.5 mr-0.5" />Ausente</>
-                                      )}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {temConteudo && (
-                              <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-950">
-                                {dep.estrategiaInquiricao && (
-                                  <DepoenteField icon={Target} label="Estratégia de Inquirição" text={dep.estrategiaInquiricao} />
-                                )}
-                                {dep.perguntasDefesa && (
-                                  <DepoenteField icon={BookOpen} label="Perguntas da Defesa" text={dep.perguntasDefesa} />
-                                )}
-                                {dep.depoimentoLiteral && (
-                                  <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 p-2">
-                                    <Label className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex items-center gap-1 mb-1">
-                                      <Quote className="w-2.5 h-2.5" /> Depoimento Literal
-                                    </Label>
-                                    <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed italic">
-                                      &ldquo;{dep.depoimentoLiteral}&rdquo;
-                                    </p>
-                                  </div>
-                                )}
-                                {dep.analisePercepcoes && (
-                                  <DepoenteField icon={Eye} label="Análise e Percepções" text={dep.analisePercepcoes} />
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {reg.depoentes.map((dep: any) => (
+                        <DepoenteCard key={dep.id || dep.nome} dep={dep} />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -363,7 +323,126 @@ function DepoenteField({ icon: Icon, label, text }: { icon: any; label: string; 
       <Label className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex items-center gap-1 mb-1">
         <Icon className="w-2.5 h-2.5" /> {label}
       </Label>
-      <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{text}</p>
+      <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{text}</p>
+    </div>
+  );
+}
+
+const STATUS_INTIMACAO_LABEL: Record<string, { label: string; class: string }> = {
+  "intimado": { label: "Intimado", class: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  "nao-intimado": { label: "Não intimado", class: "bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" },
+  "frustrada": { label: "Frustrada", class: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
+  "mp-desistiu": { label: "MP desistiu", class: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
+  "dispensado": { label: "Dispensado", class: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400" },
+  "pendente": { label: "Pendente", class: "bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" },
+};
+
+const JA_OUVIDO_LABEL: Record<string, { label: string; class: string }> = {
+  "nenhum": { label: "1ª vez", class: "bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" },
+  "delegacia": { label: "Ouvido DP", class: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  "audiencia-anterior": { label: "Ouvido AIJ", class: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" },
+  "ambos": { label: "DP + AIJ", class: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" },
+};
+
+function DepoenteCard({ dep }: { dep: any }) {
+  const style = getDepoenteStyle(dep.tipo);
+  const temConteudo = dep.estrategiaInquiricao || dep.perguntasDefesa || dep.depoimentoLiteral || dep.analisePercepcoes || dep.depoimentoDelegacia || dep.depoimentoAnterior || dep.pontosFortes || dep.pontosFracos;
+
+  return (
+    <div className={`rounded-lg border ${style.border} overflow-hidden`}>
+      {/* Header com badges */}
+      <div className={`p-2.5 border-b border-neutral-200 dark:border-neutral-800 ${style.bg}`}>
+        <div className="flex items-center justify-between flex-wrap gap-1">
+          <div className="flex items-center gap-2">
+            <Badge className={`${style.bg} ${style.text} text-[10px] px-1.5 py-0.5`}>{style.label}</Badge>
+            <span className={`text-sm font-semibold ${style.text}`}>{dep.nome}</span>
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {/* Lado */}
+            {dep.lado && (
+              <Badge className={`text-[9px] px-1.5 py-0 ${dep.lado === "acusacao" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"}`}>
+                {dep.lado === "acusacao" ? "Acusação" : "Defesa"}
+              </Badge>
+            )}
+            {/* Status intimação */}
+            {dep.statusIntimacao && STATUS_INTIMACAO_LABEL[dep.statusIntimacao] && (
+              <Badge className={`text-[9px] px-1.5 py-0 ${STATUS_INTIMACAO_LABEL[dep.statusIntimacao].class}`}>
+                {STATUS_INTIMACAO_LABEL[dep.statusIntimacao].label}
+              </Badge>
+            )}
+            {/* Fallback: intimado boolean */}
+            {!dep.statusIntimacao && dep.intimado !== undefined && (
+              <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                <Mail className="w-2.5 h-2.5 mr-0.5" />
+                {dep.intimado ? "Intimado" : "Não Intimado"}
+              </Badge>
+            )}
+            {/* Já ouvido */}
+            {dep.jaOuvido && dep.jaOuvido !== "nenhum" && JA_OUVIDO_LABEL[dep.jaOuvido] && (
+              <Badge className={`text-[9px] px-1.5 py-0 ${JA_OUVIDO_LABEL[dep.jaOuvido].class}`}>
+                {JA_OUVIDO_LABEL[dep.jaOuvido].label}
+              </Badge>
+            )}
+            {/* Presente/Ausente */}
+            {dep.presente !== undefined && (
+              <Badge className={dep.presente
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[9px] px-1.5 py-0"
+                : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[9px] px-1.5 py-0"
+              }>
+                {dep.presente ? <><Check className="w-2.5 h-2.5 mr-0.5" />Presente</> : <><XCircle className="w-2.5 h-2.5 mr-0.5" />Ausente</>}
+              </Badge>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {temConteudo && (
+        <div className="p-3 space-y-2 bg-white dark:bg-neutral-950">
+          {/* Relatos anteriores (delegacia / audiência) */}
+          {dep.depoimentoDelegacia && (
+            <div className="rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 p-2">
+              <Label className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 mb-1 block">Relato na Delegacia</Label>
+              <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{dep.depoimentoDelegacia}</p>
+            </div>
+          )}
+          {dep.depoimentoAnterior && (
+            <div className="rounded-lg bg-violet-50/60 dark:bg-violet-950/20 border border-violet-200/60 dark:border-violet-800/40 p-2">
+              <Label className="text-[10px] font-semibold text-violet-600 dark:text-violet-400 mb-1 block">Audiência Anterior</Label>
+              <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{dep.depoimentoAnterior}</p>
+            </div>
+          )}
+          {/* Pontos fortes / fracos */}
+          {(dep.pontosFortes || dep.pontosFracos) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {dep.pontosFortes && (
+                <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 p-2">
+                  <Label className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1 block">Pontos Fortes</Label>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{dep.pontosFortes}</p>
+                </div>
+              )}
+              {dep.pontosFracos && (
+                <div className="rounded-lg bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 p-2">
+                  <Label className="text-[10px] font-semibold text-rose-600 dark:text-rose-400 mb-1 block">Pontos Fracos</Label>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">{dep.pontosFracos}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Campos originais */}
+          {dep.estrategiaInquiricao && <DepoenteField icon={Target} label="Estratégia de Inquirição" text={dep.estrategiaInquiricao} />}
+          {dep.perguntasDefesa && <DepoenteField icon={BookOpen} label="Perguntas da Defesa" text={dep.perguntasDefesa} />}
+          {dep.depoimentoLiteral && (
+            <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-lg border border-neutral-200/80 dark:border-neutral-800/80 p-2">
+              <Label className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 flex items-center gap-1 mb-1">
+                <Quote className="w-2.5 h-2.5" /> Depoimento Literal (Audiência)
+              </Label>
+              <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed italic whitespace-pre-wrap">&ldquo;{dep.depoimentoLiteral}&rdquo;</p>
+            </div>
+          )}
+          {dep.analisePercepcoes && <DepoenteField icon={Eye} label="Análise e Percepções" text={dep.analisePercepcoes} />}
+        </div>
+      )}
     </div>
   );
 }
