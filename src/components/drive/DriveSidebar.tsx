@@ -313,13 +313,13 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors cursor-pointer",
                     isActive
-                      ? "bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold"
+                      ? `${attr.bgClass} border text-xs font-semibold`
                       : "hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400 text-xs font-medium"
                   )}
                 >
                   <Icon className={cn(
                     "h-4 w-4 shrink-0 transition-all duration-200",
-                    isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"
+                    isActive ? attr.iconClass : "text-zinc-400"
                   )} />
                   <span className="flex-1 text-left truncate">{attr.label}</span>
                   {!synced && (
@@ -343,7 +343,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                   <ChevronDown
                     className={cn(
                       "h-3 w-3 transition-transform duration-200 shrink-0",
-                      isActive ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400",
+                      isActive ? attr.iconClass : "text-zinc-400",
                       isExpanded && "rotate-180"
                     )}
                     onClick={(e) => { e.stopPropagation(); toggleExpand(attr.key); }}
