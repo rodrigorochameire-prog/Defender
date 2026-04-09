@@ -83,6 +83,25 @@ const atribuicaoKeyIcons: Record<string, any> = {
 const atribuicaoColors = ATRIBUICAO_COLORS;
 const defaultColors = getAtribuicaoColors("CRIMINAL");
 
+const STATUS_CHIP_COLOR: Record<string, string> = {
+  agendada: "#a1a1aa",
+  confirmada: "#a1a1aa",
+  pendente: "#a1a1aa",
+  realizada: "#22c55e",
+  concluida: "#22c55e",
+  "concluída": "#22c55e",
+  reagendada: "#f59e0b",
+  redesignada: "#f59e0b",
+  redesignado: "#f59e0b",
+  remarcado: "#f59e0b",
+  cancelada: "#ef4444",
+  cancelado: "#ef4444",
+};
+
+function getChipStatusColor(status?: string): string {
+  return STATUS_CHIP_COLOR[status?.toLowerCase() ?? ""] ?? "#a1a1aa";
+}
+
 // Função para abreviar título
 const abreviarTitulo = (titulo: string): string => {
   const abreviacoes: Record<string, string> = {
@@ -220,18 +239,18 @@ function EventoCompacto({
         <button
           onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
-          className={`group w-full text-left rounded-xl transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${
+          className={`group w-full text-left rounded-lg transition-all duration-200 overflow-hidden cursor-pointer relative bg-white/[0.8] border border-neutral-200/50 hover:bg-white hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 ${
             eventoCancelado ? "opacity-45" : ""
           }`}
         >
-          {/* Top-bar — fina com fade lateral */}
+          {/* Left status bar */}
           <div
-            className="h-[2px] w-full rounded-t-xl"
-            style={{ background: `linear-gradient(90deg, ${displayColor}, ${displayColor}60)` }}
+            className="absolute left-0 top-1 bottom-1 w-[2.5px] rounded-r-sm"
+            style={{ backgroundColor: getChipStatusColor(evento.status) }}
           />
 
           {/* Conteúdo do card */}
-          <div className="px-1.5 sm:px-2 py-1 sm:py-1.5 bg-white dark:bg-neutral-800/90 border border-t-0 border-neutral-100 dark:border-neutral-700/30 rounded-b-xl group-hover:bg-neutral-50/80 dark:group-hover:bg-neutral-800 transition-colors">
+          <div className="pl-[9px] pr-1.5 sm:pr-2 py-1 sm:py-1.5">
             {/* Linha 1: horário + tipo + dots */}
             <div className="flex items-center gap-1 sm:gap-1.5">
               {/* Status icons */}
@@ -244,7 +263,7 @@ function EventoCompacto({
 
               <span
                 className={`text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0 ${eventoCancelado ? "line-through" : ""}`}
-                style={{ color: displayColor }}
+                style={{ color: eventoCancelado ? COR_EVENTO_CANCELADO : getChipStatusColor(evento.status) }}
               >
                 {evento.horarioInicio}
               </span>
@@ -403,12 +422,7 @@ export function CalendarMonthView({
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dayName, index) => (
             <div
               key={index}
-              className={`
-                py-3 text-center text-xs font-semibold uppercase tracking-wide
-                ${index === 0 || index === 6 
-                  ? "text-neutral-400 dark:text-neutral-500" 
-                  : "text-neutral-600 dark:text-neutral-400"}
-              `}
+              className="py-3 text-center text-[9px] font-bold uppercase tracking-wider text-neutral-400"
             >
               {dayName}
             </div>
@@ -416,52 +430,52 @@ export function CalendarMonthView({
         </div>
 
         {/* Corpo - Dias do Mês */}
-        <div>
+        <div className="bg-neutral-200/30 rounded-lg overflow-hidden">
           {rows.map((week, weekIndex) => (
-            <div 
-              key={weekIndex} 
-              className="grid grid-cols-7 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
+            <div
+              key={weekIndex}
+              className="grid grid-cols-7 gap-px"
             >
               {week.map((date, dayIndex) => {
                 const dayEvents = getEventosForDate(date);
                 const isCurrentMonth = isSameMonth(date, monthStart);
                 const isDayToday = isToday(date);
                 const isWeekendDay = isWeekend(date);
+                const isOtherMonth = !isCurrentMonth;
+                const hasEvents = dayEvents.length > 0;
 
                 return (
                   <div
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-neutral-100 dark:border-neutral-800 last:border-r-0
-                      transition-colors duration-150 cursor-pointer
-                      ${isCurrentMonth
-                        ? isWeekendDay
-                          ? "bg-neutral-50/50 dark:bg-neutral-900/50"
-                          : "bg-white dark:bg-neutral-900"
-                        : "bg-neutral-100/50 dark:bg-neutral-950/50"
+                      group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 transition-all duration-150 cursor-pointer
+                      ${isOtherMonth
+                        ? "bg-neutral-100/[0.35]"
+                        : isDayToday
+                          ? "bg-white/[0.95] shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+                          : hasEvents
+                            ? "bg-white/[0.85] shadow-[0_1px_4px_rgba(0,0,0,0.04)]"
+                            : "bg-white/[0.55]"
                       }
                       ${isCurrentMonth && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"}
                     `}
                   >
                     {/* Número do Dia */}
                     <div className="flex items-start justify-between mb-2">
-                      <div
+                      <span
                         className={`
-                          flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium
-                          transition-all duration-200
-                          ${isDayToday 
-                            ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900 ring-2 ring-neutral-900/20 dark:ring-neutral-100/20" 
-                            : isCurrentMonth
-                              ? isWeekendDay
-                                ? "text-neutral-400 dark:text-neutral-500"
-                                : "text-neutral-700 dark:text-neutral-300"
-                              : "text-neutral-300 dark:text-neutral-600"
+                          text-xs sm:text-sm font-semibold w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
+                          ${isDayToday
+                            ? "bg-neutral-900 text-white"
+                            : isOtherMonth
+                              ? "text-neutral-300"
+                              : "text-neutral-500"
                           }
                         `}
                       >
                         {format(date, "d")}
-                      </div>
+                      </span>
                       
                       {/* Badge de contagem */}
                       {dayEvents.length > 3 && (
