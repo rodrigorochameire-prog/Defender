@@ -47,6 +47,8 @@ import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { ConflictBadge } from "@/components/conflict-badge";
 import { FloatingAgendaButton } from "@/components/shared/floating-agenda";
+import { PageHeaderProvider, usePageHeader } from "@/components/layouts/page-header-context";
+import { HeaderUtilityRow } from "@/components/layouts/header-utility-row";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { useTheme } from "@/contexts/theme-context";
@@ -201,6 +203,14 @@ const iconMap: Record<string, React.ElementType> = {
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
 const DEFAULT_WIDTH = 260;
+
+function ConditionalHeader() {
+  const { hasPageHeader } = usePageHeader();
+
+  if (hasPageHeader) return null;
+
+  return <HeaderUtilityRow variant="standalone" />;
+}
 
 export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
@@ -1823,75 +1833,20 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
       {/* Main Content */}
       <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
-        {/* Header - Subtle gray com accent emerald */}
-        <header className={cn(
-          "flex h-12 shrink-0 items-center",
-          "sticky top-0 z-30",
-          "bg-neutral-100 dark:bg-neutral-900",
-          "border-b border-neutral-200 dark:border-neutral-700"
-        )}>
-          {/* Conteúdo - Esquerda: Toggle + Breadcrumbs */}
-          <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-            <SidebarTrigger className="h-7 w-7 rounded-md text-neutral-900 dark:text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200 shrink-0" />
+        <PageHeaderProvider>
+          <ConditionalHeader />
 
-            {/* Separador */}
-            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700 shrink-0" />
+          {/* Main */}
+          <main className="flex-1 overflow-y-auto overflow-x-hidden pb-16 md:pb-0">
+            {children}
+          </main>
 
-            {/* Breadcrumbs navegáveis */}
-            <Breadcrumbs />
+          {/* Mobile bottom navigation */}
+          <MobileBottomNav />
 
-            {/* Slot para conteúdo injetado por páginas */}
-            <div id="header-slot" className="flex items-center" />
-          </div>
-
-          {/* Conteúdo - Direita: Indicador + Data + Controles */}
-          <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3">
-            {/* Indicador ativo */}
-            <div className="hidden md:flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-medium">Online</span>
-            </div>
-
-            {/* Separador */}
-            <div className="hidden md:block h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
-
-            {/* Data */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-neutral-400 dark:text-neutral-500">
-              <span className="capitalize">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })}</span>
-            </div>
-
-            {/* Separador */}
-            <div className="hidden lg:block h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
-
-            {/* Badge de conflitos de sync */}
-            <ConflictBadge />
-
-            {/* Controles */}
-            <div className="flex items-center gap-1">
-              <CommandPalette />
-              <ThemeToggle />
-              <NotificationsPopover />
-              <button
-                onClick={() => chatPanelActions.toggle()}
-                title="Assistente OMBUDS"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-md text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              >
-                <MessageSquare className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Main */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pb-16 md:pb-0">
-          {children}
-        </main>
-
-        {/* Mobile bottom navigation */}
-        <MobileBottomNav />
-
-        {/* Floating agenda quick-access button */}
-        <FloatingAgendaButton />
+          {/* Floating agenda quick-access button */}
+          <FloatingAgendaButton />
+        </PageHeaderProvider>
       </SidebarInset>
 
       {/* Notificação real-time de gravações Plaud pendentes */}
