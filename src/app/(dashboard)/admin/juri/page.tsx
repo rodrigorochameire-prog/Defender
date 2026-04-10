@@ -3,6 +3,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
 import {
   Gavel, Calendar, CheckCircle2, Clock, AlertTriangle, Zap, Eye,
@@ -54,105 +55,89 @@ export default function JuriPage() {
 
   return (
     <div className="w-full min-h-screen bg-background">
-      {/* Header */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        {/* Row 1: Title + Stats + Cockpit button */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          {/* Title */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center">
-              <Gavel className="w-5 h-5 text-white/70" />
-            </div>
-            <div>
-              <h1 className="text-white text-[17px] font-semibold tracking-tight">
-                Tribunal do Júri
-              </h1>
-              <p className="text-white/60 text-[10px] -mt-0.5">
-                Gestão de sessões e julgamentos
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Stats inline */}
-            <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-[#4a4a52]">
-              <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
-              <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
-              {stats.pendentesCount > 0 && (
-                <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
-              )}
-              <div className="w-px h-5 bg-white/10 mx-0.5" />
-              <div className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
-                stats.proximaDias !== null && stats.proximaDias <= 3
-                  ? "text-rose-400 bg-rose-950/30"
-                  : stats.proximaDias !== null && stats.proximaDias <= 7
-                    ? "text-emerald-400 bg-emerald-950/30"
-                    : "text-white/50"
-              )}>
-                <Zap className="w-3 h-3" />
-                <span className="tabular-nums">
-                  {stats.proximaDias === null ? "—"
-                    : stats.proximaDias === 0 ? "Hoje"
-                    : stats.proximaDias === 1 ? "Amanhã"
-                    : `${stats.proximaDias}d`}
-                </span>
-              </div>
-            </div>
-
-            {/* Cockpit button */}
-            <Link
-              href="/admin/juri/cockpit"
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
-                "bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
-              )}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              Cockpit
-            </Link>
-          </div>
-        </div>
-
-        {/* Row 2: Tabs + contextual controls */}
-        <div className={cn("flex items-center justify-between mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
-          {/* Tabs */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-[#3e3e44]">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.key;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                    isActive
-                      ? "px-3 py-1.5 bg-[#525258] text-white shadow-sm"
-                      : "px-2.5 py-1.5 text-white/50"
-                  )}
-                >
-                  <Icon className="w-[15px] h-[15px]" />
-                  {isActive && <span>{tab.label}</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Year selector (Pauta tab) */}
-          {activeTab === "pauta" && (
+      <CollapsiblePageHeader
+        title="Tribunal do Júri"
+        icon={Gavel}
+        bottomRow={
+          <div className="flex items-center justify-between">
+            {/* Tabs */}
             <div className="inline-flex items-center gap-1 p-1 rounded-full bg-[#3e3e44]">
-              <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
-                <ChevronLeft className="w-3.5 h-3.5 text-white/50" />
-              </button>
-              <span className="px-3 text-sm font-semibold tabular-nums text-white/90">{ano}</span>
-              <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
-                <ChevronRight className="w-3.5 h-3.5 text-white/50" />
-              </button>
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.key;
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
+                      isActive
+                        ? "px-3 py-1.5 bg-[#525258] text-white shadow-sm"
+                        : "px-2.5 py-1.5 text-white/50"
+                    )}
+                  >
+                    <Icon className="w-[15px] h-[15px]" />
+                    {isActive && <span>{tab.label}</span>}
+                  </button>
+                );
+              })}
             </div>
-          )}
+
+            {/* Year selector (Pauta tab) */}
+            {activeTab === "pauta" && (
+              <div className="inline-flex items-center gap-1 p-1 rounded-full bg-[#3e3e44]">
+                <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
+                  <ChevronLeft className="w-3.5 h-3.5 text-white/50" />
+                </button>
+                <span className="px-3 text-sm font-semibold tabular-nums text-white/90">{ano}</span>
+                <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
+                  <ChevronRight className="w-3.5 h-3.5 text-white/50" />
+                </button>
+              </div>
+            )}
+          </div>
+        }
+      >
+        <div className="flex items-center gap-2">
+          {/* Stats inline */}
+          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-[#4a4a52]">
+            <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
+            <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
+            {stats.pendentesCount > 0 && (
+              <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
+            )}
+            <div className="w-px h-5 bg-white/10 mx-0.5" />
+            <div className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
+              stats.proximaDias !== null && stats.proximaDias <= 3
+                ? "text-rose-400 bg-rose-950/30"
+                : stats.proximaDias !== null && stats.proximaDias <= 7
+                  ? "text-emerald-400 bg-emerald-950/30"
+                  : "text-white/50"
+            )}>
+              <Zap className="w-3 h-3" />
+              <span className="tabular-nums">
+                {stats.proximaDias === null ? "—"
+                  : stats.proximaDias === 0 ? "Hoje"
+                  : stats.proximaDias === 1 ? "Amanhã"
+                  : `${stats.proximaDias}d`}
+              </span>
+            </div>
+          </div>
+
+          {/* Cockpit button */}
+          <Link
+            href="/admin/juri/cockpit"
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
+              "bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
+            )}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Cockpit
+          </Link>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Tab content */}
       <div className="px-4 sm:px-6 md:px-8 pt-4">

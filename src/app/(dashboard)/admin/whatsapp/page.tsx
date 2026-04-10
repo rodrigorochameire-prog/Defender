@@ -35,6 +35,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 
 // ==========================================
 // COMPONENTES
@@ -677,39 +678,29 @@ export default function WhatsAppPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-background">
-      {/* Header */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-white text-[17px] font-semibold tracking-tight">WhatsApp</span>
-              <span className="text-white/60 text-[10px]">Evolution API</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
-              onClick={() => refetch()}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            {primaryConfig && (
-              <Link href="/admin/whatsapp/chat">
-                <Button size="sm" className="h-8 bg-emerald-500 text-white hover:bg-emerald-600">
-                  <MessageSquare className="w-4 h-4 mr-1" />
-                  Abrir Chat
-                </Button>
-              </Link>
-            )}
-          </div>
+      <CollapsiblePageHeader
+        title="WhatsApp"
+        icon={MessageCircle}
+      >
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
+            onClick={() => refetch()}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          {primaryConfig && (
+            <Link href="/admin/whatsapp/chat">
+              <Button size="sm" className="h-8 bg-emerald-500 text-white hover:bg-emerald-600">
+                <MessageSquare className="w-4 h-4 mr-1" />
+                Abrir Chat
+              </Button>
+            </Link>
+          )}
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
       <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">

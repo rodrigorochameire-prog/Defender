@@ -56,6 +56,7 @@ import {
 import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -474,43 +475,33 @@ export default function DelegacoesPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#4a4a52] flex items-center justify-center">
-              <UserCheck className="w-5 h-5 text-white/70" />
-            </div>
-            <div>
-              <h1 className="text-white text-[17px] font-semibold tracking-tight">Delegações</h1>
-              <p className="text-white/60 text-[10px]">Gerencie suas tarefas delegadas</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                refetchRecebidas();
-                refetchEnviadas();
-              }}
-              className="gap-2 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Atualizar
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setPedidoModalOpen(true)}
-              className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
-            >
-              <Send className="w-4 h-4" />
-              Novo Pedido
-            </Button>
-          </div>
+      <CollapsiblePageHeader
+        title="Delegações"
+        icon={UserCheck}
+      >
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              refetchRecebidas();
+              refetchEnviadas();
+            }}
+            className="gap-2 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setPedidoModalOpen(true)}
+            className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+          >
+            <Send className="w-4 h-4" />
+            Novo Pedido
+          </Button>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo principal */}
       <div className="p-4 md:p-6">

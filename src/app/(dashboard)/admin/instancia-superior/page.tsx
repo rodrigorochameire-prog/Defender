@@ -17,6 +17,7 @@ import {
   Gavel,
 } from "lucide-react";
 import { HEADER_STYLE, GLASS, LIST_ITEM } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -111,22 +112,19 @@ export default function InstanciaSuperiorPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Header: dark gradient (Padrão Defender v3) ── */}
-      <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-6 mt-3 px-5 pt-5 pb-1")}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center">
-              <Landmark className="w-5 h-5 text-white/90" />
-            </div>
-            <div>
-              <h1 className="text-lg font-serif font-semibold tracking-tight text-white">
-                Instância Superior
-              </h1>
-              <p className="text-[11px] text-white/70 mt-0.5">
-                Recursos criminais · TJBA
-              </p>
-            </div>
+      <CollapsiblePageHeader
+        title="Instância Superior"
+        icon={Landmark}
+        bottomRow={
+          <div className="grid grid-cols-4 gap-3">
+            <HeaderStat label="Total" value={stats?.total ?? 0} loading={statsLoading} />
+            <HeaderStat label="Pendentes" value={stats?.pendentes ?? 0} loading={statsLoading} highlight />
+            <HeaderStat label="Julgados" value={julgados} loading={statsLoading} />
+            <HeaderStat label="Taxa provimento" value={`${taxaProvimento}%`} loading={statsLoading} accent />
           </div>
+        }
+      >
+        <div className="flex items-center gap-2">
           <Button
             onClick={() => setCreateOpen(true)}
             size="sm"
@@ -136,15 +134,7 @@ export default function InstanciaSuperiorPage() {
             Novo Recurso
           </Button>
         </div>
-
-        {/* Stats row — inside header */}
-        <div className={cn("grid grid-cols-4 gap-3 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
-          <HeaderStat label="Total" value={stats?.total ?? 0} loading={statsLoading} />
-          <HeaderStat label="Pendentes" value={stats?.pendentes ?? 0} loading={statsLoading} highlight />
-          <HeaderStat label="Julgados" value={julgados} loading={statsLoading} />
-          <HeaderStat label="Taxa provimento" value={`${taxaProvimento}%`} loading={statsLoading} accent />
-        </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* ── Content card ── */}
       <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
