@@ -894,16 +894,15 @@ export default function AssistidosPage() {
           </div>
         </div>
 
-        {/* Bottom Row — Tabs + Stats + WhatsApp (inset) */}
-        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
+        {/* Bottom Row — Tudo num só inset */}
+        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
+          {/* Tabs */}
           <div className="flex items-center gap-1 bg-[#3e3e44] p-0.5 rounded-lg shrink-0">
             <button
               onClick={() => setActiveTab("lista")}
               className={cn(
-                "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
-                activeTab === "lista"
-                  ? "bg-[#525258] text-white shadow-sm"
-                  : "text-white/50 hover:text-white/80"
+                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
+                activeTab === "lista" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80"
               )}
             >
               <Users className="w-3 h-3" />
@@ -912,22 +911,23 @@ export default function AssistidosPage() {
             <button
               onClick={() => setActiveTab("analytics")}
               className={cn(
-                "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
-                activeTab === "analytics"
-                  ? "bg-[#525258] text-white shadow-sm"
-                  : "text-white/50 hover:text-white/80"
+                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
+                activeTab === "analytics" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80"
               )}
             >
               <BarChart3 className="w-3 h-3" />
               Analytics
             </button>
           </div>
+
           <div className="w-px h-3.5 bg-[#525258] shrink-0" />
+
+          {/* Stats inline */}
           {[
             { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
             { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", color: stats.presos > 0 ? "text-rose-400" : "" },
-            { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-            { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
+            { icon: Timer, value: stats.monitorados, label: "mon", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+            { icon: BookmarkCheck, value: stats.pinned, label: "fix", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
           ].map((stat) => {
             const Icon = stat.icon;
             return (
@@ -935,51 +935,47 @@ export default function AssistidosPage() {
                 key={stat.label}
                 onClick={stat.onClick}
                 className={cn(
-                  "flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
+                  "flex items-center gap-1 px-1 py-0.5 rounded-md text-[10px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
                   stat.active ? "bg-emerald-500/20 text-emerald-400" : "hover:bg-[#525258] text-white/60",
                 )}
               >
-                <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/50")} />
+                <Icon className={cn("w-2.5 h-2.5 shrink-0", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/50")} />
                 <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/90")}>{stat.value}</span>
-                <span className="text-white/40 text-[10px]">{stat.label}</span>
+                <span className="text-white/40 text-[9px]">{stat.label}</span>
               </button>
             );
           })}
-          <div className="flex-1" />
-          <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-white/50 hover:text-emerald-400 hover:bg-[#525258] transition-colors shrink-0">
-            <MessageCircle className="w-3 h-3" />
-            <span className="hidden sm:inline">WhatsApp</span>
-          </Link>
-        </div>
 
-        {/* Bottom Row 2 — Atribuições + Smart Presets (inset) */}
-        {!showNaoIdentificados && (
-          <div className={cn("flex items-center gap-2 mx-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-            {/* RMS toggle */}
-            <div className="inline-flex items-center gap-1 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
+          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
+
+          {/* RMS toggle */}
+          {!showNaoIdentificados && (
+            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
               <button
                 onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all",
                   !verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
                 )}
               >
-                <MapPin className="w-3 h-3" />
+                <MapPin className="w-2.5 h-2.5" />
                 Comarca
               </button>
               <button
                 onClick={() => !verRMS && toggleVerRMS({ verRMS: true })}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all",
                   verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
                 )}
               >
-                <MapPin className="w-3 h-3" />
+                <MapPin className="w-2.5 h-2.5" />
                 RMS
               </button>
             </div>
+          )}
 
-            {/* Atribuição pills */}
+          {/* Atribuição pills */}
+          {!showNaoIdentificados && (
             <AtribuicaoPills
               variant="dark"
               options={[
@@ -1001,18 +997,21 @@ export default function AssistidosPage() {
               onClear={() => setAtribuicaoFilter("all")}
               counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
               singleSelect
+              compact
             />
+          )}
 
-            <div className="flex-1 min-w-2" />
+          <div className="flex-1 min-w-2" />
 
-            {/* Smart presets */}
-            <div className="inline-flex items-center gap-1 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
+          {/* Smart presets */}
+          {!showNaoIdentificados && (
+            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
               {[
                 { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
-                { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
+                { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
                 { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
-                { id: "sem_drive", tip: "Sem pasta no Drive", icon: Link2Off, count: stats.semDrive },
-                { id: "novos_30d", tip: "Novos últimos 30 dias", icon: Plus, count: stats.novos30d },
+                { id: "sem_drive", tip: "Sem Drive", icon: Link2Off, count: stats.semDrive },
+                { id: "novos_30d", tip: "Novos 30d", icon: Plus, count: stats.novos30d },
               ].map((preset) => {
                 const active = smartPreset === preset.id;
                 const PresetIcon = preset.icon;
@@ -1031,14 +1030,14 @@ export default function AssistidosPage() {
                           }
                         }}
                         className={cn(
-                          "relative inline-flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
+                          "relative inline-flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
                           active ? "bg-emerald-600 text-white shadow-sm" : "text-white/50 hover:text-white/80"
                         )}
                       >
-                        <PresetIcon className="w-3.5 h-3.5" />
+                        <PresetIcon className="w-3 h-3" />
                         {preset.count > 0 && (
                           <span className={cn(
-                            "absolute -top-1 -right-1 text-[8px] font-bold tabular-nums min-w-[14px] h-[14px] flex items-center justify-center rounded-full",
+                            "absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full",
                             active ? "bg-emerald-500 text-white"
                               : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
                               : "bg-[#525258] text-white/60"
@@ -1053,13 +1052,17 @@ export default function AssistidosPage() {
                 );
               })}
             </div>
-            {smartPreset && (
-              <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/50 hover:text-white transition-colors shrink-0">
-                <XCircle className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        )}
+          )}
+          {smartPreset && (
+            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/50 hover:text-white transition-colors shrink-0">
+              <XCircle className="w-3 h-3" />
+            </button>
+          )}
+
+          <Link href="/admin/whatsapp" className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-medium text-white/50 hover:text-emerald-400 hover:bg-[#525258] transition-colors shrink-0">
+            <MessageCircle className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
 
       {/* Sticky Summary Bar */}
