@@ -611,6 +611,8 @@ export default function Demandas() {
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -2092,12 +2094,50 @@ export default function Demandas() {
                 </>
               )}
             </div>
-            <button
-              onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
-            >
-              <Upload className="w-3 h-3" /> Exportar
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
+              >
+                <Upload className="w-3 h-3" /> Exportar <ChevronDown className="w-2.5 h-2.5 opacity-50" />
+              </button>
+              {isExportDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setIsExportDropdownOpen(false)} />
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1">
+                    <button
+                      onClick={() => { setIsExportDropdownOpen(false); setIsExportModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4 text-emerald-600" />
+                      <span>Exportar Excel</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsExportDropdownOpen(false); handleExportSheets(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      <span>Exportar p/ Sheets</span>
+                    </button>
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <button
+                      onClick={() => { setIsExportDropdownOpen(false); handleReorderSheets(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <RefreshCw className="w-4 h-4 text-blue-600" />
+                      <span>Reordenar planilha</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsExportDropdownOpen(false); setIsDuplicatesModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Copy className="w-4 h-4 text-amber-600" />
+                      <span>Encontrar duplicatas</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-[10px] font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
@@ -2142,21 +2182,73 @@ export default function Demandas() {
           <div className="w-px h-5 bg-[#525258] rounded-full mx-0.5 shrink-0" />
 
           <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-              className="relative w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-              title="Filtros"
-            >
-              <Filter className="w-[13px] h-[13px] text-white/30" />
-              {(() => {
-                const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
-                return count > 0 ? (
-                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  </span>
-                ) : null;
-              })()}
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+                className="relative w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                title="Filtros"
+              >
+                <Filter className="w-[13px] h-[13px] text-white/30" />
+                {(() => {
+                  const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+                  return count > 0 ? (
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                    </span>
+                  ) : null;
+                })()}
+              </button>
+              {isFiltersDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersDropdownOpen(false)} />
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1">
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
+                    <button
+                      onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Lock className="w-4 h-4 text-amber-600" />
+                      <span className="flex-1">Apenas presos</span>
+                      {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    <button
+                      onClick={() => setShowArchived(!showArchived)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Archive className="w-4 h-4 text-neutral-500" />
+                      <span className="flex-1">Ver arquivados</span>
+                      {showArchived && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    <button
+                      onClick={() => setShowColumnFilters(!showColumnFilters)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <SlidersHorizontal className="w-4 h-4 text-neutral-500" />
+                      <span className="flex-1">Filtros por coluna</span>
+                      {showColumnFilters && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
+                    <button
+                      onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Layers className="w-4 h-4 text-blue-500" />
+                      <span className="flex-1">Status</span>
+                      {groupBy === "status" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    <button
+                      onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Layers className="w-4 h-4 text-violet-500" />
+                      <span className="flex-1">Atribuição</span>
+                      {groupBy === "atribuicao" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
               className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
