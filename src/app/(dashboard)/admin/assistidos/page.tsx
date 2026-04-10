@@ -893,6 +893,64 @@ export default function AssistidosPage() {
             </Link>
           </div>
         </div>
+
+        {/* Bottom Row — Tabs + Stats + WhatsApp (inset) */}
+        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
+          <div className="flex items-center gap-1 bg-[#3e3e44] p-0.5 rounded-lg shrink-0">
+            <button
+              onClick={() => setActiveTab("lista")}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
+                activeTab === "lista"
+                  ? "bg-[#525258] text-white shadow-sm"
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              <Users className="w-3 h-3" />
+              Lista
+            </button>
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
+                activeTab === "analytics"
+                  ? "bg-[#525258] text-white shadow-sm"
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              <BarChart3 className="w-3 h-3" />
+              Analytics
+            </button>
+          </div>
+          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
+          {[
+            { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+            { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", color: stats.presos > 0 ? "text-rose-400" : "" },
+            { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+            { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <button
+                key={stat.label}
+                onClick={stat.onClick}
+                className={cn(
+                  "flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
+                  stat.active ? "bg-emerald-500/20 text-emerald-400" : "hover:bg-[#525258] text-white/60",
+                )}
+              >
+                <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/50")} />
+                <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/90")}>{stat.value}</span>
+                <span className="text-white/40 text-[10px]">{stat.label}</span>
+              </button>
+            );
+          })}
+          <div className="flex-1" />
+          <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-white/50 hover:text-emerald-400 hover:bg-[#525258] transition-colors shrink-0">
+            <MessageCircle className="w-3 h-3" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </Link>
+        </div>
       </div>
 
       {/* Sticky Summary Bar */}
@@ -956,64 +1014,7 @@ export default function AssistidosPage() {
       {/* Conteudo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
 
-      {/* Tabs + Stats + WhatsApp — single line */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg shrink-0">
-          <button
-            onClick={() => setActiveTab("lista")}
-            className={cn(
-              "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
-              activeTab === "lista"
-                ? "bg-background dark:bg-muted text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Users className="w-3 h-3" />
-            Lista
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={cn(
-              "flex items-center gap-1 px-3 py-1 text-[11px] font-medium rounded-md transition-all",
-              activeTab === "analytics"
-                ? "bg-background dark:bg-muted text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <BarChart3 className="w-3 h-3" />
-            Analytics
-          </button>
-        </div>
-        <div className="w-px h-3.5 bg-border shrink-0" />
-        {/* Inline stats */}
-        {[
-          { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-          { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", color: stats.presos > 0 ? "text-rose-600 dark:text-rose-400" : "" },
-          { icon: Timer, value: stats.monitorados, label: "monit.", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-          { icon: BookmarkCheck, value: stats.pinned, label: "fixados", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
-        ].map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <button
-              key={stat.label}
-              onClick={stat.onClick}
-              className={cn(
-                "flex items-center gap-1 px-1.5 py-1 rounded-md text-[11px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
-                stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-muted",
-              )}
-            >
-              <Icon className={cn("w-3 h-3 shrink-0", stat.active ? "text-emerald-500" : (stat as any).color || "text-muted-foreground")} />
-              <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-600 dark:text-emerald-400" : (stat as any).color || "text-foreground")}>{stat.value}</span>
-              <span className="text-muted-foreground text-[10px]">{stat.label}</span>
-            </button>
-          );
-        })}
-        <div className="flex-1" />
-        <Link href="/admin/whatsapp" className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors shrink-0">
-          <MessageCircle className="w-3 h-3" />
-          <span className="hidden sm:inline">WhatsApp</span>
-        </Link>
-      </div>
+      {/* Tabs + Stats moved into header bottomRow above */}
 
       {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
