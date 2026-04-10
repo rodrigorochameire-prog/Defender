@@ -74,6 +74,7 @@ import {
   ShieldCheck,
   FileCheck,
   FileText,
+  FileSpreadsheet,
   CheckSquare,
   Trash2,
   X,
@@ -609,6 +610,7 @@ export default function Demandas() {
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
+  const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -2047,12 +2049,49 @@ export default function Demandas() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
-            >
-              <Download className="w-3 h-3" /> Importar
-            </button>
+            <div className="relative group/import">
+              <button
+                onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
+              >
+                <Download className="w-3 h-3" /> Importar <ChevronDown className="w-2.5 h-2.5 opacity-50" />
+              </button>
+              {isImportDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setIsImportDropdownOpen(false)} />
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-44 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1">
+                    <button
+                      onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <span>PJe (copiar/colar)</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Download className="w-4 h-4 text-emerald-600" />
+                      <span>Excel</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      <span>Google Sheets</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      <Gavel className="w-4 h-4 text-amber-600" />
+                      <span>SEEU</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={() => setIsExportModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
