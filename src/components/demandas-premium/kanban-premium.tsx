@@ -168,25 +168,21 @@ function KanbanCard({
       onDragEnd={() => onDragEnd?.()}
       className={`
         relative group/kcard cursor-grab active:cursor-grabbing
-        rounded-xl bg-white/[0.78] backdrop-blur-sm
-        border border-neutral-200/60 dark:border-neutral-800/60
-        hover:bg-white/95 dark:hover:bg-neutral-900/95
-        hover:shadow-[0_2px_10px_rgba(0,0,0,0.04)] dark:hover:shadow-black/20
+        rounded-xl bg-white dark:bg-neutral-900
+        border-[1.5px]
+        hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:hover:shadow-black/20
         hover:-translate-y-0.5
         transition-all duration-200
         overflow-hidden
         ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
-        ${prazoDiff !== null && prazoDiff < 0 ? "ring-1 ring-rose-300/40 dark:ring-rose-500/20 bg-rose-50/30 dark:bg-rose-950/10" : ""}
+        ${prazoDiff !== null && prazoDiff < 0 ? "ring-1 ring-rose-300/40 dark:ring-rose-500/20" : ""}
         ${prazoDiff !== null && prazoDiff >= 0 && prazoDiff <= 3 ? "ring-1 ring-amber-300/30 dark:ring-amber-500/15" : ""}
       `}
+      style={{ borderColor: `${groupColor}80`, ["--hover-glow" as string]: `${groupColor}20` }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = groupColor; e.currentTarget.style.boxShadow = `0 0 12px ${groupColor}25`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}80`; e.currentTarget.style.boxShadow = ''; }}
     >
-      {/* Left bar — group color */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl opacity-80"
-        style={{ backgroundColor: groupColor }}
-      />
-
-      <div className="pl-4 pr-3 py-3">
+      <div className="px-3 py-3">
         {/* Row 1: Nome + Data expedição + Flags */}
         <div className="flex items-center gap-2 mb-1">
           <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">

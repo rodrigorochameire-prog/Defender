@@ -112,17 +112,17 @@ export default function InstanciaSuperiorPage() {
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: dark gradient (Padrão Defender v3) ── */}
-      <div className={cn("mx-4 lg:mx-6 mt-3 px-5 pt-5 pb-4", HEADER_STYLE.container)}>
+      <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-6 mt-3 px-5 pt-5 pb-1")}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <Landmark className="w-5 h-5 text-white/80" />
+            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center">
+              <Landmark className="w-5 h-5 text-white/90" />
             </div>
             <div>
               <h1 className="text-lg font-serif font-semibold tracking-tight text-white">
                 Instância Superior
               </h1>
-              <p className="text-[11px] text-white/40 mt-0.5">
+              <p className="text-[11px] text-white/70 mt-0.5">
                 Recursos criminais · TJBA
               </p>
             </div>
@@ -138,7 +138,7 @@ export default function InstanciaSuperiorPage() {
         </div>
 
         {/* Stats row — inside header */}
-        <div className="grid grid-cols-4 gap-3 mt-4">
+        <div className={cn("grid grid-cols-4 gap-3 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
           <HeaderStat label="Total" value={stats?.total ?? 0} loading={statsLoading} />
           <HeaderStat label="Pendentes" value={stats?.pendentes ?? 0} loading={statsLoading} highlight />
           <HeaderStat label="Julgados" value={julgados} loading={statsLoading} />
@@ -220,16 +220,16 @@ function HeaderStat({
   accent?: boolean;
 }) {
   return (
-    <div className={cn("rounded-lg px-3.5 py-2.5", HEADER_STYLE.bottomRow)}>
-      <span className="text-[9px] uppercase tracking-widest text-white/30 font-medium block">
+    <div className="rounded-lg px-3.5 py-2.5 bg-[#56565e]">
+      <span className="text-[9px] uppercase tracking-widest text-white/70 font-medium block">
         {label}
       </span>
       {loading ? (
-        <div className="h-6 w-10 rounded bg-white/10 animate-pulse mt-1" />
+        <div className="h-6 w-10 rounded bg-[#4a4a52] animate-pulse mt-1" />
       ) : (
         <span className={cn(
           "text-xl font-bold tabular-nums block mt-0.5",
-          accent ? "text-emerald-400" : highlight ? "text-amber-400" : "text-white/80"
+          accent ? "text-emerald-400" : highlight ? "text-amber-400" : "text-white/90"
         )}>
           {value}
         </span>

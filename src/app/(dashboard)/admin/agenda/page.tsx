@@ -1441,19 +1441,19 @@ export default function AgendaPage() {
         headerSlot
       )}
       {/* ====== CHARCOAL HEADER ====== */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-5 md:mx-8 sm:mt-4")}>
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-5 md:mx-8 sm:mt-4 pb-1")}>
         {/* Row 1: Icon + Title + inline stats + actions */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center">
-              <CalendarIcon className="w-[15px] h-[15px] text-white/50" />
+            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
+              <CalendarIcon className="w-[15px] h-[15px] text-white/70" />
             </div>
             <h1 className="text-white text-[17px] font-semibold tracking-tight">Agenda</h1>
             <div className="flex items-center gap-1.5 ml-2">
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white/60 tabular-nums">
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
                 {stats.hoje} hoje
               </span>
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white/60 tabular-nums">
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
                 {stats.semana} semana
               </span>
             </div>
@@ -1462,7 +1462,7 @@ export default function AgendaPage() {
             {/* Overflow menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer">
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer">
                   <MoreHorizontal className="w-3 h-3" />
                 </button>
               </DropdownMenuTrigger>
@@ -1481,7 +1481,7 @@ export default function AgendaPage() {
             </DropdownMenu>
             <button
               onClick={() => setIsPJeImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer"
             >
               <Download className="w-3 h-3" /> PJe
             </button>
@@ -1495,7 +1495,7 @@ export default function AgendaPage() {
         </div>
 
         {/* Row 2: Pills | Month Nav | ViewMode + Tools — bottomRow glass */}
-        <div className="flex items-center gap-2 mx-3 mt-3 mb-3 px-3.5 py-2.5 rounded-lg bg-white/[0.06]">
+        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
           {/* AtribuicaoPills dark variant */}
           <AtribuicaoPills
             variant="dark"
@@ -1511,34 +1511,34 @@ export default function AgendaPage() {
             compact
           />
 
-          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-white/[0.12] rounded-full mx-0.5 shrink-0" />
 
           {/* Month navigation */}
           <div className="flex items-center gap-1.5 ml-auto">
             <button
               onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-              className="w-[26px] h-[26px] rounded-md bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors cursor-pointer"
+              className="w-[26px] h-[26px] rounded-md bg-[#56565e] flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-[13px] h-[13px] text-white/50" />
+              <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
             </button>
             <span className="text-[13px] font-semibold text-white min-w-[100px] text-center capitalize">
               {format(currentDate, "MMMM yyyy", { locale: ptBR })}
             </span>
             <button
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="w-[26px] h-[26px] rounded-md bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.1] transition-colors cursor-pointer"
+              className="w-[26px] h-[26px] rounded-md bg-[#56565e] flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
             >
-              <ChevronRight className="w-[13px] h-[13px] text-white/50" />
+              <ChevronRight className="w-[13px] h-[13px] text-white/70" />
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="text-[9px] font-semibold text-white/40 bg-white/[0.06] px-2 py-1 rounded-md hover:text-white/70 hover:bg-white/[0.1] transition-colors cursor-pointer"
+              className="text-[9px] font-semibold text-white/70 bg-[#56565e] px-2 py-1 rounded-md hover:text-white/90 hover:bg-[#62626a] transition-colors cursor-pointer"
             >
               Hoje
             </button>
           </div>
 
-          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-white/[0.12] rounded-full mx-0.5 shrink-0" />
 
           <ViewModeDropdown
             options={AGENDA_VIEW_OPTIONS}
@@ -1560,34 +1560,34 @@ export default function AgendaPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
-                  className="pl-8 pr-7 h-7 w-40 text-xs bg-white/10 text-white border-0 rounded-lg placeholder:text-white/30"
+                  className="pl-8 pr-7 h-7 w-40 text-xs bg-[#56565e] text-white border-0 rounded-lg placeholder:text-white/50"
                 />
-                <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 cursor-pointer">
+                <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
                   <XCircle className="w-3 h-3" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", searchTerm ? "bg-white/[0.12] text-white" : "")}
+                className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", searchTerm ? "bg-[#62626a] text-white" : "")}
                 title="Buscar"
               >
-                <Search className="w-[13px] h-[13px] text-white/30" />
+                <Search className="w-[13px] h-[13px] text-white/70" />
               </button>
             )}
             <button
               onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-              className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", (selectedTipo || selectedDefensor) ? "bg-white/[0.12] text-white" : "")}
+              className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", (selectedTipo || selectedDefensor) ? "bg-[#62626a] text-white" : "")}
               title="Filtros"
             >
-              <Filter className="w-[13px] h-[13px] text-white/30" />
+              <Filter className="w-[13px] h-[13px] text-white/70" />
             </button>
             <button
               onClick={() => setIsGoogleConfigModalOpen(true)}
-              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
               title="Configuracoes"
             >
-              <Settings className="w-[13px] h-[13px] text-white/30" />
+              <Settings className="w-[13px] h-[13px] text-white/70" />
             </button>
           </div>
         </div>

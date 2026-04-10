@@ -46,6 +46,7 @@ import { CalendarSkeleton } from "@/components/shared/skeletons";
 import { format, startOfMonth, endOfMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { ChevronLeft, ChevronRight, FileText, Bell } from "lucide-react";
 
 // Configuração dos tipos de eventos - contexto jurídico
@@ -232,14 +233,16 @@ export default function AdminCalendarPage() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="page-header">
-        <div className="page-header-content">
-          <div className="page-header-icon">
-            <Calendar />
-          </div>
-          <div className="page-header-info">
-            <h1>Calendário Jurídico</h1>
-            <p>Prazos, audiências e eventos importantes</p>
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-white/70" />
+            </div>
+            <div>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Calendário Jurídico</h1>
+              <p className="text-white/60 text-[10px]">Prazos, audiências e eventos importantes</p>
+            </div>
           </div>
         </div>
       </div>

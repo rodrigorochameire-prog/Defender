@@ -83,14 +83,16 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  container: "rounded-xl bg-gradient-to-b from-[#3f3f46] to-[#35353c] shadow-sm ring-1 ring-black/[0.04]",
-  text: "text-white font-serif text-lg font-semibold tracking-tight",
-  label: "text-white/30 text-[9px] uppercase tracking-wider",
-  value: "text-white/80 font-mono tracking-wide",
-  separator: "w-[1.5px] h-3.5 bg-white/15 rounded-full",
-  bottomRow: "bg-white/[0.08] rounded-lg px-3.5 py-2.5",
-  stat: "text-white/60 font-semibold",
-  statLabel: "text-white/30",
+  /** Moldura: cor sólida escura, sem gradient */
+  container: "rounded-xl bg-[#333338]",
+  text: "text-white font-sans text-lg font-semibold tracking-tight",
+  label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
+  value: "text-white font-mono tracking-wide",
+  separator: "w-[1.5px] h-3.5 bg-white/25 rounded-full",
+  /** Inset: cor sólida mais clara, envolvido pela moldura */
+  bottomRow: "bg-[#48484e] rounded-lg px-3.5 py-2.5",
+  stat: "text-white/90 font-semibold",
+  statLabel: "text-white/60",
 } as const;
 
 // ============================================

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 
 // Dados mockados
 const mockCustodias = [
@@ -85,24 +86,26 @@ export default function CustodiaPage() {
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-6">
-      {/* Header - Padrão Swiss */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
+      {/* Header */}
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-0 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-white/70" />
+            </div>
+            <div>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Audiências de Custódia</h1>
+              <p className="text-white/60 text-[10px]">
+                Flagrantes e análise de prisões
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Audiências de Custódia</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              Flagrantes e análise de prisões
-            </p>
-          </div>
+          <Button className="gap-2 h-9 bg-emerald-500 text-white hover:bg-emerald-600">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Registrar Custódia</span>
+            <span className="sm:hidden">Registrar</span>
+          </Button>
         </div>
-        <Button className="gap-2 h-9">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Registrar Custódia</span>
-          <span className="sm:hidden">Registrar</span>
-        </Button>
       </div>
 
       {/* Stats - Padrão Swiss */}

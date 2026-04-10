@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -167,93 +168,89 @@ export default function ModelosPage() {
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-background">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <FileStack className="w-5 h-5 text-white dark:text-neutral-900" />
+            <div className="w-11 h-11 rounded-xl bg-[#4a4a52] flex items-center justify-center shrink-0">
+              <FileStack className="w-5 h-5 text-white/70" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-foreground tracking-tight">Modelos</h1>
-              <p className="text-xs text-neutral-500 dark:text-muted-foreground">Banco de modelos com variáveis dinâmicas</p>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Modelos</h1>
+              <p className="text-white/60 text-[10px]">Banco de modelos com variáveis dinâmicas</p>
             </div>
           </div>
 
           <Link href="/admin/modelos/novo">
-            <Button size="sm" className="h-8 px-3 bg-neutral-800 hover:bg-emerald-600 dark:bg-secondary dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors">
+            <Button size="sm" className="h-8 px-3 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-medium rounded-md transition-colors">
               <Plus className="w-3.5 h-3.5 mr-1" />
               Novo Modelo
             </Button>
           </Link>
         </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6 space-y-6">
-        {/* Stats */}
-        {/* Stats Ribbon */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-card rounded-xl border border-neutral-200/80 dark:border-border/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
-          {[
-            { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
-            { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
-            { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
-            { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
-            { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-border/60 flex-shrink-0" />}
-                <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-neutral-50 dark:hover:bg-muted">
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  <span className="font-bold tabular-nums text-neutral-800 dark:text-foreground">{stat.value}</span>
-                  <span className="text-neutral-500 dark:text-muted-foreground font-medium">{stat.label}</span>
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
 
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-              <Input
-                placeholder="Buscar modelos..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {/* Filtro de Categoria */}
-            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0">
-                <Filter className="w-4 h-4 mr-2 text-neutral-400" />
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Categorias</SelectItem>
-                {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {config.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
+          {/* Stats Ribbon */}
+          <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
+            {[
+              { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
+              { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
+              { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
+              { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
+              { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <Fragment key={index}>
+                  {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
+                  <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-white/5">
+                    <Icon className="w-3.5 h-3.5 flex-shrink-0 text-white/40" />
+                    <span className="font-bold tabular-nums text-white/90">{stat.value}</span>
+                    <span className="text-white/50 font-medium">{stat.label}</span>
+                  </div>
+                </Fragment>
+              );
+            })}
           </div>
 
+          <div className="w-px h-4 bg-white/10 flex-shrink-0" />
+
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Input
+              placeholder="Buscar modelos..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 bg-[#3e3e44] border border-[#525258] text-white/90 placeholder:text-white/40"
+            />
+          </div>
+
+          {/* Filtro de Categoria */}
+          <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+            <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-[#3e3e44] border border-[#525258] text-white/90">
+              <Filter className="w-4 h-4 mr-2 text-white/40" />
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Categorias</SelectItem>
+              {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
+                <SelectItem key={key} value={key}>
+                  {config.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-muted rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-[#3e3e44] rounded-lg">
             <button
               onClick={() => setViewMode("grid")}
               className={cn(
                 "p-2 rounded-md transition-colors",
                 viewMode === "grid"
-                  ? "bg-white dark:bg-secondary shadow-sm"
-                  : "hover:bg-neutral-200 dark:hover:bg-muted"
+                  ? "bg-[#525258] shadow-sm text-white/90"
+                  : "text-white/50 hover:bg-[#525258]/50"
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -263,14 +260,18 @@ export default function ModelosPage() {
               className={cn(
                 "p-2 rounded-md transition-colors",
                 viewMode === "list"
-                  ? "bg-white dark:bg-secondary shadow-sm"
-                  : "hover:bg-neutral-200 dark:hover:bg-muted"
+                  ? "bg-[#525258] shadow-sm text-white/90"
+                  : "text-white/50 hover:bg-[#525258]/50"
               )}
             >
               <List className="w-4 h-4" />
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6 space-y-6">
 
         {/* Content */}
         {isLoading ? (

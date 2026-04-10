@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -258,15 +259,15 @@ export default function ParecerPage() {
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
-        <div className="flex items-center justify-between">
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <FileCheck className="w-5 h-5 text-white dark:text-neutral-900" />
+            <div className="w-11 h-11 rounded-xl bg-[#4a4a52] flex items-center justify-center">
+              <FileCheck className="w-5 h-5 text-white/70" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight font-serif">Pareceres</h1>
-              <p className="text-xs text-muted-foreground">Consultas e opinioes da equipe</p>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Pareceres</h1>
+              <p className="text-white/60 text-[10px]">Consultas e opinioes da equipe</p>
             </div>
           </div>
         </div>

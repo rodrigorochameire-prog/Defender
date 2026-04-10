@@ -96,6 +96,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { format, differenceInDays, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -1855,15 +1856,15 @@ export default function ProcessosPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
         {/* Header Compact */}
-        <div className="px-5 py-2.5 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80">
-          <div className="flex items-center justify-between">
+        <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+          <div className="flex items-center justify-between px-5 pt-4 pb-0">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[10px] bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
-                <Scale className="w-4 h-4 text-white dark:text-neutral-900" />
+              <div className="w-9 h-9 rounded-[10px] bg-[#4a4a52] flex items-center justify-center">
+                <Scale className="w-4 h-4 text-white/70" />
               </div>
               <div>
-                <h1 className="font-serif text-[17px] font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight leading-tight">Processos</h1>
-                <p className="text-[10px] text-neutral-400">Gestão e acompanhamento judicial</p>
+                <h1 className="text-white text-[17px] font-semibold tracking-tight leading-tight">Processos</h1>
+                <p className="text-white/60 text-[10px]">Gestão e acompanhamento judicial</p>
               </div>
             </div>
 
@@ -1874,7 +1875,7 @@ export default function ProcessosPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-neutral-400 hover:text-emerald-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                      className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
@@ -1885,7 +1886,7 @@ export default function ProcessosPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 text-neutral-400 hover:text-emerald-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
                 title="Exportar"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -1893,7 +1894,7 @@ export default function ProcessosPage() {
               <Link href="/admin/processos/novo">
                 <Button
                   size="sm"
-                  className="h-8 px-3.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
+                  className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 mr-1" />
                   Novo
@@ -1901,88 +1902,89 @@ export default function ProcessosPage() {
               </Link>
             </div>
           </div>
+
+          {/* Toolbar: Stats + Prazo Chips + Filters */}
+          <div className={cn("mx-3 mt-3 mb-2.5 space-y-3", HEADER_STYLE.bottomRow)}>
+            {/* Stats Ribbon — compact inline KPIs */}
+            <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
+              {[
+                { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
+                { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
+                { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
+                { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
+                { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
+                { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
+              ].map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Fragment key={index}>
+                    {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
+                    <button
+                      onClick={stat.onClick}
+                      className={cn(
+                        "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                        stat.onClick && "cursor-pointer",
+                        stat.active ? "bg-emerald-500/20" : "hover:bg-white/5",
+                        stat.alert && !stat.active ? "bg-rose-500/20" : ""
+                      )}
+                    >
+                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-400" : stat.active ? "text-emerald-400" : "text-white/50")} />
+                      <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-400" : "text-white/90")}>{stat.value}</span>
+                      <span className="text-white/60 font-medium">{stat.label}</span>
+                    </button>
+                  </Fragment>
+                );
+              })}
+              <div className="flex-1" />
+              <span className="text-white/40 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
+            </div>
+
+            {/* Filtros de Prazo - Chips */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="w-4 h-4 text-white/50" />
+                  <span className="text-xs font-medium text-white/70">Filtrar por Prazo</span>
+                </div>
+                {prazoFilter !== "all" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPrazoFilter("all")}
+                    className="h-6 text-[10px] text-white/40 hover:text-white/70"
+                  >
+                    <XCircle className="w-3 h-3 mr-1" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
+              <PrazoFilterChips
+                selected={prazoFilter}
+                onChange={setPrazoFilter}
+                counts={prazoCounts}
+              />
+            </div>
+
+            {/* Card de Filtros */}
+            <FilterSectionProcessos
+              selectedArea={areaFilter}
+              setSelectedArea={setAreaFilter}
+              selectedSituacao={situacaoFilter}
+              setSelectedSituacao={setSituacaoFilter}
+              sortBy={sortBy}
+              setSortBy={(v) => setSortBy(v as any)}
+              groupBy={groupBy}
+              setGroupBy={(v) => setGroupBy(v as any)}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+            />
+          </div>
         </div>
 
         {/* Conteúdo Principal */}
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
-
-        {/* Stats Ribbon — compact inline KPIs */}
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none">
-          {[
-            { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
-            { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
-            { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
-            { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
-            { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
-            { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Fragment key={index}>
-                {index > 0 && <div className="w-px h-4 bg-neutral-200/60 dark:bg-neutral-700/60 flex-shrink-0" />}
-                <button
-                  onClick={stat.onClick}
-                  className={cn(
-                    "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
-                    stat.onClick && "cursor-pointer",
-                    stat.active ? "bg-emerald-50 dark:bg-emerald-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
-                    stat.alert && !stat.active ? "bg-rose-50 dark:bg-rose-950/20" : ""
-                  )}
-                >
-                  <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-500 dark:text-rose-400" : stat.active ? "text-emerald-500 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500")} />
-                  <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-600 dark:text-rose-400" : "text-neutral-800 dark:text-neutral-100")}>{stat.value}</span>
-                  <span className="text-neutral-500 dark:text-neutral-400 font-medium">{stat.label}</span>
-                </button>
-              </Fragment>
-            );
-          })}
-          <div className="flex-1" />
-          <span className="text-neutral-400 dark:text-neutral-500 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
-        </div>
-
-        {/* Filtros de Prazo - Chips Premium */}
-        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="w-4 h-4 text-neutral-400" />
-              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Filtrar por Prazo</span>
-            </div>
-            {prazoFilter !== "all" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setPrazoFilter("all")}
-                className="h-6 text-[10px] text-neutral-400 hover:text-neutral-600"
-              >
-                <XCircle className="w-3 h-3 mr-1" />
-                Limpar
-              </Button>
-            )}
-          </div>
-          <PrazoFilterChips
-            selected={prazoFilter}
-            onChange={setPrazoFilter}
-            counts={prazoCounts}
-          />
-        </div>
-
-        {/* Card de Filtros - Padrão Demandas */}
-        <Card className="border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 rounded-xl p-5">
-          <FilterSectionProcessos
-            selectedArea={areaFilter}
-            setSelectedArea={setAreaFilter}
-            selectedSituacao={situacaoFilter}
-            setSelectedSituacao={setSituacaoFilter}
-            sortBy={sortBy}
-            setSortBy={(v) => setSortBy(v as any)}
-            groupBy={groupBy}
-            setGroupBy={(v) => setGroupBy(v as any)}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-          />
-        </Card>
 
         {/* Card de Listagem */}
         <Card className="border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 rounded-xl overflow-hidden">

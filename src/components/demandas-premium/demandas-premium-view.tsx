@@ -2018,12 +2018,12 @@ export default function Demandas() {
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0f0f11] overflow-x-hidden">
       {/* ====== CHARCOAL HEADER ====== */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3")}>
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.07] flex items-center justify-center">
-              <LayoutGrid className="w-[15px] h-[15px] text-white/50" />
+            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
+              <LayoutGrid className="w-[15px] h-[15px] text-white/70" />
             </div>
             <h1 className="text-white text-[17px] font-semibold tracking-tight">Demandas</h1>
             <div className="flex items-center gap-1.5 ml-2">
@@ -2032,7 +2032,7 @@ export default function Demandas() {
                 const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
                 return (
                   <>
-                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.08] text-white/60 tabular-nums">
+                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
                       {total} total
                     </span>
                     {urgent > 0 && (
@@ -2048,13 +2048,13 @@ export default function Demandas() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
             >
               <Download className="w-3 h-3" /> Importar
             </button>
             <button
               onClick={() => setIsExportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.07] text-white/60 text-[10px] font-medium hover:bg-white/[0.12] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#525258] transition-colors cursor-pointer"
             >
               <Upload className="w-3 h-3" /> Exportar
             </button>
@@ -2067,8 +2067,8 @@ export default function Demandas() {
           </div>
         </div>
 
-        {/* Row 2: Pills + Search | ViewMode + Tools — bottomRow glass */}
-        <div className="flex items-center gap-2 mx-3 mt-3 mb-3 px-3.5 py-2.5 rounded-lg bg-white/[0.06]">
+        {/* Row 2: Pills + Search | ViewMode + Tools — inset sólido */}
+        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
           <AtribuicaoPills
             variant="dark"
             options={atribuicaoOptions}
@@ -2081,16 +2081,16 @@ export default function Demandas() {
           />
 
           <div className="relative flex-1 max-w-[200px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/20" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar nome, processo..."
-              className="w-full bg-white/[0.05] border border-white/[0.06] rounded-lg py-1.5 pl-7 pr-3 text-[10px] text-white/60 placeholder:text-white/20 outline-none focus:bg-white/[0.1] focus:border-white/[0.15] transition-all"
+              className="w-full bg-[#3e3e44] border border-[#525258] rounded-lg py-1.5 pl-7 pr-3 text-[10px] text-white/90 placeholder:text-white/40 outline-none focus:bg-[#444448] focus:border-[#5a5a60] transition-all"
             />
           </div>
 
-          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-[#525258] rounded-full mx-0.5 shrink-0" />
 
           <ViewModeDropdown
             options={DEMANDAS_VIEW_OPTIONS}
@@ -2099,7 +2099,7 @@ export default function Demandas() {
             variant="dark"
           />
 
-          <div className="w-px h-5 bg-white/[0.08] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-[#525258] rounded-full mx-0.5 shrink-0" />
 
           <div className="flex items-center gap-0.5">
             <button

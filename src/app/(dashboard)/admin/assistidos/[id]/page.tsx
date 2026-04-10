@@ -326,7 +326,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
   return (
     <div className="flex flex-col h-full">
       {/* ── Header: Identity ── */}
-      <div className={cn("mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3", HEADER_STYLE.container)}>
+      <div className={cn("mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-4", HEADER_STYLE.container)}>
         {/* Row 1: Back + Avatar + Name + Actions */}
         <div className="flex items-center gap-4">
           <button

@@ -82,6 +82,7 @@ import {
 // Avatar removido — busca agora usa dots de atribuição
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -754,22 +755,22 @@ export default function DashboardJuriPage() {
     <div className="min-h-screen bg-background">
 
       {/* Header — Compact standardized */}
-      <div className="px-5 py-2.5 bg-card border-b border-border">
-        <div className="flex items-center justify-between gap-3">
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] bg-foreground flex items-center justify-center shrink-0">
-              <Briefcase className="w-4 h-4 text-background" />
+            <div className="w-9 h-9 rounded-[10px] bg-[#4a4a52] flex items-center justify-center shrink-0">
+              <Briefcase className="w-4 h-4 text-white/70" />
             </div>
             <div>
-              <h1 className="font-serif text-[17px] font-semibold text-foreground tracking-tight">Dashboard</h1>
-              <p className="text-[10px] text-muted-foreground">Painel de atividades e acompanhamento</p>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Dashboard</h1>
+              <p className="text-white/60 text-[10px]">Painel de atividades e acompanhamento</p>
             </div>
           </div>
 
           <Link href="/admin/demandas/nova">
             <Button
               size="sm"
-              className="h-8 px-3.5 bg-foreground hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               Nova

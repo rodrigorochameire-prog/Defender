@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -474,15 +475,15 @@ export default function DelegacoesPage() {
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
-        <div className="flex items-center justify-between">
+      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <UserCheck className="w-5 h-5 text-white dark:text-neutral-900" />
+            <div className="w-11 h-11 rounded-xl bg-[#4a4a52] flex items-center justify-center">
+              <UserCheck className="w-5 h-5 text-white/70" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">Delegações</h1>
-              <p className="text-xs text-muted-foreground">Gerencie suas tarefas delegadas</p>
+              <h1 className="text-white text-[17px] font-semibold tracking-tight">Delegações</h1>
+              <p className="text-white/60 text-[10px]">Gerencie suas tarefas delegadas</p>
             </div>
           </div>
 
@@ -494,7 +495,7 @@ export default function DelegacoesPage() {
                 refetchRecebidas();
                 refetchEnviadas();
               }}
-              className="gap-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-foreground"
+              className="gap-2 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
             >
               <RefreshCw className="w-4 h-4" />
               Atualizar
@@ -502,7 +503,7 @@ export default function DelegacoesPage() {
             <Button
               size="sm"
               onClick={() => setPedidoModalOpen(true)}
-              className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-sm"
+              className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
             >
               <Send className="w-4 h-4" />
               Novo Pedido
