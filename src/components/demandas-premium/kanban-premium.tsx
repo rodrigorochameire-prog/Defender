@@ -72,6 +72,8 @@ interface KanbanDemanda {
   processos?: Array<{ numero?: string }>;
   delegadoPara?: string | null;
   reuPreso?: boolean;
+  providenciaResumo?: string | null;
+  data?: string | null;
   [key: string]: unknown;
 }
 
@@ -191,7 +193,7 @@ function KanbanCard({
           {/* Data de expedição — canto superior direito */}
           {(demanda.data) && (
             <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
-              {demanda.data as string}
+              {demanda.data}
             </span>
           )}
           {isPreso && (
@@ -320,6 +322,16 @@ function KanbanCard({
           <div className="flex items-center gap-1 mt-1.5 pl-8">
             <span className="text-[9px] text-violet-500 dark:text-violet-400 font-medium truncate">
               → {demanda.delegadoPara}
+            </span>
+          </div>
+        )}
+
+        {/* Providência resumida — só se preenchida */}
+        {demanda.providenciaResumo && (
+          <div className="mt-1.5 pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40">
+            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 italic truncate block">
+              <span className="opacity-40 mr-1">↳</span>
+              {demanda.providenciaResumo}
             </span>
           </div>
         )}

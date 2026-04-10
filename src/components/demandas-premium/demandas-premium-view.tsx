@@ -775,7 +775,7 @@ export default function Demandas() {
       // Usar substatus granular quando disponível, senão mapear do status coarse do DB
       status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "triagem", // "triagem" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
-      data: d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : new Date(d.createdAt).toLocaleDateString("pt-BR"),
+      data: d.dataExpedicao ? new Date(d.dataExpedicao + "T12:00:00").toLocaleDateString("pt-BR") : d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : "",
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
       dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
       processos: d.processo?.numeroAutos
@@ -783,6 +783,7 @@ export default function Demandas() {
         : [],
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
+      providenciaResumo: d.providenciaResumo || "",
       atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
       atribuicaoEnum: d.processo?.atribuicao || null,
       estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),
