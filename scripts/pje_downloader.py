@@ -814,16 +814,21 @@ def download_vvd_via_acervo(
             time.sleep(8)
         _log(f"VVD Acervo: connected to {page.url[:60]}")
 
-        # Always activate Acervo tab (need the form to exist)
-        _log("VVD Acervo: activating Acervo tab")
-        page.locator("text=Acervo").first.click(timeout=10_000)
-        time.sleep(15)
-        # Wait for formAbaAcervo to appear
-        page.wait_for_function(
-            "() => !!document.getElementById('formAbaAcervo')",
-            timeout=30_000,
-        )
-        _log("VVD Acervo: tab active, form ready")
+        # Only activate Acervo tab if not already active — clicking it
+        # re-renders and COLLAPSES the tree that the user expanded.
+        is_active = page.evaluate("""() => {
+            var lbl = document.getElementById('tabAcervo_lbl');
+            return lbl && lbl.className.indexOf('active') !== -1;
+        }""")
+        if not is_active:
+            _log("VVD Acervo: activating Acervo tab")
+            page.locator("text=Acervo").first.click(timeout=10_000)
+            time.sleep(15)
+            page.wait_for_function(
+                "() => !!document.getElementById('formAbaAcervo')",
+                timeout=30_000,
+            )
+        _log("VVD Acervo: tab ready")
 
         # --- Select VVD vara/caixa ---
         vara_loc = page.locator(f"text={VVD_VARA_TEXT}")
@@ -851,10 +856,18 @@ def download_vvd_via_acervo(
                 )
         page.locator(f"text={VVD_VARA_TEXT}").first.click()
         time.sleep(15)
-        _log("VVD Acervo: vara clicked, waiting for results")
+        _log("VVD Acervo: vara clicked")
 
-        # Find the Autos Digitais link for THIS processo (by numero in text).
-        # The vara loads ALL processes; we match by the short numero prefix.
+        # Filter to target processo (vara may have thousands of processes)
+        page.evaluate("""(num) => {
+            var inp = document.getElementById('txtConsultaContextoAcervo');
+            if (inp) inp.value = num;
+            if (typeof setarTextoConsultaContextoAcervo === 'function')
+                setarTextoConsultaContextoAcervo(num);
+        }""", numero)
+        time.sleep(12)
+        _log("VVD Acervo: filtered to target processo")
+
         numero_short = numero.split("-")[0]  # e.g. "8000833"
         for _wait in range(10):
             has_target = page.evaluate(

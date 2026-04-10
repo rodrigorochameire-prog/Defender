@@ -6,10 +6,10 @@ import { getStatusConfig, STATUS_GROUPS } from "@/config/demanda-status";
 // Paleta de cores premium suaves e sofisticadas (tons pastel equilibrados)
 const PREMIUM_COLORS = [
   "#6B7280", // Gray 500 - cinza neutro principal
-  "#84CC9B", // Verde suave pastel
-  "#8DB4D2", // Azul suave pastel
-  "#B8A4C9", // Roxo suave pastel  
-  "#D4A574", // Âmbar suave pastel
+  "#5CB87A", // Verde firme
+  "#6A9EC5", // Azul com peso
+  "#9B84B8", // Lilás presente
+  "#C48A50", // Laranja definido
   "#E8A4B8", // Rosa suave pastel
   "#94A3B8", // Slate 400 - cinza azulado
   "#A7C4BC", // Verde-água suave
@@ -19,12 +19,12 @@ const PREMIUM_COLORS = [
 
 // Cores suaves das atribuições (tons pastel harmonizados)
 const ATRIBUICAO_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#84CC9B",       // Verde pastel
-  "Grupo Especial do Júri": "#D4A574", // Âmbar pastel
-  "Violência Doméstica": "#E8C87A",    // Amarelo pastel suave
-  "Execução Penal": "#8DB4D2",         // Azul pastel
+  "Tribunal do Júri": "#5CB87A",       // Verde firme
+  "Grupo Especial do Júri": "#C48A50", // Laranja definido
+  "Violência Doméstica": "#D4A84A",    // Amber quente
+  "Execução Penal": "#6A9EC5",         // Azul com peso
   "Criminal Geral": "#D4A4A4",         // Rosa/vermelho pastel
-  "Substituição": "#B8A4C9",           // Roxo pastel
+  "Substituição": "#9B84B8",           // Lilás presente
   "Curadoria Especial": "#94A3B8",     // Slate pastel
 };
 
@@ -583,10 +583,10 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
 
     const estadoPrisionaisColors: Record<string, string> = {
       preso: "#D4A4A4",      // Rosa/vermelho pastel
-      solto: "#84CC9B",      // Verde pastel
-      monitorado: "#8DB4D2", // Azul pastel
-      domiciliar: "#E8C87A", // Amarelo pastel
-      cautelar: "#B8A4C9",   // Roxo pastel
+      solto: "#5CB87A",      // Verde firme
+      monitorado: "#6A9EC5", // Azul com peso
+      domiciliar: "#D4A84A", // Amber quente
+      cautelar: "#9B84B8",   // Lilás presente
       preso_outro: "#C9A4A4", // Rosa pastel mais claro
     };
 

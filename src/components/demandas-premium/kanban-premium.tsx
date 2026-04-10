@@ -182,7 +182,7 @@ function KanbanCard({
     >
       {/* Left bar — group color */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[2.5px] rounded-l-xl opacity-50"
+        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl opacity-80"
         style={{ backgroundColor: groupColor }}
       />
 
@@ -290,8 +290,9 @@ function KanbanCard({
               }
             `}
             style={{
-              backgroundColor: `${groupColor}20`,
+              backgroundColor: `${groupColor}2E`,
               color: groupColor,
+              filter: "saturate(1.1)",
             }}
             title={onStatusChange ? "Alterar status" : undefined}
           >

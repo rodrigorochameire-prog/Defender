@@ -61,18 +61,18 @@ export interface KanbanColumnConfig {
 export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
   triagem: {
     label: "Triagem",
-    color: "#A1A1AA",
+    color: "#8A8A94",
     icon: Inbox,
   },
   em_andamento: {
     label: "Em Andamento",
-    color: "#E8C87A",
+    color: "#D4A84A",
     icon: Activity,
     subGroups: ["preparacao", "diligencias", "saida", "acompanhar"],
   },
   concluida: {
     label: "Concluída",
-    color: "#84CC9B",
+    color: "#5CB87A",
     icon: CheckCircle2,
   },
   arquivado: {
@@ -95,22 +95,22 @@ export interface SubGroupConfig {
 export const SUB_GROUPS: Record<EmAndamentoSubGroup, SubGroupConfig> = {
   preparacao: {
     label: "Preparação",
-    color: "#E8C87A",   // Amber pastel
+    color: "#D4A84A",   // Amber quente
     icon: Activity,
   },
   diligencias: {
     label: "Diligências",
-    color: "#8DB4D2",   // Azul pastel
+    color: "#6A9EC5",   // Azul com peso
     icon: FileText,
   },
   saida: {
     label: "Saída",
-    color: "#D4A574",   // Laranja pastel
+    color: "#C48A50",   // Laranja definido
     icon: Send,
   },
   acompanhar: {
     label: "Acompanhar",
-    color: "#B8A4C9",   // Lilás pastel
+    color: "#9B84B8",   // Lilás presente
     icon: Eye,
   },
 };
@@ -152,32 +152,32 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
 export const STATUS_GROUPS: Record<StatusGroup, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   triagem: {
     label: "Triagem",
-    color: "#A1A1AA",  // Cinza neutro
+    color: "#8A8A94",  // Cinza com corpo
     icon: Inbox,
   },
   preparacao: {
     label: "Preparação",
-    color: "#E8C87A",  // Amber pastel
+    color: "#D4A84A",  // Amber quente
     icon: Activity,
   },
   diligencias: {
     label: "Diligências",
-    color: "#8DB4D2",  // Azul pastel
+    color: "#6A9EC5",  // Azul com peso
     icon: FileText,
   },
   saida: {
     label: "Saída",
-    color: "#D4A574",  // Laranja pastel
+    color: "#C48A50",  // Laranja definido
     icon: Send,
   },
   acompanhar: {
     label: "Acompanhar",
-    color: "#B8A4C9",  // Lilás pastel
+    color: "#9B84B8",  // Lilás presente
     icon: Eye,
   },
   concluida: {
     label: "Concluída",
-    color: "#84CC9B",  // Verde pastel
+    color: "#5CB87A",  // Verde firme
     icon: CheckCircle2,
   },
   arquivado: {
@@ -199,7 +199,7 @@ export const STATUS_FLAGS: Record<StatusFlag, { label: string; color: string; ic
   },
   aguardando: {
     label: "Aguardando",
-    color: "#B8A4C9",  // Roxo pastel
+    color: "#9B84B8",  // Lilás presente
     icon: Clock,
   },
 };
