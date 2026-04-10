@@ -1836,10 +1836,10 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         <PageHeaderProvider>
           <ConditionalHeader />
 
-          {/* Main */}
-          <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+          {/* Content — sem overflow próprio, scroll delegado ao SidebarInset */}
+          <div className="flex-1 pb-16 md:pb-0">
             {children}
-          </main>
+          </div>
 
           {/* Mobile bottom navigation */}
           <MobileBottomNav />
