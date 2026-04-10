@@ -888,17 +888,19 @@ export default function AssistidosPage() {
           </div>
         </div>
 
-        {/* Inset Row: Comarca/RMS → Atribuições → Lista/Analytics → Smart Presets → WhatsApp */}
-        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-          {/* RMS toggle */}
+        {/* Inset Row — segmented controls uniformes */}
+        <div className={cn("flex items-center gap-3 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
+          {/* Segmented: Comarca / RMS */}
           {!showNaoIdentificados && (
-            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
-              <button onClick={() => verRMS && toggleVerRMS({ verRMS: false })} className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all", !verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50")}>
-                <MapPin className="w-2.5 h-2.5" /> Comarca
-              </button>
-              <button onClick={() => !verRMS && toggleVerRMS({ verRMS: true })} className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all", verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50")}>
-                <MapPin className="w-2.5 h-2.5" /> RMS
-              </button>
+            <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
+              {[
+                { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
+                { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
+              ].map((opt) => (
+                <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
+                  {opt.label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -929,23 +931,25 @@ export default function AssistidosPage() {
             />
           )}
 
-          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
+          <div className="w-px h-4 bg-white/[0.08] shrink-0" />
 
-          {/* Tabs Lista/Analytics */}
-          <div className="flex items-center gap-1 bg-[#3e3e44] p-0.5 rounded-lg shrink-0">
-            <button onClick={() => setActiveTab("lista")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all", activeTab === "lista" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80")}>
-              <Users className="w-3 h-3" /> Lista
-            </button>
-            <button onClick={() => setActiveTab("analytics")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all", activeTab === "analytics" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80")}>
-              <BarChart3 className="w-3 h-3" /> Analytics
-            </button>
+          {/* Segmented: Lista / Analytics */}
+          <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
+            {[
+              { label: "Lista", icon: Users, tab: "lista" as const },
+              { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
+            ].map((opt) => (
+              <button key={opt.tab} onClick={() => setActiveTab(opt.tab)} className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", activeTab === opt.tab ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
+                <opt.icon className="w-3 h-3" /> {opt.label}
+              </button>
+            ))}
           </div>
 
           <div className="flex-1 min-w-2" />
 
-          {/* Smart presets */}
+          {/* Smart presets — ícones compactos */}
           {!showNaoIdentificados && (
-            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
+            <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
               {[
                 { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
                 { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
@@ -969,7 +973,7 @@ export default function AssistidosPage() {
                             else { setStatusFilter("all"); setSortBy("nome"); }
                           }
                         }}
-                        className={cn("relative inline-flex items-center justify-center w-6 h-6 rounded-full transition-all shrink-0 cursor-pointer", active ? "bg-emerald-600 text-white shadow-sm" : "text-white/50 hover:text-white/80")}
+                        className={cn("relative inline-flex items-center justify-center w-7 h-7 rounded-[4px] transition-all shrink-0 cursor-pointer", active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}
                       >
                         <PresetIcon className="w-3 h-3" />
                         {preset.count > 0 && (
@@ -986,12 +990,12 @@ export default function AssistidosPage() {
             </div>
           )}
           {smartPreset && (
-            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/50 hover:text-white transition-colors shrink-0">
+            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/40 hover:text-white transition-colors shrink-0">
               <XCircle className="w-3 h-3" />
             </button>
           )}
-          <Link href="/admin/whatsapp" className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-medium text-white/50 hover:text-emerald-400 hover:bg-[#525258] transition-colors shrink-0">
-            <MessageCircle className="w-3 h-3" />
+          <Link href="/admin/whatsapp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
+            <MessageCircle className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
