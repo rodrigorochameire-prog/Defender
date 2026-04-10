@@ -93,6 +93,14 @@ export const HEADER_STYLE = {
   bottomRow: "bg-[#48484e] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
+  /** Utility row (Row 0): barra fina de utilitários globais */
+  utilityRow: "bg-[#1e1e22] border-b border-white/[0.06]",
+  utilityText: "text-white/50 text-[10px]",
+  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
+  utilityIcon: "w-[13px] h-[13px] text-white/40",
+  /** Collapsed: barra única compacta */
+  collapsedBar: "bg-[#222228] border-b border-white/[0.06]",
+  collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 
 // ============================================
