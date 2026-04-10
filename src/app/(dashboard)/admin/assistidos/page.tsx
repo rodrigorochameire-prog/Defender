@@ -807,15 +807,37 @@ export default function AssistidosPage() {
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
       {/* Header */}
       <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
+        {/* Row 1: Title + stats badges + search + actions */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center shrink-0">
               <Users className="w-4 h-4 text-white/70" />
             </div>
             <h1 className="text-white text-[17px] font-semibold tracking-tight">Assistidos</h1>
+            {/* Stats como badges inline (igual Demandas) */}
+            <div className="flex items-center gap-1.5 ml-1">
+              {[
+                { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+                { value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", danger: stats.presos > 0 },
+                { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+              ].map((s) => (
+                <button
+                  key={s.label}
+                  onClick={s.onClick}
+                  className={cn(
+                    "text-[9px] font-semibold px-2 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
+                    s.active ? "bg-emerald-500/20 text-emerald-400"
+                      : (s as any).danger ? "bg-red-500/15 text-red-300"
+                      : "bg-[#4a4a52] text-white/70 hover:text-white/90"
+                  )}
+                >
+                  {s.value} {s.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Busca + Acoes */}
+          {/* Busca + Ações */}
           <div className="flex items-center gap-1.5">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
@@ -832,8 +854,6 @@ export default function AssistidosPage() {
                 </p>
               )}
             </div>
-
-            {/* Icon actions */}
             <Link href="/admin/inteligencia">
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#4a4a52] cursor-pointer" title="Inteligência">
                 <Brain className="w-3.5 h-3.5" />
@@ -842,36 +862,16 @@ export default function AssistidosPage() {
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#4a4a52] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
               <Download className="w-3.5 h-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#4a4a52] cursor-pointer"
-              title="Vincular pastas Drive"
-              disabled={backfillDriveMutation.isPending}
-              onClick={() => backfillDriveMutation.mutate({ limit: 50 })}
-            >
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#4a4a52] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
               {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-[#4a4a52]")}
-              title="Exportar ao Solar"
-              onClick={() => setBatchSelectMode(!batchSelectMode)}
-            >
+            <Button variant="ghost" size="sm" className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-[#4a4a52]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
               <Sun className="w-3.5 h-3.5" />
             </Button>
-
-            {/* Batch Solar mode bar */}
             {batchSelectMode && (
               <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-white/15">
                 <span className="text-[10px] text-white/60 tabular-nums">{batchSelectedIds.size} sel.</span>
-                <Button
-                  size="sm"
-                  className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg"
-                  disabled={batchSelectedIds.size === 0 || exportarBatch.isPending}
-                  onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}
-                >
+                <Button size="sm" className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg" disabled={batchSelectedIds.size === 0 || exportarBatch.isPending} onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}>
                   {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
                 </Button>
                 <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-white/50 hover:text-white">
@@ -879,97 +879,25 @@ export default function AssistidosPage() {
                 </button>
               </div>
             )}
-
             <div className="w-px h-5 bg-[#525258] mx-0.5" />
-
             <Link href="/admin/assistidos/novo">
-              <Button
-                size="sm"
-                className="h-8 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Novo
+              <Button size="sm" className="h-8 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Novo
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Bottom Row — Tudo num só inset */}
+        {/* Inset Row: Comarca/RMS → Atribuições → Lista/Analytics → Smart Presets → WhatsApp */}
         <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-          {/* Tabs */}
-          <div className="flex items-center gap-1 bg-[#3e3e44] p-0.5 rounded-lg shrink-0">
-            <button
-              onClick={() => setActiveTab("lista")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
-                activeTab === "lista" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80"
-              )}
-            >
-              <Users className="w-3 h-3" />
-              Lista
-            </button>
-            <button
-              onClick={() => setActiveTab("analytics")}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all",
-                activeTab === "analytics" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80"
-              )}
-            >
-              <BarChart3 className="w-3 h-3" />
-              Analytics
-            </button>
-          </div>
-
-          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
-
-          {/* Stats inline */}
-          {[
-            { icon: Users, value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-            { icon: Lock, value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", color: stats.presos > 0 ? "text-rose-400" : "" },
-            { icon: Timer, value: stats.monitorados, label: "mon", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-            { icon: BookmarkCheck, value: stats.pinned, label: "fix", onClick: () => { setShowPinnedOnly(!showPinnedOnly); setStatusFilter("all"); }, active: showPinnedOnly },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <button
-                key={stat.label}
-                onClick={stat.onClick}
-                className={cn(
-                  "flex items-center gap-1 px-1 py-0.5 rounded-md text-[10px] whitespace-nowrap transition-colors shrink-0 cursor-pointer",
-                  stat.active ? "bg-emerald-500/20 text-emerald-400" : "hover:bg-[#525258] text-white/60",
-                )}
-              >
-                <Icon className={cn("w-2.5 h-2.5 shrink-0", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/50")} />
-                <span className={cn("font-bold tabular-nums", stat.active ? "text-emerald-400" : (stat as any).color || "text-white/90")}>{stat.value}</span>
-                <span className="text-white/40 text-[9px]">{stat.label}</span>
-              </button>
-            );
-          })}
-
-          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
-
           {/* RMS toggle */}
           {!showNaoIdentificados && (
             <div className="inline-flex items-center gap-0.5 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
-              <button
-                onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all",
-                  !verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
-                )}
-              >
-                <MapPin className="w-2.5 h-2.5" />
-                Comarca
+              <button onClick={() => verRMS && toggleVerRMS({ verRMS: false })} className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all", !verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50")}>
+                <MapPin className="w-2.5 h-2.5" /> Comarca
               </button>
-              <button
-                onClick={() => !verRMS && toggleVerRMS({ verRMS: true })}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all",
-                  verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
-                )}
-              >
-                <MapPin className="w-2.5 h-2.5" />
-                RMS
+              <button onClick={() => !verRMS && toggleVerRMS({ verRMS: true })} className={cn("flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold transition-all", verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50")}>
+                <MapPin className="w-2.5 h-2.5" /> RMS
               </button>
             </div>
           )}
@@ -1001,6 +929,18 @@ export default function AssistidosPage() {
             />
           )}
 
+          <div className="w-px h-3.5 bg-[#525258] shrink-0" />
+
+          {/* Tabs Lista/Analytics */}
+          <div className="flex items-center gap-1 bg-[#3e3e44] p-0.5 rounded-lg shrink-0">
+            <button onClick={() => setActiveTab("lista")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all", activeTab === "lista" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80")}>
+              <Users className="w-3 h-3" /> Lista
+            </button>
+            <button onClick={() => setActiveTab("analytics")} className={cn("flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md transition-all", activeTab === "analytics" ? "bg-[#525258] text-white shadow-sm" : "text-white/50 hover:text-white/80")}>
+              <BarChart3 className="w-3 h-3" /> Analytics
+            </button>
+          </div>
+
           <div className="flex-1 min-w-2" />
 
           {/* Smart presets */}
@@ -1029,19 +969,11 @@ export default function AssistidosPage() {
                             else { setStatusFilter("all"); setSortBy("nome"); }
                           }
                         }}
-                        className={cn(
-                          "relative inline-flex items-center justify-center w-6 h-6 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
-                          active ? "bg-emerald-600 text-white shadow-sm" : "text-white/50 hover:text-white/80"
-                        )}
+                        className={cn("relative inline-flex items-center justify-center w-6 h-6 rounded-full transition-all shrink-0 cursor-pointer", active ? "bg-emerald-600 text-white shadow-sm" : "text-white/50 hover:text-white/80")}
                       >
                         <PresetIcon className="w-3 h-3" />
                         {preset.count > 0 && (
-                          <span className={cn(
-                            "absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full",
-                            active ? "bg-emerald-500 text-white"
-                              : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
-                              : "bg-[#525258] text-white/60"
-                          )}>
+                          <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-[#525258] text-white/60")}>
                             {preset.count}
                           </span>
                         )}
@@ -1058,7 +990,6 @@ export default function AssistidosPage() {
               <XCircle className="w-3 h-3" />
             </button>
           )}
-
           <Link href="/admin/whatsapp" className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-medium text-white/50 hover:text-emerald-400 hover:bg-[#525258] transition-colors shrink-0">
             <MessageCircle className="w-3 h-3" />
           </Link>
