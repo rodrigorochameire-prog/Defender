@@ -951,6 +951,115 @@ export default function AssistidosPage() {
             <span className="hidden sm:inline">WhatsApp</span>
           </Link>
         </div>
+
+        {/* Bottom Row 2 — Atribuições + Smart Presets (inset) */}
+        {!showNaoIdentificados && (
+          <div className={cn("flex items-center gap-2 mx-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
+            {/* RMS toggle */}
+            <div className="inline-flex items-center gap-1 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
+              <button
+                onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                  !verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
+                )}
+              >
+                <MapPin className="w-3 h-3" />
+                Comarca
+              </button>
+              <button
+                onClick={() => !verRMS && toggleVerRMS({ verRMS: true })}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
+                  verRMS ? "bg-[#525258] text-white shadow-sm" : "text-white/50"
+                )}
+              >
+                <MapPin className="w-3 h-3" />
+                RMS
+              </button>
+            </div>
+
+            {/* Atribuição pills */}
+            <AtribuicaoPills
+              variant="dark"
+              options={[
+                { value: "Tribunal do Júri", label: "Tribunal do Júri" },
+                { value: "Violência Doméstica", label: "Violência Doméstica" },
+                { value: "Execução Penal", label: "Execução Penal" },
+                { value: "Substituição Criminal", label: "Substituição Criminal" },
+                { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
+              ]}
+              selectedValues={atribuicaoFilter !== "all" ? [(() => {
+                const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
+                return map[atribuicaoFilter] || atribuicaoFilter;
+              })()] : []}
+              onToggle={(value) => {
+                const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
+                const normalized = reverseMap[value] || value;
+                setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
+              }}
+              onClear={() => setAtribuicaoFilter("all")}
+              counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
+              singleSelect
+            />
+
+            <div className="flex-1 min-w-2" />
+
+            {/* Smart presets */}
+            <div className="inline-flex items-center gap-1 p-0.5 rounded-full bg-[#3e3e44] shrink-0">
+              {[
+                { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
+                { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
+                { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
+                { id: "sem_drive", tip: "Sem pasta no Drive", icon: Link2Off, count: stats.semDrive },
+                { id: "novos_30d", tip: "Novos últimos 30 dias", icon: Plus, count: stats.novos30d },
+              ].map((preset) => {
+                const active = smartPreset === preset.id;
+                const PresetIcon = preset.icon;
+                return (
+                  <Tooltip key={preset.id}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
+                          else {
+                            setSmartPreset(preset.id);
+                            if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+                            else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
+                            else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+                            else { setStatusFilter("all"); setSortBy("nome"); }
+                          }
+                        }}
+                        className={cn(
+                          "relative inline-flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
+                          active ? "bg-emerald-600 text-white shadow-sm" : "text-white/50 hover:text-white/80"
+                        )}
+                      >
+                        <PresetIcon className="w-3.5 h-3.5" />
+                        {preset.count > 0 && (
+                          <span className={cn(
+                            "absolute -top-1 -right-1 text-[8px] font-bold tabular-nums min-w-[14px] h-[14px] flex items-center justify-center rounded-full",
+                            active ? "bg-emerald-500 text-white"
+                              : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
+                              : "bg-[#525258] text-white/60"
+                          )}>
+                            {preset.count}
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+            {smartPreset && (
+              <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/50 hover:text-white transition-colors shrink-0">
+                <XCircle className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sticky Summary Bar */}
@@ -1071,120 +1180,7 @@ export default function AssistidosPage() {
         </div>
       )}
 
-      {/* === Filter Bar: stats left | atribuição center | presets right === */}
-      {!showNaoIdentificados && (
-        <div ref={statsRef} className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-          {/* RMS toggle — pill switch */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border shrink-0">
-            <button
-              onClick={() => verRMS && toggleVerRMS({ verRMS: false })}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
-                !verRMS
-                  ? "bg-foreground text-background shadow-sm"
-                  : "text-muted-foreground"
-              )}
-            >
-              <MapPin className="w-3 h-3" />
-              Comarca
-            </button>
-            <button
-              onClick={() => !verRMS && toggleVerRMS({ verRMS: true })}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all duration-200",
-                verRMS
-                  ? "bg-foreground text-background shadow-sm"
-                  : "text-muted-foreground"
-              )}
-            >
-              <MapPin className="w-3 h-3" />
-              RMS
-            </button>
-          </div>
-
-          {/* Atribuição switches */}
-          <AtribuicaoPills
-            options={[
-              { value: "Tribunal do Júri", label: "Tribunal do Júri" },
-              { value: "Violência Doméstica", label: "Violência Doméstica" },
-              { value: "Execução Penal", label: "Execução Penal" },
-              { value: "Substituição Criminal", label: "Substituição Criminal" },
-              { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
-            ]}
-            selectedValues={atribuicaoFilter !== "all" ? [(() => {
-              const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
-              return map[atribuicaoFilter] || atribuicaoFilter;
-            })()] : []}
-            onToggle={(value) => {
-              const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
-              const normalized = reverseMap[value] || value;
-              setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
-            }}
-            onClear={() => setAtribuicaoFilter("all")}
-            counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
-            singleSelect
-          />
-
-          {/* Spacer */}
-          <div className="flex-1 min-w-2" />
-
-          {/* Smart presets — icon-only, pushed right */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border shrink-0">
-            {[
-              { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
-              { id: "audiencias_semana", tip: "Audiências esta semana", icon: Calendar, count: stats.audienciasSemana },
-              { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
-              { id: "sem_drive", tip: "Sem pasta no Drive", icon: Link2Off, count: stats.semDrive },
-              { id: "novos_30d", tip: "Novos últimos 30 dias", icon: Plus, count: stats.novos30d },
-            ].map((preset) => {
-              const active = smartPreset === preset.id;
-              const PresetIcon = preset.icon;
-              return (
-                <Tooltip key={preset.id}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
-                        else {
-                          setSmartPreset(preset.id);
-                          if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
-                          else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
-                          else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
-                          else { setStatusFilter("all"); setSortBy("nome"); }
-                        }
-                      }}
-                      className={cn(
-                        "relative inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 shrink-0 cursor-pointer",
-                        active
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <PresetIcon className="w-3.5 h-3.5" />
-                      {preset.count > 0 && (
-                        <span className={cn(
-                          "absolute -top-1 -right-1 text-[8px] font-bold tabular-nums min-w-[14px] h-[14px] flex items-center justify-center rounded-full",
-                          active ? "bg-emerald-500 text-white"
-                            : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white"
-                            : "bg-muted text-muted-foreground"
-                        )}>
-                          {preset.count}
-                        </span>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-          {smartPreset && (
-            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
-              <XCircle className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      )}
+      {/* Filter bar moved into header bottom row 2 */}
 
 
 
