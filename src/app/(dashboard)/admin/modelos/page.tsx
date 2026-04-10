@@ -42,6 +42,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -167,19 +168,92 @@ export default function ModelosPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-background">
-      {/* Header Padrão Defender */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#4a4a52] flex items-center justify-center shrink-0">
-              <FileStack className="w-5 h-5 text-white/70" />
+      <CollapsiblePageHeader
+        title="Modelos"
+        icon={FileStack}
+        bottomRow={
+          <div className="flex items-center gap-2">
+            {/* Stats Ribbon */}
+            <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
+              {[
+                { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
+                { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
+                { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
+                { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
+                { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
+              ].map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Fragment key={index}>
+                    {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
+                    <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-white/5">
+                      <Icon className="w-3.5 h-3.5 flex-shrink-0 text-white/40" />
+                      <span className="font-bold tabular-nums text-white/90">{stat.value}</span>
+                      <span className="text-white/50 font-medium">{stat.label}</span>
+                    </div>
+                  </Fragment>
+                );
+              })}
             </div>
-            <div>
-              <h1 className="text-white text-[17px] font-semibold tracking-tight">Modelos</h1>
-              <p className="text-white/60 text-[10px]">Banco de modelos com variáveis dinâmicas</p>
+
+            <div className="w-px h-4 bg-white/10 flex-shrink-0" />
+
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <Input
+                placeholder="Buscar modelos..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 bg-[#3e3e44] border border-[#525258] text-white/90 placeholder:text-white/40"
+              />
+            </div>
+
+            {/* Filtro de Categoria */}
+            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-[#3e3e44] border border-[#525258] text-white/90">
+                <Filter className="w-4 h-4 mr-2 text-white/40" />
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as Categorias</SelectItem>
+                {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    {config.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 p-1 bg-[#3e3e44] rounded-lg">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={cn(
+                  "p-2 rounded-md transition-colors",
+                  viewMode === "grid"
+                    ? "bg-[#525258] shadow-sm text-white/90"
+                    : "text-white/50 hover:bg-[#525258]/50"
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "p-2 rounded-md transition-colors",
+                  viewMode === "list"
+                    ? "bg-[#525258] shadow-sm text-white/90"
+                    : "text-white/50 hover:bg-[#525258]/50"
+                )}
+              >
+                <List className="w-4 h-4" />
+              </button>
             </div>
           </div>
-
+        }
+      >
+        <div className="flex items-center gap-2">
           <Link href="/admin/modelos/novo">
             <Button size="sm" className="h-8 px-3 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-medium rounded-md transition-colors">
               <Plus className="w-3.5 h-3.5 mr-1" />
@@ -187,88 +261,7 @@ export default function ModelosPage() {
             </Button>
           </Link>
         </div>
-
-        {/* Toolbar */}
-        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
-          {/* Stats Ribbon */}
-          <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
-            {[
-              { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
-              { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
-              { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
-              { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
-              { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
-            ].map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <Fragment key={index}>
-                  {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
-                  <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-white/5">
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0 text-white/40" />
-                    <span className="font-bold tabular-nums text-white/90">{stat.value}</span>
-                    <span className="text-white/50 font-medium">{stat.label}</span>
-                  </div>
-                </Fragment>
-              );
-            })}
-          </div>
-
-          <div className="w-px h-4 bg-white/10 flex-shrink-0" />
-
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <Input
-              placeholder="Buscar modelos..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-[#3e3e44] border border-[#525258] text-white/90 placeholder:text-white/40"
-            />
-          </div>
-
-          {/* Filtro de Categoria */}
-          <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-            <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-[#3e3e44] border border-[#525258] text-white/90">
-              <Filter className="w-4 h-4 mr-2 text-white/40" />
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Categorias</SelectItem>
-              {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  {config.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-[#3e3e44] rounded-lg">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "grid"
-                  ? "bg-[#525258] shadow-sm text-white/90"
-                  : "text-white/50 hover:bg-[#525258]/50"
-              )}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                viewMode === "list"
-                  ? "bg-[#525258] shadow-sm text-white/90"
-                  : "text-white/50 hover:bg-[#525258]/50"
-              )}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Content */}
       <div className="p-6 space-y-6">

@@ -97,6 +97,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { format, differenceInDays, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -1855,133 +1856,123 @@ export default function ProcessosPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-        {/* Header Compact */}
-        <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-          <div className="flex items-center justify-between px-5 pt-4 pb-0">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[10px] bg-[#4a4a52] flex items-center justify-center">
-                <Scale className="w-4 h-4 text-white/70" />
+        <CollapsiblePageHeader
+          title="Processos"
+          icon={Scale}
+          bottomRow={
+            <div className="space-y-3">
+              {/* Stats Ribbon — compact inline KPIs */}
+              <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
+                {[
+                  { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
+                  { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
+                  { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
+                  { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
+                  { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
+                  { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
+                ].map((stat, index) => {
+                  const Icon = stat.icon;
+                  return (
+                    <Fragment key={index}>
+                      {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
+                      <button
+                        onClick={stat.onClick}
+                        className={cn(
+                          "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
+                          stat.onClick && "cursor-pointer",
+                          stat.active ? "bg-emerald-500/20" : "hover:bg-white/5",
+                          stat.alert && !stat.active ? "bg-rose-500/20" : ""
+                        )}
+                      >
+                        <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-400" : stat.active ? "text-emerald-400" : "text-white/50")} />
+                        <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-400" : "text-white/90")}>{stat.value}</span>
+                        <span className="text-white/60 font-medium">{stat.label}</span>
+                      </button>
+                    </Fragment>
+                  );
+                })}
+                <div className="flex-1" />
+                <span className="text-white/40 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
               </div>
-              <div>
-                <h1 className="text-white text-[17px] font-semibold tracking-tight leading-tight">Processos</h1>
-                <p className="text-white/60 text-[10px]">Gestão e acompanhamento judicial</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-1.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
+              {/* Filtros de Prazo - Chips */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="w-4 h-4 text-white/50" />
+                    <span className="text-xs font-medium text-white/70">Filtrar por Prazo</span>
+                  </div>
+                  {prazoFilter !== "all" && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
+                      onClick={() => setPrazoFilter("all")}
+                      className="h-6 text-[10px] text-white/40 hover:text-white/70"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <XCircle className="w-3 h-3 mr-1" />
+                      Limpar
                     </Button>
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>Consultar TJ-BA</TooltipContent>
-              </Tooltip>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
-                title="Exportar"
-              >
-                <Download className="w-3.5 h-3.5" />
-              </Button>
-              <Link href="/admin/processos/novo">
-                <Button
-                  size="sm"
-                  className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Novo
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Toolbar: Stats + Prazo Chips + Filters */}
-          <div className={cn("mx-3 mt-3 mb-2.5 space-y-3", HEADER_STYLE.bottomRow)}>
-            {/* Stats Ribbon — compact inline KPIs */}
-            <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
-              {[
-                { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
-                { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
-                { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
-                { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
-                { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
-                { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
-              ].map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <Fragment key={index}>
-                    {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
-                    <button
-                      onClick={stat.onClick}
-                      className={cn(
-                        "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
-                        stat.onClick && "cursor-pointer",
-                        stat.active ? "bg-emerald-500/20" : "hover:bg-white/5",
-                        stat.alert && !stat.active ? "bg-rose-500/20" : ""
-                      )}
-                    >
-                      <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-400" : stat.active ? "text-emerald-400" : "text-white/50")} />
-                      <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-400" : "text-white/90")}>{stat.value}</span>
-                      <span className="text-white/60 font-medium">{stat.label}</span>
-                    </button>
-                  </Fragment>
-                );
-              })}
-              <div className="flex-1" />
-              <span className="text-white/40 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
-            </div>
-
-            {/* Filtros de Prazo - Chips */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <CalendarClock className="w-4 h-4 text-white/50" />
-                  <span className="text-xs font-medium text-white/70">Filtrar por Prazo</span>
+                  )}
                 </div>
-                {prazoFilter !== "all" && (
+                <PrazoFilterChips
+                  selected={prazoFilter}
+                  onChange={setPrazoFilter}
+                  counts={prazoCounts}
+                />
+              </div>
+
+              {/* Card de Filtros */}
+              <FilterSectionProcessos
+                selectedArea={areaFilter}
+                setSelectedArea={setAreaFilter}
+                selectedSituacao={situacaoFilter}
+                setSelectedSituacao={setSituacaoFilter}
+                sortBy={sortBy}
+                setSortBy={(v) => setSortBy(v as any)}
+                groupBy={groupBy}
+                setGroupBy={(v) => setGroupBy(v as any)}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+              />
+            </div>
+          }
+        >
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setPrazoFilter("all")}
-                    className="h-6 text-[10px] text-white/40 hover:text-white/70"
+                    className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
                   >
-                    <XCircle className="w-3 h-3 mr-1" />
-                    Limpar
+                    <ExternalLink className="w-3.5 h-3.5" />
                   </Button>
-                )}
-              </div>
-              <PrazoFilterChips
-                selected={prazoFilter}
-                onChange={setPrazoFilter}
-                counts={prazoCounts}
-              />
-            </div>
-
-            {/* Card de Filtros */}
-            <FilterSectionProcessos
-              selectedArea={areaFilter}
-              setSelectedArea={setAreaFilter}
-              selectedSituacao={situacaoFilter}
-              setSelectedSituacao={setSituacaoFilter}
-              sortBy={sortBy}
-              setSortBy={(v) => setSortBy(v as any)}
-              groupBy={groupBy}
-              setGroupBy={(v) => setGroupBy(v as any)}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-            />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Consultar TJ-BA</TooltipContent>
+            </Tooltip>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
+              title="Exportar"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+            <Link href="/admin/processos/novo">
+              <Button
+                size="sm"
+                className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Novo
+              </Button>
+            </Link>
           </div>
-        </div>
+        </CollapsiblePageHeader>
 
         {/* Conteúdo Principal */}
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">

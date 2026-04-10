@@ -48,6 +48,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { ChevronLeft, ChevronRight, FileText, Bell } from "lucide-react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 
 // Configuração dos tipos de eventos - contexto jurídico
 const EVENT_TYPE_CONFIG = {
@@ -232,20 +233,12 @@ export default function AdminCalendarPage() {
 
   return (
     <div className="page-container">
-      {/* Header */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#4a4a52] flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white/70" />
-            </div>
-            <div>
-              <h1 className="text-white text-[17px] font-semibold tracking-tight">Calendário Jurídico</h1>
-              <p className="text-white/60 text-[10px]">Prazos, audiências e eventos importantes</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CollapsiblePageHeader
+        title="Calendário Jurídico"
+        icon={Calendar}
+      >
+        <div className="flex items-center gap-2" />
+      </CollapsiblePageHeader>
 
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">

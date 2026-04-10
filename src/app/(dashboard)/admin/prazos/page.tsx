@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { format, differenceInDays, isToday, isTomorrow, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -238,64 +239,56 @@ export default function PrazosPage() {
 
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      {/* Header Padrao Defender */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center gap-3 px-5 pt-4 pb-0">
-          <div className="w-9 h-9 rounded-xl bg-[#4a4a52] flex items-center justify-center">
-            <Clock className="w-4 h-4 text-white/70" />
+      <CollapsiblePageHeader
+        title="Prazos"
+        icon={Clock}
+        bottomRow={
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setAreaFilter("all")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                areaFilter === "all"
+                  ? "bg-white/20 text-white shadow-sm"
+                  : "text-white/60 hover:bg-white/10"
+              )}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Todos
+              <span className="ml-1 text-[10px] opacity-70">{prazos.length}</span>
+            </button>
+            {atribuicaoList.map((atrib: string) => {
+              const config = ATRIBUICAO_CONFIG[atrib];
+              if (!config) return null;
+              const isActive = areaFilter === atrib;
+              const count = prazos.filter((p: any) => p.atribuicao === atrib).length;
+              const IconComp = config.icon;
+              return (
+                <button
+                  key={atrib}
+                  onClick={() => setAreaFilter(isActive ? "all" : atrib)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                    isActive
+                      ? "text-white shadow-sm ring-1 ring-white/20"
+                      : "text-white/60 hover:bg-white/10"
+                  )}
+                  style={isActive ? { backgroundColor: config.color } : undefined}
+                >
+                  <span
+                    className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", !isActive && "ring-1 ring-inset ring-white/20")}
+                    style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : config.color }}
+                  />
+                  {config.shortLabel}
+                  <span className="text-[10px] opacity-70">{count}</span>
+                </button>
+              );
+            })}
           </div>
-          <div>
-            <h1 className="text-white text-[17px] font-semibold tracking-tight">Prazos</h1>
-            <p className="text-white/60 text-[10px]">
-              {isLoading ? "Carregando..." : `${filteredPrazos.length} prazos ${areaFilter !== "all" ? `em ${ATRIBUICAO_CONFIG[areaFilter]?.shortLabel || areaFilter}` : ""}`}
-            </p>
-          </div>
-        </div>
-
-        {/* Atribuicao Filter Chips */}
-        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-          <button
-            onClick={() => setAreaFilter("all")}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-              areaFilter === "all"
-                ? "bg-white/20 text-white shadow-sm"
-                : "text-white/60 hover:bg-white/10"
-            )}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            Todos
-            <span className="ml-1 text-[10px] opacity-70">{prazos.length}</span>
-          </button>
-          {atribuicaoList.map((atrib: string) => {
-            const config = ATRIBUICAO_CONFIG[atrib];
-            if (!config) return null;
-            const isActive = areaFilter === atrib;
-            const count = prazos.filter((p: any) => p.atribuicao === atrib).length;
-            const IconComp = config.icon;
-            return (
-              <button
-                key={atrib}
-                onClick={() => setAreaFilter(isActive ? "all" : atrib)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                  isActive
-                    ? "text-white shadow-sm ring-1 ring-white/20"
-                    : "text-white/60 hover:bg-white/10"
-                )}
-                style={isActive ? { backgroundColor: config.color } : undefined}
-              >
-                <span
-                  className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", !isActive && "ring-1 ring-inset ring-white/20")}
-                  style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : config.color }}
-                />
-                {config.shortLabel}
-                <span className="text-[10px] opacity-70">{count}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        }
+      >
+        <div className="flex items-center gap-2" />
+      </CollapsiblePageHeader>
 
       <div className="p-4 md:p-6 space-y-5">
 

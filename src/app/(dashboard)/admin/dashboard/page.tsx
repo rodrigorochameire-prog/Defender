@@ -83,6 +83,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -754,19 +755,11 @@ export default function DashboardJuriPage() {
   return (
     <div className="min-h-screen bg-background">
 
-      {/* Header — Compact standardized */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] bg-[#4a4a52] flex items-center justify-center shrink-0">
-              <Briefcase className="w-4 h-4 text-white/70" />
-            </div>
-            <div>
-              <h1 className="text-white text-[17px] font-semibold tracking-tight">Dashboard</h1>
-              <p className="text-white/60 text-[10px]">Painel de atividades e acompanhamento</p>
-            </div>
-          </div>
-
+      <CollapsiblePageHeader
+        title="Dashboard"
+        icon={Briefcase}
+      >
+        <div className="flex items-center gap-2">
           <Link href="/admin/demandas/nova">
             <Button
               size="sm"
@@ -777,7 +770,7 @@ export default function DashboardJuriPage() {
             </Button>
           </Link>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
