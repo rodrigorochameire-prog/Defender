@@ -765,20 +765,20 @@ CDP_PORT = int(os.environ.get("PJE_CDP_PORT", "9222"))
 VVD_VARA_TEXT = "Vara de Violência doméstica"
 
 
-def download_vvd_via_acervo(
+def download_vvd_via_cdp(
     numero: str,
     out_path: str,
     cdp_port: int = CDP_PORT,
 ) -> int:
-    """Download autos PDF for a VVD processo via the Acervo tab.
+    """Download autos PDF for a VVD processo via CDP-connected Chromium.
 
     Connects to an already-running Chromium via CDP. The user must:
       1. Have launched Chromium with --remote-debugging-port=9222
       2. Be logged into PJe
-      3. Have expanded the CAMAÇARI tree once in the Acervo tab
 
-    The flow:
-      Acervo search → click VVD vara → click Autos Digitais (popup)
+    The flow (no Acervo tree needed):
+      PETICIONAR search → extract idProcesso → click Peticionar → popup
+      → extract ca token → navigate to listProcessoCompletoAdvogado
       → trigger Download → poll Área de Download → fetch PDF from S3
 
     Returns bytes written. Raises RuntimeError on failure.
@@ -788,8 +788,7 @@ def download_vvd_via_acervo(
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
-    _log(f"VVD Acervo: connecting to CDP on port {cdp_port}")
-    # Use regular playwright for CDP (patchright crashes on connect_over_cdp)
+    _log(f"VVD CDP: connecting on port {cdp_port}")
     from playwright.sync_api import sync_playwright as _pw_sync
     with _pw_sync() as p:
         try:
@@ -802,7 +801,6 @@ def download_vvd_via_acervo(
             )
 
         ctx = browser.contexts[0]
-        # Find the painel page, or navigate to it
         page = None
         for pg in ctx.pages:
             if "advogado.seam" in pg.url:
@@ -812,143 +810,123 @@ def download_vvd_via_acervo(
             page = ctx.pages[0]
             page.goto(PJE_PANEL_URL, wait_until="domcontentloaded", timeout=60_000)
             time.sleep(8)
-        _log(f"VVD Acervo: connected to {page.url[:60]}")
+        _log(f"VVD CDP: connected to {page.url[:60]}")
 
-        # Only activate Acervo tab if not already active — clicking it
-        # re-renders and COLLAPSES the tree that the user expanded.
-        is_active = page.evaluate("""() => {
-            var lbl = document.getElementById('tabAcervo_lbl');
-            return lbl && lbl.className.indexOf('active') !== -1;
+        # --- Step 1: PETICIONAR search to get idProcesso ---
+        page.evaluate("""() => {
+            var el = document.getElementById('tabPeticionar_shifted');
+            if (el) { var ev = new MouseEvent('click', {bubbles:true});
+                       el.dispatchEvent(ev); if (el.onclick) el.onclick(ev); }
         }""")
-        if not is_active:
-            _log("VVD Acervo: activating Acervo tab")
-            page.locator("text=Acervo").first.click(timeout=10_000)
-            time.sleep(15)
-            page.wait_for_function(
-                "() => !!document.getElementById('formAbaAcervo')",
-                timeout=30_000,
-            )
-        _log("VVD Acervo: tab ready")
-
-        # --- Select VVD vara/caixa ---
-        vara_loc = page.locator(f"text={VVD_VARA_TEXT}")
-        if vara_loc.count() == 0:
-            # Tree not expanded — wait for user to expand it (one-time per session)
-            _log(
-                "VVD Acervo: CAMAÇARI tree not expanded. "
-                "Please click the > arrow next to CAMAÇARI in the Chromium window."
-            )
-            print(
-                "[pje_downloader] AGUARDANDO: expanda CAMAÇARI no Chromium "
-                "(clique na seta >). Polling a cada 5s...",
-                file=sys.stderr, flush=True,
-            )
-            for _poll in range(60):  # 5min max
-                time.sleep(5)
-                if page.locator(f"text={VVD_VARA_TEXT}").count() > 0:
-                    _log("VVD Acervo: tree expanded!")
-                    break
-            else:
-                page.screenshot(path="/tmp/pje-debug-vvd-tree.png")
-                raise RuntimeError(
-                    f"'{VVD_VARA_TEXT}' never appeared after 5 min — "
-                    f"screenshot: /tmp/pje-debug-vvd-tree.png"
-                )
-        page.locator(f"text={VVD_VARA_TEXT}").first.click()
         time.sleep(15)
-        _log("VVD Acervo: vara clicked")
+        iframe_el = page.query_selector("#framePeticionar") or page.query_selector("iframe")
+        if not iframe_el:
+            raise RuntimeError("PETICIONAR iframe not found")
+        frame = iframe_el.content_frame()
+        frame.wait_for_selector('input[id*="numeroSequencial"]', timeout=60_000)
+        _log("VVD CDP: PETICIONAR loaded")
 
-        # Filter to target processo (vara may have thousands of processes)
-        page.evaluate("""(num) => {
-            var inp = document.getElementById('txtConsultaContextoAcervo');
-            if (inp) inp.value = num;
-            if (typeof setarTextoConsultaContextoAcervo === 'function')
-                setarTextoConsultaContextoAcervo(num);
-        }""", numero)
-        time.sleep(12)
-        _log("VVD Acervo: filtered to target processo")
+        parts = _parse_numero(numero)
+        frame.evaluate("""(p) => {
+            document.querySelector('input[id*="numeroSequencial"]').value = p.seq;
+            document.querySelector('input[id*="Verificador"]').value = p.dig;
+            document.querySelector('input[id*="Ano"]').value = p.ano;
+            document.querySelector('input[id*="OrgaoJustica"]').value = p.org;
+        }""", parts)
+        frame.click('input[id*="searchProcessos"]')
+        time.sleep(8)
 
-        numero_short = numero.split("-")[0]  # e.g. "8000833"
-        for _wait in range(10):
-            has_target = page.evaluate(
-                """(ns) => {
-                    var links = document.querySelectorAll('a[title="Autos Digitais"]');
-                    for (var i = 0; i < links.length; i++) {
-                        if (links[i].textContent.indexOf(ns) !== -1) return true;
-                    }
-                    return false;
-                }""", numero_short,
-            )
-            if has_target:
-                break
-            time.sleep(3)
-        if not has_target:
-            page.screenshot(path="/tmp/pje-debug-vvd-no-autos.png")
+        id_proc = frame.evaluate("""() => {
+            var r = document.querySelector('tr.rich-table-row a');
+            if (!r) return null;
+            var m = (r.getAttribute('onclick') || '').match(/idProcesso[':]+\\s*(\\d+)/);
+            return m ? m[1] : null;
+        }""")
+        if not id_proc:
+            frame.screenshot(path="/tmp/pje-debug-vvd-search.png")
             raise RuntimeError(
-                f"processo {numero} not found in VVD Acervo results — "
-                f"screenshot: /tmp/pje-debug-vvd-no-autos.png"
+                f"processo {numero} not found in PETICIONAR — "
+                f"may be under segredo de justiça"
             )
+        _log(f"VVD CDP: idProcesso={id_proc}")
 
-        # Click the correct Autos Digitais link
-        _log("VVD Acervo: clicking Autos Digitais")
+        # --- Step 2: Click Peticionar → popup → extract ca token ---
+        popup = None
         try:
-            with ctx.expect_page(timeout=20_000) as popup_info:
-                page.evaluate(
-                    """(ns) => {
-                        var links = document.querySelectorAll('a[title="Autos Digitais"]');
-                        for (var i = 0; i < links.length; i++) {
-                            if (links[i].textContent.indexOf(ns) !== -1) {
-                                links[i].click();
-                                return;
-                            }
-                        }
-                    }""", numero_short,
-                )
+            with ctx.expect_page(timeout=15_000) as popup_info:
+                frame.evaluate("""() => {
+                    var a = document.querySelector('tr.rich-table-row a');
+                    a.onclick ? a.onclick(new Event('click')) : a.click();
+                }""")
             popup = popup_info.value
         except Exception:
-            # Popup may have opened but expect_page missed it — check ctx.pages
-            _log("VVD Acervo: expect_page timeout, checking open pages")
+            _log("VVD CDP: expect_page timeout, checking open pages")
             time.sleep(5)
-            popup = None
             for pg in ctx.pages:
-                if "listProcessoCompleto" in pg.url:
+                if "peticaoPopUp" in pg.url or "listProcessoCompleto" in pg.url:
                     popup = pg
                     break
-            if not popup:
-                # Try extracting URL from onclick and navigating directly
-                autos_url = page.evaluate("""() => {
-                    var a = document.querySelector('a[title="Autos Digitais"]');
-                    if (!a) return null;
-                    var m = (a.getAttribute('onclick') || '').match(/window\\.open\\('([^']+)'/);
-                    return m ? m[1] : null;
-                }""")
-                if autos_url:
-                    full_url = "https://pje.tjba.jus.br" + autos_url if autos_url.startswith("/") else autos_url
-                    _log(f"VVD Acervo: opening autos URL directly: {full_url[:80]}")
-                    popup = ctx.new_page()
-                    popup.goto(full_url, wait_until="domcontentloaded", timeout=60_000)
-                else:
-                    page.screenshot(path="/tmp/pje-debug-vvd-no-popup.png")
-                    raise RuntimeError(
-                        "Autos Digitais popup failed to open — "
-                        "screenshot: /tmp/pje-debug-vvd-no-popup.png"
-                    )
+        if not popup:
+            raise RuntimeError("Peticionar popup failed to open")
         popup.wait_for_load_state("domcontentloaded", timeout=60_000)
-        time.sleep(8)
-        _log(f"VVD Acervo: autos popup — {popup.title()[:50]}")
+        time.sleep(3)
+        ca_match = re.search(r"ca=([a-f0-9]+)", popup.url)
+        if not ca_match:
+            raise RuntimeError(f"no ca token in popup URL: {popup.url[:80]}")
+        ca = ca_match.group(1)
+        _log(f"VVD CDP: ca={ca[:20]}...")
 
-        # --- Trigger Download ---
+        # --- Step 3: Navigate popup to autos page ---
+        autos_url = (
+            f"https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/Detalhe/"
+            f"listProcessoCompletoAdvogado.seam?id={id_proc}&ca={ca}"
+        )
+        popup.goto(autos_url, wait_until="domcontentloaded", timeout=60_000)
+        time.sleep(8)
+        if "error" in popup.url.lower():
+            raise RuntimeError(f"autos page error: {popup.url[:80]}")
+        _log(f"VVD CDP: autos page — {popup.title()[:50]}")
+
+        # --- Step 4: Trigger Download ---
         popup.evaluate(
             "() => document.cookie = "
             "'cookieTemporizadorDownload=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'"
         )
-        popup.locator('a[title*="Download autos"]').click()
+        try:
+            popup.locator('a[title*="Download autos"]').click(timeout=10_000)
+        except Exception:
+            _log("VVD CDP: Download dropdown not found, trying via JS")
+            popup.evaluate("""() => {
+                var links = document.querySelectorAll('a');
+                for (var i = 0; i < links.length; i++) {
+                    if ((links[i].getAttribute('title') || '').indexOf('Download autos') !== -1) {
+                        links[i].click(); return;
+                    }
+                }
+            }""")
         time.sleep(2)
-        popup.locator('[id="navbar:j_id289"]').click()
-        _log("VVD Acervo: download triggered")
+        # Click the Download input (may have dynamic ID)
+        clicked_dl = popup.evaluate("""() => {
+            var ins = document.querySelectorAll('input');
+            for (var i = 0; i < ins.length; i++) {
+                if ((ins[i].getAttribute('onclick') || '').indexOf('iniciarTemporizadorDownload') !== -1) {
+                    var ev = new MouseEvent('click', {bubbles: true, cancelable: true, view: window});
+                    ins[i].dispatchEvent(ev);
+                    return true;
+                }
+            }
+            return false;
+        }""")
+        if not clicked_dl:
+            _log("VVD CDP: Download button not found via onclick, trying id")
+            try:
+                popup.locator('[id="navbar:j_id289"]').click(timeout=5_000)
+            except Exception:
+                pass
+        _log("VVD CDP: download triggered, waiting for server...")
+        time.sleep(15)
 
-        # --- Poll Área de Download ---
-        _log("VVD Acervo: polling Área de Download")
+        # --- Step 5: Poll Área de Download ---
         dl_page = ctx.new_page()
         try:
             dl_page.goto(
@@ -956,120 +934,70 @@ def download_vvd_via_acervo(
                 wait_until="domcontentloaded",
                 timeout=60_000,
             )
-            # The content lives in an Angular iframe (frame[1])
-            # Poll until processo appears with Situação=Sucesso
-            numero_short = numero.replace("-", "").replace(".", "")[:7]
-            for attempt in range(36):  # 36 × 10s = 360s max
+            for attempt in range(36):  # 360s max
                 time.sleep(10)
-                found = False
-                for frame in dl_page.frames:
-                    has = frame.evaluate(
-                        "(n) => (document.body.textContent || '').indexOf(n) >= 0",
+                for frm in dl_page.frames:
+                    if frm.evaluate(
+                        "(n) => (document.body.textContent||'').indexOf(n)>=0",
                         numero,
-                    )
-                    if has:
-                        found = True
-                        _log(f"VVD Acervo: found in Área de Download (attempt {attempt+1})")
+                    ):
+                        _log(f"VVD CDP: found in Área de Download (attempt {attempt+1})")
                         break
-                if found:
-                    break
-                if attempt % 3 == 2:
-                    _log(f"VVD Acervo: polling... {(attempt+1)*10}s")
-                    dl_page.reload()
-                    time.sleep(5)
+                else:
+                    if attempt % 3 == 2:
+                        _log(f"VVD CDP: polling... {(attempt+1)*10}s")
+                        dl_page.reload()
+                        time.sleep(5)
+                    continue
+                break
             else:
                 dl_page.screenshot(path="/tmp/pje-debug-vvd-area.png")
                 raise RuntimeError(
-                    f"processo {numero} not found in Área de Download after 360s — "
-                    f"screenshot: /tmp/pje-debug-vvd-area.png"
+                    f"processo not found in Área de Download after 360s"
                 )
 
-            # --- Intercept gerar-url-download API and fetch PDF ---
-            _log("VVD Acervo: clicking download in Área de Download")
-            api_url: dict[str, str | None] = {"val": None}
+            # --- Step 6: Click download button, capture API URL ---
+            api_url_holder: dict[str, str | None] = {"val": None}
 
             def on_req(req):
                 if "gerar-url-download" in req.url:
-                    api_url["val"] = req.url
+                    api_url_holder["val"] = req.url
 
             dl_page.on("request", on_req)
-            # Click the PrimeNG download button in the Angular iframe.
-            # Try multiple approaches since the Angular component can be tricky.
-            for frame in dl_page.frames:
-                try:
-                    has_btn = frame.evaluate(
-                        "() => !!document.querySelector('span.pi-download, button .pi-download')"
-                    )
-                    if not has_btn:
-                        continue
-                    # Click via JS to bypass visibility/scrolling issues
-                    frame.evaluate("""() => {
-                        var btn = document.querySelector('span.pi-download');
-                        if (btn) {
-                            var parent = btn.closest('button') || btn.closest('a') || btn;
+            # Find the Angular iframe and click its download button
+            for frm in dl_page.frames:
+                clicked = frm.evaluate("""() => {
+                    var btns = document.querySelectorAll('button');
+                    for (var i = 0; i < btns.length; i++) {
+                        if (btns[i].querySelector('.pi-download')) {
+                            var parent = btns[i].closest('button') || btns[i];
                             parent.click();
                             return true;
                         }
-                        return false;
-                    }""")
-                    _log("VVD Acervo: download button clicked via JS")
+                    }
+                    return false;
+                }""")
+                if clicked:
                     break
-                except Exception:
-                    continue
-            time.sleep(8)
+            time.sleep(10)
 
-            # If JS click didn't trigger, retry with CDP mouse click
-            if not api_url["val"]:
-                _log("VVD Acervo: retrying download click via coordinates")
-                for frame in dl_page.frames:
-                    try:
-                        box = frame.evaluate("""() => {
-                            var btn = document.querySelector('span.pi-download');
-                            if (!btn) return null;
-                            var el = btn.closest('button') || btn;
-                            var r = el.getBoundingClientRect();
-                            return {x: r.x + r.width/2, y: r.y + r.height/2};
-                        }""")
-                        if box:
-                            # Offset by iframe position
-                            iframe_box = dl_page.evaluate("""() => {
-                                var iframes = document.querySelectorAll('iframe');
-                                for (var i = 0; i < iframes.length; i++) {
-                                    var r = iframes[i].getBoundingClientRect();
-                                    if (r.width > 100) return {x: r.x, y: r.y};
-                                }
-                                return {x: 0, y: 0};
-                            }""")
-                            abs_x = box["x"] + iframe_box["x"]
-                            abs_y = box["y"] + iframe_box["y"]
-                            dl_page.mouse.click(abs_x, abs_y)
-                            _log(f"VVD Acervo: mouse click at ({abs_x:.0f}, {abs_y:.0f})")
-                            time.sleep(8)
-                            break
-                    except Exception:
-                        continue
-
-            if not api_url["val"]:
+            if not api_url_holder["val"]:
                 dl_page.screenshot(path="/tmp/pje-debug-vvd-dl-btn.png")
                 raise RuntimeError(
                     "gerar-url-download API was not called — "
                     "screenshot: /tmp/pje-debug-vvd-dl-btn.png"
                 )
 
-            # Fetch the API to get S3 pre-signed URL
-            _log(f"VVD Acervo: fetching download URL from API")
-            api_resp = ctx.request.get(api_url["val"], timeout=30_000)
+            # --- Step 7: Fetch S3 URL and download PDF ---
+            _log("VVD CDP: fetching S3 URL")
+            api_resp = ctx.request.get(api_url_holder["val"], timeout=30_000)
             s3_url = api_resp.text().strip().strip('"')
-            _log(f"VVD Acervo: S3 URL obtained ({len(s3_url)} chars)")
 
-            # Download PDF from S3
-            _log("VVD Acervo: downloading PDF from S3")
-            session = _requests.Session()
-            pdf_resp = session.get(s3_url, timeout=180)
+            _log("VVD CDP: downloading PDF from S3")
+            pdf_resp = _requests.get(s3_url, timeout=180)
             if pdf_resp.status_code != 200:
-                raise RuntimeError(
-                    f"S3 download failed: HTTP {pdf_resp.status_code}"
-                )
+                raise RuntimeError(f"S3 download failed: HTTP {pdf_resp.status_code}")
+
             pdf_data = pdf_resp.content
             if not is_valid_pdf(pdf_data):
                 raise RuntimeError(
@@ -1078,7 +1006,7 @@ def download_vvd_via_acervo(
                 )
 
             out.write_bytes(pdf_data)
-            _log(f"VVD Acervo: saved {len(pdf_data)} bytes to {out_path}")
+            _log(f"VVD CDP: saved {len(pdf_data)} bytes to {out_path}")
             return len(pdf_data)
 
         finally:
@@ -1129,7 +1057,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.atribuicao == "VVD_CAMACARI":
                 # VVD: connect to user's Chromium via CDP + Acervo navigation
-                bytes_written = download_vvd_via_acervo(args.numero, out_path)
+                bytes_written = download_vvd_via_cdp(args.numero, out_path)
             else:
                 # Júri: launch Patchright + login + PETICIONAR search
                 cpf = os.environ.get("PJE_CPF", "").strip()
