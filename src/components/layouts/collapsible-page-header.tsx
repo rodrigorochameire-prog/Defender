@@ -97,11 +97,11 @@ export function CollapsiblePageHeader({
           "transition-all duration-300 ease-out overflow-hidden",
           isCollapsed
             ? "opacity-0 max-h-0 pointer-events-none"
-            : "opacity-100 max-h-[200px] mx-4 lg:mx-6 mt-3",
+            : "opacity-100 max-h-[300px]",
         )}
         aria-hidden={isCollapsed}
       >
-        <div className="rounded-xl bg-gradient-to-br from-[#222228] to-[#18181b] shadow-lg shadow-black/10 ring-1 ring-white/[0.04] overflow-hidden">
+        <div className="bg-gradient-to-br from-[#222228] to-[#18181b] overflow-hidden">
           {/* Row 0 — global utility row */}
           <HeaderUtilityRow variant="embedded" />
 
