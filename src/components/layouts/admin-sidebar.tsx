@@ -1832,12 +1832,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       </Sidebar>
 
       {/* Main Content */}
-      <SidebarInset className={cn("flex flex-col min-h-screen", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
+      <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
         <PageHeaderProvider>
           <ConditionalHeader />
 
-          {/* Content — sem overflow próprio, scroll delegado ao SidebarInset */}
-          <div className="flex-1 pb-16 md:pb-0">
+          {/* Scroll container — sticky funciona aqui */}
+          <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
             {children}
           </div>
 
