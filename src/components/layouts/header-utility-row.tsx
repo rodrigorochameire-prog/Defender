@@ -19,10 +19,10 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
   const handleChatToggle = chatToggle ?? (() => chatPanelActions.toggle());
 
   const content = (
-    <div className="flex h-12 shrink-0 items-center w-full">
+    <div className="flex h-8 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-        <SidebarTrigger className="h-7 w-7 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+        <SidebarTrigger className="h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
         {/* Separator */}
         <div className="h-4 w-px bg-white/[0.08] shrink-0" />
@@ -70,9 +70,9 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
           <button
             onClick={handleChatToggle}
             title="Assistente OMBUDS"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
+            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
           >
-            <MessageSquare className="h-4 w-4" />
+            <MessageSquare className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -84,7 +84,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
       <header
         className={cn(
           "sticky top-0 z-30 shrink-0",
-          "bg-[#1e1e22] border-b border-white/[0.06]"
+          "bg-[#38383e] border-b border-white/[0.08]"
         )}
       >
         {content}

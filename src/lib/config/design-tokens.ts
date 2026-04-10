@@ -94,9 +94,9 @@ export const HEADER_STYLE = {
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
   /** Utility row (Row 0): barra fina de utilitários globais */
-  utilityRow: "bg-[#1e1e22] border-b border-white/[0.06]",
-  utilityText: "text-white/50 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
+  utilityRow: "bg-[#38383e] border-b border-white/[0.08]",
+  utilityText: "text-white/60 text-[10px]",
+  utilityButton: "w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/40",
   /** Collapsed: barra única compacta */
   collapsedBar: "bg-[#222228] border-b border-white/[0.06]",

@@ -102,8 +102,10 @@ export function CollapsiblePageHeader({
         aria-hidden={isCollapsed}
       >
         <div className="bg-gradient-to-br from-[#222228] to-[#18181b] overflow-hidden">
-          {/* Row 0 — global utility row */}
-          <HeaderUtilityRow variant="embedded" />
+          {/* Row 0 — global utility row (tom mais claro para separação visual) */}
+          <div className="bg-[#38383e] border-b border-white/[0.08]">
+            <HeaderUtilityRow variant="embedded" />
+          </div>
 
           {/* Row 1 — title + stats + actions */}
           <div className="px-4 pb-3 pt-1">
