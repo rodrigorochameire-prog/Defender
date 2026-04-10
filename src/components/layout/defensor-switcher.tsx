@@ -12,7 +12,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function DefensorSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const {
@@ -65,11 +64,9 @@ export function DefensorSwitcher({ collapsed = false }: { collapsed?: boolean })
           )}
         >
           {selectedDefensor ? (
-            <Avatar className="h-8 w-8 border-2 border-primary/40">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                {displayInitial}
-              </AvatarFallback>
-            </Avatar>
+            <span className="flex-shrink-0 w-7 h-7 rounded-md bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900 flex items-center justify-center text-xs font-semibold">
+              {displayInitial}
+            </span>
           ) : (
             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
               <Eye className="h-4 w-4 text-muted-foreground" />
@@ -99,37 +96,33 @@ export function DefensorSwitcher({ collapsed = false }: { collapsed?: boolean })
         </div>
 
         {/* Lista de defensores */}
-        <div className="p-3 flex flex-wrap gap-2">
+        <div className="py-1.5 max-h-[280px] overflow-y-auto">
           {defensores.map((defensor) => {
             const isActive = selectedDefensorId === defensor.id;
             const initial = getInitials(defensor.name).charAt(0);
             const shortName = defensor.name.split(" ").slice(0, 2).join(" ");
-            const displayShort = shortName.startsWith("Dr") ? shortName : shortName;
 
             return (
               <button
                 key={defensor.id}
                 onClick={() => setSelectedDefensorId(defensor.id)}
                 className={cn(
-                  "flex flex-col items-center gap-1.5 p-2 rounded-xl transition-all min-w-[70px]",
+                  "w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition-all cursor-pointer",
                   isActive
-                    ? "bg-primary/10 ring-2 ring-primary/40"
-                    : "hover:bg-muted"
+                    ? "bg-zinc-100 dark:bg-white/[0.06] font-medium"
+                    : "hover:bg-zinc-50 dark:hover:bg-white/[0.04] text-muted-foreground"
                 )}
               >
-                <Avatar className={cn("h-10 w-10", isActive && "ring-2 ring-primary")}>
-                  <AvatarFallback className={cn(
-                    "font-bold text-lg",
-                    isActive ? "bg-primary text-primary-foreground" : "bg-muted"
-                  )}>
-                    {initial}
-                  </AvatarFallback>
-                </Avatar>
                 <span className={cn(
-                  "text-[11px] leading-tight text-center",
-                  isActive ? "font-semibold" : "text-muted-foreground"
+                  "flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-semibold",
+                  isActive
+                    ? "bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900"
+                    : "bg-zinc-200/80 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400"
                 )}>
-                  {displayShort}
+                  {initial}
+                </span>
+                <span className="text-sm truncate">
+                  {shortName}
                 </span>
               </button>
             );

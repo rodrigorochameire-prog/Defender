@@ -758,7 +758,329 @@ def download_autos_pdf(
 
 
 # ------------------------------------------------------------------
-# CLI scaffold (Phase 1 + Phase 2 implementation lands in Tasks 4 and 5)
+# VVD path — CDP connect to user's Chromium + Acervo navigation
+# ------------------------------------------------------------------
+
+CDP_PORT = int(os.environ.get("PJE_CDP_PORT", "9222"))
+VVD_VARA_TEXT = "Vara de Violência doméstica"
+
+
+def download_vvd_via_acervo(
+    numero: str,
+    out_path: str,
+    cdp_port: int = CDP_PORT,
+) -> int:
+    """Download autos PDF for a VVD processo via the Acervo tab.
+
+    Connects to an already-running Chromium via CDP. The user must:
+      1. Have launched Chromium with --remote-debugging-port=9222
+      2. Be logged into PJe
+      3. Have expanded the CAMAÇARI tree once in the Acervo tab
+
+    The flow:
+      Acervo search → click VVD vara → click Autos Digitais (popup)
+      → trigger Download → poll Área de Download → fetch PDF from S3
+
+    Returns bytes written. Raises RuntimeError on failure.
+    """
+    import requests as _requests
+
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    _log(f"VVD Acervo: connecting to CDP on port {cdp_port}")
+    # Use regular playwright for CDP (patchright crashes on connect_over_cdp)
+    from playwright.sync_api import sync_playwright as _pw_sync
+    with _pw_sync() as p:
+        try:
+            browser = p.chromium.connect_over_cdp(f"http://localhost:{cdp_port}")
+        except Exception as e:
+            raise RuntimeError(
+                f"CDP connection failed on port {cdp_port}. "
+                f"Launch Chromium with: --remote-debugging-port={cdp_port} "
+                f"--user-data-dir=$HOME/.chromium-pje — error: {e}"
+            )
+
+        ctx = browser.contexts[0]
+        # Find the painel page, or navigate to it
+        page = None
+        for pg in ctx.pages:
+            if "advogado.seam" in pg.url:
+                page = pg
+                break
+        if not page:
+            page = ctx.pages[0]
+            page.goto(PJE_PANEL_URL, wait_until="domcontentloaded", timeout=60_000)
+            time.sleep(8)
+        _log(f"VVD Acervo: connected to {page.url[:60]}")
+
+        # Always activate Acervo tab (need the form to exist)
+        _log("VVD Acervo: activating Acervo tab")
+        page.locator("text=Acervo").first.click(timeout=10_000)
+        time.sleep(15)
+        # Wait for formAbaAcervo to appear
+        page.wait_for_function(
+            "() => !!document.getElementById('formAbaAcervo')",
+            timeout=30_000,
+        )
+        _log("VVD Acervo: tab active, form ready")
+
+        # --- Select VVD vara/caixa ---
+        vara_loc = page.locator(f"text={VVD_VARA_TEXT}")
+        if vara_loc.count() == 0:
+            # Tree not expanded — wait for user to expand it (one-time per session)
+            _log(
+                "VVD Acervo: CAMAÇARI tree not expanded. "
+                "Please click the > arrow next to CAMAÇARI in the Chromium window."
+            )
+            print(
+                "[pje_downloader] AGUARDANDO: expanda CAMAÇARI no Chromium "
+                "(clique na seta >). Polling a cada 5s...",
+                file=sys.stderr, flush=True,
+            )
+            for _poll in range(60):  # 5min max
+                time.sleep(5)
+                if page.locator(f"text={VVD_VARA_TEXT}").count() > 0:
+                    _log("VVD Acervo: tree expanded!")
+                    break
+            else:
+                page.screenshot(path="/tmp/pje-debug-vvd-tree.png")
+                raise RuntimeError(
+                    f"'{VVD_VARA_TEXT}' never appeared after 5 min — "
+                    f"screenshot: /tmp/pje-debug-vvd-tree.png"
+                )
+        page.locator(f"text={VVD_VARA_TEXT}").first.click()
+        time.sleep(15)
+        _log("VVD Acervo: vara clicked, waiting for results")
+
+        # Find the Autos Digitais link for THIS processo (by numero in text).
+        # The vara loads ALL processes; we match by the short numero prefix.
+        numero_short = numero.split("-")[0]  # e.g. "8000833"
+        for _wait in range(10):
+            has_target = page.evaluate(
+                """(ns) => {
+                    var links = document.querySelectorAll('a[title="Autos Digitais"]');
+                    for (var i = 0; i < links.length; i++) {
+                        if (links[i].textContent.indexOf(ns) !== -1) return true;
+                    }
+                    return false;
+                }""", numero_short,
+            )
+            if has_target:
+                break
+            time.sleep(3)
+        if not has_target:
+            page.screenshot(path="/tmp/pje-debug-vvd-no-autos.png")
+            raise RuntimeError(
+                f"processo {numero} not found in VVD Acervo results — "
+                f"screenshot: /tmp/pje-debug-vvd-no-autos.png"
+            )
+
+        # Click the correct Autos Digitais link
+        _log("VVD Acervo: clicking Autos Digitais")
+        try:
+            with ctx.expect_page(timeout=20_000) as popup_info:
+                page.evaluate(
+                    """(ns) => {
+                        var links = document.querySelectorAll('a[title="Autos Digitais"]');
+                        for (var i = 0; i < links.length; i++) {
+                            if (links[i].textContent.indexOf(ns) !== -1) {
+                                links[i].click();
+                                return;
+                            }
+                        }
+                    }""", numero_short,
+                )
+            popup = popup_info.value
+        except Exception:
+            # Popup may have opened but expect_page missed it — check ctx.pages
+            _log("VVD Acervo: expect_page timeout, checking open pages")
+            time.sleep(5)
+            popup = None
+            for pg in ctx.pages:
+                if "listProcessoCompleto" in pg.url:
+                    popup = pg
+                    break
+            if not popup:
+                # Try extracting URL from onclick and navigating directly
+                autos_url = page.evaluate("""() => {
+                    var a = document.querySelector('a[title="Autos Digitais"]');
+                    if (!a) return null;
+                    var m = (a.getAttribute('onclick') || '').match(/window\\.open\\('([^']+)'/);
+                    return m ? m[1] : null;
+                }""")
+                if autos_url:
+                    full_url = "https://pje.tjba.jus.br" + autos_url if autos_url.startswith("/") else autos_url
+                    _log(f"VVD Acervo: opening autos URL directly: {full_url[:80]}")
+                    popup = ctx.new_page()
+                    popup.goto(full_url, wait_until="domcontentloaded", timeout=60_000)
+                else:
+                    page.screenshot(path="/tmp/pje-debug-vvd-no-popup.png")
+                    raise RuntimeError(
+                        "Autos Digitais popup failed to open — "
+                        "screenshot: /tmp/pje-debug-vvd-no-popup.png"
+                    )
+        popup.wait_for_load_state("domcontentloaded", timeout=60_000)
+        time.sleep(8)
+        _log(f"VVD Acervo: autos popup — {popup.title()[:50]}")
+
+        # --- Trigger Download ---
+        popup.evaluate(
+            "() => document.cookie = "
+            "'cookieTemporizadorDownload=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'"
+        )
+        popup.locator('a[title*="Download autos"]').click()
+        time.sleep(2)
+        popup.locator('[id="navbar:j_id289"]').click()
+        _log("VVD Acervo: download triggered")
+
+        # --- Poll Área de Download ---
+        _log("VVD Acervo: polling Área de Download")
+        dl_page = ctx.new_page()
+        try:
+            dl_page.goto(
+                "https://pje.tjba.jus.br/pje/AreaDeDownload/listView.seam",
+                wait_until="domcontentloaded",
+                timeout=60_000,
+            )
+            # The content lives in an Angular iframe (frame[1])
+            # Poll until processo appears with Situação=Sucesso
+            numero_short = numero.replace("-", "").replace(".", "")[:7]
+            for attempt in range(36):  # 36 × 10s = 360s max
+                time.sleep(10)
+                found = False
+                for frame in dl_page.frames:
+                    has = frame.evaluate(
+                        "(n) => (document.body.textContent || '').indexOf(n) >= 0",
+                        numero,
+                    )
+                    if has:
+                        found = True
+                        _log(f"VVD Acervo: found in Área de Download (attempt {attempt+1})")
+                        break
+                if found:
+                    break
+                if attempt % 3 == 2:
+                    _log(f"VVD Acervo: polling... {(attempt+1)*10}s")
+                    dl_page.reload()
+                    time.sleep(5)
+            else:
+                dl_page.screenshot(path="/tmp/pje-debug-vvd-area.png")
+                raise RuntimeError(
+                    f"processo {numero} not found in Área de Download after 360s — "
+                    f"screenshot: /tmp/pje-debug-vvd-area.png"
+                )
+
+            # --- Intercept gerar-url-download API and fetch PDF ---
+            _log("VVD Acervo: clicking download in Área de Download")
+            api_url: dict[str, str | None] = {"val": None}
+
+            def on_req(req):
+                if "gerar-url-download" in req.url:
+                    api_url["val"] = req.url
+
+            dl_page.on("request", on_req)
+            # Click the PrimeNG download button in the Angular iframe.
+            # Try multiple approaches since the Angular component can be tricky.
+            for frame in dl_page.frames:
+                try:
+                    has_btn = frame.evaluate(
+                        "() => !!document.querySelector('span.pi-download, button .pi-download')"
+                    )
+                    if not has_btn:
+                        continue
+                    # Click via JS to bypass visibility/scrolling issues
+                    frame.evaluate("""() => {
+                        var btn = document.querySelector('span.pi-download');
+                        if (btn) {
+                            var parent = btn.closest('button') || btn.closest('a') || btn;
+                            parent.click();
+                            return true;
+                        }
+                        return false;
+                    }""")
+                    _log("VVD Acervo: download button clicked via JS")
+                    break
+                except Exception:
+                    continue
+            time.sleep(8)
+
+            # If JS click didn't trigger, retry with CDP mouse click
+            if not api_url["val"]:
+                _log("VVD Acervo: retrying download click via coordinates")
+                for frame in dl_page.frames:
+                    try:
+                        box = frame.evaluate("""() => {
+                            var btn = document.querySelector('span.pi-download');
+                            if (!btn) return null;
+                            var el = btn.closest('button') || btn;
+                            var r = el.getBoundingClientRect();
+                            return {x: r.x + r.width/2, y: r.y + r.height/2};
+                        }""")
+                        if box:
+                            # Offset by iframe position
+                            iframe_box = dl_page.evaluate("""() => {
+                                var iframes = document.querySelectorAll('iframe');
+                                for (var i = 0; i < iframes.length; i++) {
+                                    var r = iframes[i].getBoundingClientRect();
+                                    if (r.width > 100) return {x: r.x, y: r.y};
+                                }
+                                return {x: 0, y: 0};
+                            }""")
+                            abs_x = box["x"] + iframe_box["x"]
+                            abs_y = box["y"] + iframe_box["y"]
+                            dl_page.mouse.click(abs_x, abs_y)
+                            _log(f"VVD Acervo: mouse click at ({abs_x:.0f}, {abs_y:.0f})")
+                            time.sleep(8)
+                            break
+                    except Exception:
+                        continue
+
+            if not api_url["val"]:
+                dl_page.screenshot(path="/tmp/pje-debug-vvd-dl-btn.png")
+                raise RuntimeError(
+                    "gerar-url-download API was not called — "
+                    "screenshot: /tmp/pje-debug-vvd-dl-btn.png"
+                )
+
+            # Fetch the API to get S3 pre-signed URL
+            _log(f"VVD Acervo: fetching download URL from API")
+            api_resp = ctx.request.get(api_url["val"], timeout=30_000)
+            s3_url = api_resp.text().strip().strip('"')
+            _log(f"VVD Acervo: S3 URL obtained ({len(s3_url)} chars)")
+
+            # Download PDF from S3
+            _log("VVD Acervo: downloading PDF from S3")
+            session = _requests.Session()
+            pdf_resp = session.get(s3_url, timeout=180)
+            if pdf_resp.status_code != 200:
+                raise RuntimeError(
+                    f"S3 download failed: HTTP {pdf_resp.status_code}"
+                )
+            pdf_data = pdf_resp.content
+            if not is_valid_pdf(pdf_data):
+                raise RuntimeError(
+                    f"S3 response is not a valid PDF "
+                    f"(len={len(pdf_data)}, magic={pdf_data[:8]!r})"
+                )
+
+            out.write_bytes(pdf_data)
+            _log(f"VVD Acervo: saved {len(pdf_data)} bytes to {out_path}")
+            return len(pdf_data)
+
+        finally:
+            try:
+                dl_page.close()
+            except Exception:
+                pass
+            try:
+                popup.close()
+            except Exception:
+                pass
+
+
+# ------------------------------------------------------------------
+# CLI scaffold
 # ------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
@@ -775,12 +1097,6 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.cmd == "download":
-        cpf = os.environ.get("PJE_CPF", "").strip()
-        senha = os.environ.get("PJE_SENHA", "").strip()
-        if not cpf or not senha:
-            print(json.dumps({"status": "failed", "error": "PJE_CPF/PJE_SENHA not set"}))
-            return 1
-
         try:
             cfg = resolve_pje_config(args.atribuicao)
         except ValueError as e:
@@ -798,57 +1114,59 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(
-                    headless=True,
-                    args=["--disable-blink-features=AutomationControlled"],
-                )
-                context = browser.new_context(
-                    accept_downloads=True,
-                    viewport={"width": 1400, "height": 900},
-                    locale="pt-BR",
-                )
-                # Auto-accept any JS confirm/alert dialogs (Autos Digitais
-                # sometimes triggers a "Download em andamento" confirm).
-                context.add_init_script(
-                    "window.confirm = () => true; window.alert = () => true;"
-                )
-                page = context.new_page()
-                page.on("dialog", lambda d: d.accept())
-                context.on(
-                    "page",
-                    lambda new_page: new_page.on("dialog", lambda d: d.accept()),
-                )
-                try:
-                    login(page, cpf, senha)
-                    frame, row_info = _search_peticionar(page, args.numero)
-                    if row_info.get("has_autos_link"):
-                        # Júri path: click Autos Digitais link directly
-                        _log("Júri path: clicking Autos Digitais link")
+            if args.atribuicao == "VVD_CAMACARI":
+                # VVD: connect to user's Chromium via CDP + Acervo navigation
+                bytes_written = download_vvd_via_acervo(args.numero, out_path)
+            else:
+                # Júri: launch Patchright + login + PETICIONAR search
+                cpf = os.environ.get("PJE_CPF", "").strip()
+                senha = os.environ.get("PJE_SENHA", "").strip()
+                if not cpf or not senha:
+                    print(json.dumps({"status": "failed", "error": "PJE_CPF/PJE_SENHA not set"}))
+                    return 1
+
+                with sync_playwright() as p:
+                    browser = p.chromium.launch(
+                        headless=True,
+                        args=["--disable-blink-features=AutomationControlled"],
+                    )
+                    context = browser.new_context(
+                        accept_downloads=True,
+                        viewport={"width": 1400, "height": 900},
+                        locale="pt-BR",
+                    )
+                    context.add_init_script(
+                        "window.confirm = () => true; window.alert = () => true;"
+                    )
+                    page = context.new_page()
+                    page.on("dialog", lambda d: d.accept())
+                    context.on(
+                        "page",
+                        lambda new_page: new_page.on("dialog", lambda d: d.accept()),
+                    )
+                    try:
+                        login(page, cpf, senha)
+                        frame, row_info = _search_peticionar(page, args.numero)
+                        if not row_info.get("has_autos_link"):
+                            raise RuntimeError(
+                                f"Autos Digitais link not found for {args.numero} in PETICIONAR. "
+                                f"Use VVD_CAMACARI atribuição for Acervo-based download."
+                            )
                         link_id = row_info["link_id"]
                         bytes_written = download_autos_pdf(
                             context, page, frame, link_id, out_path
                         )
-                    else:
-                        # VVD path: popup → ca → listProcessoCompleto → Download
-                        _log("VVD path: no Autos Digitais link, using popup route")
-                        autos_popup = _navigate_to_autos_via_peticionar(
-                            page, context, args.numero,
-                            frame=frame, row_info=row_info,
-                        )
-                        bytes_written = _download_from_autos_page(
-                            context, autos_popup, out_path
-                        )
-                    print(json.dumps({
-                        "status": "completed",
-                        "pdf_path": out_path,
-                        "pdf_bytes": bytes_written,
-                        "atribuicao": args.atribuicao,
-                        "drive_subfolder": cfg["drive_subfolder"],
-                    }))
-                    return 0
-                finally:
-                    browser.close()
+                    finally:
+                        browser.close()
+
+            print(json.dumps({
+                "status": "completed",
+                "pdf_path": out_path,
+                "pdf_bytes": bytes_written,
+                "atribuicao": args.atribuicao,
+                "drive_subfolder": cfg["drive_subfolder"],
+            }))
+            return 0
         except Exception as e:
             _log(f"download FAILED: {type(e).__name__}: {e}")
             print(json.dumps({"status": "failed", "error": str(e)[:500]}))
