@@ -24,6 +24,7 @@ import {
 import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
 import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
@@ -1441,61 +1442,21 @@ export default function AgendaPage() {
         headerSlot
       )}
       {/* ====== CHARCOAL HEADER ====== */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-5 md:mx-8 sm:mt-4 pb-1")}>
-        {/* Row 1: Icon + Title + inline stats + actions */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
-              <CalendarIcon className="w-[15px] h-[15px] text-white/70" />
-            </div>
-            <h1 className="text-white text-[17px] font-semibold tracking-tight">Agenda</h1>
-            <div className="flex items-center gap-1.5 ml-2">
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
-                {stats.hoje} hoje
-              </span>
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
-                {stats.semana} semana
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {/* Overflow menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer">
-                  <MoreHorizontal className="w-3 h-3" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}><Settings className="w-4 h-4 mr-2" />Configuracoes</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsBuscaRegistrosModalOpen(true)}><Database className="w-4 h-4 mr-2" />Buscar Registros</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}><UserCog className="w-4 h-4 mr-2" />Configurar Escalas</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsPJeImportModalOpen(true)}><FileUp className="w-4 h-4 mr-2" />Importar do PJe</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsSEEUImportModalOpen(true)}><Lock className="w-4 h-4 mr-2" />Importar do SEEU</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}><Upload className="w-4 h-4 mr-2" />Importar iCal</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsGoogleSyncModalOpen(true)}><RefreshCw className="w-4 h-4 mr-2" />Sincronizar Google</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <button
-              onClick={() => setIsPJeImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer"
-            >
-              <Download className="w-3 h-3" /> PJe
-            </button>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-[10px] font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
-            >
-              <Plus className="w-3 h-3" /> Novo Evento
-            </button>
-          </div>
-        </div>
-
-        {/* Row 2: Pills | Month Nav | ViewMode + Tools — bottomRow glass */}
-        <div className={cn("flex items-center gap-2 mx-3 mt-3 mb-2.5", HEADER_STYLE.bottomRow)}>
+      <CollapsiblePageHeader
+        title="Agenda"
+        icon={CalendarIcon}
+        collapsedStats={
+          <>
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
+              {stats.hoje} hoje
+            </span>
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums ml-1">
+              {stats.semana} semana
+            </span>
+          </>
+        }
+        bottomRow={
+          <div className="flex items-center gap-2 mx-0 mt-0 mb-0">
           {/* AtribuicaoPills dark variant */}
           <AtribuicaoPills
             variant="dark"
@@ -1660,7 +1621,60 @@ export default function AgendaPage() {
             </button>
           </div>
         </div>
-      </div>
+        }
+      >
+        {/* Row 1: Icon + Title + inline stats + actions */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
+              <CalendarIcon className="w-[15px] h-[15px] text-white/70" />
+            </div>
+            <h1 className="text-white text-[17px] font-semibold tracking-tight">Agenda</h1>
+            <div className="flex items-center gap-1.5 ml-2">
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
+                {stats.hoje} hoje
+              </span>
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
+                {stats.semana} semana
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {/* Overflow menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer">
+                  <MoreHorizontal className="w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}><Settings className="w-4 h-4 mr-2" />Configuracoes</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsBuscaRegistrosModalOpen(true)}><Database className="w-4 h-4 mr-2" />Buscar Registros</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}><UserCog className="w-4 h-4 mr-2" />Configurar Escalas</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsPJeImportModalOpen(true)}><FileUp className="w-4 h-4 mr-2" />Importar do PJe</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsSEEUImportModalOpen(true)}><Lock className="w-4 h-4 mr-2" />Importar do SEEU</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}><Upload className="w-4 h-4 mr-2" />Importar iCal</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsGoogleSyncModalOpen(true)}><RefreshCw className="w-4 h-4 mr-2" />Sincronizar Google</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <button
+              onClick={() => setIsPJeImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer"
+            >
+              <Download className="w-3 h-3" /> PJe
+            </button>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-[10px] font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
+            >
+              <Plus className="w-3 h-3" /> Novo Evento
+            </button>
+          </div>
+        </div>
+      </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
