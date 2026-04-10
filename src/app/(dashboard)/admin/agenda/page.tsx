@@ -1575,13 +1575,82 @@ export default function AgendaPage() {
                 <Search className="w-[13px] h-[13px] text-white/70" />
               </button>
             )}
-            <button
-              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-              className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", (selectedTipo || selectedDefensor) ? "bg-[#62626a] text-white" : "")}
-              title="Filtros"
-            >
-              <Filter className="w-[13px] h-[13px] text-white/70" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) ? "bg-[#62626a] text-white" : "")}
+                title="Filtros"
+              >
+                <Filter className="w-[13px] h-[13px] text-white/70" />
+                {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </span>
+                )}
+              </button>
+              {isFiltersExpanded && (
+                <>
+                  <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1 max-h-[70vh] overflow-y-auto">
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Tipo</div>
+                    {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
+                      <button
+                        key={tipo}
+                        onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      >
+                        <span className="flex-1 capitalize">{tipo}</span>
+                        {selectedTipo === tipo && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      </button>
+                    ))}
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Status</div>
+                    {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      >
+                        <span className="flex-1 capitalize">{status}</span>
+                        {selectedStatus === status && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      </button>
+                    ))}
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Prioridade</div>
+                    {["urgente", "alta", "normal", "baixa"].map((prio) => (
+                      <button
+                        key={prio}
+                        onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      >
+                        <span className="flex-1 capitalize">{prio}</span>
+                        {selectedPrioridade === prio && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      </button>
+                    ))}
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <button
+                      onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                    >
+                      {showCanceladosRedesignados ? <Eye className="w-4 h-4 text-neutral-500" /> : <EyeOff className="w-4 h-4 text-amber-500" />}
+                      <span className="flex-1">Cancelados/Redesignados</span>
+                      {showCanceladosRedesignados && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    </button>
+                    {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+                      <>
+                        <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                        <button
+                          onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(true); }}
+                          className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
+                        >
+                          Limpar filtros
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             <button
               onClick={() => setIsGoogleConfigModalOpen(true)}
               className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"

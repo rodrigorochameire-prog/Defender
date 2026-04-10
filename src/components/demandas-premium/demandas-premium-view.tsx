@@ -2245,6 +2245,24 @@ export default function Demandas() {
                       <span className="flex-1">Atribuição</span>
                       {groupBy === "atribuicao" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                     </button>
+                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
+                    {([
+                      { value: "compact" as const, label: "Planilha", icon: List },
+                      { value: "table" as const, label: "Tabela", icon: Table2 },
+                      { value: "cards" as const, label: "Cards", icon: LayoutList },
+                      { value: "grid" as const, label: "Grid", icon: LayoutGrid },
+                    ] as const).map(({ value, label, icon: Icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      >
+                        <Icon className="w-4 h-4 text-neutral-500" />
+                        <span className="flex-1">{label}</span>
+                        {viewMode === value && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      </button>
+                    ))}
                   </div>
                 </>
               )}
