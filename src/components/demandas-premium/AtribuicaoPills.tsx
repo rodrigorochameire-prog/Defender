@@ -102,7 +102,7 @@ export function AtribuicaoPills({
                   ? isDark
                     ? { backgroundColor: "rgba(255,255,255,0.1)", color: "white" }
                     : { backgroundColor: "#e5e5e5", color: "#1a1a1a" }
-                  : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
+                  : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
               }
             >
               {allOption.label}
@@ -132,13 +132,13 @@ export function AtribuicaoPills({
                   ? isDark
                     ? { backgroundColor: "rgba(255,255,255,0.12)", color: "white" }
                     : { backgroundColor: "#e5e5e5", color: "#1a1a1a" }
-                  : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
+                  : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
               }
             >
               {Icon && (
                 <Icon
-                  className="w-[14px] h-[14px] flex-shrink-0"
-                  style={{ color: isActive ? (isDark ? "white" : "#1a1a1a") : isDark ? "rgba(255,255,255,0.35)" : "#71717a" }}
+                  className="w-[15px] h-[15px] flex-shrink-0"
+                  style={{ color: isActive ? (isDark ? "white" : "#1a1a1a") : isDark ? "rgba(255,255,255,0.50)" : "#71717a" }}
                 />
               )}
               {isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}

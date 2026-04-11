@@ -2057,7 +2057,7 @@ export default function Demandas() {
           </div>
         }
         bottomRow={
-          <div className="flex items-center gap-2 flex-wrap overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
             <AtribuicaoPills
               variant="dark"
               options={atribuicaoOptions}
@@ -2069,17 +2069,19 @@ export default function Demandas() {
               counts={atribuicaoCounts}
             />
 
-            <div className="hidden sm:flex relative flex-1 max-w-[200px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
+            <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+
+            <div className="hidden sm:flex relative flex-1 max-w-[220px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar nome, processo..."
-                className="w-full bg-black/[0.12] ring-1 ring-white/[0.06] rounded-xl py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/25 outline-none focus:bg-black/[0.20] focus:ring-white/[0.12] transition-all"
+                className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
               />
             </div>
 
-            <div className="w-px h-4 bg-[#4a4a4a] mx-0.5 shrink-0" />
+            <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
             <ViewModeDropdown
               options={DEMANDAS_VIEW_OPTIONS}
@@ -2087,8 +2089,6 @@ export default function Demandas() {
               onChange={(v) => setActiveTab(v as any)}
               variant="dark"
             />
-
-            <div className="w-px h-4 bg-white/[0.08] mx-0.5 shrink-0" />
 
             <div className="relative">
               <button
