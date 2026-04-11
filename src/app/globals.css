@@ -558,33 +558,33 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: charcoal harmonizado com header (#333338) e utility (#484850) */
+  /* Light: charcoal base (mais escuro que utility bar #353540) */
   .glass-sidebar {
-    background: #333338;
+    background: #2e2e35;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.05);
     box-shadow: none;
   }
 
-  /* Dark: mesmo tom */
+  /* Dark: mesmo charcoal */
   .dark .glass-sidebar {
-    background: #333338;
+    background: #2e2e35;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    border-right: 1px solid rgba(255,255,255,0.05);
     box-shadow: none;
   }
 
   /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
   /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
 
-  /* Light: charcoal harmonizado */
+  /* Light: charcoal harmonizado com desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #333338 !important;
+    background: #2e2e35 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(255,255,255,0.05) !important;
   }
 
   /* Medium: dark neutral-800 to match desktop */

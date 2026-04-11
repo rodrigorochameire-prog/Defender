@@ -121,16 +121,16 @@ export function CollapsiblePageHeader({
         style={{ transformOrigin: "top center" }}
       >
         <div className="overflow-visible">
-          {/* Utility Bar */}
-          <div className="bg-[#484850]">
+          {/* Utility Bar — moldura escura */}
+          <div className="bg-[#353540]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
           {/* Separação */}
           <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
 
-          {/* Page Header — card flutuante */}
-          <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 pb-1")}>
+          {/* Page Header — card flutuante (overflow-visible para dropdowns) */}
+          <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 pb-1 overflow-visible")}>
             {/* Row 1 — título/ações */}
             <div className="px-5 pb-3.5 pt-4">
               {children}
