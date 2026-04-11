@@ -558,9 +558,9 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: sidebar — base mais escura da paleta suavizada */
+  /* Light: sidebar — base escura, moldura */
   .glass-sidebar {
-    background: #383838;
+    background: #343434;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);
@@ -581,7 +581,7 @@
 
   /* Light: mesmo tom do desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #383838 !important;
+    background: #343434 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     border-color: rgba(255,255,255,0.05) !important;

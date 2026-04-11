@@ -2207,8 +2207,8 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#585858] flex items-center justify-center">
-              <LayoutGrid className="w-4 h-4 text-white/80" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <LayoutGrid className="w-4 h-4 text-white" />
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
@@ -2218,11 +2218,11 @@ export default function Demandas() {
                   const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
                   return (
                     <>
-                      <span className="text-[10px] text-white/50 tabular-nums">{total} demandas</span>
+                      <span className="text-[10px] text-white/55 tabular-nums">{total} demandas</span>
                       {urgent > 0 && (
                         <>
-                          <span className="text-white/25">·</span>
-                          <span className="text-[10px] text-red-400/80 tabular-nums">{urgent} urgentes</span>
+                          <span className="text-white/30">·</span>
+                          <span className="text-[10px] text-red-400 tabular-nums">{urgent} urgentes</span>
                         </>
                       )}
                     </>
@@ -2236,7 +2236,7 @@ export default function Demandas() {
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="w-8 h-8 rounded-xl bg-white/[0.06] text-white/50 ring-1 ring-white/[0.04] hover:bg-white/[0.12] hover:text-white/80 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Importar"
               >
                 <Download className="w-[15px] h-[15px]" />
@@ -2283,7 +2283,7 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="w-8 h-8 rounded-xl bg-white/[0.06] text-white/50 ring-1 ring-white/[0.04] hover:bg-white/[0.12] hover:text-white/80 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Exportar"
               >
                 <Upload className="w-[15px] h-[15px]" />

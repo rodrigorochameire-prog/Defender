@@ -83,24 +83,24 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — card suavizado */
-  container: "rounded-2xl bg-[#484848] shadow-sm shadow-black/[0.06] ring-1 ring-white/[0.04]",
+  /** Page Header — card meio-termo */
+  container: "rounded-2xl bg-[#424242] shadow-sm shadow-black/[0.06] ring-1 ring-white/[0.04]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
-  label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
+  label: "text-white/80 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
-  separator: "w-px h-3.5 bg-white/[0.08] rounded-full",
-  /** Inset row — levemente mais claro que o card */
-  bottomRow: "bg-[#525252] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
-  stat: "text-white/90 font-semibold",
-  statLabel: "text-white/50",
+  separator: "w-px h-3.5 bg-white/[0.10] rounded-full",
+  /** Inset row — levemente mais claro */
+  bottomRow: "bg-[#4c4c4c] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
+  stat: "text-white font-semibold",
+  statLabel: "text-white/60",
   /** Utility Bar — mais escuro que o header */
-  utilityRow: "bg-[#404040]",
-  utilityText: "text-white/50 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.06] transition-colors cursor-pointer",
-  utilityIcon: "w-[13px] h-[13px] text-white/40",
+  utilityRow: "bg-[#3a3a3a]",
+  utilityText: "text-white/55 text-[10px]",
+  utilityButton: "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
+  utilityIcon: "w-[13px] h-[13px] text-white/45",
   /** Collapsed — entre utility e header */
-  collapsedBar: "bg-[#444444] shadow-sm shadow-black/[0.06]",
-  collapsedText: "text-white/90 text-[11px] font-semibold",
+  collapsedBar: "bg-[#3e3e3e] shadow-sm shadow-black/[0.06]",
+  collapsedText: "text-white text-[11px] font-semibold",
 } as const;
 
 // ============================================
