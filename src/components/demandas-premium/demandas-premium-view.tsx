@@ -2088,13 +2088,13 @@ export default function Demandas() {
               variant="dark"
             />
 
-            <div className="w-px h-4 bg-[#4a4a4a] mx-0.5 shrink-0" />
+            <div className="w-px h-4 bg-white/[0.08] mx-0.5 shrink-0" />
 
             <div className="relative">
               <button
                 ref={filtersBtnRef}
                 onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#505050] transition-all duration-200 cursor-pointer"
+                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-all duration-200 cursor-pointer"
                 title="Configurações"
               >
                 <Settings className="w-[14px] h-[14px] text-white/50" />
@@ -2207,22 +2207,22 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/[0.08] ring-1 ring-white/[0.06] flex items-center justify-center">
-              <LayoutGrid className="w-4 h-4 text-white/70" />
+            <div className="w-8 h-8 rounded-xl bg-white/[0.07] ring-1 ring-white/[0.05] flex items-center justify-center">
+              <LayoutGrid className="w-[15px] h-[15px] text-white/60" />
             </div>
             <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <h1 className="text-white/95 text-[14px] font-semibold tracking-tight leading-tight">Demandas</h1>
+              <div className="flex items-center gap-1.5 mt-px">
                 {(() => {
                   const total = demandas.filter(d => !d.arquivado).length;
                   const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
                   return (
                     <>
-                      <span className="text-[10px] text-white/40 tabular-nums">{total} demandas</span>
+                      <span className="text-[10px] text-white/35 tabular-nums font-medium">{total} demandas</span>
                       {urgent > 0 && (
                         <>
-                          <span className="text-white/20">·</span>
-                          <span className="text-[10px] text-red-400/80 tabular-nums">{urgent} urg.</span>
+                          <span className="text-white/15">·</span>
+                          <span className="text-[10px] text-red-400/70 tabular-nums font-medium">{urgent} urg.</span>
                         </>
                       )}
                     </>
@@ -2231,15 +2231,15 @@ export default function Demandas() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <div className="relative group/import">
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="w-9 h-9 rounded-xl bg-white/[0.08] text-white/60 ring-1 ring-white/[0.04] hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.06] text-white/50 ring-1 ring-white/[0.04] hover:bg-white/[0.12] hover:text-white/80 transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Importar"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-[15px] h-[15px]" />
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -2283,10 +2283,10 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="w-9 h-9 rounded-xl bg-white/[0.08] text-white/60 ring-1 ring-white/[0.04] hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.06] text-white/50 ring-1 ring-white/[0.04] hover:bg-white/[0.12] hover:text-white/80 transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Exportar"
               >
-                <Upload className="w-4 h-4" />
+                <Upload className="w-[15px] h-[15px]" />
               </button>
               {isExportDropdownOpen && createPortal(
                 <>
@@ -2330,10 +2330,10 @@ export default function Demandas() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-9 h-9 rounded-xl bg-white text-neutral-800 shadow-sm hover:bg-neutral-100 hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
+              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
               title="Nova demanda"
             >
-              <Plus className="w-4.5 h-4.5" />
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
