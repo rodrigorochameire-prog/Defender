@@ -558,18 +558,18 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: charcoal base (mais escuro que utility bar #353540) */
+  /* Light: cinza neutro puro (R=G=B, zero azul) */
   .glass-sidebar {
-    background: #2e2e35;
+    background: #303030;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);
     box-shadow: none;
   }
 
-  /* Dark: mesmo charcoal */
+  /* Dark: mesmo cinza neutro */
   .dark .glass-sidebar {
-    background: #2e2e35;
+    background: #303030;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);
@@ -579,9 +579,9 @@
   /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
   /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
 
-  /* Light: charcoal harmonizado com desktop */
+  /* Light: cinza neutro puro como desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #2e2e35 !important;
+    background: #303030 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     border-color: rgba(255,255,255,0.05) !important;

@@ -262,8 +262,8 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           className={cn(
             "h-10 w-10 p-0 mx-auto transition-colors duration-150 rounded-lg flex items-center justify-center",
             isActive
-              ? "bg-[#48484e] text-emerald-400"
-              : "text-white/40 hover:bg-[#3e3e44] hover:text-white/70"
+              ? "bg-[#454545] text-emerald-400"
+              : "text-white/40 hover:bg-[#3a3a3a] hover:text-white/70"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -286,8 +286,8 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         className={cn(
           "h-9 transition-colors duration-150 rounded-lg group/item relative",
           isActive
-            ? "bg-[#48484e] text-white font-semibold"
-            : "text-white/50 hover:text-white/80 hover:bg-[#3e3e44]"
+            ? "bg-[#454545] text-white font-semibold"
+            : "text-white/50 hover:text-white/80 hover:bg-[#3a3a3a]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -310,7 +310,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
 // ==========================================
 
 function NavDivider({ collapsed }: { collapsed: boolean }) {
-  return <div className={cn("my-3 h-px bg-[#3e3e44]", collapsed ? "mx-2" : "mx-3")} />;
+  return <div className={cn("my-3 h-px bg-[#3a3a3a]", collapsed ? "mx-2" : "mx-3")} />;
 }
 
 // ==========================================
@@ -1666,7 +1666,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         )}
       >
         {/* Header */}
-        <SidebarHeader className="h-[60px] border-b border-[#3e3e44] flex items-center justify-center px-3">
+        <SidebarHeader className="h-[60px] border-b border-[#3a3a3a] flex items-center justify-center px-3">
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
@@ -1778,7 +1778,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </SidebarContent>
 
         {/* Footer Premium Glass */}
-        <SidebarFooter className="border-t border-[#3e3e44] p-0">
+        <SidebarFooter className="border-t border-[#3a3a3a] p-0">
           {/* Status Bar */}
           <StatusBar collapsed={isCollapsed} />
 
@@ -1786,10 +1786,10 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <div className="p-2.5">
             <div className={cn(
               "flex items-center gap-2.5 p-2 rounded-lg transition-colors duration-150 group/user",
-              "hover:bg-[#3e3e44]"
+              "hover:bg-[#3a3a3a]"
             )}>
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-[#48484e] text-white/80 font-semibold text-xs">
+                <AvatarFallback className="bg-[#454545] text-white/80 font-semibold text-xs">
                   {userName.replace(/^(Dr\.|Dra\.|Dr |Dra )/i, '').trim().charAt(0).toUpperCase() || userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
