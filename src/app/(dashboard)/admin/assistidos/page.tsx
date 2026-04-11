@@ -890,20 +890,6 @@ export default function AssistidosPage() {
 
         {/* Inset Row — segmented controls uniformes */}
         <div className={cn("flex items-center gap-3 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-          {/* Segmented: Comarca / RMS */}
-          {!showNaoIdentificados && (
-            <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
-              {[
-                { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
-                { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
-              ].map((opt) => (
-                <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* Atribuição pills */}
           {!showNaoIdentificados && (
             <AtribuicaoPills
@@ -931,7 +917,21 @@ export default function AssistidosPage() {
             />
           )}
 
-          <div className="w-px h-4 bg-white/[0.08] shrink-0" />
+          <div className="flex-1 min-w-2" />
+
+          {/* Segmented: Comarca / RMS */}
+          {!showNaoIdentificados && (
+            <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
+              {[
+                { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
+                { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
+              ].map((opt) => (
+                <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Segmented: Lista / Analytics */}
           <div className="inline-flex items-center bg-[#3e3e44] rounded-md p-[2px] shrink-0">
@@ -945,7 +945,7 @@ export default function AssistidosPage() {
             ))}
           </div>
 
-          <div className="flex-1 min-w-2" />
+          <div className="w-px h-4 bg-white/[0.08] shrink-0" />
 
           {/* Smart presets — ícones compactos */}
           {!showNaoIdentificados && (
