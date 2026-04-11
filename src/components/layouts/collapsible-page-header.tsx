@@ -111,7 +111,7 @@ export function CollapsiblePageHeader({
           <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
 
           {/* Page Header — card flutuante arredondado */}
-          <div className="mx-4 lg:mx-5 mb-2 rounded-2xl bg-gradient-to-b from-[#434349] to-[#3e3e44] ring-1 ring-white/[0.06] shadow-lg shadow-black/[0.08] overflow-hidden">
+          <div className="mx-4 lg:mx-5 mb-2 rounded-2xl bg-gradient-to-b from-[#434349] to-[#3e3e44] ring-1 ring-white/[0.06] shadow-lg shadow-black/[0.08]">
             {/* Row 1 — título/ações */}
             <div className="px-5 pb-3 pt-4">
               {children}
