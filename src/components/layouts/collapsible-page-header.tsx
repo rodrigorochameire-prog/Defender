@@ -94,10 +94,10 @@ export function CollapsiblePageHeader({
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
         className={cn(
-          "transition-all duration-300 ease-out overflow-hidden",
+          "transition-all duration-300 ease-out",
           isCollapsed
-            ? "opacity-0 max-h-0 pointer-events-none"
-            : "opacity-100 max-h-[300px]",
+            ? "opacity-0 max-h-0 overflow-hidden pointer-events-none"
+            : "opacity-100",
         )}
         aria-hidden={isCollapsed}
       >
