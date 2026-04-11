@@ -52,14 +52,14 @@
     --ring: 162 63% 35%;
     --radius: 0.5rem; /* 8px */
 
-    /* ===== SIDEBAR (light mode: warm neutral) ===== */
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 0 0% 15%;
+    /* ===== SIDEBAR (light mode: cinza sutil, mais próximo do header) ===== */
+    --sidebar-background: 0 0% 95%;
+    --sidebar-foreground: 0 0% 20%;
     --sidebar-primary: 162 63% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent: 0 0% 91%;
     --sidebar-accent-foreground: 0 0% 12%;
-    --sidebar-border: 0 0% 91%;
+    --sidebar-border: 0 0% 88%;
     --sidebar-ring: 162 63% 35%;
 
     /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
