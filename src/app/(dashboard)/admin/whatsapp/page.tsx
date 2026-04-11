@@ -682,23 +682,37 @@ export default function WhatsAppPage() {
         title="WhatsApp"
         icon={MessageCircle}
       >
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
-            onClick={() => refetch()}
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-          {primaryConfig && (
-            <Link href="/admin/whatsapp/chat">
-              <Button size="sm" className="h-8 bg-emerald-500 text-white hover:bg-emerald-600">
-                <MessageSquare className="w-4 h-4 mr-1" />
-                Abrir Chat
-              </Button>
-            </Link>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <MessageCircle className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">WhatsApp</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              title="Atualizar"
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+              onClick={() => refetch()}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            {primaryConfig && (
+              <Link href="/admin/whatsapp/chat">
+                <button
+                  title="Abrir Chat"
+                  className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                >
+                  <MessageSquare className="w-[15px] h-[15px]" />
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
       </CollapsiblePageHeader>
 
