@@ -759,16 +759,28 @@ export default function DashboardJuriPage() {
         title="Dashboard"
         icon={Briefcase}
       >
-        <div className="flex items-center gap-2">
-          <Link href="/admin/demandas/nova">
-            <Button
-              size="sm"
-              className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Nova
-            </Button>
-          </Link>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Dashboard</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {demandasFiltradas.length} demandas · {estatisticasPrazos.venceHoje} hoje · {estatisticasPrazos.vencidos} vencidas
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Link href="/admin/demandas/nova">
+              <button
+                title="Nova Demanda"
+                className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+              >
+                <Plus className="w-[15px] h-[15px]" />
+              </button>
+            </Link>
+          </div>
         </div>
       </CollapsiblePageHeader>
 
