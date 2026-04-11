@@ -86,7 +86,7 @@ export default function CustodiaPage() {
   const realizadas = filteredCustodias.filter((c) => c.status === "realizada");
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-6">
+    <div className="page-container">
       <CollapsiblePageHeader
         title="Audiências de Custódia"
         icon={AlertTriangle}

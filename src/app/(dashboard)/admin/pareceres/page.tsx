@@ -258,7 +258,7 @@ export default function ParecerPage() {
   const isLoading = loadingRec || loadingEnv;
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+    <div className="page-container">
       <CollapsiblePageHeader
         title="Pareceres"
         icon={FileCheck}
@@ -266,7 +266,7 @@ export default function ParecerPage() {
         <div className="flex items-center gap-2" />
       </CollapsiblePageHeader>
 
-      <div className="p-4 md:p-6 max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />

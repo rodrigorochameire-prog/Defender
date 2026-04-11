@@ -61,7 +61,7 @@ export default function JuriPage() {
         bottomRow={
           <div className="flex items-center justify-between">
             {/* Tabs */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-[#3e3e44]">
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06]">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.key;
                 const Icon = tab.icon;
@@ -72,7 +72,7 @@ export default function JuriPage() {
                     className={cn(
                       "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                       isActive
-                        ? "px-3 py-1.5 bg-[#525258] text-white shadow-sm"
+                        ? "px-3 py-1.5 bg-white/[0.14] text-white shadow-sm"
                         : "px-2.5 py-1.5 text-white/50"
                     )}
                   >
@@ -85,12 +85,12 @@ export default function JuriPage() {
 
             {/* Year selector (Pauta tab) */}
             {activeTab === "pauta" && (
-              <div className="inline-flex items-center gap-1 p-1 rounded-full bg-[#3e3e44]">
-                <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
+              <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06]">
+                <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors">
                   <ChevronLeft className="w-3.5 h-3.5 text-white/50" />
                 </button>
                 <span className="px-3 text-sm font-semibold tabular-nums text-white/90">{ano}</span>
-                <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-[#525258] transition-colors">
+                <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors">
                   <ChevronRight className="w-3.5 h-3.5 text-white/50" />
                 </button>
               </div>
@@ -100,7 +100,7 @@ export default function JuriPage() {
       >
         <div className="flex items-center gap-2">
           {/* Stats inline */}
-          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-[#4a4a52]">
+          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-white/[0.08]">
             <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
             <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
             {stats.pendentesCount > 0 && (
@@ -130,7 +130,7 @@ export default function JuriPage() {
             href="/admin/juri/cockpit"
             className={cn(
               "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
-              "bg-[#4a4a52] text-white/90 hover:bg-[#525258]"
+              "bg-white/[0.08] text-white/90 hover:bg-white/[0.14]"
             )}
           >
             <Zap className="w-3.5 h-3.5" />
