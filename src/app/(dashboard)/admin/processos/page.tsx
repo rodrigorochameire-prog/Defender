@@ -1858,7 +1858,7 @@ export default function ProcessosPage() {
       <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
         <CollapsiblePageHeader
           title="Processos"
-          icon={Scale}
+          icon={FileText}
           bottomRow={
             <div className="space-y-3">
               {/* Stats Ribbon — compact inline KPIs */}
@@ -1874,7 +1874,7 @@ export default function ProcessosPage() {
                   const Icon = stat.icon;
                   return (
                     <Fragment key={index}>
-                      {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
+                      {index > 0 && <div className="w-px h-4 bg-white/[0.10] flex-shrink-0" />}
                       <button
                         onClick={stat.onClick}
                         className={cn(
@@ -1939,38 +1939,50 @@ export default function ProcessosPage() {
             </div>
           }
         >
-          <div className="flex items-center gap-1.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Button>
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Consultar TJ-BA</TooltipContent>
-            </Tooltip>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-white/70 hover:text-emerald-400 hover:bg-[#525258] transition-colors cursor-pointer"
-              title="Exportar"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Link href="/admin/processos/novo">
-              <Button
-                size="sm"
-                className="h-8 px-3.5 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer"
+          <div className="flex items-center justify-between">
+            {/* Left: icon + title + stats */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Processos</h1>
+                <p className="text-[10px] text-white/55 tabular-nums">
+                  {stats.total} total · {stats.comarcas} comarca{stats.comarcas !== 1 ? "s" : ""} · {stats.reuPreso} preso{stats.reuPreso !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+
+            {/* Right: action buttons */}
+            <div className="flex items-center gap-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
+                    <button
+                      className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                      title="Consultar TJ-BA"
+                    >
+                      <ExternalLink className="w-[15px] h-[15px]" />
+                    </button>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>Consultar TJ-BA</TooltipContent>
+              </Tooltip>
+              <button
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                title="Exportar"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" />
-                Novo
-              </Button>
-            </Link>
+                <Download className="w-[15px] h-[15px]" />
+              </button>
+              <Link href="/admin/processos/novo">
+                <button
+                  className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  title="Novo processo"
+                >
+                  <Plus className="w-[15px] h-[15px]" />
+                </button>
+              </Link>
+            </div>
           </div>
         </CollapsiblePageHeader>
 
