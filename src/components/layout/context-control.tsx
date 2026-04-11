@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useAssignment, Assignment } from "@/contexts/assignment-context";
 import { useProfissional, type ProfissionalConfig } from "@/contexts/profissional-context";
+import { useDefensor } from "@/contexts/defensor-context";
 import { usePermissions } from "@/hooks/use-permissions";
 
 // ==========================================
@@ -176,6 +177,7 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
 
   const { setAssignment } = useAssignment();
   const { profissionaisConfigs, profissionalAtivo, profissionalLogado, setProfissionalAtivo } = useProfissional();
+  const { setSelectedDefensorId } = useDefensor();
   const { user: sessionUser } = usePermissions();
 
   // Verificar se o usuario logado pode ver o switcher de contexto
@@ -260,6 +262,8 @@ export function ContextControl({ collapsed = false }: ContextControlProps) {
   const updateDefensor = (value: Defensor) => {
     setDefensor(value);
     localStorage.setItem(STORAGE_KEYS.defensor, value);
+    // Sair do modo peer ao trocar de profissional interno.
+    setSelectedDefensorId(null);
   };
 
   const updateAtribuicao = (value: AtribuicaoFiltro) => {
@@ -436,7 +440,6 @@ function ContextPopoverContent({
 }) {
   // Separar defensores por grupo para melhor organizacao
   const juriEpVvdDefensores = defensoresDisplay.filter(d => d.grupo === "juri_ep_vvd");
-  const varasCriminaisDefensores = defensoresDisplay.filter(d => d.grupo === "varas_criminais");
   const geralOption = defensoresDisplay.find(d => d.id === "GERAL");
 
   return (
@@ -501,54 +504,12 @@ function ContextPopoverContent({
               "text-xs",
               defensor === geralOption.id ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
             )}>
-              Ver todos os colegas
+              Visão agregada
             </span>
             {defensor === geralOption.id && (
               <Check className="w-3.5 h-3.5 text-foreground ml-auto flex-shrink-0" />
             )}
           </button>
-        )}
-
-        {/* Varas Criminais - Seção colapsável para admin */}
-        {varasCriminaisDefensores.length > 0 && (
-          <Collapsible className="mt-2">
-            <CollapsibleTrigger className="w-full pt-2 border-t border-border flex items-center justify-between group">
-              <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Settings2 className="w-3 h-3" />
-                Outros defensores
-              </p>
-              <ChevronRight className="w-3 h-3 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-1.5">
-              <div className="flex gap-1.5">
-                {varasCriminaisDefensores.map((d) => {
-                  const isActive = defensor === d.id;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => updateDefensor(d.id)}
-                      className={cn(
-                        "flex-1 py-1.5 px-1.5 rounded-md transition-all duration-150 text-center",
-                        isActive
-                          ? "bg-neutral-100 dark:bg-neutral-800 ring-1 ring-neutral-300 dark:ring-neutral-600"
-                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] mx-auto mb-0.5",
-                        d.cor
-                      )}>
-                        {d.inicial}
-                      </div>
-                      <p className="text-[9px] font-medium text-muted-foreground truncate">
-                        {d.nomeCurto}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
         )}
       </div>
 
