@@ -39,7 +39,6 @@ import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { EntitySheetProvider } from "@/contexts/entity-sheet-context";
 import { PlaudArrivalToast } from "@/components/atendimentos/plaud-arrival-toast";
 import { RadarMatchesToast } from "@/components/radar/radar-matches-toast";
-import { PrazoAlertToast } from "@/components/demandas/prazo-alert-toast";
 import { SidebarLogo } from "@/components/shared/logo";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { StatusBar } from "@/components/layout/status-bar";
@@ -1853,8 +1852,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       <PlaudArrivalToast />
       {/* Toast de novos matches do Radar Criminal */}
       <RadarMatchesToast />
-      {/* Alertas proativos de prazos se aproximando */}
-      <PrazoAlertToast />
+      {/* Prazos: exibidos via cards Kanban (cores de urgência) — toast desativado */}
       {/* Background offline sync (IndexedDB hydration + incremental) */}
       <OfflineSyncProvider />
       {/* Chat lateral panel — Skills Engine */}
