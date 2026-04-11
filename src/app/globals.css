@@ -560,7 +560,7 @@
 
   /* Light: sidebar neutro anti-bege */
   .glass-sidebar {
-    background: #303031;
+    background: #303032;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);
@@ -569,7 +569,7 @@
 
   /* Dark: mesmo tom neutro */
   .dark .glass-sidebar {
-    background: #303031;
+    background: #303032;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);

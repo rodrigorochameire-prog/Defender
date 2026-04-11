@@ -83,23 +83,23 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — neutro anti-bege (+1 blue) */
-  container: "rounded-xl bg-[#353536]",
+  /** Page Header — anti-bege (+2 blue) */
+  container: "rounded-xl bg-[#353537]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
-  separator: "w-[1.5px] h-3.5 bg-[#4a4a4b] rounded-full",
-  /** Inset row — neutro, mais claro que moldura */
-  bottomRow: "bg-[#454546] rounded-lg px-3.5 py-2.5",
+  separator: "w-[1.5px] h-3.5 bg-[#4a4a4c] rounded-full",
+  /** Inset row — anti-bege */
+  bottomRow: "bg-[#454547] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility Bar — mesmo tom do inset */
-  utilityRow: "bg-[#454546] border-b border-white/[0.04]",
+  /** Utility Bar */
+  utilityRow: "bg-[#454547] border-b border-white/[0.04]",
   utilityText: "text-white/60 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#505051] transition-colors cursor-pointer",
+  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#505052] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/50",
-  /** Collapsed — mesmo tom da utility */
-  collapsedBar: "bg-[#454546] border-b border-white/[0.04]",
+  /** Collapsed */
+  collapsedBar: "bg-[#454547] border-b border-white/[0.04]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 
