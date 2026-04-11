@@ -52,14 +52,14 @@
     --ring: 162 63% 35%;
     --radius: 0.5rem; /* 8px */
 
-    /* ===== SIDEBAR (light mode: charcoal escuro, igual ao dark mode) ===== */
-    --sidebar-background: 0 0% 18%;
+    /* ===== SIDEBAR (charcoal = header #333338, ~22%) ===== */
+    --sidebar-background: 240 3% 22%;
     --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 162 63% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 24%;
+    --sidebar-accent: 240 3% 28%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-border: 240 3% 18%;
     --sidebar-ring: 162 63% 45%;
 
     /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
@@ -558,33 +558,33 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: mesmo charcoal do dark mode */
+  /* Light: charcoal harmonizado com header (#333338) e utility (#484850) */
   .glass-sidebar {
-    background: #2a2a30;
+    background: #333338;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(255,255,255,0.08);
     box-shadow: none;
   }
 
-  /* Dark: charcoal harmonizado */
+  /* Dark: mesmo tom */
   .dark .glass-sidebar {
-    background: #2a2a30;
+    background: #333338;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(255,255,255,0.08);
     box-shadow: none;
   }
 
   /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
   /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
 
-  /* Light: mesmo charcoal do dark mode */
+  /* Light: charcoal harmonizado */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #2a2a30 !important;
+    background: #333338 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-color: rgba(255,255,255,0.06) !important;
+    border-color: rgba(255,255,255,0.08) !important;
   }
 
   /* Medium: dark neutral-800 to match desktop */

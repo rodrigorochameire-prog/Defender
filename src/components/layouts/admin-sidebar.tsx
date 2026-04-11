@@ -32,7 +32,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ContextControl } from "@/components/layout/context-control";
-import { DefensorSwitcher } from "@/components/layout/defensor-switcher";
+import { ReadOnlyFieldset } from "@/components/layout/read-only-fieldset";
 import { CommandPalette } from "@/components/shared/command-palette";
 import { ChatPanel } from "@/components/shared/chat-panel";
 import { chatPanelActions } from "@/hooks/use-chat-panel";
@@ -1675,11 +1675,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
         {/* Content com Scroll Suave */}
         <SidebarContent className="px-0 py-0 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          {/* Painel de Contexto - Seletor de Defensor */}
+          {/* Painel de Contexto - Seletor de Defensor (inclui PeerSwitcherSection admin-only) */}
           <ContextControl collapsed={isCollapsed} />
-
-          {/* Seletor de Defensor */}
-          <DefensorSwitcher collapsed={isCollapsed} />
 
           <div className="px-3 pb-5">
             {/* 1. Principal (Dashboard, Demandas, Agenda) - Colapsável com ícone Home */}
@@ -1832,20 +1829,22 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
 
       {/* Main Content */}
       <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-neutral-50")}>
-        <PageHeaderProvider>
-          <ConditionalHeader />
+        <ReadOnlyFieldset>
+          <PageHeaderProvider>
+            <ConditionalHeader />
 
-          {/* Scroll container — sticky funciona aqui */}
-          <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
-            {children}
-          </div>
+            {/* Scroll container — sticky funciona aqui */}
+            <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
+              {children}
+            </div>
 
-          {/* Mobile bottom navigation */}
-          <MobileBottomNav />
+            {/* Mobile bottom navigation */}
+            <MobileBottomNav />
 
-          {/* Floating agenda quick-access button */}
-          <FloatingAgendaButton />
-        </PageHeaderProvider>
+            {/* Floating agenda quick-access button */}
+            <FloatingAgendaButton />
+          </PageHeaderProvider>
+        </ReadOnlyFieldset>
       </SidebarInset>
 
       {/* Notificação real-time de gravações Plaud pendentes */}
