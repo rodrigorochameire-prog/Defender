@@ -52,14 +52,14 @@
     --ring: 162 63% 35%;
     --radius: 0.5rem; /* 8px */
 
-    /* ===== SIDEBAR (charcoal = header #333338, ~22%) ===== */
-    --sidebar-background: 240 3% 22%;
+    /* ===== SIDEBAR (neutro puro, hue 0 — sem azul) ===== */
+    --sidebar-background: 0 0% 20%;
     --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 162 63% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3% 28%;
+    --sidebar-accent: 0 0% 26%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 240 3% 18%;
+    --sidebar-border: 0 0% 17%;
     --sidebar-ring: 162 63% 45%;
 
     /* ===== SPACING SYSTEM (múltiplos de 4px) ===== */
