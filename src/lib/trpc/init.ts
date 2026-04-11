@@ -28,6 +28,7 @@ export type ApprovalStatus = "pending" | "approved" | "rejected";
 export interface TRPCContext {
   user: User | null;
   requestId: string; // ID único para rastreamento de erros
+  selectedDefensorScopeId: number | null;
 }
 
 /**
@@ -47,15 +48,27 @@ export interface AdminContext extends AuthenticatedContext {
 /**
  * Cria o contexto para cada requisição
  */
-export async function createTRPCContext(): Promise<TRPCContext> {
+export async function createTRPCContext(
+  opts: { req: Request }
+): Promise<TRPCContext> {
   const requestId = generateRequestId();
-  
+
+  // Lê o header x-defensor-scope (número do usuário-alvo ou null)
+  const rawScope = opts.req.headers.get("x-defensor-scope");
+  let selectedDefensorScopeId: number | null = null;
+  if (rawScope && rawScope !== "null") {
+    const parsed = Number(rawScope);
+    if (Number.isInteger(parsed) && parsed > 0) {
+      selectedDefensorScopeId = parsed;
+    }
+  }
+
   try {
     const user = await getSession();
-    return { user, requestId };
+    return { user, requestId, selectedDefensorScopeId };
   } catch (error) {
     console.error(`[${requestId}] Erro ao criar contexto tRPC:`, error);
-    return { user: null, requestId };
+    return { user: null, requestId, selectedDefensorScopeId };
   }
 }
 
