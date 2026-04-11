@@ -19,7 +19,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
   const handleChatToggle = chatToggle ?? (() => chatPanelActions.toggle());
 
   const content = (
-    <div className="flex h-8 shrink-0 items-center w-full">
+    <div className="flex h-10 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
         <SidebarTrigger className="h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
@@ -62,8 +62,8 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
         {/* Conflict badge */}
         <ConflictBadge />
 
-        {/* Controls — scale down para caber na barra compacta */}
-        <div className="flex items-center gap-0.5 [&>*]:scale-[0.78] [&>*]:origin-center">
+        {/* Controls */}
+        <div className="flex items-center gap-1">
           <CommandPalette />
           <ThemeToggle />
           <NotificationsPopover />
@@ -84,7 +84,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
       <header
         className={cn(
           "sticky top-0 z-30 shrink-0",
-          "bg-[#38383e] border-b border-white/[0.08]"
+          "bg-[#2e2e34] border-b border-white/[0.06]"
         )}
       >
         {content}

@@ -83,23 +83,23 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Moldura: cor sólida escura, sem gradient */
-  container: "rounded-xl bg-[#2e2e34]",
+  /** Utility Bar — moldura escura, topo */
+  container: "rounded-xl bg-[#44444a]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
-  separator: "w-[1.5px] h-3.5 bg-white/25 rounded-full",
-  /** Inset: cor sólida mais clara, envolvido pela moldura */
-  bottomRow: "bg-[#3a3a40] rounded-lg px-3.5 py-2.5",
+  separator: "w-[1.5px] h-3.5 bg-white/20 rounded-full",
+  /** Page Header — conteúdo, mais claro */
+  bottomRow: "bg-[#4e4e54] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility row (Row 0): barra fina de utilitários globais */
-  utilityRow: "bg-[#38383e] border-b border-white/[0.08]",
+  /** Utility row (Row 0): barra escura de utilitários */
+  utilityRow: "bg-[#2e2e34] border-b border-white/[0.06]",
   utilityText: "text-white/60 text-[10px]",
-  utilityButton: "w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
-  utilityIcon: "w-[13px] h-[13px] text-white/40",
-  /** Collapsed: barra única compacta */
-  collapsedBar: "bg-[#2e2e34] border-b border-white/[0.06]",
+  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
+  utilityIcon: "w-[13px] h-[13px] text-white/50",
+  /** Collapsed: barra compacta */
+  collapsedBar: "bg-[#38383e] border-b border-white/[0.06]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 
