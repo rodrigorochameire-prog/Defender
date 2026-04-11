@@ -135,11 +135,14 @@ export function CollapsiblePageHeader({
               {children}
             </div>
 
-            {/* Row 2 — faixa completa, divisão marcada */}
+            {/* Divisor cor do fundo — cria separação visual real */}
             {bottomRow && (
-              <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.06] border-t border-white/[0.12] rounded-b-xl">
-                {bottomRow}
-              </div>
+              <>
+                <div className="h-[2px] bg-[#f0f0f0] dark:bg-[#1a1a1e]" />
+                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.06] rounded-b-xl">
+                  {bottomRow}
+                </div>
+              </>
             )}
           </div>
         </div>
