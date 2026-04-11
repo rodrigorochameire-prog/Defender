@@ -101,6 +101,33 @@ const themeScript = `
   })();
 `;
 
+// Forces the Service Worker to check for updates on every page load and
+// triggers a one-time reload the moment a new SW takes control. Without
+// this, some Chromium-based browsers (notably Comet) hold on to the
+// previous SW script indefinitely and keep serving stale cached API
+// responses, making list pages look permanently empty. The guard variable
+// prevents an infinite reload loop.
+const swUpdateScript = `
+  (function() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      navigator.serviceWorker.getRegistration().then(function(reg) {
+        if (!reg) return;
+        reg.update().catch(function() {});
+        if (reg.waiting) {
+          try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+        }
+      }).catch(function() {});
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -110,6 +137,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: swUpdateScript }} />
       </head>
       <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-white dark:bg-neutral-950`}>
         <Providers>
