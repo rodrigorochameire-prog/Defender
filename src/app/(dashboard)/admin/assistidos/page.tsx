@@ -810,7 +810,7 @@ export default function AssistidosPage() {
         {/* Row 1: Title + stats badges + search + actions */}
         <div className="flex items-center justify-between px-5 pt-4 pb-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#454547] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center shrink-0">
               <Users className="w-4 h-4 text-white/70" />
             </div>
             <h1 className="text-white text-[17px] font-semibold tracking-tight">Assistidos</h1>
@@ -828,7 +828,7 @@ export default function AssistidosPage() {
                     "text-[9px] font-semibold px-2 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
                     s.active ? "bg-emerald-500/20 text-emerald-400"
                       : (s as any).danger ? "bg-red-500/15 text-red-300"
-                      : "bg-[#454547] text-white/70 hover:text-white/90"
+                      : "bg-white/[0.08] text-white/70 hover:text-white/90"
                   )}
                 >
                   {s.value} {s.label}
@@ -846,7 +846,7 @@ export default function AssistidosPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nome, CPF, processo..."
-                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs bg-[#3a3a3c] border border-[#505052] text-white/90 placeholder:text-white/40 rounded-lg"
+                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs bg-black/[0.15] border border-white/[0.08] text-white/90 placeholder:text-white/40 rounded-lg"
               />
               {isProcessoSearch && (
                 <p className="text-[10px] text-white/50 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
@@ -855,17 +855,17 @@ export default function AssistidosPage() {
               )}
             </div>
             <Link href="/admin/inteligencia">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#454547] cursor-pointer" title="Inteligência">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência">
                 <Brain className="w-3.5 h-3.5" />
               </Button>
             </Link>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#454547] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
               <Download className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-[#454547] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
               {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
             </Button>
-            <Button variant="ghost" size="sm" className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-[#454547]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
+            <Button variant="ghost" size="sm" className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
               <Sun className="w-3.5 h-3.5" />
             </Button>
             {batchSelectMode && (
@@ -879,7 +879,7 @@ export default function AssistidosPage() {
                 </button>
               </div>
             )}
-            <div className="w-px h-5 bg-[#505052] mx-0.5" />
+            <div className="w-px h-5 bg-white/[0.10] mx-0.5" />
             <Link href="/admin/assistidos/novo">
               <Button size="sm" className="h-8 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
                 <Plus className="w-3.5 h-3.5 mr-1" /> Novo
@@ -921,7 +921,7 @@ export default function AssistidosPage() {
 
           {/* Segmented: Comarca / RMS */}
           {!showNaoIdentificados && (
-            <div className="inline-flex items-center bg-[#3a3a3c] rounded-md p-[2px] shrink-0">
+            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
               {[
                 { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
                 { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
@@ -934,7 +934,7 @@ export default function AssistidosPage() {
           )}
 
           {/* Segmented: Lista / Analytics */}
-          <div className="inline-flex items-center bg-[#3a3a3c] rounded-md p-[2px] shrink-0">
+          <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
             {[
               { label: "Lista", icon: Users, tab: "lista" as const },
               { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
@@ -949,7 +949,7 @@ export default function AssistidosPage() {
 
           {/* Smart presets — ícones compactos */}
           {!showNaoIdentificados && (
-            <div className="inline-flex items-center bg-[#3a3a3c] rounded-md p-[2px] shrink-0">
+            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
               {[
                 { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
                 { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
@@ -977,7 +977,7 @@ export default function AssistidosPage() {
                       >
                         <PresetIcon className="w-3 h-3" />
                         {preset.count > 0 && (
-                          <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-[#505052] text-white/60")}>
+                          <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-white/[0.10] text-white/60")}>
                             {preset.count}
                           </span>
                         )}
