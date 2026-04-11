@@ -2206,28 +2206,29 @@ export default function Demandas() {
       >
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#48484e] flex items-center justify-center">
-              <LayoutGrid className="w-[14px] h-[14px] text-white/70" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/[0.08] ring-1 ring-white/[0.06] flex items-center justify-center">
+              <LayoutGrid className="w-4 h-4 text-white/70" />
             </div>
-            <h1 className="text-white text-[17px] font-semibold tracking-tight">Demandas</h1>
-            <div className="flex items-center gap-1.5 ml-1">
-              {(() => {
-                const total = demandas.filter(d => !d.arquivado).length;
-                const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
-                return (
-                  <>
-                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#48484e] text-white/80 tabular-nums">
-                      {total} total
-                    </span>
-                    {urgent > 0 && (
-                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 tabular-nums">
-                        {urgent} urgentes
-                      </span>
-                    )}
-                  </>
-                );
-              })()}
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                {(() => {
+                  const total = demandas.filter(d => !d.arquivado).length;
+                  const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
+                  return (
+                    <>
+                      <span className="text-[10px] text-white/40 tabular-nums">{total} demandas</span>
+                      {urgent > 0 && (
+                        <>
+                          <span className="text-white/20">·</span>
+                          <span className="text-[10px] text-red-400/80 tabular-nums">{urgent} urg.</span>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
