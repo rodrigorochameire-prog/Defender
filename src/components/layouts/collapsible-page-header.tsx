@@ -128,16 +128,16 @@ export function CollapsiblePageHeader({
           {/* Gap sutil entre utility e page header */}
           <div className="h-1.5 bg-neutral-100 dark:bg-[#1a1a1e]" />
 
-          {/* Page Header — card flutuante */}
+          {/* Page Header — card único envolvendo Row 1 + Row 2 */}
           <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
             {/* Row 1 — título/ações */}
             <div className="px-4 sm:px-5 pb-3 pt-3.5">
               {children}
             </div>
 
-            {/* Row 2 — pills/filtros (glass inset) */}
+            {/* Row 2 — integrada, separada por border sutil */}
             {bottomRow && (
-              <div className={cn("mx-2.5 mb-2.5", HEADER_STYLE.bottomRow)}>
+              <div className="px-4 sm:px-5 pb-3 pt-2.5 border-t border-white/[0.06]">
                 {bottomRow}
               </div>
             )}
