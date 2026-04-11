@@ -84,7 +84,7 @@ export const CARD_STYLE = {
 
 export const HEADER_STYLE = {
   /** Page Header — sólido, sem gradient/ring/shadow */
-  container: "rounded-xl bg-[#333338]",
+  container: "rounded-xl bg-[#3a3a40]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
