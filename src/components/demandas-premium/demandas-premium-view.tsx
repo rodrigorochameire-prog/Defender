@@ -2026,7 +2026,7 @@ export default function Demandas() {
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
   return (
-    <div className="w-full min-h-screen bg-[#f0f0f0] dark:bg-[#0f0f11]">
+    <div className="w-full min-h-screen bg-[#f2f1ef] dark:bg-[#0f0f11]">
       {/* ====== CHARCOAL HEADER ====== */}
       <CollapsiblePageHeader
         title="Demandas"

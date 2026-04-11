@@ -558,21 +558,21 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: sidebar neutro anti-bege */
+  /* Light: sidebar — base da paleta, harmonizada com utility (#3e3e40) */
   .glass-sidebar {
-    background: #303032;
+    background: #363638;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.04);
     box-shadow: none;
   }
 
-  /* Dark: mesmo tom neutro */
+  /* Dark: mais profunda */
   .dark .glass-sidebar {
-    background: #303032;
+    background: #222224;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.04);
     box-shadow: none;
   }
 
@@ -581,7 +581,7 @@
 
   /* Light: mesmo tom do desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #383838 !important;
+    background: #363638 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     border-color: rgba(255,255,255,0.05) !important;
