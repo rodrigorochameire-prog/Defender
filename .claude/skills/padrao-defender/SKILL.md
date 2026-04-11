@@ -1,203 +1,238 @@
 ---
 name: padrao-defender
 description: >
-  Design system "Padrao Defender v3" para o projeto OMBUDS. Preto/branco como estrutura,
-  glass translucido como linguagem de cards, cor apenas funcional (atribuicao).
+  Design system "Padrao Defender v4" para o projeto OMBUDS. Paleta neutra pura (R=G=B),
+  CollapsiblePageHeader, cards com shadow, dropdowns portal.
   Use ao criar/editar componentes visuais, paginas, cards, sidebars, dashboards ou qualquer UI.
   Triggers: "padrao defender", "corrigir estilo", "fix style", "design system",
   "harmonizar visual", "modo claro/escuro", "dark mode", criar pagina, criar componente,
   layout, cards, stats.
 ---
 
-# Padrao Defender v3 - Design System
+# Padrao Defender v4 - Design System
 
-> **Filosofia**: Preto e branco como estrutura. Glass translucido como linguagem. Cor apenas com significado funcional (atribuicao).
+> **Filosofia**: Cinza neutro puro como estrutura. Cards brancos com shadow como conteudo. Cor apenas funcional (atribuicao nos cards kanban). Header escuro colapsavel.
 
 ## Principios
 
-1. **Preto/branco sao a estrutura** — headers, icones, tabs, bordas. Sem cores decorativas.
-2. **Glass e a linguagem de cards** — `bg-zinc-100/60` com `border-zinc-200/80`. Leve, translucido, uniforme.
-3. **Cor so quando funcional** — emerald no botao Analisar (juri), amber (VVD), sky (EP). Badge de atribuicao usa cor. Resto e monocromatico.
-4. **Header escuro, conteudo claro** — 2 blocos visuais: charcoal gradient no header, card branco para conteudo.
+1. **Neutro puro (R=G=B)** — sidebar, utility bar, page header usam cinzas puros (#383838, #3a3a3a, #424242). Zero hue azulado.
+2. **Cards brancos com shadow** — `bg-white shadow-sm shadow-black/[0.04]` sobre fundo `#f0f0f0`. Profundidade via shadow, nao cor.
+3. **Cor so quando funcional** — emerald no botao Analisar (juri), amber (VVD), sky (EP). Badge de atribuicao usa cor nos cards kanban. Switch de atribuicao e monocromatico.
+4. **Header colapsavel** — utility bar + page header card. Colapsa ao scrollar.
+5. **Dropdowns via portal** — `createPortal(menu, document.body)` com `fixed z-[9999]`.
 
-## Header de Pagina (charcoal)
+## Paleta
+
+| Camada | Cor | Uso |
+|--------|-----|-----|
+| Sidebar | `#383838` | Moldura lateral, sempre escura |
+| Utility Bar | `#3a3a3a` | Barra topo (breadcrumbs, cmd+K) |
+| Page Header | `#424242` | Card do titulo da pagina |
+| Icone titulo | `#525252` | Container do icone no Row 1 |
+| Bottom Row | border-t `white/[0.06]` | Separacao interna do card (sem bg proprio) |
+| Fundo pagina | `#f0f0f0` | Cinza neutro puro |
+| Cards | `white` + `shadow-sm` | Conteudo elevado |
+| Collapsed | `#3e3e3e` | Barra colapsada ao scrollar |
+
+## CollapsiblePageHeader
 
 ```tsx
-// Container — sempre escuro, independente do tema
-<div className="mx-4 lg:mx-6 mt-3 px-5 pt-4 pb-3 rounded-xl bg-gradient-to-br from-[#222228] to-[#18181b] shadow-lg shadow-black/10 ring-1 ring-white/[0.04]">
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 
-// Textos sobre fundo escuro
-Nome:     text-white font-serif text-lg font-semibold
-CPF:      text-white/80 font-mono
-Labels:   text-white/30 text-[9px] uppercase tracking-wider
-Links:    text-white/70 hover:text-white
-Separadores verticais: w-[1.5px] h-3.5 bg-white/20
-Divider horizontal:    h-[2px] bg-white/20
+<CollapsiblePageHeader
+  title="Nome da Pagina"
+  icon={LucideIcon}       // Mesmo icone da sidebar
+  collapsedStats={...}    // Stats inline para modo colapsado
+  collapsedPill={...}     // Pill ativa no colapsado
+  collapsedSearch={...}   // Busca compacta no colapsado
+  bottomRow={...}         // Row 2: pills, busca, filtros
+>
+  {/* Row 1: titulo + stats + botoes */}
+</CollapsiblePageHeader>
+```
 
-// Avatar — sempre branco com iniciais pretas
-<div className="h-12 w-12 rounded-xl bg-white text-zinc-900 font-bold" />
+## Row 1 — Titulo + Acoes
 
-// Badge de atribuicao — unico elemento colorido
-<span className="bg-emerald-600 text-white" />  // Juri
-<span className="bg-amber-500 text-white" />    // VVD
-<span className="bg-sky-600 text-white" />      // EP
+```tsx
+<div className="flex items-center justify-between">
+  {/* Esquerda */}
+  <div className="flex items-center gap-3">
+    <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+      <PageIcon className="w-4 h-4 text-white" />
+    </div>
+    <div>
+      <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Titulo</h1>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <span className="text-[10px] text-white/55 tabular-nums">N items</span>
+        <span className="text-white/25">·</span>
+        <span className="text-[10px] text-red-400 tabular-nums">N urgentes</span>
+      </div>
+    </div>
+  </div>
 
-// Botoes
-Analisar:   cor da atribuicao (emerald/amber/sky/zinc)
-Promptorio: text-white/80 border-white/20 bg-white/10 hover:bg-white/20
-
-// Bottom row — glass integrado
-<div className="bg-white/[0.12] rounded-lg px-3.5 py-2.5">
-  Case pill: text-white/90 font-bold
-  Stats:    text-white/60 (numeros) text-white/30 (labels)
-  Drive:    text-white/60 (count) text-white/30 (label)
+  {/* Direita — botoes icone-only */}
+  <div className="flex items-center gap-1.5">
+    <button className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center" title="Acao">
+      <Icon className="w-[15px] h-[15px]" />
+    </button>
+    {/* Botao primario (branco) */}
+    <button className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center" title="Nova">
+      <Plus className="w-4 h-4" />
+    </button>
+  </div>
 </div>
 ```
 
-## Cards Glass (summary, blocos de analise)
+## Row 2 — Pills + Busca + Settings
 
 ```tsx
-// Card glass — padrao para TODOS os cards
-<div className="bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-lg p-3.5 hover:bg-zinc-100 dark:hover:bg-white/[0.07] transition-all duration-200">
+<div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
+  <AtribuicaoPills variant="dark" singleSelect compact ... />
 
-// Icone container — preto com icone branco
-<div className="w-7 h-7 rounded-md bg-zinc-800 dark:bg-zinc-700 flex items-center justify-center">
-  <Icon className="w-3 h-3 text-white" />
+  <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+
+  <div className="hidden sm:flex relative flex-1 max-w-[220px]">
+    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+    <input
+      placeholder="Buscar..."
+      className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+    />
+  </div>
+
+  <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+
+  <button className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-all duration-200 cursor-pointer" title="Configuracoes">
+    <Settings className="w-[14px] h-[14px] text-white/50" />
+  </button>
 </div>
-
-// Labels de card
-<span className="text-[9px] uppercase tracking-wider font-semibold text-zinc-900 dark:text-zinc-400" />
-
-// Valores
-<span className="text-sm font-semibold text-foreground" />
-
-// Texto secundario
-<span className="text-xs text-muted-foreground" />
 ```
 
-## Blocos de Analise (accordion)
+## Dropdowns — Portal Pattern
 
 ```tsx
-// Trigger — glass com titulo uppercase
-<AccordionTrigger className="bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06] rounded-xl px-4 py-3">
-  // Icone: bg-zinc-800 text-white (preto, monocromatico)
-  // Titulo: text-[13px] font-bold uppercase tracking-wide text-zinc-900
-  // Count: text-[9px] bg-zinc-200/80 text-zinc-500 rounded-full
+import { createPortal } from "react-dom";
 
-// Conteudo expandido
-<AccordionContent className="bg-white dark:bg-zinc-900/80 border border-t-0 border-zinc-200/80 dark:border-white/[0.06] rounded-b-xl px-4">
+const btnRef = useRef<HTMLButtonElement>(null);
+const [isOpen, setIsOpen] = useState(false);
 
-// Sub-rows
-<CollapsibleTrigger className="bg-zinc-100 dark:bg-[#0f0f11] rounded-lg p-2.5 text-xs font-medium">
+// No JSX:
+{isOpen && createPortal(
+  <>
+    <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+    <div
+      className="fixed z-[9999] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1"
+      style={(() => {
+        const r = btnRef.current?.getBoundingClientRect();
+        return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {};
+      })()}
+    >
+      <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Secao</div>
+      <button className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer">
+        <Icon className="w-3.5 h-3.5 text-neutral-400" />
+        <span>Label</span>
+      </button>
+    </div>
+  </>,
+  document.body
+)}
 ```
 
-## Tabs (pill style)
+## Cards (conteudo)
 
 ```tsx
-// Container — cinza claro
-<div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+// Card padrao
+<div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] hover:shadow-md hover:shadow-black/[0.08] transition-all">
 
-// Tab ativa — pill preta
-<button className="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-md shadow-sm" />
-
-// Tab inativa
-<button className="text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/60" />
-
-// Count badges
-Ativa: bg-white/20 text-white/70
-Inativa: bg-zinc-200/60 text-zinc-400
+// Card kanban
+<div className="bg-white dark:bg-neutral-900 rounded-xl border-[1.5px] shadow-sm shadow-black/[0.04] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
 ```
 
-## Sidebar (sempre escura)
+## Sidebar
 
-```
-bg-gradient-to-b from-[#1f1f23] via-[#1a1a1e] to-[#1f1f23]
-border-r border-zinc-700/30
+```tsx
+// Item expandido
+isActive
+  ? "bg-white/[0.12] text-white font-semibold"  // + barra emerald 2px
+  : "text-white/60 hover:text-white/90 hover:bg-white/[0.08]"
+
+// Icone
+isActive ? "text-emerald-400" : "text-white/50"
+
+// Divider
+"h-px bg-white/[0.06]"
+
+// Section label
+"text-[10px] font-bold text-white/30 uppercase tracking-wider"
 ```
 
-- Hover: `hover:bg-zinc-700/40 hover:text-zinc-200`
-- Active: `bg-zinc-800/80 text-zinc-100`
-- Labels: `text-[10px] uppercase tracking-wider text-zinc-500`
-- NUNCA `bg-white` em sidebars
+## FABs (botoes flutuantes)
+
+```tsx
+<button className={cn(
+  "fixed z-[51] flex items-center justify-center",
+  "w-10 h-10 rounded-2xl shadow-md shadow-black/[0.08]",
+  "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+  "text-neutral-600 dark:text-neutral-300",
+  "ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
+  "hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600",
+  "transition-all duration-200 active:scale-95 cursor-pointer"
+)}>
+```
 
 ## Tipografia
 
 | Nivel | Classes |
 |-------|---------|
-| H1 (nome) | `font-serif text-lg font-semibold tracking-tight` |
-| H2 (secao) | `text-[13px] font-bold uppercase tracking-wide` |
-| Labels | `text-[9px] uppercase tracking-wider font-semibold` |
-| Body | `text-sm text-zinc-600 dark:text-zinc-400` |
-| Dados | `font-mono text-[11px]` (CPF, processo) |
-| Links | `text-xs font-medium` |
+| Titulo pagina | `text-white text-[15px] font-semibold tracking-tight` |
+| Stats | `text-[10px] text-white/55 tabular-nums` |
+| Label secao (header) | `text-white/80 text-[9px] uppercase tracking-wider font-semibold` |
+| Label secao (dropdown) | `text-[9px] font-semibold uppercase tracking-wider text-neutral-400` |
+| Body | `text-sm text-neutral-600 dark:text-neutral-400` |
+| Dados mono | `font-mono text-[11px]` (CPF, processo) |
+| Item dropdown | `text-[13px]` |
+| Sidebar item | `text-[12px] font-medium` |
+| Sidebar label | `text-[10px] font-bold text-white/30 uppercase tracking-wider` |
 
-## Cores Funcionais (UNICA cor permitida)
+## Cores Funcionais (UNICA cor no switch)
 
-| Atribuicao | Cor | Uso |
-|-----------|-----|-----|
-| Juri | `emerald-600` | Badge, botao Analisar |
-| VVD | `amber-500` | Badge, botao Analisar |
-| Execucao Penal | `sky-600` | Badge, botao Analisar |
-| Substituicao | `zinc-700` | Badge, botao Analisar |
+| Atribuicao | Cor | Onde aparece |
+|-----------|-----|-------------|
+| Juri | `emerald-600` | Badge nos cards kanban, botao Analisar |
+| VVD | `amber-500` | Badge nos cards kanban |
+| Execucao Penal | `sky-600` | Badge nos cards kanban |
+| Substituicao | `zinc-700` | Badge nos cards kanban |
 
-**Tudo mais e preto/branco/zinc.** Sem emerald em hover generico, sem cores em icones de bloco, sem tint colorido em cards.
+**Switch de atribuicao e monocromatico** — ativo `bg-white/[0.12] text-white`, inativo `text-white/45`.
 
-## Container de Conteudo
-
-```tsx
-// Envolve summary + tabs + conteudo num card unico
-<div className="bg-white dark:bg-zinc-900/50 rounded-xl border border-zinc-200/60 dark:border-zinc-800/40 overflow-hidden">
-```
-
-## Status Prisional
-
-- Preso: dot vermelho 12px no canto do avatar (`bg-red-500 border-2 border-[#222228]`)
-- Solto: texto `text-white/50` no header
-- NAO usar badge textual grande
-
-## WhatsApp Links
-
-```tsx
-// Assistido — icone emerald (acao principal)
-<svg className="w-3 h-3 text-emerald-400" />
-
-// Contato familiar — icone neutro
-<svg className="w-3 h-3 text-white/40" />
-
-// Com rotulo
-<span className="text-white/30 text-[9px] uppercase">CPF</span>
-<span className="text-white/30 text-[9px] uppercase">Tel</span>
-<span className="text-white/30 text-[9px] uppercase">{parentesco}</span>
-```
-
-## Checklist
+## Checklist Pre-Delivery
 
 ```
 [ ] Lucide icons (sem emojis)
-[ ] Icones de bloco em bg-zinc-800 text-white (monocromatico)
-[ ] Glass em todos os cards (bg-zinc-100/60 border-zinc-200/80)
-[ ] Header charcoal gradient (from-[#222228] to-[#18181b])
-[ ] Tabs pill style (bg-zinc-100, ativa bg-zinc-900)
-[ ] Cor APENAS no badge de atribuicao e botao Analisar
-[ ] Avatar branco com iniciais pretas
-[ ] cursor-pointer em clicaveis
-[ ] Hover 150-300ms transitions
+[ ] Icone da pagina consistente com sidebar
+[ ] Cores hardcoded substituidas por opacidades relativas
+[ ] Dropdowns via createPortal (nao absolute)
+[ ] Cards com shadow-sm
+[ ] Fundo #f0f0f0
+[ ] Botoes icone-only com title tooltip
+[ ] CollapsiblePageHeader usado
+[ ] Row 1 + Row 2 no padrao
+[ ] Responsivo (flex-wrap, hidden sm:flex)
 [ ] WCAG AA contraste
-[ ] Focus states visiveis
-[ ] Responsivo (375/768/1024/1440px)
-[ ] Dark mode funcional
-[ ] Sem magic numbers tipografia
+[ ] cursor-pointer em clicaveis
+[ ] Hover transitions 150-200ms
 ```
 
 ## Referencia de Implementacao
 
 | Componente | Path |
 |------------|------|
-| Assistido page | `src/app/(dashboard)/admin/assistidos/[id]/page.tsx` |
-| Overview panel | `src/app/(dashboard)/admin/assistidos/[id]/_components/overview-panel.tsx` |
-| Analise blocks | `src/app/(dashboard)/admin/assistidos/[id]/_components/analise-blocks.tsx` |
-| Analise tab | `src/app/(dashboard)/admin/assistidos/[id]/_components/analise-tab.tsx` |
-| Analise button | `src/app/(dashboard)/admin/assistidos/[id]/_components/analise-button.tsx` |
-| Promptorio modal | `src/app/(dashboard)/admin/assistidos/[id]/_components/promptorio-modal.tsx` |
-| Processo header | `src/components/processo/processo-header.tsx` |
-| Processo tabs | `src/components/processo/processo-tabs.tsx` |
+| CollapsiblePageHeader | `src/components/layouts/collapsible-page-header.tsx` |
+| HeaderUtilityRow | `src/components/layouts/header-utility-row.tsx` |
+| PageHeaderContext | `src/components/layouts/page-header-context.tsx` |
+| Design Tokens | `src/lib/config/design-tokens.ts` |
+| Demandas (referencia) | `src/components/demandas-premium/demandas-premium-view.tsx` |
+| AtribuicaoPills | `src/components/demandas-premium/AtribuicaoPills.tsx` |
+| ViewModeDropdown | `src/components/shared/view-mode-dropdown.tsx` |
+| FABs | `src/components/shared/floating-agenda.tsx`, `floating-demandas.tsx`, `feedback-fab.tsx` |
+| Sidebar | `src/components/layouts/admin-sidebar.tsx` |
+| Globals CSS | `src/app/globals.css` |
