@@ -84,7 +84,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
       <header
         className={cn(
           "sticky top-0 z-30 shrink-0",
-          "bg-[#2e2e34] border-b border-white/[0.06]"
+          "bg-[#3e3e44] border-b border-black/[0.15]"
         )}
       >
         {content}

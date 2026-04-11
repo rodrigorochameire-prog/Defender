@@ -102,8 +102,8 @@ export function CollapsiblePageHeader({
         aria-hidden={isCollapsed}
       >
         <div className="overflow-hidden">
-          {/* Utility Bar — tom mais escuro, moldura */}
-          <div className="bg-[#2e2e34] border-b border-white/[0.06]">
+          {/* Utility Bar — tom próximo do page header, separação sutil */}
+          <div className="bg-[#3e3e44] border-b border-black/[0.15]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
