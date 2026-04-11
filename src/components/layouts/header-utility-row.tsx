@@ -22,7 +22,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
     <div className="flex h-11 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-        <SidebarTrigger className="h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+        <SidebarTrigger className="h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
         {/* Separator */}
         <div className="h-4 w-px bg-white/[0.08] shrink-0" />
@@ -39,14 +39,14 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
         {/* Online indicator */}
         <div className="hidden md:flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] text-white/40 font-medium">Online</span>
+          <span className="text-[10px] text-white/50 font-medium">Online</span>
         </div>
 
         {/* Separator */}
         <div className="hidden md:block h-4 w-px bg-white/[0.08]" />
 
         {/* Date */}
-        <div className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/40">
+        <div className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/50">
           <span className="capitalize">
             {new Date().toLocaleDateString("pt-BR", {
               weekday: "long",
@@ -70,7 +70,7 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
           <button
             onClick={handleChatToggle}
             title="Assistente OMBUDS"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
           >
             <MessageSquare className="h-3.5 w-3.5" />
           </button>

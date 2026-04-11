@@ -262,8 +262,8 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           className={cn(
             "h-10 w-10 p-0 mx-auto transition-colors duration-150 rounded-lg flex items-center justify-center relative",
             isActive
-              ? "bg-white/[0.10] text-white"
-              : "text-white/35 hover:bg-white/[0.06] hover:text-white/60"
+              ? "bg-white/[0.12] text-white"
+              : "text-white/50 hover:bg-white/[0.08] hover:text-white/80"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -287,15 +287,15 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         className={cn(
           "h-9 transition-colors duration-150 rounded-lg group/item relative overflow-hidden",
           isActive
-            ? "bg-white/[0.10] text-white font-semibold"
-            : "text-white/45 hover:text-white/75 hover:bg-white/[0.06]"
+            ? "bg-white/[0.12] text-white font-semibold"
+            : "text-white/60 hover:text-white/90 hover:bg-white/[0.08]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           {isActive && <div className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-emerald-400" />}
           <Icon className={cn(
             "h-[15px] w-[15px] mr-2.5 transition-colors duration-150 flex-shrink-0",
-            isActive ? "text-emerald-400" : "text-white/35 group-hover/item:text-white/55"
+            isActive ? "text-emerald-400" : "text-white/50 group-hover/item:text-white/70"
           )} strokeWidth={isActive ? 2.2 : 1.8} />
           <span className="text-[12px] font-medium truncate">{item.label}</span>
           {item.isPremium && (
@@ -528,7 +528,7 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           align="start"
           className="w-52 p-2 glass-dark shadow-xl shadow-black/30"
         >
-          <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider px-2 pb-2">
+          <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider px-2 pb-2">
             Mais opções
           </p>
           {items.map((item) => {
@@ -1797,12 +1797,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-white/80 truncate tracking-tight">
+                  <p className="text-[12px] font-medium text-white/90 truncate tracking-tight">
                     {userName}
                   </p>
                   <button
                     onClick={handleLogout}
-                    className="text-[10px] flex items-center gap-1 mt-0.5 text-white/30 hover:text-red-400 transition-colors font-medium"
+                    className="text-[10px] flex items-center gap-1 mt-0.5 text-white/40 hover:text-red-400 transition-colors font-medium"
                   >
                     <LogOut className="w-2.5 h-2.5" />
                     Sair
