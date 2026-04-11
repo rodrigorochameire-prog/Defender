@@ -83,24 +83,24 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — card meio-termo */
-  container: "rounded-2xl bg-[#424242] shadow-sm shadow-black/[0.06] ring-1 ring-white/[0.04]",
+  /** Page Header — neutro anti-bege (+1 blue) */
+  container: "rounded-xl bg-[#353536]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
-  label: "text-white/80 text-[9px] uppercase tracking-wider font-semibold",
+  label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
-  separator: "w-px h-3.5 bg-white/[0.10] rounded-full",
-  /** Inset row — levemente mais claro */
-  bottomRow: "bg-[#4c4c4c] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
-  stat: "text-white font-semibold",
+  separator: "w-[1.5px] h-3.5 bg-[#4a4a4b] rounded-full",
+  /** Inset row — neutro, mais claro que moldura */
+  bottomRow: "bg-[#454546] rounded-lg px-3.5 py-2.5",
+  stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility Bar — mais escuro que o header */
-  utilityRow: "bg-[#3a3a3a]",
-  utilityText: "text-white/55 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
-  utilityIcon: "w-[13px] h-[13px] text-white/45",
-  /** Collapsed — entre utility e header */
-  collapsedBar: "bg-[#3e3e3e] shadow-sm shadow-black/[0.06]",
-  collapsedText: "text-white text-[11px] font-semibold",
+  /** Utility Bar — mesmo tom do inset */
+  utilityRow: "bg-[#454546] border-b border-white/[0.04]",
+  utilityText: "text-white/60 text-[10px]",
+  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#505051] transition-colors cursor-pointer",
+  utilityIcon: "w-[13px] h-[13px] text-white/50",
+  /** Collapsed — mesmo tom da utility */
+  collapsedBar: "bg-[#454546] border-b border-white/[0.04]",
+  collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 
 // ============================================

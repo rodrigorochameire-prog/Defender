@@ -558,18 +558,18 @@
 
   /* ===== SIDEBAR — 3 THEME MODES ===== */
 
-  /* Light: sidebar — próximo da utility bar (#3a3a3a) */
+  /* Light: sidebar neutro anti-bege */
   .glass-sidebar {
-    background: #383838;
+    background: #303031;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);
     box-shadow: none;
   }
 
-  /* Dark: mais profunda para contraste com conteúdo dark */
+  /* Dark: mesmo tom neutro */
   .dark .glass-sidebar {
-    background: #252525;
+    background: #303031;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-right: 1px solid rgba(255,255,255,0.05);

@@ -164,7 +164,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-[#303030] text-neutral-100 flex h-full w-[var(--sidebar-width)] flex-col",
+          "bg-[#303031] text-neutral-100 flex h-full w-[var(--sidebar-width)] flex-col",
           className
         )}
         {...props}
