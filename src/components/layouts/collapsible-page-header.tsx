@@ -102,19 +102,19 @@ export function CollapsiblePageHeader({
         aria-hidden={isCollapsed}
       >
         <div className="overflow-hidden">
-          {/* Utility Bar — tom próximo do page header, separação sutil */}
-          <div className="bg-[#3e3e44] border-b border-black/[0.15]">
+          {/* Utility Bar — cinza quente, tom próximo do page header */}
+          <div className="bg-[#484850] border-b border-white/[0.04]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Page Header — tom mais claro, área de conteúdo */}
-          <div className="bg-[#44444a] px-4 pb-3 pt-3">
+          {/* Page Header — gradiente sutil para profundidade */}
+          <div className="bg-gradient-to-b from-[#4a4a52] to-[#454550] px-5 pb-3 pt-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             {children}
           </div>
 
-          {/* Row 2 — pills, search, tools (optional) */}
+          {/* Row 2 — inset levemente mais escuro */}
           {bottomRow && (
-            <div className="bg-[#44444a] px-4 pb-3">
+            <div className="bg-[#404048] px-5 pb-3 pt-2 border-t border-white/[0.03]">
               {bottomRow}
             </div>
           )}
