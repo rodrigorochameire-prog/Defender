@@ -80,10 +80,10 @@ export function AtribuicaoPills({
     <div className={className ?? "flex items-center gap-1"}>
       {/* Switch container — segmented control style */}
       <div className={cn(
-          "inline-flex items-center gap-0 p-[3px] rounded-full border",
+          "inline-flex items-center gap-0.5 p-[3px] rounded-xl",
           isDark
-            ? "bg-black/[0.20] border-white/[0.08]"
-            : "bg-neutral-200/60 dark:bg-neutral-800 border-neutral-300/70 dark:border-neutral-700/60"
+            ? "bg-black/[0.15] ring-1 ring-white/[0.06]"
+            : "bg-neutral-200/60 dark:bg-neutral-800 ring-1 ring-neutral-300/50 dark:ring-neutral-700/60"
         )}>
         {/* Botão "Todas" — ativo quando all selecionado ou nenhum filtro específico */}
         {!singleSelect && (() => {
@@ -94,7 +94,7 @@ export function AtribuicaoPills({
             <button
               onClick={() => onClear()}
               className={cn(
-                "flex items-center gap-1 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer px-3 py-1.5",
+                "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer px-2.5 py-1",
                 isAllActive && "shadow-sm"
               )}
               style={
@@ -122,10 +122,10 @@ export function AtribuicaoPills({
               onClick={() => handleClick(opt.value)}
               title={opt.label}
               className={cn(
-                "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
+                "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                 isActive
-                  ? "px-3 py-1.5 shadow-sm text-white"
-                  : "px-2 py-1.5"
+                  ? "px-2.5 py-1 shadow-sm text-white"
+                  : "px-2 py-1"
               )}
               style={
                 isActive

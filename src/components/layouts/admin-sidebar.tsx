@@ -46,6 +46,7 @@ import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { ConflictBadge } from "@/components/conflict-badge";
 import { FloatingAgendaButton } from "@/components/shared/floating-agenda";
+import { FloatingDemandasButton } from "@/components/shared/floating-demandas";
 import { PageHeaderProvider, usePageHeader } from "@/components/layouts/page-header-context";
 import { HeaderUtilityRow } from "@/components/layouts/header-utility-row";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
@@ -1841,7 +1842,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             {/* Mobile bottom navigation */}
             <MobileBottomNav />
 
-            {/* Floating agenda quick-access button */}
+            {/* Floating quick-access buttons */}
+            <FloatingDemandasButton />
             <FloatingAgendaButton />
           </PageHeaderProvider>
         </ReadOnlyFieldset>
