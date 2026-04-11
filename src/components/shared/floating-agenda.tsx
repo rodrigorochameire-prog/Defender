@@ -99,16 +99,18 @@ export function FloatingAgendaButton() {
         onClick={() => setIsOpen(true)}
         className={cn(
           "fixed z-[51] flex items-center justify-center",
-          "w-11 h-11 rounded-full shadow-lg",
-          "bg-neutral-900 dark:bg-neutral-700 text-white",
-          "hover:bg-emerald-600 dark:hover:bg-emerald-600",
+          "w-10 h-10 rounded-2xl shadow-md shadow-black/[0.08]",
+          "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
+          "text-neutral-600 dark:text-neutral-300",
+          "ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
+          "hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:ring-emerald-300/30 dark:hover:ring-emerald-500/20",
           "transition-all duration-200 active:scale-95",
           "bottom-[5.5rem] right-4 sm:bottom-6 sm:right-6",
           "cursor-pointer"
         )}
         title="Abrir agenda rápida"
       >
-        <Calendar className="w-5 h-5" />
+        <Calendar className="w-4.5 h-4.5" />
       </button>
 
       {/* Sheet */}
