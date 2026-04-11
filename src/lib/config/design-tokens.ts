@@ -83,23 +83,23 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — card flutuante, tom médio */
-  container: "rounded-2xl bg-gradient-to-b from-[#42424a] to-[#3e3e46] ring-1 ring-white/[0.05] shadow-lg shadow-black/[0.10]",
+  /** Page Header — sólido, sem gradient/ring/shadow */
+  container: "rounded-xl bg-[#333338]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
-  label: "text-white/80 text-[9px] uppercase tracking-wider font-semibold",
+  label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
-  separator: "w-[1.5px] h-3.5 bg-white/15 rounded-full",
-  /** Inset row — glass sutil sobre o card */
-  bottomRow: "bg-white/[0.06] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.04]",
+  separator: "w-[1.5px] h-3.5 bg-[#505058] rounded-full",
+  /** Inset row — sólido, mais claro que a moldura */
+  bottomRow: "bg-[#48484e] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility Bar — mais escuro que o page header (moldura) */
-  utilityRow: "bg-[#353540] border-b border-white/[0.04]",
+  /** Utility Bar — mesmo tom do inset */
+  utilityRow: "bg-[#48484e] border-b border-white/[0.04]",
   utilityText: "text-white/60 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
+  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#525258] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/50",
   /** Collapsed — mesmo tom da utility bar */
-  collapsedBar: "bg-[#353540] border-b border-white/[0.04]",
+  collapsedBar: "bg-[#48484e] border-b border-white/[0.04]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 

@@ -120,22 +120,19 @@ export function CollapsiblePageHeader({
         className="will-change-[opacity]"
       >
         <div className="overflow-visible">
-          {/* Utility Bar — moldura escura */}
-          <div className="bg-[#48484e]">
+          {/* Utility Bar */}
+          <div className={HEADER_STYLE.utilityRow}>
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Separação */}
-          <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
-
-          {/* Page Header — card flutuante (overflow-visible para dropdowns) */}
-          <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 pb-1 overflow-visible")}>
+          {/* Page Header — colado na utility, sem gap */}
+          <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 mt-2 mb-2 pb-1 overflow-visible")}>
             {/* Row 1 — título/ações */}
             <div className="px-5 pb-3.5 pt-4">
               {children}
             </div>
 
-            {/* Row 2 — pills/filtros, glass inset */}
+            {/* Row 2 — pills/filtros (inset sólido) */}
             {bottomRow && (
               <div className={cn("mx-2 sm:mx-2.5 mb-2.5", HEADER_STYLE.bottomRow)}>
                 {bottomRow}
