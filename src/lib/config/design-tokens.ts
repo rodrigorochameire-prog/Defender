@@ -84,7 +84,7 @@ export const CARD_STYLE = {
 
 export const HEADER_STYLE = {
   /** Page Header — anti-bege (+2 blue) */
-  container: "rounded-xl bg-[#353537]",
+  container: "rounded-xl bg-[#3b3b3d]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
