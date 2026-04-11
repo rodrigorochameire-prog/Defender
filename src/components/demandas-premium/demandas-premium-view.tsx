@@ -2033,7 +2033,7 @@ export default function Demandas() {
         icon={LayoutGrid}
         collapsedStats={
           <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#454545] text-white/90 tabular-nums">
               {demandas.filter(d => !d.arquivado).length} total
             </span>
           </>
@@ -2052,7 +2052,7 @@ export default function Demandas() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar..."
-              className="w-full bg-[#3e3e44] border border-[#525258] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none"
+              className="w-full bg-[#3a3a3a] border border-[#505050] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none"
             />
           </div>
         }
@@ -2079,7 +2079,7 @@ export default function Demandas() {
               />
             </div>
 
-            <div className="w-px h-4 bg-[#505058] mx-0.5 shrink-0" />
+            <div className="w-px h-4 bg-[#4a4a4a] mx-0.5 shrink-0" />
 
             <ViewModeDropdown
               options={DEMANDAS_VIEW_OPTIONS}
@@ -2088,13 +2088,13 @@ export default function Demandas() {
               variant="dark"
             />
 
-            <div className="w-px h-4 bg-[#505058] mx-0.5 shrink-0" />
+            <div className="w-px h-4 bg-[#4a4a4a] mx-0.5 shrink-0" />
 
             <div className="relative">
               <button
                 ref={filtersBtnRef}
                 onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#525258] transition-all duration-200 cursor-pointer"
+                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#505050] transition-all duration-200 cursor-pointer"
                 title="Configurações"
               >
                 <Settings className="w-[14px] h-[14px] text-white/50" />
