@@ -111,9 +111,8 @@ export function Breadcrumbs() {
   // Se não há breadcrumbs ou só tem um item, não mostra
   if (breadcrumbs.length === 0) {
     return (
-      <div className="flex items-center gap-1.5 text-sm">
-        <Home className="w-4 h-4 text-muted-foreground" />
-        <span className="font-semibold text-foreground">Dashboard</span>
+      <div className="flex items-center gap-1 text-xs">
+        <Home className="w-3 h-3 text-white/50" />
       </div>
     );
   }
@@ -125,13 +124,13 @@ export function Breadcrumbs() {
   const parentItem = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2] : null;
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs overflow-hidden">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs overflow-hidden">
       <Link
         href="/admin"
-        className="flex items-center text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors shrink-0"
+        className="flex items-center text-white/30 hover:text-white/70 transition-colors shrink-0"
         title="Dashboard"
       >
-        <Home className="w-3.5 h-3.5" />
+        <Home className="w-3 h-3" />
       </Link>
 
       {/* Listing pages: home > icon only (page header already shows title) */}
@@ -140,11 +139,11 @@ export function Breadcrumbs() {
         const RouteIcon = ROUTE_ICONS[segment];
         return (
           <>
-            <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+            <ChevronRight className="w-2.5 h-2.5 text-white/20 shrink-0" />
             {RouteIcon ? (
-              <span title={lastItem.label}><RouteIcon className="w-3.5 h-3.5 text-neutral-900 dark:text-neutral-100" /></span>
+              <span title={lastItem.label}><RouteIcon className="w-3 h-3 text-white/90" /></span>
             ) : (
-              <span className="font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-[140px]" title={lastItem.label}>
+              <span className="font-semibold text-white/90 truncate max-w-[140px]" title={lastItem.label}>
                 {lastItem.label}
               </span>
             )}
@@ -158,13 +157,13 @@ export function Breadcrumbs() {
         const RouteIcon = segment ? ROUTE_ICONS[segment] : null;
         return (
           <>
-            <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+            <ChevronRight className="w-2.5 h-2.5 text-white/20 shrink-0" />
             <Link
               href={parentItem.href}
-              className="inline-flex items-center gap-1 text-neutral-400 dark:text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+              className="inline-flex items-center gap-1 text-white/40 hover:text-white/70 transition-colors"
               title={parentItem.label}
             >
-              {RouteIcon && <RouteIcon className="w-3 h-3" />}
+              {RouteIcon && <RouteIcon className="w-2.5 h-2.5" />}
               <span className="truncate max-w-[100px]">{parentItem.label}</span>
             </Link>
           </>
@@ -173,9 +172,9 @@ export function Breadcrumbs() {
 
       {!isListingPage && lastItem && (
         <>
-          <ChevronRight className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
+          <ChevronRight className="w-2.5 h-2.5 text-white/20 shrink-0" />
           <span
-            className="font-semibold text-neutral-900 dark:text-neutral-100 truncate max-w-[140px]"
+            className="font-semibold text-white/90 truncate max-w-[140px]"
             title={lastItem.label}
           >
             {lastItem.label}
