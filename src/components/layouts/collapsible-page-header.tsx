@@ -112,7 +112,7 @@ export function CollapsiblePageHeader({
   return (
     <div
       ref={outerRef}
-      className={cn("sticky top-0 z-30", className)}
+      className={cn("sticky top-0 z-50", className)}
     >
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
