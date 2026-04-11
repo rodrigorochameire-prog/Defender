@@ -43,11 +43,9 @@ export function CollapsiblePageHeader({
   collapsedStats,
   className,
 }: CollapsiblePageHeaderProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const outerRef = useRef<HTMLDivElement>(null);
-  const expandedRef = useRef<HTMLDivElement>(null);
-  const collapsedRef = useRef<HTMLDivElement>(null);
   const { setHasPageHeader } = usePageHeader();
-  const progressRef = useRef(0);
 
   // Register page header presence
   useEffect(() => {
@@ -55,12 +53,10 @@ export function CollapsiblePageHeader({
     return () => setHasPageHeader(false);
   }, [setHasPageHeader]);
 
-  // Smooth progressive scroll — interpolate between expanded/collapsed
+  // Simple scroll detection with hysteresis — no layout-affecting transforms
   useEffect(() => {
     const el = outerRef.current;
-    const expanded = expandedRef.current;
-    const collapsed = collapsedRef.current;
-    if (!el || !expanded || !collapsed) return;
+    if (!el) return;
 
     function getScrollParent(node: HTMLElement | null): HTMLElement | Window {
       if (!node || node === document.documentElement) return window;
@@ -71,42 +67,23 @@ export function CollapsiblePageHeader({
     }
 
     const scrollTarget = getScrollParent(el.parentElement);
-    const SCROLL_RANGE = 50; // pixels over which transition happens
-    let rafId: number;
+    let collapsed = false;
 
     function handleScroll() {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        const scrollTop =
-          scrollTarget === window
-            ? window.scrollY
-            : (scrollTarget as HTMLElement).scrollTop;
-
-        // Progress: 0 = fully expanded, 1 = fully collapsed
-        const raw = Math.min(1, Math.max(0, scrollTop / SCROLL_RANGE));
-        // Ease out cubic for smoother feel
-        const p = 1 - Math.pow(1 - raw, 3);
-        progressRef.current = p;
-
-        // Expanded: fade out + scale down
-        expanded.style.opacity = String(1 - p);
-        expanded.style.transform = `scaleY(${1 - p * 0.3}) translateY(${-p * 8}px)`;
-        expanded.style.pointerEvents = p > 0.5 ? "none" : "auto";
-
-        // Collapsed: fade in
-        collapsed.style.opacity = String(p);
-        collapsed.style.transform = `translateY(${(1 - p) * -4}px)`;
-        collapsed.style.pointerEvents = p > 0.5 ? "auto" : "none";
-      });
+      const scrollTop =
+        scrollTarget === window
+          ? window.scrollY
+          : (scrollTarget as HTMLElement).scrollTop;
+      const next = collapsed ? scrollTop > 8 : scrollTop > 40;
+      if (next !== collapsed) {
+        collapsed = next;
+        setIsCollapsed(next);
+      }
     }
 
     scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-
-    return () => {
-      scrollTarget.removeEventListener("scroll", handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    return () => scrollTarget.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
@@ -114,47 +91,51 @@ export function CollapsiblePageHeader({
       ref={outerRef}
       className={cn("sticky top-0 z-30", className)}
     >
-      {/* ── EXPANDED STATE ─────────────────────────────────────── */}
-      <div
-        ref={expandedRef}
-        className="origin-top will-change-[transform,opacity]"
-        style={{ transformOrigin: "top center" }}
-      >
-        <div className="overflow-visible">
-          {/* Utility Bar */}
-          <div className="bg-[#484850]">
-            <HeaderUtilityRow variant="embedded" />
-          </div>
-
-          {/* Separação */}
-          <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
-
-          {/* Page Header — card flutuante arredondado */}
-          <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 rounded-2xl pb-1")}>
-            {/* Row 1 — título/ações */}
-            <div className="px-5 pb-3 pt-4">
-              {children}
+      {/* Wrapper com altura fixa para evitar layout shift */}
+      <div className="relative">
+        {/* ── EXPANDED STATE ─────────────────────────────────────── */}
+        <div
+          className={cn(
+            "transition-opacity duration-150 ease-out",
+            isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100",
+          )}
+          aria-hidden={isCollapsed}
+        >
+          <div className="overflow-visible">
+            {/* Utility Bar */}
+            <div className="bg-[#484850]">
+              <HeaderUtilityRow variant="embedded" />
             </div>
 
-            {/* Row 2 — pills/filtros */}
-            {bottomRow && (
-              <div className={cn("mx-3 mb-2.5", HEADER_STYLE.bottomRow)}>
-                {bottomRow}
+            {/* Separação */}
+            <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
+
+            {/* Page Header — card flutuante arredondado */}
+            <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 rounded-2xl pb-1")}>
+              {/* Row 1 — título/ações */}
+              <div className="px-5 pb-3 pt-4">
+                {children}
               </div>
-            )}
+
+              {/* Row 2 — pills/filtros */}
+              {bottomRow && (
+                <div className={cn("mx-3 mb-2.5", HEADER_STYLE.bottomRow)}>
+                  {bottomRow}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* ── COLLAPSED STATE ────────────────────────────────────── */}
-      <div
-        ref={collapsedRef}
-        className={cn(
-          "will-change-[transform,opacity] absolute top-0 left-0 right-0",
-          HEADER_STYLE.collapsedBar,
-        )}
-        style={{ opacity: 0, pointerEvents: "none" }}
-      >
+        {/* ── COLLAPSED STATE (absolute overlay, no layout shift) ── */}
+        <div
+          className={cn(
+            "absolute inset-x-0 top-0 transition-opacity duration-150 ease-out",
+            isCollapsed ? "opacity-100" : "opacity-0 pointer-events-none",
+            HEADER_STYLE.collapsedBar,
+          )}
+          aria-hidden={!isCollapsed}
+        >
         <div className="h-11 flex items-center px-3 gap-2">
           {/* Sidebar trigger */}
           <SidebarTrigger className="h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />

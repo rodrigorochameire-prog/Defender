@@ -31,6 +31,7 @@ import { useAssignment, Assignment } from "@/contexts/assignment-context";
 import { useProfissional, type ProfissionalConfig } from "@/contexts/profissional-context";
 import { useDefensor } from "@/contexts/defensor-context";
 import { usePermissions } from "@/hooks/use-permissions";
+import { PeerSwitcherSection } from "@/components/layout/peer-switcher-section";
 
 // ==========================================
 // TIPOS
@@ -511,6 +512,8 @@ function ContextPopoverContent({
             )}
           </button>
         )}
+
+        <PeerSwitcherSection />
       </div>
 
       {/* Secao: Visao Integrada */}
