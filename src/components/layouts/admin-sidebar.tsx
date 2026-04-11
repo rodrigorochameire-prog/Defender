@@ -1815,7 +1815,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       </Sidebar>
 
       {/* Main Content */}
-      <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-[#f0f0ee]")}>
+      <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-[#f0f0f0]")}>
         <ReadOnlyFieldset>
           <PageHeaderProvider>
             <ConditionalHeader />

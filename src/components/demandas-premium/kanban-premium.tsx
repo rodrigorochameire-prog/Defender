@@ -172,7 +172,8 @@ function KanbanCard({
         relative group/kcard cursor-grab active:cursor-grabbing
         rounded-xl bg-white dark:bg-neutral-900
         border-[1.5px]
-        hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] dark:hover:shadow-black/20
+        shadow-sm shadow-black/[0.04]
+        hover:shadow-md hover:shadow-black/[0.08] dark:hover:shadow-black/20
         hover:-translate-y-0.5
         transition-all duration-200
         overflow-hidden
@@ -363,9 +364,10 @@ function ColumnHeader({
   return (
     <div
       className={`
-        flex items-center gap-2 px-3.5 py-2.5 rounded-lg min-h-[48px]
+        flex items-center gap-2 px-3.5 py-2.5 rounded-xl min-h-[44px]
         bg-white dark:bg-neutral-900
-        border border-neutral-200/80 dark:border-neutral-800/80
+        border border-neutral-200/60 dark:border-neutral-800/60
+        shadow-sm shadow-black/[0.03]
         ${onToggleExpand ? "cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors" : ""}
       `}
       style={{ borderBottomColor: `${color}40`, borderBottomWidth: 2 }}
@@ -415,7 +417,7 @@ function SubGroupHeader({
 
   return (
     <div
-      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/80 dark:bg-neutral-900/80 border border-neutral-200/60 dark:border-neutral-800/60"
       style={{ borderBottomColor: `${color}40`, borderBottomWidth: 2 }}
     >
       <div
