@@ -567,16 +567,7 @@
     box-shadow: none;
   }
 
-  /* Medium: charcoal levemente mais escuro */
-  .medium .glass-sidebar {
-    background: #303036;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-right: 1px solid #42424a;
-    box-shadow: none;
-  }
-
-  /* Dark/Noturno: charcoal harmonizado */
+  /* Dark: charcoal harmonizado */
   .dark .glass-sidebar {
     background: #2a2a30;
     backdrop-filter: none;
