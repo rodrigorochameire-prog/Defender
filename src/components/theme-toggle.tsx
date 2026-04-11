@@ -32,7 +32,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className={`relative h-8 w-8 rounded-full border transition-all duration-200 ${config.buttonClass}`}
+      className={`relative h-7 w-7 rounded-full border transition-all duration-200 ${config.buttonClass}`}
       aria-label={config.ariaLabel}
     >
       <Icon className={config.iconClass} />

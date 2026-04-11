@@ -227,7 +227,7 @@ export function CommandPalette() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-2 text-xs bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-8 px-2 sm:px-3"
+        className="gap-1.5 text-[10px] bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-7 px-2"
         onClick={() => setOpen(true)}
       >
         <Search className="h-4 w-4" />

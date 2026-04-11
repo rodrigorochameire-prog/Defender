@@ -143,11 +143,11 @@ export function NotificationsPopover() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-full bg-muted hover:bg-muted/80 border border-border hover:border-emerald-500/50 relative transition-all duration-200"
+          className="h-7 w-7 rounded-full bg-muted hover:bg-muted/80 border border-border hover:border-emerald-500/50 relative transition-all duration-200"
         >
-          <Bell className="h-5 w-5 text-foreground/80" />
+          <Bell className="h-3.5 w-3.5 text-foreground/80" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-5 w-5 rounded-full bg-red-500 text-xs font-bold text-white flex items-center justify-center shadow-sm animate-pulse">
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center shadow-sm animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
