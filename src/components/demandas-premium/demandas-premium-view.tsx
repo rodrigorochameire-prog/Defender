@@ -2231,15 +2231,15 @@ export default function Demandas() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <div className="relative group/import">
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="w-7 h-7 rounded-lg bg-[#48484e] text-white/60 hover:bg-[#525258] hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                className="w-9 h-9 rounded-xl bg-white/[0.08] text-white/60 ring-1 ring-white/[0.04] hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Importar"
               >
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4" />
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -2283,10 +2283,10 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="w-7 h-7 rounded-lg bg-[#48484e] text-white/60 hover:bg-[#525258] hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                className="w-9 h-9 rounded-xl bg-white/[0.08] text-white/60 ring-1 ring-white/[0.04] hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Exportar"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-4 h-4" />
               </button>
               {isExportDropdownOpen && createPortal(
                 <>
@@ -2330,10 +2330,10 @@ export default function Demandas() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-7 h-7 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer flex items-center justify-center"
+              className="w-9 h-9 rounded-xl bg-white text-neutral-800 shadow-sm hover:bg-neutral-100 hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center"
               title="Nova demanda"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4.5 h-4.5" />
             </button>
           </div>
         </div>
