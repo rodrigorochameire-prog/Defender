@@ -260,17 +260,17 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           isActive={isActive}
           tooltip={item.label}
           className={cn(
-            "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
+            "h-10 w-10 p-0 mx-auto transition-colors duration-150 rounded-lg flex items-center justify-center",
             isActive
-              ? "bg-emerald-500/20 text-emerald-400"
-              : "text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.10] hover:text-neutral-900 dark:hover:text-neutral-200"
+              ? "bg-[#48484e] text-emerald-400"
+              : "text-white/40 hover:bg-[#3e3e44] hover:text-white/70"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
             <Icon className={cn(
-              "h-5 w-5 transition-all duration-200",
-              isActive ? "text-emerald-400" : "text-neutral-500 dark:text-neutral-400"
-            )} strokeWidth={isActive ? 2.5 : 2} />
+              "h-[18px] w-[18px] transition-colors duration-150",
+              isActive ? "text-emerald-400" : ""
+            )} strokeWidth={isActive ? 2.5 : 1.8} />
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -284,18 +284,18 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          "h-10 transition-all duration-250 ease-in-out rounded-xl group/item relative overflow-hidden",
+          "h-9 transition-colors duration-150 rounded-lg group/item relative",
           isActive
-            ? "bg-emerald-500/20 text-emerald-400 font-semibold"
-            : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.10] hover:scale-[1.01]"
+            ? "bg-[#48484e] text-white font-semibold"
+            : "text-white/50 hover:text-white/80 hover:bg-[#3e3e44]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           <Icon className={cn(
-            "h-[18px] w-[18px] mr-2.5 transition-all duration-200 flex-shrink-0",
-            isActive ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
+            "h-[16px] w-[16px] mr-2.5 transition-colors duration-150 flex-shrink-0",
+            isActive ? "text-emerald-400" : "text-white/40 group-hover/item:text-white/60"
           )} strokeWidth={isActive ? 2.5 : 1.8} />
-          <span className="text-[13px] font-medium truncate">{item.label}</span>
+          <span className="text-[12px] font-medium truncate">{item.label}</span>
           {item.isPremium && (
             <Sparkles className="h-3 w-3 text-emerald-400 ml-auto" />
           )}
@@ -310,11 +310,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
 // ==========================================
 
 function NavDivider({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) {
-    return <div className="my-3 mx-2 h-px bg-black/[0.06] dark:bg-white/[0.06]" />;
-  }
-
-  return <div className="my-3 mx-3 h-px bg-black/[0.06] dark:bg-white/[0.06]" />;
+  return <div className={cn("my-3 h-px bg-[#3e3e44]", collapsed ? "mx-2" : "mx-3")} />;
 }
 
 // ==========================================
@@ -1670,7 +1666,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         )}
       >
         {/* Header */}
-        <SidebarHeader className="h-[60px] border-b border-black/[0.06] dark:border-white/[0.04] flex items-center justify-center px-3">
+        <SidebarHeader className="h-[60px] border-b border-[#3e3e44] flex items-center justify-center px-3">
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
@@ -1782,44 +1778,32 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </SidebarContent>
 
         {/* Footer Premium Glass */}
-        <SidebarFooter className="border-t border-black/[0.06] dark:border-white/[0.06] p-0">
+        <SidebarFooter className="border-t border-[#3e3e44] p-0">
           {/* Status Bar */}
           <StatusBar collapsed={isCollapsed} />
 
-          {/* Card do usuário */}
-          <div className="p-3">
+          {/* Card do usuário — clean */}
+          <div className="p-2.5">
             <div className={cn(
-              "flex items-center gap-3 p-2.5 rounded-2xl transition-all duration-200 group/user",
-              "bg-white/40 dark:bg-white/[0.04]",
-              "hover:bg-white/70 dark:hover:bg-white/[0.08]",
-              "border border-black/[0.06] dark:border-white/[0.06]",
-              "hover:border-emerald-200/30 dark:hover:border-emerald-500/10",
-              "hover:shadow-sm hover:shadow-emerald-500/5"
+              "flex items-center gap-2.5 p-2 rounded-lg transition-colors duration-150 group/user",
+              "hover:bg-[#3e3e44]"
             )}>
-              <Avatar className={cn(
-                "h-10 w-10 transition-all duration-200",
-                "ring-2 ring-black/[0.08] dark:ring-white/[0.1] ring-offset-2 ring-offset-transparent",
-                "group-hover/user:ring-emerald-500/30 group-hover/user:scale-105"
-              )}>
-                <AvatarFallback className="bg-gradient-to-br from-neutral-600 via-neutral-700 to-neutral-800 text-white font-bold text-sm shadow-inner">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-[#48484e] text-white/80 font-semibold text-xs">
                   {userName.replace(/^(Dr\.|Dra\.|Dr |Dra )/i, '').trim().charAt(0).toUpperCase() || userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 truncate tracking-tight">
+                  <p className="text-[12px] font-medium text-white/80 truncate tracking-tight">
                     {userName}
                   </p>
                   <button
                     onClick={handleLogout}
-                    className={cn(
-                      "text-[11px] flex items-center gap-1.5 mt-0.5 transition-all duration-200",
-                      "text-neutral-500 hover:text-red-400",
-                      "font-medium"
-                    )}
+                    className="text-[10px] flex items-center gap-1 mt-0.5 text-white/30 hover:text-red-400 transition-colors font-medium"
                   >
-                    <LogOut className="w-3 h-3" />
-                    Sair da conta
+                    <LogOut className="w-2.5 h-2.5" />
+                    Sair
                   </button>
                 </div>
               )}
