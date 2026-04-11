@@ -2033,7 +2033,7 @@ export default function Demandas() {
         icon={ListTodo}
         collapsedStats={
           <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#454545] text-white/90 tabular-nums">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#454547] text-white/90 tabular-nums">
               {demandas.filter(d => !d.arquivado).length} total
             </span>
           </>
@@ -2052,7 +2052,7 @@ export default function Demandas() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar..."
-              className="w-full bg-[#3a3a3a] border border-[#505050] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none"
+              className="w-full bg-[#3a3a3c] border border-[#505052] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none"
             />
           </div>
         }

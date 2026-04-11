@@ -27,7 +27,7 @@ export function MobileBottomNav() {
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "md:hidden",
-        "bg-[#1f1f23]/95 backdrop-blur-xl",
+        "bg-[#303032]/95 backdrop-blur-xl",
         "border-t border-neutral-700/30",
         "h-16 pb-[env(safe-area-inset-bottom)]"
       )}
