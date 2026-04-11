@@ -170,7 +170,7 @@ export default function ModelosPage() {
     <div className="min-h-screen bg-neutral-100 dark:bg-background">
       <CollapsiblePageHeader
         title="Modelos"
-        icon={FileStack}
+        icon={FileText}
         bottomRow={
           <div className="flex items-center gap-2">
             {/* Stats Ribbon */}
@@ -205,13 +205,13 @@ export default function ModelosPage() {
                 placeholder="Buscar modelos..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 bg-[#3e3e44] border border-[#525258] text-white/90 placeholder:text-white/40"
+                className="pl-9 bg-black/[0.15] ring-1 ring-white/[0.08] border-0 rounded-lg py-1.5 text-[11px] text-white/90 placeholder:text-white/40"
               />
             </div>
 
             {/* Filtro de Categoria */}
             <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-[#3e3e44] border border-[#525258] text-white/90">
+              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-black/[0.15] ring-1 ring-white/[0.08] border-0 rounded-lg text-white/90">
                 <Filter className="w-4 h-4 mr-2 text-white/40" />
                 <SelectValue placeholder="Categoria" />
               </SelectTrigger>
@@ -226,14 +226,14 @@ export default function ModelosPage() {
             </Select>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 bg-[#3e3e44] rounded-lg">
+            <div className="flex items-center gap-1 p-1 bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg">
               <button
                 onClick={() => setViewMode("grid")}
                 className={cn(
                   "p-2 rounded-md transition-colors",
                   viewMode === "grid"
-                    ? "bg-[#525258] shadow-sm text-white/90"
-                    : "text-white/50 hover:bg-[#525258]/50"
+                    ? "bg-white/[0.14] shadow-sm text-white/90"
+                    : "text-white/50 hover:bg-white/[0.08]"
                 )}
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -243,8 +243,8 @@ export default function ModelosPage() {
                 className={cn(
                   "p-2 rounded-md transition-colors",
                   viewMode === "list"
-                    ? "bg-[#525258] shadow-sm text-white/90"
-                    : "text-white/50 hover:bg-[#525258]/50"
+                    ? "bg-white/[0.14] shadow-sm text-white/90"
+                    : "text-white/50 hover:bg-white/[0.08]"
                 )}
               >
                 <List className="w-4 h-4" />
@@ -253,13 +253,31 @@ export default function ModelosPage() {
           </div>
         }
       >
-        <div className="flex items-center gap-2">
-          <Link href="/admin/modelos/novo">
-            <Button size="sm" className="h-8 px-3 bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-medium rounded-md transition-colors">
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              Novo Modelo
-            </Button>
-          </Link>
+        <div className="flex items-center justify-between">
+          {/* Left: icon + title + stats */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <FileText className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Modelos</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {statsCards.totalModelos} modelos · {statsCards.totalGerados} gerados
+              </p>
+            </div>
+          </div>
+
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-1.5">
+            <Link href="/admin/modelos/novo">
+              <button
+                className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                title="Novo Modelo"
+              >
+                <Plus className="w-[15px] h-[15px]" />
+              </button>
+            </Link>
+          </div>
         </div>
       </CollapsiblePageHeader>
 
