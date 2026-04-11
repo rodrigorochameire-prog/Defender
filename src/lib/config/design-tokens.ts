@@ -94,12 +94,12 @@ export const HEADER_STYLE = {
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
   /** Utility Bar — entre sidebar e page header */
-  utilityRow: "bg-[#3c3c3e]",
+  utilityRow: "bg-[#454547]",
   utilityText: "text-white/60 text-[10px]",
   utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/50",
   /** Collapsed — mesmo da utility */
-  collapsedBar: "bg-[#3c3c3e]",
+  collapsedBar: "bg-[#454547]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 
