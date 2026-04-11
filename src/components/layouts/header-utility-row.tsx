@@ -62,15 +62,15 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
         {/* Conflict badge */}
         <ConflictBadge />
 
-        {/* Controls */}
-        <div className="flex items-center gap-1">
+        {/* Controls — scale down para caber na barra compacta */}
+        <div className="flex items-center gap-0.5 [&>*]:scale-[0.78] [&>*]:origin-center">
           <CommandPalette />
           <ThemeToggle />
           <NotificationsPopover />
           <button
             onClick={handleChatToggle}
             title="Assistente OMBUDS"
-            className="inline-flex items-center justify-center h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors"
           >
             <MessageSquare className="h-3.5 w-3.5" />
           </button>

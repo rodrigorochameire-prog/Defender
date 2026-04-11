@@ -576,12 +576,12 @@
     box-shadow: none;
   }
 
-  /* Dark/Noturno: deep sidebar */
+  /* Dark/Noturno: sidebar harmonizada com utility bar */
   .dark .glass-sidebar {
-    background: #171717;
+    background: #2e2e34;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid #262626;
+    border-right: 1px solid #3a3a40;
     box-shadow: none;
   }
 

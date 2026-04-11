@@ -84,13 +84,13 @@ export const CARD_STYLE = {
 
 export const HEADER_STYLE = {
   /** Moldura: cor sólida escura, sem gradient */
-  container: "rounded-xl bg-[#333338]",
+  container: "rounded-xl bg-[#2e2e34]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
   separator: "w-[1.5px] h-3.5 bg-white/25 rounded-full",
   /** Inset: cor sólida mais clara, envolvido pela moldura */
-  bottomRow: "bg-[#48484e] rounded-lg px-3.5 py-2.5",
+  bottomRow: "bg-[#3a3a40] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
   /** Utility row (Row 0): barra fina de utilitários globais */
@@ -99,7 +99,7 @@ export const HEADER_STYLE = {
   utilityButton: "w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/40",
   /** Collapsed: barra única compacta */
-  collapsedBar: "bg-[#222228] border-b border-white/[0.06]",
+  collapsedBar: "bg-[#2e2e34] border-b border-white/[0.06]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 

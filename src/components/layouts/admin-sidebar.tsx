@@ -263,7 +263,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
             "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
             isActive
               ? "bg-emerald-500/15 text-emerald-400"
-              : "text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-neutral-900 dark:hover:text-neutral-200"
+              : "text-neutral-600 dark:text-neutral-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] hover:text-neutral-900 dark:hover:text-neutral-200"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
@@ -287,7 +287,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           "h-10 transition-all duration-250 ease-in-out rounded-xl group/item relative overflow-hidden",
           isActive
             ? "bg-emerald-500/15 text-emerald-400 font-semibold"
-            : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:scale-[1.01]"
+            : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.05] dark:hover:bg-white/[0.10] hover:scale-[1.01]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
