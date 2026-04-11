@@ -19,6 +19,17 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
+// Lê o selectedDefensorId do localStorage para injetar como header.
+// Chave vem de src/contexts/defensor-context.tsx (STORAGE_KEY).
+function getDefensorScopeHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const scope = window.localStorage.getItem("defesahub_selected_defensor");
+  if (scope && scope !== "null" && scope !== "undefined") {
+    return { "x-defensor-scope": scope };
+  }
+  return {};
+}
+
 // Queries leves que devem resolver rápido (auth, notificações, configs)
 const FAST_QUERIES = new Set([
   "users.me",
@@ -78,6 +89,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           true: httpLink({
             url,
             transformer: superjson,
+            headers: getDefensorScopeHeader,
             fetch: (input, init) =>
               fetch(input, { ...init, signal: AbortSignal.timeout(15_000) }),
           }),
@@ -88,6 +100,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               url,
               transformer: superjson,
               maxURLLength: 2083,
+              headers: getDefensorScopeHeader,
               fetch: (input, init) =>
                 fetch(input, { ...init, signal: AbortSignal.timeout(10_000) }),
             }),
@@ -96,6 +109,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               url,
               transformer: superjson,
               maxURLLength: 2083,
+              headers: getDefensorScopeHeader,
               fetch: (input, init) =>
                 fetch(input, { ...init, signal: AbortSignal.timeout(30_000) }),
             }),
