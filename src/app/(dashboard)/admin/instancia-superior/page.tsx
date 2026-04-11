@@ -124,15 +124,32 @@ export default function InstanciaSuperiorPage() {
           </div>
         }
       >
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setCreateOpen(true)}
-            size="sm"
-            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Novo Recurso
-          </Button>
+        <div className="flex items-center justify-between">
+          {/* Left: icon + title + stats */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Landmark className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Instância Superior</h1>
+              {!statsLoading && (
+                <p className="text-[10px] text-white/55 tabular-nums">
+                  {stats?.total ?? 0} recursos · {stats?.pendentes ?? 0} pendentes
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Right: action buttons */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setCreateOpen(true)}
+              title="Novo Recurso"
+              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+            >
+              <Plus className="w-[15px] h-[15px]" />
+            </button>
+          </div>
         </div>
       </CollapsiblePageHeader>
 
@@ -210,12 +227,12 @@ function HeaderStat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-lg px-3.5 py-2.5 bg-[#56565e]">
+    <div className="rounded-lg px-3.5 py-2.5 bg-white/[0.10]">
       <span className="text-[9px] uppercase tracking-widest text-white/70 font-medium block">
         {label}
       </span>
       {loading ? (
-        <div className="h-6 w-10 rounded bg-[#4a4a52] animate-pulse mt-1" />
+        <div className="h-6 w-10 rounded bg-white/[0.08] animate-pulse mt-1" />
       ) : (
         <span className={cn(
           "text-xl font-bold tabular-nums block mt-0.5",

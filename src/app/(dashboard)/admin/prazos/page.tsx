@@ -287,7 +287,20 @@ export default function PrazosPage() {
           </div>
         }
       >
-        <div className="flex items-center gap-2" />
+        <div className="flex items-center justify-between">
+          {/* Left: icon + title + stats */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Prazos</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {stats.vencidos > 0 && `${stats.vencidos} vencidos · `}{prazos.length} total
+              </p>
+            </div>
+          </div>
+        </div>
       </CollapsiblePageHeader>
 
       <div className="p-4 md:p-6 space-y-5">
