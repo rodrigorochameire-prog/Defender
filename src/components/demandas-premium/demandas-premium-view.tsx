@@ -2243,33 +2243,34 @@ export default function Demandas() {
               {isImportDropdownOpen && createPortal(
                 <>
                   <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
-                  <div className="fixed z-[9999] w-44 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+                  <div className="fixed z-[9999] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Importar de</div>
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <FileText className="w-4 h-4 text-blue-600" />
+                      <FileText className="w-3.5 h-3.5 text-neutral-400" />
                       <span>PJe (copiar/colar)</span>
                     </button>
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <Download className="w-4 h-4 text-emerald-600" />
+                      <Download className="w-3.5 h-3.5 text-neutral-400" />
                       <span>Excel</span>
                     </button>
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
                       <span>Google Sheets</span>
                     </button>
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <Gavel className="w-4 h-4 text-amber-600" />
+                      <Gavel className="w-3.5 h-3.5 text-neutral-400" />
                       <span>SEEU</span>
                     </button>
                   </div>
@@ -2289,34 +2290,36 @@ export default function Demandas() {
               {isExportDropdownOpen && createPortal(
                 <>
                   <div className="fixed inset-0 z-[9998]" onClick={() => setIsExportDropdownOpen(false)} />
-                  <div className="fixed z-[9999] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1" style={(() => { const r = exportBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+                  <div className="fixed z-[9999] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1" style={(() => { const r = exportBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Exportar</div>
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); setIsExportModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <Upload className="w-4 h-4 text-emerald-600" />
-                      <span>Exportar Excel</span>
+                      <Upload className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>Excel</span>
                     </button>
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); handleExportSheets(); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                      <span>Exportar p/ Sheets</span>
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>Google Sheets</span>
                     </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                    <div className="h-px bg-neutral-100 dark:bg-neutral-800 my-1" />
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ferramentas</div>
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); handleReorderSheets(); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <RefreshCw className="w-4 h-4 text-blue-600" />
+                      <RefreshCw className="w-3.5 h-3.5 text-neutral-400" />
                       <span>Reordenar planilha</span>
                     </button>
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); setIsDuplicatesModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      <Copy className="w-4 h-4 text-amber-600" />
+                      <Copy className="w-3.5 h-3.5 text-neutral-400" />
                       <span>Encontrar duplicatas</span>
                     </button>
                   </div>
