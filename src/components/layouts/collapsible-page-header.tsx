@@ -69,12 +69,18 @@ export function CollapsiblePageHeader({
 
     const scrollTarget = getScrollParent(el.parentElement);
 
+    let lastCollapsed = false;
     function handleScroll() {
       const scrollTop =
         scrollTarget === window
           ? window.scrollY
           : (scrollTarget as HTMLElement).scrollTop;
-      setIsCollapsed(scrollTop > 10);
+      // Hysteresis: collapse at 20px, expand back at 5px — prevents flickering
+      const next = lastCollapsed ? scrollTop > 5 : scrollTop > 20;
+      if (next !== lastCollapsed) {
+        lastCollapsed = next;
+        setIsCollapsed(next);
+      }
     }
 
     scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
@@ -94,10 +100,10 @@ export function CollapsiblePageHeader({
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
         className={cn(
-          "transition-all duration-300 ease-out",
+          "transition-[transform,opacity] duration-200 ease-out origin-top will-change-[transform,opacity]",
           isCollapsed
-            ? "opacity-0 max-h-0 overflow-hidden pointer-events-none"
-            : "opacity-100",
+            ? "opacity-0 scale-y-0 h-0 pointer-events-none"
+            : "opacity-100 scale-y-100",
         )}
         aria-hidden={isCollapsed}
       >
@@ -130,10 +136,10 @@ export function CollapsiblePageHeader({
       {/* ── COLLAPSED STATE ────────────────────────────────────── */}
       <div
         className={cn(
-          "transition-all duration-300 ease-out overflow-hidden",
+          "transition-[transform,opacity] duration-200 ease-out origin-top will-change-[transform,opacity]",
           isCollapsed
-            ? "opacity-100 max-h-14"
-            : "opacity-0 max-h-0 pointer-events-none",
+            ? "opacity-100 scale-y-100"
+            : "opacity-0 scale-y-0 h-0 pointer-events-none",
           HEADER_STYLE.collapsedBar,
         )}
         aria-hidden={!isCollapsed}
