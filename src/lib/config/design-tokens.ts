@@ -83,14 +83,14 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — gradiente sutil para profundidade */
-  container: "rounded-xl bg-gradient-to-b from-[#4a4a52] to-[#454550]",
+  /** Page Header — card flutuante com profundidade */
+  container: "rounded-2xl bg-gradient-to-b from-[#4a4a52] to-[#454550] ring-1 ring-white/[0.06] shadow-lg shadow-black/[0.08]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/80 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
   separator: "w-[1.5px] h-3.5 bg-white/15 rounded-full",
-  /** Inset row — levemente mais escuro que o container */
-  bottomRow: "bg-[#404048] rounded-lg px-3.5 py-2.5",
+  /** Inset row — mais claro que o container, glass sutil */
+  bottomRow: "bg-white/[0.07] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.04]",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
   /** Utility Bar — cinza quente, moldura do topo */

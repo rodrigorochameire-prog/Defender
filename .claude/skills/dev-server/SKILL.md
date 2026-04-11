@@ -20,18 +20,23 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin/dashboard
 
 ## Reinicialização Limpa (receita padrão)
 
+**IMPORTANTE**: NÃO usar `npm run dev` — ele usa `--turbopack` que TRAVA na compilação. Usar `npx next dev` diretamente.
+
 ```bash
 # Matar TODOS os processos next dev e node na porta 3000/3002
-pkill -f "next dev" 2>/dev/null
+pkill -9 -f "next" 2>/dev/null
 kill $(lsof -ti :3000) 2>/dev/null
 kill $(lsof -ti :3002) 2>/dev/null
-sleep 2
+sleep 1
 
-# Subir limpo em background
-npm run dev > /tmp/defender-dev.log 2>&1 &
+# Verificar AUTH_SECRET
+grep "^AUTH_SECRET" .env.local || echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env.local
+
+# Subir SEM TURBOPACK em background
+npx next dev --port 3000 > /tmp/defender-dev.log 2>&1 &
 
 # Aguardar e confirmar
-sleep 6 && tail -15 /tmp/defender-dev.log
+sleep 4 && tail -15 /tmp/defender-dev.log
 ```
 
 Confirmar que a saída mostra `✓ Ready` e `localhost:3000` (não 3002).
@@ -63,6 +68,8 @@ open -a "Google Chrome" "http://localhost:3000/admin/dashboard"
 | Página em branco | Cache do browser | Cmd+Shift+R no Chrome |
 | "Cannot find module" no log | .next corrompido | `rm -rf .next && npm run dev` |
 | Erro de hidratação | Server/Client mismatch no código | Verificar console do browser |
+| Trava ao carregar | `--turbopack` no npm run dev | Usar `npx next dev` sem turbopack |
+| "Configuração de autenticação" | AUTH_SECRET faltando no .env.local | `echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env.local` |
 
 ## Comportamento proativo
 

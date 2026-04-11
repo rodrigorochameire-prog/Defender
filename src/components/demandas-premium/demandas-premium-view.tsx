@@ -2089,10 +2089,10 @@ export default function Demandas() {
             <div className="relative">
               <button
                 onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                className="relative w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.10] hover:rotate-45 transition-all duration-200 cursor-pointer"
                 title="Configurações"
               >
-                <Settings className="w-[14px] h-[14px] text-white/40" />
+                <Settings className="w-[14px] h-[14px] text-white/50" />
                 {(() => {
                   const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
                   return count > 0 ? (
@@ -2201,22 +2201,22 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
-              <LayoutGrid className="w-[15px] h-[15px] text-white/70" />
+            <div className="w-8 h-8 rounded-xl bg-white/[0.08] ring-1 ring-white/[0.06] flex items-center justify-center">
+              <LayoutGrid className="w-[15px] h-[15px] text-white/80" />
             </div>
             <h1 className="text-white text-[17px] font-semibold tracking-tight">Demandas</h1>
-            <div className="flex items-center gap-1.5 ml-2">
+            <div className="flex items-center gap-1.5 ml-1.5">
               {(() => {
                 const total = demandas.filter(d => !d.arquivado).length;
                 const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
                 return (
                   <>
-                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
-                      {total} total
+                    <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-white/[0.08] text-white/70 tabular-nums">
+                      {total}
                     </span>
                     {urgent > 0 && (
-                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 tabular-nums">
-                        {urgent} urgentes
+                      <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-red-500/15 text-red-400/90 tabular-nums">
+                        {urgent} urg.
                       </span>
                     )}
                   </>
@@ -2224,11 +2224,11 @@ export default function Demandas() {
               })()}
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <div className="relative group/import">
               <button
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="w-8 h-8 rounded-lg bg-[#4a4a52] text-white/80 hover:bg-[#525258] hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center ring-1 ring-white/[0.04]"
                 title="Importar"
               >
                 <Download className="w-3.5 h-3.5" />
@@ -2272,7 +2272,7 @@ export default function Demandas() {
             <div className="relative">
               <button
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="w-8 h-8 rounded-lg bg-[#4a4a52] text-white/80 hover:bg-[#525258] hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center ring-1 ring-white/[0.04]"
                 title="Exportar"
               >
                 <Upload className="w-3.5 h-3.5" />
@@ -2316,7 +2316,7 @@ export default function Demandas() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-8 h-8 rounded-lg bg-white text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer flex items-center justify-center"
+              className="w-8 h-8 rounded-xl bg-white text-neutral-900 hover:bg-neutral-100 hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center shadow-sm"
               title="Nova demanda"
             >
               <Plus className="w-4 h-4" />
