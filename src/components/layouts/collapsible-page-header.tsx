@@ -121,7 +121,7 @@ export function CollapsiblePageHeader({
       >
         <div className="overflow-visible">
           {/* Utility Bar — moldura escura */}
-          <div className="bg-[#353540]">
+          <div className="bg-[#48484e]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
