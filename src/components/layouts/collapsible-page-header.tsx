@@ -101,26 +101,29 @@ export function CollapsiblePageHeader({
         )}
         aria-hidden={isCollapsed}
       >
-        <div className="overflow-hidden">
-          {/* Utility Bar — barra própria com respiro */}
+        <div className="overflow-visible">
+          {/* Utility Bar */}
           <div className="bg-[#484850]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Espaço de separação entre utility bar e page header */}
-          <div className="h-1.5 bg-neutral-200/80 dark:bg-black/20" />
+          {/* Separação */}
+          <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
 
-          {/* Row 1 — título/ações */}
-          <div className="bg-[#404048] px-5 pb-3 pt-3.5">
-            {children}
-          </div>
-
-          {/* Row 2 — pills/filtros, mais claro */}
-          {bottomRow && (
-            <div className="bg-gradient-to-b from-[#4a4a52] to-[#48484f] px-5 pb-3 pt-2 border-t border-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              {bottomRow}
+          {/* Page Header — card flutuante arredondado */}
+          <div className="mx-4 lg:mx-5 mb-2 rounded-2xl bg-gradient-to-b from-[#434349] to-[#3e3e44] ring-1 ring-white/[0.06] shadow-lg shadow-black/[0.08] overflow-hidden">
+            {/* Row 1 — título/ações */}
+            <div className="px-5 pb-3 pt-4">
+              {children}
             </div>
-          )}
+
+            {/* Row 2 — pills/filtros */}
+            {bottomRow && (
+              <div className="px-5 pb-3.5 pt-2 border-t border-white/[0.05]">
+                {bottomRow}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
