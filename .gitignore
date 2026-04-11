@@ -6,6 +6,9 @@ pnpm-lock.yaml
 # Python
 __pycache__/
 *.pyc
+notebooks/.venv/
+notebooks/.ipynb_checkpoints/
+.ipynb_checkpoints/
 
 # Next.js
 .next/

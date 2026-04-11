@@ -1,0 +1,7 @@
+pandas>=2.2
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+plotly>=5.20
+python-dotenv>=1.0
+jupyter>=1.0
+ipykernel>=6.29
