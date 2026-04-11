@@ -89,8 +89,8 @@ export const HEADER_STYLE = {
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
   separator: "w-px h-3.5 bg-white/[0.08] rounded-full",
-  /** Inset row — glass sutil sobre o card */
-  bottomRow: "bg-white/[0.05] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.03]",
+  /** Inset row — fundo levemente mais claro, borda interna definida */
+  bottomRow: "bg-[#444444] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/50",
   /** Utility Bar — mais escuro que o header (moldura) */

@@ -2207,22 +2207,22 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white/[0.07] ring-1 ring-white/[0.05] flex items-center justify-center">
-              <LayoutGrid className="w-[15px] h-[15px] text-white/60" />
+            <div className="w-9 h-9 rounded-xl bg-[#4a4a4a] flex items-center justify-center">
+              <LayoutGrid className="w-4 h-4 text-white/80" />
             </div>
             <div>
-              <h1 className="text-white/95 text-[14px] font-semibold tracking-tight leading-tight">Demandas</h1>
-              <div className="flex items-center gap-1.5 mt-px">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
                 {(() => {
                   const total = demandas.filter(d => !d.arquivado).length;
                   const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
                   return (
                     <>
-                      <span className="text-[10px] text-white/35 tabular-nums font-medium">{total} demandas</span>
+                      <span className="text-[10px] text-white/50 tabular-nums">{total} demandas</span>
                       {urgent > 0 && (
                         <>
-                          <span className="text-white/15">·</span>
-                          <span className="text-[10px] text-red-400/70 tabular-nums font-medium">{urgent} urg.</span>
+                          <span className="text-white/25">·</span>
+                          <span className="text-[10px] text-red-400/80 tabular-nums">{urgent} urgentes</span>
                         </>
                       )}
                     </>
