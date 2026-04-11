@@ -32,7 +32,7 @@ Fundir os dois seletores em um único popover (o do `ContextControl`), eliminand
 | 2 | Gate mecânico | `sessionUser?.role === "admin"` no render, mais middleware tRPC no backend |
 | 3 | Indicação do modo "vendo como" | Sutil + **read-only forçado** (botões de ação desabilitados, mutations bloqueadas) |
 | 4 | Layout | Seção colapsável dentro do popover do ContextControl, abaixo do PERFIL ATIVO |
-| 5 | Danilo/Cristiane | Sair de `profissionaisConfigs` — Rodrigo confirmou que não usa mais o clique neles para "virar profissional" |
+| 5 | Danilo/Cristiane | **REVISADO 2026-04-10:** Permanecem em `profissionaisConfigs` e `DEFENSORES_CONFIG` (necessário pro login próprio deles funcionar). A mudança é só visual: o colapsável "varas_criminais" do PERFIL ATIVO é removido, e eles passam a aparecer na nova seção "Outros defensores" via `workspaceDefensores`. |
 | 6 | Agrupamento da nova seção | Subgrupos "Camaçari" e "RMS" (cosmético, ambos consomem `workspaceDefensores`) |
 | 7 | Rename do botão "Ver todos os colegas" | Para "Visão agregada" — elimina ambiguidade com a nova seção |
 
@@ -146,7 +146,7 @@ O frontend é apenas UX preventiva; o backend é a barreira real.
 | Middleware de escrita bloqueia uma mutation que não deveria ser bloqueada (ex: o admin mudando configuração pessoal dele enquanto tem um peer selecionado) | Falso positivo frustra o admin | Lista de allowlist explícita de procedures (ou namespace) que ignoram o middleware: `users.updateSelf`, `auth.*`, `settings.personal.*`. Documentar no próprio middleware. |
 | Peer selecionado persiste no localStorage e admin esquece que está no modo ao voltar no dia seguinte | Confusão + frustração | O `DefensorContext` **não** persiste `selectedDefensorId` entre sessões — reset ao fazer login ou ao recarregar a página. Se já persiste hoje, adicionar limpeza no mount. |
 | Remoção de `<DefensorSwitcher />` sem antes migrar alguma dependência dele que eu não vi | Import quebrado, build falha | O arquivo será deletado apenas após `grep -rn "DefensorSwitcher" src/` confirmar que só existia o uso em `admin-sidebar.tsx`. |
-| **Danilo e Cristiane podem não existir como usuários no banco** (`users` table). Se removermos do `DEFENSORES_CONFIG` sem verificar, eles somem do UI por completo. | Regressão: a lista "Outros defensores" fica sem eles, contrariando o intento do design. | **Primeiro passo do plano de implementação**, antes de qualquer edição de código: rodar `SELECT id, name, email, role, approval_status FROM users WHERE name ILIKE '%danilo%' OR name ILIKE '%cristiane%'`. Três cenários possíveis: (1) já existem aprovados → seguir o plano como está; (2) existem mas não aprovados → aprovar manualmente como parte do plano; (3) não existem → criar como novos usuários (sem login ativo, só presença no workspace) OU manter Danilo/Cristiane no `DEFENSORES_CONFIG` por enquanto e marcar como "virtuais" no render, aceitando que o clique neles seja no-op até que tenham contas reais. A decisão entre criar ou manter vira uma escolha no plano, não neste spec. |
+| **RESOLVIDO 2026-04-10:** Danilo e Cristiane existem como usuários aprovados no banco (ids 3 e 2, comarca_id=1). Confirmado via query em Task 1 do plano. | — | — |
 
 ## Critérios de aceitação
 
@@ -156,7 +156,7 @@ O frontend é apenas UX preventiva; o backend é a barreira real.
 4. Clicar em um peer atualiza o avatar principal do ContextControl para o peer, e todos os botões de ação de escrita ficam desabilitados com tooltip explicando.
 5. Tentar chamar qualquer mutation de escrita via tRPC retorna `FORBIDDEN` quando `selectedDefensorId !== ctx.user.id`.
 6. Clicar em "Voltar ao meu perfil" (ou no próprio avatar) restaura o estado normal, reabilita os botões, e nenhuma chamada de escrita é bloqueada.
-7. Danilo e Cristiane não aparecem mais no `DEFENSORES_CONFIG` nem em qualquer lookup hardcoded por string no código.
+7. Danilo e Cristiane não aparecem mais como botões clicáveis no PERFIL ATIVO (o colapsável "varas_criminais" foi apagado), mas aparecem na nova seção "Outros defensores" quando o admin expande. `DEFENSORES_CONFIG` permanece intacto para preservar o login próprio deles.
 8. `npm run build` e `npm run lint` passam.
 
 ## Escopo fora deste design (follow-ups futuros)

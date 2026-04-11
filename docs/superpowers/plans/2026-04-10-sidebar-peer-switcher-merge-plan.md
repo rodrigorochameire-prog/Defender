@@ -679,68 +679,30 @@ git commit -m "feat(trpc): workspaceDefensores retorna comarcaId [plan Task 7]"
 
 ---
 
-## Task 8: Remoção de Danilo/Cristiane do DEFENSORES_CONFIG
+## Task 8: SKIPPED — DEFENSORES_CONFIG intencionalmente preservado
 
-**Files:**
-- Modify: `src/config/defensores.ts`
+**Status:** SKIPPED em 2026-04-10 após investigação em Task 2 (sweep).
 
-**Dependência:** Task 1 deve ter confirmado cenário A ou B. Se o cenário for C sem opção c1, esta task muda (ver Task 1 Step 2).
+**Motivo:** A Task 2 descobriu que `DEFENSORES_CONFIG` e `PROFISSIONAIS_CONFIG` são consumidos pelo fluxo de login dos próprios Danilo e Cristiane via `src/hooks/useDefensorConfig.ts:64-86`. Remover as entradas quebraria o próprio login deles (UI sem atribuições, sem categorias, sem módulos).
 
-- [ ] **Step 1: Remover as entradas `"danilo"` e `"cristiane"` do `DEFENSORES_CONFIG`**
+O brainstorming tinha dois fluxos conflundidos:
+- **(A)** Rodrigo clicando em "Danilo" pra virar ele — confirmado que não usa, pode sair.
+- **(B)** Danilo mesmo logando — precisa continuar funcionando.
 
-Em `src/config/defensores.ts:43-113`, apagar os dois blocos:
+O plano original só tratou (A). A revisão aprovada pelo Rodrigo em 2026-04-10 é: **não tocar nas configs estáticas**. A remoção visual do "Danilo/Cristiane como botões no PERFIL ATIVO" acontece via Task 9 (apagar o colapsável "varas_criminais"). A aparição deles na nova seção "Outros defensores" acontece via Task 11 (eles já estão em `workspaceDefensores` com `comarca_id=1`, confirmado em Task 1).
 
-```ts
-// Dr. Danilo - Criminal Geral é o principal
-"danilo": {
-  ...
-},
-
-// Dra. Cristiane - Criminal Geral é o principal
-"cristiane": {
-  ...
-},
-```
-
-- [ ] **Step 2: Remover as linhas correspondentes de `getDefensorByUserName`**
-
-Em `src/config/defensores.ts:148-154`, remover:
-
-```ts
-if (normalizedName.includes("danilo")) return DEFENSORES_CONFIG["danilo"];
-if (normalizedName.includes("cristiane")) return DEFENSORES_CONFIG["cristiane"];
-```
-
-- [ ] **Step 3: Rodar typecheck**
-
-Run: `npm run typecheck`
-Expected: erros em lugares que referenciam `DEFENSORES_CONFIG["danilo"]` ou `DEFENSORES_CONFIG["cristiane"]` diretamente. Usar o resultado de Task 2 como mapa. Para cada erro:
-
-- Se a referência é morta (não roda em produção): deletar o código morto.
-- Se é viva: substituir pela lookup equivalente em `workspaceDefensores` ou marcar como `TODO` com uma issue de follow-up (NÃO aceitar TODOs silenciosos — o TODO deve virar item explícito no final deste plano como Task N+x).
-
-- [ ] **Step 4: Rodar os testes**
-
-Run: `npm test`
-Expected: todos passam. Qualquer teste que tenha fixture com Danilo/Cristiane precisa ser atualizado.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add src/config/defensores.ts
-git commit -m "refactor(config): remove Danilo e Cristiane do DEFENSORES_CONFIG [plan Task 8]"
-```
+**Nenhuma ação nesta task.** Pular para Task 9.
 
 ---
 
-## Task 9: ContextControl — remover seção "varas_criminais" morta
+## Task 9: ContextControl — remover seção "varas_criminais" do PERFIL ATIVO
 
 **Files:**
 - Modify: `src/components/layout/context-control.tsx`
 
 - [ ] **Step 1: Localizar o bloco `varasCriminaisDefensores`**
 
-Em `src/components/layout/context-control.tsx:513-552`, há um `<Collapsible>` que renderiza defensores do grupo "varas_criminais". Após Task 8, esse array fica vazio e o bloco é morto.
+Em `src/components/layout/context-control.tsx:513-552`, há um `<Collapsible>` que renderiza defensores do grupo "varas_criminais". Ele continuaria funcional (Danilo/Cristiane permanecem em `profissionaisConfigs`), mas é UX duplicada com a nova seção "Outros defensores" da Task 11. Remover pra eliminar a confusão.
 
 - [ ] **Step 2: Remover o bloco por completo**
 
