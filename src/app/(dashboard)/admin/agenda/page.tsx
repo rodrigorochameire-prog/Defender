@@ -1447,16 +1447,16 @@ export default function AgendaPage() {
         icon={CalendarIcon}
         collapsedStats={
           <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
               {stats.hoje} hoje
             </span>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums ml-1">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums ml-1">
               {stats.semana} semana
             </span>
           </>
         }
         bottomRow={
-          <div className="flex items-center gap-2 mx-0 mt-0 mb-0">
+          <div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
           {/* AtribuicaoPills dark variant */}
           <AtribuicaoPills
             variant="dark"
@@ -1472,13 +1472,13 @@ export default function AgendaPage() {
             compact
           />
 
-          <div className="w-px h-5 bg-white/[0.12] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
           {/* Month navigation */}
           <div className="flex items-center gap-1.5 ml-auto">
             <button
               onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-              className="w-[26px] h-[26px] rounded-md bg-[#56565e] flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
             </button>
@@ -1487,19 +1487,19 @@ export default function AgendaPage() {
             </span>
             <button
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="w-[26px] h-[26px] rounded-md bg-[#56565e] flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
             >
               <ChevronRight className="w-[13px] h-[13px] text-white/70" />
             </button>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="text-[9px] font-semibold text-white/70 bg-[#56565e] px-2 py-1 rounded-md hover:text-white/90 hover:bg-[#62626a] transition-colors cursor-pointer"
+              className="text-[9px] font-semibold text-white/70 bg-white/[0.08] px-2 py-1 rounded-md hover:text-white/90 hover:bg-white/[0.14] transition-colors cursor-pointer"
             >
               Hoje
             </button>
           </div>
 
-          <div className="w-px h-5 bg-white/[0.12] rounded-full mx-0.5 shrink-0" />
+          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
           <ViewModeDropdown
             options={AGENDA_VIEW_OPTIONS}
@@ -1512,7 +1512,7 @@ export default function AgendaPage() {
             {/* Search toggle */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
                 <Input
                   ref={searchInputRef}
                   autoFocus
@@ -1521,7 +1521,7 @@ export default function AgendaPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
-                  className="pl-8 pr-7 h-7 w-40 text-xs bg-[#56565e] text-white border-0 rounded-lg placeholder:text-white/50"
+                  className="pl-8 pr-7 h-7 w-40 text-[11px] bg-black/[0.15] ring-1 ring-white/[0.08] text-white/90 border-0 rounded-lg placeholder:text-white/35"
                 />
                 <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
                   <XCircle className="w-3 h-3" />
@@ -1530,19 +1530,19 @@ export default function AgendaPage() {
             ) : (
               <button
                 onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", searchTerm ? "bg-[#62626a] text-white" : "")}
+                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", searchTerm ? "bg-white/[0.08] text-white" : "")}
                 title="Buscar"
               >
-                <Search className="w-[13px] h-[13px] text-white/70" />
+                <Search className="w-[14px] h-[14px] text-white/50" />
               </button>
             )}
             <div className="relative">
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={cn("w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer", (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) ? "bg-[#62626a] text-white" : "")}
+                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) ? "bg-white/[0.08] text-white" : "")}
                 title="Filtros"
               >
-                <Filter className="w-[13px] h-[13px] text-white/70" />
+                <Filter className="w-[14px] h-[14px] text-white/50" />
                 {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
                   <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -1552,50 +1552,50 @@ export default function AgendaPage() {
               {isFiltersExpanded && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1 max-h-[70vh] overflow-y-auto">
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Tipo</div>
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
+                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
                     {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
                       <button
                         key={tipo}
                         onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                       >
                         <span className="flex-1 capitalize">{tipo}</span>
-                        {selectedTipo === tipo && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                       </button>
                     ))}
                     <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Status</div>
+                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
                     {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
                       <button
                         key={status}
                         onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                       >
                         <span className="flex-1 capitalize">{status}</span>
-                        {selectedStatus === status && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                       </button>
                     ))}
                     <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Prioridade</div>
+                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
                     {["urgente", "alta", "normal", "baixa"].map((prio) => (
                       <button
                         key={prio}
                         onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                       >
                         <span className="flex-1 capitalize">{prio}</span>
-                        {selectedPrioridade === prio && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                       </button>
                     ))}
                     <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
                     <button
                       onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
                     >
-                      {showCanceladosRedesignados ? <Eye className="w-4 h-4 text-neutral-500" /> : <EyeOff className="w-4 h-4 text-amber-500" />}
+                      {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
                       <span className="flex-1">Cancelados/Redesignados</span>
-                      {showCanceladosRedesignados && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                     </button>
                     {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
                       <>
@@ -1614,10 +1614,10 @@ export default function AgendaPage() {
             </div>
             <button
               onClick={() => setIsGoogleConfigModalOpen(true)}
-              className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-[#62626a] transition-colors cursor-pointer"
-              title="Configuracoes"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+              title="Configurações"
             >
-              <Settings className="w-[13px] h-[13px] text-white/70" />
+              <Settings className="w-[14px] h-[14px] text-white/50" />
             </button>
           </div>
         </div>
@@ -1626,25 +1626,25 @@ export default function AgendaPage() {
         {/* Row 1: Icon + Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#4a4a52] flex items-center justify-center">
-              <CalendarIcon className="w-[15px] h-[15px] text-white/70" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <CalendarIcon className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-white text-[17px] font-semibold tracking-tight">Agenda</h1>
-            <div className="flex items-center gap-1.5 ml-2">
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
-                {stats.hoje} hoje
-              </span>
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#4a4a52] text-white/90 tabular-nums">
-                {stats.semana} semana
-              </span>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Agenda</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {stats.hoje} hoje · {stats.semana} semana
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             {/* Overflow menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer">
-                  <MoreHorizontal className="w-3 h-3" />
+                <button
+                  title="Mais opções"
+                  className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                >
+                  <MoreHorizontal className="w-[15px] h-[15px]" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -1662,15 +1662,17 @@ export default function AgendaPage() {
             </DropdownMenu>
             <button
               onClick={() => setIsPJeImportModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4a4a52] text-white/90 text-[10px] font-medium hover:bg-[#56565e] transition-colors cursor-pointer"
+              title="Importar do PJe"
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
             >
-              <Download className="w-3 h-3" /> PJe
+              <Download className="w-[15px] h-[15px]" />
             </button>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-[10px] font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
+              title="Novo Evento"
+              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
             >
-              <Plus className="w-3 h-3" /> Novo Evento
+              <Plus className="w-[15px] h-[15px]" />
             </button>
           </div>
         </div>
