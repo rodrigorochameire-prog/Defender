@@ -83,23 +83,23 @@ export const CARD_STYLE = {
 // ============================================
 
 export const HEADER_STYLE = {
-  /** Page Header — neutro puro, card com profundidade sutil */
-  container: "rounded-2xl bg-[#3a3a3a] shadow-sm shadow-black/[0.06] ring-1 ring-white/[0.04]",
+  /** Page Header — card suavizado */
+  container: "rounded-2xl bg-[#484848] shadow-sm shadow-black/[0.06] ring-1 ring-white/[0.04]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
   separator: "w-px h-3.5 bg-white/[0.08] rounded-full",
-  /** Inset row — fundo levemente mais claro, borda interna definida */
-  bottomRow: "bg-[#444444] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
+  /** Inset row — levemente mais claro que o card */
+  bottomRow: "bg-[#525252] rounded-xl px-3.5 py-2.5 ring-1 ring-white/[0.05]",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/50",
-  /** Utility Bar — mais escuro que o header (moldura) */
-  utilityRow: "bg-[#303030]",
+  /** Utility Bar — mais escuro que o header */
+  utilityRow: "bg-[#404040]",
   utilityText: "text-white/50 text-[10px]",
   utilityButton: "w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.06] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/40",
   /** Collapsed — entre utility e header */
-  collapsedBar: "bg-[#353535] shadow-sm shadow-black/[0.06]",
+  collapsedBar: "bg-[#444444] shadow-sm shadow-black/[0.06]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
 } as const;
 

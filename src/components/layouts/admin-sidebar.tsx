@@ -260,17 +260,18 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           isActive={isActive}
           tooltip={item.label}
           className={cn(
-            "h-10 w-10 p-0 mx-auto transition-colors duration-150 rounded-lg flex items-center justify-center",
+            "h-10 w-10 p-0 mx-auto transition-colors duration-150 rounded-lg flex items-center justify-center relative",
             isActive
-              ? "bg-[#454545] text-emerald-400"
-              : "text-white/40 hover:bg-[#3a3a3a] hover:text-white/70"
+              ? "bg-white/[0.10] text-white"
+              : "text-white/35 hover:bg-white/[0.06] hover:text-white/60"
           )}
         >
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
+            {isActive && <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-emerald-400" />}
             <Icon className={cn(
               "h-[18px] w-[18px] transition-colors duration-150",
               isActive ? "text-emerald-400" : ""
-            )} strokeWidth={isActive ? 2.5 : 1.8} />
+            )} strokeWidth={isActive ? 2.2 : 1.8} />
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -284,17 +285,18 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         isActive={isActive}
         tooltip={item.label}
         className={cn(
-          "h-9 transition-colors duration-150 rounded-lg group/item relative",
+          "h-9 transition-colors duration-150 rounded-lg group/item relative overflow-hidden",
           isActive
-            ? "bg-[#454545] text-white font-semibold"
-            : "text-white/50 hover:text-white/80 hover:bg-[#3a3a3a]"
+            ? "bg-white/[0.10] text-white font-semibold"
+            : "text-white/45 hover:text-white/75 hover:bg-white/[0.06]"
         )}
       >
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
+          {isActive && <div className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-emerald-400" />}
           <Icon className={cn(
-            "h-[16px] w-[16px] mr-2.5 transition-colors duration-150 flex-shrink-0",
-            isActive ? "text-emerald-400" : "text-white/40 group-hover/item:text-white/60"
-          )} strokeWidth={isActive ? 2.5 : 1.8} />
+            "h-[15px] w-[15px] mr-2.5 transition-colors duration-150 flex-shrink-0",
+            isActive ? "text-emerald-400" : "text-white/35 group-hover/item:text-white/55"
+          )} strokeWidth={isActive ? 2.2 : 1.8} />
           <span className="text-[12px] font-medium truncate">{item.label}</span>
           {item.isPremium && (
             <Sparkles className="h-3 w-3 text-emerald-400 ml-auto" />
@@ -310,7 +312,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
 // ==========================================
 
 function NavDivider({ collapsed }: { collapsed: boolean }) {
-  return <div className={cn("my-3 h-px bg-[#3a3a3a]", collapsed ? "mx-2" : "mx-3")} />;
+  return <div className={cn("my-3 h-px bg-white/[0.06]", collapsed ? "mx-2" : "mx-3")} />;
 }
 
 // ==========================================
@@ -1666,7 +1668,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         )}
       >
         {/* Header */}
-        <SidebarHeader className="h-[60px] border-b border-[#3a3a3a] flex items-center justify-center px-3">
+        <SidebarHeader className="h-[56px] border-b border-white/[0.06] flex items-center justify-center px-3">
           <SidebarLogo collapsed={isCollapsed} />
         </SidebarHeader>
 
@@ -1778,7 +1780,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         </SidebarContent>
 
         {/* Footer Premium Glass */}
-        <SidebarFooter className="border-t border-[#3a3a3a] p-0">
+        <SidebarFooter className="border-t border-white/[0.06] p-0">
           {/* Status Bar */}
           <StatusBar collapsed={isCollapsed} />
 
@@ -1786,10 +1788,10 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
           <div className="p-2.5">
             <div className={cn(
               "flex items-center gap-2.5 p-2 rounded-lg transition-colors duration-150 group/user",
-              "hover:bg-[#3a3a3a]"
+              "hover:bg-white/[0.06]"
             )}>
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-[#454545] text-white/80 font-semibold text-xs">
+                <AvatarFallback className="bg-white/[0.10] text-white/80 font-semibold text-xs">
                   {userName.replace(/^(Dr\.|Dra\.|Dr |Dra )/i, '').trim().charAt(0).toUpperCase() || userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

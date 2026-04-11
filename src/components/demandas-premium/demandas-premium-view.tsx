@@ -2207,7 +2207,7 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#4a4a4a] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#585858] flex items-center justify-center">
               <LayoutGrid className="w-4 h-4 text-white/80" />
             </div>
             <div>
