@@ -107,14 +107,14 @@ export function CollapsiblePageHeader({
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Page Header — gradiente sutil para profundidade */}
-          <div className="bg-gradient-to-b from-[#4a4a52] to-[#454550] px-5 pb-3 pt-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          {/* Row 1 — título/ações, mais escuro */}
+          <div className="bg-[#404048] px-5 pb-3 pt-3.5">
             {children}
           </div>
 
-          {/* Row 2 — inset levemente mais escuro */}
+          {/* Row 2 — pills/filtros, mais claro */}
           {bottomRow && (
-            <div className="bg-[#404048] px-5 pb-3 pt-2 border-t border-white/[0.03]">
+            <div className="bg-gradient-to-b from-[#4a4a52] to-[#48484f] px-5 pb-3 pt-2 border-t border-white/[0.04] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               {bottomRow}
             </div>
           )}
