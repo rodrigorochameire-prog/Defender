@@ -102,12 +102,15 @@ export function CollapsiblePageHeader({
         aria-hidden={isCollapsed}
       >
         <div className="overflow-hidden">
-          {/* Utility Bar — cinza quente, tom próximo do page header */}
-          <div className="bg-[#484850] border-b border-white/[0.04]">
+          {/* Utility Bar — barra própria com respiro */}
+          <div className="bg-[#484850]">
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Row 1 — título/ações, mais escuro */}
+          {/* Espaço de separação entre utility bar e page header */}
+          <div className="h-1.5 bg-neutral-200/80 dark:bg-black/20" />
+
+          {/* Row 1 — título/ações */}
           <div className="bg-[#404048] px-5 pb-3 pt-3.5">
             {children}
           </div>
@@ -126,13 +129,13 @@ export function CollapsiblePageHeader({
         className={cn(
           "transition-all duration-300 ease-out overflow-hidden",
           isCollapsed
-            ? "opacity-100 max-h-12"
+            ? "opacity-100 max-h-14"
             : "opacity-0 max-h-0 pointer-events-none",
           HEADER_STYLE.collapsedBar,
         )}
         aria-hidden={!isCollapsed}
       >
-        <div className="h-8 flex items-center px-3 gap-2">
+        <div className="h-11 flex items-center px-3 gap-2">
           {/* Sidebar trigger */}
           <SidebarTrigger className="h-6 w-6 rounded-md text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
