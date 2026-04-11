@@ -129,11 +129,11 @@ export function CollapsiblePageHeader({
           <div className="h-1.5 bg-[#f2f1ef] dark:bg-[#1a1a1e]" />
 
           {/* Page Header — card com accent emerald no topo */}
-          <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
-            {/* Accent line — assinatura de marca */}
-            <div className="h-[2px] bg-gradient-to-r from-emerald-500/40 via-emerald-400/20 to-transparent rounded-t-xl" />
+          <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible relative")}>
+            {/* Accent line — assinatura de marca (absolute no topo, respeita rounded) */}
+            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-emerald-500/50 via-emerald-400/25 to-transparent rounded-t-xl" />
             {/* Row 1 — título/ações */}
-            <div className="px-4 sm:px-5 pb-3 pt-3">
+            <div className="px-4 sm:px-5 pb-3 pt-3.5">
               {children}
             </div>
 
