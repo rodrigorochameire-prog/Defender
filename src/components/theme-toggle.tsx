@@ -7,16 +7,14 @@ import { useTheme } from "@/contexts/theme-context";
 const themeConfig = {
   light: {
     icon: Sun,
-    iconClass: "h-4 w-4 text-amber-500",
-    buttonClass:
-      "bg-neutral-100 hover:bg-neutral-200 border-neutral-200 hover:border-emerald-500/50",
+    iconClass: "h-3.5 w-3.5 text-amber-400/80",
+    buttonClass: "bg-transparent hover:bg-white/[0.08] border-none",
     ariaLabel: "Modo claro",
   },
   dark: {
     icon: Moon,
-    iconClass: "h-4 w-4 text-blue-300",
-    buttonClass:
-      "bg-muted hover:bg-muted border-border hover:border-emerald-500/50",
+    iconClass: "h-3.5 w-3.5 text-blue-300/80",
+    buttonClass: "bg-transparent hover:bg-white/[0.08] border-none",
     ariaLabel: "Modo noturno",
   },
 } as const;

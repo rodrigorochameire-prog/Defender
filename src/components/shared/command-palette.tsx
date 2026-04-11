@@ -227,10 +227,10 @@ export function CommandPalette() {
       <Button
         variant="outline"
         size="sm"
-        className="gap-1.5 text-[10px] bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:border-emerald-500/50 dark:hover:border-emerald-500/50 h-7 px-2"
+        className="gap-1.5 text-[10px] bg-transparent border-white/[0.1] text-white/40 hover:bg-white/[0.08] hover:text-white/70 hover:border-white/[0.15] h-7 px-2"
         onClick={() => setOpen(true)}
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-3 w-3" />
         <span className="hidden sm:inline">Cmd + K</span>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
