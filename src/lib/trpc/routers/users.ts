@@ -189,7 +189,11 @@ export const usersRouter = router({
       conditions.push(eq(users.workspaceId, workspaceId));
     }
     return db
-      .select({ id: users.id, name: users.name })
+      .select({
+        id: users.id,
+        name: users.name,
+        comarcaId: users.comarcaId,
+      })
       .from(users)
       .where(and(...conditions))
       .orderBy(users.name);
