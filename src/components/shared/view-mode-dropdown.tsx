@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,8 @@ export function ViewModeDropdown({
   variant = "dark",
 }: ViewModeDropdownProps) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeOption = options.find((o) => o.value === value) ?? options[0];
   const ActiveIcon = activeOption?.icon;
@@ -38,9 +40,10 @@ export function ViewModeDropdown({
   // Click-outside handler
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
+      const target = e.target as Node;
       if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
+        btnRef.current && !btnRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
       ) {
         setOpen(false);
       }
@@ -56,9 +59,10 @@ export function ViewModeDropdown({
   const isDark = variant === "dark";
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       {/* Trigger button */}
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
@@ -82,17 +86,19 @@ export function ViewModeDropdown({
         />
       </button>
 
-      {/* Dropdown panel */}
-      {open && (
+      {/* Dropdown panel — portal to body */}
+      {open && createPortal(
         <div
+          ref={dropdownRef}
           role="listbox"
           className={cn(
-            "absolute right-0 top-full z-50 mt-1 min-w-[128px] rounded-md border shadow-lg",
+            "fixed z-[9999] min-w-[128px] rounded-xl border shadow-xl shadow-black/[0.12]",
             "overflow-hidden py-1",
             isDark
-              ? "bg-black/[0.75] backdrop-blur-sm border-white/[0.08]"
+              ? "bg-neutral-900 border-white/[0.08]"
               : "bg-white border-zinc-200"
           )}
+          style={(() => { const r = btnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}
         >
           {options.map((option) => {
             const Icon = option.icon;
@@ -138,7 +144,8 @@ export function ViewModeDropdown({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
