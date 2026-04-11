@@ -43,9 +43,11 @@ export function CollapsiblePageHeader({
   collapsedStats,
   className,
 }: CollapsiblePageHeaderProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const outerRef = useRef<HTMLDivElement>(null);
+  const expandedRef = useRef<HTMLDivElement>(null);
+  const collapsedRef = useRef<HTMLDivElement>(null);
   const { setHasPageHeader } = usePageHeader();
+  const progressRef = useRef(0);
 
   // Register page header presence
   useEffect(() => {
@@ -53,12 +55,13 @@ export function CollapsiblePageHeader({
     return () => setHasPageHeader(false);
   }, [setHasPageHeader]);
 
-  // Scroll detection: find the closest scrollable parent and listen on it
+  // Smooth progressive scroll — interpolate between expanded/collapsed
   useEffect(() => {
     const el = outerRef.current;
-    if (!el) return;
+    const expanded = expandedRef.current;
+    const collapsed = collapsedRef.current;
+    if (!el || !expanded || !collapsed) return;
 
-    // Walk up the DOM to find the closest scrollable ancestor
     function getScrollParent(node: HTMLElement | null): HTMLElement | Window {
       if (!node || node === document.documentElement) return window;
       const { overflowY } = window.getComputedStyle(node);
@@ -68,27 +71,41 @@ export function CollapsiblePageHeader({
     }
 
     const scrollTarget = getScrollParent(el.parentElement);
+    const SCROLL_RANGE = 50; // pixels over which transition happens
+    let rafId: number;
 
-    let lastCollapsed = false;
     function handleScroll() {
-      const scrollTop =
-        scrollTarget === window
-          ? window.scrollY
-          : (scrollTarget as HTMLElement).scrollTop;
-      // Hysteresis: collapse at 20px, expand back at 5px — prevents flickering
-      const next = lastCollapsed ? scrollTop > 5 : scrollTop > 20;
-      if (next !== lastCollapsed) {
-        lastCollapsed = next;
-        setIsCollapsed(next);
-      }
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const scrollTop =
+          scrollTarget === window
+            ? window.scrollY
+            : (scrollTarget as HTMLElement).scrollTop;
+
+        // Progress: 0 = fully expanded, 1 = fully collapsed
+        const raw = Math.min(1, Math.max(0, scrollTop / SCROLL_RANGE));
+        // Ease out cubic for smoother feel
+        const p = 1 - Math.pow(1 - raw, 3);
+        progressRef.current = p;
+
+        // Expanded: fade out + scale down
+        expanded.style.opacity = String(1 - p);
+        expanded.style.transform = `scaleY(${1 - p * 0.3}) translateY(${-p * 8}px)`;
+        expanded.style.pointerEvents = p > 0.5 ? "none" : "auto";
+
+        // Collapsed: fade in
+        collapsed.style.opacity = String(p);
+        collapsed.style.transform = `translateY(${(1 - p) * -4}px)`;
+        collapsed.style.pointerEvents = p > 0.5 ? "auto" : "none";
+      });
     }
 
     scrollTarget.addEventListener("scroll", handleScroll, { passive: true });
-    // Run once to set initial state
     handleScroll();
 
     return () => {
       scrollTarget.removeEventListener("scroll", handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -99,13 +116,9 @@ export function CollapsiblePageHeader({
     >
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
-        className={cn(
-          "transition-[transform,opacity] duration-200 ease-out origin-top will-change-[transform,opacity]",
-          isCollapsed
-            ? "opacity-0 scale-y-0 h-0 pointer-events-none"
-            : "opacity-100 scale-y-100",
-        )}
-        aria-hidden={isCollapsed}
+        ref={expandedRef}
+        className="origin-top will-change-[transform,opacity]"
+        style={{ transformOrigin: "top center" }}
       >
         <div className="overflow-visible">
           {/* Utility Bar */}
@@ -117,7 +130,7 @@ export function CollapsiblePageHeader({
           <div className="h-2 bg-neutral-100 dark:bg-[#1a1a1e]" />
 
           {/* Page Header — card flutuante arredondado */}
-          <div className="mx-4 lg:mx-5 mb-2 rounded-2xl bg-gradient-to-b from-[#434349] to-[#3e3e44] ring-1 ring-white/[0.06] shadow-lg shadow-black/[0.08]">
+          <div className={cn(HEADER_STYLE.container, "mx-4 lg:mx-5 mb-2 rounded-2xl pb-1")}>
             {/* Row 1 — título/ações */}
             <div className="px-5 pb-3 pt-4">
               {children}
@@ -125,7 +138,7 @@ export function CollapsiblePageHeader({
 
             {/* Row 2 — pills/filtros */}
             {bottomRow && (
-              <div className="px-5 pb-3.5 pt-2 border-t border-white/[0.05]">
+              <div className={cn("mx-3 mb-2.5", HEADER_STYLE.bottomRow)}>
                 {bottomRow}
               </div>
             )}
@@ -135,14 +148,12 @@ export function CollapsiblePageHeader({
 
       {/* ── COLLAPSED STATE ────────────────────────────────────── */}
       <div
+        ref={collapsedRef}
         className={cn(
-          "transition-[transform,opacity] duration-200 ease-out origin-top will-change-[transform,opacity]",
-          isCollapsed
-            ? "opacity-100 scale-y-100"
-            : "opacity-0 scale-y-0 h-0 pointer-events-none",
+          "will-change-[transform,opacity] absolute top-0 left-0 right-0",
           HEADER_STYLE.collapsedBar,
         )}
-        aria-hidden={!isCollapsed}
+        style={{ opacity: 0, pointerEvents: "none" }}
       >
         <div className="h-11 flex items-center px-3 gap-2">
           {/* Sidebar trigger */}
