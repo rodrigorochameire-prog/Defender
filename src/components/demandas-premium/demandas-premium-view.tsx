@@ -2030,7 +2030,7 @@ export default function Demandas() {
       {/* ====== CHARCOAL HEADER ====== */}
       <CollapsiblePageHeader
         title="Demandas"
-        icon={LayoutGrid}
+        icon={ListTodo}
         collapsedStats={
           <>
             <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#454545] text-white/90 tabular-nums">
@@ -2208,7 +2208,7 @@ export default function Demandas() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <LayoutGrid className="w-4 h-4 text-white" />
+              <ListTodo className="w-4 h-4 text-white" />
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
