@@ -2207,8 +2207,8 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <ListTodo className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-white/[0.10] ring-1 ring-white/[0.06] flex items-center justify-center">
+              <ListTodo className="w-4 h-4 text-white/90" />
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
@@ -2231,15 +2231,16 @@ export default function Demandas() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <div className="relative group/import">
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
                 title="Importar"
               >
-                <Download className="w-[15px] h-[15px]" />
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Importar</span>
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -2283,10 +2284,11 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
                 title="Exportar"
               >
-                <Upload className="w-[15px] h-[15px]" />
+                <Upload className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Exportar</span>
               </button>
               {isExportDropdownOpen && createPortal(
                 <>
@@ -2330,10 +2332,11 @@ export default function Demandas() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+              className="h-8 px-3 rounded-lg bg-white text-neutral-800 shadow-sm hover:bg-neutral-100 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
               title="Nova demanda"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Nova</span>
             </button>
           </div>
         </div>
