@@ -88,15 +88,15 @@ export function CollapsiblePageHeader({
         const p = 1 - Math.pow(1 - raw, 3);
         progressRef.current = p;
 
-        // Expanded: fade out + scale down
+        // Expanded: fade out only (no transform — preserves dropdown stacking)
         expanded!.style.opacity = String(1 - p);
-        expanded!.style.transform = `scaleY(${1 - p * 0.3}) translateY(${-p * 8}px)`;
         expanded!.style.pointerEvents = p > 0.5 ? "none" : "auto";
+        expanded!.style.display = p >= 1 ? "none" : "";
 
         // Collapsed: fade in
         collapsed!.style.opacity = String(p);
-        collapsed!.style.transform = `translateY(${(1 - p) * -4}px)`;
         collapsed!.style.pointerEvents = p > 0.5 ? "auto" : "none";
+        collapsed!.style.display = p <= 0 ? "none" : "";
       });
     }
 
@@ -117,8 +117,7 @@ export function CollapsiblePageHeader({
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
         ref={expandedRef}
-        className="origin-top will-change-[transform,opacity]"
-        style={{ transformOrigin: "top center" }}
+        className="will-change-[opacity]"
       >
         <div className="overflow-visible">
           {/* Utility Bar — moldura escura */}
@@ -150,7 +149,7 @@ export function CollapsiblePageHeader({
       <div
         ref={collapsedRef}
         className={cn(
-          "will-change-[transform,opacity] absolute top-0 left-0 right-0",
+          "will-change-[opacity] absolute top-0 left-0 right-0",
           HEADER_STYLE.collapsedBar,
         )}
         style={{ opacity: 0, pointerEvents: "none" }}
