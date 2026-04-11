@@ -135,9 +135,9 @@ export function CollapsiblePageHeader({
               {children}
             </div>
 
-            {/* Row 2 — integrada, separada por border sutil */}
+            {/* Row 2 — fundo levemente mais claro que Row 1 */}
             {bottomRow && (
-              <div className="px-4 sm:px-5 pb-3 pt-2.5 border-t border-white/[0.06]">
+              <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.04] border-t border-white/[0.05] rounded-b-xl">
                 {bottomRow}
               </div>
             )}
