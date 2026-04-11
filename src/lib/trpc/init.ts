@@ -3,6 +3,7 @@ import superjson from "superjson";
 import { getSession } from "@/lib/auth/session";
 import { toTRPCError, generateRequestId } from "@/lib/errors";
 import type { User } from "@/lib/db/schema";
+import { blockWhenViewingAsPeerCheck } from "./middlewares/block-when-viewing-as-peer";
 
 // ==========================================
 // TIPOS DE ROLES
@@ -146,6 +147,20 @@ const requireAuth = t.middleware(async ({ ctx, next }) => {
 });
 
 /**
+ * Middleware que bloqueia mutations quando o usuário está visualizando
+ * dados como outro defensor (modo read-only do "ver como peer").
+ */
+const blockWhenViewingAsPeer = t.middleware(async ({ ctx, next, type }) => {
+  const user = (ctx as AuthenticatedContext).user;
+  blockWhenViewingAsPeerCheck({
+    type,
+    user,
+    selectedDefensorScopeId: ctx.selectedDefensorScopeId,
+  });
+  return next();
+});
+
+/**
  * Middleware de autorização admin
  * Verifica se o usuário tem role admin
  */
@@ -201,7 +216,8 @@ export const publicProcedure = t.procedure
  * Requer usuário logado (qualquer role)
  */
 export const protectedProcedure = publicProcedure
-  .use(requireAuth);
+  .use(requireAuth)
+  .use(blockWhenViewingAsPeer);
 
 /**
  * Procedure de admin
