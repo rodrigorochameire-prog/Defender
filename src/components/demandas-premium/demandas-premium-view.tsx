@@ -30,6 +30,7 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { useDefensor } from "@/contexts/defensor-context";
@@ -614,6 +615,9 @@ export default function Demandas() {
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
+  const importBtnRef = useRef<HTMLButtonElement>(null);
+  const exportBtnRef = useRef<HTMLButtonElement>(null);
+  const filtersBtnRef = useRef<HTMLButtonElement>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDuplicatesModalOpen, setIsDuplicatesModalOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -2088,6 +2092,7 @@ export default function Demandas() {
 
             <div className="relative">
               <button
+                ref={filtersBtnRef}
                 onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
                 className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.10] hover:rotate-45 transition-all duration-200 cursor-pointer"
                 title="Configurações"
@@ -2102,10 +2107,10 @@ export default function Demandas() {
                   ) : null;
                 })()}
               </button>
-              {isFiltersDropdownOpen && (
+              {isFiltersDropdownOpen && createPortal(
                 <>
-                  <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
+                  <div className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
                     <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
                     <button
                       onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
@@ -2192,7 +2197,8 @@ export default function Demandas() {
                       <span className="flex-1">Configurações</span>
                     </button>
                   </div>
-                </>
+                </>,
+                document.body
               )}
             </div>
           </div>
@@ -2227,16 +2233,17 @@ export default function Demandas() {
           <div className="flex items-center gap-1.5">
             <div className="relative group/import">
               <button
+                ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
                 className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center ring-1 ring-white/[0.04]"
                 title="Importar"
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
-              {isImportDropdownOpen && (
+              {isImportDropdownOpen && createPortal(
                 <>
-                  <div className="fixed inset-0 z-[90]" onClick={() => setIsImportDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-44 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1">
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
+                  <div className="fixed z-[9999] w-44 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
@@ -2266,21 +2273,23 @@ export default function Demandas() {
                       <span>SEEU</span>
                     </button>
                   </div>
-                </>
+                </>,
+                document.body
               )}
             </div>
             <div className="relative">
               <button
+                ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
                 className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 hover:bg-white/[0.14] hover:text-white hover:scale-105 transition-all duration-150 cursor-pointer flex items-center justify-center ring-1 ring-white/[0.04]"
                 title="Exportar"
               >
                 <Upload className="w-3.5 h-3.5" />
               </button>
-              {isExportDropdownOpen && (
+              {isExportDropdownOpen && createPortal(
                 <>
-                  <div className="fixed inset-0 z-[90]" onClick={() => setIsExportDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1">
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsExportDropdownOpen(false)} />
+                  <div className="fixed z-[9999] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1" style={(() => { const r = exportBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); setIsExportModalOpen(true); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
@@ -2311,7 +2320,8 @@ export default function Demandas() {
                       <span>Encontrar duplicatas</span>
                     </button>
                   </div>
-                </>
+                </>,
+                document.body
               )}
             </div>
             <button
