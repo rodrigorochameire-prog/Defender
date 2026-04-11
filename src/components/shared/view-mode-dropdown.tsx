@@ -92,11 +92,9 @@ export function ViewModeDropdown({
           ref={dropdownRef}
           role="listbox"
           className={cn(
-            "fixed z-[9999] min-w-[128px] rounded-xl border shadow-xl shadow-black/[0.12]",
+            "fixed z-[9999] min-w-[140px] rounded-xl shadow-xl shadow-black/[0.12]",
             "overflow-hidden py-1",
-            isDark
-              ? "bg-neutral-900 border-white/[0.08]"
-              : "bg-white border-zinc-200"
+            "bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04]"
           )}
           style={(() => { const r = btnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}
         >
@@ -115,31 +113,17 @@ export function ViewModeDropdown({
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-1.5 text-sm transition-colors",
-                  isDark
-                    ? cn(
-                        "text-white/80",
-                        isActive
-                          ? "bg-white/[0.08]"
-                          : "hover:bg-white/[0.05]"
-                      )
-                    : cn(
-                        "text-zinc-700",
-                        isActive
-                          ? "bg-black/[0.06]"
-                          : "hover:bg-black/[0.04]"
-                      )
+                  "flex w-full items-center gap-2 px-3 py-1.5 text-[13px] transition-colors cursor-pointer",
+                  "text-neutral-700 dark:text-neutral-300",
+                  isActive
+                    ? "bg-neutral-100 dark:bg-white/[0.08]"
+                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 )}
               >
-                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <Icon className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
                 <span className="flex-1 text-left">{option.label}</span>
                 {isActive && (
-                  <Check
-                    className={cn(
-                      "h-3 w-3 shrink-0",
-                      isDark ? "text-white/60" : "text-zinc-400"
-                    )}
-                  />
+                  <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
                 )}
               </button>
             );
