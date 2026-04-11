@@ -126,7 +126,7 @@ export function CollapsiblePageHeader({
           </div>
 
           {/* Gap sutil entre utility e page header */}
-          <div className="h-1.5 bg-neutral-100 dark:bg-[#1a1a1e]" />
+          <div className="h-1.5 bg-[#f0f0ee] dark:bg-[#1a1a1e]" />
 
           {/* Page Header — card único envolvendo Row 1 + Row 2 */}
           <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
