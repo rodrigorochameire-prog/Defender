@@ -138,7 +138,7 @@ export function CollapsiblePageHeader({
 
             {/* Row 2 — pills/filtros, glass inset */}
             {bottomRow && (
-              <div className={cn("mx-2.5 mb-2.5", HEADER_STYLE.bottomRow)}>
+              <div className={cn("mx-2 sm:mx-2.5 mb-2.5", HEADER_STYLE.bottomRow)}>
                 {bottomRow}
               </div>
             )}

@@ -90,7 +90,7 @@ export function ViewModeDropdown({
             "absolute right-0 top-full z-50 mt-1 min-w-[128px] rounded-md border shadow-lg",
             "overflow-hidden py-1",
             isDark
-              ? "bg-[#1e1e23] border-white/10"
+              ? "bg-black/[0.75] backdrop-blur-sm border-white/[0.08]"
               : "bg-white border-zinc-200"
           )}
         >

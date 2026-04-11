@@ -2053,7 +2053,7 @@ export default function Demandas() {
           </div>
         }
         bottomRow={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap overflow-x-auto scrollbar-none">
             <AtribuicaoPills
               variant="dark"
               options={atribuicaoOptions}
@@ -2065,7 +2065,7 @@ export default function Demandas() {
               counts={atribuicaoCounts}
             />
 
-            <div className="relative flex-1 max-w-[200px]">
+            <div className="hidden sm:flex relative flex-1 max-w-[200px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
               <input
                 value={searchTerm}
@@ -2105,7 +2105,7 @@ export default function Demandas() {
               {isFiltersDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-700 py-1 max-h-[70vh] overflow-y-auto">
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
                     <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
                     <button
                       onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
@@ -2236,7 +2236,7 @@ export default function Demandas() {
               {isImportDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsImportDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-44 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1">
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-44 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1">
                     <button
                       onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
@@ -2280,7 +2280,7 @@ export default function Demandas() {
               {isExportDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setIsExportDropdownOpen(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-48 bg-white dark:bg-neutral-900 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden py-1">
+                  <div className="absolute top-full mt-1 right-0 z-[100] w-48 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-hidden py-1">
                     <button
                       onClick={() => { setIsExportDropdownOpen(false); setIsExportModalOpen(true); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm cursor-pointer"
