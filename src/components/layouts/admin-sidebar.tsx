@@ -1668,8 +1668,9 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         )}
       >
         {/* Header */}
-        <SidebarHeader className="h-[56px] border-b border-white/[0.06] flex items-center justify-center px-3">
+        <SidebarHeader className="h-[56px] border-b border-white/[0.06] flex items-center justify-center px-3 relative">
           <SidebarLogo collapsed={isCollapsed} />
+          <div className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-emerald-500/30 via-emerald-400/15 to-transparent rounded-full" />
         </SidebarHeader>
 
         {/* Content com Scroll Suave */}

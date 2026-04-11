@@ -2211,7 +2211,7 @@ export default function Demandas() {
               <ListTodo className="w-4 h-4 text-white/90" />
             </div>
             <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
+              <h1 className="text-white text-[16px] font-serif font-semibold tracking-tight leading-tight">Demandas</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {(() => {
                   const total = demandas.filter(d => !d.arquivado).length;
@@ -2332,7 +2332,7 @@ export default function Demandas() {
             </div>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="h-8 px-3 rounded-lg bg-white text-neutral-800 shadow-sm hover:bg-neutral-100 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="h-8 px-3 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
               title="Nova demanda"
             >
               <Plus className="w-3.5 h-3.5" />

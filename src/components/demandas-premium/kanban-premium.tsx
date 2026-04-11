@@ -181,9 +181,9 @@ function KanbanCard({
         ${prazoDiff !== null && prazoDiff < 0 ? "ring-1 ring-rose-300/40 dark:ring-rose-500/20" : ""}
         ${prazoDiff !== null && prazoDiff >= 0 && prazoDiff <= 3 ? "ring-1 ring-amber-300/30 dark:ring-amber-500/15" : ""}
       `}
-      style={{ borderColor: `${groupColor}80`, ["--hover-glow" as string]: `${groupColor}20` }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = groupColor; e.currentTarget.style.boxShadow = `0 0 12px ${groupColor}25`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}80`; e.currentTarget.style.boxShadow = ''; }}
+      style={{ borderColor: `${groupColor}60` }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
       <div className="px-3 py-3">
         {/* Row 1: Nome + Data expedição + Flags */}

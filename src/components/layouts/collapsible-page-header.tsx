@@ -128,10 +128,12 @@ export function CollapsiblePageHeader({
           {/* Gap sutil entre utility e page header */}
           <div className="h-1.5 bg-[#f0f0f0] dark:bg-[#1a1a1e]" />
 
-          {/* Page Header — card único envolvendo Row 1 + Row 2 */}
+          {/* Page Header — card com accent emerald no topo */}
           <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
+            {/* Accent line — assinatura de marca */}
+            <div className="h-[2px] bg-gradient-to-r from-emerald-500/40 via-emerald-400/20 to-transparent rounded-t-xl" />
             {/* Row 1 — título/ações */}
-            <div className="px-4 sm:px-5 pb-3 pt-3.5">
+            <div className="px-4 sm:px-5 pb-3 pt-3">
               {children}
             </div>
 
