@@ -2071,11 +2071,11 @@ export default function Demandas() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar nome, processo..."
-                className="w-full bg-[#3e3e44] border border-[#525258] rounded-lg py-1.5 pl-7 pr-3 text-[10px] text-white/90 placeholder:text-white/40 outline-none focus:bg-[#444448] focus:border-[#5a5a60] transition-all"
+                className="w-full bg-black/[0.15] border border-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[10px] text-white/90 placeholder:text-white/30 outline-none focus:bg-black/[0.25] focus:border-white/[0.15] transition-all"
               />
             </div>
 
-            <div className="w-px h-5 bg-[#525258] rounded-full mx-0.5 shrink-0" />
+            <div className="w-px h-5 bg-white/[0.10] rounded-full mx-0.5 shrink-0" />
 
             <ViewModeDropdown
               options={DEMANDAS_VIEW_OPTIONS}
@@ -2084,7 +2084,7 @@ export default function Demandas() {
               variant="dark"
             />
 
-            <div className="w-px h-5 bg-[#525258] rounded-full mx-0.5 shrink-0" />
+            <div className="w-px h-5 bg-white/[0.10] rounded-full mx-0.5 shrink-0" />
 
             <div className="relative">
               <button

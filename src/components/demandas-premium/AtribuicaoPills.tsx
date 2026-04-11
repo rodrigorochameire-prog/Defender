@@ -82,7 +82,7 @@ export function AtribuicaoPills({
       <div className={cn(
           "inline-flex items-center gap-0 p-[3px] rounded-full border",
           isDark
-            ? "bg-white/[0.05] border-white/[0.06]"
+            ? "bg-black/[0.20] border-white/[0.08]"
             : "bg-neutral-200/60 dark:bg-neutral-800 border-neutral-300/70 dark:border-neutral-700/60"
         )}>
         {/* Botão "Todas" — ativo quando all selecionado ou nenhum filtro específico */}
