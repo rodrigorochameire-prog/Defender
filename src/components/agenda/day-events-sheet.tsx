@@ -186,59 +186,80 @@ export function DayEventsSheet({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
-        {/* Header */}
-        <SheetHeader className="px-5 py-4 border-b border-neutral-200/80 dark:border-neutral-800/80 space-y-0">
-          <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-medium">
-            {dayName}
-          </p>
-          <div className="flex items-center gap-2">
-            <SheetTitle className="text-lg font-serif font-semibold text-neutral-900 dark:text-neutral-100">
-              {dayDate}
+        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0 space-y-0">
+            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
+              Agenda
             </SheetTitle>
+          </SheetHeader>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+            title="Fechar (Esc)"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-            {/* Filtro de atribuições inline — só ícones presentes no dia */}
-            {dayAtribuicoes.length > 1 && (
-              <>
-                <span className="w-px h-4 bg-neutral-200 dark:bg-neutral-700" />
-                {dayAtribuicoes.map(({ key, color, Icon }) => {
-                  const isActive = activeAtribFilter === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setActiveAtribFilter(isActive ? null : key)}
-                      className={cn(
-                        "w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer",
-                        isActive ? "shadow-sm" : "opacity-40 hover:opacity-75"
-                      )}
-                      style={isActive ? { backgroundColor: `${color}18`, color } : { color }}
-                      title={getAtribuicaoColors(key).label}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                    </button>
-                  );
-                })}
-              </>
-            )}
-
-            <span className="flex-1" />
-            <span className="text-[10px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">
-              {eventos.length}
-            </span>
-          </div>
-        </SheetHeader>
-
-        {/* Event list */}
+        {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {filteredEventos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
-              <CalendarIcon className="w-8 h-8 mb-2" />
-              <p className="text-sm">Nenhum evento neste dia</p>
+          {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#5a5a5e] shadow-[0_1px_8px_-3px_rgba(0,0,0,0.10)]">
+            <div className="flex items-start gap-3.5">
+              {/* Avatar calendário */}
+              <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex flex-col items-center justify-center shrink-0 shadow-[0_0_0_2.5px_rgba(255,255,255,0.10)]">
+                <span className="text-[9px] font-medium text-white/50 leading-none uppercase">
+                  {format(date, "EEE", { locale: ptBR }).replace(".", "")}
+                </span>
+                <span className="text-base font-bold text-white/90 leading-tight">
+                  {format(date, "d")}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <p className="text-[10px] text-white/45 font-medium capitalize">{dayName}</p>
+                <h2 className="text-[15px] font-semibold text-white leading-tight capitalize">
+                  {dayDate}
+                </h2>
+
+                {/* Filtro de atribuições inline */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  {dayAtribuicoes.length > 1 && dayAtribuicoes.map(({ key, color, Icon }) => {
+                    const isActive = activeAtribFilter === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setActiveAtribFilter(isActive ? null : key)}
+                        className={cn(
+                          "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                          isActive ? "bg-white/[0.18]" : "bg-white/[0.06] opacity-50 hover:opacity-80"
+                        )}
+                        style={{ color: isActive ? color : "rgba(255,255,255,0.6)" }}
+                        title={getAtribuicaoColors(key).label}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </button>
+                    );
+                  })}
+                  <span className="ml-auto text-[10px] font-medium tabular-nums text-white/40 px-1.5 py-0.5 rounded-md bg-white/[0.08]">
+                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
-              {filteredEventos.map((evento) => {
+          </div>
+
+          {/* ===== EVENT LIST ===== */}
+          <div className="px-3 pb-4 space-y-2">
+            {filteredEventos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-neutral-400">
+                <CalendarIcon className="w-8 h-8 mb-2" />
+                <p className="text-sm">Nenhum evento neste dia</p>
+              </div>
+            ) : (
+              filteredEventos.map((evento) => {
                 const cancelado = isEventoCancelado(evento.status);
                 const isExpanded = expandedId === evento.id;
                 const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
@@ -248,24 +269,25 @@ export function DayEventsSheet({
                 const processo = evento.processo || "";
 
                 return (
-                  <div key={evento.id} className="group">
+                  <div
+                    key={evento.id}
+                    className={cn(
+                      "rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200 group",
+                      cancelado ? "opacity-50" : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80"
+                    )}
+                  >
                     {/* Row */}
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : evento.id)}
-                      className={cn(
-                        "w-full text-left flex items-stretch gap-0 transition-colors cursor-pointer",
-                        cancelado
-                          ? "opacity-45"
-                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
-                      )}
+                      className="w-full text-left flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
                     >
-                      {/* Color bar */}
+                      {/* Color dot */}
                       <div
-                        className="w-[3px] flex-shrink-0 my-2.5 ml-1.5 rounded-full"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: solidColor }}
                       />
 
-                      <div className="flex-1 min-w-0 px-3 py-2.5">
+                      <div className="flex-1 min-w-0">
                         {/* Linha 1: Horário + Tipo */}
                         <div className="flex items-center gap-2">
                           <span className={cn(
@@ -284,7 +306,7 @@ export function DayEventsSheet({
                             {tipo}
                           </span>
                           {cancelado && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
                               {evento.status}
                             </span>
                           )}
@@ -307,7 +329,7 @@ export function DayEventsSheet({
                       </div>
 
                       {/* Expand indicator */}
-                      <div className="flex items-center pr-3 shrink-0">
+                      <div className="shrink-0">
                         {isExpanded ? (
                           <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
                         ) : (
@@ -318,7 +340,7 @@ export function DayEventsSheet({
 
                     {/* Expanded details */}
                     {isExpanded && (
-                      <div className="bg-neutral-50/50 dark:bg-neutral-800/20 px-5 py-3 ml-1.5 border-l-2 space-y-2.5" style={{ borderColor: solidColor + "40" }}>
+                      <div className="bg-neutral-50/60 dark:bg-neutral-800/20 px-4 py-3 border-t border-neutral-100/80 dark:border-neutral-800/40 space-y-2.5">
                         {/* Info rows */}
                         {evento.local && (
                           <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
@@ -408,11 +430,10 @@ export function DayEventsSheet({
                         )}
 
                         {/* Separator */}
-                        <div className="border-t border-neutral-100 dark:border-neutral-800 pt-2" />
+                        <div className="h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
 
                         {/* Navigation + Actions */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {/* Abrir detalhes */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -426,7 +447,6 @@ export function DayEventsSheet({
                             Detalhes
                           </Button>
 
-                          {/* Ver assistido */}
                           {evento.assistidoId && (
                             <Link
                               href={`/admin/assistidos/${evento.assistidoId}`}
@@ -443,7 +463,6 @@ export function DayEventsSheet({
                             </Link>
                           )}
 
-                          {/* Ver demanda/processo */}
                           {evento.vinculoDemanda && (
                             <Link
                               href={`/admin/demandas/${evento.vinculoDemanda}`}
@@ -460,10 +479,8 @@ export function DayEventsSheet({
                             </Link>
                           )}
 
-                          {/* Spacer */}
                           <span className="flex-1" />
 
-                          {/* Edit */}
                           {onEditEvento && (
                             <Button
                               variant="ghost"
@@ -478,7 +495,6 @@ export function DayEventsSheet({
                               <Edit3 className="w-3.5 h-3.5" />
                             </Button>
                           )}
-                          {/* Delete */}
                           {onDeleteEvento && (
                             <Button
                               variant="ghost"
@@ -498,9 +514,9 @@ export function DayEventsSheet({
                     )}
                   </div>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>
