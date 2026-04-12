@@ -647,11 +647,8 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — card v5 com border-l na cor da atribuição ===== */}
-          <div
-            className="mx-4 mt-4 mb-5 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] overflow-hidden"
-            style={{ borderLeftColor: atribuicaoColor }}
-          >
+          {/* ===== HERO HEADER — estilo page header charcoal (Padrão Defender) ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#414144] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]">
             <div className="flex items-start gap-3.5">
               <AssistidoAvatar
                 nome={demanda.assistido}
@@ -659,28 +656,27 @@ export function DemandaQuickPreview({
                 atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
                 statusPrisional={demanda.estadoPrisional}
                 showStatusDot={false}
-                size="xl"
+                size="lg"
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base font-semibold text-foreground leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
                     {demanda.assistido}
                   </h2>
-                  {/* Flags inline com nome */}
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/[0.12] text-white shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <Flame className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                   )}
                 </div>
 
-                {/* Processo — chip copiável */}
+                {/* Processo — chip no estilo dark */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-50 dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-emerald-300 dark:hover:ring-emerald-700 group/proc cursor-pointer transition-all duration-150"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.06] hover:bg-white/[0.14] group/proc cursor-pointer transition-all duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -688,17 +684,17 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
-                    <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 group-hover/proc:text-emerald-500 transition-colors" />
+                    <span className="font-mono text-[11px] tabular-nums text-white/60 group-hover/proc:text-white/90 transition-colors">{processo.numero}</span>
+                    <Copy className="w-2.5 h-2.5 text-white/30 group-hover/proc:text-white/60 transition-colors" />
                   </button>
                 )}
 
                 {/* Action links */}
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-3 mt-2">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-muted-foreground hover:text-emerald-600 transition-colors"
+                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
                     >
                       Ver assistido →
                     </Link>
@@ -706,7 +702,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-muted-foreground hover:text-emerald-600 transition-colors"
+                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
                     >
                       Ver processo →
                     </Link>
