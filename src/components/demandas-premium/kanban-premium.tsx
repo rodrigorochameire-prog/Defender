@@ -215,16 +215,26 @@ function KanbanCard({
           })()}
         </div>
 
-        {/* Row 2: Ato (full width, não compete com data) */}
-        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate mb-0.5">
-          {demanda.ato}
-        </p>
+        {/* Row 2: Ato + Data (inline, data só quebra se não couber) */}
+        <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
+          <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+            {demanda.ato}
+          </span>
+          {demanda.data && (
+            <span className="text-[8px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
+              {demanda.data}
+            </span>
+          )}
+        </div>
 
-        {/* Row 3: Processo */}
+        {/* Row 3: Processo — hover na cor funcional do status */}
         {processo && (
           <div className="flex items-center gap-1 mb-1">
             <span
-              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate transition-colors cursor-pointer"
+              style={{ ["--hover-color" as string]: groupColor }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = groupColor; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = ""; }}
               onClick={(e) => {
                 e.stopPropagation();
                 copyToClipboard(processo);
@@ -235,13 +245,6 @@ function KanbanCard({
             </span>
             <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
           </div>
-        )}
-
-        {/* Data de expedição — discreta, antes do status */}
-        {demanda.data && (
-          <p className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 mb-1">
-            {demanda.data}
-          </p>
         )}
 
         {/* Row 4: Prazo + Status badge (clickable) */}
