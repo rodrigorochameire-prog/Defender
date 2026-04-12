@@ -376,6 +376,7 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
           assistidoId={processo?.assistidoId}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -880,7 +881,6 @@ function CronologiaView({
         </div>
       )}
       </div>
-    </div>
   );
 }
 
