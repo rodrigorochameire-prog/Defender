@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -523,41 +524,34 @@ export default function AvaliacaoJuriPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* SUB-HEADER - Padrão Defender */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+      <CollapsiblePageHeader title="Avaliação do Júri" icon={ClipboardCheck}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <Link href="/admin/juri/avaliacao">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
             </Link>
-            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center border border-purple-200 dark:border-purple-800">
-              <ClipboardCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <ClipboardCheck className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Avaliação do Júri</h1>
-                <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-700">
-                  Sessão #{sessaoId}
-                </Badge>
-              </div>
-              <p className="text-[10px] text-neutral-500">Formulário de observação comportamental</p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Avaliação do Júri</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Formulário de observação comportamental</p>
             </div>
           </div>
-          <Button 
-            onClick={handleSave} 
+          <button
+            onClick={handleSave}
             disabled={isSaving}
-            size="sm"
-            className="h-8 text-xs gap-1.5 bg-purple-600 hover:bg-purple-500"
+            className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
             {isSaving ? "Salvando..." : "Salvar"}
-          </Button>
+          </button>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 
       {/* Progress */}
       <div className="space-y-2">

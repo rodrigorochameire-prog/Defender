@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -337,19 +338,25 @@ export default function CalculadorasPage() {
   }, [penaMaximaAnos, dataFato]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calculadoras</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Ferramentas para cálculo de prazos penais e execução
-          </p>
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <CollapsiblePageHeader title="Calculadoras" icon={Calculator}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+            <Calculator className="w-4 h-4 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+              Calculadoras
+            </h1>
+            <p className="text-[10px] text-white/55 hidden sm:block">
+              Ferramentas para cálculo de prazos penais e execução
+            </p>
+          </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="px-5 md:px-8 py-3 md:py-4 space-y-6">
         <TabsList className="bg-muted/50">
           <TabsTrigger value="progressao" className="gap-2">
             <TrendingUp className="h-4 w-4" />

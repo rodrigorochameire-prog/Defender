@@ -1068,7 +1068,7 @@ async function criarSubpastasProcesso(pastaProcessoId: string): Promise<void> {
 /**
  * Cria uma pasta se não existir, ou retorna a existente
  */
-async function criarOuEncontrarPasta(
+export async function criarOuEncontrarPasta(
   nome: string,
   parentFolderId: string
 ): Promise<DriveFolder | null> {

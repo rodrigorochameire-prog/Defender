@@ -110,7 +110,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
       "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
       "bg-white dark:bg-neutral-900",
       "border border-neutral-200/80 dark:border-neutral-800/80",
-      "rounded-2xl shadow-sm",
+      "rounded-lg shadow-sm",
       "hover:shadow-md hover:-translate-y-0.5",
       isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30",
     )}>
@@ -183,7 +183,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
                 href={`https://drive.google.com/drive/folders/${assistido.driveFolderId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-6 rounded-md flex items-center gap-1 px-1.5 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 border border-emerald-200/50 dark:border-emerald-800/30 transition-colors"
+                className="h-6 rounded-md flex items-center gap-1 px-1.5 text-zinc-600 dark:text-zinc-300 bg-zinc-100/60 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.06] transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 <HardDrive className="w-3 h-3" />
@@ -286,13 +286,13 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
             audienciaHoje
               ? "bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/60 dark:border-amber-800/40"
               : audienciaAmanha
-                ? "bg-blue-50/80 dark:bg-blue-900/20 border-blue-200/60 dark:border-blue-800/40"
+                ? "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]"
                 : "bg-neutral-50/80 dark:bg-neutral-800/40 border-neutral-200/60 dark:border-neutral-700/40",
           )}>
             <div className={cn(
               "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
               audienciaHoje && "bg-amber-500 text-white",
-              audienciaAmanha && "bg-blue-500 text-white",
+              audienciaAmanha && "bg-zinc-800 dark:bg-zinc-600 text-white",
               !audienciaHoje && !audienciaAmanha && "bg-neutral-200 dark:bg-neutral-700 text-neutral-500",
             )}>
               <Calendar className="w-3 h-3" />
@@ -301,7 +301,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
               <span className={cn(
                 "text-[10px] font-bold uppercase",
                 audienciaHoje && "text-amber-700 dark:text-amber-400",
-                audienciaAmanha && "text-blue-700 dark:text-blue-400",
+                audienciaAmanha && "text-zinc-700 dark:text-zinc-300",
                 !audienciaHoje && !audienciaAmanha && "text-neutral-600 dark:text-neutral-300",
               )}>
                 {audienciaHoje ? "HOJE" : audienciaAmanha ? "AMANHA" : format(parseISO(assistido.proximaAudiencia), "dd/MM")}
@@ -310,7 +310,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
               <span className="text-[10px] text-neutral-400 truncate">{assistido.tipoProximaAudiencia || "Audiência"}</span>
             </div>
             {(audienciaHoje || audienciaAmanha) && (
-              <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", audienciaHoje ? "bg-amber-500 animate-pulse" : "bg-blue-500")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", audienciaHoje ? "bg-amber-500 animate-pulse" : "bg-zinc-800 dark:bg-zinc-600")} />
             )}
           </div>
         )}
@@ -366,7 +366,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
         </div>
 
         <Link href={`/admin/assistidos/${assistido.id}`}>
-          <Button size="sm" className="h-7 text-[10px] px-3 gap-1 bg-neutral-800 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white rounded-lg">
+          <Button size="sm" className="h-7 text-[10px] px-3 gap-1 bg-neutral-800 hover:bg-zinc-900 dark:bg-neutral-700 dark:hover:bg-zinc-600 text-white rounded-lg">
             Ver Perfil <ChevronRight className="w-3 h-3" />
           </Button>
         </Link>
@@ -380,11 +380,11 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
             <div className="relative pl-4 space-y-2.5 border-l-2 border-neutral-200 dark:border-neutral-700">
               {assistido.proximaAudiencia && (
                 <div className="relative">
-                  <div className={cn("absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center", audienciaHoje ? "bg-amber-500" : audienciaAmanha ? "bg-blue-500" : "bg-violet-500")}>
+                  <div className={cn("absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center", "bg-zinc-800 dark:bg-zinc-600")}>
                     <Calendar className="w-2 h-2 text-white" />
                   </div>
                   <div className="ml-3">
-                    <p className={cn("text-xs font-semibold", audienciaHoje ? "text-amber-600" : audienciaAmanha ? "text-blue-600" : "text-violet-600")}>
+                    <p className={cn("text-xs font-semibold", audienciaHoje ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300")}>
                       {format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy 'às' HH:mm")}
                     </p>
                     <p className="text-[10px] text-neutral-500">{assistido.tipoProximaAudiencia || "Audiência"}</p>

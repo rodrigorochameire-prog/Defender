@@ -68,7 +68,7 @@ export const KANBAN_COLUMNS: Record<KanbanColumn, KanbanColumnConfig> = {
     label: "Em Andamento",
     color: "#D4A84A",
     icon: Activity,
-    subGroups: ["preparacao", "diligencias", "saida", "acompanhar"],
+    subGroups: ["preparacao", "diligencias", "acompanhar", "saida"],
   },
   concluida: {
     label: "Concluída",
@@ -441,8 +441,8 @@ export const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }
   { key: "triagem", label: "Triagem", short: "Triagem" },
   { key: "preparacao", label: "Preparação", short: "Prep." },
   { key: "diligencias", label: "Diligências", short: "Dilig." },
-  { key: "saida", label: "Saída", short: "Saída" },
   { key: "acompanhar", label: "Acompanhar", short: "Acomp." },
+  { key: "saida", label: "Saída", short: "Saída" },
   { key: "concluida", label: "Concluída", short: "Concl." },
 ];
 

@@ -19,6 +19,7 @@ import { ptBR } from "date-fns/locale";
 import { IntelligenceTab } from "@/components/intelligence/IntelligenceTab";
 // DriveStatusBar absorbed into header card
 import { DriveTabEnhanced } from "@/components/drive/DriveTabEnhanced";
+import { IndexedFilesSection } from "@/components/drive/IndexedFilesSection";
 import { MarkdownViewerModal } from "@/components/drive/MarkdownViewerModal";
 import { useRealtimeFileStatus } from "@/hooks/use-realtime-file-status";
 import { MidiasHub } from "@/components/midias/MidiasHub";
@@ -688,12 +689,15 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         )}
 
         {tab === "drive" && (
-          <DriveTabEnhanced
-            files={data.driveFiles}
-            assistidoId={Number(id)}
-            driveFolderId={data.driveFolderId}
-            atribuicaoPrimaria={data.atribuicaoPrimaria}
-          />
+          <div className="space-y-6">
+            <DriveTabEnhanced
+              files={data.driveFiles}
+              assistidoId={Number(id)}
+              driveFolderId={data.driveFolderId}
+              atribuicaoPrimaria={data.atribuicaoPrimaria}
+            />
+            <IndexedFilesSection assistidoId={Number(id)} />
+          </div>
         )}
 
         {tab === "audiencias" && (

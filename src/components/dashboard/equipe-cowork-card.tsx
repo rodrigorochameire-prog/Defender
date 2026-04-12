@@ -89,24 +89,22 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-card border border-neutral-200/80 dark:border-border rounded-xl overflow-hidden transition-all duration-200">
-      {/* Accent bar */}
-      <div className="h-1 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600" />
+    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-neutral-100 dark:border-border flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-md">
-            <Users className="w-4 h-4 text-white dark:text-neutral-900" />
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+            <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-neutral-800 dark:text-foreground tracking-tight">Equipe & Cowork</h3>
-            <p className="text-xs text-neutral-400 dark:text-muted-foreground">Delegações, pareceres e coberturas</p>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Equipe & Cowork</h3>
+            <p className="text-[10px] text-muted-foreground tabular-nums">
+              {delegacoesAtivas} delegações · {muralNaoLidas} mural · {equipeMembros} equipe · {coberturasAtivas} coberturas
+              {pareceresPendentes > 0 && (
+                <> · <span className="text-rose-500">{pareceresPendentes} parecer{pareceresPendentes > 1 ? "es" : ""}</span></>
+              )}
+            </p>
           </div>
-          {pareceresPendentes > 0 && (
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-              {pareceresPendentes} parecer{pareceresPendentes > 1 ? "es" : ""}
-            </span>
-          )}
         </div>
         <Button
           variant="ghost"
@@ -119,35 +117,9 @@ export function EquipeCoworkCard({
         </Button>
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3">
-
-        {/* Row 1 — Stats (grid compacto 3×2) + Ações (coluna) */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
-          {/* Stats grid 3×2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
-            {miniStats.map((stat) => {
-              const StatIcon = stat.icon;
-              return (
-                <Link
-                  key={stat.label}
-                  href={stat.href}
-                  className="flex items-center gap-1.5 group/stat transition-colors py-0.5"
-                >
-                  <StatIcon className="w-3 h-3 text-neutral-400 group-hover/stat:text-emerald-500 transition-colors flex-shrink-0" />
-                  <span className="text-sm font-bold tabular-nums text-neutral-800 dark:text-foreground group-hover/stat:text-emerald-600 dark:group-hover/stat:text-emerald-400 transition-colors">
-                    {stat.value}
-                  </span>
-                  <span className="text-[10px] text-neutral-400 group-hover/stat:text-neutral-600 dark:group-hover/stat:text-foreground transition-colors truncate">
-                    {stat.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Ações rápidas — botões maiores */}
-          <div className="grid grid-cols-2 gap-1.5">
+      {/* Body — ações rápidas */}
+      <div className="p-4">
+        <div className="flex flex-wrap gap-2">
             {acoes.map((acao, i) => {
               const AcaoIcon = acao.icon;
               return (
@@ -156,8 +128,8 @@ export function EquipeCoworkCard({
                   onClick={acao.onClick}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg",
-                    "border border-neutral-200/60 dark:border-border",
-                    "bg-neutral-50/50 dark:bg-muted/50",
+                    "border border-neutral-200/60 dark:border-neutral-800/60",
+                    "bg-neutral-50/50 dark:bg-neutral-800/30",
                     "hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10",
                     "hover:border-emerald-300/60 dark:hover:border-emerald-800/50",
                     "hover:shadow-sm",
@@ -170,12 +142,11 @@ export function EquipeCoworkCard({
               );
             })}
           </div>
-        </div>
 
-        {/* Row 2 — Atividade Recente (compacta) */}
+        {/* Atividade Recente */}
         {atividades.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">Atividade recente</p>
+          <div className="space-y-1 mt-3">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Atividade recente</p>
             <div className="space-y-1.5">
               {atividades.slice(0, 5).map((ativ) => (
                 <div key={ativ.id} className="flex items-start gap-2">
@@ -194,7 +165,7 @@ export function EquipeCoworkCard({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-border">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-200/60 dark:border-neutral-800/60">
           <Link
             href="/admin/delegacoes"
             className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-foreground uppercase tracking-wide transition-colors"

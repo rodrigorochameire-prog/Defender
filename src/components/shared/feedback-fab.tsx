@@ -165,6 +165,28 @@ export function FeedbackFAB() {
 
   const canSubmit = !!tipo && mensagem.trim().length > 0;
 
+  // Dock height depende de quantos ícones estão visíveis
+  // 2 ícones = 82px · 1 ícone = 44px · 0 = dock hidden
+  const dockItems =
+    (pathname === "/admin/agenda" ? 0 : 1) +
+    (pathname === "/admin/demandas" ? 0 : 1);
+
+  // Desktop: dock at bottom-6 (24px). Feedback = 24 + dockH + 16 gap
+  // Mobile: dock at bottom-[5rem] (80px). Feedback = 80 + dockH + 16 gap
+  const btnBottomClass =
+    dockItems === 2
+      ? "bottom-[11.125rem] md:bottom-[7.625rem]" // 178 / 122
+      : dockItems === 1
+      ? "bottom-[8.75rem] md:bottom-[5.25rem]"    // 140 / 84
+      : "bottom-[5rem] md:bottom-6";              //  80 / 24
+
+  const popoverBottomClass =
+    dockItems === 2
+      ? "bottom-[14.25rem] md:bottom-[10.75rem]"  // ~228 / 172
+      : dockItems === 1
+      ? "bottom-[11.875rem] md:bottom-[8.375rem]" // ~190 / 134
+      : "bottom-[8.125rem] md:bottom-[4.625rem]"; // ~130 / 74
+
   return (
     <>
       {/* FAB Button — mesma linguagem do FloatingDock */}
@@ -178,7 +200,8 @@ export function FeedbackFAB() {
           "text-neutral-500 dark:text-neutral-400",
           "hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400",
           "transition-all duration-150 active:scale-95",
-          "bottom-[10.75rem] right-4 md:bottom-[7.75rem] md:right-6",
+          btnBottomClass,
+          "right-4 md:right-6",
           "cursor-pointer"
         )}
         title={isOpen ? "Fechar feedback" : "Enviar feedback"}
@@ -195,7 +218,8 @@ export function FeedbackFAB() {
         <div
           className={cn(
             "fixed z-[52]",
-            "bottom-[15rem] right-4 md:bottom-[12rem] md:right-6",
+            popoverBottomClass,
+            "right-4 md:right-6",
             "w-80 sm:w-96",
             "bg-white dark:bg-neutral-900 rounded-xl ring-1 ring-black/[0.06] dark:ring-white/[0.06] shadow-2xl shadow-black/[0.12]",
             "animate-in fade-in slide-in-from-bottom-2 duration-200"

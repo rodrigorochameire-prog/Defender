@@ -577,8 +577,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
-        style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
+        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none"
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -604,10 +603,10 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        {/* ===== STICKY NAV HEADER ===== */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/50 px-4 py-2.5 flex items-center justify-between">
+        {/* ===== STICKY NAV HEADER — Padrão Defender shell sutil ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
+            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Demanda
             </SheetTitle>
           </SheetHeader>
@@ -616,76 +615,65 @@ export function DemandaQuickPreview({
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
                   title="Anterior (↑)"
                 >
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-3.5 h-3.5" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
                   title="Próximo (↓)"
                 >
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
-            {/* Close button */}
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer ml-1"
+              className="w-7 h-7 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center ml-1"
               title="Fechar (Esc)"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER with gradient ===== */}
-          <div
-            className="px-5 pt-5 pb-4"
-            style={{
-              background: `linear-gradient(180deg, ${atribuicaoColor}14 0%, transparent 100%)`,
-            }}
-          >
+          {/* ===== HERO HEADER — estilo page header charcoal (Padrão Defender) ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#414144] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]">
             <div className="flex items-start gap-3.5">
-              <AssistidoAvatar
-                nome={demanda.assistido}
-                photoUrl={demanda.photoUrl}
-                atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
-                statusPrisional={demanda.estadoPrisional}
-                showStatusDot={isPreso}
-                size="xl"
-              />
+              {/* Avatar neutro no charcoal — initials translúcidas */}
+              <div className="w-11 h-11 rounded-xl bg-white/[0.10] ring-1 ring-white/[0.06] flex items-center justify-center shrink-0">
+                <span className="text-sm font-semibold text-white/80">
+                  {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                </span>
+              </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-serif text-lg sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
                     {demanda.assistido}
                   </h2>
-                  {/* Flags inline com nome */}
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/[0.12] text-white shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 shrink-0">
-                      <Flame className="w-2.5 h-2.5" /> Urgente
-                    </span>
+                    <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
                   )}
                 </div>
 
-                {/* Processo — chip copiável */}
+                {/* Processo — chip no estilo dark */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group/proc cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.06] hover:bg-white/[0.14] group/proc cursor-pointer transition-all duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -693,27 +681,27 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
-                    <Copy className="w-3 h-3 text-neutral-300 dark:text-neutral-600 group-hover/proc:text-emerald-500 transition-colors" />
+                    <span className="font-mono text-[11px] tabular-nums text-white/60 group-hover/proc:text-white/90 transition-colors">{processo.numero}</span>
+                    <Copy className="w-2.5 h-2.5 text-white/30 group-hover/proc:text-white/60 transition-colors" />
                   </button>
                 )}
 
-                {/* Action links — underline on hover */}
+                {/* Action links */}
                 <div className="flex items-center gap-3 mt-2">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
                     >
-                      Ver assistido
+                      Ver assistido →
                     </Link>
                   )}
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
                     >
-                      Ver processo
+                      Ver processo →
                     </Link>
                   )}
                 </div>
@@ -722,7 +710,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 py-5 border-t border-neutral-100 dark:border-neutral-800/50">
+          <div className="px-5 pb-4 pt-1">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
@@ -816,20 +804,21 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== CARD SECTIONS ===== */}
-          <div className="px-4 sm:px-5 pb-4 space-y-4">
-            {/* Section label: AÇÃO */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ação</span>
-              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+          <div className="px-4 sm:px-5 pb-4 space-y-3">
+            {/* Section divider: Ação */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ação</span>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
             {/* Card 1: Prazo + Providências — unified with border */}
-            <div className="rounded-xl bg-neutral-50/80 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
-              {/* Prazo row */}
-              <div className="flex items-center justify-between px-3.5 sm:px-4 py-3">
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-[#414144] dark:border-l-neutral-500 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
+              {/* Prazo */}
+              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Prazo</span>
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-[11px] text-foreground font-semibold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -838,22 +827,21 @@ export function DemandaQuickPreview({
                   />
                 </div>
                 {prazoBadge && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
-                    prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
-                    prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                    prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
-                    "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap tabular-nums ${
+                    prazoBadge.cor === "red" ? "text-rose-600 dark:text-rose-400" :
+                    prazoBadge.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
+                    prazoBadge.cor === "green" ? "text-emerald-600 dark:text-emerald-400" :
+                    "text-muted-foreground"
                   }`}>
                     {prazoBadge.texto}
                   </span>
                 )}
               </div>
-              {/* Divider */}
-              <div className="border-t border-neutral-200/40 dark:border-neutral-700/30" />
+              {/* Espaço clean entre prazo e providências — sem separator */}
               {/* Providências */}
-              <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
+              <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Providências</span>
+                  <span className="text-[11px] text-foreground font-semibold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -879,7 +867,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 min-h-[64px] bg-white/60 dark:bg-neutral-900/40 rounded-lg p-2.5 transition-colors group/edit"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[44px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-2.5 py-2 border border-neutral-200/40 dark:border-neutral-800/40 focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[12px] leading-relaxed"
                   multiline
                 />
                 {/* Timestamp última edição */}
@@ -894,20 +882,21 @@ export function DemandaQuickPreview({
               </div>
             </div>
 
-            {/* Section label: CLASSIFICAÇÃO */}
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Classificação</span>
-              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+            {/* Section divider: Classificação */}
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Classificação</span>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Detalhes — floating rows without card bg */}
-            <div className="overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-700/25">
+            {/* Detalhes — card v5 com border-l-4 */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
               {/* Status row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Status</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Status</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.status}
@@ -927,7 +916,7 @@ export function DemandaQuickPreview({
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${atribuicaoColor}18` }}>
                   <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Atribuição</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.atribuicao}
@@ -944,10 +933,10 @@ export function DemandaQuickPreview({
               </div>
               {/* Ato row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Ato</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Ato</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.ato}
@@ -968,7 +957,7 @@ export function DemandaQuickPreview({
                 onClick={() => setMetadataOpen(!metadataOpen)}
                 className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
               >
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 </div>
                 <span className="font-medium">Metadados</span>
@@ -977,37 +966,37 @@ export function DemandaQuickPreview({
                 <>
                   {demanda.dataInclusao && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Clock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Importado</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   )}
                   {demanda.estadoPrisional && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Lock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Prisional</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
                     </div>
                   )}
                   {processo?.tipo && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Tipo</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
                     </div>
                   )}
                   {demanda.importBatchId && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <AlertCircle className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Batch</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Batch</span>
                       <span className="flex-1 text-right text-xs font-mono text-neutral-500 dark:text-neutral-400">{demanda.importBatchId.slice(0, 8)}</span>
                     </div>
                   )}
@@ -1018,9 +1007,10 @@ export function DemandaQuickPreview({
             {/* ===== OFÍCIO SUGERIDO ===== */}
             {oficioSugerido && (
               <>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ofício</span>
-                  <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ofício</span>
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
                 </div>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
@@ -1223,24 +1213,24 @@ export function DemandaQuickPreview({
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800/80 px-5 py-2.5 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/60 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
-            className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 h-8 rounded-xl bg-emerald-500 text-white shadow-sm text-[11px] font-semibold hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             Resolver
           </button>
           <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-8 px-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-700/80 text-neutral-500 dark:text-neutral-400 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 px-3.5 rounded-xl bg-white/[0.08] text-neutral-500 dark:text-neutral-400 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-[11px] font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
           >
             <Archive className="w-3 h-3" />
             Arquivar
           </button>
           <button
             onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
-            className="h-8 w-8 rounded-lg border border-rose-200/80 dark:border-rose-800/40 text-rose-400 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer flex items-center justify-center"
+            className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-rose-500 hover:ring-rose-200 dark:hover:ring-rose-800/40 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-150 cursor-pointer flex items-center justify-center"
           >
             <Trash2 className="w-3 h-3" />
           </button>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -878,47 +879,45 @@ export default function JuradosPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* SUB-HEADER */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+      <CollapsiblePageHeader title="Jurados" icon={Users}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <Link href="/admin/juri">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
             </Link>
-            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <Users className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Jurados</h1>
-              <p className="text-[10px] text-neutral-500">Análise comportamental</p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Jurados</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Análise comportamental</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-8 text-xs border-neutral-300 dark:border-neutral-700"
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
               onClick={() => setImportModalOpen(true)}
+              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
             >
-              <Upload className="w-3.5 h-3.5 mr-1.5" />
-              Importar Lista
-            </Button>
-            <Button size="sm" className="h-8 text-xs bg-neutral-900 hover:bg-neutral-800 text-white dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200">
-              <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Novo Jurado
-            </Button>
+              <Upload className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Importar Lista</span>
+            </button>
+            <button
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Novo Jurado</span>
+            </button>
             {juradosDoSistema.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="w-4 h-4 text-neutral-400" />
-                  </Button>
+                  <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                     onClick={() => setShowDeleteAllConfirm(true)}
                   >
@@ -930,9 +929,9 @@ export default function JuradosPage() {
             )}
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
-      <div className="p-4 md:p-6 space-y-4">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
         {/* Stats */}
         <StatsBar jurados={juradosDoSistema} />
 

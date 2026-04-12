@@ -11,7 +11,7 @@ import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extr
 export const DRIVE_ATRIBUICOES = [
   {
     key: "JURI",
-    label: "Juri",
+    label: "Júri",
     icon: Scale,
     folderId: ATRIBUICAO_FOLDER_IDS.JURI,
     color: "emerald",
@@ -24,7 +24,7 @@ export const DRIVE_ATRIBUICOES = [
   },
   {
     key: "VVD",
-    label: "Violencia Domestica",
+    label: "Violência Doméstica",
     icon: ShieldCheck,
     folderId: ATRIBUICAO_FOLDER_IDS.VVD,
     color: "amber",
@@ -37,7 +37,7 @@ export const DRIVE_ATRIBUICOES = [
   },
   {
     key: "EP",
-    label: "Execucao Penal",
+    label: "Execução Penal",
     icon: Lock,
     folderId: ATRIBUICAO_FOLDER_IDS.EP,
     color: "sky",
@@ -50,7 +50,7 @@ export const DRIVE_ATRIBUICOES = [
   },
   {
     key: "SUBSTITUICAO",
-    label: "Substituicao",
+    label: "Substituição",
     icon: ArrowLeftRight,
     folderId: ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO,
     color: "rose",
@@ -63,7 +63,7 @@ export const DRIVE_ATRIBUICOES = [
   },
   {
     key: "GRUPO_JURI",
-    label: "Grupo do Juri",
+    label: "Grupo do Júri",
     icon: Users,
     folderId: ATRIBUICAO_FOLDER_IDS.GRUPO_JURI,
     color: "orange",

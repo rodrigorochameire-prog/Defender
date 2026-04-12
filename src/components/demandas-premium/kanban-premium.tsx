@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   ChevronRight,
   ChevronLeft,
@@ -115,8 +116,8 @@ function KanbanCard({
 }) {
   const rawStatus = demanda.substatus || demanda.status || "triagem";
   const statusCfg = getStatusConfig(rawStatus);
-  // Show original substatus label (e.g. "2 - Elaborar") for planilha fidelity
-  const statusDisplay = rawStatus.match(/^\d+\s*-\s*/) ? rawStatus : statusCfg?.label || rawStatus;
+  // Strip numeric prefix (e.g. "2 - Elaborar" → "Elaborar") — numeração é só pra planilha
+  const statusDisplay = statusCfg?.label || rawStatus.replace(/^\d+\s*-\s*/, "");
   const processo = demanda.processos?.[0]?.numero || "";
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
@@ -185,27 +186,17 @@ function KanbanCard({
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
-      <div className="px-3 py-3">
-        {/* Row 1: Nome + Data expedição + Flags */}
-        <div className="flex items-center gap-2 mb-1">
-          <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
+      <div className="px-3 py-2.5">
+        {/* Row 1: Nome + Flags */}
+        <div className="flex items-start gap-1.5 mb-0.5">
+          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2">
             {demanda.assistido}
           </p>
-          {/* Data de expedição — canto superior direito */}
-          {(demanda.data) && (
-            <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
-              {demanda.data}
-            </span>
-          )}
           {isPreso && (
-            <span className="flex items-center text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded shrink-0">
-              <Lock className="w-2.5 h-2.5" />
-            </span>
+            <Lock className="w-2.5 h-2.5 text-amber-500 shrink-0" />
           )}
           {isUrgente && (
-            <span className="flex items-center text-[8px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded shrink-0">
-              <Flame className="w-2.5 h-2.5" />
-            </span>
+            <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0" />
           )}
           {showAtribBadge && demanda.atribuicao && (() => {
             const atribColor = ATRIBUICAO_COLORS[demanda.atribuicao as string] || "#71717a";
@@ -224,16 +215,26 @@ function KanbanCard({
           })()}
         </div>
 
-        {/* Row 2: Ato */}
-        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mb-1">
-          {demanda.ato}
-        </p>
+        {/* Row 2: Ato + Data (inline, data só quebra se não couber) */}
+        <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
+          <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+            {demanda.ato}
+          </span>
+          {demanda.data && (
+            <span className="text-[8px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
+              {demanda.data}
+            </span>
+          )}
+        </div>
 
-        {/* Row 3: Processo */}
+        {/* Row 3: Processo — hover na cor funcional do status */}
         {processo && (
           <div className="flex items-center gap-1 mb-1">
             <span
-              className="text-[11px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate transition-colors cursor-pointer"
+              style={{ ["--hover-color" as string]: groupColor }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = groupColor; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = ""; }}
               onClick={(e) => {
                 e.stopPropagation();
                 copyToClipboard(processo);
@@ -464,7 +465,7 @@ function EmAndamentoExpanded({
   onDragEnd?: () => void;
 }) {
   // Only show non-empty sub-groups
-  const visibleSubGroups = (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+  const visibleSubGroups = (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
     .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
 
   if (visibleSubGroups.length === 0) {
@@ -815,19 +816,29 @@ export function KanbanPremium({
 
   // Count non-empty sub-groups for grid sizing
   const nonEmptySubGroupCount = useMemo(() => {
-    return (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0).length;
   }, [subGroupDemandas]);
 
-  // Visible columns
+  // Viewport check — esconde Concluída quando expandido em telas < lg
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrowViewport(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Visible columns — Concluída esconde quando Em Andamento expandido em tela estreita
   const visibleColumns = useMemo(() => {
     const cols: KanbanColumn[] = [];
     if (columnDemandas.triagem.length > 0) cols.push("triagem");
     cols.push("em_andamento");
-    if (columnDemandas.concluida.length > 0) cols.push("concluida");
+    const hideConcluida = emAndamentoExpanded && isNarrowViewport;
+    if (columnDemandas.concluida.length > 0 && !hideConcluida) cols.push("concluida");
     if (showArchived && columnDemandas.arquivado.length > 0) cols.push("arquivado");
     return cols;
-  }, [columnDemandas, showArchived]);
+  }, [columnDemandas, showArchived, emAndamentoExpanded, isNarrowViewport]);
 
   // CSS Grid — balanced proportions
   const gridTemplate = useMemo(() => {
@@ -843,7 +854,7 @@ export function KanbanPremium({
 
   // Mobile: non-empty sub-groups
   const mobileVisibleSubGroups = useMemo(() => {
-    return (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
   }, [subGroupDemandas]);
 
@@ -934,13 +945,12 @@ export function KanbanPremium({
       </div>
 
       {/* ===================== DESKTOP LAYOUT ===================== */}
-      <div className="hidden sm:block">
+      <div className="hidden sm:block overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700">
         {/* Kanban Grid */}
         <div
-          className="grid gap-4 transition-all duration-500 ease-out overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700"
+          className="grid gap-3 transition-all duration-500 ease-out pb-2"
           style={{
             gridTemplateColumns: gridTemplate,
-            minWidth: emAndamentoExpanded ? `${Math.max(600, nonEmptySubGroupCount * 240 + 400)}px` : undefined,
             alignItems: "start",
           }}
         >
@@ -1055,8 +1065,11 @@ export function KanbanPremium({
             return (
               <div
                 key={col}
-                className={`flex flex-col min-w-0 rounded-xl transition-all duration-200 ${isRegularDropTarget ? "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1" : ""}`}
-                style={{ opacity: col === "concluida" ? 0.5 : 1 }}
+                className={cn(
+                  "flex flex-col min-w-0 rounded-xl transition-all duration-200",
+                  isRegularDropTarget && "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1",
+                  col === "concluida" && ""
+                )}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
                 onDrop={(e) => {

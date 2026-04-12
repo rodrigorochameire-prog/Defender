@@ -2230,7 +2230,7 @@ export default function Demandas() {
                 title="Importar"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Importar</span>
+                <span className="hidden md:inline">Importar</span>
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -2278,7 +2278,7 @@ export default function Demandas() {
                 title="Exportar"
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Exportar</span>
+                <span className="hidden md:inline">Exportar</span>
               </button>
               {isExportDropdownOpen && createPortal(
                 <>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -284,44 +285,33 @@ export default function MonitoramentoMPUPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/vvd">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <ShieldCheck className="w-5 h-5 text-white dark:text-neutral-900" />
+      <CollapsiblePageHeader title="MPUs" icon={ShieldCheck}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
                 Monitoramento de MPUs
               </h1>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 hidden sm:block">
-                Medidas Protetivas de Urgência - Acompanhamento e Histórico
+              <p className="text-[10px] text-white/55 hidden sm:block">
+                Medidas Protetivas de Urgência — Acompanhamento e Histórico
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              refetchStats();
-              refetchProcessos();
-            }}
-            className="h-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+          <button
+            onClick={() => { refetchStats(); refetchProcessos(); }}
+            className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
           >
-            <RefreshCw className="h-4 w-4 mr-1" />
+            <RefreshCw className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Atualizar</span>
-          </Button>
+          </button>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
         {/* Stats Ribbon */}
         <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 text-xs overflow-x-auto scrollbar-none shadow-sm">
           {[

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -267,28 +268,23 @@ export default function PalacioMentePage() {
   const casoSelecionado = casos?.find(c => c.id.toString() === selectedCasoId);
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-background">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
-              <Brain className="h-5 w-5 text-white" />
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Palácio da Mente" icon={Brain}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Brain className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-foreground">
-                Palácio da Mente
-              </h1>
-              <p className="text-sm text-neutral-500 dark:text-muted-foreground">
-                Visualize e conecte as peças do quebra-cabeça
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Palácio da Mente</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Visualize e conecte as peças do quebra-cabeça</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Seletor de Caso */}
             <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
-              <SelectTrigger className="w-[280px] bg-white dark:bg-muted border-neutral-200 dark:border-border">
+              <SelectTrigger className="w-[220px] h-8 text-[11px] bg-white/[0.08] text-white border-white/[0.12] hover:bg-white/[0.14] focus:ring-0">
                 <SelectValue placeholder="Selecione um caso..." />
               </SelectTrigger>
               <SelectContent>
@@ -308,13 +304,13 @@ export default function PalacioMentePage() {
             {/* Botão Criar Diagrama */}
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                <button
+                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
                   disabled={!selectedCasoId}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Diagrama
-                </Button>
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Novo Diagrama</span>
+                </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
@@ -420,10 +416,10 @@ export default function PalacioMentePage() {
             </Dialog>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo Principal */}
-      <div className="p-4 md:p-6">
+      <div className="px-5 md:px-8 py-3 md:py-4">
         {!selectedCasoId ? (
           /* Estado vazio - Nenhum caso selecionado */
           <div className="flex flex-col items-center justify-center min-h-[60vh]">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "motion/react";
 import {
   BarChart3,
+  Download,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -58,7 +59,7 @@ const KPI = {
   hover: "hover:bg-white dark:hover:bg-[#1f1f22] transition-colors duration-200",
   // Ícone container — subtle neutral
   iconWrap:
-    "w-7 h-7 rounded-md bg-neutral-900/[0.04] dark:bg-white/[0.05] flex items-center justify-center",
+    "w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center",
   iconColor: "text-neutral-700 dark:text-neutral-300",
   // Tipografia
   label: "text-[9px] uppercase tracking-wider font-semibold text-neutral-500 dark:text-neutral-400",
@@ -325,7 +326,7 @@ function ChartCard({
           <Icon className={cn("w-3.5 h-3.5", KPI.iconColor)} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
             {title}
           </h3>
           {subtitle && (
@@ -345,6 +346,7 @@ function ChartCard({
 export function KpisSection({ onClose }: { onClose?: () => void }) {
   const { selectedDefensorId, selectedDefensor } = useDefensor();
   const [comarcaId, setComarcaId] = useState<number | null>(null);
+  const [showRelatorioDetail, setShowRelatorioDetail] = useState(false);
 
   const scope = useMemo(
     () => ({
@@ -363,6 +365,17 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const cargaQ = trpc.kpis.cargaDefensor.useQuery(scope);
   const presosQ = trpc.kpis.presosUrgentes.useQuery(scope);
   const agingQ = trpc.kpis.backlogAging.useQuery(scope);
+  const audienciasProxQ = trpc.kpis.audienciasProximas.useQuery(scope);
+  const semAtendQ = trpc.kpis.semAtendimento.useQuery(scope);
+  const relatorioScope = {
+    defensorId: selectedDefensorId ?? undefined,
+    ano: new Date().getFullYear(),
+    semestre: (new Date().getMonth() < 6 ? "1" : "2") as "1" | "2",
+  };
+  const relatorioQ = trpc.kpis.relatorioResumo.useQuery(relatorioScope);
+  const relatorioDetalhadoQ = trpc.kpis.relatorioDetalhado.useQuery(relatorioScope, {
+    enabled: showRelatorioDetail,
+  });
   const comarcasQ = trpc.comarcas.listRMS.useQuery();
 
   const utils = trpc.useUtils();
@@ -383,6 +396,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
       utils.kpis.cargaDefensor.invalidate(),
       utils.kpis.presosUrgentes.invalidate(),
       utils.kpis.backlogAging.invalidate(),
+      utils.kpis.audienciasProximas.invalidate(),
+      utils.kpis.semAtendimento.invalidate(),
+      utils.kpis.relatorioResumo.invalidate(),
     ]);
   };
 
@@ -394,6 +410,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const carga = cargaQ.data ?? [];
   const presos = presosQ.data ?? [];
   const aging = agingQ.data;
+  const audienciasProx = audienciasProxQ.data ?? [];
+  const semAtend = semAtendQ.data;
+  const relatorio = relatorioQ.data ?? [];
   const comarcas = comarcasQ.data ?? [];
 
   const defensorLabel = selectedDefensor?.name ?? "Visão Geral";
@@ -474,6 +493,33 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   ];
   const agingTotal = agingBuckets.reduce((acc, b) => acc + b.value, 0);
 
+  // Relatório semestral — 6 colunas (meses) com barras por seção
+  const MESES_LABEL = ["", "JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  const semestreAtual = new Date().getMonth() < 6 ? 1 : 2;
+  const mesesRange = semestreAtual === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+
+  const relatorioByMes = useMemo(() => {
+    const map = new Map<number, { judicial: number; extrajudicial: number }>();
+    for (const m of mesesRange) map.set(m, { judicial: 0, extrajudicial: 0 });
+    for (const r of relatorio) {
+      const entry = map.get(r.mes);
+      if (!entry) continue;
+      if (r.secao.includes("JUDICIAIS")) entry.judicial += r.total;
+      else entry.extrajudicial += r.total;
+    }
+    return mesesRange.map((m) => ({
+      mes: m,
+      label: MESES_LABEL[m] ?? `M${m}`,
+      judicial: map.get(m)?.judicial ?? 0,
+      extrajudicial: map.get(m)?.extrajudicial ?? 0,
+      total: (map.get(m)?.judicial ?? 0) + (map.get(m)?.extrajudicial ?? 0),
+    }));
+  }, [relatorio, mesesRange]);
+
+  const relatorioTotal = relatorioByMes.reduce((acc, m) => acc + m.total, 0);
+  const relatorioJudicial = relatorioByMes.reduce((acc, m) => acc + m.judicial, 0);
+  const relatorioExtrajudicial = relatorioByMes.reduce((acc, m) => acc + m.extrajudicial, 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -497,7 +543,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               <BarChart3 className={cn("w-3.5 h-3.5", KPI.iconColor)} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
                 KPIs Operacionais
               </h2>
               <div className="flex items-center gap-1.5 text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -509,7 +555,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-white/[0.05] hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] transition-colors rounded-md px-2.5 py-1.5 border border-neutral-200/60 dark:border-white/[0.04]">
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200/70 dark:hover:bg-neutral-700/50 transition-colors rounded-lg px-2.5 py-1.5 border border-neutral-200/60 dark:border-neutral-800/60">
               <Filter className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
               <select
                 className="bg-transparent text-[11px] outline-none cursor-pointer text-neutral-700 dark:text-neutral-200"
@@ -529,7 +575,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Atualizar"
-              className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-neutral-600 dark:text-neutral-300"
+              className="h-7 w-7 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-neutral-600 dark:text-neutral-300"
             >
               <RefreshCw className={cn("w-3 h-3", isRefreshing && "animate-spin")} />
             </button>
@@ -538,7 +584,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               <button
                 onClick={onClose}
                 title="Fechar"
-                className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer text-neutral-600 dark:text-neutral-300"
+                className="h-7 w-7 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors flex items-center justify-center cursor-pointer text-neutral-600 dark:text-neutral-300"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -558,7 +604,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             "px-4 py-2.5 flex items-center gap-5 flex-wrap",
           )}
         >
-          <span className="inline-flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400 pr-2 border-r border-neutral-200 dark:border-white/[0.08]">
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground pr-2 border-r border-neutral-200/60 dark:border-neutral-800/60">
             <CalendarClock className="w-3 h-3" />
             Hoje
           </span>
@@ -721,7 +767,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                 <Activity className={cn("w-3.5 h-3.5", KPI.iconColor)} />
               </div>
               <div>
-                <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
                   Saúde do backlog
                 </h3>
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -733,7 +779,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               </span>
             </div>
 
-            <div className="flex items-center h-8 w-full rounded-md overflow-hidden ring-1 ring-neutral-200/60 dark:ring-white/[0.04]">
+            <div className="flex items-center h-8 w-full rounded-lg overflow-hidden ring-1 ring-neutral-200/60 dark:ring-neutral-800/60">
               {agingBuckets.map((b, i) => {
                 const pct = (b.value / agingTotal) * 100;
                 if (pct === 0) return null;
@@ -784,7 +830,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             >
               <div className="px-4 py-2.5 border-b border-red-500/20 flex items-center gap-2">
                 <Flame className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-                <h3 className="text-[11px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
                   Réu Preso — Prazo ≤ 5 dias
                 </h3>
                 <span className="ml-auto text-[9px] uppercase tracking-wider text-red-600/70 dark:text-red-400/70 font-semibold">
@@ -998,6 +1044,97 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           </ChartCard>
         </div>
 
+        {/* Audiências próximas + Sem atendimento */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Audiências próximas 7 dias */}
+          <ChartCard
+            title="Audiências próximas"
+            subtitle={`${audienciasProx.length} nos próximos 7 dias`}
+            icon={Clock}
+            delay={0.55}
+          >
+            {audienciasProx.length === 0 ? (
+              <EmptyState text="Nenhuma audiência nos próximos 7 dias" />
+            ) : (
+              <ul className="divide-y divide-neutral-100 dark:divide-neutral-800/40 max-h-[240px] overflow-y-auto scrollbar-none -mx-1">
+                {audienciasProx.slice(0, 8).map((a) => (
+                  <li key={a.id} className="px-1 py-2 flex items-center gap-3 text-xs">
+                    <span
+                      className={cn(
+                        "font-mono text-[11px] font-bold w-8 text-center tabular-nums shrink-0",
+                        a.diasRestantes === 0
+                          ? "text-red-600 dark:text-red-500"
+                          : a.diasRestantes <= 1
+                            ? "text-amber-600 dark:text-amber-500"
+                            : "text-neutral-500",
+                      )}
+                    >
+                      {a.diasRestantes === 0 ? "HOJE" : `+${a.diasRestantes}d`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate block">
+                        {a.assistidoNome ?? a.titulo ?? a.tipo}
+                      </span>
+                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate block">
+                        {a.tipo} {a.local ? `· ${a.local}` : ""}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tabular-nums shrink-0">
+                      {new Date(a.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </ChartCard>
+
+          {/* Assistidos sem atendimento > 30 dias */}
+          <ChartCard
+            title="Sem atendimento recente"
+            subtitle={`${semAtend?.total ?? 0} assistidos > 30 dias sem registro`}
+            icon={AlertTriangle}
+            delay={0.6}
+          >
+            {!semAtend || semAtend.total === 0 ? (
+              <EmptyState text="Todos os assistidos com atendimento recente" />
+            ) : (
+              <ul className="divide-y divide-neutral-100 dark:divide-neutral-800/40 max-h-[240px] overflow-y-auto scrollbar-none -mx-1">
+                {semAtend.topAssistidos.map((a) => (
+                  <li key={a.id} className="px-1 py-2 flex items-center gap-3 text-xs">
+                    <span
+                      className={cn(
+                        "font-mono text-[11px] font-bold w-12 text-center tabular-nums shrink-0",
+                        a.diasSemAtendimento === null
+                          ? "text-red-600 dark:text-red-500"
+                          : a.diasSemAtendimento > 60
+                            ? "text-red-600 dark:text-red-500"
+                            : "text-amber-600 dark:text-amber-500",
+                      )}
+                    >
+                      {a.diasSemAtendimento === null ? "NUNCA" : `${a.diasSemAtendimento}d`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate block">
+                        {a.nome}
+                      </span>
+                      {a.statusPrisional && (
+                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                          {a.statusPrisional}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+                {semAtend.total > 10 && (
+                  <li className="px-1 py-2 text-center text-[10px] text-neutral-400">
+                    + {semAtend.total - 10} outros assistidos
+                  </li>
+                )}
+              </ul>
+            )}
+          </ChartCard>
+        </div>
+
         {/* Carga por defensor */}
         {cargaChartData.length > 1 && (
           <ChartCard
@@ -1033,8 +1170,338 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             </ResponsiveContainer>
           </ChartCard>
         )}
+
+        {/* Relatório Semestral — Corregedoria DPE-BA */}
+        {relatorioTotal > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.65 }}
+            className={cn(KPI.card, "p-5")}
+          >
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className={KPI.iconWrap}>
+                <BarChart3 className={cn("w-3.5 h-3.5", KPI.iconColor)} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                  Relatório Semestral {semestreAtual === 1 ? "2026.1" : "2026.2"}
+                </h3>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  Atividades por mês — Corregedoria DPE-BA
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <div className={cn(KPI.value, "text-2xl")}>
+                    <AnimatedNumber value={relatorioTotal} />
+                  </div>
+                  <div className="text-[9px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wider font-semibold mt-0.5">
+                    atividades
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid meses */}
+            <div className="grid grid-cols-6 gap-2 mb-4">
+              {relatorioByMes.map((m, i) => {
+                const maxTotal = Math.max(...relatorioByMes.map((x) => x.total), 1);
+                const pctJud = maxTotal > 0 ? (m.judicial / maxTotal) * 100 : 0;
+                const pctExt = maxTotal > 0 ? (m.extrajudicial / maxTotal) * 100 : 0;
+                const mesAtual = new Date().getMonth() + 1;
+                const isAtual = m.mes === mesAtual;
+                return (
+                  <motion.div
+                    key={m.mes}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.04 }}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-lg transition-colors",
+                      isAtual
+                        ? "bg-emerald-50/80 dark:bg-emerald-950/20 ring-1 ring-emerald-500/30"
+                        : "hover:bg-neutral-50 dark:hover:bg-white/[0.02]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-[9px] font-bold uppercase tracking-wider",
+                        isAtual ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500",
+                      )}
+                    >
+                      {m.label}
+                    </span>
+                    {/* Stacked mini bar */}
+                    <div className="w-full h-20 flex flex-col-reverse items-center justify-start gap-0.5 px-1">
+                      <motion.div
+                        className="w-full rounded-t-sm bg-neutral-800 dark:bg-neutral-200"
+                        initial={{ height: 0 }}
+                        animate={{ height: `${pctJud}%` }}
+                        transition={{ duration: 0.6, delay: 0.8 + i * 0.04 }}
+                        style={{ minHeight: pctJud > 0 ? 2 : 0 }}
+                      />
+                      <motion.div
+                        className="w-full rounded-t-sm bg-amber-500"
+                        initial={{ height: 0 }}
+                        animate={{ height: `${pctExt}%` }}
+                        transition={{ duration: 0.6, delay: 0.85 + i * 0.04 }}
+                        style={{ minHeight: pctExt > 0 ? 2 : 0 }}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[11px] font-semibold tabular-nums",
+                        isAtual ? "text-emerald-700 dark:text-emerald-400" : KPI.value,
+                      )}
+                    >
+                      {m.total}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Legenda + breakdown */}
+            <div className="flex items-center gap-4 text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-neutral-800 dark:bg-neutral-200" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">
+                  Judiciais
+                </span>
+                <span className="text-neutral-400 dark:text-neutral-500 tabular-nums font-mono">
+                  {relatorioJudicial}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">
+                  Extrajudiciais
+                </span>
+                <span className="text-neutral-400 dark:text-neutral-500 tabular-nums font-mono">
+                  {relatorioExtrajudicial}
+                </span>
+              </div>
+              {/* Exportar CSV + Drill-down */}
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => {
+                    // Force load if not already
+                    if (!showRelatorioDetail) setShowRelatorioDetail(true);
+                    // Wait for data then export
+                    const doExport = () => {
+                      const detail = relatorioDetalhadoQ.data;
+                      if (!detail?.length) return;
+                      // Build CSV: Seção, Categoria, JAN, FEV, MAR, ABR, MAI, JUN, Total
+                      const header = ["Seção", "Categoria", ...mesesRange.map((m) => MESES_LABEL[m]), "Total"];
+                      const catMap = new Map<string, { secao: string; meses: Map<number, number> }>();
+                      for (const r of detail) {
+                        const key = `${r.secao}||${r.categoria}`;
+                        if (!catMap.has(key)) catMap.set(key, { secao: r.secao, meses: new Map() });
+                        const entry = catMap.get(key)!;
+                        entry.meses.set(r.mes, (entry.meses.get(r.mes) ?? 0) + r.total);
+                      }
+                      const rows = Array.from(catMap.entries()).map(([key, val]) => {
+                        const cat = key.split("||")[1];
+                        const vals = mesesRange.map((m) => val.meses.get(m) ?? 0);
+                        const total = vals.reduce((a, b) => a + b, 0);
+                        return [val.secao, cat, ...vals.map(String), String(total)];
+                      });
+                      const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+                      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `relatorio-semestral-${relatorioScope.ano}-${relatorioScope.semestre}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    };
+                    // If data already loaded, export immediately
+                    if (relatorioDetalhadoQ.data?.length) {
+                      doExport();
+                    } else {
+                      // Wait for query to resolve
+                      const interval = setInterval(() => {
+                        if (relatorioDetalhadoQ.data?.length) {
+                          clearInterval(interval);
+                          doExport();
+                        }
+                      }, 200);
+                      setTimeout(() => clearInterval(interval), 5000);
+                    }
+                  }}
+                  className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Download className="w-3 h-3" />
+                  Exportar CSV
+                </button>
+              <button
+                onClick={() => setShowRelatorioDetail(!showRelatorioDetail)}
+                className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                {showRelatorioDetail ? "Ocultar detalhamento" : "Ver detalhamento"}
+                <svg
+                  className={cn("w-3 h-3 transition-transform", showRelatorioDetail && "rotate-180")}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              </div>
+            </div>
+
+            {/* Drill-down — tabela estilo formulário Corregedoria */}
+            <AnimatePresence>
+              {showRelatorioDetail && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 border-t border-neutral-200/70 dark:border-neutral-700/30 pt-4">
+                    {relatorioDetalhadoQ.isLoading ? (
+                      <div className="flex items-center gap-2 text-xs text-neutral-400 py-6 justify-center">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Carregando detalhamento...
+                      </div>
+                    ) : (
+                      <RelatorioDetailTable
+                        data={relatorioDetalhadoQ.data ?? []}
+                        mesesRange={mesesRange}
+                        mesesLabel={MESES_LABEL}
+                      />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tabela de detalhamento do relatório semestral
+// ---------------------------------------------------------------------------
+
+function RelatorioDetailTable({
+  data,
+  mesesRange,
+  mesesLabel,
+}: {
+  data: { secao: string; categoria: string; mes: number; total: number }[];
+  mesesRange: number[];
+  mesesLabel: string[];
+}) {
+  // Agrupar por seção → categoria → meses
+  const secoes = useMemo(() => {
+    const map = new Map<string, Map<string, Map<number, number>>>();
+    for (const r of data) {
+      if (!map.has(r.secao)) map.set(r.secao, new Map());
+      const catMap = map.get(r.secao)!;
+      if (!catMap.has(r.categoria)) catMap.set(r.categoria, new Map());
+      const mesMap = catMap.get(r.categoria)!;
+      mesMap.set(r.mes, (mesMap.get(r.mes) ?? 0) + r.total);
+    }
+
+    return Array.from(map.entries()).map(([secao, catMap]) => ({
+      secao,
+      categorias: Array.from(catMap.entries())
+        .map(([cat, mesMap]) => {
+          const totals = mesesRange.map((m) => mesMap.get(m) ?? 0);
+          const total = totals.reduce((a, b) => a + b, 0);
+          return { categoria: cat, totals, total };
+        })
+        .sort((a, b) => b.total - a.total),
+    }));
+  }, [data, mesesRange]);
+
+  if (secoes.length === 0) {
+    return (
+      <div className="text-center text-xs text-neutral-400 py-4">
+        Sem dados para o período selecionado
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-none">
+      {secoes.map((secao) => (
+        <div key={secao.secao}>
+          {/* Seção header */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">
+              {secao.secao}
+            </span>
+            <span className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-700/40" />
+            <span className="text-[9px] font-mono tabular-nums text-neutral-400">
+              {secao.categorias.reduce((a, c) => a + c.total, 0)}
+            </span>
+          </div>
+
+          {/* Table */}
+          <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-700/30 overflow-hidden">
+            {/* Header row */}
+            <div className="grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-200/60 dark:border-neutral-700/30 px-3 py-1.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400">
+                Atividade
+              </span>
+              {mesesRange.map((m) => (
+                <span
+                  key={m}
+                  className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 text-center"
+                >
+                  {mesesLabel[m]}
+                </span>
+              ))}
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 text-right">
+                Total
+              </span>
+            </div>
+
+            {/* Data rows */}
+            {secao.categorias.map((cat, idx) => (
+              <div
+                key={cat.categoria}
+                className={cn(
+                  "grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 px-3 py-1.5 text-[11px]",
+                  idx % 2 === 0
+                    ? "bg-white dark:bg-transparent"
+                    : "bg-neutral-50/50 dark:bg-neutral-800/10",
+                )}
+              >
+                <span className="text-neutral-700 dark:text-neutral-300 truncate pr-2 leading-tight">
+                  {cat.categoria}
+                </span>
+                {cat.totals.map((val, mi) => (
+                  <span
+                    key={mi}
+                    className={cn(
+                      "text-center tabular-nums font-mono",
+                      val > 0
+                        ? "text-neutral-800 dark:text-neutral-200 font-medium"
+                        : "text-neutral-300 dark:text-neutral-600",
+                    )}
+                  >
+                    {val || "—"}
+                  </span>
+                ))}
+                <span className="text-right tabular-nums font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+                  {cat.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

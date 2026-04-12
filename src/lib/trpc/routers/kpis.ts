@@ -300,6 +300,149 @@ export const kpisRouter = router({
     }));
   }),
 
+  /** Relatório semestral — resumo mensal por seção (Corregedoria DPE-BA) */
+  relatorioResumo: protectedProcedure
+    .input(
+      z
+        .object({
+          defensorId: z.number().optional(),
+          ano: z.number().default(new Date().getFullYear()),
+          semestre: z.enum(["1", "2"]).default("1"),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const ano = input?.ano ?? new Date().getFullYear();
+      const sem = input?.semestre ?? "1";
+      const mesInicio = sem === "1" ? 1 : 7;
+      const mesFim = sem === "1" ? 6 : 12;
+      const visiveis = getDefensoresVisiveis(ctx.user);
+      const workspaceId = Number((ctx.user as any).workspaceId ?? 1);
+
+      const defFilter = input?.defensorId
+        ? `defensor_id = ${Number(input.defensorId)}`
+        : visiveis === "all"
+          ? `(defensor_id IS NOT NULL OR workspace_id = ${workspaceId})`
+          : visiveis.length > 0
+            ? `(defensor_id IN (${visiveis.join(",")}) OR (defensor_id IS NULL AND workspace_id = ${workspaceId}))`
+            : "1 = 0";
+
+      const result = await db.execute(
+        sql.raw(`
+          SELECT mes, secao_relatorio AS secao, SUM(total)::int AS total
+          FROM vw_relatorio_semestral
+          WHERE ${defFilter} AND ano = ${ano} AND mes BETWEEN ${mesInicio} AND ${mesFim}
+          GROUP BY mes, secao_relatorio ORDER BY mes, secao_relatorio
+        `),
+      );
+      return toRows(result).map((r) => ({
+        mes: Number(r.mes ?? 0),
+        secao: String(r.secao ?? ""),
+        total: Number(r.total ?? 0),
+      }));
+    }),
+
+  /** Relatório semestral — detalhado por categoria (drill-down pro formulário) */
+  relatorioDetalhado: protectedProcedure
+    .input(
+      z
+        .object({
+          defensorId: z.number().optional(),
+          ano: z.number().default(new Date().getFullYear()),
+          semestre: z.enum(["1", "2"]).default("1"),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const ano = input?.ano ?? new Date().getFullYear();
+      const sem = input?.semestre ?? "1";
+      const mesInicio = sem === "1" ? 1 : 7;
+      const mesFim = sem === "1" ? 6 : 12;
+      const visiveis = getDefensoresVisiveis(ctx.user);
+      const workspaceId = Number((ctx.user as any).workspaceId ?? 1);
+
+      const defFilter = input?.defensorId
+        ? `defensor_id = ${Number(input.defensorId)}`
+        : visiveis === "all"
+          ? `(defensor_id IS NOT NULL OR workspace_id = ${workspaceId})`
+          : visiveis.length > 0
+            ? `(defensor_id IN (${visiveis.join(",")}) OR (defensor_id IS NULL AND workspace_id = ${workspaceId}))`
+            : "1 = 0";
+
+      const result = await db.execute(
+        sql.raw(`
+          SELECT secao_relatorio AS secao, categoria_relatorio AS categoria, mes, SUM(total)::int AS total
+          FROM vw_relatorio_semestral
+          WHERE ${defFilter} AND ano = ${ano} AND mes BETWEEN ${mesInicio} AND ${mesFim}
+          GROUP BY secao_relatorio, categoria_relatorio, mes
+          ORDER BY secao_relatorio, categoria_relatorio, mes
+        `),
+      );
+      return toRows(result).map((r) => ({
+        secao: String(r.secao ?? ""),
+        categoria: String(r.categoria ?? ""),
+        mes: Number(r.mes ?? 0),
+        total: Number(r.total ?? 0),
+      }));
+    }),
+
+  /** Audiências próximas 7 dias */
+  audienciasProximas: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
+    const workspaceId = Number((ctx.user as any).workspaceId ?? 1);
+    const visiveis = getDefensoresVisiveis(ctx.user);
+    const defFilter = input?.defensorId
+      ? `(defensor_id = ${Number(input.defensorId)} OR (defensor_id IS NULL AND workspace_id = ${workspaceId}))`
+      : visiveis === "all"
+        ? `(defensor_id IS NOT NULL OR workspace_id = ${workspaceId})`
+        : visiveis.length > 0
+          ? `(defensor_id IN (${visiveis.join(",")}) OR (defensor_id IS NULL AND workspace_id = ${workspaceId}))`
+          : "1 = 0";
+
+    const result = await db.execute(
+      sql.raw(`
+        SELECT id, data_audiencia::text AS data, tipo, titulo, local, status,
+          assistido_nome, numero_autos, dias_restantes
+        FROM vw_kpi_audiencias_proximas
+        WHERE ${defFilter}
+        ORDER BY data_audiencia LIMIT 20
+      `),
+    );
+    return toRows(result).map((r) => ({
+      id: Number(r.id ?? 0),
+      data: String(r.data ?? ""),
+      tipo: String(r.tipo ?? ""),
+      titulo: r.titulo ? String(r.titulo) : null,
+      local: r.local ? String(r.local) : null,
+      status: String(r.status ?? ""),
+      assistidoNome: r.assistido_nome ? String(r.assistido_nome) : null,
+      numeroAutos: r.numero_autos ? String(r.numero_autos) : null,
+      diasRestantes: Number(r.dias_restantes ?? 0),
+    }));
+  }),
+
+  /** Assistidos sem atendimento recente (> 30 dias) */
+  semAtendimento: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
+    const scope = buildScope(ctx, input);
+    const result = await db.execute(
+      sql.raw(`
+        SELECT assistido_id, nome, status_prisional, dias_sem_atendimento
+        FROM vw_kpi_sem_atendimento
+        ${scope}
+        LIMIT 50
+      `),
+    );
+    const rows = toRows(result);
+    return {
+      total: rows.length,
+      topAssistidos: rows.slice(0, 10).map((r) => ({
+        id: Number(r.assistido_id ?? 0),
+        nome: String(r.nome ?? ""),
+        statusPrisional: r.status_prisional ? String(r.status_prisional) : null,
+        diasSemAtendimento: r.dias_sem_atendimento != null ? Number(r.dias_sem_atendimento) : null,
+      })),
+    };
+  }),
+
   /** Réu preso com prazo ≤ 5 dias */
   presosUrgentes: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);

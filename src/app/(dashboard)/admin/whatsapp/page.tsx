@@ -650,8 +650,13 @@ function formatPhone(phone: string): string {
 
 export default function WhatsAppPage() {
   const { data: configs, isLoading, refetch } = trpc.whatsappChat.listConfigs.useQuery();
-
   const primaryConfig = configs?.[0];
+
+  // Stats para Row 2
+  const { data: whatsappStats } = trpc.whatsappChat.getStats.useQuery(
+    { configId: primaryConfig?.id! },
+    { enabled: !!primaryConfig?.id, refetchInterval: 30000 }
+  );
 
   if (isLoading) {
     return (
@@ -681,6 +686,53 @@ export default function WhatsAppPage() {
       <CollapsiblePageHeader
         title="WhatsApp"
         icon={MessageCircle}
+        collapsedStats={
+          primaryConfig && whatsappStats ? (
+            <>
+              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
+                {whatsappStats.totalContacts} contatos
+              </span>
+              {(whatsappStats.unreadMessages ?? 0) > 0 && (
+                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 tabular-nums ml-1">
+                  {whatsappStats.unreadMessages} novas
+                </span>
+              )}
+            </>
+          ) : null
+        }
+        bottomRow={primaryConfig ? (
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+              {/* Status de conexão */}
+              <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.06] ring-1 ring-white/[0.06]">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-white/60 font-medium">Conectado</span>
+              </div>
+
+              <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+
+              {/* Stats inline */}
+              {whatsappStats && (
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[10px] text-white/50 tabular-nums">
+                    <span className="text-white/80 font-semibold">{whatsappStats.totalContacts}</span> contatos
+                  </span>
+                  <span className="text-[10px] text-white/50 tabular-nums">
+                    <span className="text-white/80 font-semibold">{whatsappStats.inboundMessages}</span> recebidas
+                  </span>
+                  <span className="text-[10px] text-white/50 tabular-nums">
+                    <span className="text-white/80 font-semibold">{whatsappStats.outboundMessages}</span> enviadas
+                  </span>
+                  {(whatsappStats.unreadMessages ?? 0) > 0 && (
+                    <span className="text-[10px] text-emerald-400 tabular-nums font-semibold">
+                      {whatsappStats.unreadMessages} não lidas
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : undefined}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -447,54 +448,46 @@ export default function EquipePage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+      <CollapsiblePageHeader title="Equipe" icon={Users}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <Users className="w-5 h-5 text-white dark:text-neutral-900" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Equipe</h1>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Gestão de membros e delegações</p>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Equipe</h1>
+              <p className="text-[10px] text-white/55">Gestão de membros e delegações</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-1">
-            <div className="relative mr-1">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+          <div className="flex items-center gap-1.5">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
               <Input
                 placeholder="Buscar..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 w-[140px] h-7 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-md"
+                className="pl-8 w-[140px] h-7 text-xs bg-black/[0.15] ring-1 ring-white/[0.08] border-0 text-white/90 placeholder:text-white/35 rounded-lg"
               />
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600"
+            <button
               title="Exportar"
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
             >
               <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Button 
-              size="sm" 
-              className="h-7 px-2.5 ml-1 bg-neutral-800 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
-              onClick={() => {
-                resetForm();
-                setAddModalOpen(true);
-              }}
+            </button>
+            <button
+              onClick={() => { resetForm(); setAddModalOpen(true); }}
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
             >
-              <UserPlus className="w-3.5 h-3.5 mr-1" />
+              <UserPlus className="w-3.5 h-3.5" />
               Novo Membro
-            </Button>
+            </button>
           </div>
         </div>
-      </div>
-      
+      </CollapsiblePageHeader>
+
       {/* Content */}
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
 
       {/* Stats Cards - Mobile-first */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
