@@ -90,8 +90,8 @@ function ParecerItem({ parecer, onRespondido }: ParecerItemProps) {
       className={cn(
         "border rounded-xl transition-all duration-200",
         expanded
-          ? "border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10"
-          : "border-neutral-200 dark:border-border bg-neutral-50 dark:bg-muted/50 hover:border-violet-200 dark:hover:border-violet-800"
+          ? "border-violet-200 dark:border-violet-800 bg-white dark:bg-neutral-900 shadow-md shadow-black/[0.08]"
+          : "border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] hover:shadow-md hover:shadow-black/[0.08] hover:border-violet-200 dark:hover:border-violet-800"
       )}
     >
       <button

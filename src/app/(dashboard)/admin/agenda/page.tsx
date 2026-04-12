@@ -1456,59 +1456,63 @@ export default function AgendaPage() {
           </>
         }
         bottomRow={
-          <div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
-          {/* AtribuicaoPills dark variant */}
-          <AtribuicaoPills
-            variant="dark"
-            options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
-            selectedValues={Array.from(areaFilters)}
-            onToggle={handleAreaFilterToggle}
-            onClear={() => setAreaFilters(new Set(["all"]))}
-            counts={Object.fromEntries(
-              AGENDA_ATRIBUICAO_PILL_OPTIONS
-                .filter(o => o.value !== "all")
-                .map(o => [o.label, countByArea[o.value] ?? 0])
-            )}
-            compact
-          />
+          <div className="flex items-center gap-2.5">
+          {/* ========= LEFT GROUP — pills + (opt) month nav — pode encolher ========= */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+            {/* AtribuicaoPills dark variant */}
+            <AtribuicaoPills
+              variant="dark"
+              options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
+              selectedValues={Array.from(areaFilters)}
+              onToggle={handleAreaFilterToggle}
+              onClear={() => setAreaFilters(new Set(["all"]))}
+              counts={Object.fromEntries(
+                AGENDA_ATRIBUICAO_PILL_OPTIONS
+                  .filter(o => o.value !== "all")
+                  .map(o => [o.label, countByArea[o.value] ?? 0])
+              )}
+              compact
+            />
 
-          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-          {/* Month navigation */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button
-              onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
-            </button>
-            <span className="text-[13px] font-semibold text-white min-w-[100px] text-center capitalize">
-              {format(currentDate, "MMMM yyyy", { locale: ptBR })}
-            </span>
-            <button
-              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-            >
-              <ChevronRight className="w-[13px] h-[13px] text-white/70" />
-            </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="text-[9px] font-semibold text-white/70 bg-white/[0.08] px-2 py-1 rounded-md hover:text-white/90 hover:bg-white/[0.14] transition-colors cursor-pointer"
-            >
-              Hoje
-            </button>
+            {/* Month navigation — só em telas largas (lg+). Na calendar abaixo há nav própria. */}
+            <div className="hidden lg:flex items-center gap-2.5 shrink-0">
+              <div className="w-px h-5 bg-white/[0.10]" />
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentDate(addMonths(currentDate, -1))}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
+                </button>
+                <span className="text-[12px] font-semibold text-white min-w-[96px] text-center capitalize tabular-nums">
+                  {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+                </span>
+                <button
+                  onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-[13px] h-[13px] text-white/70" />
+                </button>
+                <button
+                  onClick={() => setCurrentDate(new Date())}
+                  className="ml-1 text-[10px] font-semibold text-white/70 bg-white/[0.08] ring-1 ring-white/[0.05] px-2 py-1 rounded-md hover:text-white hover:bg-white/[0.14] transition-colors cursor-pointer"
+                >
+                  Hoje
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+          {/* ========= RIGHT CLUSTER — view + busca + filtros — sempre visível ========= */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ViewModeDropdown
+              options={AGENDA_VIEW_OPTIONS}
+              value={viewMode}
+              onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
+              variant="dark"
+            />
 
-          <ViewModeDropdown
-            options={AGENDA_VIEW_OPTIONS}
-            value={viewMode}
-            onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
-            variant="dark"
-          />
-
-          <div className="flex items-center gap-0.5">
+            <div className="w-px h-5 bg-white/[0.10]" />
             {/* Search toggle */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
@@ -1530,19 +1534,25 @@ export default function AgendaPage() {
             ) : (
               <button
                 onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", searchTerm ? "bg-white/[0.08] text-white" : "")}
+                className={cn(
+                  "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                  searchTerm && "bg-white/[0.14] text-white"
+                )}
                 title="Buscar"
               >
-                <Search className="w-[14px] h-[14px] text-white/50" />
+                <Search className="w-[13px] h-[13px]" />
               </button>
             )}
             <div className="relative">
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) ? "bg-white/[0.08] text-white" : "")}
+                className={cn(
+                  "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                  (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
+                )}
                 title="Filtros"
               >
-                <Filter className="w-[14px] h-[14px] text-white/50" />
+                <Filter className="w-[13px] h-[13px]" />
                 {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
                   <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -1612,20 +1622,13 @@ export default function AgendaPage() {
                 </>
               )}
             </div>
-            <button
-              onClick={() => setIsGoogleConfigModalOpen(true)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-              title="Configurações"
-            >
-              <Settings className="w-[14px] h-[14px] text-white/50" />
-            </button>
           </div>
         </div>
         }
       >
         {/* Row 1: Icon + Title + inline stats + actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
               <CalendarIcon className="w-4 h-4 text-white" />
             </div>
@@ -1670,9 +1673,10 @@ export default function AgendaPage() {
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"
-              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
             >
-              <Plus className="w-[15px] h-[15px]" />
+              <Plus className="w-3.5 h-3.5" />
+              Novo
             </button>
           </div>
         </div>

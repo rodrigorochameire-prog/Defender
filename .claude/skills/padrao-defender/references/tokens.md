@@ -1,4 +1,4 @@
-# Tokens Detalhados - Padr\u00e3o Defender
+# Tokens Detalhados - Padr\u00e3o Defender v5
 
 ## Paleta Completa
 
@@ -19,6 +19,27 @@
 --custom:   #1f1f23    /* sidebar bg */
 --custom:   #1a1a1e    /* sidebar via */
 --custom:   #252529    /* sidebar header */
+```
+
+### Shell v5 (HSL 240 2% — barely cool)
+```css
+/* Camadas principais */
+--shell-sidebar:      #3e3e41    /* HSL 240 2% 25% — moldura lateral */
+--shell-sidebar-dark: #232324    /* HSL 240 2% 14% — sidebar dark mode */
+--shell-utility:      #464649    /* HSL 240 2% 28% — utility bar */
+--shell-header:       #414144    /* HSL 240 2% 26% — page header Row 1 */
+--shell-collapsed:    #464649    /* HSL 240 2% 28% — barra colapsada */
+--shell-icon:         #525252    /* HSL 0 0% 32%   — icone titulo (mantido) */
+--page-bg:            #f5f5f5    /* HSL 0 0% 96%   — neutral-100 */
+
+/* Bordas e overlays */
+--border-crisp:       rgba(255,255,255,0.08)   /* aresta visivel */
+--shell-highlight:    rgba(255,255,255,0.05)   /* inset highlight topo */
+--shell-shadow:       0 2px 12px -4px rgba(15,23,42,0.10)  /* lift do fundo */
+
+/* Kanban badge (v5 — border+fill sutil) */
+--badge-border-alpha: 40   /* hex alpha para border: ${groupColor}40 */
+--badge-fill-alpha:   14   /* hex alpha para fill:   ${groupColor}14 */
 ```
 
 ### Prim\u00e1ria (emerald)

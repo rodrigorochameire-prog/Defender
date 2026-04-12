@@ -123,7 +123,7 @@ export function DriveFileCompact({ files, isLoading }: DriveFileCompactProps) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900">
+      <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04]">
         {Array.from({ length: 16 }).map((_, i) => <SkeletonRow key={i} />)}
       </div>
     );
@@ -139,7 +139,7 @@ export function DriveFileCompact({ files, isLoading }: DriveFileCompactProps) {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900 divide-y divide-neutral-100/50 dark:divide-neutral-800/30">
+    <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] divide-y divide-neutral-100/50 dark:divide-neutral-800/30">
       {sortedFiles.map((file) => (
         <CompactRow key={file.id} file={file} />
       ))}

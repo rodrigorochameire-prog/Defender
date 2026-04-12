@@ -1874,7 +1874,7 @@ export default function ProcessosPage() {
                   const Icon = stat.icon;
                   return (
                     <Fragment key={index}>
-                      {index > 0 && <div className="w-px h-4 bg-white/[0.10] flex-shrink-0" />}
+                      {index > 0 && <div className="w-px h-5 bg-white/[0.10] shrink-0" />}
                       <button
                         onClick={stat.onClick}
                         className={cn(
@@ -1941,15 +1941,17 @@ export default function ProcessosPage() {
         >
           <div className="flex items-center justify-between">
             {/* Left: icon + title + stats */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
                 <FileText className="w-4 h-4 text-white" />
               </div>
               <div>
                 <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Processos</h1>
-                <p className="text-[10px] text-white/55 tabular-nums">
-                  {stats.total} total · {stats.comarcas} comarca{stats.comarcas !== 1 ? "s" : ""} · {stats.reuPreso} preso{stats.reuPreso !== 1 ? "s" : ""}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-[10px] text-white/55 tabular-nums">
+                    {stats.total} total · {stats.comarcas} comarca{stats.comarcas !== 1 ? "s" : ""} · {stats.reuPreso} preso{stats.reuPreso !== 1 ? "s" : ""}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1959,7 +1961,7 @@ export default function ProcessosPage() {
                 <TooltipTrigger asChild>
                   <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
                     <button
-                      className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                      className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
                       title="Consultar TJ-BA"
                     >
                       <ExternalLink className="w-[15px] h-[15px]" />
@@ -1969,17 +1971,18 @@ export default function ProcessosPage() {
                 <TooltipContent>Consultar TJ-BA</TooltipContent>
               </Tooltip>
               <button
-                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
                 title="Exportar"
               >
                 <Download className="w-[15px] h-[15px]" />
               </button>
               <Link href="/admin/processos/novo">
                 <button
-                  className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
                   title="Novo processo"
                 >
-                  <Plus className="w-[15px] h-[15px]" />
+                  <Plus className="w-3.5 h-3.5" />
+                  Novo
                 </button>
               </Link>
             </div>

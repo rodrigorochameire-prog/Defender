@@ -582,7 +582,10 @@ export default function DashboardVarasCriminaisPage() {
                 </div>
               ) : (
                 minhasAudiencias.slice(0, 4).map((audiencia: any) => {
-                  const data = audiencia.dataHora ? parseISO(audiencia.dataHora) : null;
+                  const raw = audiencia.dataHora;
+                  const data = raw
+                    ? (raw instanceof Date ? raw : typeof raw === "string" ? parseISO(raw) : null)
+                    : null;
                   const isHoje = data && isToday(data);
                   const isAmanha = data && isTomorrow(data);
                   

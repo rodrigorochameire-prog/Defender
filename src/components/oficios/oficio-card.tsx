@@ -85,8 +85,8 @@ export function OficioCard({ oficio, onDuplicate, onArchive }: OficioCardProps) 
 
   return (
     <div
-      className={`group relative rounded-xl border border-border bg-card p-4
-        hover:bg-muted/50 transition-colors duration-150 border-l-4 ${urgenciaColor}`}
+      className={`group relative rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 p-4
+        shadow-sm shadow-black/[0.04] hover:shadow-md hover:shadow-black/[0.08] transition-all duration-200 border-l-4 ${urgenciaColor}`}
     >
       <div className="flex items-start justify-between gap-3">
         {/* Left: Content */}

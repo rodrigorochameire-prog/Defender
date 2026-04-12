@@ -37,7 +37,7 @@ import {
   Copy,
   Check,
   User,
-  Briefcase,
+  LayoutDashboard,
   Plus,
   Send,
   MessageSquare,
@@ -65,6 +65,7 @@ import {
   Loader2,
   Baby,
   Handshake,
+  BarChart3,
 } from "lucide-react";
 import {
   Popover,
@@ -84,6 +85,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { KpisSection } from "@/components/dashboard/kpis-section";
+import { AnimatePresence } from "motion/react";
 import { trpc } from "@/lib/trpc/client";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -550,6 +553,21 @@ export default function DashboardJuriPage() {
     return audienciasSemana.length < 5;
   }, [audiencias]);
 
+  // Toggle KPIs — persistido em localStorage
+  const [showKpis, setShowKpis] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ombuds_show_kpis") === "true";
+  });
+  const toggleKpis = useCallback(() => {
+    setShowKpis((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("ombuds_show_kpis", String(next));
+      }
+      return next;
+    });
+  }, []);
+
   // Estado para registro rápido
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
@@ -753,39 +771,51 @@ export default function DashboardJuriPage() {
   // ==========================================
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
 
       <CollapsiblePageHeader
         title="Dashboard"
-        icon={Briefcase}
+        icon={LayoutDashboard}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-white" />
+              <LayoutDashboard className="w-4 h-4 text-white" />
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Dashboard</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {demandasFiltradas.length} demandas · {estatisticasPrazos.venceHoje} hoje · {estatisticasPrazos.vencidos} vencidas
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] text-white/55 tabular-nums">
+                  {demandasFiltradas.length} demandas · {estatisticasPrazos.venceHoje} hoje · {estatisticasPrazos.vencidos} vencidas
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <Link href="/admin/demandas/nova">
-              <button
-                title="Nova Demanda"
-                className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
-              >
-                <Plus className="w-[15px] h-[15px]" />
-              </button>
-            </Link>
+            <button
+              onClick={toggleKpis}
+              title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
+              className={cn(
+                "h-8 px-3 rounded-xl text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
+                showKpis
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-emerald-500 hover:bg-emerald-600",
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              KPIs
+            </button>
           </div>
         </div>
       </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
+
+        {/* ===== KPIs (toggleable) — APARECE ANTES DO REGISTRO RÁPIDO ===== */}
+        <AnimatePresence initial={false}>
+          {showKpis && <KpisSection key="kpis-section" onClose={() => toggleKpis()} />}
+        </AnimatePresence>
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
         <Card className="bg-card border border-border rounded-xl overflow-hidden">

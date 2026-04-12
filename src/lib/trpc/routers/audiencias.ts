@@ -627,7 +627,7 @@ export const audienciasRouter = router({
       // Só adiciona limite de data se dias > 0
       if (dias > 0) {
         const dataLimite = addDays(new Date(), dias);
-        whereConditions.push(sql`${audiencias.dataAudiencia} <= ${dataLimite}`);
+        whereConditions.push(lte(audiencias.dataAudiencia, dataLimite));
       }
 
       const results = await db

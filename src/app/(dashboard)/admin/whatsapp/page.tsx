@@ -683,32 +683,35 @@ export default function WhatsAppPage() {
         icon={MessageCircle}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">WhatsApp</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
-              </p>
+              <div className="mt-0.5">
+                <span className="text-[10px] text-white/55 tabular-nums">
+                  {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             <button
               title="Atualizar"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
               onClick={() => refetch()}
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-[15px] h-[15px]" />
             </button>
             {primaryConfig && (
               <Link href="/admin/whatsapp/chat">
                 <button
-                  title="Abrir Chat"
-                  className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  title="Abrir chat do WhatsApp"
+                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
                 >
-                  <MessageSquare className="w-[15px] h-[15px]" />
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  Abrir chat
                 </button>
               </Link>
             )}

@@ -9,6 +9,7 @@ import { ConflictBadge } from "@/components/conflict-badge";
 import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HEADER_STYLE } from "@/lib/config/design-tokens";
 
 interface HeaderUtilityRowProps {
   variant: "standalone" | "embedded";
@@ -84,7 +85,8 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
       <header
         className={cn(
           "sticky top-0 z-30 shrink-0",
-          "bg-[#454547]"
+          HEADER_STYLE.utilityRow,
+          HEADER_STYLE.shellShadow,
         )}
       >
         {content}

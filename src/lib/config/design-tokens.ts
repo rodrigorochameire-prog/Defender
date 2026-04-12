@@ -79,12 +79,16 @@ export const CARD_STYLE = {
 } as const;
 
 // ============================================
-// HEADER (v3 — gradient escuro)
+// HEADER (v5 — cinza neutro, luminâncias harmonizadas)
 // ============================================
+// Hue HSL 240 2% — imperceptível, mantém o caráter de "cinza puro" que o usuário
+// prefere (sem azulado). Luminâncias ajustadas: sidebar (l=25) mais próxima do utility
+// (l=28), com Row 1 (l=26) entre as duas. Bordas white/[0.08] e shell shadow garantem
+// aresta crisp sem precisar de hue shift.
 
 export const HEADER_STYLE = {
-  /** Page Header — card mais claro que sidebar */
-  container: "rounded-xl bg-[#414143]",
+  /** Page Header — card (HSL 240 2% 26%) */
+  container: "rounded-xl bg-[#414144]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
@@ -93,14 +97,16 @@ export const HEADER_STYLE = {
   bottomRow: "bg-white/[0.06] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility Bar — entre sidebar e page header */
-  utilityRow: "bg-[#454547]",
+  /** Utility Bar — acima do page header (HSL 240 2% 28%) */
+  utilityRow: "bg-[#464649] border-b border-white/[0.08]",
   utilityText: "text-white/60 text-[10px]",
   utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/50",
-  /** Collapsed — mesmo da utility */
-  collapsedBar: "bg-[#454547]",
+  /** Collapsed — mesmo tom do utility */
+  collapsedBar: "bg-[#464649] border-b border-white/[0.08]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
+  /** Shell shadow — top inset highlight + subtle drop shadow pra dar "lift" do fundo claro */
+  shellShadow: "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]",
 } as const;
 
 // ============================================
