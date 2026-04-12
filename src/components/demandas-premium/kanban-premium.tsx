@@ -937,10 +937,9 @@ export function KanbanPremium({
       <div className="hidden sm:block overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700">
         {/* Kanban Grid */}
         <div
-          className="grid gap-4 transition-all duration-500 ease-out pb-2"
+          className="grid gap-3 transition-all duration-500 ease-out pb-2"
           style={{
             gridTemplateColumns: gridTemplate,
-            minWidth: emAndamentoExpanded ? `${Math.max(600, nonEmptySubGroupCount * 240 + 400)}px` : undefined,
             alignItems: "start",
           }}
         >
