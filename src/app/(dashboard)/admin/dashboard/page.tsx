@@ -1882,51 +1882,101 @@ export default function DashboardJuriPage() {
 
         )}
 
-        {/* ===== 7. CARDS POR ÁREA ===== */}
-        {(hasArea("INFANCIA_JUVENTUDE") || hasArea("CRIMINAL")) && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-              <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Acompanhamento por Area</h2>
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+        {/* ===== 7. CARDS POR ÁREA — dinâmico, baseado nas áreas do defensor ===== */}
+        {(() => {
+          const areaCards: Array<{ area: string; label: string; icon: any; color: string; borderColor: string; stats: Array<{ value: number | string; label: string }>; href: string }> = [];
+
+          if (hasArea("JURI")) {
+            const count = demandas.filter(d => !d.arquivado && (d.processo?.atribuicao === "Tribunal do Júri" || d.processo?.atribuicao === "Grupo Especial do Júri")).length;
+            const jurisCount = jurisProximos?.length ?? 0;
+            areaCards.push({
+              area: "JURI", label: "Tribunal do Júri", icon: Gavel,
+              color: "text-emerald-600 dark:text-emerald-400", borderColor: "border-l-emerald-500",
+              stats: [{ value: count, label: "demandas" }, { value: jurisCount, label: "júris próximos" }],
+              href: "/admin/demandas",
+            });
+          }
+
+          if (hasArea("VIOLENCIA_DOMESTICA")) {
+            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Violência Doméstica").length;
+            areaCards.push({
+              area: "VVD", label: "Violência Doméstica", icon: Shield,
+              color: "text-amber-600 dark:text-amber-400", borderColor: "border-l-amber-500",
+              stats: [{ value: count, label: "demandas" }],
+              href: "/admin/demandas",
+            });
+          }
+
+          if (hasArea("EXECUCAO_PENAL")) {
+            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Execução Penal").length;
+            areaCards.push({
+              area: "EP", label: "Execução Penal", icon: Lock,
+              color: "text-blue-600 dark:text-blue-400", borderColor: "border-l-blue-500",
+              stats: [{ value: count, label: "demandas" }],
+              href: "/admin/demandas",
+            });
+          }
+
+          if (hasArea("CRIMINAL")) {
+            const count = demandas.filter(d => !d.arquivado && (d.processo?.atribuicao === "Criminal Geral" || d.processo?.atribuicao === "Substituição Criminal")).length;
+            const instCount = institutosAtivos?.length ?? 0;
+            areaCards.push({
+              area: "CRIMINAL", label: "Criminal Geral", icon: Handshake,
+              color: "text-rose-600 dark:text-rose-400", borderColor: "border-l-rose-500",
+              stats: [{ value: count, label: "demandas" }, { value: instCount, label: "institutos ativos" }],
+              href: "/admin/demandas",
+            });
+          }
+
+          if (hasArea("INFANCIA_JUVENTUDE")) {
+            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Infância e Juventude").length;
+            const medCount = medidasAtivas?.length ?? 0;
+            areaCards.push({
+              area: "INFANCIA", label: "Infância e Juventude", icon: Baby,
+              color: "text-violet-600 dark:text-violet-400", borderColor: "border-l-violet-500",
+              stats: [{ value: count, label: "demandas" }, { value: medCount, label: "medidas ativas" }],
+              href: "/admin/demandas",
+            });
+          }
+
+          if (areaCards.length === 0) return null;
+
+          return (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 px-1">
+                <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Acompanhamento por Área</h2>
+                <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {areaCards.map((ac) => {
+                  const AreaIcon = ac.icon;
+                  return (
+                    <Link href={ac.href} key={ac.area}>
+                      <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200 cursor-pointer">
+                        <div className={cn("px-5 py-4", ac.borderColor, "border-l-[4px]")}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                              <AreaIcon className={cn("w-4 h-4", ac.color)} />
+                            </div>
+                            <div>
+                              <h3 className="text-[13px] font-semibold text-foreground tracking-tight">{ac.label}</h3>
+                              <p className="text-[10px] text-muted-foreground tabular-nums">
+                                {ac.stats.map((s, i) => (
+                                  <span key={i}>{i > 0 && " · "}{s.value} {s.label}</span>
+                                ))}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-              {/* Medidas Socioeducativas — Infância */}
-              {hasArea("INFANCIA_JUVENTUDE") && (
-                <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 font-bold text-foreground">
-                      <Baby className="h-4 w-4 text-amber-500" />
-                      Medidas Socioeducativas
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-foreground">{medidasAtivas?.length ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">em cumprimento</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Institutos Despenalizadores — Criminal Comum */}
-              {hasArea("CRIMINAL") && (
-                <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2 font-bold text-foreground">
-                      <Handshake className="h-4 w-4 text-emerald-500" />
-                      Institutos Despenalizadores
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold text-foreground">{institutosAtivos?.length ?? 0}</p>
-                    <p className="text-xs text-muted-foreground">ANPPs/sursis em cumprimento</p>
-                  </CardContent>
-                </Card>
-              )}
-
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Modais */}

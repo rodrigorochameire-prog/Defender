@@ -229,6 +229,152 @@ isActive ? "text-emerald-400" : "text-white/50"
 [ ] Hover transitions 150-200ms
 ```
 
+## Card Content Pattern (construido em 12/04/2026)
+
+### Card wrapper com hover
+
+```tsx
+<Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
+```
+
+### Card header (variacao D + inset separator)
+
+```tsx
+{/* Header com barra lateral 4px + inset separator */}
+<div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
+  <div className="flex items-center gap-3">
+    <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+      <Icon className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+    </div>
+    <div>
+      <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Titulo</h3>
+      <p className="text-[10px] text-muted-foreground tabular-nums">N total · N detalhe</p>
+    </div>
+  </div>
+  <button className="ghost-btn h-7 text-xs text-muted-foreground hover:text-emerald-600">Ver todas →</button>
+</div>
+<div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
+{/* Body */}
+```
+
+Regras:
+- **border-l-[4px] border-l-neutral-300** para cards genéricos
+- **border-l-{cor-funcional}** para cards de área (emerald para Júri, amber para VVD, etc.)
+- Separador é **inset** (mx-5), não full-width (border-b)
+- Stats no **subtitle inline** ("N total · N vencidos"), não em pill badges
+- Sem cores no texto de stats (tudo text-muted-foreground, sem vermelho)
+
+### Mini-card list items (dentro de cards)
+
+```tsx
+{/* Container: space-y-1.5 p-3 (gap entre items, padding geral) */}
+<div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
+  {items.map(item => (
+    <Link href={...} className="block">
+      <div className="flex items-stretch rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 overflow-hidden cursor-pointer">
+        {/* Barra de atribuicao — unica cor funcional */}
+        <div className={cn("w-1 flex-shrink-0", atribColor)} />
+        {/* Conteudo */}
+        <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold text-foreground truncate">Nome</p>
+            <p className="text-[11px] text-muted-foreground truncate">Detalhe</p>
+          </div>
+          <span className="text-[11px] font-medium text-muted-foreground tabular-nums">Info</span>
+        </div>
+      </div>
+    </Link>
+  ))}
+</div>
+```
+
+Regras:
+- Cada item é um container autônomo (rounded-lg, bg sutil, hover)
+- **NAO usar divide-y** — usar space-y-1.5 entre mini-cards
+- Barra lateral colorida (w-1) como **unico elemento cromatico** por item
+- **SEM badges de atribuicao** inline — a barra ja comunica
+- Countdown/prazo como **texto puro** (nao chip colorido)
+
+### Section dividers (linha centrada)
+
+```tsx
+<div className="flex items-center gap-3 px-1">
+  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+  <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Label da Secao</h2>
+  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+</div>
+```
+
+Regras:
+- Mixed-case (nao UPPERCASE)
+- Sem barra verde ou colorida (era v4, removida)
+- Linhas finas dos dois lados
+
+### Input fields
+
+```tsx
+<input className="w-full h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all" />
+```
+
+Regras:
+- **bg-white** (nao bg-muted — evita inputs "cinza" dentro de cards brancos)
+- **rounded-lg** (nao rounded-md)
+- Focus ring emerald
+
+### Primary button (CTA)
+
+```tsx
+<button className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+  <Plus className="w-3.5 h-3.5" />
+  Novo
+</button>
+```
+
+### Row 2 responsiva (padrao Agenda/Demandas)
+
+```tsx
+<div className="flex items-center gap-2.5">
+  {/* LEFT GROUP — pills + controles (flex-1 min-w-0 overflow-x-auto) */}
+  <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+    <AtribuicaoPills variant="dark" compact />
+    <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+    <ViewModeDropdown variant="dark" />
+    <button>Settings</button>
+  </div>
+  {/* RIGHT CLUSTER — busca (shrink-0, oculta em mobile) */}
+  <div className="hidden md:flex relative w-[220px] shrink-0">
+    <input ... />
+  </div>
+</div>
+```
+
+Regras:
+- **NAO usar flex-wrap** — uma row sempre
+- **NAO usar ml-auto** em meio a flow (causa wrap esquisito)
+- Left group: flex-1, overflow scroll se tight
+- Right cluster: shrink-0, hidden em mobile
+
+## Checklist Pre-Delivery (atualizado)
+
+```
+[ ] Cards com shadow-sm + hover:shadow-md + focus-within:shadow-md
+[ ] Card headers com border-l-[4px] + inset separator (mx-5 h-px)
+[ ] Mini-card list items (rounded-lg, bg-neutral-50/50, hover, barra lateral)
+[ ] Section dividers: linha centrada (nao barra verde)
+[ ] Stats inline no subtitle (nao pill badges)
+[ ] Inputs bg-white rounded-lg focus:ring-emerald
+[ ] Fundo #f5f5f5 (neutral-100)
+[ ] Botoes primarios emerald-500 rounded-xl shrink-0
+[ ] Row 2: justify-between, left flex-1 + right shrink-0
+[ ] Tipografia: titulo text-[13px] font-semibold, subtitle text-[10px]
+[ ] Dropdowns via createPortal
+[ ] CollapsiblePageHeader com title + icon
+[ ] Responsivo (hidden md:flex, overflow-x-auto)
+[ ] WCAG AA contraste
+[ ] cursor-pointer em clicaveis
+[ ] Hover transitions 150-200ms
+```
+
 ## Referencia de Implementacao
 
 | Componente | Path |
@@ -237,9 +383,13 @@ isActive ? "text-emerald-400" : "text-white/50"
 | HeaderUtilityRow | `src/components/layouts/header-utility-row.tsx` |
 | PageHeaderContext | `src/components/layouts/page-header-context.tsx` |
 | Design Tokens | `src/lib/config/design-tokens.ts` |
-| Demandas (referencia) | `src/components/demandas-premium/demandas-premium-view.tsx` |
+| Dashboard (referencia completa v5) | `src/app/(dashboard)/admin/dashboard/page.tsx` |
+| Demandas (referencia kanban+header) | `src/components/demandas-premium/demandas-premium-view.tsx` |
 | AtribuicaoPills | `src/components/demandas-premium/AtribuicaoPills.tsx` |
+| EquipeCoworkCard | `src/components/dashboard/equipe-cowork-card.tsx` |
+| RadarWidget | `src/components/dashboard/radar-widget.tsx` |
 | ViewModeDropdown | `src/components/shared/view-mode-dropdown.tsx` |
-| FABs | `src/components/shared/floating-agenda.tsx`, `floating-demandas.tsx`, `feedback-fab.tsx` |
 | Sidebar | `src/components/layouts/admin-sidebar.tsx` |
+| Atribuicoes Config | `src/lib/config/atribuicoes.ts` |
+| Verificacao TDD | `scripts/verify-padrao-defender.sh` |
 | Globals CSS | `src/app/globals.css` |
