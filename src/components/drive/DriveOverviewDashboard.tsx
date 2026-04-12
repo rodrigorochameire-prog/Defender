@@ -35,6 +35,15 @@ interface SyncFolder {
   fileCount: number;
 }
 
+// Border-l color map — literal strings para Tailwind JIT
+const BORDER_L_COLOR: Record<string, string> = {
+  emerald: "border-l-emerald-500",
+  amber: "border-l-amber-500",
+  sky: "border-l-sky-500",
+  rose: "border-l-rose-500",
+  orange: "border-l-orange-500",
+};
+
 // --- Atribuicao Card (clean zinc) ---
 
 function AtribuicaoCard({
@@ -72,7 +81,7 @@ function AtribuicaoCard({
         "transition-all duration-200"
       )}
     >
-      <div className={cn("flex items-center gap-3 px-4 py-3 border-l-[4px]", atribuicao.dotClass.replace("bg-", "border-l-"))}>
+      <div className={cn("flex items-center gap-3 px-4 py-3 border-l-[4px]", BORDER_L_COLOR[atribuicao.color] || "border-l-neutral-300")}>
         <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
@@ -261,64 +270,23 @@ export function DriveOverviewDashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* Quality strip — stats únicas (vinc, extraídos, falhas) + ação enrichment.
-          O título "Drive" + stats brutas já vivem no CollapsiblePageHeader acima. */}
-      {(linkedPercent > 0 ||
-        enrichmentCounts.completed > 0 ||
-        enrichmentCounts.failed > 0 ||
-        enrichmentCounts.pending > 0) && (
-        <div className="flex items-center gap-3 px-5 md:px-6 py-2.5 border-b border-neutral-200/40 dark:border-neutral-800/40 bg-white/60 dark:bg-neutral-900/30 shrink-0">
-          <span className="text-[9px] tracking-wider text-muted-foreground font-semibold">
-            Qualidade
-          </span>
-          <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-800/60 shrink-0" />
-          <div className="flex items-center gap-2.5 text-[10px] text-neutral-500 dark:text-neutral-400 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-            <span className="shrink-0">
-              <strong className="text-neutral-900 dark:text-neutral-100 font-mono tabular-nums">
-                {linkedPercent}%
-              </strong>{" "}
-              vinculados
-            </span>
-            <span className="shrink-0">·</span>
-            <span className="shrink-0">
-              <strong className="text-neutral-900 dark:text-neutral-100 font-mono tabular-nums">
-                {enrichmentCounts.completed}
-              </strong>{" "}
-              extraídos
-            </span>
+      <div className="max-w-5xl mx-auto space-y-6 p-5 md:p-6">
+        {/* Quality stats inline — integrado como texto, sem bar separada */}
+        {(linkedPercent > 0 || enrichmentCounts.completed > 0) && (
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground px-1">
+            <span className="tabular-nums"><strong className="text-foreground">{linkedPercent}%</strong> vinculados</span>
+            <span>·</span>
+            <span className="tabular-nums"><strong className="text-foreground">{enrichmentCounts.completed}</strong> extraídos</span>
             {enrichmentCounts.failed > 0 && (
               <>
-                <span className="shrink-0">·</span>
-                <span className="text-rose-500 shrink-0">
-                  <strong className="font-mono tabular-nums">{enrichmentCounts.failed}</strong>{" "}
-                  falhas
-                </span>
+                <span>·</span>
+                <span className="text-rose-500 tabular-nums"><strong>{enrichmentCounts.failed}</strong> falhas</span>
               </>
             )}
-            <span className="shrink-0">·</span>
-            <span className="shrink-0 text-neutral-400 dark:text-neutral-500">{lastSyncStr}</span>
+            <span>·</span>
+            <span>{lastSyncStr}</span>
           </div>
-
-          {enrichmentCounts.pending > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2.5 text-xs rounded-lg bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 hover:border-emerald-600 shadow-sm transition-all duration-150 shrink-0"
-              onClick={() => retryEnrichment.mutate({})}
-              disabled={retryEnrichment.isPending}
-            >
-              {retryEnrichment.isPending ? (
-                <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3 w-3 mr-1.5" />
-              )}
-              Processar {enrichmentCounts.pending}
-            </Button>
-          )}
-        </div>
-      )}
-
-      <div className="max-w-5xl mx-auto space-y-6 p-5 md:p-6">
+        )}
         {/* --- Atribuicao Cards --- */}
         <div>
           <div className="flex items-center gap-3 mb-3">

@@ -41,6 +41,7 @@ import {
   FolderOpen,
   FolderPlus,
   Loader2,
+  Sparkles,
   ExternalLink,
   Activity,
   Search,
@@ -907,9 +908,18 @@ export function DriveTopBar({
   const utils = trpc.useUtils();
   const { addJob, completeJob, failJob, activeCount } = useProcessingQueue();
 
-  // Stats query for Row 2
+  // Stats query for Row 2 + enrichment for Row 1 "Processar" button
   const { data: stats } = trpc.drive.stats.useQuery(undefined, { staleTime: 30_000 });
   const { data: syncFolders } = trpc.drive.syncFolders.useQuery(undefined, { staleTime: 30_000 });
+  const { data: statsDetailed } = trpc.drive.statsDetailed.useQuery({}, { staleTime: 30_000 });
+  const retryEnrichment = trpc.drive.retryEnrichment.useMutation({
+    onSuccess: () => { toast.success("Processamento iniciado"); utils.drive.statsDetailed.invalidate(); },
+    onError: (error: any) => toast.error(error.message || "Erro ao processar"),
+  });
+  const enrichmentPending = useMemo(() => {
+    if (!statsDetailed?.byEnrichment) return 0;
+    return statsDetailed.byEnrichment.find((e: any) => e.enrichmentStatus === "pending")?.count ?? 0;
+  }, [statsDetailed]);
 
   const handleSyncAll = useCallback(() => {
     const syncJobId = "sync-drive-topbar";
@@ -981,8 +991,25 @@ export function DriveTopBar({
             </div>
           </div>
 
-          {/* Right: Upload + Nova Pasta + Overflow */}
+          {/* Right: Processar + Upload + Nova Pasta + Overflow */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {enrichmentPending > 0 && (
+              <button
+                onClick={() => retryEnrichment.mutate({})}
+                disabled={retryEnrichment.isPending}
+                title={`Processar ${enrichmentPending} arquivos pendentes`}
+                className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-medium shrink-0 disabled:opacity-50"
+              >
+                {retryEnrichment.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden md:inline">Processar</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-white/[0.15] text-[9px] font-semibold tabular-nums">{enrichmentPending}</span>
+              </button>
+            )}
+
             <FileUploadButton folderId={targetFolderId} dark />
 
             <button
@@ -996,7 +1023,7 @@ export function DriveTopBar({
               ) : (
                 <Plus className="w-3.5 h-3.5" />
               )}
-              Nova Pasta
+              <span className="hidden sm:inline">Nova Pasta</span>
             </button>
 
             <OverflowMenu
