@@ -299,17 +299,19 @@ function StageSubstatusPopover({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Position: centered below the node, flip above if no room below
+  // Position: centered below the node, flip above if near bottom
   const popoverWidth = 160;
-  const estimatedHeight = options.length * 28 + 40; // ~28px per option + header
+  const estimatedHeight = options.length * 32 + 48;
   const left = Math.max(8, Math.min(
     anchorRect.left + anchorRect.width / 2 - popoverWidth / 2,
     window.innerWidth - popoverWidth - 8
   ));
-  const fitsBelow = anchorRect.bottom + 8 + estimatedHeight < window.innerHeight - 8;
+  // Force above if anchor is in the lower 40% of viewport
+  const fitsBelow = anchorRect.top < window.innerHeight * 0.6
+    && anchorRect.bottom + 8 + estimatedHeight < window.innerHeight - 16;
   const top = fitsBelow
     ? anchorRect.bottom + 8
-    : anchorRect.top - estimatedHeight - 8;
+    : Math.max(8, anchorRect.top - estimatedHeight - 8);
 
   // Normalize current status for comparison
   const normalizedCurrent = currentStatus.toLowerCase().replace(/\s+/g, "_");
