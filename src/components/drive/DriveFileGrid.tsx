@@ -118,9 +118,9 @@ function FileGridCard({ file }: { file: DriveFile }) {
     <div
       onClick={handleClick}
       className={cn(
-        "group relative bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg overflow-hidden cursor-pointer",
-        "hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/20 dark:hover:bg-emerald-500/5",
-        "transition-colors duration-200",
+        "group relative bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl overflow-hidden cursor-pointer",
+        "shadow-sm shadow-black/[0.04] hover:shadow-md hover:shadow-black/[0.08] hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-emerald-50/20 dark:hover:bg-emerald-500/5",
+        "transition-all duration-200",
         isSelected && "border-emerald-300 dark:border-emerald-500/50 bg-emerald-50/80 dark:bg-emerald-500/10"
       )}
     >
