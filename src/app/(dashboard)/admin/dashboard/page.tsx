@@ -1567,15 +1567,15 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[420px] overflow-y-auto">
+          <div className="space-y-1.5 p-3 max-h-[420px] overflow-y-auto">
             {loadingDemandas ? (
-              <div className="p-4 space-y-2">
-                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
               </div>
             ) : demandasPorPrazo.length === 0 ? (
               <div className="p-6 text-center">
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
-                <p className="text-sm text-muted-foreground">Nenhum prazo urgente</p>
+                <p className="text-[11px] text-muted-foreground">Nenhum prazo urgente</p>
               </div>
             ) : (
               demandasPorPrazo.map((demanda: any) => {
@@ -1588,51 +1588,52 @@ export default function DashboardJuriPage() {
                   <Link
                     href={`/admin/demandas/${demanda.id}`}
                     key={demanda.id}
-                    className="flex items-stretch gap-0 transition-colors group hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
+                    className="block"
                   >
-                    {/* Barra de cor de atribuição — única cor funcional do item */}
-                    <div className={cn("w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5", atColors.bgSolid || "bg-neutral-300")} />
+                    <div className="flex items-stretch gap-0 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 overflow-hidden cursor-pointer">
+                      {/* Barra de atribuição — única cor funcional */}
+                      <div className={cn("w-1 flex-shrink-0", atColors.bgSolid || "bg-neutral-300")} />
 
-                    <div className="flex items-center gap-3 px-4 py-3 flex-1 min-w-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
-                            {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
-                          </p>
-                          {demanda.reuPreso && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex-shrink-0">
-                              <Lock className="w-2 h-2" />
-                              Preso
-                            </span>
-                          )}
+                      <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
+                              {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
+                            </p>
+                            {demanda.reuPreso && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex-shrink-0">
+                                <Lock className="w-2 h-2" />
+                                Preso
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {atribuicao && (
+                              <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", atColors.bgSolid, atColors.text)}>
+                                {atColors.shortLabel}
+                              </span>
+                            )}
+                            <p className="text-[11px] text-muted-foreground truncate">{demanda.ato}</p>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          {atribuicao && (
-                            <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", atColors.bgSolid, atColors.text)}>
-                              {atColors.shortLabel}
-                            </span>
-                          )}
-                          <p className="text-[11px] text-muted-foreground truncate">{demanda.ato}</p>
-                        </div>
-                      </div>
 
-                      {/* Direita: ação + prazo (sem badges coloridos — texto puro) */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <QuickStatusButton
-                          demandaId={demanda.id}
-                          currentSubstatus={demanda.substatus}
-                          onUpdate={handleQuickStatusUpdate}
-                        />
-                        <span className={cn(
-                          "text-[11px] font-medium px-2 py-1 rounded-md whitespace-nowrap tabular-nums",
-                          isVencido
-                            ? "text-rose-500 dark:text-rose-400"
-                            : prazoInfo.cor === "yellow"
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-muted-foreground"
-                        )}>
-                          {prazoInfo.texto}
-                        </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <QuickStatusButton
+                            demandaId={demanda.id}
+                            currentSubstatus={demanda.substatus}
+                            onUpdate={handleQuickStatusUpdate}
+                          />
+                          <span className={cn(
+                            "text-[11px] font-medium tabular-nums whitespace-nowrap",
+                            isVencido
+                              ? "text-rose-500 dark:text-rose-400"
+                              : prazoInfo.cor === "yellow"
+                              ? "text-amber-600 dark:text-amber-400"
+                              : "text-muted-foreground"
+                          )}>
+                            {prazoInfo.texto}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -1685,15 +1686,15 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
+            <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
               {loadingJuris ? (
-                <div className="p-4 space-y-2">
-                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                <div className="space-y-2">
+                  {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
                 </div>
               ) : jurisProximos.length === 0 ? (
                 <div className="p-6 text-center">
                   <Gavel className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">Nenhum júri agendado</p>
+                  <p className="text-[11px] text-muted-foreground">Nenhum júri agendado</p>
                 </div>
               ) : (
                 jurisProximos.map((juri: any) => {
@@ -1701,14 +1702,13 @@ export default function DashboardJuriPage() {
                   const diasRestantes = dataSessao ? differenceInDays(dataSessao, new Date()) : null;
 
                   return (
-                    <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
-                        {/* Date box — neutro, sem cor funcional (a urgência fica no countdown) */}
-                        <div className="w-11 h-11 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-semibold text-foreground/80 leading-none">
+                    <Link href={`/admin/juri/${juri.id}`} key={juri.id} className="block">
+                      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer">
+                        <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
+                          <span className="text-[13px] font-semibold text-foreground/80 leading-none tabular-nums">
                             {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
                           </span>
-                          <span className="text-[9px] text-muted-foreground uppercase leading-tight">
+                          <span className="text-[8px] text-muted-foreground uppercase leading-tight">
                             {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
                           </span>
                         </div>
@@ -1717,9 +1717,9 @@ export default function DashboardJuriPage() {
                             {juri.assistidoNome || "Réu"}
                           </p>
                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                            <span>{juri.horario || "Horário a definir"}</span>
+                            <span className="tabular-nums">{juri.horario || "Horário a definir"}</span>
                             {juri.defensorNome && (
-                              <span className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground">
+                              <span className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800">
                                 {juri.defensorNome}
                               </span>
                             )}
@@ -1775,7 +1775,7 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
+            <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
               {loadingAudiencias ? (
                 <div className="p-4 space-y-2">
                   {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -1791,7 +1791,7 @@ export default function DashboardJuriPage() {
                   const isHoje = dataAud && isToday(dataAud);
 
                   return (
-                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="flex items-stretch gap-0 transition-colors group hover:bg-muted/50">
+                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer">
                       {/* Barra de atribuição */}
                       <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
                       <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
@@ -1870,7 +1870,7 @@ export default function DashboardJuriPage() {
                 </div>
               </div>
 
-              <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
+              <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
                 {loadingAudiencias ? (
                   <div className="p-4 space-y-2">
                     {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -1911,7 +1911,7 @@ export default function DashboardJuriPage() {
                             )}
                           </div>
                         )}
-                        <Link href={`/admin/audiencias/${aud.id}`} className="flex items-stretch gap-0 transition-colors group hover:bg-muted/50">
+                        <Link href={`/admin/audiencias/${aud.id}`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer">
                           <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
                           <div className="flex items-center gap-3 px-3 py-2 flex-1 min-w-0">
                             <div className="flex-1 min-w-0">
