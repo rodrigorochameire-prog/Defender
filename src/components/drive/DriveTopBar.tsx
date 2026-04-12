@@ -415,7 +415,7 @@ function InlineBreadcrumbs({ fileCount }: { fileCount?: number }) {
 
 // ─── Expandable Search ──────────────────────────────────────────────
 
-function ExpandableSearch() {
+function ExpandableSearch({ dark = false }: { dark?: boolean } = {}) {
   const ctx = useDriveContext();
   const [expanded, setExpanded] = useState(false);
   const [localSearch, setLocalSearch] = useState(ctx.searchQuery);
@@ -454,14 +454,17 @@ function ExpandableSearch() {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+          <button
             onClick={() => setExpanded(true)}
+            className={cn(
+              "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer",
+              dark
+                ? "bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white"
+                : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300",
+            )}
           >
             <Search className="h-3.5 w-3.5" />
-          </Button>
+          </button>
         </TooltipTrigger>
         <TooltipContent side="bottom">Buscar (Ctrl+K)</TooltipContent>
       </Tooltip>
@@ -470,7 +473,12 @@ function ExpandableSearch() {
 
   return (
     <div className="relative flex items-center">
-      <Search className="absolute left-2.5 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
+      <Search
+        className={cn(
+          "absolute left-2.5 h-3.5 w-3.5 pointer-events-none",
+          dark ? "text-white/40" : "text-zinc-400",
+        )}
+      />
       <input
         ref={inputRef}
         type="text"
@@ -479,16 +487,20 @@ function ExpandableSearch() {
         onKeyDown={(e) => { if (e.key === "Escape") handleClose(); }}
         placeholder="Buscar arquivos, assistidos, processos..."
         className={cn(
-          "h-8 w-56 pl-8 pr-7 rounded-lg text-xs",
-          "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
-          "text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400",
-          "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
-          "transition-all duration-200"
+          "h-8 w-56 pl-8 pr-7 rounded-lg text-xs transition-all duration-200 focus:outline-none",
+          dark
+            ? "bg-black/[0.15] ring-1 ring-white/[0.08] border-0 text-white/90 placeholder:text-white/35 focus:ring-emerald-500/40"
+            : "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30",
         )}
       />
       <button
         onClick={handleClose}
-        className="absolute right-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+        className={cn(
+          "absolute right-2",
+          dark
+            ? "text-white/60 hover:text-white"
+            : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300",
+        )}
       >
         <X className="h-3 w-3" />
       </button>
@@ -675,10 +687,12 @@ function OverflowMenu({
   onSyncAll,
   isSyncing,
   activeCount,
+  dark = false,
 }: {
   onSyncAll: () => void;
   isSyncing: boolean;
   activeCount: number;
+  dark?: boolean;
 }) {
   const ctx = useDriveContext();
   const targetFolderId = ctx.selectedFolderId || ctx.rootSyncFolderId;
@@ -686,7 +700,15 @@ function OverflowMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="h-8 w-8 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors">
+        <button
+          title="Mais opções"
+          className={cn(
+            "flex items-center justify-center transition-all duration-150 cursor-pointer shrink-0",
+            dark
+              ? "w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white"
+              : "h-8 w-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-500 dark:text-zinc-400",
+          )}
+        >
           <MoreVertical className="w-4 h-4" />
         </button>
       </DropdownMenuTrigger>
@@ -810,8 +832,33 @@ function NewDocumentMenuItem() {
 
 // ─── View Mode Toggle (list/grid) ──────────────────────────────────
 
-function ViewModeToggle() {
+function ViewModeToggle({ dark = false }: { dark?: boolean } = {}) {
   const ctx = useDriveContext();
+
+  if (dark) {
+    return (
+      <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] ring-1 ring-white/[0.05]">
+        {[
+          { mode: "list" as const, label: "Lista", Icon: List },
+          { mode: "grid" as const, label: "Grade", Icon: LayoutGrid },
+        ].map(({ mode, label, Icon }) => (
+          <button
+            key={mode}
+            onClick={() => ctx.setViewMode(mode)}
+            className={cn(
+              "inline-flex items-center justify-center w-6 h-6 rounded-[4px] transition-all cursor-pointer",
+              ctx.viewMode === mode
+                ? "bg-white/[0.14] text-white"
+                : "text-white/40 hover:text-white/70",
+            )}
+            title={label}
+          >
+            <Icon className="w-3 h-3" />
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
@@ -845,7 +892,15 @@ function ViewModeToggle() {
 
 // ─── Main TopBar ────────────────────────────────────────────────────
 
-export function DriveTopBar({ fileCount }: { fileCount?: number }) {
+export type DriveTopBarVariant = "standalone" | "row1" | "row2";
+
+export function DriveTopBar({
+  fileCount,
+  variant = "standalone",
+}: {
+  fileCount?: number;
+  variant?: DriveTopBarVariant;
+}) {
   const ctx = useDriveContext();
 
   const syncAll = trpc.drive.syncAll.useMutation();
@@ -903,6 +958,111 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
     return "";
   }, [stats]);
 
+  // ─── EMBEDDED VARIANTS (inside CollapsiblePageHeader) ───────────────
+  // Row 1: icon + title + subtitle + actions (Upload, Nova Pasta, Overflow)
+  // Row 2: sync status + stats + search + view toggle
+  //
+  // Both instances share query state via React Query dedup, so rendering
+  // DriveTopBar twice (once per row) has no extra network cost.
+  if (variant === "row1") {
+    return (
+      <TooltipProvider delayDuration={300}>
+        <div className="flex items-center justify-between gap-3">
+          {/* Left: icon + title + subtitle */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <FolderOpen className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Drive
+              </h1>
+              <p className="text-[10px] text-white/55 truncate">7ª Regional · Camaçari</p>
+            </div>
+          </div>
+
+          {/* Right: Upload + Nova Pasta + Overflow */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <FileUploadButton folderId={targetFolderId} dark />
+
+            <button
+              onClick={handleCreateFolder}
+              disabled={!targetFolderId || createFolder.isPending}
+              title="Nova pasta"
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+            >
+              {createFolder.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Plus className="w-3.5 h-3.5" />
+              )}
+              Nova Pasta
+            </button>
+
+            <OverflowMenu
+              onSyncAll={handleSyncAll}
+              isSyncing={syncAll.isPending}
+              activeCount={activeCount}
+              dark
+            />
+          </div>
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  if (variant === "row2") {
+    return (
+      <TooltipProvider delayDuration={300}>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Left: sync dot + stats */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <SyncHealthDot />
+            <span className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
+              Sincronizado
+            </span>
+          </div>
+
+          {stats && (
+            <div className="flex items-center gap-2.5 text-[10px] text-white/50 shrink-0">
+              <span className="w-px h-3 bg-white/[0.10]" />
+              <span>
+                <strong className="text-white/85 font-mono tabular-nums">{stats.totalFiles}</strong>{" "}
+                arquivos
+              </span>
+              <span>·</span>
+              <span>
+                <strong className="text-white/85 font-mono tabular-nums">
+                  {stats.syncedFolders}
+                </strong>{" "}
+                pastas
+              </span>
+              {syncFolders && (
+                <>
+                  <span>·</span>
+                  <span>
+                    <strong className="text-white/85 font-mono tabular-nums">
+                      {syncFolders.length}
+                    </strong>{" "}
+                    atribuições
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Right: search + view toggle */}
+          <div className="flex items-center gap-1.5 ml-auto shrink-0">
+            <ExpandableSearch dark />
+            <div className="w-px h-4 bg-white/[0.10]" />
+            <ViewModeToggle dark />
+          </div>
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  // ─── STANDALONE (backward compat) ───────────────────────────────────
   return (
     <TooltipProvider delayDuration={300}>
       <header className="shrink-0 bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800/80">
@@ -994,12 +1154,27 @@ export function DriveTopBar({ fileCount }: { fileCount?: number }) {
 // ─── File Upload Button ─────────────────────────────────────────────
 // Wrapper that triggers the FileUploadWithLink dialog from the top bar
 
-function FileUploadButton({ folderId }: { folderId: string | null }) {
+function FileUploadButton({
+  folderId,
+  dark = false,
+}: {
+  folderId: string | null;
+  dark?: boolean;
+}) {
+  const baseClass = dark
+    ? "h-8 px-3 text-[11px] font-semibold rounded-xl flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0"
+    : "h-8 px-3 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors";
+
   if (!folderId) {
     return (
       <button
         disabled
-        className="h-8 px-3 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-400 flex items-center gap-1.5 opacity-50 cursor-not-allowed"
+        className={cn(
+          baseClass,
+          dark
+            ? "bg-white/[0.05] text-white/30 ring-1 ring-white/[0.05] cursor-not-allowed"
+            : "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-400 opacity-50 cursor-not-allowed",
+        )}
       >
         <Upload className="w-3.5 h-3.5" />
         Upload
@@ -1011,7 +1186,14 @@ function FileUploadButton({ folderId }: { folderId: string | null }) {
     <FileUploadWithLink
       folderId={folderId}
       trigger={
-        <button className="h-8 px-3 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5 transition-colors">
+        <button
+          className={cn(
+            baseClass,
+            dark
+              ? "bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white"
+              : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300",
+          )}
+        >
           <Upload className="w-3.5 h-3.5" />
           Upload
         </button>

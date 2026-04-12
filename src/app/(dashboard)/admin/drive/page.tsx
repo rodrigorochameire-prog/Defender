@@ -16,28 +16,22 @@ function DrivePageInner() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-50 dark:bg-[#0f0f11]">
-      {/* Header — Padrão Defender v5 */}
-      <CollapsiblePageHeader title="Drive" icon={FolderOpen}>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-            <FolderOpen className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Drive</h1>
-            <span className="text-[10px] text-white/55">
-              Arquivos e pastas dos assistidos e processos
-            </span>
-          </div>
-        </div>
+      {/* Page header Padrão Defender v5 — DriveTopBar absorvido via variants.
+          Row 1 (children) = icon + title + actions (Upload, Nova Pasta, Overflow).
+          Row 2 (bottomRow) = sync status + stats + search + view toggle.
+          Duas instâncias compartilham state via React Query dedup (sem custo extra). */}
+      <CollapsiblePageHeader
+        title="Drive"
+        icon={FolderOpen}
+        bottomRow={<DriveTopBar variant="row2" />}
+      >
+        <DriveTopBar variant="row1" />
       </CollapsiblePageHeader>
 
       {/* Drive layout (sidebar + content) — ocupa o resto da viewport */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* Sidebar */}
         <DriveSidebar />
-        {/* Content column */}
         <div className="flex flex-col flex-1 min-w-0 min-h-0">
-          <DriveTopBar />
           <div className="flex flex-1 min-h-0">
             <DriveContentArea />
             {detailPanelFileId !== null && <DriveDetailPanel />}
