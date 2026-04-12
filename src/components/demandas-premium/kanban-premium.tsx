@@ -116,8 +116,8 @@ function KanbanCard({
 }) {
   const rawStatus = demanda.substatus || demanda.status || "triagem";
   const statusCfg = getStatusConfig(rawStatus);
-  // Show original substatus label (e.g. "2 - Elaborar") for planilha fidelity
-  const statusDisplay = rawStatus.match(/^\d+\s*-\s*/) ? rawStatus : statusCfg?.label || rawStatus;
+  // Strip numeric prefix (e.g. "2 - Elaborar" → "Elaborar") — numeração é só pra planilha
+  const statusDisplay = statusCfg?.label || rawStatus.replace(/^\d+\s*-\s*/, "");
   const processo = demanda.processos?.[0]?.numero || "";
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
@@ -462,7 +462,7 @@ function EmAndamentoExpanded({
   onDragEnd?: () => void;
 }) {
   // Only show non-empty sub-groups
-  const visibleSubGroups = (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+  const visibleSubGroups = (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
     .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
 
   if (visibleSubGroups.length === 0) {
@@ -813,7 +813,7 @@ export function KanbanPremium({
 
   // Count non-empty sub-groups for grid sizing
   const nonEmptySubGroupCount = useMemo(() => {
-    return (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0).length;
   }, [subGroupDemandas]);
 
@@ -851,7 +851,7 @@ export function KanbanPremium({
 
   // Mobile: non-empty sub-groups
   const mobileVisibleSubGroups = useMemo(() => {
-    return (["preparacao", "diligencias", "saida", "acompanhar"] as EmAndamentoSubGroup[])
+    return (["preparacao", "diligencias", "acompanhar", "saida"] as EmAndamentoSubGroup[])
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0);
   }, [subGroupDemandas]);
 
@@ -1065,7 +1065,7 @@ export function KanbanPremium({
                 className={cn(
                   "flex flex-col min-w-0 rounded-xl transition-all duration-200",
                   isRegularDropTarget && "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1",
-                  col === "concluida" && "opacity-50"
+                  col === "concluida" && ""
                 )}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
