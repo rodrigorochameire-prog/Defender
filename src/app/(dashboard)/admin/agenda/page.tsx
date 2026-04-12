@@ -1456,59 +1456,63 @@ export default function AgendaPage() {
           </>
         }
         bottomRow={
-          <div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
-          {/* AtribuicaoPills dark variant */}
-          <AtribuicaoPills
-            variant="dark"
-            options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
-            selectedValues={Array.from(areaFilters)}
-            onToggle={handleAreaFilterToggle}
-            onClear={() => setAreaFilters(new Set(["all"]))}
-            counts={Object.fromEntries(
-              AGENDA_ATRIBUICAO_PILL_OPTIONS
-                .filter(o => o.value !== "all")
-                .map(o => [o.label, countByArea[o.value] ?? 0])
-            )}
-            compact
-          />
+          <div className="flex items-center gap-2.5">
+          {/* ========= LEFT GROUP — pills + (opt) month nav — pode encolher ========= */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+            {/* AtribuicaoPills dark variant */}
+            <AtribuicaoPills
+              variant="dark"
+              options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
+              selectedValues={Array.from(areaFilters)}
+              onToggle={handleAreaFilterToggle}
+              onClear={() => setAreaFilters(new Set(["all"]))}
+              counts={Object.fromEntries(
+                AGENDA_ATRIBUICAO_PILL_OPTIONS
+                  .filter(o => o.value !== "all")
+                  .map(o => [o.label, countByArea[o.value] ?? 0])
+              )}
+              compact
+            />
 
-          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-          {/* Month navigation */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <button
-              onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
-            </button>
-            <span className="text-[13px] font-semibold text-white min-w-[100px] text-center capitalize">
-              {format(currentDate, "MMMM yyyy", { locale: ptBR })}
-            </span>
-            <button
-              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-            >
-              <ChevronRight className="w-[13px] h-[13px] text-white/70" />
-            </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="text-[9px] font-semibold text-white/70 bg-white/[0.08] px-2 py-1 rounded-md hover:text-white/90 hover:bg-white/[0.14] transition-colors cursor-pointer"
-            >
-              Hoje
-            </button>
+            {/* Month navigation — só em telas largas (lg+). Na calendar abaixo há nav própria. */}
+            <div className="hidden lg:flex items-center gap-2.5 shrink-0">
+              <div className="w-px h-5 bg-white/[0.10]" />
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentDate(addMonths(currentDate, -1))}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
+                </button>
+                <span className="text-[12px] font-semibold text-white min-w-[96px] text-center capitalize tabular-nums">
+                  {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+                </span>
+                <button
+                  onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-[13px] h-[13px] text-white/70" />
+                </button>
+                <button
+                  onClick={() => setCurrentDate(new Date())}
+                  className="ml-1 text-[10px] font-semibold text-white/70 bg-white/[0.08] ring-1 ring-white/[0.05] px-2 py-1 rounded-md hover:text-white hover:bg-white/[0.14] transition-colors cursor-pointer"
+                >
+                  Hoje
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+          {/* ========= RIGHT CLUSTER — view + busca + filtros — sempre visível ========= */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ViewModeDropdown
+              options={AGENDA_VIEW_OPTIONS}
+              value={viewMode}
+              onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
+              variant="dark"
+            />
 
-          <ViewModeDropdown
-            options={AGENDA_VIEW_OPTIONS}
-            value={viewMode}
-            onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
-            variant="dark"
-          />
-
-          <div className="flex items-center gap-1.5">
+            <div className="w-px h-5 bg-white/[0.10]" />
             {/* Search toggle */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
