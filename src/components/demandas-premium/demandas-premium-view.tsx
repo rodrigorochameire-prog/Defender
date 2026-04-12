@@ -2207,28 +2207,26 @@ export default function Demandas() {
         {/* Row 1: Title + inline stats + actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/[0.10] ring-1 ring-white/[0.06] flex items-center justify-center">
-              <ListTodo className="w-4 h-4 text-white/90" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <ListTodo className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-white text-[16px] font-serif font-semibold tracking-tight leading-tight">Demandas</h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {(() => {
-                  const total = demandas.filter(d => !d.arquivado).length;
-                  const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
-                  return (
-                    <>
-                      <span className="text-[10px] text-white/55 tabular-nums">{total} demandas</span>
-                      {urgent > 0 && (
-                        <>
-                          <span className="text-white/30">·</span>
-                          <span className="text-[10px] text-red-400 tabular-nums">{urgent} urgentes</span>
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
+              {(() => {
+                const total = demandas.filter(d => !d.arquivado).length;
+                const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
+                return (
+                  <p className="text-[10px] text-white/55 tabular-nums">
+                    {total} demandas
+                    {urgent > 0 && (
+                      <>
+                        {" · "}
+                        <span className="text-red-400">{urgent} urgentes</span>
+                      </>
+                    )}
+                  </p>
+                );
+              })()}
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -1508,7 +1508,7 @@ export default function AgendaPage() {
             variant="dark"
           />
 
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-1.5">
             {/* Search toggle */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
@@ -1530,19 +1530,25 @@ export default function AgendaPage() {
             ) : (
               <button
                 onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", searchTerm ? "bg-white/[0.08] text-white" : "")}
+                className={cn(
+                  "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                  searchTerm && "bg-white/[0.14] text-white"
+                )}
                 title="Buscar"
               >
-                <Search className="w-[14px] h-[14px] text-white/50" />
+                <Search className="w-[13px] h-[13px]" />
               </button>
             )}
             <div className="relative">
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={cn("w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer", (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) ? "bg-white/[0.08] text-white" : "")}
+                className={cn(
+                  "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                  (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
+                )}
                 title="Filtros"
               >
-                <Filter className="w-[14px] h-[14px] text-white/50" />
+                <Filter className="w-[13px] h-[13px]" />
                 {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
                   <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -1612,13 +1618,6 @@ export default function AgendaPage() {
                 </>
               )}
             </div>
-            <button
-              onClick={() => setIsGoogleConfigModalOpen(true)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-              title="Configurações"
-            >
-              <Settings className="w-[14px] h-[14px] text-white/50" />
-            </button>
           </div>
         </div>
         }
