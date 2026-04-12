@@ -650,14 +650,12 @@ export function DemandaQuickPreview({
           {/* ===== HERO HEADER — estilo page header charcoal (Padrão Defender) ===== */}
           <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#414144] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]">
             <div className="flex items-start gap-3.5">
-              <AssistidoAvatar
-                nome={demanda.assistido}
-                photoUrl={demanda.photoUrl}
-                atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
-                statusPrisional={demanda.estadoPrisional}
-                showStatusDot={false}
-                size="lg"
-              />
+              {/* Avatar neutro no charcoal — initials translúcidas */}
+              <div className="w-11 h-11 rounded-xl bg-white/[0.10] ring-1 ring-white/[0.06] flex items-center justify-center shrink-0">
+                <span className="text-sm font-semibold text-white/80">
+                  {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                </span>
+              </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
@@ -713,7 +711,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 pb-3">
+          <div className="px-5 pb-4 pt-1">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
@@ -937,7 +935,7 @@ export function DemandaQuickPreview({
               </div>
               {/* Ato row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
                 <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Ato</span>
@@ -961,7 +959,7 @@ export function DemandaQuickPreview({
                 onClick={() => setMetadataOpen(!metadataOpen)}
                 className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
               >
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 </div>
                 <span className="font-medium">Metadados</span>
@@ -970,7 +968,7 @@ export function DemandaQuickPreview({
                 <>
                   {demanda.dataInclusao && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Clock className="w-3 h-3 text-neutral-400" />
                       </div>
                       <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
@@ -979,7 +977,7 @@ export function DemandaQuickPreview({
                   )}
                   {demanda.estadoPrisional && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Lock className="w-3 h-3 text-neutral-400" />
                       </div>
                       <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
@@ -988,7 +986,7 @@ export function DemandaQuickPreview({
                   )}
                   {processo?.tipo && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
                       <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
@@ -997,7 +995,7 @@ export function DemandaQuickPreview({
                   )}
                   {demanda.importBatchId && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <AlertCircle className="w-3 h-3 text-neutral-400" />
                       </div>
                       <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Batch</span>
