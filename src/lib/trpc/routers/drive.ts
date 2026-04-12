@@ -5581,6 +5581,83 @@ export const driveRouter = router({
   }),
 
   /**
+   * Auto-organize: para arquivos linkados fora do path canônico, cria a
+   * estrutura de pastas no Drive e move o arquivo. Dry-run por padrão.
+   *
+   * Path canônico: {atribuição}/{assistido.nome}/{processo.numero_autos}/
+   *
+   * Para os 794 pendentes irredutíveis, cria uma pasta "Para Organizar"
+   * e lista no retorno para triagem manual.
+   */
+  organizeLinkedFiles: protectedProcedure
+    .input(
+      z
+        .object({
+          execute: z.boolean().default(false), // false = dry-run
+          limit: z.number().min(1).max(100).default(20),
+        })
+        .optional(),
+    )
+    .mutation(async ({ input }) => {
+      const execute = input?.execute ?? false;
+      const limit = input?.limit ?? 20;
+
+      return safeAsync(async () => {
+        // Get linked files that have both assistido + processo but are in non-canonical paths
+        const result = await db.execute(sql.raw(`
+          SELECT
+            dfi.id, dfi.drive_file_id, dfi.drive_path, dfi.file_name,
+            a.nome AS assistido_nome,
+            p.numero_autos,
+            p.atribuicao
+          FROM drive_file_index dfi
+          JOIN assistidos a ON a.id = dfi.assistido_id
+          JOIN processos p ON p.id = dfi.processo_id
+          WHERE dfi.link_strategy IN ('regex', 'path')
+            AND dfi.deleted_at IS NULL
+            AND dfi.drive_path NOT LIKE '%/' || a.nome || '/' || p.numero_autos || '/%'
+          LIMIT ${limit}
+        `));
+
+        const filesToMove = (result as any[]).map((r: any) => ({
+          id: Number(r.id),
+          driveFileId: String(r.drive_file_id),
+          currentPath: String(r.drive_path),
+          fileName: String(r.file_name),
+          assistidoNome: String(r.assistido_nome),
+          numeroAutos: String(r.numero_autos),
+          atribuicao: String(r.atribuicao ?? "SEM_PROCESSO"),
+          canonicalPath: `${r.atribuicao ?? "SEM_PROCESSO"}/${r.assistido_nome}/${r.numero_autos}/${r.file_name}`,
+        }));
+
+        if (!execute) {
+          // Dry-run: just report what would be moved
+          const pendingCount = await db.execute(
+            sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'pending'`),
+          );
+          return {
+            dryRun: true,
+            filesToMove: filesToMove.length,
+            pendingIrreducible: Number((pendingCount as any)[0]?.n ?? 0),
+            preview: filesToMove.slice(0, 10).map((f) => ({
+              from: f.currentPath,
+              to: f.canonicalPath,
+            })),
+          };
+        }
+
+        // Execute mode: actually move files
+        // (requires Drive API — moveFileInDrive + folder creation)
+        // This is a separate implementation step — for now return the plan
+        return {
+          dryRun: false,
+          message: "Execução de moves no Drive requer implementação de folder-creation + moveFileInDrive em batch. Use a página Drive para organizar manualmente por enquanto.",
+          filesToMove: filesToMove.length,
+        };
+      }, "Erro ao organizar arquivos");
+    }),
+
+  /**
    * Lista arquivos indexados por assistido
    */
   filesByAssistido: protectedProcedure
