@@ -647,10 +647,10 @@ export function DemandaQuickPreview({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — estilo page header charcoal (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#414144] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#525256] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_12px_-4px_rgba(15,23,42,0.08)]">
             <div className="flex items-start gap-3.5">
-              {/* Avatar neutro no charcoal — initials translúcidas */}
-              <div className="w-11 h-11 rounded-xl bg-white/[0.10] ring-1 ring-white/[0.06] flex items-center justify-center shrink-0">
+              {/* Avatar com ring de atribuição */}
+              <div className="w-11 h-11 rounded-xl bg-white/[0.10] flex items-center justify-center shrink-0 ring-2" style={{ ringColor: atribuicaoColor, boxShadow: `0 0 0 2px ${atribuicaoColor}` }}>
                 <span className="text-sm font-semibold text-white/80">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
@@ -812,32 +812,8 @@ export function DemandaQuickPreview({
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Card 1: Prazo + Providências — unified with border */}
+            {/* Card 1: Providências — unified with border */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-[#414144] dark:border-l-neutral-500 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
-              {/* Prazo */}
-              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-[11px] text-foreground font-semibold">Prazo</span>
-                  <InlineDatePicker
-                    value={demanda.prazo}
-                    onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
-                    placeholder="Definir prazo"
-                    showEditIcon
-                  />
-                </div>
-                {prazoBadge && (
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap tabular-nums ${
-                    prazoBadge.cor === "red" ? "text-rose-600 dark:text-rose-400" :
-                    prazoBadge.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
-                    prazoBadge.cor === "green" ? "text-emerald-600 dark:text-emerald-400" :
-                    "text-muted-foreground"
-                  }`}>
-                    {prazoBadge.texto}
-                  </span>
-                )}
-              </div>
-              {/* Espaço clean entre prazo e providências — sem separator */}
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
                 <div className="flex items-center justify-between mb-2">
