@@ -648,13 +648,8 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER with gradient ===== */}
-          <div
-            className="px-5 pt-5 pb-4"
-            style={{
-              background: `linear-gradient(180deg, ${atribuicaoColor}14 0%, transparent 100%)`,
-            }}
-          >
+          {/* ===== HERO HEADER — neutro, sem gradient de atribuição ===== */}
+          <div className="px-5 pt-5 pb-4">
             <div className="flex items-start gap-3.5">
               <AssistidoAvatar
                 nome={demanda.assistido}
@@ -825,10 +820,10 @@ export function DemandaQuickPreview({
             {/* Card 1: Prazo + Providências — unified with border */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
               {/* Prazo row */}
-              <div className="flex items-center justify-between px-3.5 sm:px-4 py-3">
+              <div className="flex items-center justify-between px-3.5 sm:px-4 py-3 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Prazo</span>
+                  <span className="text-[10px] text-muted-foreground font-semibold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -852,7 +847,7 @@ export function DemandaQuickPreview({
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Providências</span>
+                  <span className="text-[10px] text-muted-foreground font-semibold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -900,8 +895,8 @@ export function DemandaQuickPreview({
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Detalhes — floating rows without card bg */}
-            <div className="overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-700/25">
+            {/* Detalhes — card v5 com border-l-4 */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
               {/* Status row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
@@ -1224,24 +1219,24 @@ export function DemandaQuickPreview({
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/80 dark:border-neutral-800/80 px-5 py-2.5 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/60 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
-            className="flex-1 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/20 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="flex-1 h-8 rounded-xl bg-emerald-500 text-white shadow-sm text-[11px] font-semibold hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             Resolver
           </button>
           <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-8 px-3.5 rounded-lg border border-neutral-200/80 dark:border-neutral-700/80 text-neutral-500 dark:text-neutral-400 text-xs font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center gap-1.5"
+            className="h-8 px-3.5 rounded-xl bg-white/[0.08] text-neutral-500 dark:text-neutral-400 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-[11px] font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
           >
             <Archive className="w-3 h-3" />
             Arquivar
           </button>
           <button
             onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
-            className="h-8 w-8 rounded-lg border border-rose-200/80 dark:border-rose-800/40 text-rose-400 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer flex items-center justify-center"
+            className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-rose-500 hover:ring-rose-200 dark:hover:ring-rose-800/40 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-150 cursor-pointer flex items-center justify-center"
           >
             <Trash2 className="w-3 h-3" />
           </button>
