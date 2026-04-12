@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   ChevronRight,
   ChevronLeft,
@@ -185,27 +186,17 @@ function KanbanCard({
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
-      <div className="px-3 py-3">
-        {/* Row 1: Nome + Data expedição + Flags */}
-        <div className="flex items-center gap-2 mb-1">
-          <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
+      <div className="px-3 py-2.5">
+        {/* Row 1: Nome + Flags (data movida pra baixo — libera espaço pro nome) */}
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
             {demanda.assistido}
           </p>
-          {/* Data de expedição — canto superior direito */}
-          {(demanda.data) && (
-            <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
-              {demanda.data}
-            </span>
-          )}
           {isPreso && (
-            <span className="flex items-center text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded shrink-0">
-              <Lock className="w-2.5 h-2.5" />
-            </span>
+            <Lock className="w-2.5 h-2.5 text-amber-500 shrink-0" />
           )}
           {isUrgente && (
-            <span className="flex items-center text-[8px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-1 py-0.5 rounded shrink-0">
-              <Flame className="w-2.5 h-2.5" />
-            </span>
+            <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0" />
           )}
           {showAtribBadge && demanda.atribuicao && (() => {
             const atribColor = ATRIBUICAO_COLORS[demanda.atribuicao as string] || "#71717a";
@@ -224,10 +215,17 @@ function KanbanCard({
           })()}
         </div>
 
-        {/* Row 2: Ato */}
-        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mb-1">
-          {demanda.ato}
-        </p>
+        {/* Row 2: Ato + Data expedição */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate flex-1">
+            {demanda.ato}
+          </p>
+          {demanda.data && (
+            <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
+              {demanda.data}
+            </span>
+          )}
+        </div>
 
         {/* Row 3: Processo */}
         {processo && (
@@ -1054,8 +1052,12 @@ export function KanbanPremium({
             return (
               <div
                 key={col}
-                className={`flex flex-col min-w-0 rounded-xl transition-all duration-200 ${isRegularDropTarget ? "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1" : ""}`}
-                style={{ opacity: col === "concluida" ? 0.5 : 1 }}
+                className={cn(
+                  "flex flex-col min-w-0 rounded-xl transition-all duration-200",
+                  isRegularDropTarget && "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1",
+                  col === "concluida" && "opacity-50",
+                  col === "concluida" && emAndamentoExpanded && "hidden lg:flex"
+                )}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
                 onDrop={(e) => {
