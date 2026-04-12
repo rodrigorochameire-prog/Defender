@@ -647,16 +647,16 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER ===== */}
-          <div className="px-5 pt-4 pb-3">
-            <div className="flex items-start gap-3">
+          {/* ===== HERO HEADER — card sutil com border-l funcional ===== */}
+          <div className="mx-4 mt-4 mb-5 px-4 py-4 rounded-xl bg-neutral-50/50 dark:bg-neutral-800/20 border border-neutral-200/40 dark:border-neutral-800/40">
+            <div className="flex items-start gap-3.5">
               <AssistidoAvatar
                 nome={demanda.assistido}
                 photoUrl={demanda.photoUrl}
                 atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
                 statusPrisional={demanda.estadoPrisional}
                 showStatusDot={false}
-                size="md"
+                size="lg"
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -714,7 +714,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 py-3 border-t border-neutral-200/60 dark:border-neutral-800/60">
+          <div className="px-5 pb-3">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
