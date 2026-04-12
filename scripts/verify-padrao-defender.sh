@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+cd "$(dirname "$0")/.." || { echo "Cannot cd to project root"; exit 1; }
+
 ERRORS=0
 PASS="✓"
 FAIL="✗"
@@ -187,8 +189,8 @@ else
     fail "\${groupColor}14 subtle fill pattern NOT found in kanban-premium.tsx"
   fi
 
-  # Check for visible border pattern: borderColor: ...groupColor...40
-  if grep -qE 'borderColor.*groupColor.*40' "$KANBAN_FILE"; then
+  # Check for visible border pattern: borderColor: `${groupColor}40`  (literal exact match)
+  if grep -qF 'borderColor: `${groupColor}40`,' "$KANBAN_FILE"; then
     pass "borderColor: \${groupColor}40 (visible border) pattern found"
   else
     fail "borderColor: \${groupColor}40 visible border pattern NOT found in kanban-premium.tsx"
