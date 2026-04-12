@@ -5646,14 +5646,119 @@ export const driveRouter = router({
           };
         }
 
-        // Execute mode: actually move files
-        // (requires Drive API — moveFileInDrive + folder creation)
-        // This is a separate implementation step — for now return the plan
-        return {
-          dryRun: false,
-          message: "Execução de moves no Drive requer implementação de folder-creation + moveFileInDrive em batch. Use a página Drive para organizar manualmente por enquanto.",
-          filesToMove: filesToMove.length,
+        // Execute mode: move files in Drive
+        const {
+          criarOuEncontrarPasta,
+          moveFileInDrive,
+          getAccessToken,
+          getSyncFolders,
+        } = await import("@/lib/services/google-drive");
+
+        // Verify auth
+        const token = await getAccessToken();
+        if (!token) {
+          return { dryRun: false, error: "Google Drive não autenticado", moved: 0, errors: 0 };
+        }
+
+        // Map atribuição → sync folder ID
+        const syncFolders = await getSyncFolders();
+        const atribToFolderId = new Map<string, string>();
+        const ATRIB_LABELS: Record<string, string> = {
+          JURI_CAMACARI: "Júri",
+          VVD_CAMACARI: "VVD",
+          EXECUCAO_PENAL: "Execução Penal",
+          SUBSTITUICAO: "Substituição",
+          SUBSTITUICAO_CIVEL: "Substituição",
+          GRUPO_JURI: "Júri",
         };
+        for (const sf of syncFolders) {
+          // Map by name match
+          for (const [enumVal, label] of Object.entries(ATRIB_LABELS)) {
+            if (sf.name?.toLowerCase().includes(label.toLowerCase())) {
+              atribToFolderId.set(enumVal, sf.driveFolderId);
+            }
+          }
+        }
+
+        let moved = 0;
+        let errors = 0;
+
+        const sfNames = syncFolders.map(sf => `"${sf.name}"`).join(", ");
+        console.log(`[Organize] SyncFolders (${syncFolders.length}): ${sfNames}`);
+        for (const [k,v] of atribToFolderId.entries()) console.log(`[Organize] Map: ${k} → ${v.slice(0,12)}`);
+        if (atribToFolderId.size === 0) console.log(`[Organize] MAP IS EMPTY! First SF name type: ${typeof syncFolders[0]?.name}, val: "${syncFolders[0]?.name}"`);
+        console.log(`[Organize] Files to move: ${filesToMove.length}, first atrib: ${filesToMove[0]?.atribuicao}`);
+
+        for (const file of filesToMove) {
+          try {
+            // 1. Find the sync folder for this atribuição
+            const syncFolderId = atribToFolderId.get(file.atribuicao);
+            if (!syncFolderId) {
+              console.error(`[Organize] No sync folder for "${file.atribuicao}". Map keys: ${[...atribToFolderId.keys()].join(", ")}`);
+              errors++;
+              continue;
+            }
+
+            // 2. Find or create assistido folder
+            console.log(`[Organize] Step 2: criarOuEncontrar "${file.assistidoNome}" in ${syncFolderId.slice(0,8)}`);
+            const assistidoFolder = await criarOuEncontrarPasta(file.assistidoNome, syncFolderId);
+            if (!assistidoFolder) {
+              console.error(`[Organize] FAIL: assistido folder creation returned null`);
+              errors++;
+              continue;
+            }
+
+            // 3. Find or create processo folder
+            console.log(`[Organize] Step 3: criarOuEncontrar "${file.numeroAutos}" in ${assistidoFolder.id.slice(0,8)}`);
+            const processoFolder = await criarOuEncontrarPasta(file.numeroAutos, assistidoFolder.id);
+            if (!processoFolder) {
+              console.error(`[Organize] FAIL: processo folder creation returned null`);
+              errors++;
+              continue;
+            }
+
+            // 4. Get file's current parent
+            console.log(`[Organize] Step 4: get parent of ${file.driveFileId.slice(0,8)}`);
+            const fileInfoRes = await fetch(
+              `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?fields=parents`,
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (!fileInfoRes.ok) {
+              errors++;
+              continue;
+            }
+            const fileInfo = await fileInfoRes.json();
+            const currentParent = fileInfo.parents?.[0] ?? null;
+
+            // 5. Move file
+            const result = await moveFileInDrive(file.driveFileId, processoFolder.id, currentParent);
+            if (!result) {
+              errors++;
+              continue;
+            }
+
+            // 6. Update index
+            await db.execute(sql`
+              UPDATE drive_file_index
+              SET drive_path = ${file.canonicalPath},
+                  link_strategy = 'path',
+                  link_confidence = 1.0,
+                  last_seen_at = ${new Date().toISOString()}
+              WHERE id = ${file.id}
+            `);
+
+            moved++;
+            if (moved % 5 === 0) {
+              console.log(`[Organize] Progress: ${moved}/${filesToMove.length} moved`);
+            }
+          } catch (e: any) {
+            console.error(`[Organize] Error for "${file.fileName}" (atrib=${file.atribuicao}):`, e?.message ?? String(e).slice(0, 200));
+            errors++;
+          }
+        }
+
+        console.log(`[Organize] Done: ${moved} moved, ${errors} errors`);
+        return { dryRun: false, moved, errors, total: filesToMove.length };
       }, "Erro ao organizar arquivos");
     }),
 
