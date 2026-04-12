@@ -657,7 +657,7 @@ export function DemandaQuickPreview({
                 atribuicao={demanda.atribuicaoEnum || demanda.atribuicao}
                 statusPrisional={demanda.estadoPrisional}
                 showStatusDot={isPreso}
-                size="xl"
+                size="lg"
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -678,7 +678,7 @@ export function DemandaQuickPreview({
                 {/* Processo — chip copiável */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 group/proc cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-50 dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-emerald-300 dark:hover:ring-emerald-700 group/proc cursor-pointer transition-all duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -686,27 +686,27 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-xs text-neutral-500 dark:text-neutral-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
-                    <Copy className="w-3 h-3 text-neutral-300 dark:text-neutral-600 group-hover/proc:text-emerald-500 transition-colors" />
+                    <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-emerald-700 dark:group-hover/proc:text-emerald-400 transition-colors">{processo.numero}</span>
+                    <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 group-hover/proc:text-emerald-500 transition-colors" />
                   </button>
                 )}
 
-                {/* Action links — underline on hover */}
-                <div className="flex items-center gap-3 mt-2">
+                {/* Action links */}
+                <div className="flex items-center gap-2 mt-2">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-[10px] font-medium text-muted-foreground hover:text-emerald-600 transition-colors"
                     >
-                      Ver assistido
+                      Ver assistido →
                     </Link>
                   )}
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline underline-offset-2 transition-colors"
+                      className="text-[10px] font-medium text-muted-foreground hover:text-emerald-600 transition-colors"
                     >
-                      Ver processo
+                      Ver processo →
                     </Link>
                   )}
                 </div>
@@ -715,7 +715,7 @@ export function DemandaQuickPreview({
           </div>
 
           {/* ===== PIPELINE STEPPER ===== */}
-          <div className="px-5 py-5 border-t border-neutral-100 dark:border-neutral-800/50">
+          <div className="px-5 py-4 border-t border-neutral-200/60 dark:border-neutral-800/60">
             {/* Track + nodes */}
             <div className="relative flex items-center">
               {/* Background track */}
@@ -832,7 +832,7 @@ export function DemandaQuickPreview({
                   />
                 </div>
                 {prazoBadge && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap tabular-nums ${
                     prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" :
                     prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
                     prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
@@ -842,8 +842,8 @@ export function DemandaQuickPreview({
                   </span>
                 )}
               </div>
-              {/* Divider */}
-              <div className="border-t border-neutral-200/40 dark:border-neutral-700/30" />
+              {/* Inset separator (como Dashboard) */}
+              <div className="mx-4 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
                 <div className="flex items-center justify-between mb-2">
@@ -873,7 +873,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 min-h-[64px] bg-white/60 dark:bg-neutral-900/40 rounded-lg p-2.5 transition-colors group/edit"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[64px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg p-2.5 border border-transparent focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit"
                   multiline
                 />
                 {/* Timestamp última edição */}
@@ -902,7 +902,7 @@ export function DemandaQuickPreview({
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Status</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Status</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.status}
@@ -922,7 +922,7 @@ export function DemandaQuickPreview({
                 <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${atribuicaoColor}18` }}>
                   <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Atribuição</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.atribuicao}
@@ -942,7 +942,7 @@ export function DemandaQuickPreview({
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                   <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Ato</span>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Ato</span>
                 <div className="flex-1 text-right">
                   <InlineDropdown
                     value={demanda.ato}
@@ -975,7 +975,7 @@ export function DemandaQuickPreview({
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                         <Clock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Importado</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   )}
@@ -984,7 +984,7 @@ export function DemandaQuickPreview({
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                         <Lock className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Prisional</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
                     </div>
                   )}
@@ -993,7 +993,7 @@ export function DemandaQuickPreview({
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Tipo</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
                     </div>
                   )}
@@ -1002,7 +1002,7 @@ export function DemandaQuickPreview({
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-700/40 flex items-center justify-center shrink-0">
                         <AlertCircle className="w-3 h-3 text-neutral-400" />
                       </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium w-14 shrink-0">Batch</span>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Batch</span>
                       <span className="flex-1 text-right text-xs font-mono text-neutral-500 dark:text-neutral-400">{demanda.importBatchId.slice(0, 8)}</span>
                     </div>
                   )}
