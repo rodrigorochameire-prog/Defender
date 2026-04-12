@@ -1292,7 +1292,7 @@ export default function DashboardJuriPage() {
             </div>
 
             {/* Footer: Detalhes opcionais + Botão Submit */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-200/60 dark:border-neutral-800/60">
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
                 className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground uppercase tracking-wide transition-colors"
@@ -1303,7 +1303,7 @@ export default function DashboardJuriPage() {
 
               <Button
                 size="sm"
-                className="h-8 px-4 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-none transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="h-8 px-4 text-[11px] font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm rounded-xl transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
                 disabled={!atendimentoRapido.descricao.trim() || !atendimentoRapido.assistidoId || createAtendimento.isPending}
                 onClick={() => {
                   if (!atendimentoRapido.assistidoId) {
@@ -1343,13 +1343,13 @@ export default function DashboardJuriPage() {
 
             {/* Detalhes opcionais (colapsável) */}
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetalhes ? "max-h-40 opacity-100 mt-3" : "max-h-0 opacity-0"}`}>
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-neutral-200/60 dark:border-neutral-800/60">
                 <div className="space-y-1">
                   <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Local</label>
                   <select
                     value={atendimentoRapido.local}
                     onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, local: e.target.value }))}
-                    className="w-full h-8 text-xs rounded-md border border-border bg-card text-foreground/80 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                    className="w-full h-8 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-2 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                   >
                     <option value="">Não informado</option>
                     <option value="Presencial">Presencial</option>
@@ -1366,7 +1366,7 @@ export default function DashboardJuriPage() {
                     placeholder="Ex: Instrução, Acordo, Alvará..."
                     value={atendimentoRapido.assunto}
                     onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, assunto: e.target.value }))}
-                    className="w-full h-8 text-xs rounded-md border border-border bg-card text-foreground/80 px-2 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                    className="w-full h-8 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-2 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                   />
                 </div>
               </div>
@@ -1543,7 +1543,7 @@ export default function DashboardJuriPage() {
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
         <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-          <div className="px-5 py-4 border-b border-border">
+          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
@@ -1567,7 +1567,7 @@ export default function DashboardJuriPage() {
             </div>
           </div>
 
-          <div className="divide-y divide-border max-h-[420px] overflow-y-auto">
+          <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[420px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="p-4 space-y-2">
                 {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
@@ -1663,7 +1663,7 @@ export default function DashboardJuriPage() {
         {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
         {!isDefensorCriminalGeral && hasArea("JURI") && (
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
@@ -1703,7 +1703,7 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
               {loadingJuris ? (
                 <div className="p-4 space-y-2">
                   {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -1779,7 +1779,7 @@ export default function DashboardJuriPage() {
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
@@ -1798,7 +1798,7 @@ export default function DashboardJuriPage() {
               </div>
             </div>
 
-            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
               {loadingAudiencias ? (
                 <div className="p-4 space-y-2">
                   {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -1872,7 +1872,7 @@ export default function DashboardJuriPage() {
         ) : (
           /* Especializado: Audiências da Semana */
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-              <div className="px-5 py-4 border-b border-border">
+              <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
@@ -1893,7 +1893,7 @@ export default function DashboardJuriPage() {
                 </div>
               </div>
 
-              <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+              <div className="divide-y divide-neutral-200/60 dark:divide-neutral-800/60 max-h-[400px] overflow-y-auto">
                 {loadingAudiencias ? (
                   <div className="p-4 space-y-2">
                     {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
