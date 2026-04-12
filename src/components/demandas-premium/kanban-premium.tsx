@@ -187,12 +187,6 @@ function KanbanCard({
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
       <div className="px-3 py-2.5">
-        {/* Row 0: Data expedição — linha própria, nunca compete */}
-        {demanda.data && (
-          <p className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 text-right mb-1">
-            {demanda.data}
-          </p>
-        )}
         {/* Row 1: Nome + Flags */}
         <div className="flex items-start gap-1.5 mb-0.5">
           <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2">
@@ -241,6 +235,13 @@ function KanbanCard({
             </span>
             <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
           </div>
+        )}
+
+        {/* Data de expedição — discreta, antes do status */}
+        {demanda.data && (
+          <p className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 mb-1">
+            {demanda.data}
+          </p>
         )}
 
         {/* Row 4: Prazo + Status badge (clickable) */}
