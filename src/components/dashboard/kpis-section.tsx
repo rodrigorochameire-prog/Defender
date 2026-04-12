@@ -345,6 +345,7 @@ function ChartCard({
 export function KpisSection({ onClose }: { onClose?: () => void }) {
   const { selectedDefensorId, selectedDefensor } = useDefensor();
   const [comarcaId, setComarcaId] = useState<number | null>(null);
+  const [showRelatorioDetail, setShowRelatorioDetail] = useState(false);
 
   const scope = useMemo(
     () => ({
@@ -363,10 +364,14 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const cargaQ = trpc.kpis.cargaDefensor.useQuery(scope);
   const presosQ = trpc.kpis.presosUrgentes.useQuery(scope);
   const agingQ = trpc.kpis.backlogAging.useQuery(scope);
-  const relatorioQ = trpc.kpis.relatorioResumo.useQuery({
+  const relatorioScope = {
     defensorId: selectedDefensorId ?? undefined,
     ano: new Date().getFullYear(),
-    semestre: new Date().getMonth() < 6 ? "1" : "2",
+    semestre: (new Date().getMonth() < 6 ? "1" : "2") as "1" | "2",
+  };
+  const relatorioQ = trpc.kpis.relatorioResumo.useQuery(relatorioScope);
+  const relatorioDetalhadoQ = trpc.kpis.relatorioDetalhado.useQuery(relatorioScope, {
+    enabled: showRelatorioDetail,
   });
   const comarcasQ = trpc.comarcas.listRMS.useQuery();
 
@@ -1179,11 +1184,173 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   {relatorioExtrajudicial}
                 </span>
               </div>
+              {/* Botão drill-down */}
+              <button
+                onClick={() => setShowRelatorioDetail(!showRelatorioDetail)}
+                className="ml-auto text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                {showRelatorioDetail ? "Ocultar detalhamento" : "Ver detalhamento"}
+                <svg
+                  className={cn("w-3 h-3 transition-transform", showRelatorioDetail && "rotate-180")}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
+
+            {/* Drill-down — tabela estilo formulário Corregedoria */}
+            <AnimatePresence>
+              {showRelatorioDetail && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 border-t border-neutral-200/70 dark:border-neutral-700/30 pt-4">
+                    {relatorioDetalhadoQ.isLoading ? (
+                      <div className="flex items-center gap-2 text-xs text-neutral-400 py-6 justify-center">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Carregando detalhamento...
+                      </div>
+                    ) : (
+                      <RelatorioDetailTable
+                        data={relatorioDetalhadoQ.data ?? []}
+                        mesesRange={mesesRange}
+                        mesesLabel={MESES_LABEL}
+                      />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </div>
     </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tabela de detalhamento do relatório semestral
+// ---------------------------------------------------------------------------
+
+function RelatorioDetailTable({
+  data,
+  mesesRange,
+  mesesLabel,
+}: {
+  data: { secao: string; categoria: string; mes: number; total: number }[];
+  mesesRange: number[];
+  mesesLabel: string[];
+}) {
+  // Agrupar por seção → categoria → meses
+  const secoes = useMemo(() => {
+    const map = new Map<string, Map<string, Map<number, number>>>();
+    for (const r of data) {
+      if (!map.has(r.secao)) map.set(r.secao, new Map());
+      const catMap = map.get(r.secao)!;
+      if (!catMap.has(r.categoria)) catMap.set(r.categoria, new Map());
+      const mesMap = catMap.get(r.categoria)!;
+      mesMap.set(r.mes, (mesMap.get(r.mes) ?? 0) + r.total);
+    }
+
+    return Array.from(map.entries()).map(([secao, catMap]) => ({
+      secao,
+      categorias: Array.from(catMap.entries())
+        .map(([cat, mesMap]) => {
+          const totals = mesesRange.map((m) => mesMap.get(m) ?? 0);
+          const total = totals.reduce((a, b) => a + b, 0);
+          return { categoria: cat, totals, total };
+        })
+        .sort((a, b) => b.total - a.total),
+    }));
+  }, [data, mesesRange]);
+
+  if (secoes.length === 0) {
+    return (
+      <div className="text-center text-xs text-neutral-400 py-4">
+        Sem dados para o período selecionado
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-none">
+      {secoes.map((secao) => (
+        <div key={secao.secao}>
+          {/* Seção header */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">
+              {secao.secao}
+            </span>
+            <span className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-700/40" />
+            <span className="text-[9px] font-mono tabular-nums text-neutral-400">
+              {secao.categorias.reduce((a, c) => a + c.total, 0)}
+            </span>
+          </div>
+
+          {/* Table */}
+          <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-700/30 overflow-hidden">
+            {/* Header row */}
+            <div className="grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-200/60 dark:border-neutral-700/30 px-3 py-1.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400">
+                Atividade
+              </span>
+              {mesesRange.map((m) => (
+                <span
+                  key={m}
+                  className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 text-center"
+                >
+                  {mesesLabel[m]}
+                </span>
+              ))}
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 text-right">
+                Total
+              </span>
+            </div>
+
+            {/* Data rows */}
+            {secao.categorias.map((cat, idx) => (
+              <div
+                key={cat.categoria}
+                className={cn(
+                  "grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 px-3 py-1.5 text-[11px]",
+                  idx % 2 === 0
+                    ? "bg-white dark:bg-transparent"
+                    : "bg-neutral-50/50 dark:bg-neutral-800/10",
+                )}
+              >
+                <span className="text-neutral-700 dark:text-neutral-300 truncate pr-2 leading-tight">
+                  {cat.categoria}
+                </span>
+                {cat.totals.map((val, mi) => (
+                  <span
+                    key={mi}
+                    className={cn(
+                      "text-center tabular-nums font-mono",
+                      val > 0
+                        ? "text-neutral-800 dark:text-neutral-200 font-medium"
+                        : "text-neutral-300 dark:text-neutral-600",
+                    )}
+                  >
+                    {val || "—"}
+                  </span>
+                ))}
+                <span className="text-right tabular-nums font-mono font-semibold text-neutral-900 dark:text-neutral-100">
+                  {cat.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
