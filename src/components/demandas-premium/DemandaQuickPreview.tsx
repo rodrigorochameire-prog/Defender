@@ -605,7 +605,7 @@ export function DemandaQuickPreview({
         }}
       >
         {/* ===== STICKY NAV HEADER ===== */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/50 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
               Demanda
@@ -666,19 +666,17 @@ export function DemandaQuickPreview({
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-serif text-lg sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-foreground leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {/* Flags inline com nome */}
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 shrink-0">
-                      <Flame className="w-2.5 h-2.5" /> Urgente
-                    </span>
+                    <Flame className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                   )}
                 </div>
 
@@ -817,19 +815,20 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-4">
-            {/* Section label: AÇÃO */}
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ação</span>
-              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+            {/* Section divider: Ação */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ação</span>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
             {/* Card 1: Prazo + Providências — unified with border */}
-            <div className="rounded-xl bg-neutral-50/80 dark:bg-neutral-800/30 border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
               {/* Prazo row */}
               <div className="flex items-center justify-between px-3.5 sm:px-4 py-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Prazo</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -839,7 +838,7 @@ export function DemandaQuickPreview({
                 </div>
                 {prazoBadge && (
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
-                    prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 animate-pulse" :
+                    prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" :
                     prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
                     prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
                     "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
@@ -853,7 +852,7 @@ export function DemandaQuickPreview({
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3.5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Providências</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -894,10 +893,11 @@ export function DemandaQuickPreview({
               </div>
             </div>
 
-            {/* Section label: CLASSIFICAÇÃO */}
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Classificação</span>
-              <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+            {/* Section divider: Classificação */}
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Classificação</span>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
             {/* Detalhes — floating rows without card bg */}
@@ -1018,9 +1018,10 @@ export function DemandaQuickPreview({
             {/* ===== OFÍCIO SUGERIDO ===== */}
             {oficioSugerido && (
               <>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-bold">Ofício</span>
-                  <div className="flex-1 h-px bg-neutral-200/50 dark:bg-neutral-700/30" />
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ofício</span>
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
                 </div>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
