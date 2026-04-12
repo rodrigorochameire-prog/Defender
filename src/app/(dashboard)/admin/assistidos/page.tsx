@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -805,10 +806,123 @@ export default function AssistidosPage() {
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      {/* Header */}
-      <div className={cn(HEADER_STYLE.container, "rounded-none sm:rounded-xl sm:mx-3 sm:mt-3 pb-1")}>
-        {/* Row 1: Title + stats badges + search + actions */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-0">
+      {/* Header — Padrão Defender v5 (CollapsiblePageHeader) */}
+      <CollapsiblePageHeader
+        title="Assistidos"
+        icon={Users}
+        bottomRow={
+          <div className="flex items-center gap-3 overflow-x-auto scrollbar-none">
+            {/* Atribuição pills */}
+            {!showNaoIdentificados && (
+              <AtribuicaoPills
+                variant="dark"
+                options={[
+                  { value: "Tribunal do Júri", label: "Tribunal do Júri" },
+                  { value: "Violência Doméstica", label: "Violência Doméstica" },
+                  { value: "Execução Penal", label: "Execução Penal" },
+                  { value: "Substituição Criminal", label: "Substituição Criminal" },
+                  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
+                ]}
+                selectedValues={atribuicaoFilter !== "all" ? [(() => {
+                  const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
+                  return map[atribuicaoFilter] || atribuicaoFilter;
+                })()] : []}
+                onToggle={(value) => {
+                  const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
+                  const normalized = reverseMap[value] || value;
+                  setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
+                }}
+                onClear={() => setAtribuicaoFilter("all")}
+                counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
+                singleSelect
+                compact
+              />
+            )}
+
+            <div className="flex-1 min-w-2" />
+
+            {/* Segmented: Comarca / RMS */}
+            {!showNaoIdentificados && (
+              <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
+                {[
+                  { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
+                  { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
+                ].map((opt) => (
+                  <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Segmented: Lista / Analytics */}
+            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
+              {[
+                { label: "Lista", icon: Users, tab: "lista" as const },
+                { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
+              ].map((opt) => (
+                <button key={opt.tab} onClick={() => setActiveTab(opt.tab)} className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", activeTab === opt.tab ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
+                  <opt.icon className="w-3 h-3" /> {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="w-px h-4 bg-white/[0.08] shrink-0" />
+
+            {/* Smart presets — ícones compactos */}
+            {!showNaoIdentificados && (
+              <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
+                {[
+                  { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
+                  { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
+                  { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
+                  { id: "sem_drive", tip: "Sem Drive", icon: Link2Off, count: stats.semDrive },
+                  { id: "novos_30d", tip: "Novos 30d", icon: Plus, count: stats.novos30d },
+                ].map((preset) => {
+                  const active = smartPreset === preset.id;
+                  const PresetIcon = preset.icon;
+                  return (
+                    <Tooltip key={preset.id}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => {
+                            if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
+                            else {
+                              setSmartPreset(preset.id);
+                              if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+                              else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
+                              else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+                              else { setStatusFilter("all"); setSortBy("nome"); }
+                            }
+                          }}
+                          className={cn("relative inline-flex items-center justify-center w-7 h-7 rounded-[4px] transition-all shrink-0 cursor-pointer", active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}
+                        >
+                          <PresetIcon className="w-3 h-3" />
+                          {preset.count > 0 && (
+                            <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-white/[0.10] text-white/60")}>
+                              {preset.count}
+                            </span>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            )}
+            {smartPreset && (
+              <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/40 hover:text-white transition-colors shrink-0">
+                <XCircle className="w-3 h-3" />
+              </button>
+            )}
+            <Link href="/admin/whatsapp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
+              <MessageCircle className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        }
+      >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center shrink-0">
               <Users className="w-4 h-4 text-white/70" />
@@ -887,118 +1001,7 @@ export default function AssistidosPage() {
             </Link>
           </div>
         </div>
-
-        {/* Inset Row — segmented controls uniformes */}
-        <div className={cn("flex items-center gap-3 mx-3 mt-3 mb-2.5 overflow-x-auto scrollbar-none", HEADER_STYLE.bottomRow)}>
-          {/* Atribuição pills */}
-          {!showNaoIdentificados && (
-            <AtribuicaoPills
-              variant="dark"
-              options={[
-                { value: "Tribunal do Júri", label: "Tribunal do Júri" },
-                { value: "Violência Doméstica", label: "Violência Doméstica" },
-                { value: "Execução Penal", label: "Execução Penal" },
-                { value: "Substituição Criminal", label: "Substituição Criminal" },
-                { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
-              ]}
-              selectedValues={atribuicaoFilter !== "all" ? [(() => {
-                const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
-                return map[atribuicaoFilter] || atribuicaoFilter;
-              })()] : []}
-              onToggle={(value) => {
-                const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
-                const normalized = reverseMap[value] || value;
-                setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
-              }}
-              onClear={() => setAtribuicaoFilter("all")}
-              counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
-              singleSelect
-              compact
-            />
-          )}
-
-          <div className="flex-1 min-w-2" />
-
-          {/* Segmented: Comarca / RMS */}
-          {!showNaoIdentificados && (
-            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-              {[
-                { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
-                { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
-              ].map((opt) => (
-                <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Segmented: Lista / Analytics */}
-          <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-            {[
-              { label: "Lista", icon: Users, tab: "lista" as const },
-              { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
-            ].map((opt) => (
-              <button key={opt.tab} onClick={() => setActiveTab(opt.tab)} className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", activeTab === opt.tab ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                <opt.icon className="w-3 h-3" /> {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-px h-4 bg-white/[0.08] shrink-0" />
-
-          {/* Smart presets — ícones compactos */}
-          {!showNaoIdentificados && (
-            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-              {[
-                { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
-                { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
-                { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
-                { id: "sem_drive", tip: "Sem Drive", icon: Link2Off, count: stats.semDrive },
-                { id: "novos_30d", tip: "Novos 30d", icon: Plus, count: stats.novos30d },
-              ].map((preset) => {
-                const active = smartPreset === preset.id;
-                const PresetIcon = preset.icon;
-                return (
-                  <Tooltip key={preset.id}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => {
-                          if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
-                          else {
-                            setSmartPreset(preset.id);
-                            if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
-                            else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
-                            else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
-                            else { setStatusFilter("all"); setSortBy("nome"); }
-                          }
-                        }}
-                        className={cn("relative inline-flex items-center justify-center w-7 h-7 rounded-[4px] transition-all shrink-0 cursor-pointer", active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}
-                      >
-                        <PresetIcon className="w-3 h-3" />
-                        {preset.count > 0 && (
-                          <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-white/[0.10] text-white/60")}>
-                            {preset.count}
-                          </span>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          )}
-          {smartPreset && (
-            <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/40 hover:text-white transition-colors shrink-0">
-              <XCircle className="w-3 h-3" />
-            </button>
-          )}
-          <Link href="/admin/whatsapp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
-            <MessageCircle className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Sticky Summary Bar */}
       {showStickyBar && (
