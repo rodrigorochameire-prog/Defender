@@ -796,24 +796,15 @@ export default function DashboardJuriPage() {
               onClick={toggleKpis}
               title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
               className={cn(
-                "h-8 px-3 rounded-xl transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
+                "h-8 px-3 rounded-xl text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
                 showKpis
-                  ? "bg-white text-zinc-900 shadow-sm hover:bg-white/90"
-                  : "bg-white/[0.08] text-white/80 hover:bg-white/[0.14] border border-white/[0.12]",
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-emerald-500 hover:bg-emerald-600",
               )}
             >
               <BarChart3 className="w-3.5 h-3.5" />
               KPIs
             </button>
-            <Link href="/admin/demandas/nova">
-              <button
-                title="Nova Demanda"
-                className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Novo
-              </button>
-            </Link>
           </div>
         </div>
       </CollapsiblePageHeader>
