@@ -577,7 +577,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl"
+        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0"
         style={{ borderLeft: `3px solid ${atribuicaoColor}` }}
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
@@ -605,7 +605,7 @@ export function DemandaQuickPreview({
         }}
       >
         {/* ===== STICKY NAV HEADER — Padrão Defender shell sutil ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Demanda
@@ -814,13 +814,11 @@ export function DemandaQuickPreview({
             </div>
 
             {/* Card 1: Prazo + Providências — unified with border */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
-              {/* Prazo header — bg diferenciado como Dashboard card headers */}
-              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/30">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-md bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3 h-3 text-muted-foreground" />
-                  </div>
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-[#414144] dark:border-l-neutral-500 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
+              {/* Prazo */}
+              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="text-[11px] text-foreground font-semibold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
@@ -840,8 +838,7 @@ export function DemandaQuickPreview({
                   </span>
                 )}
               </div>
-              {/* Inset separator */}
-              <div className="mx-4 h-px bg-neutral-200/50 dark:bg-neutral-800/50" />
+              {/* Espaço clean entre prazo e providências — sem separator */}
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
                 <div className="flex items-center justify-between mb-2">
