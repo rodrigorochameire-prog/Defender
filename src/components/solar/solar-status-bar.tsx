@@ -76,7 +76,18 @@ function StatusDot({ level }: { level: StatusLevel }) {
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarStatusBarProps) {
+export type SolarStatusBarVariant = "standalone" | "embedded";
+
+interface SolarStatusBarFullProps extends SolarStatusBarProps {
+  variant?: SolarStatusBarVariant;
+}
+
+export function SolarStatusBar({
+  onRefresh,
+  isRefreshing,
+  vencidas = 0,
+  variant = "standalone",
+}: SolarStatusBarFullProps) {
   const { data: solarStatus, isLoading } = trpc.solar.status.useQuery(undefined, {
     retry: false,
     staleTime: 30_000,
@@ -129,6 +140,83 @@ export function SolarStatusBar({ onRefresh, isRefreshing, vencidas = 0 }: SolarS
     );
   }
 
+  // ─── EMBEDDED VARIANT (dentro de CollapsiblePageHeader — dark theme) ────
+  if (variant === "embedded") {
+    return (
+      <div className="flex items-center justify-between gap-3">
+        {/* Left: icon + title + status indicators + vencidas badge */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+            <Sun className="w-4 h-4 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Intimações
+              </h1>
+              {vencidas > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider bg-red-500/20 text-red-300 ring-1 ring-red-500/30">
+                  {vencidas} vencida{vencidas > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2.5 mt-0.5">
+              {isLoading ? (
+                <span className="text-[10px] text-white/50 flex items-center gap-1">
+                  <RefreshCw className="h-2.5 w-2.5 animate-spin" />
+                  Verificando conexão...
+                </span>
+              ) : (
+                indicators.map((ind) => (
+                  <div key={ind.label} className="flex items-center gap-1 text-[10px]">
+                    <StatusDot level={ind.level} />
+                    <span
+                      className={cn(
+                        "font-medium",
+                        ind.level === "online"
+                          ? "text-emerald-400"
+                          : ind.level === "warning"
+                            ? "text-amber-400"
+                            : ind.level === "offline"
+                              ? "text-red-400"
+                              : "text-white/50",
+                      )}
+                    >
+                      {ind.label}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Re-autenticar (conditional) + Atualizar */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {solarStatus && !solarStatus.authenticated && (
+            <button
+              onClick={onRefresh}
+              className="h-8 px-3 text-[11px] font-semibold rounded-xl flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0 bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40 hover:bg-amber-500/30"
+            >
+              <WifiOff className="h-3 w-3" />
+              Re-autenticar
+            </button>
+          )}
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            title="Atualizar"
+            className="h-8 px-3 text-[11px] font-semibold rounded-xl flex items-center gap-1.5 transition-all duration-150 cursor-pointer shrink-0 bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white disabled:opacity-50"
+          >
+            <RefreshCw className={cn("h-3 w-3", isRefreshing && "animate-spin")} />
+            <span className="hidden sm:inline">Atualizar</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── STANDALONE (backward compat) ────────────────────────────────────────
   return (
     <div className="px-4 md:px-6 py-4 bg-card border-b border-border">
       <div className="flex items-center justify-between gap-4">

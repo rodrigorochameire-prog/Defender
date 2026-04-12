@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { SolarStatusBar } from "@/components/solar/solar-status-bar";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { SolarBatchOperations } from "@/components/solar/solar-batch-operations";
 import { SolarSyncFases } from "@/components/solar/solar-sync-fases";
 import { SolarLogs } from "@/components/solar/solar-logs";
@@ -360,78 +361,80 @@ export default function SolarHubPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-
-      {/* ── StatusBar ────────────────────────────────────────────────────── */}
-      <SolarStatusBar
-        onRefresh={handleRefresh}
-        isRefreshing={isLoading}
-        vencidas={contadores.vencidas}
-      />
-
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
       <Tabs defaultValue="caixa" className="w-full">
 
-        {/* Tab triggers */}
-        <div className="px-4 md:px-6 pt-4 bg-neutral-100 dark:bg-[#0f0f11] overflow-x-auto scrollbar-none">
-          <TabsList className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm h-9 p-0.5 rounded-lg w-full min-w-max">
-            <TabsTrigger
-              value="caixa"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
-            >
-              <Inbox className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Caixa de Entrada</span>
-              <span className="sm:hidden">Caixa</span>
-              {contadores.total > 0 && (
-                <Badge
-                  variant="outline"
-                  className="ml-0.5 h-4 px-1 text-[9px] rounded-full border-current"
+        {/* Page header Padrão Defender v5 — SolarStatusBar embedded + tabs em bottomRow */}
+        <CollapsiblePageHeader
+          title="Intimações"
+          icon={Inbox}
+          bottomRow={
+            <div className="overflow-x-auto scrollbar-none">
+              <TabsList className="bg-black/[0.15] ring-1 ring-white/[0.05] border-0 h-8 p-[2px] rounded-md w-full min-w-max gap-0">
+                <TabsTrigger
+                  value="caixa"
+                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
                 >
-                  {contadores.total}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="batch"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
-            >
-              <Layers className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Operações Batch</span>
-              <span className="sm:hidden">Batch</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="fases"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Fases &rarr; Solar</span>
-              <span className="sm:hidden">Fases</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="logs"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
-            >
-              <Settings className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Logs & Stats</span>
-              <span className="sm:hidden">Logs</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="assistidos-sync"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-neutral-900 data-[state=active]:text-white dark:data-[state=active]:bg-neutral-100 dark:data-[state=active]:text-neutral-900"
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Assistidos</span>
-              <span className="sm:hidden">Assist.</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="protocolar"
-              className="text-xs gap-1.5 rounded-md data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-600 dark:data-[state=active]:text-white"
-            >
-              <Send className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Protocolar</span>
-              <span className="sm:hidden">Proto</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+                  <Inbox className="h-3 w-3" />
+                  <span className="hidden sm:inline">Caixa de Entrada</span>
+                  <span className="sm:hidden">Caixa</span>
+                  {contadores.total > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-[14px] px-1 text-[8px] font-bold rounded-full bg-white/[0.12] text-white/90 tabular-nums">
+                      {contadores.total}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="batch"
+                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+                >
+                  <Layers className="h-3 w-3" />
+                  <span className="hidden sm:inline">Operações Batch</span>
+                  <span className="sm:hidden">Batch</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="fases"
+                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  <span className="hidden sm:inline">Fases → Solar</span>
+                  <span className="sm:hidden">Fases</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="logs"
+                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+                >
+                  <Settings className="h-3 w-3" />
+                  <span className="hidden sm:inline">Logs & Stats</span>
+                  <span className="sm:hidden">Logs</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="assistidos-sync"
+                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+                >
+                  <Users className="h-3 w-3" />
+                  <span className="hidden sm:inline">Assistidos</span>
+                  <span className="sm:hidden">Assist.</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="protocolar"
+                  className="text-[11px] font-semibold gap-1.5 rounded-[4px] px-2.5 py-1 text-emerald-400/80 hover:text-emerald-300 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-none"
+                >
+                  <Send className="h-3 w-3" />
+                  <span className="hidden sm:inline">Protocolar</span>
+                  <span className="sm:hidden">Proto</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          }
+        >
+          <SolarStatusBar
+            variant="embedded"
+            onRefresh={handleRefresh}
+            isRefreshing={isLoading}
+            vencidas={contadores.vencidas}
+          />
+        </CollapsiblePageHeader>
 
         {/* ── Tab: Caixa de Entrada ──────────────────────────────────────── */}
         <TabsContent value="caixa" className="mt-0">
