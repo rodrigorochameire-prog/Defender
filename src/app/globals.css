@@ -556,57 +556,57 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* ===== SIDEBAR — 3 THEME MODES ===== */
+  /* ===== SIDEBAR — cinza neutro harmonizado (v5, HSL 240 2%) ===== */
 
-  /* Light: sidebar — base da paleta, harmonizada com utility (#3e3e40) */
+  /* Light: harmonizada com utility bar — HSL 240 2% 25% */
   .glass-sidebar {
-    background: #363638;
+    background: #3e3e41;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.04);
+    border-right: 1px solid rgba(255,255,255,0.08);
     box-shadow: none;
   }
 
-  /* Dark: mais profunda */
+  /* Dark: mais profunda — HSL 240 2% 14% */
   .dark .glass-sidebar {
-    background: #222224;
+    background: #232324;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    border-right: 1px solid rgba(255,255,255,0.04);
+    border-right: 1px solid rgba(255,255,255,0.08);
     box-shadow: none;
   }
 
-  /* ===== MOBILE SIDEBAR — 3 THEME MODES ===== */
+  /* ===== MOBILE SIDEBAR — match desktop (slate shell v4) ===== */
   /* Sheet portal renders outside Sidebar, so glass-sidebar doesn't apply */
 
   /* Light: mesmo tom do desktop */
   [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #363638 !important;
+    background: #3e3e41 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    border-color: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.08) !important;
   }
 
-  /* Medium: dark neutral-800 to match desktop */
+  /* Medium: mesmo tom do desktop */
   .medium [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #262626 !important;
+    background: #3e3e41 !important;
     color: #f5f5f5 !important;
-    border-color: #404040 !important;
+    border-color: rgba(255,255,255,0.08) !important;
   }
 
-  /* Dark: deep neutral-900 to match desktop */
+  /* Dark: cinza mais profundo */
   .dark [data-mobile="true"][data-sidebar="sidebar"] {
-    background: #171717 !important;
+    background: #232324 !important;
     color: #f5f5f5 !important;
-    border-color: #262626 !important;
+    border-color: rgba(255,255,255,0.08) !important;
   }
 
   /* ===== PAGE BACKGROUNDS — MEDIUM MODE ===== */
 
-  /* Medium: pages get a subtle off-white */
+  /* Medium: cinza neutro puro — nem warm, nem cool */
   .medium body,
   .medium main {
-    background-color: #fafafa;
+    background-color: #f5f5f5;
   }
 
   /* Medium: cards stay white for contrast */

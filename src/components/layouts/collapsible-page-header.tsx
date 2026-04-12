@@ -112,7 +112,7 @@ export function CollapsiblePageHeader({
   return (
     <div
       ref={outerRef}
-      className={cn("sticky top-0 z-50", className)}
+      className={cn("sticky top-0 z-50", HEADER_STYLE.shellShadow, className)}
     >
       {/* ── EXPANDED STATE ─────────────────────────────────────── */}
       <div
@@ -126,7 +126,7 @@ export function CollapsiblePageHeader({
           </div>
 
           {/* Gap sutil entre utility e page header */}
-          <div className="h-1.5 bg-[#f2f1ef] dark:bg-[#1a1a1e]" />
+          <div className="h-1.5 bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
 
           {/* Page Header — card com accent emerald no topo */}
           <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
@@ -138,8 +138,8 @@ export function CollapsiblePageHeader({
             {/* Divisor cor do fundo — cria separação visual real */}
             {bottomRow && (
               <>
-                <div className="h-[2px] bg-[#f2f1ef] dark:bg-[#1a1a1e]" />
-                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.06] rounded-b-xl">
+                <div className="h-[2px] bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
+                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.10] rounded-b-xl">
                   {bottomRow}
                 </div>
               </>

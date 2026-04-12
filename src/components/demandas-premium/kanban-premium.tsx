@@ -282,14 +282,15 @@ function KanbanCard({
             onClick={handleBadgeClick}
             className={`
               ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
-              transition-all duration-150
+              border transition-all duration-150
               ${onStatusChange
                 ? "hover:ring-1 hover:ring-emerald-300/60 dark:hover:ring-emerald-700/40 cursor-pointer"
                 : "cursor-default"
               }
             `}
             style={{
-              backgroundColor: `${groupColor}2E`,
+              backgroundColor: `${groupColor}14`,
+              borderColor: `${groupColor}40`,
               color: groupColor,
               filter: "saturate(1.1)",
             }}

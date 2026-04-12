@@ -2026,14 +2026,14 @@ export default function Demandas() {
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
   return (
-    <div className="w-full min-h-screen bg-[#f2f1ef] dark:bg-[#0f0f11]">
+    <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
       {/* ====== CHARCOAL HEADER ====== */}
       <CollapsiblePageHeader
         title="Demandas"
         icon={ListTodo}
         collapsedStats={
           <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#454547] text-white/90 tabular-nums">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] text-white/90 tabular-nums">
               {demandas.filter(d => !d.arquivado).length} total
             </span>
           </>
