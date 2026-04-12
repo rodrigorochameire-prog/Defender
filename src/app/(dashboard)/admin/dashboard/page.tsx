@@ -1551,7 +1551,7 @@ export default function DashboardJuriPage() {
                 </div>
                 <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-rose-500 dark:text-rose-400 font-semibold">
                     {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
                   </span>
                 )}
@@ -1581,40 +1581,26 @@ export default function DashboardJuriPage() {
               demandasPorPrazo.map((demanda: any) => {
                 const prazoInfo = formatPrazo(demanda.prazo);
                 const isVencido = prazoInfo.vencido;
-                const isReuPresoCritico = demanda.reuPreso && (isVencido || prazoInfo.diasRestantes === 0);
                 const atribuicao = demanda.processo?.atribuicao;
                 const atColors = getAtribuicaoColors(atribuicao);
-
-                // Cor da barra lateral de atribuição
-                const barColor = isReuPresoCritico
-                  ? "bg-red-500"
-                  : atColors.bgSolid || "bg-muted-foreground/50";
 
                 return (
                   <Link
                     href={`/admin/demandas/${demanda.id}`}
                     key={demanda.id}
-                    className={cn(
-                      "flex items-stretch gap-0 transition-colors group",
-                      isReuPresoCritico
-                        ? "bg-red-50/60 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/30"
-                        : "hover:bg-muted/50"
-                    )}
+                    className="flex items-stretch gap-0 transition-colors group hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
                   >
-                    {/* Barra de cor de atribuição */}
-                    <div className={cn("w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5", barColor)} />
+                    {/* Barra de cor de atribuição — única cor funcional do item */}
+                    <div className={cn("w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5", atColors.bgSolid || "bg-neutral-300")} />
 
                     <div className="flex items-center gap-3 px-4 py-3 flex-1 min-w-0">
-                      {/* Info principal */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className={`text-[13px] font-semibold truncate leading-tight ${
-                            isReuPresoCritico ? "text-red-700 dark:text-red-300" : "text-foreground"
-                          }`}>
+                          <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
                             {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
                           </p>
                           {demanda.reuPreso && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-foreground text-background flex-shrink-0">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 flex-shrink-0">
                               <Lock className="w-2 h-2" />
                               Preso
                             </span>
@@ -1630,7 +1616,7 @@ export default function DashboardJuriPage() {
                         </div>
                       </div>
 
-                      {/* Direita: ação + prazo */}
+                      {/* Direita: ação + prazo (sem badges coloridos — texto puro) */}
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <QuickStatusButton
                           demandaId={demanda.id}
@@ -1638,16 +1624,12 @@ export default function DashboardJuriPage() {
                           onUpdate={handleQuickStatusUpdate}
                         />
                         <span className={cn(
-                          "text-[11px] font-semibold px-2 py-1 rounded-md whitespace-nowrap tabular-nums",
-                          isReuPresoCritico
-                            ? "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
-                            : isVencido
-                            ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400"
-                            : prazoInfo.cor === "red"
-                            ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                          "text-[11px] font-medium px-2 py-1 rounded-md whitespace-nowrap tabular-nums",
+                          isVencido
+                            ? "text-rose-500 dark:text-rose-400"
                             : prazoInfo.cor === "yellow"
-                            ? "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
-                            : "bg-muted text-muted-foreground"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-muted-foreground"
                         )}>
                           {prazoInfo.texto}
                         </span>
@@ -1666,8 +1648,8 @@ export default function DashboardJuriPage() {
             <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-                    <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                    <Gavel className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                   </div>
                   <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Próximos Júris</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
@@ -1720,47 +1702,42 @@ export default function DashboardJuriPage() {
 
                   return (
                     <Link href={`/admin/juri/${juri.id}`} key={juri.id}>
-                      <div className="flex items-center gap-3 px-3 py-3 hover:bg-muted/50 transition-colors">
-                        <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                          diasRestantes !== null && diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30" :
-                          diasRestantes !== null && diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30" :
-                          "bg-muted"
-                        }`}>
-                          <span className={`text-sm font-bold ${
-                            diasRestantes !== null && diasRestantes <= 3 ? "text-rose-700 dark:text-rose-400" :
-                            diasRestantes !== null && diasRestantes <= 7 ? "text-amber-700 dark:text-amber-400" :
-                            "text-foreground/80"
-                          }`}>
+                      <div className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
+                        {/* Date box — neutro, sem cor funcional (a urgência fica no countdown) */}
+                        <div className="w-11 h-11 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-semibold text-foreground/80 leading-none">
                             {dataSessao ? format(dataSessao, "dd", { locale: ptBR }) : "--"}
                           </span>
-                          <span className="text-[9px] text-muted-foreground uppercase">
+                          <span className="text-[9px] text-muted-foreground uppercase leading-tight">
                             {dataSessao ? format(dataSessao, "MMM", { locale: ptBR }) : ""}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-[13px] font-semibold text-foreground truncate">
                             {juri.assistidoNome || "Réu"}
                           </p>
                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span>{juri.horario || "Horário a definir"}</span>
                             {juri.defensorNome && (
-                              <span className="px-1.5 py-0.5 rounded bg-muted">
+                              <span className="px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground">
                                 {juri.defensorNome}
                               </span>
                             )}
                           </div>
                         </div>
-                        {juri.status === "CANCELADA" && <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                        {juri.status === "REDESIGNADA" && <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />}
-                        {juri.status === "REALIZADA" && <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
+                        {juri.status === "CANCELADA" && <XCircle className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />}
+                        {juri.status === "REDESIGNADA" && <RefreshCw className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />}
+                        {juri.status === "REALIZADA" && <CircleCheck className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />}
                         {diasRestantes !== null && (
-                          <span className={`text-[10px] font-semibold px-2 py-1 rounded ${
-                            diasRestantes <= 0 ? "bg-rose-500 text-white" :
-                            diasRestantes <= 3 ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
-                            diasRestantes <= 7 ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" :
-                            "bg-muted text-muted-foreground"
-                          }`}>
-                            {diasRestantes <= 0 ? "HOJE" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
+                          <span className={cn(
+                            "text-[10px] font-medium tabular-nums whitespace-nowrap",
+                            diasRestantes <= 3
+                              ? "text-rose-500 dark:text-rose-400"
+                              : diasRestantes <= 7
+                              ? "text-amber-500 dark:text-amber-400"
+                              : "text-muted-foreground"
+                          )}>
+                            {diasRestantes <= 0 ? "Hoje" : diasRestantes === 1 ? "Amanhã" : `${diasRestantes} dias`}
                           </span>
                         )}
                       </div>
