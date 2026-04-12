@@ -1014,45 +1014,49 @@ export function DriveTopBar({
   if (variant === "row2") {
     return (
       <TooltipProvider delayDuration={300}>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Left: sync dot + stats */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <SyncHealthDot />
-            <span className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
-              Sincronizado
-            </span>
-          </div>
+        <div className="flex items-center gap-3 w-full min-w-0">
+          {/* Left: sync dot + stats — pode encolher, com scroll horizontal se não couber */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <SyncHealthDot />
+              <span className="text-[10px] uppercase tracking-wider text-white/55 font-semibold">
+                Sincronizado
+              </span>
+            </div>
 
-          {stats && (
-            <div className="flex items-center gap-2.5 text-[10px] text-white/50 shrink-0">
-              <span className="w-px h-3 bg-white/[0.10]" />
-              <span>
-                <strong className="text-white/85 font-mono tabular-nums">{stats.totalFiles}</strong>{" "}
-                arquivos
-              </span>
-              <span>·</span>
-              <span>
-                <strong className="text-white/85 font-mono tabular-nums">
-                  {stats.syncedFolders}
-                </strong>{" "}
-                pastas
-              </span>
-              {syncFolders && (
-                <>
+            {stats && (
+              <>
+                <span className="w-px h-3 bg-white/[0.10] shrink-0" />
+                <div className="flex items-center gap-2 text-[10px] text-white/50 shrink-0">
+                  <span>
+                    <strong className="text-white/85 font-mono tabular-nums">{stats.totalFiles}</strong>{" "}
+                    arquivos
+                  </span>
                   <span>·</span>
                   <span>
                     <strong className="text-white/85 font-mono tabular-nums">
-                      {syncFolders.length}
+                      {stats.syncedFolders}
                     </strong>{" "}
-                    atribuições
+                    pastas
                   </span>
-                </>
-              )}
-            </div>
-          )}
+                  {syncFolders && (
+                    <>
+                      <span>·</span>
+                      <span>
+                        <strong className="text-white/85 font-mono tabular-nums">
+                          {syncFolders.length}
+                        </strong>{" "}
+                        atribuições
+                      </span>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
-          {/* Right: search + view toggle */}
-          <div className="flex items-center gap-1.5 ml-auto shrink-0">
+          {/* Right: search + view toggle — sempre alinhados à direita, nunca quebram */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <ExpandableSearch dark />
             <div className="w-px h-4 bg-white/[0.10]" />
             <ViewModeToggle dark />

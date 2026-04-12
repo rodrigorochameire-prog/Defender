@@ -277,41 +277,49 @@ export function DriveOverviewDashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      {/* --- Header --- */}
-      <div className="flex items-center gap-4 px-5 md:px-6 py-4 border-b border-neutral-200/50 dark:border-neutral-800/50 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-sm shrink-0">
-            <HardDrive className="w-4 h-4 text-white dark:text-neutral-900" />
+      {/* Quality strip — stats únicas (vinc, extraídos, falhas) + ação enrichment.
+          O título "Drive" + stats brutas já vivem no CollapsiblePageHeader acima. */}
+      {(linkedPercent > 0 ||
+        enrichmentCounts.completed > 0 ||
+        enrichmentCounts.failed > 0 ||
+        enrichmentCounts.pending > 0) && (
+        <div className="flex items-center gap-3 px-5 md:px-6 py-2.5 border-b border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50/60 dark:bg-neutral-900/30 shrink-0">
+          <span className="text-[9px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold">
+            Qualidade
+          </span>
+          <div className="w-px h-3 bg-neutral-200 dark:bg-neutral-800 shrink-0" />
+          <div className="flex items-center gap-2.5 text-[10px] text-neutral-500 dark:text-neutral-400 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+            <span className="shrink-0">
+              <strong className="text-neutral-900 dark:text-neutral-100 font-mono tabular-nums">
+                {linkedPercent}%
+              </strong>{" "}
+              vinculados
+            </span>
+            <span className="shrink-0">·</span>
+            <span className="shrink-0">
+              <strong className="text-neutral-900 dark:text-neutral-100 font-mono tabular-nums">
+                {enrichmentCounts.completed}
+              </strong>{" "}
+              extraídos
+            </span>
+            {enrichmentCounts.failed > 0 && (
+              <>
+                <span className="shrink-0">·</span>
+                <span className="text-rose-500 shrink-0">
+                  <strong className="font-mono tabular-nums">{enrichmentCounts.failed}</strong>{" "}
+                  falhas
+                </span>
+              </>
+            )}
+            <span className="shrink-0">·</span>
+            <span className="shrink-0 text-neutral-400 dark:text-neutral-500">{lastSyncStr}</span>
           </div>
-          <div className="min-w-0">
-            <h2 className="font-serif text-xl font-semibold text-neutral-900 dark:text-neutral-50 tracking-tight">
-              Drive Hub
-            </h2>
-            <div className="flex items-center gap-2 text-[10px] text-neutral-400 dark:text-neutral-500">
-              <span className="tabular-nums">{totalFiles} docs</span>
-              <span>·</span>
-              <span className="tabular-nums">{linkedPercent}% vinc.</span>
-              <span>·</span>
-              <span className="tabular-nums">{enrichmentCounts.completed} extraídos</span>
-              {enrichmentCounts.failed > 0 && (
-                <>
-                  <span>·</span>
-                  <span className="text-rose-500 tabular-nums">{enrichmentCounts.failed} falhas</span>
-                </>
-              )}
-              <span>·</span>
-              <span>{lastSyncStr}</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 ml-auto shrink-0">
           {enrichmentCounts.pending > 0 && (
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2.5 text-xs rounded-lg border-neutral-200/80 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="h-7 px-2.5 text-xs rounded-lg border-neutral-200/80 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0"
               onClick={() => retryEnrichment.mutate({})}
               disabled={retryEnrichment.isPending}
             >
@@ -324,7 +332,7 @@ export function DriveOverviewDashboard() {
             </Button>
           )}
         </div>
-      </div>
+      )}
 
       <div className="max-w-5xl mx-auto space-y-6 p-5 md:p-6">
         {/* --- Atribuicao Cards --- */}
