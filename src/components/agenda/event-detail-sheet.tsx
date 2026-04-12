@@ -232,8 +232,8 @@ export function EventDetailSheet({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#4a4a4e] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
+          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               {(() => {
@@ -241,10 +241,10 @@ export function EventDetailSheet({
                 const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
                 return (
                   <div
-                    className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0"
-                    style={{ boxShadow: `0 0 0 2.5px ${atribColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}
+                    className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0"
+                    style={{ boxShadow: `0 0 0 2.5px ${atribColor}` }}
                   >
-                    <span className="text-sm font-semibold text-white/90">
+                    <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">
                       {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
                     </span>
                   </div>
@@ -252,32 +252,32 @@ export function EventDetailSheet({
               })()}
               <div className="flex-1 min-w-0 pt-0.5">
                 {assistidoNome && (
-                  <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
                     {assistidoNome}
                   </h2>
                 )}
                 <div className="flex items-center gap-2 flex-wrap mt-1">
                   {processoNum && (
                     <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.06] hover:bg-white/[0.14] group/proc cursor-pointer transition-all duration-150"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-neutral-200/60 dark:bg-neutral-700/60 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
                       onClick={(e) => {
                         e.stopPropagation();
                         copyProcesso(processoNum);
                       }}
                       title="Copiar número do processo"
                     >
-                      <span className="font-mono text-[11px] tabular-nums text-white/60 group-hover/proc:text-white/90 transition-colors">{processoNum}</span>
-                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5 text-white/30 group-hover/proc:text-white/60 transition-colors" />}
+                      <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processoNum}</span>
+                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />}
                     </button>
                   )}
                   {dataHora && (
-                    <span className="text-[11px] text-white/45 tabular-nums">
+                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500 tabular-nums">
                       {format(dataHora, "HH:mm", { locale: ptBR })}
                     </span>
                   )}
                 </div>
                 {(vara) && (
-                  <p className="text-[10px] text-white/40 mt-1.5 leading-snug uppercase tracking-wide">
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1.5 leading-snug">
                     {vara}
                   </p>
                 )}

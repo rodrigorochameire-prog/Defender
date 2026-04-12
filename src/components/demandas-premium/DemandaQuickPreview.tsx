@@ -646,34 +646,34 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#4a4a4e] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
+          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
-              {/* Avatar com borda de atribuição */}
-              <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}>
-                <span className="text-sm font-semibold text-white/90">
+              {/* Avatar com ring de atribuição */}
+              <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}` }}>
+                <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/[0.12] text-white shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
                   {isUrgente && (
-                    <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <Flame className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                   )}
                 </div>
 
-                {/* Processo — chip no estilo dark */}
+                {/* Processo — chip */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.06] hover:bg-white/[0.14] group/proc cursor-pointer transition-all duration-150"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-200/60 dark:bg-neutral-700/60 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -681,8 +681,8 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-white/60 group-hover/proc:text-white/90 transition-colors">{processo.numero}</span>
-                    <Copy className="w-2.5 h-2.5 text-white/30 group-hover/proc:text-white/60 transition-colors" />
+                    <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                    <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
                   </button>
                 )}
 
@@ -691,7 +691,7 @@ export function DemandaQuickPreview({
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
+                      className="text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver assistido →
                     </Link>
@@ -699,7 +699,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-white/40 hover:text-white/80 transition-colors"
+                      className="text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver processo →
                     </Link>

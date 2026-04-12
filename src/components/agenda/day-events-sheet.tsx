@@ -206,21 +206,21 @@ export function DayEventsSheet({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#4a4a4e] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
+          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar calendário */}
-              <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex flex-col items-center justify-center shrink-0 shadow-[0_0_0_2.5px_rgba(255,255,255,0.10)]">
-                <span className="text-[9px] font-medium text-white/50 leading-none uppercase">
+              <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200/60 dark:border-neutral-600/40 flex flex-col items-center justify-center shrink-0">
+                <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 leading-none uppercase">
                   {format(date, "EEE", { locale: ptBR }).replace(".", "")}
                 </span>
-                <span className="text-base font-bold text-white/90 leading-tight">
+                <span className="text-base font-bold text-neutral-700 dark:text-neutral-200 leading-tight">
                   {format(date, "d")}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[10px] text-white/45 font-medium capitalize">{dayName}</p>
-                <h2 className="text-[15px] font-semibold text-white leading-tight capitalize">
+                <p className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium capitalize">{dayName}</p>
+                <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight capitalize">
                   {dayDate}
                 </h2>
 
@@ -234,16 +234,16 @@ export function DayEventsSheet({
                         onClick={() => setActiveAtribFilter(isActive ? null : key)}
                         className={cn(
                           "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                          isActive ? "bg-white/[0.18]" : "bg-white/[0.06] opacity-50 hover:opacity-80"
+                          isActive ? "bg-neutral-200/80 dark:bg-neutral-700" : "opacity-40 hover:opacity-70"
                         )}
-                        style={{ color: isActive ? color : "rgba(255,255,255,0.6)" }}
+                        style={{ color }}
                         title={getAtribuicaoColors(key).label}
                       >
                         <Icon className="w-3.5 h-3.5" />
                       </button>
                     );
                   })}
-                  <span className="ml-auto text-[10px] font-medium tabular-nums text-white/40 px-1.5 py-0.5 rounded-md bg-white/[0.08]">
+                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-700/60">
                     {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
                   </span>
                 </div>
