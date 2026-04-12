@@ -577,7 +577,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none"
+        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -603,8 +603,8 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        {/* ===== STICKY NAV HEADER — Padrão Defender shell sutil ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Demanda
@@ -646,12 +646,12 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — estilo page header charcoal (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#525256] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_2px_12px_-4px_rgba(15,23,42,0.08)]">
+          {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#5a5a5e] shadow-[0_1px_8px_-3px_rgba(0,0,0,0.10)]">
             <div className="flex items-start gap-3.5">
-              {/* Avatar com ring de atribuição */}
-              <div className="w-11 h-11 rounded-xl bg-white/[0.10] flex items-center justify-center shrink-0 ring-2" style={{ ringColor: atribuicaoColor, boxShadow: `0 0 0 2px ${atribuicaoColor}` }}>
-                <span className="text-sm font-semibold text-white/80">
+              {/* Avatar com borda de atribuição */}
+              <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}>
+                <span className="text-sm font-semibold text-white/90">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
               </div>
@@ -812,8 +812,8 @@ export function DemandaQuickPreview({
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Card 1: Providências — unified with border */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-[#414144] dark:border-l-neutral-500 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
+            {/* Card 1: Providências */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
               {/* Providências */}
               <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
                 <div className="flex items-center justify-between mb-2">
@@ -843,7 +843,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[44px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-2.5 py-2 border border-neutral-200/40 dark:border-neutral-800/40 focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[12px] leading-relaxed"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[44px] bg-neutral-50/60 dark:bg-neutral-800/20 rounded-lg px-2.5 py-2 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[12px] leading-relaxed"
                   multiline
                 />
                 {/* Timestamp última edição */}
@@ -1175,7 +1175,7 @@ export function DemandaQuickPreview({
           <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-              <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-medium">Próxima Audiência</span>
+              <span className="text-[10px] text-neutral-400 tracking-wider font-medium">Próxima Audiência</span>
             </div>
             <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
               {new Date(proximaAudiencia.dataHora).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
@@ -1189,7 +1189,7 @@ export function DemandaQuickPreview({
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/60 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/50 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
             className="flex-1 h-8 rounded-xl bg-emerald-500 text-white shadow-sm text-[11px] font-semibold hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5"
