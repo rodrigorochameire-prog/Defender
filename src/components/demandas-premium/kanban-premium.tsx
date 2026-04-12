@@ -215,32 +215,32 @@ function KanbanCard({
           })()}
         </div>
 
-        {/* Row 2: Ato + Data expedição */}
-        <div className="flex items-center gap-1.5 mb-1">
-          <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate flex-1">
-            {demanda.ato}
-          </p>
-          {demanda.data && (
-            <span className="text-[9px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0">
-              {demanda.data}
-            </span>
-          )}
-        </div>
+        {/* Row 2: Ato (full width, não compete com data) */}
+        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate mb-0.5">
+          {demanda.ato}
+        </p>
 
-        {/* Row 3: Processo */}
-        {processo && (
+        {/* Row 3: Processo + Data expedição */}
+        {(processo || demanda.data) && (
           <div className="flex items-center gap-1 mb-1">
-            <span
-              className="text-[11px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                copyToClipboard(processo);
-              }}
-              title="Copiar"
-            >
-              {processo}
-            </span>
-            <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
+            {processo && (
+              <span
+                className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(processo);
+                }}
+                title="Copiar"
+              >
+                {processo}
+              </span>
+            )}
+            {demanda.data && (
+              <span className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
+                {demanda.data}
+              </span>
+            )}
+            {processo && <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />}
           </div>
         )}
 
