@@ -1401,75 +1401,45 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-amber-200/60 dark:border-amber-900/40 overflow-hidden">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center shrink-0">
-                    <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
-                    Pendências Solar
-                  </h3>
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+            <div className="px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <Sun className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                 </div>
-                <Link href="/admin/intimacoes?tab=assistidos">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-amber-600">
-                    Ver todos <ExternalLink className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
+                <div>
+                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Pendências Solar</h3>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">
+                    {solarSync.stats.pending} pendentes
+                    {solarSync.stats.errors > 0 && <> · <span className="text-rose-500">{solarSync.stats.errors} erros</span></>}
+                    {" · "}{solarSync.stats.exportedSolar}/{solarSync.stats.total} no Solar
+                  </p>
+                </div>
               </div>
+              <Link href="/admin/intimacoes?tab=assistidos">
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-emerald-600 transition-colors cursor-pointer">
+                  Ver todos <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </Link>
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {/* Pendentes de exportação */}
-                <div className="text-center p-2 rounded-lg bg-amber-50/50 dark:bg-amber-900/10">
-                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                    {solarSync.stats.pending}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                    Pendentes
-                  </p>
+            <div className="px-5 pb-4">
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center p-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent">
+                  <p className="text-lg font-semibold text-amber-600 dark:text-amber-400 tabular-nums">{solarSync.stats.pending}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Pendentes</p>
                 </div>
-
-                {/* Erros de exportação */}
-                <div className="text-center p-2 rounded-lg bg-rose-50/50 dark:bg-rose-900/10">
-                  <p className={cn(
-                    "text-lg font-bold",
-                    solarSync.stats.errors > 0
-                      ? "text-rose-600 dark:text-rose-400"
-                      : "text-muted-foreground/50"
-                  )}>
-                    {solarSync.stats.errors}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                    Erros
-                  </p>
+                <div className="text-center p-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent">
+                  <p className={cn("text-lg font-semibold tabular-nums", solarSync.stats.errors > 0 ? "text-rose-500" : "text-muted-foreground/50")}>{solarSync.stats.errors}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Erros</p>
                 </div>
-
-                {/* Cobertura */}
-                <div className="text-center p-2 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10">
-                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                    {solarSync.stats.total > 0
-                      ? Math.round((solarSync.stats.exportedSolar / solarSync.stats.total) * 100)
-                      : 0}%
-                  </p>
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                    Cobertura
-                  </p>
+                <div className="text-center p-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent">
+                  <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">{solarSync.stats.total > 0 ? Math.round((solarSync.stats.exportedSolar / solarSync.stats.total) * 100) : 0}%</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Cobertura</p>
                 </div>
-
-                {/* Sem CPF */}
-                <div className="text-center p-2 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20">
-                  <p className={cn(
-                    "text-lg font-bold",
-                    solarSync.stats.noCpf > 0
-                      ? "text-neutral-600 dark:text-neutral-400"
-                      : "text-muted-foreground/50"
-                  )}>
-                    {solarSync.stats.noCpf}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                    Sem CPF
-                  </p>
+                <div className="text-center p-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent">
+                  <p className={cn("text-lg font-semibold tabular-nums", solarSync.stats.noCpf > 0 ? "text-neutral-600 dark:text-neutral-400" : "text-muted-foreground/50")}>{solarSync.stats.noCpf}</p>
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Sem CPF</p>
                 </div>
               </div>
 
@@ -1543,28 +1513,26 @@ export default function DashboardJuriPage() {
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
         <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Prazos</h3>
-                {estatisticasPrazos.vencidos > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-rose-500 dark:text-rose-400 font-semibold">
-                    {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
-                  </span>
-                )}
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
-                  {demandasPorPrazo.length} total
-                </span>
+          <div className="px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
               </div>
-              <Link href="/admin/demandas">
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-emerald-600 transition-colors cursor-pointer">
-                  Ver todas <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
-              </Link>
+              <div>
+                <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Prazos</h3>
+                <p className="text-[10px] text-muted-foreground tabular-nums">
+                  {demandasPorPrazo.length} total
+                  {estatisticasPrazos.vencidos > 0 && (
+                    <> · <span className="text-rose-500 dark:text-rose-400">{estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}</span></>
+                  )}
+                </p>
+              </div>
             </div>
+            <Link href="/admin/demandas">
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-emerald-600 transition-colors cursor-pointer">
+                Ver todas <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </Link>
           </div>
 
           <div className="space-y-1.5 p-3 max-h-[420px] overflow-y-auto">
@@ -1791,54 +1759,33 @@ export default function DashboardJuriPage() {
                   const isHoje = dataAud && isToday(dataAud);
 
                   return (
-                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer">
-                      {/* Barra de atribuição */}
-                      <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
-                      <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
-                        <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0 ${
-                          isHoje ? "bg-emerald-50 dark:bg-emerald-900/20" :
-                          "bg-muted"
-                        }`}>
-                          <span className={`text-sm font-mono font-bold tabular-nums ${
-                            isHoje ? "text-emerald-700 dark:text-emerald-400" :
-                            "text-foreground/80"
-                          }`}>
-                            {dataAud ? format(dataAud, "dd", { locale: ptBR }) : "--"}
-                          </span>
-                          <span className="text-[9px] text-muted-foreground uppercase">
-                            {dataAud ? format(dataAud, "MMM", { locale: ptBR }) : ""}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-medium text-foreground truncate">
+                    <Link href={`/admin/audiencias/${aud.id}`} key={aud.id} className="block">
+                      <div className="flex items-stretch rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 overflow-hidden cursor-pointer">
+                        <div className={cn("w-1 flex-shrink-0", getAtribuicaoColors(aud.processo?.atribuicao).bgSolid || "bg-neutral-300")} />
+                        <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center flex-shrink-0">
+                            <span className="text-[13px] font-semibold text-foreground/80 leading-none tabular-nums">
+                              {dataAud ? format(dataAud, "dd", { locale: ptBR }) : "--"}
+                            </span>
+                            <span className="text-[8px] text-muted-foreground uppercase leading-tight">
+                              {dataAud ? format(dataAud, "MMM", { locale: ptBR }) : ""}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-foreground truncate">
                               {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
-                            {dataAud && <UrgencyDot eventDate={dataAud} />}
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              {(() => { const ac = getAtribuicaoColors(aud.processo?.atribuicao); return ac.shortLabel ? (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", ac.bgSolid, ac.text)}>{ac.shortLabel}</span>
+                              ) : null; })()}
+                              <span className="tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
+                              <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-                            <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
-                            <span>•</span>
-                            <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
-                            {aud.local && (
-                              <>
-                                <span>•</span>
-                                <span className="truncate max-w-[100px]">{aud.local}</span>
-                              </>
-                            )}
-                          </div>
+                          {dataAud && <CountdownBadge eventDate={dataAud} />}
+                          {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
                         </div>
-                        {dataAud && <CountdownBadge eventDate={dataAud} />}
-                        {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-                        {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
-                          <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                        )}
-                        {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
-                          <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                        )}
-                        {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
-                          <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        )}
                       </div>
                     </Link>
                   );
@@ -1911,39 +1858,25 @@ export default function DashboardJuriPage() {
                             )}
                           </div>
                         )}
-                        <Link href={`/admin/audiencias/${aud.id}`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer">
-                          <div className={cn("w-1 group-hover:w-1.5 flex-shrink-0 rounded-r my-2 ml-0.5 transition-all duration-200", getAtribuicaoColors(aud.processo?.atribuicao).indicator)} />
-                          <div className="flex items-center gap-3 px-3 py-2 flex-1 min-w-0">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-medium text-foreground truncate">
+                        <Link href={`/admin/audiencias/${aud.id}`} className="block">
+                          <div className="flex items-stretch rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 overflow-hidden cursor-pointer">
+                            <div className={cn("w-1 flex-shrink-0", getAtribuicaoColors(aud.processo?.atribuicao).bgSolid || "bg-neutral-300")} />
+                            <div className="flex items-center gap-3 px-3 py-2.5 flex-1 min-w-0">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold text-foreground truncate">
                                   {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
                                 </p>
-                                {dataAud && <UrgencyDot eventDate={dataAud} />}
+                                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                  {(() => { const ac = getAtribuicaoColors(aud.processo?.atribuicao); return ac.shortLabel ? (
+                                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", ac.bgSolid, ac.text)}>{ac.shortLabel}</span>
+                                  ) : null; })()}
+                                  <span className="tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
+                                  <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-                                <span className="font-mono tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
-                                <span>•</span>
-                                <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
-                                {aud.local && (
-                                  <>
-                                    <span>•</span>
-                                    <span className="truncate max-w-[100px]">{aud.local}</span>
-                                  </>
-                                )}
-                              </div>
+                              {dataAud && <CountdownBadge eventDate={dataAud} />}
+                              {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
                             </div>
-                            {dataAud && <CountdownBadge eventDate={dataAud} />}
-                            {aud.reuPreso && <Lock className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />}
-                            {aud.status && (aud.status === "cancelada" || aud.status === "CANCELADA") && (
-                              <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                            )}
-                            {aud.status && (aud.status === "reagendada" || aud.status === "REDESIGNADA") && (
-                              <RefreshCw className="w-4 h-4 text-orange-500 flex-shrink-0" />
-                            )}
-                            {aud.status && (aud.status === "realizada" || aud.status === "REALIZADA") && (
-                              <CircleCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                            )}
                           </div>
                         </Link>
                       </div>
