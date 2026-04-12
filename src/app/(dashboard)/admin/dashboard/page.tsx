@@ -1140,8 +1140,8 @@ export default function DashboardJuriPage() {
               )}
             </div>
 
-            {/* Tipo de Registro (estilo padronizado com Cowork) */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+            {/* Tipo de Registro — grid 6-col inline */}
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
               {tiposRegistro.map((tipo) => {
                 const Icon = tipo.icon;
                 const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -1505,9 +1505,10 @@ export default function DashboardJuriPage() {
 
         {/* ===== 5. PRAZOS + JÚRIS ===== */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2 px-1">
-            <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Prazos & Agenda</h2>
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Prazos & Agenda</h2>
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
           </div>
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
@@ -1523,7 +1524,7 @@ export default function DashboardJuriPage() {
                 <p className="text-[10px] text-muted-foreground tabular-nums">
                   {demandasPorPrazo.length} total
                   {estatisticasPrazos.vencidos > 0 && (
-                    <> · <span className="text-rose-500 dark:text-rose-400">{estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}</span></>
+                    <> · {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}</>
                   )}
                 </p>
               </div>
@@ -1575,14 +1576,7 @@ export default function DashboardJuriPage() {
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            {atribuicao && (
-                              <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", atColors.bgSolid, atColors.text)}>
-                                {atColors.shortLabel}
-                              </span>
-                            )}
-                            <p className="text-[11px] text-muted-foreground truncate">{demanda.ato}</p>
-                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{demanda.ato}</p>
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -1776,9 +1770,6 @@ export default function DashboardJuriPage() {
                               {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
                             </p>
                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                              {(() => { const ac = getAtribuicaoColors(aud.processo?.atribuicao); return ac.shortLabel ? (
-                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", ac.bgSolid, ac.text)}>{ac.shortLabel}</span>
-                              ) : null; })()}
                               <span className="tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                               <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                             </div>
@@ -1867,9 +1858,6 @@ export default function DashboardJuriPage() {
                                   {aud.assistido?.nome || aud.assistidoNome || aud.titulo || "Audiência"}
                                 </p>
                                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                  {(() => { const ac = getAtribuicaoColors(aud.processo?.atribuicao); return ac.shortLabel ? (
-                                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-semibold flex-shrink-0", ac.bgSolid, ac.text)}>{ac.shortLabel}</span>
-                                  ) : null; })()}
                                   <span className="tabular-nums">{dataAud ? format(dataAud, "HH:mm") : "—"}</span>
                                   <span className="truncate">{aud.tipo || aud.tipoAudiencia || "Audiência"}</span>
                                 </div>
@@ -1891,9 +1879,10 @@ export default function DashboardJuriPage() {
         {/* ===== 7. CARDS POR ÁREA ===== */}
         {(hasArea("INFANCIA_JUVENTUDE") || hasArea("CRIMINAL")) && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <div className="w-1.5 h-5 rounded-full bg-amber-500" />
-              <h2 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Acompanhamento por Área</h2>
+            <div className="flex items-center gap-3 px-1">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Acompanhamento por Area</h2>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 

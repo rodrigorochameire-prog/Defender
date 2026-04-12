@@ -98,13 +98,13 @@ export function EquipeCoworkCard({
           </div>
           <div>
             <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Equipe & Cowork</h3>
-            <p className="text-[11px] text-muted-foreground">Delegações, pareceres e coberturas</p>
+            <p className="text-[10px] text-muted-foreground tabular-nums">
+              {delegacoesAtivas} delegações · {muralNaoLidas} mural · {equipeMembros} equipe · {coberturasAtivas} coberturas
+              {pareceresPendentes > 0 && (
+                <> · <span className="text-rose-500">{pareceresPendentes} parecer{pareceresPendentes > 1 ? "es" : ""}</span></>
+              )}
+            </p>
           </div>
-          {pareceresPendentes > 0 && (
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
-              {pareceresPendentes} parecer{pareceresPendentes > 1 ? "es" : ""}
-            </span>
-          )}
         </div>
         <Button
           variant="ghost"
@@ -117,35 +117,9 @@ export function EquipeCoworkCard({
         </Button>
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3">
-
-        {/* Row 1 — Stats (grid compacto 3×2) + Ações (coluna) */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
-          {/* Stats grid 3×2 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
-            {miniStats.map((stat) => {
-              const StatIcon = stat.icon;
-              return (
-                <Link
-                  key={stat.label}
-                  href={stat.href}
-                  className="flex items-center gap-1.5 group/stat transition-colors py-0.5"
-                >
-                  <StatIcon className="w-3 h-3 text-neutral-400 group-hover/stat:text-emerald-500 transition-colors flex-shrink-0" />
-                  <span className="text-sm font-bold tabular-nums text-neutral-800 dark:text-foreground group-hover/stat:text-emerald-600 dark:group-hover/stat:text-emerald-400 transition-colors">
-                    {stat.value}
-                  </span>
-                  <span className="text-[10px] text-neutral-400 group-hover/stat:text-neutral-600 dark:group-hover/stat:text-foreground transition-colors truncate">
-                    {stat.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Ações rápidas — botões maiores */}
-          <div className="grid grid-cols-2 gap-1.5">
+      {/* Body — ações rápidas */}
+      <div className="p-4">
+        <div className="flex flex-wrap gap-2">
             {acoes.map((acao, i) => {
               const AcaoIcon = acao.icon;
               return (
@@ -168,12 +142,11 @@ export function EquipeCoworkCard({
               );
             })}
           </div>
-        </div>
 
-        {/* Row 2 — Atividade Recente (compacta) */}
+        {/* Atividade Recente */}
         {atividades.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide">Atividade recente</p>
+          <div className="space-y-1 mt-3">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Atividade recente</p>
             <div className="space-y-1.5">
               {atividades.slice(0, 5).map((ativ) => (
                 <div key={ativ.id} className="flex items-start gap-2">
