@@ -647,7 +647,7 @@ export function DemandaQuickPreview({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#6b6b6f] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#4a4a4e] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com borda de atribuição */}
               <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}>

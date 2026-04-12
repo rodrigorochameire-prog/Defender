@@ -233,7 +233,7 @@ export function EventDetailSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#6b6b6f] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#4a4a4e] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               {(() => {
