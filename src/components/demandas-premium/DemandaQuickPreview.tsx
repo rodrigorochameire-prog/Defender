@@ -815,11 +815,13 @@ export function DemandaQuickPreview({
 
             {/* Card 1: Prazo + Providências — unified with border */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
-              {/* Prazo row */}
-              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-[11px] text-muted-foreground font-semibold">Prazo</span>
+              {/* Prazo header — bg diferenciado como Dashboard card headers */}
+              <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                  </div>
+                  <span className="text-[11px] text-foreground font-semibold">Prazo</span>
                   <InlineDatePicker
                     value={demanda.prazo}
                     onChange={(isoDate) => onPrazoChange(demanda.id, isoDate)}
@@ -829,21 +831,21 @@ export function DemandaQuickPreview({
                 </div>
                 {prazoBadge && (
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap tabular-nums ${
-                    prazoBadge.cor === "red" ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" :
-                    prazoBadge.cor === "amber" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                    prazoBadge.cor === "green" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" :
-                    "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                    prazoBadge.cor === "red" ? "text-rose-600 dark:text-rose-400" :
+                    prazoBadge.cor === "amber" ? "text-amber-600 dark:text-amber-400" :
+                    prazoBadge.cor === "green" ? "text-emerald-600 dark:text-emerald-400" :
+                    "text-muted-foreground"
                   }`}>
                     {prazoBadge.texto}
                   </span>
                 )}
               </div>
-              {/* Inset separator (como Dashboard) */}
-              <div className="mx-4 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
+              {/* Inset separator */}
+              <div className="mx-4 h-px bg-neutral-200/50 dark:bg-neutral-800/50" />
               {/* Providências */}
-              <div className="px-3.5 sm:px-4 pt-2 pb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] text-muted-foreground font-semibold">Providências</span>
+              <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] text-foreground font-semibold">Providências</span>
                   <div className="flex items-center gap-0.5">
                     <AudioRecorderButton
                       compact
@@ -869,7 +871,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-2.5 py-2 border border-transparent focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[13px] leading-relaxed"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[44px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-2.5 py-2 border border-neutral-200/40 dark:border-neutral-800/40 focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[12px] leading-relaxed"
                   multiline
                 />
                 {/* Timestamp última edição */}
