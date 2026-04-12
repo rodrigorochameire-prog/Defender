@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   UserCheck,
   Plus,
   Clock,
@@ -11,115 +11,85 @@ import {
   Building2,
 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 
 export default function AtendimentosPage() {
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-      {/* Header - Design Suíço */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 sm:p-2.5 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex-shrink-0">
-            <UserCheck className="w-5 h-5 sm:w-6 sm:h-6 text-purple-700 dark:text-purple-400" />
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Atendimentos" icon={UserCheck}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <UserCheck className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Atendimentos
+              </h1>
+              <p className="text-[10px] text-white/55">
+                Gestão de atendimentos aos assistidos
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Atendimentos
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Gestão de atendimentos aos assistidos
-            </p>
-          </div>
+          <Link href="/admin/atendimentos/novo">
+            <button className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Novo Atendimento</span>
+              <span className="sm:hidden">Novo</span>
+            </button>
+          </Link>
+        </div>
+      </CollapsiblePageHeader>
+
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+          {[
+            { label: "Hoje", value: 5, color: "rose", icon: Clock },
+            { label: "Presenciais", value: 3, color: "blue", icon: Building2 },
+            { label: "Vídeo", value: 1, color: "violet", icon: Video },
+            { label: "Telefone", value: 1, color: "amber", icon: Phone },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className={`border-l-2 border-l-${s.color}-500`}>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
+                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 text-${s.color}-500`} />
+                    </div>
+                    <div>
+                      <p className={`text-xl sm:text-2xl font-bold text-${s.color}-700 dark:text-${s.color}-400`}>{s.value}</p>
+                      <p className={`text-xs text-${s.color}-600 dark:text-${s.color}-400`}>{s.label}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
-        <Link href="/admin/atendimentos/novo">
-          <Button className="h-8 sm:h-9 text-xs sm:text-sm gap-1.5">
-            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Novo Atendimento</span>
-            <span className="sm:hidden">Novo</span>
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats Cards - Design Suíço com borda lateral */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <Card className="border-l-2 border-l-rose-500">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-rose-700 dark:text-rose-400">5</p>
-                <p className="text-xs sm:text-xs text-rose-600 dark:text-rose-400">Hoje</p>
-              </div>
+        {/* Empty State */}
+        <Card className="border-dashed">
+          <CardContent className="text-center py-16">
+            <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+              <UserCheck className="w-8 h-8 text-purple-500" />
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-l-2 border-l-blue-500">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
-                <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">3</p>
-                <p className="text-xs sm:text-xs text-blue-600 dark:text-blue-400">Presenciais</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-l-2 border-l-violet-500">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
-                <Video className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-violet-700 dark:text-violet-400">1</p>
-                <p className="text-xs sm:text-xs text-violet-600 dark:text-violet-400">Vídeo</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-l-2 border-l-amber-500">
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
-                <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400">1</p>
-                <p className="text-xs sm:text-xs text-amber-600 dark:text-amber-400">Telefone</p>
-              </div>
-            </div>
+            <h3 className="text-lg font-medium text-foreground/80 mb-2">
+              Módulo de Atendimentos
+            </h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+              Registre e acompanhe atendimentos presenciais, por videoconferência, telefone e visitas carcerárias.
+            </p>
+            <Link href="/admin/atendimentos/novo">
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Agendar Atendimento
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
-
-      {/* Empty State - Design Suíço */}
-      <Card className="border-dashed">
-        <CardContent className="text-center py-16">
-          <div className="mx-auto w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
-            <UserCheck className="w-8 h-8 text-purple-500" />
-          </div>
-          <h3 className="text-lg font-medium text-foreground/80 mb-2">
-            Módulo de Atendimentos
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-            Registre e acompanhe atendimentos presenciais, por videoconferência, telefone e visitas carcerárias.
-          </p>
-          <Link href="/admin/atendimentos/novo">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Agendar Atendimento
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
     </div>
   );
 }
