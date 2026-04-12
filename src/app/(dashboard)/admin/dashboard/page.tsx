@@ -818,14 +818,14 @@ export default function DashboardJuriPage() {
         </AnimatePresence>
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
-        <Card className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-border flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-foreground flex items-center justify-center">
-              <Plus className="w-4 h-4 text-background" />
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+              <Plus className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground tracking-tight">Registro Rápido</h3>
-              <p className="text-xs text-muted-foreground">Atendimento, diligência ou anotação</p>
+              <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Registro Rápido</h3>
+              <p className="text-[11px] text-muted-foreground">Atendimento, diligência ou anotação</p>
             </div>
           </div>
 
@@ -1401,14 +1401,14 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="bg-card border border-amber-200/60 dark:border-amber-800/30 rounded-xl overflow-hidden">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-amber-200/60 dark:border-amber-900/40 overflow-hidden">
             <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-amber-500/10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center shrink-0">
                     <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground tracking-tight">
+                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
                     Pendências Solar
                   </h3>
                 </div>
@@ -1509,24 +1509,24 @@ export default function DashboardJuriPage() {
 
         {/* ===== 4. ALERTA CRÍTICO - Réu Preso com Prazo Vencido ===== */}
         {(hasArea("CRIMINAL") || hasArea("JURI") || hasArea("EXECUCAO_PENAL") || hasArea("VIOLENCIA_DOMESTICA")) && estatisticasPrazos.reuPresoVencido > 0 && (
-          <Card className="border-red-500 bg-red-50 dark:bg-red-950/50 animate-pulse">
-            <div className="p-3">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-rose-200/70 dark:border-rose-900/40 overflow-hidden">
+            <div className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-red-100 dark:bg-red-900/50">
-                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold text-red-800 dark:text-red-200">
-                    ATENÇÃO: {estatisticasPrazos.reuPresoVencido} prazo{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""} de RÉU PRESO vencido{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""}!
+                  <p className="text-[13px] font-semibold text-rose-700 dark:text-rose-300 tracking-tight">
+                    {estatisticasPrazos.reuPresoVencido} prazo{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""} de réu preso vencido{estatisticasPrazos.reuPresoVencido > 1 ? "s" : ""}
                   </p>
-                  <p className="text-sm text-red-600 dark:text-red-300">
-                    Prioridade máxima - verificar imediatamente
+                  <p className="text-[11px] text-rose-600/80 dark:text-rose-400/80">
+                    Prioridade máxima — verificar imediatamente
                   </p>
                 </div>
                 <Link href="/admin/demandas?filtro=reuPreso">
-                  <Button size="sm" variant="destructive" className="h-8">
+                  <button className="h-8 px-3 rounded-xl bg-rose-600 text-white shadow-sm hover:bg-rose-700 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
                     Ver agora
-                  </Button>
+                  </button>
                 </Link>
               </div>
             </div>
@@ -1537,19 +1537,19 @@ export default function DashboardJuriPage() {
         <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
             <div className="w-1.5 h-5 rounded-full bg-emerald-500" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Prazos & Agenda</h2>
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Prazos & Agenda</h2>
           </div>
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
-        <Card className="bg-card border border-border rounded-xl overflow-hidden">
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
                   <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
-                <h3 className="text-base font-bold text-foreground tracking-tight">Prazos</h3>
+                <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Prazos</h3>
                 {estatisticasPrazos.vencidos > 0 && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-semibold">
                     {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
@@ -1662,14 +1662,14 @@ export default function DashboardJuriPage() {
 
         {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
         {!isDefensorCriminalGeral && hasArea("JURI") && (
-          <Card className="bg-card border border-border rounded-xl overflow-hidden">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
                     <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground tracking-tight">Próximos Júris</h3>
+                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Próximos Júris</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                     {jurisProximos.length}
                   </span>
@@ -1778,14 +1778,14 @@ export default function DashboardJuriPage() {
         {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
-          <Card className="bg-card border border-border rounded-xl overflow-hidden">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                     <CalendarDays className="w-4 h-4 text-muted-foreground" />
                   </div>
-                  <h3 className="text-base font-bold text-foreground tracking-tight">Minhas Audiências</h3>
+                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Minhas Audiências</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
                     {audienciasExibir.length}
                   </span>
@@ -1871,14 +1871,14 @@ export default function DashboardJuriPage() {
           </Card>
         ) : (
           /* Especializado: Audiências da Semana */
-          <Card className="bg-card border border-border rounded-xl overflow-hidden">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
               <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                       <CalendarDays className="w-4 h-4 text-muted-foreground" />
                     </div>
-                    <h3 className="text-base font-bold text-foreground tracking-tight">
+                    <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
                       {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
                     </h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
@@ -1983,13 +1983,13 @@ export default function DashboardJuriPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 px-1">
               <div className="w-1.5 h-5 rounded-full bg-amber-500" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Acompanhamento por Área</h2>
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Acompanhamento por Área</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {/* Medidas Socioeducativas — Infância */}
               {hasArea("INFANCIA_JUVENTUDE") && (
-                <Card className="bg-card border border-border rounded-xl">
+                <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2 font-bold text-foreground">
                       <Baby className="h-4 w-4 text-amber-500" />
@@ -2005,7 +2005,7 @@ export default function DashboardJuriPage() {
 
               {/* Institutos Despenalizadores — Criminal Comum */}
               {hasArea("CRIMINAL") && (
-                <Card className="bg-card border border-border rounded-xl">
+                <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2 font-bold text-foreground">
                       <Handshake className="h-4 w-4 text-emerald-500" />
