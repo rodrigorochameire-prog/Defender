@@ -1625,7 +1625,7 @@ export default function AgendaPage() {
       >
         {/* Row 1: Icon + Title + inline stats + actions */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
               <CalendarIcon className="w-4 h-4 text-white" />
             </div>
@@ -1670,9 +1670,10 @@ export default function AgendaPage() {
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"
-              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm ring-1 ring-white/[0.1] hover:bg-white hover:text-neutral-900 transition-all duration-150 cursor-pointer flex items-center justify-center"
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
             >
-              <Plus className="w-[15px] h-[15px]" />
+              <Plus className="w-3.5 h-3.5" />
+              Novo
             </button>
           </div>
         </div>
