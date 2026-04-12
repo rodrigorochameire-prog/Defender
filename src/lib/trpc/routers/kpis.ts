@@ -74,7 +74,7 @@ function toRows(result: any): any[] {
 }
 
 export const kpisRouter = router({
-  /** Números agregados para os 4 cards grandes no topo do dashboard */
+  /** Números agregados — estado, urgência, hoje, SLA, velocidade, encalhadas */
   summary: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
     const result = await db.execute(
@@ -85,23 +85,72 @@ export const kpisRouter = router({
           COALESCE(SUM(concluidas), 0)::int AS concluidas,
           COALESCE(SUM(vencidas), 0)::int AS vencidas,
           COALESCE(SUM(urgentes), 0)::int AS urgentes,
+          COALESCE(SUM(vencem_hoje), 0)::int AS vencem_hoje,
+          COALESCE(SUM(criadas_hoje), 0)::int AS criadas_hoje,
           COALESCE(SUM(reu_preso_ativas), 0)::int AS reu_preso_ativas,
-          COALESCE(SUM(concluidas_mes), 0)::int AS concluidas_mes
+          COALESCE(SUM(concluidas_mes), 0)::int AS concluidas_mes,
+          COALESCE(SUM(concluidas_no_prazo), 0)::int AS concluidas_no_prazo,
+          COALESCE(SUM(concluidas_com_prazo), 0)::int AS concluidas_com_prazo,
+          COALESCE(SUM(concluidas_7d), 0)::int AS concluidas_7d,
+          COALESCE(SUM(concluidas_7d_anterior), 0)::int AS concluidas_7d_anterior,
+          COALESCE(AVG(tempo_medio_resposta_dias), 0)::real AS tempo_medio_resposta_dias,
+          COALESCE(SUM(encalhadas), 0)::int AS encalhadas
         FROM vw_kpi_summary
         ${scope}
       `),
     );
 
     const r = toRows(result)[0] ?? {};
+    const concluidasNoPrazo = Number(r.concluidas_no_prazo ?? 0);
+    const concluidasComPrazo = Number(r.concluidas_com_prazo ?? 0);
+    const slaHitRate =
+      concluidasComPrazo > 0 ? (concluidasNoPrazo / concluidasComPrazo) * 100 : null;
+
+    const concluidas7d = Number(r.concluidas_7d ?? 0);
+    const concluidas7dAnterior = Number(r.concluidas_7d_anterior ?? 0);
+    const velocidadeDelta = concluidas7d - concluidas7dAnterior;
+
     return {
       total: Number(r.total ?? 0),
       ativas: Number(r.ativas ?? 0),
       concluidas: Number(r.concluidas ?? 0),
       vencidas: Number(r.vencidas ?? 0),
       urgentes: Number(r.urgentes ?? 0),
+      vencemHoje: Number(r.vencem_hoje ?? 0),
+      criadasHoje: Number(r.criadas_hoje ?? 0),
       reuPresoAtivas: Number(r.reu_preso_ativas ?? 0),
       concluidasMes: Number(r.concluidas_mes ?? 0),
+      // SLA — null quando não há amostra suficiente (denom = 0)
+      slaHitRate,
+      slaSample: concluidasComPrazo,
+      // Velocidade 7d vs 7d anterior
+      concluidas7d,
+      concluidas7dAnterior,
+      velocidadeDelta,
+      // Tempo médio de resposta (dias)
+      tempoMedioRespostaDias: Number(r.tempo_medio_resposta_dias ?? 0),
+      // Encalhadas
+      encalhadas: Number(r.encalhadas ?? 0),
     };
+  }),
+
+  /** Idade do backlog em buckets */
+  backlogAging: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
+    const scope = buildScope(ctx, input);
+    const result = await db.execute(
+      sql.raw(`
+        SELECT bucket, SUM(total)::int AS total
+        FROM vw_kpi_backlog_aging
+        ${scope}
+        GROUP BY bucket
+      `),
+    );
+    const buckets = { a_0_7: 0, b_7_15: 0, c_15_30: 0, d_30_60: 0, e_60_plus: 0 };
+    for (const r of toRows(result)) {
+      const k = String(r.bucket ?? "") as keyof typeof buckets;
+      if (k in buckets) buckets[k] = Number(r.total ?? 0);
+    }
+    return buckets;
   }),
 
   /** Throughput semanal (últimas 12 semanas) */
