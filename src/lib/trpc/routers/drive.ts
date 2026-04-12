@@ -5717,25 +5717,62 @@ export const driveRouter = router({
               continue;
             }
 
-            // 4. Get file's current parent
-            console.log(`[Organize] Step 4: get parent of ${file.driveFileId.slice(0,8)}`);
+            // 4. Get user's OAuth token (owner of files — SA can't move files it doesn't own)
+            const { tryRefreshOAuth } = await import("@/lib/services/google-drive");
+            let userToken = token; // SA token as fallback
+            try {
+              const oauthClientId = process.env.GOOGLE_CLIENT_ID;
+              const oauthClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+              const dbRefreshToken = await (async () => {
+                const r = await db.execute(sql`SELECT refresh_token FROM google_tokens ORDER BY updated_at DESC LIMIT 1`);
+                return (r as any)[0]?.refresh_token ?? process.env.GOOGLE_REFRESH_TOKEN ?? null;
+              })();
+              if (oauthClientId && oauthClientSecret && dbRefreshToken) {
+                const oauthRes = await fetch("https://oauth2.googleapis.com/token", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                  body: new URLSearchParams({
+                    client_id: oauthClientId,
+                    client_secret: oauthClientSecret,
+                    refresh_token: dbRefreshToken,
+                    grant_type: "refresh_token",
+                  }),
+                });
+                if (oauthRes.ok) {
+                  const oauthData = await oauthRes.json();
+                  userToken = oauthData.access_token;
+                  console.log(`[Organize] Using OAuth user token for moves`);
+                }
+              }
+            } catch { /* fallback to SA token */ }
+
+            // 5. Get file's current parent
             const fileInfoRes = await fetch(
               `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?fields=parents`,
-              { headers: { Authorization: `Bearer ${token}` } },
+              { headers: { Authorization: `Bearer ${userToken}` } },
             );
             if (!fileInfoRes.ok) {
+              console.error(`[Organize] FAIL: get parent ${fileInfoRes.status}`);
               errors++;
               continue;
             }
             const fileInfo = await fileInfoRes.json();
             const currentParent = fileInfo.parents?.[0] ?? null;
 
-            // 5. Move file
-            const result = await moveFileInDrive(file.driveFileId, processoFolder.id, currentParent);
-            if (!result) {
+            // 6. Move file using USER token (not SA)
+            console.log(`[Organize] Step 6: move ${file.driveFileId.slice(0,8)} → ${processoFolder.id.slice(0,8)}`);
+            const moveUrl = `https://www.googleapis.com/drive/v3/files/${file.driveFileId}?addParents=${processoFolder.id}${currentParent ? `&removeParents=${currentParent}` : ""}&fields=id,name`;
+            const moveRes = await fetch(moveUrl, {
+              method: "PATCH",
+              headers: { Authorization: `Bearer ${userToken}` },
+            });
+            if (!moveRes.ok) {
+              const errBody = await moveRes.text();
+              console.error(`[Organize] FAIL: move ${moveRes.status}: ${errBody.slice(0, 150)}`);
               errors++;
               continue;
             }
+            console.log(`[Organize] ✓ moved ${file.fileName}`);
 
             // 6. Update index
             await db.execute(sql`
