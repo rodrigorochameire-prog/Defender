@@ -23,6 +23,7 @@ import {
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, isStatusConcluido } from "@/config/demanda-status";
 import { getAtribuicaoColors, ATRIBUICAO_OPTIONS, areaMatchesFilter } from "@/lib/config/atribuicoes";
+import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { toast } from "sonner";
 import {
   Users,
