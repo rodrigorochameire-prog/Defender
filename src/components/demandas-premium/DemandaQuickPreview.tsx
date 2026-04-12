@@ -843,7 +843,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[11.5px] leading-[1.65] tracking-[0.01em] text-neutral-600 dark:text-neutral-400"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[10.5px] leading-[1.7] tracking-[0.015em] text-neutral-500 dark:text-neutral-400 font-[system-ui]"
                   multiline
                 />
                 {/* Timestamp última edição */}
