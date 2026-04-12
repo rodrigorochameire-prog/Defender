@@ -363,6 +363,11 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const cargaQ = trpc.kpis.cargaDefensor.useQuery(scope);
   const presosQ = trpc.kpis.presosUrgentes.useQuery(scope);
   const agingQ = trpc.kpis.backlogAging.useQuery(scope);
+  const relatorioQ = trpc.kpis.relatorioResumo.useQuery({
+    defensorId: selectedDefensorId ?? undefined,
+    ano: new Date().getFullYear(),
+    semestre: new Date().getMonth() < 6 ? "1" : "2",
+  });
   const comarcasQ = trpc.comarcas.listRMS.useQuery();
 
   const utils = trpc.useUtils();
@@ -383,6 +388,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
       utils.kpis.cargaDefensor.invalidate(),
       utils.kpis.presosUrgentes.invalidate(),
       utils.kpis.backlogAging.invalidate(),
+      utils.kpis.relatorioResumo.invalidate(),
     ]);
   };
 
@@ -394,6 +400,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const carga = cargaQ.data ?? [];
   const presos = presosQ.data ?? [];
   const aging = agingQ.data;
+  const relatorio = relatorioQ.data ?? [];
   const comarcas = comarcasQ.data ?? [];
 
   const defensorLabel = selectedDefensor?.name ?? "Visão Geral";
@@ -473,6 +480,33 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
     { key: "e_60_plus", label: AGING_LABELS.e_60_plus, value: aging?.e_60_plus ?? 0, color: AGING_COLORS.e_60_plus },
   ];
   const agingTotal = agingBuckets.reduce((acc, b) => acc + b.value, 0);
+
+  // Relatório semestral — 6 colunas (meses) com barras por seção
+  const MESES_LABEL = ["", "JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  const semestreAtual = new Date().getMonth() < 6 ? 1 : 2;
+  const mesesRange = semestreAtual === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+
+  const relatorioByMes = useMemo(() => {
+    const map = new Map<number, { judicial: number; extrajudicial: number }>();
+    for (const m of mesesRange) map.set(m, { judicial: 0, extrajudicial: 0 });
+    for (const r of relatorio) {
+      const entry = map.get(r.mes);
+      if (!entry) continue;
+      if (r.secao.includes("JUDICIAIS")) entry.judicial += r.total;
+      else entry.extrajudicial += r.total;
+    }
+    return mesesRange.map((m) => ({
+      mes: m,
+      label: MESES_LABEL[m] ?? `M${m}`,
+      judicial: map.get(m)?.judicial ?? 0,
+      extrajudicial: map.get(m)?.extrajudicial ?? 0,
+      total: (map.get(m)?.judicial ?? 0) + (map.get(m)?.extrajudicial ?? 0),
+    }));
+  }, [relatorio, mesesRange]);
+
+  const relatorioTotal = relatorioByMes.reduce((acc, m) => acc + m.total, 0);
+  const relatorioJudicial = relatorioByMes.reduce((acc, m) => acc + m.judicial, 0);
+  const relatorioExtrajudicial = relatorioByMes.reduce((acc, m) => acc + m.extrajudicial, 0);
 
   return (
     <motion.div
@@ -1032,6 +1066,121 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        )}
+
+        {/* Relatório Semestral — Corregedoria DPE-BA */}
+        {relatorioTotal > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.65 }}
+            className={cn(KPI.card, "p-5")}
+          >
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className={KPI.iconWrap}>
+                <BarChart3 className={cn("w-3.5 h-3.5", KPI.iconColor)} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                  Relatório Semestral {semestreAtual === 1 ? "2026.1" : "2026.2"}
+                </h3>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  Atividades por mês — Corregedoria DPE-BA
+                </p>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right">
+                  <div className={cn(KPI.value, "text-2xl")}>
+                    <AnimatedNumber value={relatorioTotal} />
+                  </div>
+                  <div className="text-[9px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wider font-semibold mt-0.5">
+                    atividades
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid meses */}
+            <div className="grid grid-cols-6 gap-2 mb-4">
+              {relatorioByMes.map((m, i) => {
+                const maxTotal = Math.max(...relatorioByMes.map((x) => x.total), 1);
+                const pctJud = maxTotal > 0 ? (m.judicial / maxTotal) * 100 : 0;
+                const pctExt = maxTotal > 0 ? (m.extrajudicial / maxTotal) * 100 : 0;
+                const mesAtual = new Date().getMonth() + 1;
+                const isAtual = m.mes === mesAtual;
+                return (
+                  <motion.div
+                    key={m.mes}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.04 }}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-lg transition-colors",
+                      isAtual
+                        ? "bg-emerald-50/80 dark:bg-emerald-950/20 ring-1 ring-emerald-500/30"
+                        : "hover:bg-neutral-50 dark:hover:bg-white/[0.02]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-[9px] font-bold uppercase tracking-wider",
+                        isAtual ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500",
+                      )}
+                    >
+                      {m.label}
+                    </span>
+                    {/* Stacked mini bar */}
+                    <div className="w-full h-20 flex flex-col-reverse items-center justify-start gap-0.5 px-1">
+                      <motion.div
+                        className="w-full rounded-t-sm bg-neutral-800 dark:bg-neutral-200"
+                        initial={{ height: 0 }}
+                        animate={{ height: `${pctJud}%` }}
+                        transition={{ duration: 0.6, delay: 0.8 + i * 0.04 }}
+                        style={{ minHeight: pctJud > 0 ? 2 : 0 }}
+                      />
+                      <motion.div
+                        className="w-full rounded-t-sm bg-amber-500"
+                        initial={{ height: 0 }}
+                        animate={{ height: `${pctExt}%` }}
+                        transition={{ duration: 0.6, delay: 0.85 + i * 0.04 }}
+                        style={{ minHeight: pctExt > 0 ? 2 : 0 }}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[11px] font-semibold tabular-nums",
+                        isAtual ? "text-emerald-700 dark:text-emerald-400" : KPI.value,
+                      )}
+                    >
+                      {m.total}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Legenda + breakdown */}
+            <div className="flex items-center gap-4 text-[10px]">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-neutral-800 dark:bg-neutral-200" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">
+                  Judiciais
+                </span>
+                <span className="text-neutral-400 dark:text-neutral-500 tabular-nums font-mono">
+                  {relatorioJudicial}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
+                <span className="text-neutral-600 dark:text-neutral-300 font-medium">
+                  Extrajudiciais
+                </span>
+                <span className="text-neutral-400 dark:text-neutral-500 tabular-nums font-mono">
+                  {relatorioExtrajudicial}
+                </span>
+              </div>
+            </div>
+          </motion.div>
         )}
       </div>
     </motion.div>
