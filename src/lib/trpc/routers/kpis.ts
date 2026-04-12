@@ -8,13 +8,13 @@ import { getDefensoresVisiveis } from "../defensor-scope";
  * KPIs Dashboard — Fase 1 do TDD analytics-ml-foundation.
  *
  * Lê de views SQL (drizzle/0029_kpi_views.sql):
- *   - vw_kpi_summary          — números agregados pros cards de topo
- *   - vw_kpi_throughput       — demandas criadas/concluídas por semana
+ *   - vw_kpi_summary          — agregados pros cards de topo
+ *   - vw_kpi_throughput       — criadas/concluídas por semana (12 sem)
  *   - vw_kpi_backlog          — atribuição × status
  *   - vw_kpi_prazos           — buckets de urgência
  *   - vw_kpi_top_atos         — ranking de atos
  *   - vw_kpi_carga_defensor   — carga por defensor (admin/servidor)
- *   - vw_presos_urgentes      — réu preso com prazo ≤ 5 dias (tempo real)
+ *   - vw_presos_urgentes      — réu preso com prazo ≤ 5 dias
  *
  * Escopo:
  *   - defensor              → apenas seus dados (automático)
@@ -31,28 +31,28 @@ const scopeInput = z
 
 type ScopeInput = z.infer<typeof scopeInput>;
 
-/** Monta cláusula WHERE compartilhada entre todas as queries. */
+/** Monta cláusula WHERE compartilhada (SQL injection safe: todos os valores são numéricos validados). */
 function buildScope(ctx: { user: any }, input: ScopeInput) {
   const { defensorId, comarcaId } = input ?? {};
   const visiveis = getDefensoresVisiveis(ctx.user);
 
   const clauses: string[] = [];
 
-  // Filtro de defensor — explícito ou automático pelo papel
   if (defensorId) {
-    if (visiveis !== "all" && !visiveis.includes(defensorId)) {
+    const id = Number(defensorId);
+    if (visiveis !== "all" && !visiveis.includes(id)) {
       throw new Error("Sem acesso às demandas desse defensor");
     }
-    clauses.push(`defensor_id = ${defensorId}`);
+    clauses.push(`defensor_id = ${id}`);
   } else if (visiveis !== "all") {
     if (visiveis.length === 0) {
       clauses.push("1 = 0");
     } else {
-      clauses.push(`defensor_id IN (${visiveis.join(",")})`);
+      const ids = visiveis.map((n) => Number(n)).join(",");
+      clauses.push(`defensor_id IN (${ids})`);
     }
   }
 
-  // Filtro de comarca — opcional, só admins/servidores
   if (comarcaId) {
     clauses.push(`comarca_id = ${Number(comarcaId)}`);
   }
@@ -60,11 +60,24 @@ function buildScope(ctx: { user: any }, input: ScopeInput) {
   return clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
 }
 
+/** db.execute(sql.raw(...)) retorna um RowList iterável do postgres-js. Converte pra array plano. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRows(result: any): any[] {
+  if (Array.isArray(result)) return result;
+  if (result && Array.isArray(result.rows)) return result.rows;
+  try {
+    return Array.from(result ?? []);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_) {
+    return [];
+  }
+}
+
 export const kpisRouter = router({
   /** Números agregados para os 4 cards grandes no topo do dashboard */
   summary: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
-    const rows = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           COALESCE(SUM(total), 0)::int AS total,
@@ -77,9 +90,9 @@ export const kpisRouter = router({
         FROM vw_kpi_summary
         ${scope}
       `),
-    )) as any;
+    );
 
-    const r = rows[0] ?? rows?.rows?.[0] ?? {};
+    const r = toRows(result)[0] ?? {};
     return {
       total: Number(r.total ?? 0),
       ativas: Number(r.ativas ?? 0),
@@ -91,10 +104,10 @@ export const kpisRouter = router({
     };
   }),
 
-  /** Throughput semanal (últimas 12 semanas) — linha temporal */
+  /** Throughput semanal (últimas 12 semanas) */
   throughput: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
-    const result = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           semana::text AS semana,
@@ -105,20 +118,18 @@ export const kpisRouter = router({
         GROUP BY semana
         ORDER BY semana ASC
       `),
-    )) as any;
-
-    const rows = result.rows ?? result;
-    return rows.map((r: any) => ({
-      semana: r.semana,
+    );
+    return toRows(result).map((r) => ({
+      semana: String(r.semana ?? ""),
       criadas: Number(r.criadas ?? 0),
       concluidas: Number(r.concluidas ?? 0),
     }));
   }),
 
-  /** Backlog por atribuição × status — barras empilhadas */
+  /** Backlog por atribuição × status */
   backlog: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
-    const result = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           atribuicao,
@@ -130,20 +141,19 @@ export const kpisRouter = router({
         GROUP BY atribuicao, status
         ORDER BY atribuicao, status
       `),
-    )) as any;
-    const rows = result.rows ?? result;
-    return rows.map((r: any) => ({
-      atribuicao: r.atribuicao as string,
-      status: r.status as string,
+    );
+    return toRows(result).map((r) => ({
+      atribuicao: String(r.atribuicao ?? "SEM_PROCESSO"),
+      status: String(r.status ?? ""),
       total: Number(r.total ?? 0),
       urgentes: Number(r.urgentes ?? 0),
     }));
   }),
 
-  /** Distribuição de prazos em buckets (vencido/urgente/próximo/médio/longo) */
+  /** Distribuição de prazos em buckets */
   prazos: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
-    const result = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           bucket,
@@ -152,26 +162,25 @@ export const kpisRouter = router({
         ${scope}
         GROUP BY bucket
       `),
-    )) as any;
+    );
 
-    const rows = result.rows ?? result;
-    const bucketsBase = {
+    const buckets = {
       vencido: 0,
       urgente: 0,
       proximo: 0,
       medio: 0,
       longo: 0,
     };
-    for (const r of rows) {
-      const bucket = r.bucket as keyof typeof bucketsBase;
-      if (bucket in bucketsBase) {
-        bucketsBase[bucket] = Number(r.total ?? 0);
+    for (const r of toRows(result)) {
+      const bucket = String(r.bucket ?? "") as keyof typeof buckets;
+      if (bucket in buckets) {
+        buckets[bucket] = Number(r.total ?? 0);
       }
     }
-    return bucketsBase;
+    return buckets;
   }),
 
-  /** Top N atos mais frequentes (default 10) */
+  /** Top N atos mais frequentes */
   topAtos: protectedProcedure
     .input(
       z
@@ -183,9 +192,9 @@ export const kpisRouter = router({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const limit = input?.limit ?? 10;
+      const limit = Number(input?.limit ?? 10);
       const scope = buildScope(ctx, { defensorId: input?.defensorId, comarcaId: input?.comarcaId });
-      const result = (await db.execute(
+      const result = await db.execute(
         sql.raw(`
           SELECT
             ato,
@@ -197,10 +206,9 @@ export const kpisRouter = router({
           ORDER BY total DESC
           LIMIT ${limit}
         `),
-      )) as any;
-      const rows = result.rows ?? result;
-      return rows.map((r: any) => ({
-        ato: r.ato as string,
+      );
+      return toRows(result).map((r) => ({
+        ato: String(r.ato ?? ""),
         total: Number(r.total ?? 0),
         ativas: Number(r.ativas ?? 0),
       }));
@@ -209,12 +217,11 @@ export const kpisRouter = router({
   /** Carga por defensor — só visível pra admin/servidor */
   cargaDefensor: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const visiveis = getDefensoresVisiveis(ctx.user);
-    // Se é defensor comum vendo só a si mesmo, retorna vazio — não faz sentido
     if (visiveis !== "all" && visiveis.length <= 1) {
       return [];
     }
     const scope = buildScope(ctx, input);
-    const result = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           defensor_id,
@@ -229,23 +236,25 @@ export const kpisRouter = router({
         GROUP BY defensor_id, defensor_nome, defensor_email, atribuicao
         ORDER BY defensor_nome, atribuicao
       `),
-    )) as any;
-    const rows = result.rows ?? result;
-    return rows.map((r: any) => ({
-      defensorId: Number(r.defensor_id),
-      defensorNome: (r.defensor_nome as string) || (r.defensor_email as string)?.split("@")[0] || "(sem nome)",
-      defensorEmail: r.defensor_email as string,
-      atribuicao: r.atribuicao as string,
+    );
+    return toRows(result).map((r) => ({
+      defensorId: Number(r.defensor_id ?? 0),
+      defensorNome:
+        String(r.defensor_nome ?? "") ||
+        String(r.defensor_email ?? "").split("@")[0] ||
+        "(sem nome)",
+      defensorEmail: String(r.defensor_email ?? ""),
+      atribuicao: String(r.atribuicao ?? "SEM_PROCESSO"),
       ativas: Number(r.ativas ?? 0),
       concluidas: Number(r.concluidas ?? 0),
       total: Number(r.total ?? 0),
     }));
   }),
 
-  /** Réu preso com prazo ≤ 5 dias — alerta fixo no topo da página */
+  /** Réu preso com prazo ≤ 5 dias */
   presosUrgentes: protectedProcedure.input(scopeInput).query(async ({ ctx, input }) => {
     const scope = buildScope(ctx, input);
-    const result = (await db.execute(
+    const result = await db.execute(
       sql.raw(`
         SELECT
           id,
@@ -262,16 +271,15 @@ export const kpisRouter = router({
         ORDER BY dias_ate_prazo ASC
         LIMIT 50
       `),
-    )) as any;
-    const rows = result.rows ?? result;
-    return rows.map((r: any) => ({
-      id: Number(r.id),
-      ato: r.ato as string,
-      prazo: r.prazo as string,
-      status: r.status as string,
-      atribuicao: r.atribuicao as string,
-      numeroAutos: r.numero_autos as string | null,
-      assistidoNome: r.assistido_nome as string | null,
+    );
+    return toRows(result).map((r) => ({
+      id: Number(r.id ?? 0),
+      ato: String(r.ato ?? ""),
+      prazo: String(r.prazo ?? ""),
+      status: String(r.status ?? ""),
+      atribuicao: String(r.atribuicao ?? "SEM_PROCESSO"),
+      numeroAutos: r.numero_autos ? String(r.numero_autos) : null,
+      assistidoNome: r.assistido_nome ? String(r.assistido_nome) : null,
       assistidoId: r.assistido_id ? Number(r.assistido_id) : null,
       diasAtePrazo: Number(r.dias_ate_prazo ?? 0),
     }));
