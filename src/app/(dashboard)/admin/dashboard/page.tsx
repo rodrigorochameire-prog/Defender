@@ -849,7 +849,7 @@ export default function DashboardJuriPage() {
                             getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).border.replace("border-l-", "border-"),
                             "hover:opacity-90"
                           )
-                        : "bg-muted border-border hover:bg-muted hover:border-emerald-300 dark:hover:border-emerald-700"
+                        : "bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 hover:border-emerald-300 dark:hover:border-emerald-700"
                     )}
                   >
                     {atendimentoRapido.assistidoId ? (
@@ -1000,7 +1000,7 @@ export default function DashboardJuriPage() {
                 <select
                   value={atendimentoRapido.processoId || ""}
                   onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
-                  className="w-full h-9 text-xs rounded-md border border-border bg-muted text-foreground/80 px-3 focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                  className="w-full h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                 >
                   <option value="">
                     {processosDoAssistido.length === 0 ? "Sem processos vinculados" : "Processo (opcional)"}
@@ -1016,7 +1016,7 @@ export default function DashboardJuriPage() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-9 justify-between text-xs bg-muted border-border text-muted-foreground hover:bg-muted hover:border-emerald-300"
+                      className="w-full h-9 justify-between text-xs bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 text-muted-foreground hover:border-emerald-300 dark:hover:border-emerald-700"
                     >
                       <span className="flex items-center gap-2">
                         <CalendarDays className="w-3.5 h-3.5" />
@@ -1172,8 +1172,8 @@ export default function DashboardJuriPage() {
                               "shadow-sm shadow-emerald-500/10"
                             )
                           : cn(
-                              "border border-border",
-                              "bg-card/50",
+                              "border border-neutral-200/60 dark:border-neutral-800/60",
+                              "bg-white dark:bg-neutral-900/50",
                               "hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10",
                               "hover:border-emerald-200 dark:hover:border-emerald-800"
                             )
@@ -1261,7 +1261,7 @@ export default function DashboardJuriPage() {
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
                 rows={3}
-                className="w-full text-sm bg-muted border-border resize-none focus:ring-emerald-500/20 focus:border-emerald-300 dark:focus:border-emerald-700 transition-colors"
+                className="w-full text-sm bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-lg resize-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
               />
               {/* Ações pós-transcrição */}
               {audioTranscript && (
