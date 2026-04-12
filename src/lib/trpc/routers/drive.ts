@@ -5185,4 +5185,213 @@ export const driveRouter = router({
       return { success: true };
     }, "Erro ao desconectar Microsoft");
   }),
+
+  /**
+   * Indexa a árvore do Drive no drive_file_index — Estratégia A (path-based).
+   *
+   * Walk 3 níveis: syncFolder → assistido folders → processo folders → arquivos.
+   * Match nome → assistidos.nome (ilike), número → processos.numero_autos.
+   * Upsert em drive_file_index com link_strategy = 'path'.
+   *
+   * Job longo (~2500 arquivos típico): roda em background.
+   */
+  indexDriveTree: protectedProcedure.mutation(async ({ ctx }) => {
+    return safeAsync(async () => {
+      const { listAllItemsInFolder, getSyncFolders } = await import("@/lib/services/google-drive");
+      const syncFolders = await getSyncFolders();
+
+      if (!syncFolders.length) {
+        return { indexed: 0, linked: 0, errors: 0, message: "Nenhuma pasta de sincronização configurada" };
+      }
+
+      // Load all assistidos + processos for matching
+      const allAssistidos = await db
+        .select({ id: assistidos.id, nome: assistidos.nome })
+        .from(assistidos)
+        .where(isNull(assistidos.deletedAt));
+      const allProcessos = await db
+        .select({ id: processos.id, numeroAutos: processos.numeroAutos })
+        .from(processos);
+
+      // Name → id map (normalized: uppercase, trimmed)
+      const assistidoMap = new Map<string, number>();
+      for (const a of allAssistidos) {
+        if (a.nome) assistidoMap.set(a.nome.toUpperCase().trim(), a.id);
+      }
+      // Processo number → id map
+      const processoMap = new Map<string, number>();
+      for (const p of allProcessos) {
+        if (p.numeroAutos) processoMap.set(p.numeroAutos.trim(), p.id);
+      }
+
+      let indexed = 0;
+      let linked = 0;
+      let errors = 0;
+
+      for (const sf of syncFolders) {
+        const atribuicaoLabel = sf.atribuicao || sf.label || "desconhecida";
+        console.log(`[DriveIndex] Walking sync folder: ${atribuicaoLabel} (${sf.driveFolderId})`);
+
+        try {
+          // Level 1: assistido folders
+          const level1Items = await listAllItemsInFolder(sf.driveFolderId);
+          const assistidoFolders = level1Items.filter(
+            (f: any) => f.mimeType === "application/vnd.google-apps.folder",
+          );
+
+          for (const assistidoFolder of assistidoFolders) {
+            const assistidoName = assistidoFolder.name?.toUpperCase().trim() ?? "";
+            const matchedAssistidoId = assistidoMap.get(assistidoName) ?? null;
+
+            // Level 2: processo folders inside assistido
+            let level2Items: any[] = [];
+            try {
+              level2Items = await listAllItemsInFolder(assistidoFolder.id);
+            } catch (e) {
+              errors++;
+              continue;
+            }
+
+            const processoFolders = level2Items.filter(
+              (f: any) => f.mimeType === "application/vnd.google-apps.folder",
+            );
+            const looseFiles = level2Items.filter(
+              (f: any) => f.mimeType !== "application/vnd.google-apps.folder",
+            );
+
+            // Index loose files at assistido level
+            for (const file of looseFiles) {
+              const path = `${atribuicaoLabel}/${assistidoFolder.name}/${file.name}`;
+              try {
+                await db.execute(sql`
+                  INSERT INTO drive_file_index (drive_file_id, drive_path, file_name, mime_type, size_bytes, modified_time, assistido_id, processo_id, link_strategy, link_confidence, workspace_id, defensor_id, last_seen_at)
+                  VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ? new Date(file.modifiedTime) : null}, ${matchedAssistidoId}, ${null}, ${matchedAssistidoId ? "path" : "pending"}, ${matchedAssistidoId ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date()})
+                  ON CONFLICT (drive_file_id) DO UPDATE SET
+                    drive_path = EXCLUDED.drive_path,
+                    file_name = EXCLUDED.file_name,
+                    mime_type = EXCLUDED.mime_type,
+                    size_bytes = EXCLUDED.size_bytes,
+                    modified_time = EXCLUDED.modified_time,
+                    assistido_id = EXCLUDED.assistido_id,
+                    link_strategy = EXCLUDED.link_strategy,
+                    link_confidence = EXCLUDED.link_confidence,
+                    last_seen_at = EXCLUDED.last_seen_at
+                `);
+                indexed++;
+                if (matchedAssistidoId) linked++;
+              } catch (e) {
+                errors++;
+              }
+            }
+
+            // Level 3: files inside processo folders
+            for (const processoFolder of processoFolders) {
+              const processoNum = processoFolder.name?.trim() ?? "";
+              const matchedProcessoId = processoMap.get(processoNum) ?? null;
+
+              let level3Items: any[] = [];
+              try {
+                level3Items = await listAllItemsInFolder(processoFolder.id);
+              } catch (e) {
+                errors++;
+                continue;
+              }
+
+              const files = level3Items.filter(
+                (f: any) => f.mimeType !== "application/vnd.google-apps.folder",
+              );
+
+              for (const file of files) {
+                const path = `${atribuicaoLabel}/${assistidoFolder.name}/${processoFolder.name}/${file.name}`;
+                const hasMatch = !!(matchedAssistidoId || matchedProcessoId);
+                try {
+                  await db.execute(sql`
+                    INSERT INTO drive_file_index (drive_file_id, drive_path, file_name, mime_type, size_bytes, modified_time, assistido_id, processo_id, link_strategy, link_confidence, workspace_id, defensor_id, last_seen_at)
+                    VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ? new Date(file.modifiedTime) : null}, ${matchedAssistidoId}, ${matchedProcessoId}, ${hasMatch ? "path" : "pending"}, ${hasMatch ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date()})
+                    ON CONFLICT (drive_file_id) DO UPDATE SET
+                      drive_path = EXCLUDED.drive_path,
+                      file_name = EXCLUDED.file_name,
+                      mime_type = EXCLUDED.mime_type,
+                      size_bytes = EXCLUDED.size_bytes,
+                      modified_time = EXCLUDED.modified_time,
+                      assistido_id = COALESCE(EXCLUDED.assistido_id, drive_file_index.assistido_id),
+                      processo_id = COALESCE(EXCLUDED.processo_id, drive_file_index.processo_id),
+                      link_strategy = CASE WHEN EXCLUDED.assistido_id IS NOT NULL OR EXCLUDED.processo_id IS NOT NULL THEN 'path' ELSE drive_file_index.link_strategy END,
+                      link_confidence = COALESCE(EXCLUDED.link_confidence, drive_file_index.link_confidence),
+                      last_seen_at = EXCLUDED.last_seen_at
+                  `);
+                  indexed++;
+                  if (hasMatch) linked++;
+                } catch (e) {
+                  errors++;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error(`[DriveIndex] Error walking ${atribuicaoLabel}:`, e);
+          errors++;
+        }
+      }
+
+      console.log(`[DriveIndex] Done: ${indexed} indexed, ${linked} linked, ${errors} errors`);
+      return { indexed, linked, errors };
+    }, "Erro ao indexar árvore do Drive");
+  }),
+
+  /**
+   * Lista arquivos indexados por assistido
+   */
+  filesByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db.execute(sql`
+        SELECT id, drive_file_id, drive_path, file_name, mime_type, size_bytes,
+          modified_time, processo_id, link_strategy, link_confidence
+        FROM drive_file_index
+        WHERE assistido_id = ${input.assistidoId}
+          AND deleted_at IS NULL
+        ORDER BY drive_path
+      `);
+      return (result as any[]).map((r: any) => ({
+        id: Number(r.id),
+        driveFileId: String(r.drive_file_id),
+        drivePath: String(r.drive_path),
+        fileName: String(r.file_name),
+        mimeType: r.mime_type ? String(r.mime_type) : null,
+        sizeBytes: r.size_bytes ? Number(r.size_bytes) : null,
+        modifiedTime: r.modified_time ? String(r.modified_time) : null,
+        processoId: r.processo_id ? Number(r.processo_id) : null,
+        linkStrategy: String(r.link_strategy),
+        linkConfidence: r.link_confidence ? Number(r.link_confidence) : null,
+      }));
+    }),
+
+  /**
+   * Lista arquivos indexados por processo
+   */
+  filesByProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const result = await db.execute(sql`
+        SELECT id, drive_file_id, drive_path, file_name, mime_type, size_bytes,
+          modified_time, assistido_id, link_strategy, link_confidence
+        FROM drive_file_index
+        WHERE processo_id = ${input.processoId}
+          AND deleted_at IS NULL
+        ORDER BY drive_path
+      `);
+      return (result as any[]).map((r: any) => ({
+        id: Number(r.id),
+        driveFileId: String(r.drive_file_id),
+        drivePath: String(r.drive_path),
+        fileName: String(r.file_name),
+        mimeType: r.mime_type ? String(r.mime_type) : null,
+        sizeBytes: r.size_bytes ? Number(r.size_bytes) : null,
+        modifiedTime: r.modified_time ? String(r.modified_time) : null,
+        assistidoId: r.assistido_id ? Number(r.assistido_id) : null,
+        linkStrategy: String(r.link_strategy),
+        linkConfidence: r.link_confidence ? Number(r.link_confidence) : null,
+      }));
+    }),
 });
