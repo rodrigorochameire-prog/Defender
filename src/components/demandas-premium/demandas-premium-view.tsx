@@ -2057,56 +2057,47 @@ export default function Demandas() {
           </div>
         }
         bottomRow={
-          <div className="flex items-center gap-2.5 flex-wrap overflow-x-auto scrollbar-none">
-            <AtribuicaoPills
-              variant="dark"
-              options={atribuicaoOptions}
-              selectedValues={selectedAtribuicoes}
-              onToggle={handleSingleAtribuicaoSelect}
-              onClear={() => {}}
-              singleSelect
-              compact
-              counts={atribuicaoCounts}
-            />
-
-            <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-            <div className="hidden sm:flex relative flex-1 max-w-[220px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar nome, processo..."
-                className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+          <div className="flex items-center gap-2.5">
+            {/* ========= LEFT GROUP — pills + view mode + settings ========= */}
+            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+              <AtribuicaoPills
+                variant="dark"
+                options={atribuicaoOptions}
+                selectedValues={selectedAtribuicoes}
+                onToggle={handleSingleAtribuicaoSelect}
+                onClear={() => {}}
+                singleSelect
+                compact
+                counts={atribuicaoCounts}
               />
-            </div>
 
-            <div className="w-px h-5 bg-white/[0.10] shrink-0" />
+              <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
-            <ViewModeDropdown
-              options={DEMANDAS_VIEW_OPTIONS}
-              value={activeTab}
-              onChange={(v) => setActiveTab(v as any)}
-              variant="dark"
-            />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <ViewModeDropdown
+                  options={DEMANDAS_VIEW_OPTIONS}
+                  value={activeTab}
+                  onChange={(v) => setActiveTab(v as any)}
+                  variant="dark"
+                />
 
-            <div className="relative">
-              <button
-                ref={filtersBtnRef}
-                onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                className="relative w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-all duration-200 cursor-pointer"
-                title="Configurações"
-              >
-                <Settings className="w-[14px] h-[14px] text-white/50" />
-                {(() => {
-                  const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
-                  return count > 0 ? (
-                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    </span>
-                  ) : null;
-                })()}
-              </button>
+                <div className="relative">
+                  <button
+                    ref={filtersBtnRef}
+                    onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+                    className="relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+                    title="Configurações"
+                  >
+                    <Settings className="w-[13px] h-[13px]" />
+                    {(() => {
+                      const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+                      return count > 0 ? (
+                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                        </span>
+                      ) : null;
+                    })()}
+                  </button>
               {isFiltersDropdownOpen && createPortal(
                 <>
                   <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
@@ -2200,6 +2191,19 @@ export default function Demandas() {
                 </>,
                 document.body
               )}
+                </div>
+              </div>
+            </div>
+
+            {/* ========= RIGHT CLUSTER — busca (oculta em mobile) ========= */}
+            <div className="hidden md:flex relative w-[220px] shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar nome, processo..."
+                className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+              />
             </div>
           </div>
         }
@@ -2212,21 +2216,9 @@ export default function Demandas() {
             </div>
             <div>
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
-              {(() => {
-                const total = demandas.filter(d => !d.arquivado).length;
-                const urgent = demandas.filter(d => !d.arquivado && d.status?.toUpperCase?.() === "URGENTE").length;
-                return (
-                  <p className="text-[10px] text-white/55 tabular-nums">
-                    {total} demandas
-                    {urgent > 0 && (
-                      <>
-                        {" · "}
-                        <span className="text-red-400">{urgent} urgentes</span>
-                      </>
-                    )}
-                  </p>
-                );
-              })()}
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {demandas.filter(d => !d.arquivado).length} demandas
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
