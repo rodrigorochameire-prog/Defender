@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -308,29 +309,31 @@ export default function NovaDemandaPage() {
   };
 
   return (
-    <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Link href="/admin/demandas">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
-          </Link>
-          <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 flex-shrink-0">
-            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-violet-700 dark:text-violet-400" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              Nova Demanda
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
-              Registre uma nova demanda com cálculo automático de prazo
-            </p>
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <CollapsiblePageHeader title="Nova Demanda" icon={Plus}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/admin/demandas">
+              <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            </Link>
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Plus className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Nova Demanda
+              </h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">
+                Registre uma nova demanda com cálculo automático de prazo
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
+      <div className="px-5 md:px-8 py-3 md:py-4 max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Formulário */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Assistido e Processo */}
@@ -863,6 +866,7 @@ export default function NovaDemandaPage() {
           </Button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

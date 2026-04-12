@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,27 +17,28 @@ import {
 export default function MedidasProtetivasPage() {
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      {/* SUB-HEADER */}
-      <div className="px-4 md:px-6 py-3 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Link href="/admin">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center border border-purple-200 dark:border-purple-800">
-              <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h1 className="text-sm font-semibold text-foreground">Monitor de MPUs</h1>
-              <p className="text-[10px] text-neutral-500">Medidas Protetivas de Urgência</p>
-            </div>
+      <CollapsiblePageHeader title="Medidas Socioeducativas" icon={Shield}>
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/admin">
+            <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          </Link>
+          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+              Medidas Socioeducativas
+            </h1>
+            <p className="text-[10px] text-white/55 hidden sm:block">
+              Medidas Protetivas de Urgência
+            </p>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
-      <div className="p-4 md:p-6">
+      <div className="px-5 md:px-8 py-3 md:py-4">
         {/* Estado: Em Desenvolvimento */}
         <Card className="border-amber-200 dark:border-amber-800/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
           <CardContent className="py-16 px-8 text-center">

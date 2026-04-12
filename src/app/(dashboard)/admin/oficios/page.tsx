@@ -16,6 +16,7 @@ import {
   RefreshCw,
   LayoutTemplate,
 } from "lucide-react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -134,38 +135,42 @@ export default function OficiosPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10">
-            <Mail className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <CollapsiblePageHeader title="Ofícios" icon={Mail}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Mail className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Ofícios
+              </h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">
+                Gerar, revisar e gerenciar ofícios com IA
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Oficios</h1>
-            <p className="text-sm text-neutral-500">
-              Gerar, revisar e gerenciar oficios com IA
-            </p>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => router.push("/admin/oficios/templates")}
+              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <LayoutTemplate className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Templates</span>
+            </button>
+            <button
+              onClick={() => setTemplateSelectorOpen(true)}
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Novo Ofício</span>
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300"
-            onClick={() => router.push("/admin/oficios/templates")}
-          >
-            <LayoutTemplate className="w-4 h-4 mr-2" />
-            Templates
-          </Button>
-          <Button
-            onClick={() => setTemplateSelectorOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Oficio
-          </Button>
-        </div>
-      </div>
+      </CollapsiblePageHeader>
+
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -497,6 +502,7 @@ export default function OficiosPage() {
         onClose={() => setTemplateSelectorOpen(false)}
         onSelect={handleTemplateSelect}
       />
+      </div>
     </div>
   );
 }

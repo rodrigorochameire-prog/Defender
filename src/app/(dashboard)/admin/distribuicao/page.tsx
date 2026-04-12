@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1205,76 +1206,60 @@ export default function DistribuicaoPage() {
   }, [pendingFiles, history]);
 
   return (
-    <div className="h-screen flex flex-col bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
-              <FolderInput className="w-5 h-5 text-white dark:text-neutral-900" />
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Distribuição" icon={FolderInput}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <FolderInput className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
                 Distribuição
               </h1>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-[10px] text-white/55 hidden sm:block">
                 Distribuição automática de documentos com IA
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            {/* Stats */}
-            <div className="hidden md:flex items-center gap-4 mr-4">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-amber-500" />
-                <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {stats.pending} pendentes
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {stats.completed} distribuídos
-                </span>
-              </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="hidden md:flex items-center gap-3 mr-2">
+              <span className="text-[11px] text-white/60 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                {stats.pending} pendentes
+              </span>
+              <span className="text-[11px] text-white/60 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                {stats.completed} distribuídos
+              </span>
             </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center border border-neutral-200 dark:border-neutral-700 rounded-lg">
-              <Button
-                variant={viewMode === "split" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 rounded-r-none"
-                onClick={() => setViewMode("split")}
-              >
-                <SplitSquareVertical className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 rounded-l-none"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => refetchFiles()}
-              className="h-8"
+            <button
+              onClick={() => setViewMode("split")}
+              className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "split" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
             >
-              <RefreshCw className="w-4 h-4 mr-1" />
-              Atualizar
-            </Button>
+              <SplitSquareVertical className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Split</span>
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "list" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Lista</span>
+            </button>
+            <button
+              onClick={() => refetchFiles()}
+              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Atualizar</span>
+            </button>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden p-4 md:p-6">
+      <div className="flex-1 overflow-hidden px-5 md:px-8 py-3 md:py-4">
         {viewMode === "split" ? (
           // Split View
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-4">
