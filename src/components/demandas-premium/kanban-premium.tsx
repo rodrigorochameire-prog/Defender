@@ -220,27 +220,20 @@ function KanbanCard({
           {demanda.ato}
         </p>
 
-        {/* Row 3: Processo + Data expedição */}
-        {(processo || demanda.data) && (
+        {/* Row 3: Processo */}
+        {processo && (
           <div className="flex items-center gap-1 mb-1">
-            {processo && (
-              <span
-                className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  copyToClipboard(processo);
-                }}
-                title="Copiar"
-              >
-                {processo}
-              </span>
-            )}
-            {demanda.data && (
-              <span className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
-                {demanda.data}
-              </span>
-            )}
-            {processo && <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />}
+            <span
+              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                copyToClipboard(processo);
+              }}
+              title="Copiar"
+            >
+              {processo}
+            </span>
+            <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
           </div>
         )}
 
