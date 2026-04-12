@@ -244,7 +244,7 @@ export function EventDetailSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-300/60 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-300 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               {(() => {
@@ -496,7 +496,31 @@ export function EventDetailSheet({
                   )}
                 </SectionCard>
 
-                {/* 5. LAUDOS */}
+                {/* 5. CONTRADICOES — logo após depoentes */}
+                <SectionCard label="Contradições">
+                  {contradicoes.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {contradicoes.map((c: any, i: number) => {
+                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
+                        const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
+                        return (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-400/70" : "text-amber-400/70")}>
+                              {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                            </span>
+                            <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                              {text}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <EmptyHint text="Nenhuma contradição identificada." />
+                  )}
+                </SectionCard>
+
+                {/* 6. LAUDOS */}
                 <SectionCard label="Laudos e Perícias">
                   {laudos.length > 0 ? (
                     <>
@@ -529,7 +553,7 @@ export function EventDetailSheet({
                   )}
                 </SectionCard>
 
-                {/* 6. INVESTIGACAO DEFENSIVA */}
+                {/* 7. INVESTIGACAO DEFENSIVA */}
                 <SectionCard label="Investigação Defensiva">
                   {diligencias.length > 0 ? (
                     <ul className="space-y-2">
@@ -561,30 +585,6 @@ export function EventDetailSheet({
                     </ul>
                   ) : (
                     <EmptyHint text="Nenhuma diligência registrada." />
-                  )}
-                </SectionCard>
-
-                {/* 7. CONTRADICOES */}
-                <SectionCard label="Contradições">
-                  {contradicoes.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {contradicoes.map((c: any, i: number) => {
-                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
-                        const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
-                        return (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-400/70" : "text-amber-400/70")}>
-                              {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                            </span>
-                            <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                              {text}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma contradição identificada." />
                   )}
                 </SectionCard>
 

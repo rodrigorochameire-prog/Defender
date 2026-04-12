@@ -207,7 +207,7 @@ export function DayEventsSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-300/60 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-300 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar calendário */}
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200/60 dark:border-neutral-600/40 flex flex-col items-center justify-center shrink-0">
