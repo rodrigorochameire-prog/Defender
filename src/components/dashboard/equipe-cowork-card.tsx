@@ -91,7 +91,7 @@ export function EquipeCoworkCard({
   return (
     <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
             <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />

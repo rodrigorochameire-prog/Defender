@@ -819,7 +819,7 @@ export default function DashboardJuriPage() {
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
         <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center gap-3">
+          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
               <Plus className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
             </div>
@@ -1402,7 +1402,7 @@ export default function DashboardJuriPage() {
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-            <div className="px-5 py-4 flex items-center justify-between">
+            <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   <Sun className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
@@ -1514,7 +1514,7 @@ export default function DashboardJuriPage() {
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
         <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-          <div className="px-5 py-4 flex items-center justify-between">
+          <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                 <Clock className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
@@ -1608,7 +1608,7 @@ export default function DashboardJuriPage() {
         {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
         {!isDefensorCriminalGeral && hasArea("JURI") && (
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
@@ -1718,7 +1718,7 @@ export default function DashboardJuriPage() {
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
@@ -1787,7 +1787,7 @@ export default function DashboardJuriPage() {
         ) : (
           /* Especializado: Audiências da Semana */
           <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-              <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
+              <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
