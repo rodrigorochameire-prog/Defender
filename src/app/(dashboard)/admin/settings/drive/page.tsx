@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -692,61 +693,56 @@ export default function DriveConfigPage() {
   const isConfigured = configStatus?.configured === true;
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg">
-            <HardDrive className="w-5 h-5 text-white dark:text-neutral-900" />
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Configurações Drive" icon={Settings}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Settings className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Configurações Drive</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Gerencie a integração e pastas sincronizadas</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">
-              Configuração do Google Drive
-            </h1>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Gerencie a integração e pastas sincronizadas
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link href="/admin/distribuicao">
-            <Button variant="outline" size="sm">
-              <FolderPlus className="w-4 h-4 mr-2" />
-              Distribuição
-            </Button>
-          </Link>
-          <Link href="/admin/drive">
-            <Button variant="outline" size="sm">
-              <FolderOpen className="w-4 h-4 mr-2" />
-              Abrir Drive
-            </Button>
-          </Link>
-          {isConfigured && rootLink?.link && (
-            <a href={rootLink.link} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Abrir no Google
-              </Button>
-            </a>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => organizeDriveMutation.mutate({ dryRun: false })}
-            disabled={organizeDriveMutation.isPending}
-            className="border-orange-200 text-orange-700 hover:bg-orange-50"
-          >
-            {organizeDriveMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <FolderSync className="w-4 h-4 mr-2" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link href="/admin/distribuicao">
+              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                <FolderPlus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Distribuição</span>
+              </button>
+            </Link>
+            <Link href="/admin/drive">
+              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                <FolderOpen className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Abrir Drive</span>
+              </button>
+            </Link>
+            {isConfigured && rootLink?.link && (
+              <a href={rootLink.link} target="_blank" rel="noopener noreferrer">
+                <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Abrir no Google</span>
+                </button>
+              </a>
             )}
-            {organizeDriveMutation.isPending ? "Organizando..." : "Organizar PDFs"}
-          </Button>
+            <button
+              onClick={() => organizeDriveMutation.mutate({ dryRun: false })}
+              disabled={organizeDriveMutation.isPending}
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+            >
+              {organizeDriveMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FolderSync className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">{organizeDriveMutation.isPending ? "Organizando..." : "Organizar PDFs"}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
       {/* Status da Conexão */}
       <ConnectionStatus
         isConfigured={isConfigured}
@@ -1228,6 +1224,7 @@ export default function DriveConfigPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -368,38 +369,32 @@ export default function DataManagementPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-              <Database className="w-5 h-5 text-white" />
+      <CollapsiblePageHeader title="Dados & Backup" icon={Database}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Database className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                Gerenciamento de Dados
-              </h1>
-              <p className="text-xs text-neutral-500">
-                Monitor, gerencie e administre os dados do sistema
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Dados & Backup</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Monitor, gerencie e administre os dados do sistema</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-8">
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Exportar
-            </Button>
-            <Button variant="outline" size="sm" className="h-8">
-              <Upload className="w-3.5 h-3.5 mr-1.5" />
-              Importar
-            </Button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Exportar</span>
+            </button>
+            <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+              <Upload className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Importar</span>
+            </button>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <StatCard
