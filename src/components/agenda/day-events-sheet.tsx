@@ -189,7 +189,7 @@ export function DayEventsSheet({
         className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
         {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Agenda
@@ -207,7 +207,7 @@ export function DayEventsSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#5a5a5e] shadow-[0_1px_8px_-3px_rgba(0,0,0,0.10)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#6b6b6f] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
             <div className="flex items-start gap-3.5">
               {/* Avatar calendário */}
               <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex flex-col items-center justify-center shrink-0 shadow-[0_0_0_2.5px_rgba(255,255,255,0.10)]">

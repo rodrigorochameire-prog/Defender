@@ -30,6 +30,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  normalizeAreaToFilter,
+  SOLID_COLOR_MAP,
+} from "@/lib/config/atribuicoes";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -51,7 +55,7 @@ function SectionCard({
         className
       )}
     >
-      <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500 mb-2">
+      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-2 tracking-wide">
         {label}
       </p>
       {children}
@@ -211,7 +215,7 @@ export function EventDetailSheet({
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
         {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Evento
@@ -229,14 +233,23 @@ export function EventDetailSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#5a5a5e] shadow-[0_1px_8px_-3px_rgba(0,0,0,0.10)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#6b6b6f] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
             <div className="flex items-start gap-3.5">
-              {/* Avatar iniciais */}
-              <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0 shadow-[0_0_0_2.5px_rgba(255,255,255,0.10)]">
-                <span className="text-sm font-semibold text-white/90">
-                  {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
-                </span>
-              </div>
+              {/* Avatar com ring de atribuição */}
+              {(() => {
+                const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
+                const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
+                return (
+                  <div
+                    className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0"
+                    style={{ boxShadow: `0 0 0 2.5px ${atribColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}
+                  >
+                    <span className="text-sm font-semibold text-white/90">
+                      {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
+                    </span>
+                  </div>
+                );
+              })()}
               <div className="flex-1 min-w-0 pt-0.5">
                 {assistidoNome && (
                   <h2 className="text-[15px] font-semibold text-white leading-tight truncate">
@@ -313,7 +326,7 @@ export function EventDetailSheet({
                   <SectionCard label="Elementos">
                     {laudos.length > 0 && (
                       <div className="mb-2">
-                        <p className="text-[10px] uppercase tracking-wider font-medium text-neutral-400 mb-1">
+                        <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
                           Laudos
                         </p>
                         <ul className="space-y-1">
@@ -328,13 +341,13 @@ export function EventDetailSheet({
                     )}
                     {lacunas.length > 0 && (
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider font-medium text-neutral-400 mb-1">
-                          Lacunas / Vulnerabilidades
+                        <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
+                          Lacunas
                         </p>
                         <ul className="space-y-1">
                           {lacunas.map((l: any, i: number) => (
-                            <li key={i} className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
                               <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
                             </li>
                           ))}
@@ -349,8 +362,8 @@ export function EventDetailSheet({
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400/70" />
+                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
                           Delegacia
                         </span>
                       </div>
@@ -366,8 +379,8 @@ export function EventDetailSheet({
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
                           Atendimento Defensoria
                         </span>
                         {atendimento?.data && (
@@ -396,12 +409,12 @@ export function EventDetailSheet({
                       {diligencias.map((d: any) => {
                         const statusColor =
                           d.status === "concluida" || d.status === "concluída"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400"
                             : d.status === "em_andamento" || d.status === "em andamento"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400"
                               : d.status === "frustrada" || d.status === "cancelada"
-                                ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
-                                : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+                                ? "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                                : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400";
                         return (
                           <li key={d.id} className="text-xs">
                             <div className="flex items-center gap-2">
@@ -434,14 +447,14 @@ export function EventDetailSheet({
                         const isAcusacao = d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA";
                         const isDefesa = d.lado === "defesa" || d.tipo === "DEFESA";
                         const borderColor = isAcusacao
-                          ? "border-l-rose-300"
+                          ? "border-l-rose-300/60"
                           : isDefesa
-                            ? "border-l-emerald-300"
-                            : "border-l-neutral-300";
+                            ? "border-l-emerald-300/60"
+                            : "border-l-neutral-200";
                         const bgColor = isAcusacao
-                          ? "bg-rose-50/40 dark:bg-rose-950/10"
+                          ? "bg-rose-50/30 dark:bg-rose-950/10"
                           : isDefesa
-                            ? "bg-emerald-50/40 dark:bg-emerald-950/10"
+                            ? "bg-emerald-50/30 dark:bg-emerald-950/10"
                             : "";
                         const nome = d.nome ?? d.name ?? "Sem nome";
                         const resumo = d.resumo ?? d.versao_delegacia ?? d.versao ?? null;
@@ -498,7 +511,7 @@ export function EventDetailSheet({
                         const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
                         return (
                           <li key={i} className="flex items-start gap-2 text-xs">
-                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-500" : "text-rose-500")}>
+                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-400/70" : "text-amber-400/70")}>
                               {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
                             </span>
                             <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
@@ -518,8 +531,8 @@ export function EventDetailSheet({
                       {pendencias.map((p: any, i: number) => {
                         const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
                         return (
-                          <li key={i} className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
-                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
                             <span>{text}</span>
                           </li>
                         );
@@ -537,10 +550,10 @@ export function EventDetailSheet({
                         const viabilidade = typeof t === "object" ? t.viabilidade ?? t.probabilidade : null;
                         const color =
                           viabilidade === "alta" || viabilidade === "forte"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-300"
+                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-200/60"
                             : viabilidade === "media" || viabilidade === "moderada"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300"
-                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700";
+                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200/60"
+                              : "bg-neutral-50 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200/60 dark:border-neutral-700";
                         return (
                           <span
                             key={i}
@@ -568,7 +581,7 @@ export function EventDetailSheet({
         </div>
 
         {/* ===== STICKY FOOTER — Padrão Defender ===== */}
-        <div className="sticky bottom-0 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/50 dark:border-neutral-800/60 px-4 py-3 space-y-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-4 py-3 space-y-2">
           {/* Anotacao rapida */}
           <div className="flex gap-2">
             <Input

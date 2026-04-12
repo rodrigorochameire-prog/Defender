@@ -604,7 +604,7 @@ export function DemandaQuickPreview({
         }}
       >
         {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
             <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Demanda
@@ -647,7 +647,7 @@ export function DemandaQuickPreview({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — sheet header suave (Padrão Defender) ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#5a5a5e] shadow-[0_1px_8px_-3px_rgba(0,0,0,0.10)]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#6b6b6f] shadow-[0_1px_6px_-2px_rgba(0,0,0,0.08)]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com borda de atribuição */}
               <div className="w-11 h-11 rounded-xl bg-white/[0.12] flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}, 0 0 0 4px rgba(255,255,255,0.06)` }}>
@@ -1189,7 +1189,7 @@ export function DemandaQuickPreview({
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
-        <div className="sticky bottom-0 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/50 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
+        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
           <button
             onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
             className="flex-1 h-8 rounded-xl bg-emerald-500 text-white shadow-sm text-[11px] font-semibold hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5"
