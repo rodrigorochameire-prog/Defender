@@ -102,7 +102,7 @@ function StatCard({
   };
 
   const content = (
-    <div className={`group relative p-4 rounded-xl bg-white dark:bg-card border border-neutral-100 dark:border-border ${colors[color]} transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-${color}-500/[0.03]`}>
+    <div className={`group relative p-4 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 ${colors[color]} transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-${color}-500/[0.03]`}>
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-${color}-500/0 to-transparent group-hover:via-${color}-500/30 transition-all duration-300 rounded-t-xl" />
       
       <div className="flex items-start justify-between gap-3">
@@ -123,7 +123,7 @@ function StatCard({
             </p>
           )}
         </div>
-        <div className={`w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center flex-shrink-0 border border-neutral-200 dark:border-border group-hover:bg-${color}-50 dark:group-hover:bg-${color}-900/20 transition-all duration-300`}>
+        <div className={`w-9 h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0 border border-neutral-200 dark:border-neutral-800/60 group-hover:bg-${color}-50 dark:group-hover:bg-${color}-900/20 transition-all duration-300`}>
           <Icon className={`w-4 h-4 ${iconColors[color]} transition-colors duration-300`} />
         </div>
       </div>
@@ -145,7 +145,7 @@ function DelegacaoCard({ delegacao }: { delegacao: any }) {
     : null;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-neutral-100 dark:border-border hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 hover:border-amber-200 dark:hover:border-amber-800/50 transition-colors">
       <div className={`w-2 h-10 rounded-full ${
         delegacao.status === "pendente" ? "bg-amber-500" :
         delegacao.status === "em_andamento" ? "bg-blue-500" :
@@ -206,7 +206,7 @@ function DashboardEstagiario({
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
@@ -228,7 +228,7 @@ function DashboardEstagiario({
       <div className="p-4 md:p-6 space-y-6">
         {/* Stats Cards - Padrão Defender */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
                 <ClipboardList className="w-5 h-5 text-white" />
@@ -240,7 +240,7 @@ function DashboardEstagiario({
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
                 <RefreshCw className="w-5 h-5 text-white" />
@@ -252,7 +252,7 @@ function DashboardEstagiario({
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
                 <CheckCircle2 className="w-5 h-5 text-white" />
@@ -266,7 +266,7 @@ function DashboardEstagiario({
 
           <Card className="group relative p-5 bg-neutral-900 dark:bg-white border-neutral-800 dark:border-neutral-200 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-neutral-900 flex items-center justify-center shadow-md">
                 <TrendingUp className="w-5 h-5 text-neutral-900 dark:text-white" />
               </div>
               <div>
@@ -278,8 +278,8 @@ function DashboardEstagiario({
         </div>
 
         {/* Tarefas Delegadas */}
-        <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-neutral-50/50 dark:bg-card/50">
+        <Card className="bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ListTodo className="w-4 h-4 text-amber-500" />
@@ -323,7 +323,7 @@ function DashboardEstagiario({
         {/* Grid de acesso rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -332,7 +332,7 @@ function DashboardEstagiario({
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Scale className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
@@ -341,7 +341,7 @@ function DashboardEstagiario({
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
@@ -350,7 +350,7 @@ function DashboardEstagiario({
             </Card>
           </Link>
           <Link href="/admin/juri">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Gavel className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
@@ -386,7 +386,7 @@ function DashboardServidor({
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Padrão Defender */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
+      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
@@ -408,7 +408,7 @@ function DashboardServidor({
       <div className="p-4 md:p-6 space-y-6">
         {/* Stats Cards - Padrão Defender */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shadow-md shadow-amber-500/30">
                 <ClipboardList className="w-5 h-5 text-white" />
@@ -420,7 +420,7 @@ function DashboardServidor({
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md shadow-emerald-500/30">
                 <MessageSquare className="w-5 h-5 text-white" />
@@ -432,7 +432,7 @@ function DashboardServidor({
             </div>
           </Card>
 
-          <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/30">
                 <ListTodo className="w-5 h-5 text-white" />
@@ -446,7 +446,7 @@ function DashboardServidor({
 
           <Card className="group relative p-5 bg-neutral-900 dark:bg-white border-neutral-800 dark:border-neutral-200 rounded-2xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-neutral-900 flex items-center justify-center shadow-md">
                 <Users className="w-5 h-5 text-neutral-900 dark:text-white" />
               </div>
               <div>
@@ -458,8 +458,8 @@ function DashboardServidor({
         </div>
 
         {/* Tarefas do Dia */}
-        <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-neutral-50/50 dark:bg-card/50">
+        <Card className="bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/50">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-blue-500" />
               <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">
@@ -484,7 +484,7 @@ function DashboardServidor({
                   .filter((a: any) => a.data && isToday(new Date(a.data)))
                   .slice(0, 5)
                   .map((aud: any) => (
-                    <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-100 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
+                    <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                         <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </div>
@@ -506,7 +506,7 @@ function DashboardServidor({
         {/* Acesso Rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Link href="/admin/demandas">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <ListTodo className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
@@ -514,7 +514,7 @@ function DashboardServidor({
             </Card>
           </Link>
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -522,7 +522,7 @@ function DashboardServidor({
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Scale className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
@@ -530,7 +530,7 @@ function DashboardServidor({
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
@@ -538,7 +538,7 @@ function DashboardServidor({
             </Card>
           </Link>
           <Link href="/admin/whatsapp">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-green-200 dark:hover:border-green-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/80 dark:border-neutral-800/60 rounded-2xl hover:shadow-xl hover:border-green-200 dark:hover:border-green-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <MessageSquare className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
@@ -625,8 +625,8 @@ function DashboardTriagem({
       </Card>
 
       {/* Últimos Cadastros */}
-      <Card className="bg-white dark:bg-card border-neutral-100 dark:border-border rounded-xl overflow-hidden">
-        <div className="p-3 border-b border-neutral-100 dark:border-border">
+      <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-xl overflow-hidden">
+        <div className="p-3 border-b border-neutral-200/60 dark:border-neutral-800/60">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-neutral-500" />
             <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">
@@ -762,8 +762,8 @@ function DashboardDefensorCriminal({
       </div>
 
       {/* Prazos Próximos */}
-      <Card className="bg-white dark:bg-card border-neutral-100 dark:border-border rounded-xl overflow-hidden">
-        <div className="p-3 border-b border-neutral-100 dark:border-border">
+      <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-xl overflow-hidden">
+        <div className="p-3 border-b border-neutral-200/60 dark:border-neutral-800/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-500" />

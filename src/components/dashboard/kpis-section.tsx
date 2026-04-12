@@ -58,7 +58,7 @@ const KPI = {
   hover: "hover:bg-white dark:hover:bg-[#1f1f22] transition-colors duration-200",
   // Ícone container — subtle neutral
   iconWrap:
-    "w-7 h-7 rounded-md bg-neutral-900/[0.04] dark:bg-white/[0.05] flex items-center justify-center",
+    "w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center",
   iconColor: "text-neutral-700 dark:text-neutral-300",
   // Tipografia
   label: "text-[9px] uppercase tracking-wider font-semibold text-neutral-500 dark:text-neutral-400",
@@ -325,7 +325,7 @@ function ChartCard({
           <Icon className={cn("w-3.5 h-3.5", KPI.iconColor)} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
             {title}
           </h3>
           {subtitle && (
@@ -497,7 +497,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               <BarChart3 className={cn("w-3.5 h-3.5", KPI.iconColor)} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
                 KPIs Operacionais
               </h2>
               <div className="flex items-center gap-1.5 text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -509,7 +509,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-white/[0.05] hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] transition-colors rounded-md px-2.5 py-1.5 border border-neutral-200/60 dark:border-white/[0.04]">
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200/70 dark:hover:bg-neutral-700/50 transition-colors rounded-lg px-2.5 py-1.5 border border-neutral-200/60 dark:border-neutral-800/60">
               <Filter className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
               <select
                 className="bg-transparent text-[11px] outline-none cursor-pointer text-neutral-700 dark:text-neutral-200"
@@ -529,7 +529,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Atualizar"
-              className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-neutral-600 dark:text-neutral-300"
+              className="h-7 w-7 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-neutral-600 dark:text-neutral-300"
             >
               <RefreshCw className={cn("w-3 h-3", isRefreshing && "animate-spin")} />
             </button>
@@ -538,7 +538,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               <button
                 onClick={onClose}
                 title="Fechar"
-                className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer text-neutral-600 dark:text-neutral-300"
+                className="h-7 w-7 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors flex items-center justify-center cursor-pointer text-neutral-600 dark:text-neutral-300"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -558,7 +558,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             "px-4 py-2.5 flex items-center gap-5 flex-wrap",
           )}
         >
-          <span className="inline-flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400 pr-2 border-r border-neutral-200 dark:border-white/[0.08]">
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground pr-2 border-r border-neutral-200/60 dark:border-neutral-800/60">
             <CalendarClock className="w-3 h-3" />
             Hoje
           </span>
@@ -721,7 +721,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                 <Activity className={cn("w-3.5 h-3.5", KPI.iconColor)} />
               </div>
               <div>
-                <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
                   Saúde do backlog
                 </h3>
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
@@ -733,7 +733,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               </span>
             </div>
 
-            <div className="flex items-center h-8 w-full rounded-md overflow-hidden ring-1 ring-neutral-200/60 dark:ring-white/[0.04]">
+            <div className="flex items-center h-8 w-full rounded-lg overflow-hidden ring-1 ring-neutral-200/60 dark:ring-neutral-800/60">
               {agingBuckets.map((b, i) => {
                 const pct = (b.value / agingTotal) * 100;
                 if (pct === 0) return null;
@@ -784,7 +784,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             >
               <div className="px-4 py-2.5 border-b border-red-500/20 flex items-center gap-2">
                 <Flame className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-                <h3 className="text-[11px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
                   Réu Preso — Prazo ≤ 5 dias
                 </h3>
                 <span className="ml-auto text-[9px] uppercase tracking-wider text-red-600/70 dark:text-red-400/70 font-semibold">

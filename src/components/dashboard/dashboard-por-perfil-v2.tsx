@@ -91,7 +91,7 @@ function StatCardPremium({
   loading?: boolean;
 }) {
   const content = (
-    <Card className="group relative p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl transition-all">
+    <Card className="group relative p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl transition-all">
       <div className="flex items-center gap-4">
         <div className={`w-12 h-12 rounded-xl ${colorClass} flex items-center justify-center shadow-md`}>
           <Icon className="w-5 h-5 text-white" />
@@ -130,7 +130,7 @@ function DelegacaoCardCompact({ delegacao }: { delegacao: any }) {
     : null;
 
   const content = (
-    <div className={`flex items-center gap-3 p-3 rounded-xl border border-neutral-100 dark:border-border transition-all bg-white dark:bg-card/50 ${
+    <div className={`flex items-center gap-3 p-3 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 transition-all bg-white dark:bg-neutral-900/50 ${
       href ? "hover:border-emerald-200/50 dark:hover:border-emerald-800/30 cursor-pointer" : "hover:border-amber-200 dark:hover:border-amber-800/50"
     }`}>
       <div className={`w-1.5 h-12 rounded-full ${
@@ -187,7 +187,7 @@ function EventoCompartilhadoCard({ evento }: { evento: any }) {
   const isAmanha = dataEvento && isTomorrow(dataEvento);
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl border border-neutral-100 dark:border-border hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-colors bg-white dark:bg-card/50">
+    <div className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-colors bg-white dark:bg-neutral-900/50">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
         evento.tipo === "audiencia" ? "bg-blue-100 dark:bg-blue-900/30" :
         evento.tipo === "prazo" ? "bg-amber-100 dark:bg-amber-900/30" :
@@ -272,10 +272,10 @@ function DashboardEstagiarioV2({
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Premium */}
-      <div className="px-4 md:px-6 py-5 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
+      <div className="px-4 md:px-6 py-5 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
               <GraduationCap className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -323,9 +323,9 @@ function DashboardEstagiarioV2({
             colorClass="bg-emerald-500 shadow-emerald-500/30"
             loading={isLoading}
           />
-          <Card className="group relative p-5 bg-neutral-900 dark:bg-white border-neutral-800 dark:border-neutral-200 rounded-2xl hover:shadow-xl transition-all">
+          <Card className="group relative p-5 bg-neutral-900 dark:bg-white border-neutral-800 dark:border-neutral-200 rounded-xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-white dark:bg-card flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-neutral-900 flex items-center justify-center shadow-md">
                 <TrendingUp className="w-5 h-5 text-neutral-900 dark:text-white" />
               </div>
               <div>
@@ -339,12 +339,12 @@ function DashboardEstagiarioV2({
         {/* Grid Principal */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Minhas Tarefas */}
-          <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
+          <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ListTodo className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-sm font-bold text-neutral-800 dark:text-foreground">
+                  <h3 className="text-[13px] font-semibold text-neutral-800 dark:text-foreground">
                     Minhas Tarefas
                   </h3>
                   <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px]">
@@ -382,12 +382,12 @@ function DashboardEstagiarioV2({
           </Card>
 
           {/* Agenda do Supervisor (Compartilhada) */}
-          <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-muted/50 dark:to-muted/30">
+          <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-muted/50 dark:to-muted/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-neutral-500" />
-                  <h3 className="text-sm font-bold text-neutral-800 dark:text-foreground">
+                  <h3 className="text-[13px] font-semibold text-neutral-800 dark:text-foreground">
                     Agenda de {supervisorName || "Defensor"}
                   </h3>
                   <Badge className="bg-neutral-100 text-neutral-600 dark:bg-muted dark:text-muted-foreground text-[10px]">
@@ -439,7 +439,7 @@ function DashboardEstagiarioV2({
         {/* Acesso Rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -448,7 +448,7 @@ function DashboardEstagiarioV2({
             </Card>
           </Link>
           <Link href="/admin/processos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Scale className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -457,7 +457,7 @@ function DashboardEstagiarioV2({
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
@@ -466,7 +466,7 @@ function DashboardEstagiarioV2({
             </Card>
           </Link>
           <Link href="/admin/demandas">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <ListTodo className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
@@ -502,10 +502,10 @@ function DashboardServidorV2({
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Premium */}
-      <div className="px-4 md:px-6 py-5 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
+      <div className="px-4 md:px-6 py-5 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Briefcase className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -560,8 +560,8 @@ function DashboardServidorV2({
         {/* Tarefas e Agenda */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tarefas Delegadas */}
-          <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-neutral-50/50 dark:bg-card/50">
+          <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-card/50">
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-amber-500" />
                 <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">
@@ -597,8 +597,8 @@ function DashboardServidorV2({
           </Card>
 
           {/* Agenda do Dia */}
-          <Card className="bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-neutral-100 dark:border-border bg-neutral-50/50 dark:bg-card/50">
+          <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-card/50">
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-neutral-500" />
                 <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">
@@ -625,7 +625,7 @@ function DashboardServidorV2({
                     .filter((a: any) => a.data && isToday(new Date(a.data)))
                     .slice(0, 5)
                     .map((aud: any) => (
-                      <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-100 dark:border-border hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
+                      <div key={aud.id} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200/60 dark:border-neutral-800/60 hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
                         <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                           <Clock className="w-5 h-5 text-emerald-600" />
                         </div>
@@ -646,7 +646,7 @@ function DashboardServidorV2({
         {/* Acesso Rápido */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/assistidos">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -655,7 +655,7 @@ function DashboardServidorV2({
             </Card>
           </Link>
           <Link href="/admin/demandas">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-amber-200 dark:hover:border-amber-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <ListTodo className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
@@ -664,7 +664,7 @@ function DashboardServidorV2({
             </Card>
           </Link>
           <Link href="/admin/agenda">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-emerald-200 dark:hover:border-emerald-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Calendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
@@ -673,7 +673,7 @@ function DashboardServidorV2({
             </Card>
           </Link>
           <Link href="/admin/drive">
-            <Card className="p-5 bg-white dark:bg-card border-neutral-200/80 dark:border-border rounded-2xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
+            <Card className="p-5 bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 shadow-sm shadow-black/[0.04] rounded-xl hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-800 transition-all cursor-pointer group">
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <FolderOpen className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
@@ -705,10 +705,10 @@ function DashboardTriagemV2({
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
       {/* Header Premium */}
-      <div className="px-4 md:px-6 py-5 bg-white dark:bg-card border-b border-neutral-200 dark:border-border">
+      <div className="px-4 md:px-6 py-5 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <UserCheck className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -745,7 +745,7 @@ function DashboardTriagemV2({
         </div>
 
         {/* Ação Principal */}
-        <Card className="p-6 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-2xl shadow-xl">
+        <Card className="p-6 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl shadow-xl">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
               <User className="w-8 h-8" />
@@ -764,8 +764,8 @@ function DashboardTriagemV2({
         </Card>
 
         {/* Últimos Cadastros */}
-        <Card className="bg-white dark:bg-card border-neutral-100 dark:border-border rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-neutral-100 dark:border-border bg-neutral-50/50 dark:bg-card/50">
+        <Card className="bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-card/50">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-neutral-500" />
               <h3 className="text-sm font-semibold text-neutral-800 dark:text-foreground">
