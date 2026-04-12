@@ -5265,7 +5265,7 @@ export const driveRouter = router({
               try {
                 await db.execute(sql`
                   INSERT INTO drive_file_index (drive_file_id, drive_path, file_name, mime_type, size_bytes, modified_time, assistido_id, processo_id, link_strategy, link_confidence, workspace_id, defensor_id, last_seen_at)
-                  VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ? new Date(file.modifiedTime) : null}, ${matchedAssistidoId}, ${null}, ${matchedAssistidoId ? "path" : "pending"}, ${matchedAssistidoId ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date()})
+                  VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ?? null}, ${matchedAssistidoId}, ${null}, ${matchedAssistidoId ? "path" : "pending"}, ${matchedAssistidoId ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date().toISOString()})
                   ON CONFLICT (drive_file_id) DO UPDATE SET
                     drive_path = EXCLUDED.drive_path,
                     file_name = EXCLUDED.file_name,
@@ -5279,7 +5279,8 @@ export const driveRouter = router({
                 `);
                 indexed++;
                 if (matchedAssistidoId) linked++;
-              } catch (e) {
+              } catch (e: any) {
+                if (errors < 3) console.error(`[DriveIndex] INSERT error (loose):`, e?.message ?? e);
                 errors++;
               }
             }
@@ -5307,7 +5308,7 @@ export const driveRouter = router({
                 try {
                   await db.execute(sql`
                     INSERT INTO drive_file_index (drive_file_id, drive_path, file_name, mime_type, size_bytes, modified_time, assistido_id, processo_id, link_strategy, link_confidence, workspace_id, defensor_id, last_seen_at)
-                    VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ? new Date(file.modifiedTime) : null}, ${matchedAssistidoId}, ${matchedProcessoId}, ${hasMatch ? "path" : "pending"}, ${hasMatch ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date()})
+                    VALUES (${file.id}, ${path}, ${file.name}, ${file.mimeType}, ${file.size ? Number(file.size) : null}, ${file.modifiedTime ?? null}, ${matchedAssistidoId}, ${matchedProcessoId}, ${hasMatch ? "path" : "pending"}, ${hasMatch ? 1.0 : null}, ${ctx.user.workspaceId ?? 1}, ${ctx.user.id}, ${new Date().toISOString()})
                     ON CONFLICT (drive_file_id) DO UPDATE SET
                       drive_path = EXCLUDED.drive_path,
                       file_name = EXCLUDED.file_name,
@@ -5322,7 +5323,8 @@ export const driveRouter = router({
                   `);
                   indexed++;
                   if (hasMatch) linked++;
-                } catch (e) {
+                } catch (e: any) {
+                  if (errors < 3) console.error(`[DriveIndex] INSERT error:`, e?.message ?? e);
                   errors++;
                 }
               }
