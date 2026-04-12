@@ -44,22 +44,31 @@ import { useDefensor } from "@/contexts/defensor-context";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
-// Design tokens LOCAIS — espelham HEADER_STYLE (page header / utility bar)
+// Design tokens LOCAIS — harmônicos com page header (mesma família neutral)
+// mas leves: superfícies claras, valores em charcoal como acento tipográfico.
 // ---------------------------------------------------------------------------
 
 const KPI = {
-  // Card principal — mesmo tom do page header (#414144)
-  card: "rounded-xl bg-[#414144] border border-white/[0.06] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]",
-  // Card secundário (compact strip) — mesmo tom do utility bar (#464649)
-  cardCompact: "rounded-xl bg-[#464649] border border-white/[0.06]",
-  // Hover bem sutil (lighten)
-  hover: "hover:bg-[#4a4a4d] transition-colors duration-200",
+  // Card principal — branco airy (light) / zinc muito escuro (dark)
+  card: "rounded-xl bg-white/95 dark:bg-[#1c1c1f] border border-neutral-200/70 dark:border-white/[0.05] shadow-[0_1px_0_0_rgba(15,23,42,0.02),0_1px_2px_0_rgba(15,23,42,0.03)]",
+  // Compact strip (HOJE) — levemente mais escuro pra rhythm sutil
+  cardCompact:
+    "rounded-xl bg-neutral-50/80 dark:bg-[#17171a] border border-neutral-200/70 dark:border-white/[0.04]",
+  // Hover bem sutil
+  hover: "hover:bg-white dark:hover:bg-[#1f1f22] transition-colors duration-200",
+  // Ícone container — subtle neutral
+  iconWrap:
+    "w-7 h-7 rounded-md bg-neutral-900/[0.04] dark:bg-white/[0.05] flex items-center justify-center",
+  iconColor: "text-neutral-700 dark:text-neutral-300",
   // Tipografia
-  label: "text-[9px] uppercase tracking-wider font-semibold text-white/55",
-  labelSm: "text-[8px] uppercase tracking-wider font-semibold text-white/50",
-  value: "text-white font-sans font-semibold tracking-tight tabular-nums",
-  valueSub: "text-[10px] text-white/45 mt-0.5",
-  divider: "w-[1px] h-3.5 bg-white/[0.10]",
+  label: "text-[9px] uppercase tracking-wider font-semibold text-neutral-500 dark:text-neutral-400",
+  labelSm:
+    "text-[8px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500",
+  // Valores em charcoal (#414144 light / white dark) — ponte visual com o header
+  value:
+    "font-sans font-semibold tracking-tight tabular-nums text-[#414144] dark:text-neutral-100",
+  valueSub: "text-[10px] text-neutral-500 dark:text-neutral-500 mt-0.5",
+  divider: "w-[1px] h-3.5 bg-neutral-200 dark:bg-white/[0.08]",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -162,7 +171,7 @@ function DeltaBadge({
 }) {
   if (delta === 0) {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-white/40 tabular-nums">
+      <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-neutral-400 dark:text-neutral-500 tabular-nums">
         —
       </span>
     );
@@ -170,11 +179,18 @@ function DeltaBadge({
 
   const isPositive = delta > 0;
   const isGood = goodWhenPositive ? isPositive : !isPositive;
-  const colorClass = isGood ? "text-emerald-400" : "text-red-400";
+  const colorClass = isGood
+    ? "text-emerald-600 dark:text-emerald-500"
+    : "text-red-600 dark:text-red-500";
   const Icon = isPositive ? TrendingUp : TrendingDown;
 
   return (
-    <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold tabular-nums", colorClass)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 text-[9px] font-semibold tabular-nums",
+        colorClass,
+      )}
+    >
       <Icon className="w-2.5 h-2.5" />
       {isPositive ? "+" : ""}
       {delta}
@@ -207,12 +223,12 @@ function MainStatCard({
 }) {
   const accentColor =
     accent === "danger"
-      ? "text-red-400"
+      ? "text-red-600 dark:text-red-500"
       : accent === "warning"
-        ? "text-amber-400"
+        ? "text-amber-600 dark:text-amber-500"
         : accent === "success"
-          ? "text-emerald-400"
-          : "text-white";
+          ? "text-emerald-600 dark:text-emerald-500"
+          : "";
 
   return (
     <motion.div
@@ -223,7 +239,7 @@ function MainStatCard({
     >
       <div className="flex items-center justify-between mb-3">
         <span className={KPI.label}>{label}</span>
-        <Icon className="w-3.5 h-3.5 text-white/40" />
+        <Icon className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
       </div>
       <div className={cn(KPI.value, "text-3xl", accentColor)}>
         <AnimatedNumber value={value} />
@@ -253,16 +269,21 @@ function TickerCell({
 }) {
   const colorClass =
     accent === "danger"
-      ? "text-red-400"
+      ? "text-red-600 dark:text-red-500"
       : accent === "warning"
-        ? "text-amber-400"
+        ? "text-amber-600 dark:text-amber-500"
         : accent === "success"
-          ? "text-emerald-400"
-          : "text-white";
+          ? "text-emerald-600 dark:text-emerald-500"
+          : "";
 
   return (
-    <div className="flex items-center gap-2.5 min-w-0">
-      <Icon className={cn("w-3.5 h-3.5 shrink-0", colorClass)} />
+    <div className="flex items-center gap-2 min-w-0">
+      <Icon
+        className={cn(
+          "w-3 h-3 shrink-0",
+          accent ? colorClass : "text-neutral-400 dark:text-neutral-500",
+        )}
+      />
       <div className="flex items-baseline gap-1.5 min-w-0">
         <span className={cn(KPI.value, "text-sm", colorClass)}>
           {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
@@ -300,12 +321,16 @@ function ChartCard({
       className={cn(KPI.card, "p-5", className)}
     >
       <div className="flex items-center gap-2.5 mb-4">
-        <div className="w-7 h-7 rounded-md bg-white/[0.06] flex items-center justify-center">
-          <Icon className="w-3.5 h-3.5 text-white/80" />
+        <div className={KPI.iconWrap}>
+          <Icon className={cn("w-3.5 h-3.5", KPI.iconColor)} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[12px] font-bold uppercase tracking-wide text-white">{title}</h3>
-          {subtitle && <p className="text-[10px] text-white/50 mt-0.5">{subtitle}</p>}
+          <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">{subtitle}</p>
+          )}
         </div>
       </div>
       {children}
@@ -395,7 +420,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
     return Array.from(set);
   }, [backlog]);
 
-  const statusColors = ["#e4e4e7", "#d4d4d8", "#a1a1aa", "#71717a", "#52525b", "#3f3f46", "#27272a"];
+  const statusColors = ["#18181b", "#27272a", "#3f3f46", "#52525b", "#71717a", "#a1a1aa", "#d4d4d8"];
 
   const throughputChartData = useMemo(
     () =>
@@ -461,34 +486,39 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
         {/* ============================================================ */}
         {/* Toolbar — título, escopo, filtro, refresh, close             */}
         {/* ============================================================ */}
-        <div className={cn(KPI.card, "px-4 py-3 flex items-center justify-between gap-3 flex-wrap")}>
+        <div
+          className={cn(
+            KPI.card,
+            "px-4 py-3 flex items-center justify-between gap-3 flex-wrap",
+          )}
+        >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-md bg-white/[0.06] flex items-center justify-center shrink-0">
-              <BarChart3 className="w-3.5 h-3.5 text-white/80" />
+            <div className={cn(KPI.iconWrap, "shrink-0")}>
+              <BarChart3 className={cn("w-3.5 h-3.5", KPI.iconColor)} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-[12px] font-bold uppercase tracking-wide text-white">KPIs Operacionais</h2>
-              <div className="flex items-center gap-1.5 text-[10px] text-white/50 mt-0.5">
+              <h2 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                KPIs Operacionais
+              </h2>
+              <div className="flex items-center gap-1.5 text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                 <span className="truncate">{defensorLabel}</span>
-                <span className="w-[3px] h-[3px] rounded-full bg-white/30" />
+                <span className="w-[3px] h-[3px] rounded-full bg-neutral-300 dark:bg-neutral-600" />
                 <span className="truncate">{comarcaLabel}</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className="flex items-center gap-1.5 bg-white/[0.08] hover:bg-white/[0.12] transition-colors rounded-md px-2.5 py-1.5">
-              <Filter className="w-3 h-3 text-white/50" />
+            <div className="flex items-center gap-1.5 bg-neutral-100 dark:bg-white/[0.05] hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] transition-colors rounded-md px-2.5 py-1.5 border border-neutral-200/60 dark:border-white/[0.04]">
+              <Filter className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
               <select
-                className="bg-transparent text-[11px] outline-none cursor-pointer text-white/90"
+                className="bg-transparent text-[11px] outline-none cursor-pointer text-neutral-700 dark:text-neutral-200"
                 value={comarcaId ?? ""}
                 onChange={(e) => setComarcaId(e.target.value ? Number(e.target.value) : null)}
               >
-                <option value="" className="text-zinc-900">
-                  Todas as comarcas
-                </option>
+                <option value="">Todas as comarcas</option>
                 {comarcas.map((c) => (
-                  <option key={c.id} value={c.id} className="text-zinc-900">
+                  <option key={c.id} value={c.id}>
                     {c.nome}
                   </option>
                 ))}
@@ -499,7 +529,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Atualizar"
-              className="h-7 w-7 rounded-md border border-white/[0.10] hover:bg-white/[0.10] transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-white/70"
+              className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center disabled:opacity-50 cursor-pointer text-neutral-600 dark:text-neutral-300"
             >
               <RefreshCw className={cn("w-3 h-3", isRefreshing && "animate-spin")} />
             </button>
@@ -508,7 +538,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               <button
                 onClick={onClose}
                 title="Fechar"
-                className="h-7 w-7 rounded-md border border-white/[0.10] hover:bg-white/[0.10] transition-colors flex items-center justify-center cursor-pointer text-white/70"
+                className="h-7 w-7 rounded-md border border-neutral-200/70 dark:border-white/[0.06] hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer text-neutral-600 dark:text-neutral-300"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -523,9 +553,12 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.02 }}
-          className={cn(KPI.cardCompact, "px-4 py-2.5 flex items-center gap-5 flex-wrap")}
+          className={cn(
+            KPI.cardCompact,
+            "px-4 py-2.5 flex items-center gap-5 flex-wrap",
+          )}
         >
-          <span className="inline-flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-white/70 pr-2 border-r border-white/[0.10]">
+          <span className="inline-flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400 pr-2 border-r border-neutral-200 dark:border-white/[0.08]">
             <CalendarClock className="w-3 h-3" />
             Hoje
           </span>
@@ -603,20 +636,20 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           >
             <div className="flex items-center justify-between mb-3">
               <span className={KPI.label}>SLA — dentro do prazo</span>
-              <Target className="w-3.5 h-3.5 text-white/40" />
+              <Target className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
             </div>
             {summary?.slaHitRate === null || summary?.slaSample === 0 ? (
-              <div className={cn(KPI.value, "text-3xl text-white/40")}>—</div>
+              <div className={cn(KPI.value, "text-3xl text-neutral-300 dark:text-neutral-600")}>—</div>
             ) : (
               <div
                 className={cn(
                   KPI.value,
                   "text-3xl",
                   (summary?.slaHitRate ?? 0) >= 80
-                    ? "text-emerald-400"
+                    ? "text-emerald-600 dark:text-emerald-500"
                     : (summary?.slaHitRate ?? 0) >= 50
-                      ? "text-amber-400"
-                      : "text-red-400",
+                      ? "text-amber-600 dark:text-amber-500"
+                      : "text-red-600 dark:text-red-500",
                 )}
               >
                 <AnimatedNumber value={summary?.slaHitRate ?? 0} suffix="%" decimals={0} />
@@ -637,9 +670,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           >
             <div className="flex items-center justify-between mb-3">
               <span className={KPI.label}>Velocidade 7d</span>
-              <Zap className="w-3.5 h-3.5 text-white/40" />
+              <Zap className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
             </div>
-            <div className={cn(KPI.value, "text-3xl text-white")}>
+            <div className={cn(KPI.value, "text-3xl")}>
               <AnimatedNumber value={summary?.concluidas7d ?? 0} />
             </div>
             <div className="flex items-center justify-between mt-1">
@@ -656,12 +689,12 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           >
             <div className="flex items-center justify-between mb-3">
               <span className={KPI.label}>Tempo médio — entrada → conclusão</span>
-              <Timer className="w-3.5 h-3.5 text-white/40" />
+              <Timer className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
             </div>
             {(summary?.tempoMedioRespostaDias ?? 0) === 0 ? (
-              <div className={cn(KPI.value, "text-3xl text-white/40")}>—</div>
+              <div className={cn(KPI.value, "text-3xl text-neutral-300 dark:text-neutral-600")}>—</div>
             ) : (
-              <div className={cn(KPI.value, "text-3xl text-white")}>
+              <div className={cn(KPI.value, "text-3xl")}>
                 <AnimatedNumber
                   value={summary?.tempoMedioRespostaDias ?? 0}
                   decimals={1}
@@ -684,17 +717,23 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             className={cn(KPI.card, "p-5")}
           >
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-7 h-7 rounded-md bg-white/[0.06] flex items-center justify-center">
-                <Activity className="w-3.5 h-3.5 text-white/80" />
+              <div className={KPI.iconWrap}>
+                <Activity className={cn("w-3.5 h-3.5", KPI.iconColor)} />
               </div>
               <div>
-                <h3 className="text-[12px] font-bold uppercase tracking-wide text-white">Saúde do backlog</h3>
-                <p className="text-[10px] text-white/50 mt-0.5">Idade das demandas ativas — quanto mais à direita, mais crônico</p>
+                <h3 className="text-[12px] font-bold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+                  Saúde do backlog
+                </h3>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  Idade das demandas ativas — quanto mais à direita, mais crônico
+                </p>
               </div>
-              <span className="ml-auto text-[10px] text-white/50 tabular-nums">{agingTotal} ativas</span>
+              <span className="ml-auto text-[10px] text-neutral-500 dark:text-neutral-400 tabular-nums">
+                {agingTotal} ativas
+              </span>
             </div>
 
-            <div className="flex items-center h-8 w-full rounded-md overflow-hidden">
+            <div className="flex items-center h-8 w-full rounded-md overflow-hidden ring-1 ring-neutral-200/60 dark:ring-white/[0.04]">
               {agingBuckets.map((b, i) => {
                 const pct = (b.value / agingTotal) * 100;
                 if (pct === 0) return null;
@@ -718,8 +757,10 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               {agingBuckets.map((b) => (
                 <div key={b.key} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: b.color }} />
-                  <span className="text-[10px] text-white/60 font-medium">{b.label}</span>
-                  <span className="text-[10px] text-white/40 tabular-nums">
+                  <span className="text-[10px] text-neutral-600 dark:text-neutral-300 font-medium">
+                    {b.label}
+                  </span>
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
                     {b.value}
                     {agingTotal > 0 ? ` (${((b.value / agingTotal) * 100).toFixed(0)}%)` : ""}
                   </span>
@@ -739,14 +780,14 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.3 }}
-              className="rounded-xl border border-red-500/40 bg-[#2a1a1a] overflow-hidden"
+              className="rounded-xl border border-red-500/30 bg-red-50/80 dark:bg-red-950/20 overflow-hidden"
             >
               <div className="px-4 py-2.5 border-b border-red-500/20 flex items-center gap-2">
-                <Flame className="w-3.5 h-3.5 text-red-400" />
-                <h3 className="text-[11px] font-bold uppercase tracking-wide text-red-300">
+                <Flame className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                <h3 className="text-[11px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
                   Réu Preso — Prazo ≤ 5 dias
                 </h3>
-                <span className="ml-auto text-[9px] uppercase tracking-wider text-red-400/70 font-semibold">
+                <span className="ml-auto text-[9px] uppercase tracking-wider text-red-600/70 dark:text-red-400/70 font-semibold">
                   {presos.length} {presos.length === 1 ? "caso" : "casos"}
                 </span>
               </div>
@@ -765,23 +806,27 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                       <span
                         className={cn(
                           "font-mono text-[11px] font-bold w-10 text-center tabular-nums shrink-0",
-                          p.diasAtePrazo < 0 ? "text-red-300" : "text-red-400",
+                          p.diasAtePrazo < 0
+                            ? "text-red-700 dark:text-red-300"
+                            : "text-red-600 dark:text-red-400",
                         )}
                       >
                         {p.diasAtePrazo < 0 ? `${p.diasAtePrazo}d` : `+${p.diasAtePrazo}d`}
                       </span>
-                      <Lock className="w-3 h-3 text-red-400/70 shrink-0" />
-                      <span className="font-medium text-white/90 truncate flex-1 min-w-0">
+                      <Lock className="w-3 h-3 text-red-600/60 dark:text-red-400/70 shrink-0" />
+                      <span className="font-medium text-neutral-900 dark:text-white/90 truncate flex-1 min-w-0">
                         {p.assistidoNome ?? "(sem assistido)"}
                       </span>
-                      <span className="text-white/50 truncate max-w-[180px] shrink">{p.ato}</span>
+                      <span className="text-neutral-500 dark:text-white/50 truncate max-w-[180px] shrink">
+                        {p.ato}
+                      </span>
                       <span
                         className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider text-white shrink-0"
                         style={{ backgroundColor: ATRIB_COLOR[p.atribuicao] ?? "#52525b" }}
                       >
                         {ATRIB_LABEL[p.atribuicao] ?? p.atribuicao}
                       </span>
-                      <ArrowRight className="w-3 h-3 text-red-400/40 group-hover:text-red-400 transition-colors shrink-0" />
+                      <ArrowRight className="w-3 h-3 text-red-600/40 dark:text-red-400/40 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors shrink-0" />
                     </Link>
                   </motion.li>
                 ))}
@@ -801,9 +846,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={backlogChartData} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.08} vertical={false} />
-                  <XAxis dataKey="atribuicao" tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.12} vertical={false} />
+                  <XAxis dataKey="atribuicao" tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{
                       background: "#18181b",
@@ -845,12 +890,17 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                       transition={{ delay: 0.45 + i * 0.05 }}
                     >
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-medium text-white/80">{b.label}</span>
-                        <span className="font-mono tabular-nums text-white/60">
-                          {b.value} <span className="text-white/40">({pct.toFixed(0)}%)</span>
+                        <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                          {b.label}
+                        </span>
+                        <span className="font-mono tabular-nums text-neutral-500 dark:text-neutral-400">
+                          {b.value}{" "}
+                          <span className="text-neutral-400 dark:text-neutral-500">
+                            ({pct.toFixed(0)}%)
+                          </span>
                         </span>
                       </div>
-                      <div className="h-2 bg-white/[0.08] rounded-full overflow-hidden">
+                      <div className="h-2 bg-neutral-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
                         <motion.div
                           className="h-full rounded-full"
                           style={{ backgroundColor: b.color }}
@@ -873,9 +923,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={throughputChartData} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.08} vertical={false} />
-                  <XAxis dataKey="semanaLabel" tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.12} vertical={false} />
+                  <XAxis dataKey="semanaLabel" tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{
                       background: "#18181b",
@@ -889,9 +939,9 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                     type="monotone"
                     dataKey="criadas"
                     name="Criadas"
-                    stroke="#d4d4d8"
+                    stroke="#18181b"
                     strokeWidth={2.5}
-                    dot={{ r: 3, fill: "#d4d4d8" }}
+                    dot={{ r: 3, fill: "#18181b" }}
                     activeDot={{ r: 5 }}
                     animationDuration={900}
                   />
@@ -917,12 +967,12 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={topAtosChartData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.08} horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.12} horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
                   <YAxis
                     type="category"
                     dataKey="ato"
-                    tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.7 }}
+                    tick={{ fontSize: 11, fill: "currentColor", opacity: 0.75 }}
                     axisLine={false}
                     tickLine={false}
                     width={170}
@@ -939,7 +989,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   />
                   <Bar dataKey="total" radius={[0, 6, 6, 0]} animationDuration={900}>
                     {topAtosChartData.map((_, idx) => (
-                      <Cell key={idx} fill={`hsl(0, 0%, ${92 - idx * 4}%)`} />
+                      <Cell key={idx} fill={`hsl(0, 0%, ${22 + idx * 4}%)`} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -958,12 +1008,12 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
           >
             <ResponsiveContainer width="100%" height={Math.max(180, cargaChartData.length * 38)}>
               <BarChart data={cargaChartData} layout="vertical" margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" opacity={0.08} horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.55 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.12} horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "currentColor", opacity: 0.6 }} axisLine={false} tickLine={false} />
                 <YAxis
                   type="category"
                   dataKey="defensorNome"
-                  tick={{ fontSize: 11, fill: "#ffffff", opacity: 0.7 }}
+                  tick={{ fontSize: 11, fill: "currentColor", opacity: 0.75 }}
                   axisLine={false}
                   tickLine={false}
                   width={170}
@@ -978,7 +1028,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   }}
                   cursor={{ fill: "rgba(255,255,255,0.04)" }}
                 />
-                <Bar dataKey="ativas" fill="#e4e4e7" radius={[0, 6, 6, 0]} animationDuration={900} />
+                <Bar dataKey="ativas" fill="#18181b" radius={[0, 6, 6, 0]} animationDuration={900} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -990,6 +1040,6 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="h-[200px] flex items-center justify-center text-xs text-white/40">{text}</div>
+    <div className="h-[200px] flex items-center justify-center text-xs text-neutral-400 dark:text-neutral-500">{text}</div>
   );
 }
