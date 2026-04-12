@@ -5342,6 +5342,132 @@ export const driveRouter = router({
   }),
 
   /**
+   * Estratégia B — vincula arquivos pendentes via regex + nome.
+   *
+   * Cascata de 3 estratégias (executadas em um único batch SQL cada):
+   * 1. CNJ regex: extrai número de processo do path/nome → match processos → infere assistido
+   * 2. Nome de pasta: segmento do path → ILIKE assistidos.nome (case-insensitive)
+   * 3. Resultado: atualiza drive_file_index com strategy='regex', confidence 0.60-0.95
+   */
+  linkPendingFiles: protectedProcedure.mutation(async () => {
+    return safeAsync(async () => {
+      // === ETAPA 1: CNJ regex → match processos ===
+      const cnjResult = await db.execute(sql.raw(`
+        WITH cnj_extracts AS (
+          SELECT
+            dfi.id AS file_id,
+            (regexp_matches(dfi.drive_path || '/' || dfi.file_name, '(\\d{7}-\\d{2}\\.\\d{4}\\.\\d\\.\\d{2}\\.\\d{4})'))[1] AS cnj
+          FROM drive_file_index dfi
+          WHERE dfi.link_strategy = 'pending'
+            AND (dfi.drive_path || '/' || dfi.file_name) ~ '\\d{7}-\\d{2}\\.\\d{4}\\.\\d\\.\\d{2}\\.\\d{4}'
+        )
+        UPDATE drive_file_index dfi
+        SET
+          processo_id = p.id,
+          assistido_id = COALESCE(ap.assistido_id, dfi.assistido_id),
+          link_strategy = 'regex',
+          link_confidence = 0.95
+        FROM cnj_extracts ce
+        JOIN processos p ON p.numero_autos = ce.cnj
+        LEFT JOIN LATERAL (
+          SELECT assistido_id FROM assistidos_processos
+          WHERE processo_id = p.id AND is_principal = true
+          LIMIT 1
+        ) ap ON true
+        WHERE dfi.id = ce.file_id
+          AND dfi.link_strategy = 'pending'
+      `));
+
+      // Count CNJ-linked
+      const cnjLinked = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'regex' AND link_confidence = 0.95`),
+      );
+      const cnjCount = Number((cnjLinked as any)[0]?.n ?? 0);
+
+      // === ETAPA 2: Nome de pasta → match assistidos ===
+      // Para cada pending, extrai o 2º segmento do path (após "desconhecida/")
+      // e tenta match case-insensitive contra assistidos.nome
+      const nameResult = await db.execute(sql.raw(`
+        WITH path_names AS (
+          SELECT
+            dfi.id AS file_id,
+            split_part(dfi.drive_path, '/', 2) AS folder_name
+          FROM drive_file_index dfi
+          WHERE dfi.link_strategy = 'pending'
+            AND split_part(dfi.drive_path, '/', 2) != ''
+            AND split_part(dfi.drive_path, '/', 2) NOT IN (
+              'Dias Davila', 'Processos - Candeias', 'Processos - Camaçari',
+              'Processos - Salvador', 'Processos - Lauro de Freitas',
+              'Distribuicao', 'Jurisprudencia', 'desconhecida'
+            )
+            AND length(split_part(dfi.drive_path, '/', 2)) > 3
+        )
+        UPDATE drive_file_index dfi
+        SET
+          assistido_id = a.id,
+          link_strategy = 'regex',
+          link_confidence = 0.80
+        FROM path_names pn
+        JOIN assistidos a ON UPPER(a.nome) = UPPER(pn.folder_name)
+        WHERE dfi.id = pn.file_id
+          AND dfi.link_strategy = 'pending'
+      `));
+
+      // Count name-linked
+      const nameLinked = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'regex' AND link_confidence = 0.80`),
+      );
+      const nameCount = Number((nameLinked as any)[0]?.n ?? 0);
+
+      // === ETAPA 3: Nome em subpasta (nível 3) — para "desconhecida/Comarca/Nome/..." ===
+      await db.execute(sql.raw(`
+        WITH deep_names AS (
+          SELECT
+            dfi.id AS file_id,
+            split_part(dfi.drive_path, '/', 3) AS folder_name
+          FROM drive_file_index dfi
+          WHERE dfi.link_strategy = 'pending'
+            AND array_length(string_to_array(dfi.drive_path, '/'), 1) >= 4
+            AND length(split_part(dfi.drive_path, '/', 3)) > 3
+        )
+        UPDATE drive_file_index dfi
+        SET
+          assistido_id = a.id,
+          link_strategy = 'regex',
+          link_confidence = 0.70
+        FROM deep_names dn
+        JOIN assistidos a ON UPPER(a.nome) = UPPER(dn.folder_name)
+        WHERE dfi.id = dn.file_id
+          AND dfi.link_strategy = 'pending'
+      `));
+
+      const deepLinked = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'regex' AND link_confidence = 0.70`),
+      );
+      const deepCount = Number((deepLinked as any)[0]?.n ?? 0);
+
+      // Final stats
+      const totalLinked = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy != 'pending'`),
+      );
+      const remaining = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'pending'`),
+      );
+
+      const result = {
+        cnjLinked: cnjCount,
+        nameLinked: nameCount,
+        deepNameLinked: deepCount,
+        totalLinked: Number((totalLinked as any)[0]?.n ?? 0),
+        remaining: Number((remaining as any)[0]?.n ?? 0),
+      };
+
+      console.log(`[DriveLink] Strategy B done:`, result);
+      return result;
+    }, "Erro ao vincular arquivos pendentes");
+  }),
+
+  /**
    * Lista arquivos indexados por assistido
    */
   filesByAssistido: protectedProcedure
