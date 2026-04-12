@@ -65,6 +65,7 @@ import {
   Loader2,
   Baby,
   Handshake,
+  BarChart3,
 } from "lucide-react";
 import {
   Popover,
@@ -84,6 +85,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { KpisSection } from "@/components/dashboard/kpis-section";
+import { AnimatePresence } from "motion/react";
 import { trpc } from "@/lib/trpc/client";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -550,6 +553,21 @@ export default function DashboardJuriPage() {
     return audienciasSemana.length < 5;
   }, [audiencias]);
 
+  // Toggle KPIs — persistido em localStorage
+  const [showKpis, setShowKpis] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ombuds_show_kpis") === "true";
+  });
+  const toggleKpis = useCallback(() => {
+    setShowKpis((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("ombuds_show_kpis", String(next));
+      }
+      return next;
+    });
+  }, []);
+
   // Estado para registro rápido
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
@@ -774,6 +792,19 @@ export default function DashboardJuriPage() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={toggleKpis}
+              title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
+              className={cn(
+                "h-8 px-3 rounded-xl transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
+                showKpis
+                  ? "bg-white text-zinc-900 shadow-sm hover:bg-white/90"
+                  : "bg-white/[0.08] text-white/80 hover:bg-white/[0.14] border border-white/[0.12]",
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              KPIs
+            </button>
             <Link href="/admin/demandas/nova">
               <button
                 title="Nova Demanda"
@@ -789,6 +820,11 @@ export default function DashboardJuriPage() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
+
+        {/* ===== KPIs (toggleable) — APARECE ANTES DO REGISTRO RÁPIDO ===== */}
+        <AnimatePresence initial={false}>
+          {showKpis && <KpisSection key="kpis-section" onClose={() => toggleKpis()} />}
+        </AnimatePresence>
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
         <Card className="bg-card border border-border rounded-xl overflow-hidden">
