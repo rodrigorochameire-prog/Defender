@@ -167,26 +167,26 @@ export function FeedbackFAB() {
 
   return (
     <>
-      {/* FAB Button */}
+      {/* FAB Button — mesma linguagem do FloatingDock */}
       <button
         onClick={handleToggle}
         className={cn(
           "fixed z-[52] flex items-center justify-center",
-          "w-10 h-10 rounded-2xl shadow-md shadow-black/[0.08]",
-          "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm",
-          "text-neutral-600 dark:text-neutral-300",
-          "ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
-          "hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:ring-emerald-300/30 dark:hover:ring-emerald-500/20",
-          "transition-all duration-200 active:scale-95",
-          "bottom-[8.5rem] right-4 sm:bottom-6 sm:right-[4.5rem]",
+          "w-10 h-10 rounded-2xl",
+          "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-md",
+          "shadow-lg shadow-black/[0.10] ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
+          "text-neutral-500 dark:text-neutral-400",
+          "hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400",
+          "transition-all duration-150 active:scale-95",
+          "bottom-[10.75rem] right-4 md:bottom-[7.75rem] md:right-6",
           "cursor-pointer"
         )}
         title={isOpen ? "Fechar feedback" : "Enviar feedback"}
       >
         {isOpen ? (
-          <X className="w-4 h-4 transition-transform duration-200 rotate-0" />
+          <X className="w-[17px] h-[17px]" />
         ) : (
-          <MessageSquarePlus className="w-4 h-4 transition-transform duration-200" />
+          <MessageSquarePlus className="w-[17px] h-[17px]" />
         )}
       </button>
 
@@ -195,9 +195,9 @@ export function FeedbackFAB() {
         <div
           className={cn(
             "fixed z-[52]",
-            "bottom-[12rem] right-4 sm:bottom-[4.5rem] sm:right-[4.5rem]",
+            "bottom-[15rem] right-4 md:bottom-[12rem] md:right-6",
             "w-80 sm:w-96",
-            "bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-2xl",
+            "bg-white dark:bg-neutral-900 rounded-xl ring-1 ring-black/[0.06] dark:ring-white/[0.06] shadow-2xl shadow-black/[0.12]",
             "animate-in fade-in slide-in-from-bottom-2 duration-200"
           )}
         >

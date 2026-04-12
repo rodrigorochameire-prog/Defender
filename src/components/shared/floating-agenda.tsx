@@ -8,10 +8,7 @@ import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
-  Clock,
-  MapPin,
   User,
-  FileText,
   X,
   ChevronRight,
   Gavel,
@@ -33,19 +30,32 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Atribuição colors (subset from main config)
-const ATRIBUICAO_COLORS: Record<string, string> = {
-  JURI: "#f59e0b",
-  VVD: "#ef4444",
-  EXECUCAO: "#8b5cf6",
-  SUBSTITUICAO: "#3b82f6",
-  SUBSTITUICAO_CIVEL: "#06b6d4",
-  CRIMINAL: "#3b82f6",
+// Atribuição palette — Padrão Defender v5
+// Júri=emerald-600, VVD=amber-500, EP=sky-600, Criminal/Subst=zinc-700
+const JURI  = { bar: "#059669", tint: "#05966910", time: "#047857" }; // emerald-600
+const VVD   = { bar: "#f59e0b", tint: "#f59e0b10", time: "#b45309" }; // amber-500
+const EP    = { bar: "#0284c7", tint: "#0284c710", time: "#0369a1" }; // sky-600
+const ZINC  = { bar: "#3f3f46", tint: "#3f3f4610", time: "#52525b" }; // zinc-700
+
+const ATRIBUICAO_COLORS: Record<string, typeof JURI> = {
+  JURI_CAMACARI:              JURI,
+  GRUPO_JURI:                 JURI,
+  VVD_CAMACARI:               VVD,
+  EXECUCAO_PENAL:             EP,
+  CRIMINAL_CAMACARI:          ZINC,
+  CRIMINAL_SIMOES_FILHO:      ZINC,
+  CRIMINAL_LAURO_DE_FREITAS:  ZINC,
+  CRIMINAL_CANDEIAS:          ZINC,
+  CRIMINAL_ITAPARICA:         ZINC,
+  SUBSTITUICAO:               ZINC,
+  SUBSTITUICAO_CIVEL:         ZINC,
 };
 
-function getAtribuicaoColor(atribuicao?: string | null): string {
-  if (!atribuicao) return "#71717a";
-  return ATRIBUICAO_COLORS[atribuicao] || "#71717a";
+const DEFAULT_COLOR = { bar: "#a1a1aa", tint: "#a1a1aa10", time: "#52525b" };
+
+function getAtribuicaoColor(atribuicao?: string | null) {
+  if (!atribuicao) return DEFAULT_COLOR;
+  return ATRIBUICAO_COLORS[atribuicao] || DEFAULT_COLOR;
 }
 
 function formatRelativeTime(date: Date): string {
@@ -123,18 +133,21 @@ export function FloatingAgendaButton() {
 // AGENDA QUICK SHEET
 // ============================================
 
-function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
+export function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
   const now = new Date();
   const start = startOfDay(now).toISOString();
   const end = endOfDay(addDays(now, 30)).toISOString();
 
   // Fetch calendar events (next 30 days)
   const { data: calendarData, isLoading: isLoadingCalendar } =
-    trpc.calendar.list.useQuery({ start, end });
+    trpc.calendar.list.useQuery({ start, end }, { staleTime: 0, refetchOnMount: "always" });
 
-  // Fetch audiencias (next 30 days)
+  // Fetch audiencias (next 30 days) — sem limite artificial baixo
   const { data: audienciasData, isLoading: isLoadingAudiencias } =
-    trpc.audiencias.proximas.useQuery({ dias: 30, limite: 50 });
+    trpc.audiencias.proximas.useQuery(
+      { dias: 30, limite: 200 },
+      { staleTime: 0, refetchOnMount: "always" }
+    );
 
   const isLoading = isLoadingCalendar || isLoadingAudiencias;
 
@@ -142,11 +155,48 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
   const allEvents = useMemo(() => {
     const events: any[] = [];
 
-    // Calendar events (flat shape: ...event spread + processo + assistido)
+    // Audiencias PRIMEIRO — são a fonte de verdade.
+    // PJe grava hora local rotulada como UTC; reinterpretar UTC como local.
+    const audKeys = new Set<string>();
+    if (audienciasData) {
+      for (const aud of audienciasData) {
+        const raw = new Date(aud.dataHora);
+        const dataHora = new Date(
+          raw.getUTCFullYear(),
+          raw.getUTCMonth(),
+          raw.getUTCDate(),
+          raw.getUTCHours(),
+          raw.getUTCMinutes(),
+          raw.getUTCSeconds()
+        );
+        events.push({
+          id: `aud-${aud.id}`,
+          type: "audiencia",
+          titulo: aud.titulo || `Audiência - ${aud.tipo || ""}`,
+          dataHora,
+          hora: format(dataHora, "HH:mm"),
+          local: aud.local || null,
+          assistido: aud.assistido?.nome || null,
+          processo: aud.processo?.numero || null,
+          atribuicao: aud.processo?.atribuicao || null,
+          status: aud.status || "pendente",
+          tipoEvento: aud.tipo || "audiencia",
+        });
+        if (aud.processo?.numero) {
+          audKeys.add(`${aud.processo.numero}|${format(dataHora, "yyyy-MM-dd")}`);
+        }
+      }
+    }
+
+    // Calendar events — pular duplicatas (mesmo processo, mesmo dia que já tem audiência)
     if (calendarData) {
       for (const item of calendarData) {
         const evtDate = new Date(item.eventDate);
-        // Extract time from timestamp (if not midnight, it has a specific time)
+        const procNum = item.processo?.numeroAutos;
+        if (procNum) {
+          const key = `${procNum}|${format(evtDate, "yyyy-MM-dd")}`;
+          if (audKeys.has(key)) continue;
+        }
         const hasTime = evtDate.getHours() !== 0 || evtDate.getMinutes() !== 0;
         events.push({
           id: `cal-${item.id}`,
@@ -156,29 +206,10 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
           hora: hasTime ? format(evtDate, "HH:mm") : null,
           local: item.location || null,
           assistido: item.assistido?.nome || null,
-          processo: item.processo?.numeroAutos || null,
+          processo: procNum || null,
           atribuicao: item.processo?.atribuicao || null,
           status: item.status || "pendente",
           tipoEvento: item.eventType || null,
-        });
-      }
-    }
-
-    // Audiencias
-    if (audienciasData) {
-      for (const aud of audienciasData) {
-        events.push({
-          id: `aud-${aud.id}`,
-          type: "audiencia",
-          titulo: aud.titulo || `Audiência - ${aud.tipo || ""}`,
-          dataHora: new Date(aud.dataHora),
-          hora: format(new Date(aud.dataHora), "HH:mm"),
-          local: aud.local || null,
-          assistido: aud.assistido?.nome || null,
-          processo: aud.processo?.numero || null,
-          atribuicao: aud.processo?.atribuicao || null,
-          status: aud.status || "pendente",
-          tipoEvento: aud.tipo || "audiencia",
         });
       }
     }
@@ -191,7 +222,37 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
     return events.filter((e) => e.dataHora >= todayStart);
   }, [calendarData, audienciasData]);
 
-  const grouped = groupByDay(allEvents);
+  // Agrupa atribuições em "buckets" de filtro — Júri/VVD/EP/Outros
+  const getBucket = (atrib?: string | null): "JURI" | "VVD" | "EP" | "OTHER" => {
+    if (!atrib) return "OTHER";
+    if (atrib === "JURI_CAMACARI" || atrib === "GRUPO_JURI") return "JURI";
+    if (atrib === "VVD_CAMACARI") return "VVD";
+    if (atrib === "EXECUCAO_PENAL") return "EP";
+    return "OTHER";
+  };
+
+  const bucketCounts = useMemo(() => {
+    const c: Record<string, number> = { JURI: 0, VVD: 0, EP: 0, OTHER: 0 };
+    for (const e of allEvents) c[getBucket(e.atribuicao)]++;
+    return c;
+  }, [allEvents]);
+
+  const [activeBuckets, setActiveBuckets] = useState<Set<string>>(new Set());
+  const toggleBucket = (b: string) => {
+    setActiveBuckets((prev) => {
+      const next = new Set(prev);
+      if (next.has(b)) next.delete(b);
+      else next.add(b);
+      return next;
+    });
+  };
+
+  const filteredEvents = useMemo(() => {
+    if (activeBuckets.size === 0) return allEvents;
+    return allEvents.filter((e) => activeBuckets.has(getBucket(e.atribuicao)));
+  }, [allEvents, activeBuckets]);
+
+  const grouped = groupByDay(filteredEvents);
   const todayCount = grouped.get(format(now, "yyyy-MM-dd"))?.length || 0;
 
   return createPortal(
@@ -199,48 +260,69 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/20 dark:bg-black/40" />
 
-      {/* Panel — right side on desktop, full on mobile */}
+      {/* Panel — Padrão Defender: card claro sobre neutral-50 */}
       <div
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "absolute bg-white dark:bg-neutral-900 shadow-xl shadow-black/[0.06] overflow-hidden flex flex-col border border-neutral-200/60 dark:border-neutral-800/60",
+          "absolute bg-neutral-50 dark:bg-neutral-900 overflow-hidden flex flex-col",
+          "shadow-2xl shadow-black/[0.12] ring-1 ring-black/[0.06] dark:ring-white/[0.06]",
           "inset-2 rounded-xl",
-          "sm:inset-auto sm:top-3 sm:right-3 sm:bottom-3 sm:w-[380px] sm:rounded-xl",
+          "sm:inset-auto sm:top-3 sm:right-3 sm:bottom-3 sm:w-[400px] sm:rounded-2xl",
         )}
         style={{ animation: "fadeInRight 0.2s ease-out" }}
       >
-        {/* Header — clean, minimal */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-100 dark:border-neutral-800/60">
-          <div className="flex items-center gap-2.5">
-            <CalendarDays className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-            <div>
-              <h2 className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 tracking-tight">
-                Agenda
-              </h2>
-              <p className="text-[9px] text-neutral-400 dark:text-neutral-500 tabular-nums">
-                {todayCount > 0
-                  ? `${todayCount} hoje`
-                  : "Nenhum hoje"
-                }
-                {" · "}{allEvents.length} próximos
-              </p>
+        {/* Header — dois rows no estilo Padrão Defender */}
+        <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200/60 dark:border-neutral-800/60">
+          {/* Row 1 — título + ações */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-[14px] h-[14px] text-neutral-500 dark:text-neutral-400" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-[13px] font-semibold text-neutral-800 dark:text-neutral-200 tracking-tight leading-tight">
+                  Agenda
+                </h2>
+                <p className="text-[9px] text-neutral-400 dark:text-neutral-500 tabular-nums leading-tight mt-0.5">
+                  {todayCount > 0 ? `${todayCount} hoje` : "Nenhum hoje"}
+                  {" · "}{filteredEvents.length} próximos
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Link
+                href="/admin/agenda"
+                onClick={onClose}
+                className="h-7 px-2.5 rounded-md text-[10px] text-neutral-500 dark:text-neutral-400 font-medium flex items-center gap-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                Abrir
+                <ExternalLink className="w-2.5 h-2.5" />
+              </Link>
+              <button
+                onClick={onClose}
+                className="h-7 w-7 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Link
-              href="/admin/agenda"
-              onClick={onClose}
-              className="h-7 px-2.5 rounded-md text-[10px] text-neutral-500 dark:text-neutral-400 font-medium flex items-center gap-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-            >
-              Abrir
-              <ExternalLink className="w-2.5 h-2.5" />
-            </Link>
-            <button
-              onClick={onClose}
-              className="h-7 w-7 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+
+          {/* Row 2 — filter pills discretos */}
+          <div className="flex items-center gap-1.5 px-5 pb-2.5 pt-1 overflow-x-auto scrollbar-none">
+            <FilterPill label="Júri" count={bucketCounts.JURI} color={JURI} active={activeBuckets.has("JURI")} onClick={() => toggleBucket("JURI")} />
+            <FilterPill label="VVD" count={bucketCounts.VVD} color={VVD} active={activeBuckets.has("VVD")} onClick={() => toggleBucket("VVD")} />
+            <FilterPill label="EP" count={bucketCounts.EP} color={EP} active={activeBuckets.has("EP")} onClick={() => toggleBucket("EP")} />
+            {bucketCounts.OTHER > 0 && (
+              <FilterPill label="Outros" count={bucketCounts.OTHER} color={ZINC} active={activeBuckets.has("OTHER")} onClick={() => toggleBucket("OTHER")} />
+            )}
+            {activeBuckets.size > 0 && (
+              <button
+                onClick={() => setActiveBuckets(new Set())}
+                className="ml-auto text-[9px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer shrink-0 font-medium"
+              >
+                limpar
+              </button>
+            )}
           </div>
         </div>
 
@@ -261,18 +343,18 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
+            <div>
               {Array.from(grouped.entries()).map(([dateKey, events]) => {
                 const dayLabel = getDayLabel(dateKey);
                 const isCurrentDay = isToday(new Date(dateKey + "T12:00:00"));
 
                 return (
-                  <div key={dateKey}>
-                    {/* Day header — clean sticky */}
-                    <div className="px-5 py-2 sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-[2px]">
+                  <div key={dateKey} className="pb-1">
+                    {/* Day header — sticky sobre neutral-50 */}
+                    <div className="px-5 py-1.5 sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-[2px]">
                       <div className="flex items-center justify-between">
                         <span className={cn(
-                          "text-[10px] font-bold uppercase tracking-wider",
+                          "text-[9px] font-bold uppercase tracking-wider",
                           isCurrentDay ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-400 dark:text-neutral-500"
                         )}>
                           {dayLabel}
@@ -284,7 +366,7 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
                     </div>
 
                     {/* Events */}
-                    <div className="py-1">
+                    <div>
                       {events.map((evt: any) => (
                         <EventRow key={evt.id} event={evt} />
                       ))}
@@ -297,7 +379,7 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Footer — subtle */}
-        <div className="border-t border-neutral-100 dark:border-neutral-800/60 px-5 py-2.5">
+        <div className="border-t border-neutral-200/60 dark:border-neutral-800/60 px-5 py-2.5 bg-white dark:bg-neutral-900">
           <Link
             href="/admin/agenda"
             onClick={onClose}
@@ -325,6 +407,51 @@ function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
 // EVENT ROW
 // ============================================
 
+// ============================================
+// FILTER PILL
+// ============================================
+
+function FilterPill({
+  label,
+  count,
+  color,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  color: { bar: string; tint: string; time: string };
+  active: boolean;
+  onClick: () => void;
+}) {
+  const disabled = count === 0;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "shrink-0 inline-flex items-center gap-1.5 h-5 px-1.5 rounded-md text-[10px] tabular-nums transition-colors duration-150 cursor-pointer",
+        disabled && "opacity-25 cursor-not-allowed",
+        active
+          ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium"
+          : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/60"
+      )}
+    >
+      <span
+        className="w-1 h-1 rounded-full shrink-0"
+        style={{ backgroundColor: color.bar }}
+      />
+      {label}
+      <span className="text-neutral-400/80 dark:text-neutral-500/80">{count}</span>
+    </button>
+  );
+}
+
+// ============================================
+// EVENT ROW
+// ============================================
+
 function EventRow({ event }: { event: any }) {
   const color = getAtribuicaoColor(event.atribuicao);
   const relTime = formatRelativeTime(event.dataHora);
@@ -334,17 +461,28 @@ function EventRow({ event }: { event: any }) {
   return (
     <div
       className={cn(
-        "mx-3 mb-1 px-3 py-2.5 rounded-lg flex items-start gap-3 transition-colors",
-        "hover:bg-neutral-50 dark:hover:bg-neutral-800/40",
-        "border-l-2",
+        "group relative mx-3 mb-1.5 pl-4 pr-3 py-2.5 rounded-lg flex items-start gap-3",
+        "bg-white dark:bg-neutral-800/40",
+        "shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03] dark:ring-white/[0.04]",
+        "transition-all duration-150",
+        "hover:shadow-md hover:shadow-black/[0.06] hover:-translate-y-px",
         isPast && "opacity-40"
       )}
-      style={{ borderLeftColor: color }}
     >
-      {/* Hora */}
-      <div className="min-w-[38px] pt-px">
+      {/* Barra lateral — marcador funcional forte */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full"
+        style={{ backgroundColor: color.bar }}
+      />
+
+      {/* Hora — colorida pela atribuição */}
+      <div className="min-w-[40px] pt-px">
         {event.hora ? (
-          <span className="text-[12px] font-mono font-bold text-neutral-800 dark:text-neutral-200 tabular-nums">
+          <span
+            className="text-[12px] font-mono font-bold tabular-nums"
+            style={{ color: isPast ? undefined : color.time }}
+          >
             {event.hora}
           </span>
         ) : (
@@ -354,33 +492,31 @@ function EventRow({ event }: { event: any }) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200 truncate leading-tight">
-          {isAudiencia && <Gavel className="w-3 h-3 text-amber-500 inline mr-1 -mt-px" />}
-          {event.titulo}
-        </p>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {isAudiencia && (
+            <Gavel className="w-3 h-3 shrink-0" style={{ color: color.bar }} />
+          )}
+          <p className="text-[12px] font-semibold text-neutral-800 dark:text-neutral-200 truncate leading-tight">
+            {event.titulo}
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0 mt-1">
           {event.assistido && (
-            <span className="flex items-center gap-1 text-[10px] text-neutral-500 dark:text-neutral-400">
+            <span className="flex items-center gap-1 text-[10px] text-neutral-500 dark:text-neutral-400 min-w-0">
               <User className="w-2.5 h-2.5 shrink-0" />
-              <span className="truncate max-w-[120px]">{event.assistido}</span>
+              <span className="truncate max-w-[150px]">{event.assistido}</span>
             </span>
           )}
           {event.processo && (
-            <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono tabular-nums truncate max-w-[140px]">
+            <span className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono tabular-nums truncate max-w-[150px]">
               {event.processo}
-            </span>
-          )}
-          {event.local && (
-            <span className="flex items-center gap-1 text-[9px] text-neutral-400 dark:text-neutral-500">
-              <MapPin className="w-2 h-2 shrink-0" />
-              <span className="truncate max-w-[100px]">{event.local}</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Relative time — clean text */}
+      {/* Relative time */}
       <span className={cn(
         "text-[9px] font-medium tabular-nums shrink-0 pt-0.5",
         isPast ? "text-neutral-300 dark:text-neutral-600"

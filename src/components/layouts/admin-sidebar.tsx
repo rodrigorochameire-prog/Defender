@@ -45,8 +45,7 @@ import { StatusBar } from "@/components/layout/status-bar";
 import { OfflineSyncProvider } from "@/components/layout/offline-sync-provider";
 import { MobileBottomNav } from "@/components/shared/mobile-bottom-nav";
 import { ConflictBadge } from "@/components/conflict-badge";
-import { FloatingAgendaButton } from "@/components/shared/floating-agenda";
-import { FloatingDemandasButton } from "@/components/shared/floating-demandas";
+import { FloatingDock } from "@/components/shared/floating-dock";
 import { PageHeaderProvider, usePageHeader } from "@/components/layouts/page-header-context";
 import { HeaderUtilityRow } from "@/components/layouts/header-utility-row";
 import { type AssignmentMenuItem } from "@/contexts/assignment-context";
@@ -1828,9 +1827,8 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
             {/* Mobile bottom navigation */}
             <MobileBottomNav />
 
-            {/* Floating quick-access buttons */}
-            <FloatingDemandasButton />
-            <FloatingAgendaButton />
+            {/* Floating dock — agenda + demandas */}
+            <FloatingDock />
           </PageHeaderProvider>
         </ReadOnlyFieldset>
       </SidebarInset>
