@@ -1458,11 +1458,11 @@ export default function DashboardJuriPage() {
                 </div>
 
                 {/* Sem CPF */}
-                <div className="text-center p-2 rounded-lg bg-muted/50">
+                <div className="text-center p-2 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20">
                   <p className={cn(
                     "text-lg font-bold",
                     solarSync.stats.noCpf > 0
-                      ? "text-muted-foreground"
+                      ? "text-neutral-600 dark:text-neutral-400"
                       : "text-muted-foreground/50"
                   )}>
                     {solarSync.stats.noCpf}
@@ -1555,7 +1555,7 @@ export default function DashboardJuriPage() {
                     {estatisticasPrazos.vencidos} vencido{estatisticasPrazos.vencidos > 1 ? "s" : ""}
                   </span>
                 )}
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                   {demandasPorPrazo.length} total
                 </span>
               </div>
@@ -1670,12 +1670,12 @@ export default function DashboardJuriPage() {
                     <Gavel className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                   </div>
                   <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Próximos Júris</h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                     {jurisProximos.length}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="flex items-center bg-muted rounded-lg p-0.5">
+                  <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-0.5 ring-1 ring-neutral-200/60 dark:ring-neutral-700/60">
                     {[
                       { id: "todos", label: "Todos" },
                       { id: "rodrigo", label: "Dr. Rodrigo" },
@@ -1684,9 +1684,9 @@ export default function DashboardJuriPage() {
                       <button
                         key={opt.id}
                         onClick={() => setFiltroDefensorJuri(opt.id as typeof filtroDefensorJuri)}
-                        className={`px-2.5 py-1 text-[10px] sm:text-[11px] rounded-md transition-colors whitespace-nowrap ${
+                        className={`px-2.5 py-1 text-[10px] sm:text-[11px] rounded-md transition-all duration-150 whitespace-nowrap cursor-pointer ${
                           filtroDefensorJuri === opt.id
-                            ? "bg-card text-foreground shadow-sm"
+                            ? "bg-white dark:bg-neutral-900 text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
@@ -1782,11 +1782,11 @@ export default function DashboardJuriPage() {
             <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                     <CalendarDays className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Minhas Audiências</h3>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                     {audienciasExibir.length}
                   </span>
                 </div>
@@ -1875,13 +1875,13 @@ export default function DashboardJuriPage() {
               <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                       <CalendarDays className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
                       {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
                     </h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                       {audienciasExibir.length}
                     </span>
                   </div>

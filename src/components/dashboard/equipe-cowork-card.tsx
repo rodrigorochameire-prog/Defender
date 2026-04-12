@@ -89,18 +89,16 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-card border border-neutral-200/80 dark:border-border rounded-xl overflow-hidden transition-all duration-200">
-      {/* Accent bar */}
-      <div className="h-1 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-600" />
+    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-neutral-100 dark:border-border flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-md">
-            <Users className="w-4 h-4 text-white dark:text-neutral-900" />
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+            <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-neutral-800 dark:text-foreground tracking-tight">Equipe & Cowork</h3>
-            <p className="text-xs text-neutral-400 dark:text-muted-foreground">Delegações, pareceres e coberturas</p>
+            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Equipe & Cowork</h3>
+            <p className="text-[11px] text-muted-foreground">Delegações, pareceres e coberturas</p>
           </div>
           {pareceresPendentes > 0 && (
             <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">
@@ -156,8 +154,8 @@ export function EquipeCoworkCard({
                   onClick={acao.onClick}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg",
-                    "border border-neutral-200/60 dark:border-border",
-                    "bg-neutral-50/50 dark:bg-muted/50",
+                    "border border-neutral-200/60 dark:border-neutral-800/60",
+                    "bg-neutral-50/50 dark:bg-neutral-800/30",
                     "hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10",
                     "hover:border-emerald-300/60 dark:hover:border-emerald-800/50",
                     "hover:shadow-sm",
@@ -194,7 +192,7 @@ export function EquipeCoworkCard({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-border">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-200/60 dark:border-neutral-800/60">
           <Link
             href="/admin/delegacoes"
             className="flex items-center gap-1.5 text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-foreground uppercase tracking-wide transition-colors"
