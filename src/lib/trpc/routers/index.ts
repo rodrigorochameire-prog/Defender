@@ -63,6 +63,7 @@ import { legislacaoRouter } from "./legislacao";
 import { noticiasRouter } from "./noticias";
 import { bibliotecaRouter } from "./biblioteca";
 import { comarcasRouter } from "./comarcas";
+import { kpisRouter } from "./kpis";
 import { observatoryRouter } from "./observatory";
 import { syncRouter } from "./sync";
 import { skillsRouter } from "./skills";
@@ -302,6 +303,7 @@ export const appRouter = router({
   // COMARCAS - CONFIGURAÇÃO E FEATURES POR COMARCA
   // ==========================================
   comarcas: comarcasRouter,
+  kpis: kpisRouter,
 
   // ==========================================
   // OBSERVATORY - PAINEL ADMINISTRATIVO
