@@ -647,7 +647,7 @@ export function DemandaQuickPreview({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-300 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}` }}>
@@ -717,7 +717,7 @@ export function DemandaQuickPreview({
               <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-neutral-200 dark:bg-neutral-700/60 rounded-full" />
               {/* Filled track (neutral — only current stage has color) */}
               <div
-                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-neutral-300 dark:bg-neutral-600"
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500 bg-[#c8c8cc] dark:bg-neutral-600"
                 style={{
                   width: currentStageIdx >= 0 ? `${(currentStageIdx / (PIPELINE_STAGES.length - 1)) * 100}%` : "0%",
                 }}
@@ -843,7 +843,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[56px] bg-neutral-50/60 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[13px] leading-[1.6] text-neutral-700 dark:text-neutral-300"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[11.5px] leading-[1.65] tracking-[0.01em] text-neutral-600 dark:text-neutral-400"
                   multiline
                 />
                 {/* Timestamp última edição */}
