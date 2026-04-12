@@ -299,13 +299,17 @@ function StageSubstatusPopover({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Position: centered below the node
+  // Position: centered below the node, flip above if no room below
   const popoverWidth = 160;
+  const estimatedHeight = options.length * 28 + 40; // ~28px per option + header
   const left = Math.max(8, Math.min(
     anchorRect.left + anchorRect.width / 2 - popoverWidth / 2,
     window.innerWidth - popoverWidth - 8
   ));
-  const top = anchorRect.bottom + 8;
+  const fitsBelow = anchorRect.bottom + 8 + estimatedHeight < window.innerHeight - 8;
+  const top = fitsBelow
+    ? anchorRect.bottom + 8
+    : anchorRect.top - estimatedHeight - 8;
 
   // Normalize current status for comparison
   const normalizedCurrent = currentStatus.toLowerCase().replace(/\s+/g, "_");
@@ -313,7 +317,7 @@ function StageSubstatusPopover({
   return (
     <div
       ref={ref}
-      className="fixed z-[9999] max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+      className={`fixed z-[9999] max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-700/80 shadow-xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in duration-150 ${fitsBelow ? "slide-in-from-top-1" : "slide-in-from-bottom-1"}`}
       style={{ top, left, width: popoverWidth }}
     >
       {/* Header with stage color accent */}
