@@ -5468,6 +5468,119 @@ export const driveRouter = router({
   }),
 
   /**
+   * Estratégia C — fuzzy/unaccent matching + nome no filename.
+   * Roda DEPOIS de linkPendingFiles (B). Usa:
+   * 1. unaccent + ILIKE no path nível 2 e 3 (pega acentos diferentes)
+   * 2. Nome completo do assistido dentro do filename (ILIKE '%nome%')
+   * 3. pg_trgm similarity para matches parciais (threshold 0.4)
+   */
+  linkPendingAdvanced: protectedProcedure.mutation(async () => {
+    return safeAsync(async () => {
+      let totalLinked = 0;
+
+      // === 1. Unaccent path matching (nível 2) ===
+      const r1 = await db.execute(sql.raw(`
+        WITH path_names AS (
+          SELECT dfi.id AS file_id,
+            split_part(dfi.drive_path, '/', 2) AS folder_name
+          FROM drive_file_index dfi
+          WHERE dfi.link_strategy = 'pending'
+            AND length(split_part(dfi.drive_path, '/', 2)) > 3
+        )
+        UPDATE drive_file_index dfi SET
+          assistido_id = a.id,
+          link_strategy = 'regex',
+          link_confidence = 0.75
+        FROM path_names pn
+        JOIN assistidos a ON unaccent(UPPER(a.nome)) = unaccent(UPPER(pn.folder_name))
+        WHERE dfi.id = pn.file_id AND dfi.link_strategy = 'pending'
+      `));
+
+      // === 2. Unaccent path matching (nível 3) ===
+      await db.execute(sql.raw(`
+        WITH deep_names AS (
+          SELECT dfi.id AS file_id,
+            split_part(dfi.drive_path, '/', 3) AS folder_name
+          FROM drive_file_index dfi
+          WHERE dfi.link_strategy = 'pending'
+            AND array_length(string_to_array(dfi.drive_path, '/'), 1) >= 4
+            AND length(split_part(dfi.drive_path, '/', 3)) > 3
+        )
+        UPDATE drive_file_index dfi SET
+          assistido_id = a.id,
+          link_strategy = 'regex',
+          link_confidence = 0.65
+        FROM deep_names dn
+        JOIN assistidos a ON unaccent(UPPER(a.nome)) = unaccent(UPPER(dn.folder_name))
+        WHERE dfi.id = dn.file_id AND dfi.link_strategy = 'pending'
+      `));
+
+      // === 3. Full name in filename (ILIKE) ===
+      // Matches "DOC. - CAROLINE PEREIRA DA SILVA JESUS.pdf" → assistido "Caroline Pereira da Silva Jesus"
+      await db.execute(sql.raw(`
+        UPDATE drive_file_index dfi SET
+          assistido_id = matched.aid,
+          link_strategy = 'regex',
+          link_confidence = 0.60
+        FROM (
+          SELECT DISTINCT ON (dfi2.id) dfi2.id AS fid, a.id AS aid
+          FROM drive_file_index dfi2
+          CROSS JOIN assistidos a
+          WHERE dfi2.link_strategy = 'pending'
+            AND a.deleted_at IS NULL
+            AND length(a.nome) > 8
+            AND unaccent(UPPER(dfi2.file_name)) LIKE '%' || unaccent(UPPER(a.nome)) || '%'
+          ORDER BY dfi2.id, length(a.nome) DESC
+        ) matched
+        WHERE dfi.id = matched.fid AND dfi.link_strategy = 'pending'
+      `));
+
+      // === 4. pg_trgm similarity on path segment ===
+      // Only match if similarity > 0.5 (strong partial match)
+      await db.execute(sql.raw(`
+        UPDATE drive_file_index dfi SET
+          assistido_id = matched.aid,
+          link_strategy = 'regex',
+          link_confidence = 0.50
+        FROM (
+          SELECT DISTINCT ON (dfi2.id) dfi2.id AS fid, a.id AS aid,
+            similarity(unaccent(UPPER(split_part(dfi2.drive_path, '/', 2))), unaccent(UPPER(a.nome))) AS sim
+          FROM drive_file_index dfi2
+          CROSS JOIN assistidos a
+          WHERE dfi2.link_strategy = 'pending'
+            AND a.deleted_at IS NULL
+            AND length(split_part(dfi2.drive_path, '/', 2)) > 5
+            AND length(a.nome) > 5
+            AND similarity(unaccent(UPPER(split_part(dfi2.drive_path, '/', 2))), unaccent(UPPER(a.nome))) > 0.5
+          ORDER BY dfi2.id, sim DESC
+        ) matched
+        WHERE dfi.id = matched.fid AND dfi.link_strategy = 'pending'
+      `));
+
+      // Final counts
+      const stats = await db.execute(sql.raw(`
+        SELECT link_strategy, link_confidence::text AS conf, count(*)::int AS n
+        FROM drive_file_index
+        GROUP BY link_strategy, link_confidence
+        ORDER BY link_strategy, link_confidence DESC
+      `));
+      const remaining = await db.execute(
+        sql.raw(`SELECT count(*)::int AS n FROM drive_file_index WHERE link_strategy = 'pending'`),
+      );
+
+      console.log(`[DriveLink] Strategy C done. Remaining: ${(remaining as any)[0]?.n}`);
+      return {
+        breakdown: (stats as any[]).map((r: any) => ({
+          strategy: r.link_strategy,
+          confidence: r.conf,
+          count: r.n,
+        })),
+        remaining: Number((remaining as any)[0]?.n ?? 0),
+      };
+    }, "Erro ao vincular arquivos (avançado)");
+  }),
+
+  /**
    * Lista arquivos indexados por assistido
    */
   filesByAssistido: protectedProcedure
