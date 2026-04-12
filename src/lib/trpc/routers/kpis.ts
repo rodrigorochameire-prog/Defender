@@ -61,13 +61,11 @@ function buildScope(ctx: { user: any }, input: ScopeInput) {
 }
 
 /** db.execute(sql.raw(...)) retorna um RowList iterável do postgres-js. Converte pra array plano. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toRows(result: any): any[] {
   if (Array.isArray(result)) return result;
   if (result && Array.isArray(result.rows)) return result.rows;
   try {
     return Array.from(result ?? []);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_) {
     return [];
   }
