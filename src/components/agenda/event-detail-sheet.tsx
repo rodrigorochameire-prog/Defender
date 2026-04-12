@@ -244,7 +244,7 @@ export function EventDetailSheet({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
           {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-neutral-200/70 dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               {(() => {
@@ -497,33 +497,37 @@ export function EventDetailSheet({
                 </SectionCard>
 
                 {/* 5. LAUDOS */}
-                {laudos.length > 0 && (
-                  <SectionCard label="Laudos e Perícias">
-                    <ul className="space-y-1">
-                      {laudos.map((l: any, i: number) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                          <ClipboardList className="w-3 h-3 text-neutral-400 mt-0.5 flex-shrink-0" />
-                          <span>{typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {lacunas.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-                        <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
-                          Lacunas probatórias
-                        </p>
-                        <ul className="space-y-1">
-                          {lacunas.map((l: any, i: number) => (
-                            <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                              <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </SectionCard>
-                )}
+                <SectionCard label="Laudos e Perícias">
+                  {laudos.length > 0 ? (
+                    <>
+                      <ul className="space-y-1">
+                        {laudos.map((l: any, i: number) => (
+                          <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+                            <ClipboardList className="w-3 h-3 text-neutral-400 mt-0.5 flex-shrink-0" />
+                            <span>{typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {lacunas.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
+                          <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
+                            Lacunas probatórias
+                          </p>
+                          <ul className="space-y-1">
+                            {lacunas.map((l: any, i: number) => (
+                              <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
+                                <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                                <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <EmptyHint text="Nenhum laudo ou perícia identificado." />
+                  )}
+                </SectionCard>
 
                 {/* 6. INVESTIGACAO DEFENSIVA */}
                 <SectionCard label="Investigação Defensiva">
@@ -561,8 +565,8 @@ export function EventDetailSheet({
                 </SectionCard>
 
                 {/* 7. CONTRADICOES */}
-                {contradicoes.length > 0 && (
-                  <SectionCard label="Contradições">
+                <SectionCard label="Contradições">
+                  {contradicoes.length > 0 ? (
                     <ul className="space-y-1.5">
                       {contradicoes.map((c: any, i: number) => {
                         const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
@@ -579,12 +583,14 @@ export function EventDetailSheet({
                         );
                       })}
                     </ul>
-                  </SectionCard>
-                )}
+                  ) : (
+                    <EmptyHint text="Nenhuma contradição identificada." />
+                  )}
+                </SectionCard>
 
                 {/* 8. PENDENCIAS */}
-                {pendencias.length > 0 && (
-                  <SectionCard label="Pendências">
+                <SectionCard label="Pendências">
+                  {pendencias.length > 0 ? (
                     <ul className="space-y-1">
                       {pendencias.map((p: any, i: number) => {
                         const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
@@ -596,8 +602,10 @@ export function EventDetailSheet({
                         );
                       })}
                     </ul>
-                  </SectionCard>
-                )}
+                  ) : (
+                    <EmptyHint text="Nenhuma pendência registrada." />
+                  )}
+                </SectionCard>
 
                 {/* 9. TESES */}
                 <SectionCard label="Teses">
