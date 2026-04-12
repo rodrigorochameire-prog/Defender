@@ -451,9 +451,15 @@ export default function DashboardJuriPage() {
   // ==========================================
 
   const demandasFiltradas = useMemo(() => {
-    if (isVisaoGeral) return demandas;
-    return demandas.filter((d: any) => d.defensorId === defensorUserId);
-  }, [demandas, defensorUserId, isVisaoGeral]);
+    let filtered = isVisaoGeral ? demandas : demandas.filter((d: any) => d.defensorId === defensorUserId);
+    // Filtro por atribuição da dashboard (Row 2 pills)
+    if (dashboardAreaFilter.length > 0) {
+      filtered = filtered.filter((d: any) =>
+        dashboardAreaFilter.some(area => areaMatchesFilter(d.processo?.atribuicao, area))
+      );
+    }
+    return filtered;
+  }, [demandas, defensorUserId, isVisaoGeral, dashboardAreaFilter]);
 
   const jurisFiltrados = useMemo(() => {
     if (isVisaoGeral) return juris;
@@ -592,6 +598,7 @@ export default function DashboardJuriPage() {
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
+  const [dashboardAreaFilter, setDashboardAreaFilter] = useState<string[]>([]);
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   // Transcrição de áudio
@@ -787,6 +794,42 @@ export default function DashboardJuriPage() {
       <CollapsiblePageHeader
         title="Dashboard"
         icon={LayoutDashboard}
+        collapsedStats={
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
+            {demandasFiltradas.filter((d: any) => !d.arquivado).length} demandas
+          </span>
+        }
+        bottomRow={
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+              <AtribuicaoPills
+                variant="dark"
+                options={atribuicaoOptions}
+                selectedValues={dashboardAreaFilter.length > 0 ? dashboardAreaFilter : ["all"]}
+                onToggle={(value) => {
+                  if (value === "all" || value === "Todas") {
+                    setDashboardAreaFilter([]);
+                  } else {
+                    setDashboardAreaFilter(prev => {
+                      if (prev.includes(value)) {
+                        const next = prev.filter(v => v !== value);
+                        return next;
+                      }
+                      return [...prev, value];
+                    });
+                  }
+                }}
+                onClear={() => setDashboardAreaFilter([])}
+                compact
+                counts={Object.fromEntries(
+                  atribuicaoOptions
+                    .filter(o => o.value !== "all" && o.value !== "Todas")
+                    .map(o => [o.label, demandas.filter((d: any) => !d.arquivado && areaMatchesFilter(d.processo?.atribuicao, o.value)).length])
+                )}
+              />
+            </div>
+          </div>
+        }
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
