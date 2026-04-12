@@ -67,39 +67,23 @@ function AtribuicaoCard({
         if (atribuicao.folderId) ctx.navigateToFolder(atribuicao.folderId, atribuicao.label);
       }}
       className={cn(
-        "group bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 cursor-pointer text-left",
-        "transition-all duration-200",
-        "hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm hover:shadow-neutral-200/50 dark:hover:shadow-black/20"
+        "group bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden cursor-pointer text-left",
+        "hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60",
+        "transition-all duration-200"
       )}
     >
-      <div className="flex items-center gap-2.5 mb-2.5">
+      <div className={cn("flex items-center gap-3 px-4 py-3 border-l-[4px]", atribuicao.dotClass.replace("bg-", "border-l-"))}>
         <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-              {atribuicao.label}
-            </span>
-            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", atribuicao.dotClass)} />
-          </div>
-          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-            {fileCount} arquivo{fileCount !== 1 ? "s" : ""} · {syncTimeStr}
+          <span className="text-[13px] font-semibold text-foreground truncate block">
+            {atribuicao.label}
+          </span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {fileCount} arquivo{fileCount !== 1 ? "s" : ""} · {syncTimeStr} · {linkedPercent}% vinculados
           </span>
         </div>
-      </div>
-
-      {/* Vinculação bar */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-neutral-400 dark:bg-neutral-600 transition-all duration-500"
-            style={{ width: `${Math.min(linkedPercent, 100)}%` }}
-          />
-        </div>
-        <span className="text-[10px] font-medium tabular-nums text-neutral-400 min-w-[3ch] text-right">
-          {linkedPercent}%
-        </span>
       </div>
     </button>
   );
@@ -124,18 +108,18 @@ function SpecialFolderCard({
         if (folder.folderId) ctx.navigateToFolder(folder.folderId, folder.label);
       }}
       className={cn(
-        "group bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 cursor-pointer text-left",
-        "transition-all duration-200",
-        "hover:border-neutral-300 dark:hover:border-neutral-700 hover:shadow-sm hover:shadow-neutral-200/50 dark:hover:shadow-black/20"
+        "group bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden cursor-pointer text-left",
+        "hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60",
+        "transition-all duration-200"
       )}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3 px-4 py-3 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
         <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{folder.label}</p>
-          <p className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
+          <p className="text-[13px] font-semibold text-foreground truncate">{folder.label}</p>
+          <p className="text-[10px] text-muted-foreground tabular-nums">
             {fileCount} arquivo{fileCount !== 1 ? "s" : ""}
           </p>
         </div>
@@ -177,18 +161,18 @@ function RecentFileItem({
       href={file.webViewLink ?? "#"}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2.5 px-3.5 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors duration-150 group cursor-pointer"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 cursor-pointer"
     >
       <Icon className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
-      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors">
+      <span className="text-[12px] font-medium text-neutral-700 dark:text-neutral-300 truncate flex-1">
         {file.name}
       </span>
       {atribuicaoLabel && (
-        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 shrink-0">
+        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground shrink-0">
           {atribuicaoLabel}
         </span>
       )}
-      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0 tabular-nums">
+      <span className="text-[10px] text-muted-foreground shrink-0 tabular-nums">
         {timeStr}
       </span>
     </a>
@@ -283,11 +267,11 @@ export function DriveOverviewDashboard() {
         enrichmentCounts.completed > 0 ||
         enrichmentCounts.failed > 0 ||
         enrichmentCounts.pending > 0) && (
-        <div className="flex items-center gap-3 px-5 md:px-6 py-2.5 border-b border-neutral-200/50 dark:border-neutral-800/50 bg-neutral-50/60 dark:bg-neutral-900/30 shrink-0">
-          <span className="text-[9px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold">
+        <div className="flex items-center gap-3 px-5 md:px-6 py-2.5 border-b border-neutral-200/40 dark:border-neutral-800/40 bg-white/60 dark:bg-neutral-900/30 shrink-0">
+          <span className="text-[9px] tracking-wider text-muted-foreground font-semibold">
             Qualidade
           </span>
-          <div className="w-px h-3 bg-neutral-200 dark:bg-neutral-800 shrink-0" />
+          <div className="w-px h-3 bg-neutral-200/60 dark:bg-neutral-800/60 shrink-0" />
           <div className="flex items-center gap-2.5 text-[10px] text-neutral-500 dark:text-neutral-400 min-w-0 flex-1 overflow-x-auto scrollbar-none">
             <span className="shrink-0">
               <strong className="text-neutral-900 dark:text-neutral-100 font-mono tabular-nums">
@@ -319,7 +303,7 @@ export function DriveOverviewDashboard() {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2.5 text-xs rounded-lg border-neutral-200/80 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-500/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shrink-0"
+              className="h-7 px-2.5 text-xs rounded-lg bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 hover:border-emerald-600 shadow-sm transition-all duration-150 shrink-0"
               onClick={() => retryEnrichment.mutate({})}
               disabled={retryEnrichment.isPending}
             >
@@ -337,9 +321,11 @@ export function DriveOverviewDashboard() {
       <div className="max-w-5xl mx-auto space-y-6 p-5 md:p-6">
         {/* --- Atribuicao Cards --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
-            Atribuições
-          </h3>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <h3 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Atribuições</h3>
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+          </div>
           {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -372,9 +358,11 @@ export function DriveOverviewDashboard() {
 
         {/* --- Special Folders --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
-            Especiais
-          </h3>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <h3 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Especiais</h3>
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {SPECIAL_FOLDERS.map((sf) => {
               const data = folderCountMap[sf.folderId];
@@ -386,10 +374,12 @@ export function DriveOverviewDashboard() {
         {/* --- Enrichment Progress (inline) --- */}
         {enrichedPercent > 0 && (
           <div>
-            <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3">
-              Extração IA
-            </h3>
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+              <h3 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Extração IA</h3>
+              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            </div>
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200 p-4">
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
@@ -426,12 +416,13 @@ export function DriveOverviewDashboard() {
 
         {/* --- Recent Activity --- */}
         <div>
-          <h3 className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Clock className="h-3 w-3" />
-            Atividade Recente
-          </h3>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <h3 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Atividade Recente</h3>
+            <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+          </div>
           {recentFiles && recentFiles.length > 0 ? (
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl divide-y divide-neutral-100 dark:divide-neutral-800/50 overflow-hidden">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200 p-3 space-y-1.5">
               {recentFiles.map((file) => (
                 <RecentFileItem
                   key={file.id}
@@ -441,7 +432,7 @@ export function DriveOverviewDashboard() {
               ))}
             </div>
           ) : !isLoadingStats ? (
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl">
+            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60">
               <div className="text-center py-8">
                 <Clock className="h-5 w-5 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
                 <p className="text-xs text-neutral-400">Nenhuma atividade recente</p>
