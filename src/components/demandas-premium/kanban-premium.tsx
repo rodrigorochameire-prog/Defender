@@ -187,9 +187,9 @@ function KanbanCard({
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
       <div className="px-3 py-2.5">
-        {/* Row 1: Nome + Flags (data movida pra baixo — libera espaço pro nome) */}
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 truncate flex-1 leading-tight">
+        {/* Row 1: Nome + Flags */}
+        <div className="flex items-start gap-1.5 mb-0.5">
+          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2">
             {demanda.assistido}
           </p>
           {isPreso && (
@@ -817,15 +817,25 @@ export function KanbanPremium({
       .filter((sg) => (subGroupDemandas[sg]?.length || 0) > 0).length;
   }, [subGroupDemandas]);
 
-  // Visible columns
+  // Viewport check — esconde Concluída quando expandido em telas < lg
+  const [isNarrowViewport, setIsNarrowViewport] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrowViewport(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Visible columns — Concluída esconde quando Em Andamento expandido em tela estreita
   const visibleColumns = useMemo(() => {
     const cols: KanbanColumn[] = [];
     if (columnDemandas.triagem.length > 0) cols.push("triagem");
     cols.push("em_andamento");
-    if (columnDemandas.concluida.length > 0) cols.push("concluida");
+    const hideConcluida = emAndamentoExpanded && isNarrowViewport;
+    if (columnDemandas.concluida.length > 0 && !hideConcluida) cols.push("concluida");
     if (showArchived && columnDemandas.arquivado.length > 0) cols.push("arquivado");
     return cols;
-  }, [columnDemandas, showArchived]);
+  }, [columnDemandas, showArchived, emAndamentoExpanded, isNarrowViewport]);
 
   // CSS Grid — balanced proportions
   const gridTemplate = useMemo(() => {
@@ -1055,8 +1065,7 @@ export function KanbanPremium({
                 className={cn(
                   "flex flex-col min-w-0 rounded-xl transition-all duration-200",
                   isRegularDropTarget && "bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-dashed ring-emerald-400 ring-offset-1",
-                  col === "concluida" && "opacity-50",
-                  col === "concluida" && emAndamentoExpanded && "hidden lg:flex"
+                  col === "concluida" && "opacity-50"
                 )}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDragOverColumn(col); }}
                 onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null); }}
