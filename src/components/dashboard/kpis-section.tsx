@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, useMotionValue, useTransform, animate, AnimatePresence } from "motion/react";
 import {
   BarChart3,
+  Download,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -1281,10 +1282,62 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   {relatorioExtrajudicial}
                 </span>
               </div>
-              {/* Botão drill-down */}
+              {/* Exportar CSV + Drill-down */}
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => {
+                    // Force load if not already
+                    if (!showRelatorioDetail) setShowRelatorioDetail(true);
+                    // Wait for data then export
+                    const doExport = () => {
+                      const detail = relatorioDetalhadoQ.data;
+                      if (!detail?.length) return;
+                      // Build CSV: Seção, Categoria, JAN, FEV, MAR, ABR, MAI, JUN, Total
+                      const header = ["Seção", "Categoria", ...mesesRange.map((m) => MESES_LABEL[m]), "Total"];
+                      const catMap = new Map<string, { secao: string; meses: Map<number, number> }>();
+                      for (const r of detail) {
+                        const key = `${r.secao}||${r.categoria}`;
+                        if (!catMap.has(key)) catMap.set(key, { secao: r.secao, meses: new Map() });
+                        const entry = catMap.get(key)!;
+                        entry.meses.set(r.mes, (entry.meses.get(r.mes) ?? 0) + r.total);
+                      }
+                      const rows = Array.from(catMap.entries()).map(([key, val]) => {
+                        const cat = key.split("||")[1];
+                        const vals = mesesRange.map((m) => val.meses.get(m) ?? 0);
+                        const total = vals.reduce((a, b) => a + b, 0);
+                        return [val.secao, cat, ...vals.map(String), String(total)];
+                      });
+                      const csv = [header, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+                      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `relatorio-semestral-${relatorioScope.ano}-${relatorioScope.semestre}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    };
+                    // If data already loaded, export immediately
+                    if (relatorioDetalhadoQ.data?.length) {
+                      doExport();
+                    } else {
+                      // Wait for query to resolve
+                      const interval = setInterval(() => {
+                        if (relatorioDetalhadoQ.data?.length) {
+                          clearInterval(interval);
+                          doExport();
+                        }
+                      }, 200);
+                      setTimeout(() => clearInterval(interval), 5000);
+                    }
+                  }}
+                  className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Download className="w-3 h-3" />
+                  Exportar CSV
+                </button>
               <button
                 onClick={() => setShowRelatorioDetail(!showRelatorioDetail)}
-                className="ml-auto text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
+                className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors cursor-pointer flex items-center gap-1"
               >
                 {showRelatorioDetail ? "Ocultar detalhamento" : "Ver detalhamento"}
                 <svg
@@ -1297,6 +1350,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+              </div>
             </div>
 
             {/* Drill-down — tabela estilo formulário Corregedoria */}
