@@ -25,6 +25,9 @@ import {
   Phone,
   Printer,
   X,
+  Building2,
+  Gavel,
+  FolderOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -165,11 +168,16 @@ export function EventDetailSheet({
 
   // 4. Versao do acusado
   const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
+  const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia", "versao_instrucao");
   const atendimento = ctx?.atendimentos?.[0];
   const versaoAtendimento = atendimento?.resumo
     ?? atendimento?.transcricaoResumo
     ?? (atendimento?.pontosChave as any)
     ?? null;
+
+  // IDs for navigation
+  const assistidoId = (ctx?.assistido as any)?.id ?? evento.assistidoId ?? null;
+  const processoId = (ctx?.processo as any)?.id ?? evento.processoId ?? null;
 
   // 5. Diligencias
   const diligencias = ctx?.diligencias ?? [];
@@ -362,7 +370,7 @@ export function EventDetailSheet({
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400/70" />
+                        <Building2 className="w-3 h-3 text-neutral-400" />
                         <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
                           Delegacia
                         </span>
@@ -379,7 +387,7 @@ export function EventDetailSheet({
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/70" />
+                        <Shield className="w-3 h-3 text-neutral-400" />
                         <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
                           Atendimento Defensoria
                         </span>
@@ -399,6 +407,20 @@ export function EventDetailSheet({
                         </p>
                       )}
                     </div>
+                    {/* Versão em Juízo */}
+                    {versaoJuizo && (
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Gavel className="w-3 h-3 text-neutral-400" />
+                          <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
+                            Em Juízo
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-3.5">
+                          {versaoJuizo}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </SectionCard>
 
@@ -575,6 +597,38 @@ export function EventDetailSheet({
                     <EmptyHint text="Nenhuma tese identificada." />
                   )}
                 </SectionCard>
+
+                {/* 10. DRIVE — acesso rápido aos arquivos */}
+                {(assistidoId || processoId) && (
+                  <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-4 hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FolderOpen className="w-3.5 h-3.5 text-neutral-400" />
+                      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 tracking-wide">
+                        Documentos
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {assistidoId && (
+                        <Link
+                          href={`/admin/assistidos/${assistidoId}?tab=drive`}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
+                        >
+                          <FolderOpen className="w-3 h-3" />
+                          Pasta do Assistido
+                        </Link>
+                      )}
+                      {processoId && (
+                        <Link
+                          href={`/admin/processos/${processoId}?tab=drive`}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
+                        >
+                          <FileText className="w-3 h-3" />
+                          Autos do Processo
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
