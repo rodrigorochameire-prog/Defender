@@ -285,7 +285,7 @@ function KanbanCard({
               ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
               border transition-all duration-150
               ${onStatusChange
-                ? "hover:ring-1 hover:ring-emerald-300/60 dark:hover:ring-emerald-700/40 cursor-pointer"
+                ? "hover:ring-1 cursor-pointer"
                 : "cursor-default"
               }
             `}
@@ -294,7 +294,9 @@ function KanbanCard({
               borderColor: `${groupColor}40`,
               color: groupColor,
               filter: "saturate(1.1)",
-            }}
+              // @ts-ignore -- ring color via inline
+              "--tw-ring-color": `${groupColor}60`,
+            } as React.CSSProperties}
             title={onStatusChange ? "Alterar status" : undefined}
           >
             {(() => {
