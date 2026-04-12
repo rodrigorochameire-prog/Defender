@@ -66,6 +66,17 @@ import {
   Baby,
   Handshake,
   BarChart3,
+  Zap,
+  PieChart,
+  Scale,
+  ShieldCheck,
+  AlertTriangle,
+  FileCheck,
+  TrendingUp,
+  Building,
+  Calculator,
+  ClipboardList,
+  ListTodo,
 } from "lucide-react";
 import {
   Popover,
@@ -1882,60 +1893,80 @@ export default function DashboardJuriPage() {
 
         )}
 
-        {/* ===== 7. CARDS POR ÁREA — dinâmico, baseado nas áreas do defensor ===== */}
+        {/* ===== 7. CARDS POR ÁREA — hubs de atalho para funcionalidades especiais ===== */}
         {(() => {
-          const areaCards: Array<{ area: string; label: string; icon: any; color: string; borderColor: string; stats: Array<{ value: number | string; label: string }>; href: string }> = [];
+          const areaCards: Array<{
+            area: string; label: string; icon: any; color: string; borderColor: string;
+            subtitle: string;
+            links: Array<{ label: string; href: string; icon: any }>;
+          }> = [];
 
           if (hasArea("JURI")) {
-            const count = demandas.filter(d => !d.arquivado && (d.processo?.atribuicao === "Tribunal do Júri" || d.processo?.atribuicao === "Grupo Especial do Júri")).length;
             const jurisCount = jurisProximos?.length ?? 0;
             areaCards.push({
               area: "JURI", label: "Tribunal do Júri", icon: Gavel,
               color: "text-emerald-600 dark:text-emerald-400", borderColor: "border-l-emerald-500",
-              stats: [{ value: count, label: "demandas" }, { value: jurisCount, label: "júris próximos" }],
-              href: "/admin/demandas",
+              subtitle: `${jurisCount} júris próximos`,
+              links: [
+                { label: "Sessões", href: "/admin/juri", icon: CalendarDays },
+                { label: "Plenário", href: "/admin/juri/cockpit", icon: Zap },
+                { label: "Cosmovisão", href: "/admin/juri/cosmovisao", icon: PieChart },
+                { label: "Recursos", href: "/admin/juri/recursos", icon: Scale },
+              ],
             });
           }
 
           if (hasArea("VIOLENCIA_DOMESTICA")) {
-            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Violência Doméstica").length;
             areaCards.push({
               area: "VVD", label: "Violência Doméstica", icon: Shield,
               color: "text-amber-600 dark:text-amber-400", borderColor: "border-l-amber-500",
-              stats: [{ value: count, label: "demandas" }],
-              href: "/admin/demandas",
+              subtitle: "Medidas protetivas e monitoramento",
+              links: [
+                { label: "Dashboard", href: "/admin/vvd", icon: LayoutDashboard },
+                { label: "Monitoramento MPU", href: "/admin/vvd/medidas", icon: ShieldCheck },
+                { label: "Processos", href: "/admin/vvd/processos", icon: FileText },
+                { label: "Avaliação de Risco", href: "/admin/medidas/risco", icon: AlertTriangle },
+              ],
             });
           }
 
           if (hasArea("EXECUCAO_PENAL")) {
-            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Execução Penal").length;
             areaCards.push({
               area: "EP", label: "Execução Penal", icon: Lock,
               color: "text-blue-600 dark:text-blue-400", borderColor: "border-l-blue-500",
-              stats: [{ value: count, label: "demandas" }],
-              href: "/admin/demandas",
+              subtitle: "Benefícios, progressões e custódia",
+              links: [
+                { label: "Benefícios", href: "/admin/beneficios", icon: FileCheck },
+                { label: "Progressões", href: "/admin/progressoes", icon: TrendingUp },
+                { label: "Custódia", href: "/admin/custodia", icon: Building },
+                { label: "Calculadora EP", href: "/admin/calculadoras?tipo=ep", icon: Calculator },
+              ],
             });
           }
 
           if (hasArea("CRIMINAL")) {
-            const count = demandas.filter(d => !d.arquivado && (d.processo?.atribuicao === "Criminal Geral" || d.processo?.atribuicao === "Substituição Criminal")).length;
             const instCount = institutosAtivos?.length ?? 0;
             areaCards.push({
               area: "CRIMINAL", label: "Criminal Geral", icon: Handshake,
               color: "text-rose-600 dark:text-rose-400", borderColor: "border-l-rose-500",
-              stats: [{ value: count, label: "demandas" }, { value: instCount, label: "institutos ativos" }],
-              href: "/admin/demandas",
+              subtitle: `${instCount} institutos despenalizadores ativos`,
+              links: [
+                { label: "Demandas", href: "/admin/demandas", icon: ListTodo },
+                { label: "Calculadoras", href: "/admin/calculadoras", icon: Calculator },
+              ],
             });
           }
 
           if (hasArea("INFANCIA_JUVENTUDE")) {
-            const count = demandas.filter(d => !d.arquivado && d.processo?.atribuicao === "Infância e Juventude").length;
             const medCount = medidasAtivas?.length ?? 0;
             areaCards.push({
               area: "INFANCIA", label: "Infância e Juventude", icon: Baby,
               color: "text-violet-600 dark:text-violet-400", borderColor: "border-l-violet-500",
-              stats: [{ value: count, label: "demandas" }, { value: medCount, label: "medidas ativas" }],
-              href: "/admin/demandas",
+              subtitle: `${medCount} medidas socioeducativas ativas`,
+              links: [
+                { label: "Medidas", href: "/admin/medidas", icon: ClipboardList },
+                { label: "Demandas", href: "/admin/demandas", icon: ListTodo },
+              ],
             });
           }
 
@@ -1945,32 +1976,40 @@ export default function DashboardJuriPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 px-1">
                 <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-                <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Acompanhamento por Área</h2>
+                <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Especialidades</h2>
                 <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {areaCards.map((ac) => {
                   const AreaIcon = ac.icon;
                   return (
-                    <Link href={ac.href} key={ac.area}>
-                      <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200 cursor-pointer">
-                        <div className={cn("px-5 py-4", ac.borderColor, "border-l-[4px]")}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                              <AreaIcon className={cn("w-4 h-4", ac.color)} />
-                            </div>
-                            <div>
-                              <h3 className="text-[13px] font-semibold text-foreground tracking-tight">{ac.label}</h3>
-                              <p className="text-[10px] text-muted-foreground tabular-nums">
-                                {ac.stats.map((s, i) => (
-                                  <span key={i}>{i > 0 && " · "}{s.value} {s.label}</span>
-                                ))}
-                              </p>
-                            </div>
+                    <Card key={ac.area} className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200">
+                      <div className={cn("px-5 py-4 border-l-[4px]", ac.borderColor)}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                            <AreaIcon className={cn("w-4 h-4", ac.color)} />
+                          </div>
+                          <div>
+                            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">{ac.label}</h3>
+                            <p className="text-[10px] text-muted-foreground tabular-nums">{ac.subtitle}</p>
                           </div>
                         </div>
-                      </Card>
-                    </Link>
+                      </div>
+                      <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
+                      <div className="p-3 grid grid-cols-2 gap-1.5">
+                        {ac.links.map((link) => {
+                          const LinkIcon = link.icon;
+                          return (
+                            <Link href={link.href} key={link.href}>
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-all duration-150 cursor-pointer">
+                                <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80 truncate">{link.label}</span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </Card>
                   );
                 })}
               </div>
