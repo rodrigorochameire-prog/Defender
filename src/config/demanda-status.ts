@@ -134,10 +134,10 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
     { label: "Investigar", icon: Eye, statuses: ["investigar"] },
     { label: "Documentos", icon: FileText, statuses: ["documentos"] },
     { label: "Testemunhas", icon: Users, statuses: ["testemunhas"] },
+    { label: "Oficiar", icon: Mail, statuses: ["oficiar"] },
   ],
   saida: [
     { label: "Protocolar", icon: Send, statuses: ["protocolar"] },
-    { label: "Oficiar", icon: Mail, statuses: ["oficiar"] },
   ],
   acompanhar: [
     { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
@@ -248,10 +248,10 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   investigar:  { label: "Investigar",  group: "diligencias", icon: Eye },
   buscar:      { label: "Buscar",      group: "diligencias", icon: Search },
   diligenciar: { label: "Diligenciar", group: "diligencias", icon: FileText },
+  oficiar:     { label: "Oficiar",     group: "diligencias", icon: Mail },
 
-  // === SAÍDA (2) ===
+  // === SAÍDA (1) ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
-  oficiar:    { label: "Oficiar",    group: "saida", icon: Mail },
 
   // === ACOMPANHAR (4) — monitorar + delegações ===
   monitorar:  { label: "Monitorar",  group: "acompanhar", icon: Eye },
@@ -409,9 +409,9 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "investigar", label: "Investigar", group: "diligencias" },
     { value: "buscar", label: "Buscar", group: "diligencias" },
     { value: "diligenciar", label: "Diligenciar", group: "diligencias" },
-    // Saída — Protocolar + Oficiar
+    { value: "oficiar", label: "Oficiar", group: "diligencias" },
+    // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    { value: "oficiar", label: "Oficiar", group: "saida" },
     // Acompanhar — Monitorar + Delegações
     { value: "monitorar", label: "Monitorar", group: "acompanhar" },
     { value: "emilly", label: "Emilly", group: "acompanhar" },
@@ -470,7 +470,7 @@ export const UI_STATUS_TO_DB: Record<string, string> = {
   "documentos": "2_ATENDER",
   "testemunhas": "2_ATENDER",
   "investigar": "2_ATENDER",
-  "oficiar": "5_TRIAGEM",
+  "oficiar": "2_ATENDER",
   "monitorar": "4_MONITORAR",
   "protocolar": "5_TRIAGEM",
   "protocolado": "7_PROTOCOLADO",
