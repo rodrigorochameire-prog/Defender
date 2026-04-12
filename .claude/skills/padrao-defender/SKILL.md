@@ -1,7 +1,7 @@
 ---
 name: padrao-defender
 description: >
-  Design system "Padrao Defender v4" para o projeto OMBUDS. Paleta neutra pura (R=G=B),
+  Design system "Padrao Defender v5" para o projeto OMBUDS. Paleta HSL 240 2% barely-cool,
   CollapsiblePageHeader, cards com shadow, dropdowns portal.
   Use ao criar/editar componentes visuais, paginas, cards, sidebars, dashboards ou qualquer UI.
   Triggers: "padrao defender", "corrigir estilo", "fix style", "design system",
@@ -9,30 +9,37 @@ description: >
   layout, cards, stats.
 ---
 
-# Padrao Defender v4 - Design System
+# Padrão Defender v5 — Design System
 
-> **Filosofia**: Cinza neutro puro como estrutura. Cards brancos com shadow como conteudo. Cor apenas funcional (atribuicao nos cards kanban). Header escuro colapsavel.
+> Refinamento da paleta v4: shift de HSL 0 (neutro puro) para HSL 240 2% (barely cool neutral), com luminâncias harmonizadas. Aprovado em 2026-04-11 após iteração com o usuário.
+
+> **Filosofia**: Cinza barely-cool (HSL 240 2%) como estrutura. Cards brancos com shadow como conteudo. Cor apenas funcional (atribuicao nos cards kanban). Header escuro colapsavel.
 
 ## Principios
 
-1. **Neutro puro (R=G=B)** — sidebar, utility bar, page header usam cinzas puros (#383838, #3a3a3a, #424242). Zero hue azulado.
-2. **Cards brancos com shadow** — `bg-white shadow-sm shadow-black/[0.04]` sobre fundo `#f0f0f0`. Profundidade via shadow, nao cor.
-3. **Cor so quando funcional** — emerald no botao Analisar (juri), amber (VVD), sky (EP). Badge de atribuicao usa cor nos cards kanban. Switch de atribuicao e monocromatico.
-4. **Header colapsavel** — utility bar + page header card. Colapsa ao scrollar.
-5. **Dropdowns via portal** — `createPortal(menu, document.body)` com `fixed z-[9999]`.
+1. **HSL 240 2% (barely cool)** — sidebar, utility bar, page header usam HSL 240 2% (#3e3e41, #464649, #414144). Praticamente neutro — nao "azulado" (hue 220+ e muito blue), nao "warm bege" (hue 0-40). O leve shift para hue 240 da profundidade sem cor aparente.
+2. **Luminancias harmonizadas** — sidebar (l=25) proxima do utility (l=28), com Row 1 (l=26) entre as duas e Row 2 via overlay `bg-white/[0.10]` (l≈30). Cria gradiente de profundidade sidebar→utility→header.
+3. **Cards brancos com shadow** — `bg-white shadow-sm shadow-black/[0.04]` sobre fundo `#f5f5f5` (neutral-100). Profundidade via shadow, nao cor.
+4. **Cor so quando funcional** — emerald no botao Analisar (juri), amber (VVD), sky (EP). Badge de atribuicao usa cor nos cards kanban com `border: groupColor+40` + `bg: groupColor+14` (border + fill sutil) em vez de fill solido `groupColor+2E`. Switch de atribuicao e monocromatico.
+5. **Bordas crisp white/[0.08]** — aresta visivel entre camadas sem escurecer o fill. Usado em utility bar border-b, ring em botoes, separadores.
+6. **Shell shadow** — inset highlight `rgba(255,255,255,0.05)` 1px no topo + drop shadow sutil `0 2px 12px -4px rgba(15,23,42,0.10)` para lift do fundo claro.
+7. **Row 2 mais clara que Row 1** — Row 1 (container solido #414144) ancora o titulo; Row 2 (overlay `white/[0.10]` sobre Row 1) acolhe filtros/pills com luminancia ligeiramente maior (l≈30 vs l=26).
+8. **Header colapsavel** — utility bar + page header card. Colapsa ao scrollar.
+9. **Dropdowns via portal** — `createPortal(menu, document.body)` com `fixed z-[9999]`.
 
 ## Paleta
 
-| Camada | Cor | Uso |
-|--------|-----|-----|
-| Sidebar | `#383838` | Moldura lateral, sempre escura |
-| Utility Bar | `#3a3a3a` | Barra topo (breadcrumbs, cmd+K) |
-| Page Header | `#424242` | Card do titulo da pagina |
-| Icone titulo | `#525252` | Container do icone no Row 1 |
-| Bottom Row | border-t `white/[0.06]` | Separacao interna do card (sem bg proprio) |
-| Fundo pagina | `#f0f0f0` | Cinza neutro puro |
-| Cards | `white` + `shadow-sm` | Conteudo elevado |
-| Collapsed | `#3e3e3e` | Barra colapsada ao scrollar |
+| Camada | Cor | HSL | Uso |
+|--------|-----|-----|-----|
+| Sidebar | `#3e3e41` | 240 2% 25% | Moldura lateral, sempre escura |
+| Sidebar dark (dark mode) | `#232324` | 240 2% 14% | Sidebar em dark mode |
+| Utility Bar | `#464649` | 240 2% 28% | Barra topo (breadcrumbs, cmd+K) |
+| Page Header (Row 1) | `#414144` | 240 2% 26% | Card do titulo da pagina |
+| Icone titulo | `#525252` | 0 0% 32% | Container do icone no Row 1 (mantido) |
+| Bottom Row | border-t `white/[0.06]` | — | Separacao interna do card (sem bg proprio) |
+| Fundo pagina | `#f5f5f5` | 0 0% 96% | neutral-100 — fundo claro harmonizado |
+| Cards | `white` + `shadow-sm` | — | Conteudo elevado |
+| Collapsed | `#464649` | 240 2% 28% | Barra colapsada ao scrollar |
 
 ## CollapsiblePageHeader
 
@@ -212,7 +219,7 @@ isActive ? "text-emerald-400" : "text-white/50"
 [ ] Cores hardcoded substituidas por opacidades relativas
 [ ] Dropdowns via createPortal (nao absolute)
 [ ] Cards com shadow-sm
-[ ] Fundo #f0f0f0
+[ ] Fundo #f5f5f5 (neutral-100)
 [ ] Botoes icone-only com title tooltip
 [ ] CollapsiblePageHeader usado
 [ ] Row 1 + Row 2 no padrao
