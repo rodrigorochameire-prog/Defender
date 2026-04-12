@@ -81,18 +81,16 @@ function AtribuicaoCard({
         "transition-all duration-200"
       )}
     >
-      <div className={cn("flex items-center gap-3 px-4 py-3 border-l-[4px]", BORDER_L_COLOR[atribuicao.color] || "border-l-neutral-300")}>
-        <div className="h-8 w-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="text-[13px] font-semibold text-foreground truncate block">
+      <div className={cn("px-4 py-3.5 border-l-[4px]", BORDER_L_COLOR[atribuicao.color] || "border-l-neutral-300")}>
+        <div className="flex items-center gap-2 mb-1.5">
+          <Icon className={cn("h-3.5 w-3.5 shrink-0", atribuicao.iconClass)} />
+          <span className="text-[13px] font-semibold text-foreground truncate">
             {atribuicao.label}
           </span>
-          <span className="text-[10px] text-muted-foreground tabular-nums">
-            {fileCount} arquivo{fileCount !== 1 ? "s" : ""} · {syncTimeStr} · {linkedPercent}% vinculados
-          </span>
         </div>
+        <p className="text-[10px] text-muted-foreground tabular-nums truncate">
+          {fileCount} arq. · {syncTimeStr} · {linkedPercent}%
+        </p>
       </div>
     </button>
   );
@@ -295,7 +293,7 @@ export function DriveOverviewDashboard() {
             <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
           </div>
           {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-3.5 animate-pulse">
                   <div className="flex items-center gap-2.5 mb-2.5">
@@ -307,7 +305,7 @@ export function DriveOverviewDashboard() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {DRIVE_ATRIBUICOES.map((attr) => {
                 const data = folderCountMap[attr.folderId];
                 return (
