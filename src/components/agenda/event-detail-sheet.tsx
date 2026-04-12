@@ -255,7 +255,7 @@ export function EventDetailSheet({
                     className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0"
                     style={{ boxShadow: `0 0 0 2.5px ${atribColor}` }}
                   >
-                    <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">
+                    <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                       {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
                     </span>
                   </div>
@@ -263,32 +263,32 @@ export function EventDetailSheet({
               })()}
               <div className="flex-1 min-w-0 pt-0.5">
                 {assistidoNome && (
-                  <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {assistidoNome}
                   </h2>
                 )}
                 <div className="flex items-center gap-2 flex-wrap mt-1">
                   {processoNum && (
                     <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-neutral-200/60 dark:bg-neutral-700/60 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
                       onClick={(e) => {
                         e.stopPropagation();
                         copyProcesso(processoNum);
                       }}
                       title="Copiar número do processo"
                     >
-                      <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processoNum}</span>
-                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />}
+                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processoNum}</span>
+                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />}
                     </button>
                   )}
                   {dataHora && (
-                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500 tabular-nums">
+                    <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
                       {format(dataHora, "HH:mm", { locale: ptBR })}
                     </span>
                   )}
                 </div>
                 {(vara || evento.atribuicao) && (
-                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1.5 leading-snug">
+                  <p className="text-[10px] text-neutral-500 dark:text-neutral-500 mt-1.5 leading-snug">
                     {vara}
                     {vara && evento.atribuicao && " · "}
                     {evento.atribuicao}

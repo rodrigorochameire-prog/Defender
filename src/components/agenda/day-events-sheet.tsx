@@ -211,7 +211,7 @@ export function DayEventsSheet({
             <div className="flex items-start gap-3.5">
               {/* Avatar calendário */}
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200/60 dark:border-neutral-600/40 flex flex-col items-center justify-center shrink-0">
-                <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 leading-none uppercase">
+                <span className="text-[9px] font-medium text-neutral-500 dark:text-neutral-500 leading-none uppercase">
                   {format(date, "EEE", { locale: ptBR }).replace(".", "")}
                 </span>
                 <span className="text-base font-bold text-neutral-700 dark:text-neutral-200 leading-tight">
@@ -219,8 +219,8 @@ export function DayEventsSheet({
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium capitalize">{dayName}</p>
-                <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight capitalize">
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">{dayName}</p>
+                <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight capitalize">
                   {dayDate}
                 </h2>
 
@@ -243,7 +243,7 @@ export function DayEventsSheet({
                       </button>
                     );
                   })}
-                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-200/60 dark:bg-neutral-700/60">
+                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-neutral-700/60">
                     {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
                   </span>
                 </div>

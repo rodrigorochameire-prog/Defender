@@ -651,17 +651,17 @@ export function DemandaQuickPreview({
             <div className="flex items-start gap-3.5">
               {/* Avatar com ring de atribuição */}
               <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}` }}>
-                <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-300">
+                <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight truncate">
+                  <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/60 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
@@ -673,7 +673,7 @@ export function DemandaQuickPreview({
                 {/* Processo — chip */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-200/60 dark:bg-neutral-700/60 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -681,8 +681,8 @@ export function DemandaQuickPreview({
                     }}
                     title="Copiar número do processo"
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                    <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
+                    <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                    <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
                   </button>
                 )}
 
@@ -691,7 +691,7 @@ export function DemandaQuickPreview({
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver assistido →
                     </Link>
@@ -699,7 +699,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver processo →
                     </Link>
