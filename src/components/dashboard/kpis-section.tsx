@@ -364,6 +364,8 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const cargaQ = trpc.kpis.cargaDefensor.useQuery(scope);
   const presosQ = trpc.kpis.presosUrgentes.useQuery(scope);
   const agingQ = trpc.kpis.backlogAging.useQuery(scope);
+  const audienciasProxQ = trpc.kpis.audienciasProximas.useQuery(scope);
+  const semAtendQ = trpc.kpis.semAtendimento.useQuery(scope);
   const relatorioScope = {
     defensorId: selectedDefensorId ?? undefined,
     ano: new Date().getFullYear(),
@@ -393,6 +395,8 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
       utils.kpis.cargaDefensor.invalidate(),
       utils.kpis.presosUrgentes.invalidate(),
       utils.kpis.backlogAging.invalidate(),
+      utils.kpis.audienciasProximas.invalidate(),
+      utils.kpis.semAtendimento.invalidate(),
       utils.kpis.relatorioResumo.invalidate(),
     ]);
   };
@@ -405,6 +409,8 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
   const carga = cargaQ.data ?? [];
   const presos = presosQ.data ?? [];
   const aging = agingQ.data;
+  const audienciasProx = audienciasProxQ.data ?? [];
+  const semAtend = semAtendQ.data;
   const relatorio = relatorioQ.data ?? [];
   const comarcas = comarcasQ.data ?? [];
 
@@ -1033,6 +1039,97 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </div>
+
+        {/* Audiências próximas + Sem atendimento */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Audiências próximas 7 dias */}
+          <ChartCard
+            title="Audiências próximas"
+            subtitle={`${audienciasProx.length} nos próximos 7 dias`}
+            icon={Clock}
+            delay={0.55}
+          >
+            {audienciasProx.length === 0 ? (
+              <EmptyState text="Nenhuma audiência nos próximos 7 dias" />
+            ) : (
+              <ul className="divide-y divide-neutral-100 dark:divide-neutral-800/40 max-h-[240px] overflow-y-auto scrollbar-none -mx-1">
+                {audienciasProx.slice(0, 8).map((a) => (
+                  <li key={a.id} className="px-1 py-2 flex items-center gap-3 text-xs">
+                    <span
+                      className={cn(
+                        "font-mono text-[11px] font-bold w-8 text-center tabular-nums shrink-0",
+                        a.diasRestantes === 0
+                          ? "text-red-600 dark:text-red-500"
+                          : a.diasRestantes <= 1
+                            ? "text-amber-600 dark:text-amber-500"
+                            : "text-neutral-500",
+                      )}
+                    >
+                      {a.diasRestantes === 0 ? "HOJE" : `+${a.diasRestantes}d`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate block">
+                        {a.assistidoNome ?? a.titulo ?? a.tipo}
+                      </span>
+                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate block">
+                        {a.tipo} {a.local ? `· ${a.local}` : ""}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-mono tabular-nums shrink-0">
+                      {new Date(a.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </ChartCard>
+
+          {/* Assistidos sem atendimento > 30 dias */}
+          <ChartCard
+            title="Sem atendimento recente"
+            subtitle={`${semAtend?.total ?? 0} assistidos > 30 dias sem registro`}
+            icon={AlertTriangle}
+            delay={0.6}
+          >
+            {!semAtend || semAtend.total === 0 ? (
+              <EmptyState text="Todos os assistidos com atendimento recente" />
+            ) : (
+              <ul className="divide-y divide-neutral-100 dark:divide-neutral-800/40 max-h-[240px] overflow-y-auto scrollbar-none -mx-1">
+                {semAtend.topAssistidos.map((a) => (
+                  <li key={a.id} className="px-1 py-2 flex items-center gap-3 text-xs">
+                    <span
+                      className={cn(
+                        "font-mono text-[11px] font-bold w-12 text-center tabular-nums shrink-0",
+                        a.diasSemAtendimento === null
+                          ? "text-red-600 dark:text-red-500"
+                          : a.diasSemAtendimento > 60
+                            ? "text-red-600 dark:text-red-500"
+                            : "text-amber-600 dark:text-amber-500",
+                      )}
+                    >
+                      {a.diasSemAtendimento === null ? "NUNCA" : `${a.diasSemAtendimento}d`}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-neutral-800 dark:text-neutral-200 truncate block">
+                        {a.nome}
+                      </span>
+                      {a.statusPrisional && (
+                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                          {a.statusPrisional}
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                ))}
+                {semAtend.total > 10 && (
+                  <li className="px-1 py-2 text-center text-[10px] text-neutral-400">
+                    + {semAtend.total - 10} outros assistidos
+                  </li>
+                )}
+              </ul>
             )}
           </ChartCard>
         </div>
