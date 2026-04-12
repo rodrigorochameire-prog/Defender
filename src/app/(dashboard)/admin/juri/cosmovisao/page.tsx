@@ -33,8 +33,10 @@ import {
   MapPin,
   BarChart3,
   Eye,
+  Globe,
   ChevronRight,
 } from "lucide-react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 
 // ============================================
 // TYPES
@@ -344,25 +346,26 @@ export default function CosmovisaoPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header */}
-      <div className="px-4 sm:px-6 md:px-8 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200/80 dark:border-neutral-800/80">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/juri" className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-              <ArrowLeft className="w-4 h-4 text-neutral-400" />
+      <CollapsiblePageHeader title="Cosmovisão do Júri" icon={Globe}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/admin/juri">
+              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
             </Link>
-            <div className="w-9 h-9 rounded-lg bg-neutral-900 dark:bg-neutral-100 flex items-center justify-center">
-              <Eye className="w-4 h-4 text-white dark:text-neutral-900" />
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Globe className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="font-serif text-lg font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight">Cosmovisão</h1>
-              <p className="text-[11px] text-neutral-400">Analytics completo do Tribunal do Júri</p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Cosmovisão do Júri</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">Analytics completo do Tribunal do Júri</p>
             </div>
           </div>
 
           {/* Period filter — inline in header */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/40">
+            <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-white/[0.08] border border-white/[0.06]">
               {([
                 { key: "mes", label: "Mês" },
                 { key: "trimestre", label: "Trim." },
@@ -374,10 +377,10 @@ export default function CosmovisaoPage() {
                   key={opt.key}
                   onClick={() => setPeriodo(opt.key)}
                   className={cn(
-                    "px-2.5 py-1 rounded-md text-[10px] font-medium transition-all",
+                    "px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all",
                     periodo === opt.key
-                      ? "bg-white dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100 shadow-sm"
-                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                      ? "bg-white/[0.15] text-white shadow-sm"
+                      : "text-white/55 hover:text-white/80"
                   )}
                 >
                   {opt.label}
@@ -387,16 +390,16 @@ export default function CosmovisaoPage() {
 
             {periodo === "custom" && (
               <div className="flex items-center gap-1.5">
-                <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px]" />
-                <span className="text-[10px] text-neutral-400">—</span>
-                <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px]" />
+                <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
+                <span className="text-[10px] text-white/55">—</span>
+                <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
               </div>
             )}
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
-      <div className="px-4 sm:px-6 md:px-8 py-4 space-y-4">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 
         {/* Loading State */}
         {loadingPanorama && (

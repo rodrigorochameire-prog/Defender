@@ -16,10 +16,12 @@ import {
   Send,
   Loader2,
   Wand2,
+  Mail,
   X,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -323,65 +325,51 @@ export default function OficioEditorPage() {
   const isIABusy = generating || reviewing || improving;
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-neutral-400 hover:text-neutral-100"
-            onClick={() => router.push("/admin/oficios")}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-semibold text-neutral-100">
-              {titulo || "Novo Oficio"}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              {oficio?.assistidoNome && (
-                <span className="text-xs text-neutral-500">{oficio.assistidoNome}</span>
-              )}
-              {oficio?.processoNumero && (
-                <span className="text-xs text-neutral-500 font-mono">
-                  {oficio.processoNumero}
-                </span>
-              )}
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Ofício" icon={Mail}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => router.push("/admin/oficios")}
+              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+              <Mail className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">{titulo || "Ofício"}</h1>
+              <p className="text-[10px] text-white/55 hidden sm:block">
+                {oficio?.assistidoNome || ""}
+                {oficio?.processoNumero ? ` · ${oficio.processoNumero}` : ""}
+              </p>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          {dirty && (
-            <Badge variant="outline" className="text-[10px] text-yellow-400 border-yellow-500/20">
-              Nao salvo
-            </Badge>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-neutral-700 text-neutral-300"
-            disabled={!dirty || saving}
-            onClick={handleSave}
-          >
-            {saving ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Save className="w-3.5 h-3.5 mr-1.5" />
+          <div className="flex items-center gap-2">
+            {dirty && (
+              <Badge variant="outline" className="text-[10px] text-yellow-400 border-yellow-500/20">
+                Nao salvo
+              </Badge>
             )}
-            Salvar
-          </Button>
-          {oficio?.googleDocUrl && (
-            <Button variant="ghost" size="sm" className="text-neutral-400" asChild>
-              <a href={oficio.googleDocUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                Google Doc
-              </a>
-            </Button>
-          )}
+            <button
+              disabled={!dirty || saving}
+              onClick={handleSave}
+              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              Salvar
+            </button>
+          </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
+
+      <div className="px-5 md:px-8 py-3 md:py-4 max-w-4xl mx-auto space-y-4">
 
       {/* Metadata Bar */}
       <div className="rounded-xl border border-neutral-700/30 bg-neutral-900/50 p-4">
@@ -785,6 +773,7 @@ Defensor(a) Publico(a)`}
             Google Docs
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

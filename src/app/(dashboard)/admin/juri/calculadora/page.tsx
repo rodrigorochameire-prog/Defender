@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -388,24 +389,20 @@ export default function CalculadoraExecucaoPenalPage() {
   // RENDER
   // ====================================
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
-            <Scale className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Calculadora Penal" icon={Calculator}>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+            <Calculator className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-              Calculadora de Execucao Penal
-            </h1>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Progressao de regime, livramento condicional e marcos da pena
-            </p>
+          <div className="min-w-0">
+            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Calculadora Penal</h1>
+            <p className="text-[10px] text-white/55 hidden sm:block">Progressão de regime, livramento condicional e marcos da pena</p>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
+      <div className="px-5 md:px-8 py-3 md:py-4 max-w-7xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* ====================== INPUT FORM ====================== */}
         <div className="lg:col-span-2 space-y-5">
@@ -795,6 +792,7 @@ export default function CalculadoraExecucaoPenalPage() {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

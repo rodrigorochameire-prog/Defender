@@ -3,6 +3,7 @@
 
 import { use, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -271,29 +272,29 @@ export default function SistematizacaoPage({ params }: { params: Promise<{ id: s
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/admin/processos/${processoId}`)}
-          className="gap-1.5"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-violet-500" />
-            Sistematização Processual
-          </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
-            {processo?.numero || `Processo #${processoId}`}
-            {processo?.assistido && ` — ${processo.assistido.nome}`}
-          </p>
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <CollapsiblePageHeader title="Sistematização" icon={FileSearch}>
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => router.push(`/admin/processos/${processoId}`)}
+            className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
+            <FileSearch className="w-4 h-4 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Sistematização</h1>
+            <p className="text-[10px] text-white/55 hidden sm:block">
+              {processo?.numero || `Processo #${processoId}`}
+              {processo?.assistido && ` — ${processo.assistido.nome}`}
+            </p>
+          </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
+
+      <div className="max-w-7xl mx-auto px-5 md:px-8 py-3 md:py-4 space-y-6">
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -878,6 +879,7 @@ function CronologiaView({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
