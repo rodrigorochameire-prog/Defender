@@ -450,6 +450,8 @@ export default function DashboardJuriPage() {
   // LÓGICA DE DADOS - APENAS MINHAS DEMANDAS
   // ==========================================
 
+  const [dashboardAreaFilter, setDashboardAreaFilter] = useState<string[]>([]);
+
   const demandasFiltradas = useMemo(() => {
     let filtered = isVisaoGeral ? demandas : demandas.filter((d: any) => d.defensorId === defensorUserId);
     // Filtro por atribuição da dashboard (Row 2 pills)
@@ -598,7 +600,6 @@ export default function DashboardJuriPage() {
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [atribuicaoFilter, setAtribuicaoFilter] = useState<string>("all");
-  const [dashboardAreaFilter, setDashboardAreaFilter] = useState<string[]>([]);
   const [showDetalhes, setShowDetalhes] = useState(false);
 
   // Transcrição de áudio
