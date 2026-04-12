@@ -604,10 +604,10 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        {/* ===== STICKY NAV HEADER ===== */}
-        <div className="sticky top-0 z-10 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        {/* ===== STICKY NAV HEADER — Padrão Defender shell sutil ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
+            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
               Demanda
             </SheetTitle>
           </SheetHeader>
@@ -616,32 +616,31 @@ export function DemandaQuickPreview({
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
                   title="Anterior (↑)"
                 >
-                  <ChevronUp className="w-4 h-4" />
+                  <ChevronUp className="w-3.5 h-3.5" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="p-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
                   title="Próximo (↓)"
                 >
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               </>
             )}
-            {/* Close button */}
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer ml-1"
+              className="w-7 h-7 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center ml-1"
               title="Fechar (Esc)"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -873,7 +872,7 @@ export function DemandaQuickPreview({
                   value={demanda.providencias || ""}
                   onSave={(v) => onProvidenciasChange(demanda.id, v)}
                   placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[64px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg p-2.5 border border-transparent focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit"
+                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[56px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg p-2.5 border border-transparent focus-within:border-neutral-200/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[13px]"
                   multiline
                 />
                 {/* Timestamp última edição */}
