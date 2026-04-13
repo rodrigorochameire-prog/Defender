@@ -22,6 +22,7 @@ import {
   Scale,
   FolderOpen,
   Link2,
+  BookOpen,
 } from "lucide-react";
 import {
   Command,
@@ -49,8 +50,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LIST_ITEM, GLASS } from "@/lib/config/design-tokens";
 import { File } from "lucide-react";
+import { SectionsViewer } from "./SectionsViewer";
 
-type ViewMode = "tree" | "timeline" | "status" | "processo";
+type ViewMode = "tree" | "timeline" | "status" | "processo" | "pecas";
 
 const TYPE_FILTERS = [
   { key: "all", label: "Todos" },
@@ -109,6 +111,7 @@ const VIEW_MODES: { key: ViewMode; label: string; icon: React.ElementType }[] = 
   { key: "tree", label: "Arvore", icon: FolderTree },
   { key: "timeline", label: "Timeline", icon: Clock },
   { key: "status", label: "Status", icon: BarChart3 },
+  { key: "pecas", label: "Peças", icon: BookOpen },
 ];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
@@ -818,6 +821,12 @@ export function DriveTabEnhanced({
       )}
       {view === "processo" && processoId && (
         <ProcessoTimeline processoId={processoId} compact />
+      )}
+      {view === "pecas" && (
+        <SectionsViewer
+          assistidoId={assistidoId!}
+          processoId={processoId}
+        />
       )}
 
       {/* File Detail Sheet */}

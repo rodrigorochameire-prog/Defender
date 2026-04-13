@@ -1947,6 +1947,64 @@ export const driveRouter = router({
       }, "Erro ao listar arquivos do assistido");
     }),
 
+  sectionsByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          resumo: driveDocumentSections.resumo,
+          textoExtraido: driveDocumentSections.textoExtraido,
+          confianca: driveDocumentSections.confianca,
+          reviewStatus: driveDocumentSections.reviewStatus,
+          fichaData: driveDocumentSections.fichaData,
+          metadata: driveDocumentSections.metadata,
+          createdAt: driveDocumentSections.createdAt,
+          fileId: driveFiles.id,
+          fileName: driveFiles.name,
+          fileWebViewLink: driveFiles.webViewLink,
+          fileMimeType: driveFiles.mimeType,
+        })
+        .from(driveDocumentSections)
+        .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
+        .where(eq(driveFiles.assistidoId, input.assistidoId))
+        .orderBy(driveDocumentSections.tipo, driveDocumentSections.paginaInicio);
+      return sections;
+    }),
+
+  sectionsByProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const sections = await db
+        .select({
+          id: driveDocumentSections.id,
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          resumo: driveDocumentSections.resumo,
+          textoExtraido: driveDocumentSections.textoExtraido,
+          confianca: driveDocumentSections.confianca,
+          reviewStatus: driveDocumentSections.reviewStatus,
+          fichaData: driveDocumentSections.fichaData,
+          metadata: driveDocumentSections.metadata,
+          createdAt: driveDocumentSections.createdAt,
+          fileId: driveFiles.id,
+          fileName: driveFiles.name,
+          fileWebViewLink: driveFiles.webViewLink,
+          fileMimeType: driveFiles.mimeType,
+        })
+        .from(driveDocumentSections)
+        .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
+        .where(eq(driveFiles.processoId, input.processoId))
+        .orderBy(driveDocumentSections.tipo, driveDocumentSections.paginaInicio);
+      return sections;
+    }),
+
   /**
    * Estatísticas de vinculação
    */

@@ -551,7 +551,7 @@ export async function syncIncremental(
               lastSyncAt: new Date(),
               createdById: userId,
             }).onConflictDoUpdate({
-              target: driveFiles.driveFileId,
+              target: [driveFiles.driveFileId, driveFiles.provider],
               set: {
                 name: file.name,
                 mimeType: file.mimeType,
@@ -1662,7 +1662,7 @@ export async function syncFolderWithDatabase(
             lastSyncAt: new Date(),
             createdById: userId,
           }).onConflictDoUpdate({
-            target: driveFiles.driveFileId,
+            target: [driveFiles.driveFileId, driveFiles.provider],
             set: {
               name: driveFile.name,
               mimeType: driveFile.mimeType,
