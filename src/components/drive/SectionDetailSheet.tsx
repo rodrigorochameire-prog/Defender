@@ -5,9 +5,12 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ExternalLink, FileText, User, Calendar, Shield, AlertTriangle, Scissors, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ExternalLink, FileText, User, Calendar, Shield, AlertTriangle, Scissors, CheckCircle, XCircle, Loader2, Eye } from "lucide-react";
+import dynamic from "next/dynamic";
 import { trpc } from "@/lib/trpc/client";
 import { TIPO_LABELS, TIPO_TO_TIER, TIER_CONFIG } from "./SectionCard";
+
+const PdfViewerModal = dynamic(() => import("./PdfViewerModal").then(m => m.PdfViewerModal), { ssr: false });
 
 interface SectionDetailSheetProps {
   section: {
@@ -34,6 +37,7 @@ interface SectionDetailSheetProps {
 export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdated }: SectionDetailSheetProps) {
   const [extractError, setExtractError] = useState<string | null>(null);
   const [extractedLink, setExtractedLink] = useState<string | null>(null);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
 
   const approveMutation = trpc.documentSections.approveSection.useMutation({
     onSuccess: () => onSectionUpdated?.(),
@@ -99,11 +103,23 @@ export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdat
             <span className="font-mono">{pageRange}</span>
           </div>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {section.fileId && section.fileName?.endsWith('.pdf') && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setShowPdfViewer(true)}
+                className="bg-violet-600 hover:bg-violet-700"
+              >
+                <Eye className="w-3.5 h-3.5 mr-1.5" />
+                Visualizar ({pageRange})
+              </Button>
+            )}
+
             {section.fileWebViewLink && (
               <Button variant="outline" size="sm" asChild>
                 <a href={section.fileWebViewLink} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                  Abrir PDF
+                  Abrir no Drive
                 </a>
               </Button>
             )}
@@ -269,6 +285,16 @@ export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdat
           </div>
         </ScrollArea>
       </SheetContent>
+
+      {showPdfViewer && section.fileId && (
+        <PdfViewerModal
+          isOpen={showPdfViewer}
+          onClose={() => setShowPdfViewer(false)}
+          fileId={section.fileId}
+          fileName={section.fileName}
+          pdfUrl={section.fileWebViewLink || ""}
+        />
+      )}
     </Sheet>
   );
 }
