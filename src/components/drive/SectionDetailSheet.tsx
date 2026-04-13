@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,8 @@ interface SectionDetailSheetProps {
 }
 
 export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdated }: SectionDetailSheetProps) {
-  const utils = trpc.useUtils();
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [extractedLink, setExtractedLink] = useState<string | null>(null);
 
   const approveMutation = trpc.documentSections.approveSection.useMutation({
     onSuccess: () => onSectionUpdated?.(),
@@ -42,7 +44,14 @@ export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdat
   });
 
   const extractMutation = trpc.documentSections.extractSectionToPdf.useMutation({
-    onSuccess: () => onSectionUpdated?.(),
+    onSuccess: (data) => {
+      setExtractError(null);
+      setExtractedLink(data.webViewLink || null);
+      onSectionUpdated?.();
+    },
+    onError: (err) => {
+      setExtractError(err.message);
+    },
   });
 
   if (!section) return null;
@@ -136,10 +145,23 @@ export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdat
               Extrair PDF
             </Button>
 
-            {extractMutation.isSuccess && (
+            {extractMutation.isSuccess && extractedLink && (
+              <Button variant="outline" size="sm" asChild className="text-emerald-700 border-emerald-200">
+                <a href={extractedLink} target="_blank" rel="noopener noreferrer">
+                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                  Abrir PDF extraído
+                </a>
+              </Button>
+            )}
+            {extractMutation.isSuccess && !extractedLink && (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
                 PDF extraído com sucesso
               </Badge>
+            )}
+            {extractError && (
+              <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200 w-full">
+                Erro: {extractError}
+              </p>
             )}
 
             {section.reviewStatus === "approved" && (
