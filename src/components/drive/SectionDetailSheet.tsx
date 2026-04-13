@@ -4,7 +4,8 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ExternalLink, FileText, User, Calendar, Shield, AlertTriangle } from "lucide-react";
+import { ExternalLink, FileText, User, Calendar, Shield, AlertTriangle, Scissors, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc/client";
 import { TIPO_LABELS, TIPO_TO_TIER, TIER_CONFIG } from "./SectionCard";
 
 interface SectionDetailSheetProps {
@@ -22,12 +23,28 @@ interface SectionDetailSheetProps {
     metadata: any;
     fileName: string;
     fileWebViewLink: string | null;
+    fileId?: number;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSectionUpdated?: () => void;
 }
 
-export function SectionDetailSheet({ section, open, onOpenChange }: SectionDetailSheetProps) {
+export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdated }: SectionDetailSheetProps) {
+  const utils = trpc.useUtils();
+
+  const approveMutation = trpc.documentSections.approveSection.useMutation({
+    onSuccess: () => onSectionUpdated?.(),
+  });
+
+  const rejectMutation = trpc.documentSections.rejectSection.useMutation({
+    onSuccess: () => onSectionUpdated?.(),
+  });
+
+  const extractMutation = trpc.documentSections.extractSectionToPdf.useMutation({
+    onSuccess: () => onSectionUpdated?.(),
+  });
+
   if (!section) return null;
 
   const tier = TIPO_TO_TIER[section.tipo] || "baixo";
@@ -72,14 +89,66 @@ export function SectionDetailSheet({ section, open, onOpenChange }: SectionDetai
             <span className="truncate">{section.fileName}</span>
             <span className="font-mono">{pageRange}</span>
           </div>
-          {section.fileWebViewLink && (
-            <Button variant="outline" size="sm" asChild className="mt-1">
-              <a href={section.fileWebViewLink} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                Abrir PDF
-              </a>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {section.fileWebViewLink && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={section.fileWebViewLink} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  Abrir PDF
+                </a>
+              </Button>
+            )}
+
+            {section.reviewStatus !== "approved" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => approveMutation.mutate({ id: section.id })}
+                disabled={approveMutation.isPending}
+                className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              >
+                {approveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5 mr-1.5" />}
+                Aprovar
+              </Button>
+            )}
+
+            {section.reviewStatus !== "rejected" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => rejectMutation.mutate({ id: section.id })}
+                disabled={rejectMutation.isPending}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                {rejectMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5 mr-1.5" />}
+                Rejeitar
+              </Button>
+            )}
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => extractMutation.mutate({ sectionId: section.id })}
+              disabled={extractMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {extractMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Scissors className="w-3.5 h-3.5 mr-1.5" />}
+              Extrair PDF
             </Button>
-          )}
+
+            {extractMutation.isSuccess && (
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                PDF extraído com sucesso
+              </Badge>
+            )}
+
+            {section.reviewStatus === "approved" && (
+              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Aprovada</Badge>
+            )}
+            {section.reviewStatus === "rejected" && (
+              <Badge className="bg-red-50 text-red-600 border-red-200">Rejeitada</Badge>
+            )}
+          </div>
         </div>
 
         <ScrollArea className="h-[calc(100vh-180px)]">

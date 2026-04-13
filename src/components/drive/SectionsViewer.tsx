@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, List } from "lucide-react";
+import { Users, List, Scissors, Loader2, CheckCircle } from "lucide-react";
 import { SectionCard, TIPO_TO_TIER, TIPO_LABELS, TIER_CONFIG } from "./SectionCard";
 import { SectionDetailSheet } from "./SectionDetailSheet";
 
@@ -27,6 +27,8 @@ export function SectionsViewer({ assistidoId, processoId }: SectionsViewerProps)
   const [groupByDepoente, setGroupByDepoente] = useState(false);
   const [selectedSection, setSelectedSection] = useState<any>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  const utils = trpc.useUtils();
 
   const { data: sections, isLoading } = processoId
     ? trpc.drive.sectionsByProcesso.useQuery({ processoId })
@@ -212,6 +214,14 @@ export function SectionsViewer({ assistidoId, processoId }: SectionsViewerProps)
         section={selectedSection}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
+        onSectionUpdated={() => {
+          // Refetch sections after approve/reject/extract
+          if (processoId) {
+            utils.drive.sectionsByProcesso.invalidate({ processoId });
+          } else {
+            utils.drive.sectionsByAssistido.invalidate({ assistidoId });
+          }
+        }}
       />
     </div>
   );

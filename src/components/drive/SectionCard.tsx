@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { FileText } from "lucide-react";
+import { FileText, CheckCircle, Scissors } from "lucide-react";
 
 const TIER_CONFIG: Record<string, { label: string; color: string }> = {
   critico: { label: "Crítico", color: "bg-red-100 text-red-700 border-red-200" },
@@ -116,6 +116,9 @@ export function SectionCard({ section, onClick }: SectionCardProps) {
           )}
         </div>
         <div className="flex items-center gap-1.5">
+          {section.reviewStatus === "approved" && (
+            <CheckCircle className="w-3 h-3 text-emerald-500" />
+          )}
           {section.confianca !== null && (
             <span className={`text-[10px] font-mono ${
               section.confianca >= 90 ? "text-emerald-600" :
