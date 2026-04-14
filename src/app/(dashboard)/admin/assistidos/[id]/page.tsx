@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen, AlertCircle } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { HEADER_STYLE, LIST_ITEM } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -286,6 +286,20 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     ? (PRESOS as readonly string[]).includes(data.statusPrisional)
     : false;
 
+  // Próxima audiência + demanda crítica (para chips no header)
+  const nowDate = new Date();
+  const proximaAudiencia = [...data.audiencias]
+    .filter(a => a.dataAudiencia && new Date(a.dataAudiencia) > nowDate)
+    .sort((a, b) => new Date(a.dataAudiencia!).getTime() - new Date(b.dataAudiencia!).getTime())[0] ?? null;
+
+  const DEMANDA_EXCLUDED = new Set(["7_PROTOCOLADO", "CONCLUIDO", "ARQUIVADO", "7_CIENCIA", "7_SEM_ATUACAO"]);
+  const DEMANDA_PRIORIDADE: Record<string, number> = {
+    URGENTE: 1, "2_ATENDER": 2, "4_MONITORAR": 3, "5_TRIAGEM": 4,
+  };
+  const demandaCritica = [...data.demandas]
+    .filter(d => d.status && !DEMANDA_EXCLUDED.has(d.status))
+    .sort((a, b) => (DEMANDA_PRIORIDADE[a.status ?? ""] ?? 99) - (DEMANDA_PRIORIDADE[b.status ?? ""] ?? 99))[0] ?? null;
+
   const statusLabel: Record<string, string> = {
     SOLTO: "solto",
     CADEIA_PUBLICA: "cadeia pública",
@@ -452,6 +466,40 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                 })()}
               </div>
             )}
+
+            {/* Chips sutis: próxima audiência + demanda crítica */}
+            {(proximaAudiencia || demandaCritica) && (
+              <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                {proximaAudiencia && (
+                  <div className="inline-flex items-center gap-1.5 bg-white/[0.04] border border-white/10 rounded-md px-2 py-1 text-[11px]">
+                    <Calendar className="w-3 h-3 text-white/40" />
+                    <span className="text-white/40 uppercase tracking-wider text-[9px] font-semibold">Próx. aud</span>
+                    <span className="text-white/80 font-medium">
+                      {format(new Date(proximaAudiencia.dataAudiencia!), "dd MMM", { locale: ptBR })}
+                    </span>
+                    {proximaAudiencia.tipo && (
+                      <span className="text-white/40">· {proximaAudiencia.tipo}</span>
+                    )}
+                  </div>
+                )}
+                {demandaCritica && (
+                  <button
+                    onClick={() => {
+                      setSelectedDemandaId(demandaCritica.id);
+                      setSelectedProcessoId(null);
+                      setItemSheetType("demanda");
+                      setItemSheetOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] hover:border-white/20 rounded-md px-2 py-1 text-[11px] transition-colors cursor-pointer"
+                  >
+                    <AlertCircle className="w-3 h-3 text-white/40" />
+                    <span className="text-white/40 uppercase tracking-wider text-[9px] font-semibold">Demanda</span>
+                    <span className="text-white/80 font-medium">{demandaCritica.ato}</span>
+                    <span className="text-white/30">→</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         }
       >
@@ -535,27 +583,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
       </CollapsiblePageHeader>
 
-      {/* Content container — unified card for summary + tabs + content */}
+      {/* Content container — unified card for tabs + content */}
       <div className="mx-4 lg:mx-6 mt-2 bg-white dark:bg-neutral-900/50 rounded-xl border border-neutral-200/60 dark:border-neutral-800/40 overflow-hidden flex-1 flex flex-col min-h-0">
-
-      {/* Overview Panel */}
-      <div className="px-4 pt-3 pb-1">
-        <AssistidoOverviewPanel
-          data={data}
-          onProcessoClick={(processoId) => {
-            setSelectedProcessoId(processoId);
-            setSelectedDemandaId(null);
-            setItemSheetType("processo");
-            setItemSheetOpen(true);
-          }}
-          onDemandaClick={(demandaId) => {
-            setSelectedDemandaId(demandaId);
-            setSelectedProcessoId(null);
-            setItemSheetType("demanda");
-            setItemSheetOpen(true);
-          }}
-        />
-      </div>
 
       {/* ── Tabs (underline emerald) ── */}
       <div className="flex items-center gap-1 px-5 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
