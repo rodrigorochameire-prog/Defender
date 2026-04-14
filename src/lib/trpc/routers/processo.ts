@@ -50,8 +50,20 @@ function tipoToGroup(tipo: string): string {
 
 export const processoRouter = router({
   getGroupedSections: protectedProcedure
-    .input(z.object({ processoId: z.number() }))
+    .input(z.object({
+      processoId: z.number().optional(),
+      assistidoId: z.number().optional(),
+    }).refine((v) => v.processoId || v.assistidoId, {
+      message: "Either processoId or assistidoId is required",
+    }))
     .query(async ({ input }) => {
+      // Filter: prefer processoId if given, otherwise use assistidoId (catches sections
+      // linked only to the assistido, e.g. when files live in the assistido folder but
+      // not in a processo subfolder)
+      const whereClause = input.processoId
+        ? eq(driveFiles.processoId, input.processoId)
+        : eq(driveFiles.assistidoId, input.assistidoId!);
+
       const rows = await db
         .select({
           id: driveDocumentSections.id,
@@ -71,10 +83,11 @@ export const processoRouter = router({
           fileWebViewLink: driveFiles.webViewLink,
           fileDriveId: driveFiles.driveFileId,
           fileMimeType: driveFiles.mimeType,
+          fileProcessoId: driveFiles.processoId,
         })
         .from(driveDocumentSections)
         .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
-        .where(eq(driveFiles.processoId, input.processoId))
+        .where(whereClause)
         .orderBy(driveDocumentSections.paginaInicio);
 
       const groups: Record<string, typeof rows> = {};

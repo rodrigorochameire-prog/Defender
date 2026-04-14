@@ -735,6 +735,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         {tab === "processo" && (
           <div className="flex-1 min-h-0 overflow-hidden">
             <ProcessoTab
+              assistidoId={Number(id)}
               processos={data.processos.map((p) => ({
                 id: p.id,
                 numeroAutos: p.numeroAutos,

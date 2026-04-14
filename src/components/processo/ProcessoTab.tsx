@@ -17,13 +17,23 @@ interface ProcessoBasicData {
 }
 
 interface ProcessoTabProps {
+  assistidoId: number;
   processos: ProcessoBasicData[];
 }
 
-export function ProcessoTab({ processos }: ProcessoTabProps) {
+// Virtual "all" option when processos have no classified sections yet
+// but the assistido does (files sit at assistido level)
+const ALL_OPTION: ProcessoBasicData = {
+  id: -1,
+  numeroAutos: "Todos os arquivos do assistido",
+  tipoProcesso: "Geral",
+  isReferencia: true,
+};
+
+export function ProcessoTab({ assistidoId, processos }: ProcessoTabProps) {
   const initialProcessoId = useMemo(() => {
     const ref = processos.find((p) => p.isReferencia);
-    return ref?.id ?? processos[0]?.id ?? 0;
+    return ref?.id ?? processos[0]?.id ?? -1;
   }, [processos]);
 
   const [selectedProcessoId, setSelectedProcessoId] = useState<number>(initialProcessoId);
@@ -31,14 +41,24 @@ export function ProcessoTab({ processos }: ProcessoTabProps) {
 
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.processo.getGroupedSections.useQuery(
-    { processoId: selectedProcessoId },
-    { enabled: selectedProcessoId > 0 },
+  // Query: filter by processoId if selected, else by assistidoId
+  const queryInput = selectedProcessoId > 0
+    ? { processoId: selectedProcessoId }
+    : { assistidoId };
+
+  const { data, isLoading } = trpc.processo.getGroupedSections.useQuery(queryInput);
+
+  // If the selected processo has 0 sections but the assistido has some,
+  // automatically switch to the virtual "Todos" option
+  const { data: fallbackData } = trpc.processo.getGroupedSections.useQuery(
+    { assistidoId },
+    { enabled: selectedProcessoId > 0 && data?.total === 0 },
   );
+  const shouldOfferFallback = selectedProcessoId > 0 && data?.total === 0 && (fallbackData?.total ?? 0) > 0;
 
   const extractApprovedMutation = trpc.documentSections.extractApprovedToDrive.useMutation({
     onSuccess: () => {
-      utils.processo.getGroupedSections.invalidate({ processoId: selectedProcessoId });
+      utils.processo.getGroupedSections.invalidate(queryInput);
     },
   });
 
@@ -107,19 +127,33 @@ export function ProcessoTab({ processos }: ProcessoTabProps) {
             Nenhuma peça classificada
           </h3>
           <p className="text-sm text-zinc-500 mb-4">
-            Para ver as peças organizadas (denúncia, depoimentos, laudos, etc.),
-            classifique os autos usando o botão &quot;Classificar&quot; na aba Drive.
+            {shouldOfferFallback
+              ? `Este processo não tem peças classificadas, mas o assistido tem ${fallbackData?.total ?? 0} peças vinculadas. Veja todas as peças do assistido:`
+              : "Para ver as peças organizadas (denúncia, depoimentos, laudos, etc.), classifique os autos usando o botão \"Classificar\" na aba Drive."}
           </p>
+          {shouldOfferFallback && (
+            <Button
+              onClick={() => setSelectedProcessoId(-1)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Ver todas as peças do assistido ({fallbackData?.total})
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
+  // Adds a virtual "All" option to the selector if we have any orphaned sections
+  const processosWithAll: ProcessoBasicData[] = (fallbackData && fallbackData.total > 0) || selectedProcessoId === -1
+    ? [ALL_OPTION, ...processos]
+    : processos;
+
   return (
     <div className="p-4 space-y-4 h-full flex flex-col min-h-0">
       <div className="flex items-center gap-3 flex-wrap">
         <ProcessoSelector
-          processos={processos}
+          processos={processosWithAll}
           selectedId={selectedProcessoId}
           onSelect={(id) => {
             setSelectedProcessoId(id);
