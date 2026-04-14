@@ -14,7 +14,7 @@ import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { logSyncAction, classifySync } from "@/lib/services/sync-engine";
 import { getSheetName } from "@/lib/services/google-sheets";
-import { inngest } from "@/lib/inngest/client";
+import { reorderAllSheets } from "@/lib/services/sheets-reorder";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
 const CAMPO_MAP: Record<string, string> = {
@@ -243,17 +243,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Registrar log
     await logSyncAction(demandaId, campoDb, null, String(valor), "PLANILHA");
 
-    // Disparar reorder da aba afetada (debounced 15s via Inngest) — necessário
-    // quando o campo editado influencia o agrupamento (status), para que a
-    // linha seja movida ao bloco correto. Fire-and-forget.
+    // Reorder direto da aba afetada quando o campo muda o agrupamento.
+    // Chamada síncrona (1-2s) em vez de delegar ao Inngest — sem Inngest
+    // configurado em produção os eventos ficam órfãos. Apps Script aguarda
+    // até 30s, então temos folga.
     if (campoDb === "status" && demanda.atribuicao) {
       const sheetName = getSheetName(demanda.atribuicao);
-      inngest
-        .send({
-          name: "sheets/reorder.requested",
-          data: { sheetName, reason: "webhook-status", demandaId },
-        })
-        .catch((err) => console.error("[Sheets Webhook] falha enfileirando reorder:", err));
+      try {
+        await reorderAllSheets(sheetName);
+      } catch (err) {
+        console.error("[Sheets Webhook] reorder falhou:", err);
+      }
     }
 
     console.log(`[Sheets Webhook] Demanda ${demandaId} — campo "${campo}" atualizado: "${valorStr}"`);

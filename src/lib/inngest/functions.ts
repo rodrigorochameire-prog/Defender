@@ -2103,13 +2103,12 @@ export const syncSheetPollingFn = inngest.createFunction(
             }
           }
 
-          // Se houve update via planilha nesta aba, agendar reorder para que
-          // as linhas reposicionem-se no grupo correto (debounce 15s).
+          // Se houve update via planilha nesta aba, reordenar imediatamente
+          // (chamada direta — sem indireção via Inngest, que não está
+          // configurado em produção).
           if (stats.updated > 0) {
-            await inngest.send({
-              name: "sheets/reorder.requested",
-              data: { sheetName, reason: "poller-sync" },
-            });
+            const { reorderAllSheets } = await import("@/lib/services/sheets-reorder");
+            await reorderAllSheets(sheetName);
           }
         } catch (err) {
           console.error(`[Polling] Erro na aba ${sheetName}:`, err);
