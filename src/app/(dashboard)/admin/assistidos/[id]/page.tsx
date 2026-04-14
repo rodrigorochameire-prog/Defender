@@ -557,8 +557,8 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
         />
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex items-center gap-0.5 mx-3 mt-1 mb-0 overflow-x-auto rounded-lg bg-neutral-100 dark:bg-neutral-800 p-1">
+      {/* ── Tabs (underline emerald) ── */}
+      <div className="flex items-center gap-1 px-5 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto">
         {tabs.map((t) => {
           const TabIcon = t.icon;
           const isActive = tab === t.key;
@@ -568,24 +568,22 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
               type="button"
               onClick={() => handleSetTab(t.key)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap shrink-0",
+                "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 -mb-px",
                 isActive
-                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm"
-                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-300 hover:bg-neutral-200/60 dark:hover:bg-white/5"
+                  ? "text-zinc-900 dark:text-zinc-100 border-emerald-500"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent"
               )}
             >
-              <TabIcon className="h-3 w-3" />
+              <TabIcon className="h-3.5 w-3.5" />
               {t.label}
               {t.count !== undefined && t.count > 0 && (
                 <span className={cn(
-                  "text-[9px] min-w-[18px] text-center px-1 py-px rounded-full font-medium",
+                  "text-[10px] min-w-[18px] text-center px-1.5 py-0.5 rounded-md font-medium",
                   t.urgency === "red"
                     ? "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"
                     : t.urgency === "amber"
                     ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300"
-                    : isActive
-                    ? "bg-white/15 text-white/70 dark:bg-neutral-700 dark:text-neutral-300"
-                    : "bg-neutral-200/60 dark:bg-white/10 text-neutral-400 dark:text-neutral-500"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                 )}>
                   {t.count}
                 </span>
@@ -599,10 +597,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             <button
               type="button"
               className={cn(
-                "px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center gap-1 shrink-0",
+                "px-2 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 shrink-0 -mb-px",
                 overflowTabs.some(t => t.key === tab)
-                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 shadow-sm"
-                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-white/5"
+                  ? "text-zinc-900 dark:text-zinc-100 border-emerald-500"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 border-transparent"
               )}
             >
               <MoreHorizontal className="h-3.5 w-3.5" />

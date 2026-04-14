@@ -79,17 +79,17 @@ export function IndexedFilesSection({ assistidoId }: { assistidoId: number }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground">
+        <h3 className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500">
           Arquivos Indexados
         </h3>
-        <span className="text-[9px] font-mono tabular-nums text-muted-foreground">
+        <span className="text-[10px] font-mono tabular-nums text-zinc-500">
           {files.length} arquivo{files.length !== 1 ? "s" : ""}
         </span>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-2">
         {files.map((file) => {
           const ext = MIME_ICONS[file.mimeType ?? ""] ?? file.fileName.split(".").pop()?.toUpperCase().slice(0, 4) ?? "FILE";
           const driveUrl = `https://drive.google.com/file/d/${file.driveFileId}/view`;
@@ -99,31 +99,28 @@ export function IndexedFilesSection({ assistidoId }: { assistidoId: number }) {
               href={driveUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={cn(
-                GLASS.cardHover,
-                "flex items-center gap-3 px-3 py-2 group",
-              )}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-all group"
             >
               {/* File type badge */}
-              <div className="w-8 h-8 rounded-md bg-neutral-900/[0.04] dark:bg-white/[0.05] flex items-center justify-center shrink-0">
-                <span className="text-[8px] font-bold text-neutral-600 dark:text-neutral-400 uppercase">
+              <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                <span className="text-[9px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
                   {ext}
                 </span>
               </div>
 
               {/* File info */}
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-foreground/90 truncate block group-hover:text-foreground transition-colors">
+                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate block">
                   {file.fileName}
                 </span>
-                <span className="text-[10px] text-muted-foreground truncate block">
+                <span className="text-xs text-zinc-500 truncate block mt-0.5">
                   {file.drivePath}
                 </span>
               </div>
 
               {/* Size */}
               {file.sizeBytes && (
-                <span className="text-[10px] text-muted-foreground font-mono tabular-nums shrink-0">
+                <span className="text-xs text-zinc-500 font-mono tabular-nums shrink-0">
                   {formatSize(file.sizeBytes)}
                 </span>
               )}
@@ -131,19 +128,19 @@ export function IndexedFilesSection({ assistidoId }: { assistidoId: number }) {
               {/* Strategy badge */}
               <span
                 className={cn(
-                  "text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0",
+                  "text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-md shrink-0 border",
                   file.linkStrategy === "path"
-                    ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
+                    ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50"
                     : file.linkStrategy === "manual"
-                      ? "bg-sky-50 dark:bg-sky-950/20 text-sky-600 dark:text-sky-400"
-                      : "bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400",
+                      ? "bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/50"
+                      : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50",
                 )}
               >
                 {file.linkStrategy}
               </span>
 
               {/* External link */}
-              <ExternalLink className="w-3 h-3 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
+              <ExternalLink className="w-3.5 h-3.5 text-zinc-300 group-hover:text-zinc-500 transition-colors shrink-0" />
             </a>
           );
         })}

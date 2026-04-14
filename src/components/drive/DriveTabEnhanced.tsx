@@ -681,9 +681,9 @@ function DriveTabEnhancedInner({
       )}
 
       {/* View toggle + search */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* View mode buttons */}
-        <div className="flex rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* View mode buttons (pill-group cinza) */}
+        <div className="flex gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
           {VIEW_MODES.map((m) => {
             const Icon = m.icon;
             return (
@@ -691,13 +691,13 @@ function DriveTabEnhancedInner({
                 key={m.key}
                 onClick={() => setView(m.key)}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                   view === m.key
-                    ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
-                    : "text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
+                    ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                    : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200",
                 )}
               >
-                <Icon className="h-3 w-3" />
+                <Icon className="h-3.5 w-3.5" />
                 {m.label}
               </button>
             );
@@ -706,27 +706,27 @@ function DriveTabEnhancedInner({
             <button
               onClick={() => setView("processo")}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                 view === "processo"
-                  ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
-                  : "text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
+                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200",
               )}
             >
-              <Scale className="h-3 w-3" />
+              <Scale className="h-3.5 w-3.5" />
               Processo
             </button>
           )}
         </div>
 
         {/* Search bar */}
-        <div className="flex-1 relative min-w-[140px]">
-          <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400" />
+        <div className="flex-1 relative min-w-[180px]">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             type="text"
             placeholder="Buscar arquivos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-[11px] pl-7 pr-2 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+            className="w-full text-xs pl-8 pr-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
           {searchQuery && (
             <button
@@ -767,16 +767,16 @@ function DriveTabEnhancedInner({
       </div>
 
       {/* Type filter pills */}
-      <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {TYPE_FILTERS.map((tf) => (
           <button
             key={tf.key}
             onClick={() => setTypeFilter(tf.key)}
             className={cn(
-              "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors",
+              "text-xs px-3 py-1 rounded-md font-medium transition-colors",
               typeFilter === tf.key
-                ? "bg-neutral-800 dark:bg-white text-white dark:text-neutral-900"
-                : "bg-neutral-100/60 dark:bg-white/[0.04] text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border border-neutral-200/80 dark:border-white/[0.06]",
+                ? "bg-zinc-700 dark:bg-zinc-200 text-white dark:text-zinc-900"
+                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-200",
             )}
           >
             {tf.label}
