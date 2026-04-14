@@ -35,7 +35,7 @@ export function CaseSummaryCard({ assistidoId }: CaseSummaryCardProps) {
   const utils = trpc.useUtils();
 
   const { data, isLoading } = trpc.intelligence.getForAssistido.useQuery({ assistidoId });
-  const generateMutation = trpc.intelligence.generateForAssistido.useMutation({
+  const generateMutation = trpc.processo.quickSummary.useMutation({
     onSuccess: () => utils.intelligence.getForAssistido.invalidate({ assistidoId }),
   });
 
