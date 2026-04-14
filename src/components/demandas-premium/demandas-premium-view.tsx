@@ -6,6 +6,8 @@ import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-hea
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
 import { isAtoAudiencia } from "@/lib/audiencia-parser";
+import { RecursoConfirmModal, type RecursoConfirmData } from "@/components/demandas-premium/recurso-confirm-modal";
+import { isAtoRecurso, infoDoAtoRecurso, type TipoRecurso } from "@/lib/recurso-helpers";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
 import { FilterSectionsCompact } from "@/components/demandas-premium/filter-sections-compact";
 import { InfographicSelector } from "@/components/demandas-premium/infographic-selector";
@@ -618,6 +620,18 @@ export default function Demandas() {
     numeroAutos?: string;
     sources: Array<string | null | undefined>;
   }>({ open: false, demandaId: null, sources: [] });
+
+  // Modal de registro de recurso em 2º grau — disparado ao mudar status para
+  // Protocolado em demanda cujo ato é HC/Apelação/RSE/Agravo em Execução.
+  const [recursoModal, setRecursoModal] = useState<{
+    open: boolean;
+    demandaId: number | null;
+    assistidoNome?: string;
+    numeroAutosOrigem?: string;
+    tipo: TipoRecurso | null;
+    rotulo: string;
+    exigeNumero: boolean;
+  }>({ open: false, demandaId: null, tipo: null, rotulo: "", exigeNumero: false });
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isChartConfigModalOpen, setIsChartConfigModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -743,6 +757,21 @@ export default function Demandas() {
     },
     onError: (error) => {
       toast.error("Erro ao registrar audiência: " + error.message);
+    },
+  });
+
+  // Mutation para registrar recurso (HC/Apelação/RSE/Agravo) em 2º grau
+  const createRecursoMutation = trpc.instanciaSuperior.createRecursoFromForm.useMutation({
+    onSuccess: (res: { duplicate?: boolean }) => {
+      if (res.duplicate) {
+        toast.info("Já existia um recurso deste tipo vinculado ao processo.");
+      } else {
+        toast.success("Recurso registrado em 2º grau!");
+      }
+      setRecursoModal({ open: false, demandaId: null, tipo: null, rotulo: "", exigeNumero: false });
+    },
+    onError: (error) => {
+      toast.error("Erro ao registrar recurso: " + error.message);
     },
   });
 
@@ -933,6 +962,24 @@ export default function Demandas() {
         status: dbStatus as any,
         substatus: newStatus, // Salvar o status granular
       });
+    }
+
+    // Gatilho: status → Protocolado em ato de recurso (HC/Apelação/RSE/Agravo)
+    // abre modal para registrar o recurso em 2º grau.
+    if (newStatus.toLowerCase() === "protocolado" && !isNaN(numericId)) {
+      const demanda = demandas.find((d) => d.id === demandaId);
+      const info = infoDoAtoRecurso(demanda?.ato);
+      if (info) {
+        setRecursoModal({
+          open: true,
+          demandaId: numericId,
+          assistidoNome: demanda?.assistido,
+          numeroAutosOrigem: demanda?.processos?.[0]?.numero,
+          tipo: info.tipo,
+          rotulo: info.rotulo,
+          exigeNumero: info.exigeNumero,
+        });
+      }
     }
 
     // Se o status é de delegação, abrir o modal para adicionar instruções
@@ -2835,6 +2882,37 @@ export default function Demandas() {
         atribuicaoOptions={atribuicaoOptions}
         atoOptions={atoOptionsFiltered}
         statusOptions={statusOptions}
+      />
+
+      <RecursoConfirmModal
+        isOpen={recursoModal.open}
+        onClose={() => setRecursoModal({ open: false, demandaId: null, tipo: null, rotulo: "", exigeNumero: false })}
+        assistidoNome={recursoModal.assistidoNome}
+        numeroAutosOrigem={recursoModal.numeroAutosOrigem}
+        tipo={recursoModal.tipo}
+        rotulo={recursoModal.rotulo}
+        exigeNumero={recursoModal.exigeNumero}
+        saving={createRecursoMutation.isPending}
+        onConfirm={(dados: RecursoConfirmData) => {
+          if (!recursoModal.demandaId || !recursoModal.tipo) return;
+          const demandaDB = demandasDB.find((d: any) => d.id === recursoModal.demandaId);
+          const processoOrigemId = demandaDB?.processoId;
+          const assistidoId = demandaDB?.assistidoId;
+          if (!processoOrigemId) {
+            toast.error("Não foi possível localizar o processo de origem.");
+            return;
+          }
+          createRecursoMutation.mutate({
+            tipo: recursoModal.tipo,
+            numeroRecurso: dados.numeroRecurso || undefined,
+            processoOrigemId,
+            assistidoId,
+            dataInterposicao: dados.dataInterposicao,
+            camara: dados.camara || undefined,
+            turma: dados.turma || undefined,
+            relatorNome: dados.relatorNome || undefined,
+          });
+        }}
       />
 
       <AudienciaConfirmModal

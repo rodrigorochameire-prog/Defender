@@ -164,6 +164,80 @@ export const instanciaSuperiorRouter = router({
       return created;
     }),
 
+  /**
+   * Cria recurso a partir do formulário disparado ao protocolar uma demanda
+   * de HC/Apelação/RSE/Agravo. Aceita relator por nome (find-or-create em
+   * desembargadores) e combina câmara+turma numa única string. Evita
+   * duplicata (mesmo processoOrigem+tipo ativo).
+   */
+  createRecursoFromForm: protectedProcedure
+    .input(
+      z.object({
+        tipo: z.enum(["HC", "APELACAO", "RSE", "AGRAVO_EXECUCAO"]),
+        numeroRecurso: z.string().optional(),
+        processoOrigemId: z.number(),
+        assistidoId: z.number().optional(),
+        dataInterposicao: z.string().optional(), // YYYY-MM-DD
+        camara: z.string().optional(),
+        turma: z.string().optional(),
+        relatorNome: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // 1. Checar duplicata: mesmo processoOrigem + tipo (qualquer status)
+      const [existente] = await db
+        .select({ id: recursos.id, numero: recursos.numeroRecurso })
+        .from(recursos)
+        .where(and(eq(recursos.processoOrigemId, input.processoOrigemId), eq(recursos.tipo, input.tipo)))
+        .limit(1);
+      if (existente) {
+        return { created: false, recursoId: existente.id, duplicate: true };
+      }
+
+      // 2. Câmara combinada: "Turma X — Câmara Y" (ou só um dos dois)
+      const camaraCombinada = [input.turma?.trim(), input.camara?.trim()]
+        .filter(Boolean)
+        .join(" — ") || null;
+
+      // 3. Resolver relator por nome (find-or-create)
+      let relatorId: number | null = null;
+      if (input.relatorNome?.trim()) {
+        const nome = input.relatorNome.trim();
+        const [exist] = await db
+          .select({ id: desembargadores.id })
+          .from(desembargadores)
+          .where(ilike(desembargadores.nome, nome))
+          .limit(1);
+        if (exist) {
+          relatorId = exist.id;
+        } else {
+          const [novo] = await db
+            .insert(desembargadores)
+            .values({ nome, camara: input.camara?.trim() || null, area: "CRIMINAL" })
+            .returning({ id: desembargadores.id });
+          relatorId = novo.id;
+        }
+      }
+
+      // 4. Inserir recurso
+      const [created] = await db
+        .insert(recursos)
+        .values({
+          tipo: input.tipo,
+          numeroRecurso: input.numeroRecurso?.trim() || null,
+          processoOrigemId: input.processoOrigemId,
+          assistidoId: input.assistidoId,
+          dataInterposicao: input.dataInterposicao || new Date().toISOString().slice(0, 10),
+          camara: camaraCombinada,
+          relatorId,
+          tesesInvocadas: [],
+          tiposPenais: [],
+        })
+        .returning();
+
+      return { created: true, recursoId: created.id, duplicate: false };
+    }),
+
   /** Atualizar recurso */
   updateRecurso: protectedProcedure
     .input(
