@@ -181,6 +181,7 @@ export interface DemandaParaSync {
   substatus: string | null;
   reuPreso: boolean | null;
   dataEntrada: string | null; // date string YYYY-MM-DD
+  dataExpedicao?: string | null; // date string YYYY-MM-DD — preferido na coluna "Data"
   assistidoNome: string;
   numeroAutos: string;
   ato: string | null;
@@ -779,11 +780,15 @@ export function findRowById(rows: string[][], id: number, numeroAutos?: string):
  * Converte uma demanda para linha da planilha
  */
 function demandaToRow(d: DemandaParaSync): string[] {
+  // Coluna "Data" representa a data de EXPEDIÇÃO da intimação (PJe). Usa
+  // dataExpedicao; fallback para dataEntrada por compatibilidade com linhas
+  // antigas cujo campo ainda não foi migrado.
+  const dataCol = d.dataExpedicao ?? d.dataEntrada ?? "";
   return [
     String(d.id),
     statusParaLabel(d.status, d.substatus),
-    d.reuPreso ? (d.dataEntrada ?? "Preso") : "",
-    d.dataEntrada ?? "",
+    d.reuPreso ? (dataCol || "Preso") : "",
+    dataCol,
     d.assistidoNome,
     d.numeroAutos,
     d.ato ?? "",

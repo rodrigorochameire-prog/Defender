@@ -37,6 +37,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
       substatus: demandas.substatus,
       reuPreso: demandas.reuPreso,
       dataEntrada: demandas.dataEntrada,
+      dataExpedicao: demandas.dataExpedicao,
       ato: demandas.ato,
       prazo: demandas.prazo,
       providencias: demandas.providencias,
@@ -61,6 +62,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
     substatus: row.substatus ?? null,
     reuPreso: row.reuPreso,
     dataEntrada: row.dataEntrada,
+    dataExpedicao: row.dataExpedicao,
     ato: row.ato,
     prazo: row.prazo,
     providencias: row.providencias,
@@ -1157,12 +1159,29 @@ export const demandasRouter = router({
           // createdAt = momento real da importação (para ordenar "mais novo primeiro")
           // ordemOriginal = posição no texto colado (para saber a ordem original do PJe)
           // importBatchId = UUID do lote (para agrupar demandas importadas juntas)
+          // Data de expedição: preferir `dataExpedicaoCompleta` (com hora, extrai só a data)
+          // e cair para `row.dataEntrada` quando ausente — mantém o campo preenchido para
+          // exibição na planilha/cards.
+          let dataExpedicaoDB: string | null = null;
+          if (row.dataExpedicaoCompleta) {
+            if (row.dataExpedicaoCompleta.includes("T")) {
+              dataExpedicaoDB = row.dataExpedicaoCompleta.split("T")[0];
+            } else if (row.dataExpedicaoCompleta.includes(" ")) {
+              dataExpedicaoDB = convertDate(row.dataExpedicaoCompleta.split(" ")[0]);
+            } else {
+              dataExpedicaoDB = convertDate(row.dataExpedicaoCompleta);
+            }
+          } else if (row.dataEntrada) {
+            dataExpedicaoDB = convertDate(row.dataEntrada);
+          }
+
           const [insertedDemanda] = await db.insert(demandas).values({
             processoId: processo.id,
             assistidoId: assistido.id,
             ato: row.ato,
             prazo: convertDate(row.prazo),
             dataEntrada: convertDate(row.dataEntrada),
+            dataExpedicao: dataExpedicaoDB,
             status: dbStatus as typeof demandas.status._.data,
             substatus: substatus, // Status granular preservado
             prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
