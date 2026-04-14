@@ -120,12 +120,12 @@ function SimpleSelect({
         type="button"
         onClick={toggleDropdown}
         className={cn(
-          "w-full h-11 text-sm bg-white dark:bg-neutral-900/80 border rounded-xl cursor-pointer transition-all duration-200 text-left relative flex items-center",
-          "border-neutral-200 dark:border-neutral-700/80",
-          "hover:border-emerald-400 dark:hover:border-emerald-600 hover:shadow-sm hover:shadow-emerald-500/10",
-          "focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500",
-          isOpen && "border-emerald-500 ring-2 ring-emerald-500/20",
-          icon ? "pl-10 pr-10" : "pl-4 pr-10"
+          "w-full h-9 text-xs bg-white dark:bg-neutral-900 border rounded-lg cursor-pointer transition-all duration-150 text-left relative flex items-center",
+          "border-neutral-200/60 dark:border-neutral-800/60",
+          "hover:border-neutral-300/80 dark:hover:border-neutral-700/80",
+          "focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600",
+          isOpen && "border-emerald-400 dark:border-emerald-600 ring-1 ring-emerald-500/30",
+          icon ? "pl-9 pr-8" : "pl-3 pr-8"
         )}
       >
         {/* Ícone opcional à esquerda */}
@@ -211,7 +211,7 @@ export function DemandaCreateModal({
     initialData || {
       assistido: "",
       status: "triagem",
-      data: new Date().toISOString().split("T")[0],
+      data: "", // data de expedição — opcional; preencher só quando for intimação
       prazo: "",
       processos: [{ tipo: "AP", numero: "" }],
       ato: "",
@@ -358,25 +358,26 @@ export function DemandaCreateModal({
           className="dark:bg-neutral-900"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+          {/* Header — Padrão Defender v5: header neutro, sem gradiente */}
+          <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
+                <h2 className="text-[13px] font-semibold text-foreground tracking-tight">
                   {mode === "edit" ? "Editar Demanda" : "Nova Demanda"}
                 </h2>
-                <p className="text-xs text-neutral-500">Preencha os campos abaixo</p>
+                <p className="text-[10px] text-muted-foreground">Preencha os campos abaixo</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               type="button"
+              title="Fechar"
             >
-              <X className="h-5 w-5 text-neutral-500" />
+              <X className="h-4 w-4 text-neutral-500" />
             </button>
           </div>
 
@@ -394,7 +395,7 @@ export function DemandaCreateModal({
                   value={formData.assistido}
                   onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
                   placeholder="Nome completo do assistido"
-                  className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                  className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                 />
               </div>
 
@@ -460,12 +461,14 @@ export function DemandaCreateModal({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Data de Expedição
+                    <span className="text-[10px] font-normal text-neutral-400 dark:text-neutral-500">(opcional)</span>
                   </Label>
                   <Input
                     type="date"
                     value={formData.data}
                     onChange={(e) => handleDataChange(e.target.value)}
-                    className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                    placeholder="Se vier de intimação"
+                    className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                   />
                 </div>
                 <div className="space-y-2">
@@ -479,7 +482,7 @@ export function DemandaCreateModal({
                     value={formData.prazo}
                     onChange={(e) => setFormData({ ...formData, prazo: e.target.value })}
                     placeholder="DD/MM/AAAA"
-                    className="h-11 rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono"
+                    className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all font-mono tabular-nums"
                   />
                 </div>
               </div>
@@ -532,7 +535,7 @@ export function DemandaCreateModal({
                         value={processo.numero}
                         onChange={(e) => updateProcesso(index, "numero", e.target.value)}
                         placeholder="0000000-00.0000.0.00.0000"
-                        className="h-11 text-sm flex-1 font-mono tracking-wide rounded-xl border-neutral-200 dark:border-neutral-700/80 hover:border-emerald-400 dark:hover:border-emerald-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                        className="h-9 text-xs flex-1 rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all font-mono tabular-nums"
                       />
                       {formData.processos.length > 1 && (
                         <Button
@@ -540,7 +543,7 @@ export function DemandaCreateModal({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeProcesso(index)}
-                          className="h-11 w-11 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                          className="h-9 w-9 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -561,29 +564,27 @@ export function DemandaCreateModal({
                   onChange={(e) => setFormData({ ...formData, providencias: e.target.value })}
                   placeholder="Descreva as providências necessárias, observações importantes ou anotações sobre a demanda..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-white dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-700/80 rounded-xl text-sm resize-none transition-all duration-200 hover:border-emerald-400 dark:hover:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-neutral-400"
+                  className="w-full px-3 py-2 bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg text-xs resize-none transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 placeholder:text-neutral-400"
                 />
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex gap-3 p-5 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 rounded-b-2xl">
-              <Button
+            {/* Footer — Padrão Defender v5: primary emerald-500 rounded-xl */}
+            <div className="flex gap-2 px-5 py-3 border-t border-neutral-200/60 dark:border-neutral-800/60 bg-neutral-50/50 dark:bg-neutral-900/50 rounded-b-2xl">
+              <button
                 type="button"
-                variant="outline"
                 onClick={onClose}
-                className="flex-1 h-12 rounded-xl border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium transition-all"
+                className="flex-1 h-9 rounded-lg border border-neutral-200/80 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-150 cursor-pointer"
               >
-                <X className="w-4 h-4 mr-2 opacity-60" />
                 Cancelar
-              </Button>
-              <Button
+              </button>
+              <button
                 type="submit"
-                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all"
+                className="flex-1 h-9 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-3.5 h-3.5" />
                 {mode === "edit" ? "Salvar Alterações" : "Criar Demanda"}
-              </Button>
+              </button>
             </div>
           </form>
         </div>

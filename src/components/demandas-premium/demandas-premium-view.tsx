@@ -711,6 +711,18 @@ export default function Demandas() {
     },
   });
 
+  // Mutation usada pelo modal "Nova" — resolve assistido/processo por nome/número
+  const createFromFormMutation = trpc.demandas.createFromForm.useMutation({
+    onSuccess: () => {
+      toast.success("Demanda criada com sucesso!");
+      utils.demandas.list.invalidate();
+      setIsCreateModalOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar demanda: " + error.message);
+    },
+  });
+
   // Mutation para atualizar demanda (com suporte offline)
   // Nota: cada handler individual mostra seu próprio toast de sucesso (optimistic update),
   // então não mostramos toast genérico aqui para evitar double-toasting
@@ -1126,28 +1138,25 @@ export default function Demandas() {
   };
 
   const handleSaveNewDemanda = (demandaData: DemandaFormData) => {
-    // Por enquanto usar dados locais (mock) até o modal estar preparado
-    // para selecionar assistidos e processos do banco de dados
-    const newDemanda = {
-      id: `new-${Date.now()}`,
-      status: demandaData.status || "triagem",
-      prazo: demandaData.prazo,
-      data: demandaData.data || new Date().toLocaleDateString("pt-BR"),
-      assistido: demandaData.assistido,
-      avatar: "",
-      processos: demandaData.processos,
-      ato: demandaData.ato,
-      providencias: demandaData.providencias,
+    // Persiste no banco via tRPC. A mutation resolve assistido/processo por
+    // nome/número (find-or-create), converte status/atribuição e dispara o
+    // sync da planilha. O modal fecha e a lista invalida no onSuccess.
+    const primeiroProcesso = demandaData.processos?.[0];
+    const reuPreso = (demandaData.estadoPrisional ?? "").toLowerCase() !== "solto"
+      && (demandaData.estadoPrisional ?? "").trim() !== "";
+
+    createFromFormMutation.mutate({
+      assistidoNome: demandaData.assistido,
+      numeroAutos: primeiroProcesso?.numero || undefined,
+      tipoProcesso: primeiroProcesso?.tipo || undefined,
       atribuicao: demandaData.atribuicao,
-      tipoAto: demandaData.ato,
-      estadoPrisional: demandaData.estadoPrisional || "solto",
-      dataInclusao: new Date().toISOString(),
-      arquivado: false,
-    };
-    
-    setDemandas((prev) => [newDemanda, ...prev]);
-    toast.success("Demanda criada com sucesso!");
-    setIsCreateModalOpen(false);
+      ato: demandaData.ato || "Demanda",
+      status: demandaData.status || "triagem",
+      dataExpedicao: demandaData.data || undefined,
+      prazo: demandaData.prazo || undefined,
+      providencias: demandaData.providencias || undefined,
+      reuPreso,
+    });
   };
 
   const handleEditDemanda = (demanda: any) => {
@@ -2033,7 +2042,7 @@ export default function Demandas() {
         icon={ListTodo}
         collapsedStats={
           <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] text-white/90 tabular-nums">
+            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
               {demandas.filter(d => !d.arquivado).length} total
             </span>
           </>

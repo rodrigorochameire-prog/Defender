@@ -404,6 +404,189 @@ export const demandasRouter = router({
       }));
     }),
 
+  // Criar demanda a partir do formulário "Nova" — resolve assistido/processo
+  // por nome/número (find-or-create), aceita atribuição e status em formato
+  // amigável e já dispara o sync da planilha. Diferente de `create`, não
+  // exige IDs pré-existentes.
+  createFromForm: protectedProcedure
+    .input(
+      z.object({
+        assistidoNome: z.string().min(1),
+        numeroAutos: z.string().optional(),
+        tipoProcesso: z.string().optional(),
+        atribuicao: z.string().min(1), // aceita label ("Tribunal do Júri") ou enum ("JURI_CAMACARI")
+        ato: z.string().min(1),
+        status: z.string().optional(), // "triagem", "protocolado", ou enum direto
+        dataExpedicao: z.string().optional(), // YYYY-MM-DD ou DD/MM/YYYY
+        dataEntrada: z.string().optional(),
+        prazo: z.string().optional(),
+        providencias: z.string().optional(),
+        reuPreso: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // 1. Resolver atribuicao (aceita label PT-BR ou enum)
+      const ATRIBUICAO_LABEL_TO_ENUM: Record<string, string> = {
+        "Tribunal do Júri": "JURI_CAMACARI",
+        "Grupo Especial do Júri": "GRUPO_JURI",
+        "Violência Doméstica": "VVD_CAMACARI",
+        "Execução Penal": "EXECUCAO_PENAL",
+        "Substituição Criminal": "SUBSTITUICAO",
+        "Curadoria Especial": "SUBSTITUICAO_CIVEL",
+      };
+      const atribuicaoEnum = ATRIBUICAO_LABEL_TO_ENUM[input.atribuicao] ?? input.atribuicao;
+
+      // `area` é NOT NULL em `processos` — derivar do enum de atribuição.
+      const ATRIBUICAO_TO_AREA: Record<string, string> = {
+        JURI_CAMACARI: "JURI",
+        GRUPO_JURI: "JURI",
+        VVD_CAMACARI: "VIOLENCIA_DOMESTICA",
+        EXECUCAO_PENAL: "EXECUCAO_PENAL",
+        SUBSTITUICAO: "CRIMINAL",
+        SUBSTITUICAO_CIVEL: "CIVEL",
+      };
+      const areaEnumValue = ATRIBUICAO_TO_AREA[atribuicaoEnum] ?? "CRIMINAL";
+
+      // 2. Resolver status+substatus a partir do valor do select do modal
+      const STATUS_MAP: Record<string, { status: string; substatus: string | null }> = {
+        urgente: { status: "URGENTE", substatus: null },
+        triagem: { status: "5_TRIAGEM", substatus: null },
+        atender: { status: "2_ATENDER", substatus: "2 - Atender" },
+        analisar: { status: "2_ATENDER", substatus: "2 - Analisar" },
+        elaborar: { status: "2_ATENDER", substatus: "2 - Elaborar" },
+        elaborando: { status: "2_ATENDER", substatus: "2 - Elaborando" },
+        revisar: { status: "2_ATENDER", substatus: "2 - Revisar" },
+        revisando: { status: "2_ATENDER", substatus: "2 - Revisando" },
+        relatorio: { status: "2_ATENDER", substatus: "2 - Relatório" },
+        documentos: { status: "2_ATENDER", substatus: "6 - Documentos" },
+        testemunhas: { status: "2_ATENDER", substatus: "6 - Testemunhas" },
+        investigar: { status: "2_ATENDER", substatus: "2 - Investigar" },
+        buscar: { status: "2_ATENDER", substatus: "2 - Buscar" },
+        oficiar: { status: "2_ATENDER", substatus: "2 - Oficiar" },
+        protocolar: { status: "2_ATENDER", substatus: "3 - Protocolar" },
+        monitorar: { status: "4_MONITORAR", substatus: null },
+        protocolado: { status: "7_PROTOCOLADO", substatus: null },
+        ciencia: { status: "7_CIENCIA", substatus: null },
+        resolvido: { status: "CONCLUIDO", substatus: "7 - Resolvido" },
+        constituiu_advogado: { status: "CONCLUIDO", substatus: "7 - Constituiu advogado" },
+        sem_atuacao: { status: "7_SEM_ATUACAO", substatus: null },
+        arquivado: { status: "ARQUIVADO", substatus: null },
+      };
+      const statusKey = (input.status ?? "triagem").toLowerCase();
+      const resolvedStatus = STATUS_MAP[statusKey] ?? { status: statusKey.toUpperCase(), substatus: null };
+
+      // 3. Normalizar datas (aceita DD/MM/YYYY ou YYYY-MM-DD)
+      const normalizeDate = (v: string | undefined): string | null => {
+        if (!v) return null;
+        const s = v.trim();
+        if (!s) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        if (s.includes("/")) {
+          const parts = s.split("/");
+          if (parts.length === 3) {
+            const [d, m, y] = parts;
+            if (d && m && y) return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+          }
+        }
+        return null;
+      };
+      const dataExpedicaoDB = normalizeDate(input.dataExpedicao) ?? normalizeDate(input.dataEntrada);
+      const dataEntradaDB = normalizeDate(input.dataEntrada) ?? dataExpedicaoDB;
+      const prazoDB = normalizeDate(input.prazo);
+
+      // 4. Find-or-create assistido pelo nome (case-insensitive)
+      const nomeTrimmed = input.assistidoNome.trim();
+      let [assistido] = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(and(ilike(assistidos.nome, nomeTrimmed), isNull(assistidos.deletedAt)))
+        .limit(1);
+      if (!assistido) {
+        const [novo] = await db
+          .insert(assistidos)
+          .values({ nome: nomeTrimmed, origemCadastro: "manual" })
+          .returning({ id: assistidos.id });
+        assistido = novo;
+      }
+
+      // 5. Find-or-create processo — por numeroAutos se fornecido, senão cria
+      // um stub "SN-<timestamp>" vinculado ao assistido (paridade com importFromSheets).
+      const numAutos = (input.numeroAutos ?? "").trim();
+      let processoId: number;
+      if (numAutos) {
+        const [existente] = await db
+          .select({ id: processos.id })
+          .from(processos)
+          .where(and(eq(processos.numeroAutos, numAutos), isNull(processos.deletedAt)))
+          .limit(1);
+        if (existente) {
+          processoId = existente.id;
+        } else {
+          const [novo] = await db
+            .insert(processos)
+            .values({
+              assistidoId: assistido.id,
+              numeroAutos: numAutos,
+              atribuicao: atribuicaoEnum as never,
+              area: areaEnumValue as never,
+            })
+            .returning({ id: processos.id });
+          processoId = novo.id;
+        }
+      } else {
+        const [novo] = await db
+          .insert(processos)
+          .values({
+            assistidoId: assistido.id,
+            numeroAutos: `SN-${Date.now()}`,
+            atribuicao: atribuicaoEnum as never,
+            area: areaEnumValue as never,
+          })
+          .returning({ id: processos.id });
+        processoId = novo.id;
+      }
+
+      // 6. Inserir a demanda
+      const defensorId = getDefensorResponsavel(ctx.user);
+      const [nova] = await db
+        .insert(demandas)
+        .values({
+          processoId,
+          assistidoId: assistido.id,
+          ato: input.ato,
+          status: resolvedStatus.status as never,
+          substatus: resolvedStatus.substatus,
+          prazo: prazoDB,
+          dataEntrada: dataEntradaDB,
+          dataExpedicao: dataExpedicaoDB,
+          providencias: input.providencias?.trim() || null,
+          reuPreso: input.reuPreso ?? false,
+          prioridade: input.reuPreso ? "REU_PRESO" : "NORMAL",
+          defensorId: defensorId || ctx.user.id,
+        })
+        .returning();
+
+      logAudit({
+        userId: ctx.user.id,
+        userName: ctx.user.name,
+        entityType: "demanda",
+        entityId: nova.id,
+        action: "create",
+        metadata: { ato: input.ato, origem: "modal_nova" },
+      });
+
+      // 7. Sync planilha (fire-and-forget, mesmo padrão de `create`)
+      buildDemandaSync(nova.id)
+        .then((d) => {
+          if (!d) return;
+          sheetsPush(d).catch(console.error);
+          triggerReorder(d.atribuicao, "create", nova.id);
+        })
+        .catch(console.error);
+
+      return nova;
+    }),
+
   // Criar nova demanda
   // A demanda é criada no "banco" do defensor logado (ou do supervisor, se estagiário)
   create: protectedProcedure
