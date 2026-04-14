@@ -28,6 +28,7 @@ interface SectionDetailSheetProps {
     fileName: string;
     fileWebViewLink: string | null;
     fileId?: number;
+    fileDriveId?: string;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -286,13 +287,13 @@ export function SectionDetailSheet({ section, open, onOpenChange, onSectionUpdat
         </ScrollArea>
       </SheetContent>
 
-      {showPdfViewer && section.fileId && (
+      {showPdfViewer && section.fileId && section.fileDriveId && (
         <PdfViewerModal
           isOpen={showPdfViewer}
           onClose={() => setShowPdfViewer(false)}
           fileId={section.fileId}
           fileName={section.fileName}
-          pdfUrl={section.fileWebViewLink || ""}
+          pdfUrl={`/api/drive/proxy?fileId=${section.fileDriveId}`}
         />
       )}
     </Sheet>

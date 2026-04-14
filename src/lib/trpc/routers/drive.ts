@@ -1968,6 +1968,7 @@ export const driveRouter = router({
           fileName: driveFiles.name,
           fileWebViewLink: driveFiles.webViewLink,
           fileMimeType: driveFiles.mimeType,
+          fileDriveId: driveFiles.driveFileId,
         })
         .from(driveDocumentSections)
         .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
@@ -1997,6 +1998,7 @@ export const driveRouter = router({
           fileName: driveFiles.name,
           fileWebViewLink: driveFiles.webViewLink,
           fileMimeType: driveFiles.mimeType,
+          fileDriveId: driveFiles.driveFileId,
         })
         .from(driveDocumentSections)
         .innerJoin(driveFiles, eq(driveDocumentSections.driveFileId, driveFiles.id))
