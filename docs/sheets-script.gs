@@ -92,6 +92,13 @@ function onEditTrigger(e) {
       const valor = e.value ?? "";
       _enviarWebhook(Number(ombudsId), campo, valor);
 
+      // Se o campo editado foi Status, reagrupar a aba localmente para que a
+      // linha se mova imediatamente para o bloco correto (sem esperar o
+      // reorder do servidor). Sort estável preserva a ordem dentro do grupo.
+      if (col === COL_STATUS) {
+        _reagruparPorStatus(sheet);
+      }
+
     } else {
       // ── Linha nova: tenta criar a demanda no app ────────────────────────
       // Só dispara se o campo editado for um campo de dados (não a coluna tracking)
@@ -133,6 +140,30 @@ function onEditTrigger(e) {
     }
   } catch (err) {
     console.error("[OMBUDS Sync] Erro inesperado:", err);
+  }
+}
+
+// ==========================================
+// REAGRUPAMENTO LOCAL
+// ==========================================
+
+/**
+ * Ordena as linhas de dados da aba pela coluna Status (ASC).
+ * Os rótulos já usam prefixo numérico ("1 - ...", "2 - ...", "5 - ...",
+ * "7 - ..."), então o sort alfanumérico produz o agrupamento correto.
+ * Sort é estável → ordem dentro do mesmo status é preservada.
+ *
+ * Linhas 1-3 (título, separador, cabeçalho) não são tocadas.
+ */
+function _reagruparPorStatus(sheet) {
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 3) return;
+    const lastCol = sheet.getLastColumn();
+    const dataRange = sheet.getRange(4, 1, lastRow - 3, lastCol);
+    dataRange.sort({ column: COL_STATUS, ascending: true });
+  } catch (err) {
+    console.error("[OMBUDS Sync] Falha ao reagrupar por status:", err);
   }
 }
 

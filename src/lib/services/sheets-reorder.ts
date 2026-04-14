@@ -121,6 +121,8 @@ export async function reorderAllSheets(
       providencias: demandas.providencias,
       ordemManual: demandas.ordemManual,
       createdAt: demandas.createdAt,
+      importBatchId: demandas.importBatchId,
+      ordemOriginal: demandas.ordemOriginal,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -137,6 +139,8 @@ export async function reorderAllSheets(
     createdAt: Date;
     prazo: string | null;
     rank: number;
+    importBatchId: string | null;
+    ordemOriginal: number | null;
   };
   const bySheet = new Map<string, Enriched[]>();
 
@@ -167,6 +171,8 @@ export async function reorderAllSheets(
       createdAt: r.createdAt,
       prazo: r.prazo,
       rank: computeRank(r.status, r.substatus),
+      importBatchId: r.importBatchId,
+      ordemOriginal: r.ordemOriginal,
     };
 
     if (!bySheet.has(sheetName)) bySheet.set(sheetName, []);
@@ -176,13 +182,12 @@ export async function reorderAllSheets(
   const cmp = (a: Enriched, b: Enriched): number => {
     if (a.rank !== b.rank) return a.rank - b.rank;
 
-    const ao = a.ordemManual;
-    const bo = b.ordemManual;
-    if (ao !== bo) {
-      if (ao === null) return 1;
-      if (bo === null) return -1;
-      return ao - bo;
-    }
+    // Espelha exatamente o sort da coluna do Kanban (kanban-premium.tsx:799):
+    // ordemOriginal ASC (NULLS LAST) → createdAt DESC → prazo ASC.
+    // `ordemManual` é legado e não é mais considerado pelas views.
+    const oa = a.ordemOriginal ?? 9999;
+    const ob = b.ordemOriginal ?? 9999;
+    if (oa !== ob) return oa - ob;
 
     const ac = a.createdAt.getTime();
     const bc = b.createdAt.getTime();

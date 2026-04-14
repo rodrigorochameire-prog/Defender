@@ -13,6 +13,8 @@ import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { logSyncAction, classifySync } from "@/lib/services/sync-engine";
+import { getSheetName } from "@/lib/services/google-sheets";
+import { inngest } from "@/lib/inngest/client";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
 const CAMPO_MAP: Record<string, string> = {
@@ -103,14 +105,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const valorStr = valor != null ? String(valor).trim() : "";
 
-  // 3. Busca a demanda
+  // 3. Busca a demanda (+ atribuicao do processo, para disparar reorder depois)
   const [demanda] = await db
     .select({
       id: demandas.id,
       processoId: demandas.processoId,
       assistidoId: demandas.assistidoId,
+      atribuicao: processos.atribuicao,
     })
     .from(demandas)
+    .leftJoin(processos, eq(demandas.processoId, processos.id))
     .where(and(eq(demandas.id, demandaId), isNull(demandas.deletedAt)))
     .limit(1);
 
@@ -238,6 +242,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Registrar log
     await logSyncAction(demandaId, campoDb, null, String(valor), "PLANILHA");
+
+    // Disparar reorder da aba afetada (debounced 15s via Inngest) — necessário
+    // quando o campo editado influencia o agrupamento (status), para que a
+    // linha seja movida ao bloco correto. Fire-and-forget.
+    if (campoDb === "status" && demanda.atribuicao) {
+      const sheetName = getSheetName(demanda.atribuicao);
+      inngest
+        .send({
+          name: "sheets/reorder.requested",
+          data: { sheetName, reason: "webhook-status", demandaId },
+        })
+        .catch((err) => console.error("[Sheets Webhook] falha enfileirando reorder:", err));
+    }
 
     console.log(`[Sheets Webhook] Demanda ${demandaId} — campo "${campo}" atualizado: "${valorStr}"`);
     return NextResponse.json({ ok: true });

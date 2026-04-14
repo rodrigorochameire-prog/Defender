@@ -883,6 +883,9 @@ export const demandasRouter = router({
       // Rastrear IDs únicos dos assistidos envolvidos na importação
       const assistidoIdsImportados = new Set<number>();
 
+      // IDs das demandas efetivamente criadas — usado para o push em lote à planilha
+      const importedDemandaIds: number[] = [];
+
       for (const row of input.rows) {
         try {
           // Validar que assistido não é uma data serializada (bug Apps Script)
@@ -1222,9 +1225,33 @@ export const demandasRouter = router({
           }
 
           results.imported++;
+          importedDemandaIds.push(insertedDemanda.id);
         } catch (error) {
           results.errors.push(`${row.assistido}: ${(error as Error).message}`);
         }
+      }
+
+      // Sync Google Sheets (fire-and-forget) — push de cada demanda recém-criada.
+      // Sem isso, o bulk import deixa as demandas invisíveis na planilha, em
+      // contraste com demandas.create (que já sincroniza). Aplica a qualquer
+      // atribuição (Júri, VVD, Execução Penal, etc.).
+      if (importedDemandaIds.length > 0) {
+        (async () => {
+          const reorderAtribuicoes = new Set<string>();
+          for (const id of importedDemandaIds) {
+            try {
+              const d = await buildDemandaSync(id);
+              if (!d) continue;
+              await sheetsPush(d);
+              if (d.atribuicao) reorderAtribuicoes.add(d.atribuicao);
+            } catch (err) {
+              console.error(`[import] sheets push falhou para demanda ${id}:`, err);
+            }
+          }
+          for (const atr of reorderAtribuicoes) {
+            triggerReorder(atr, "import", undefined);
+          }
+        })().catch((err) => console.error("[import] sync planilha falhou:", err));
       }
 
       // Contar assistidos importados que não estão no Solar

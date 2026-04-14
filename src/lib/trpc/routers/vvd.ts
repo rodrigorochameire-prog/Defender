@@ -14,6 +14,7 @@ import {
 import { eq, and, desc, asc, sql, isNull, isNotNull, or, ilike, gte, lte, count, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
+import { syncVVDIntimacoesToSheet } from "@/lib/services/vvd-sync";
 
 // ==========================================
 // ROUTER VVD - VIOLÊNCIA DOMÉSTICA / MPU
@@ -852,6 +853,21 @@ export const vvdRouter = router({
             `Erro ao importar ${intimacao.assistido}: ${error instanceof Error ? error.message : "Erro desconhecido"}`
           );
         }
+      }
+
+      // Fire-and-forget: envia as intimações recém-importadas para a planilha VVD.
+      // Sem await — se falhar, não bloqueia o retorno ao usuário; erros ficam no log.
+      if (resultados.intimacoesNovas > 0) {
+        syncVVDIntimacoesToSheet()
+          .then((stats) => {
+            console.log(
+              `[VVD Import] sync planilha: ${stats.pushed}/${stats.considered} enviadas` +
+                (stats.errors.length ? ` | ${stats.errors.length} erros` : "")
+            );
+          })
+          .catch((err) => {
+            console.error("[VVD Import] sync planilha falhou:", err);
+          });
       }
 
       return resultados;

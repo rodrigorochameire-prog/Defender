@@ -2053,7 +2053,8 @@ export const syncSheetPollingFn = inngest.createFunction(
       const DATA_START_ROW = 4; // Row 4 in sheets = index 3
 
       for (const [atribuicao, sheetName] of Object.entries(ATRIBUICAO_TO_SHEET)) {
-        if (sheetName === "Violência Doméstic" || sheetName === "Plenários") continue;
+        // Plenários vive em `sessoesJuri`, não em `demandas` — esse loop não se aplica.
+        if (sheetName === "Plenários") continue;
 
         try {
           const rows = await readSheet(sheetName);
@@ -2100,6 +2101,15 @@ export const syncSheetPollingFn = inngest.createFunction(
                 }
               }
             }
+          }
+
+          // Se houve update via planilha nesta aba, agendar reorder para que
+          // as linhas reposicionem-se no grupo correto (debounce 15s).
+          if (stats.updated > 0) {
+            await inngest.send({
+              name: "sheets/reorder.requested",
+              data: { sheetName, reason: "poller-sync" },
+            });
           }
         } catch (err) {
           console.error(`[Polling] Erro na aba ${sheetName}:`, err);
