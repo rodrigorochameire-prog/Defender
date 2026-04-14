@@ -48,6 +48,7 @@ import { solarRouter } from "./solar";
 import { searchRouter } from "./search";
 import { intelligenceRouter } from "./intelligence";
 import { documentSectionsRouter } from "./document-sections";
+import { processoRouter } from "./processo";
 import { annotationsRouter } from "./annotations";
 import { settingsRouter } from "./settings";
 import { tesesRouter } from "./teses";
@@ -228,6 +229,7 @@ export const appRouter = router({
   // SEÇÕES DE DOCUMENTOS PDF (ENRICHMENT PIPELINE)
   // ==========================================
   documentSections: documentSectionsRouter,
+  processo: processoRouter,
 
   // ==========================================
   // ANOTAÇÕES EM PDF (HIGHLIGHTS E NOTAS)
