@@ -51,6 +51,10 @@ import { ptBR } from "date-fns/locale";
 import { LIST_ITEM, GLASS } from "@/lib/config/design-tokens";
 import { File } from "lucide-react";
 import { SectionsViewer } from "./SectionsViewer";
+import dynamic from "next/dynamic";
+import { DriveProvider, useDriveContext } from "./DriveContext";
+
+const DriveDetailPanel = dynamic(() => import("./DriveDetailPanel").then(m => m.DriveDetailPanel), { ssr: false });
 
 type ViewMode = "tree" | "timeline" | "status" | "processo" | "pecas";
 
@@ -514,16 +518,24 @@ function PreviewContent({ file, onOpenDetail }: { file: DriveFileData; onOpenDet
   );
 }
 
-export function DriveTabEnhanced({
+export function DriveTabEnhanced(props: DriveTabEnhancedProps) {
+  return (
+    <DriveProvider>
+      <DriveTabEnhancedInner {...props} />
+    </DriveProvider>
+  );
+}
+
+function DriveTabEnhancedInner({
   files,
   assistidoId,
   processoId,
   driveFolderId,
   atribuicaoPrimaria,
 }: DriveTabEnhancedProps) {
+  const { openDetailPanel, detailPanelFileId } = useDriveContext();
   const [view, setView] = useState<ViewMode>("tree");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFile, setSelectedFile] = useState<DriveFileData | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [previewFile, setPreviewFile] = useState<DriveFileData | null>(null);
 
@@ -808,7 +820,7 @@ export function DriveTabEnhanced({
       {view === "tree" && (
         <SubpastaExplorer
           files={filteredFiles}
-          onFileClick={(f) => setSelectedFile(f as DriveFileData)}
+          onFileClick={(f) => openDetailPanel((f as DriveFileData).id)}
         />
       )}
       {view === "timeline" && <TimelineDocumental files={filteredFiles} />}
@@ -829,13 +841,8 @@ export function DriveTabEnhanced({
         />
       )}
 
-      {/* File Detail Sheet */}
-      {selectedFile && (
-        <FileDetailSheet
-          file={selectedFile}
-          onClose={() => setSelectedFile(null)}
-        />
-      )}
+      {/* Rich Drive Detail Panel (PDF viewer, expand, etc.) */}
+      {detailPanelFileId !== null && <DriveDetailPanel />}
 
       {/* Quick Preview Sheet */}
       <Sheet open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
@@ -844,7 +851,7 @@ export function DriveTabEnhanced({
           {previewFile != null && (
             <PreviewContent
               file={previewFile}
-              onOpenDetail={(f) => { setSelectedFile(f); setPreviewFile(null); }}
+              onOpenDetail={(f) => { openDetailPanel(f.id); setPreviewFile(null); }}
             />
           )}
         </SheetContent>
