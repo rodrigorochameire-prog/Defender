@@ -491,7 +491,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
           {/* Name + Badge + Status */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg font-semibold text-white truncate">
+              {data.nome}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap mt-1">
               <Link href={`/admin/assistidos/${data.id}/editar`}>
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-white/30 hover:text-white/80">
                   <Pencil className="h-3 w-3" />
