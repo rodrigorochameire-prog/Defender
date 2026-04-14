@@ -8,6 +8,7 @@ import { Scissors, Loader2 } from "lucide-react";
 import { ProcessoSelector } from "./ProcessoSelector";
 import { PecasIndex } from "./PecasIndex";
 import { PecaPreview } from "./PecaPreview";
+import { CaseSummaryCard } from "./CaseSummaryCard";
 
 interface ProcessoBasicData {
   id: number;
@@ -118,27 +119,30 @@ export function ProcessoTab({ assistidoId, processos }: ProcessoTabProps) {
 
   if (!data || data.total === 0) {
     return (
-      <div className="p-6">
-        <div className="max-w-md mx-auto text-center py-16">
-          <div className="w-14 h-14 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-            <Scissors className="w-6 h-6 text-zinc-400" />
+      <div className="p-4 space-y-3 h-full flex flex-col min-h-0">
+        <CaseSummaryCard assistidoId={assistidoId} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="max-w-md text-center">
+            <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-3">
+              <Scissors className="w-5 h-5 text-neutral-400" />
+            </div>
+            <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1">
+              Nenhuma peça classificada
+            </h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+              {shouldOfferFallback
+                ? `Este processo não tem peças classificadas, mas o assistido tem ${fallbackData?.total ?? 0} peças vinculadas.`
+                : "Classifique os autos usando o botão \"Classificar\" na aba Drive."}
+            </p>
+            {shouldOfferFallback && (
+              <Button
+                onClick={() => setSelectedProcessoId(-1)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                Ver todas as peças do assistido ({fallbackData?.total})
+              </Button>
+            )}
           </div>
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
-            Nenhuma peça classificada
-          </h3>
-          <p className="text-sm text-zinc-500 mb-4">
-            {shouldOfferFallback
-              ? `Este processo não tem peças classificadas, mas o assistido tem ${fallbackData?.total ?? 0} peças vinculadas. Veja todas as peças do assistido:`
-              : "Para ver as peças organizadas (denúncia, depoimentos, laudos, etc.), classifique os autos usando o botão \"Classificar\" na aba Drive."}
-          </p>
-          {shouldOfferFallback && (
-            <Button
-              onClick={() => setSelectedProcessoId(-1)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              Ver todas as peças do assistido ({fallbackData?.total})
-            </Button>
-          )}
         </div>
       </div>
     );
@@ -150,7 +154,11 @@ export function ProcessoTab({ assistidoId, processos }: ProcessoTabProps) {
     : processos;
 
   return (
-    <div className="p-4 space-y-4 h-full flex flex-col min-h-0">
+    <div className="p-4 space-y-3 h-full flex flex-col min-h-0">
+      {/* Sumário consolidado do caso */}
+      <CaseSummaryCard assistidoId={assistidoId} />
+
+      {/* Seletor de processos + ações */}
       <div className="flex items-center gap-3 flex-wrap">
         <ProcessoSelector
           processos={processosWithAll}
@@ -167,7 +175,7 @@ export function ProcessoTab({ assistidoId, processos }: ProcessoTabProps) {
             variant="outline"
             onClick={() => extractApprovedMutation.mutate({ driveFileId: firstFileId })}
             disabled={extractApprovedMutation.isPending}
-            className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800/50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
           >
             {extractApprovedMutation.isPending ? (
               <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
@@ -179,7 +187,7 @@ export function ProcessoTab({ assistidoId, processos }: ProcessoTabProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-[320px_1fr] gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0">
         <PecasIndex
           groups={data.groups as any}
           depoimentos={data.depoimentos as any}

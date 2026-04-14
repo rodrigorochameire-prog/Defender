@@ -24,7 +24,7 @@ export function PecaGroup({ groupKey, sections, activeId, onSelect }: PecaGroupP
 
   return (
     <div className="mb-3">
-      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-3 mb-1">
+      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 px-3 mb-1">
         {label}
       </h4>
       <div className="space-y-0.5">
@@ -58,13 +58,13 @@ export function DepoimentoGroup({ depoimentos, activeId, onSelect }: DepoimentoG
 
   return (
     <div className="mb-3">
-      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 px-3 mb-1">
+      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 px-3 mb-1">
         Depoimentos
       </h4>
       <div className="space-y-2">
         {depoimentos.map((dp) => (
           <div key={dp.pessoa}>
-            <div className="text-[10px] text-zinc-400 dark:text-zinc-500 px-3 py-1 uppercase tracking-wide">
+            <div className="text-[10px] text-neutral-400 dark:text-neutral-500 px-3 py-1 uppercase tracking-wide">
               {dp.pessoa}
             </div>
             <div className="space-y-0.5">

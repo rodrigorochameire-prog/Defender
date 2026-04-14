@@ -48,10 +48,10 @@ export function PecasIndex({ groups, depoimentos, activeId, onSelect, total }: P
 
   if (total === 0) {
     return (
-      <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50/40 dark:bg-zinc-900/40 p-8 text-center">
-        <List className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Nenhuma peça classificada</p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+      <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg bg-neutral-50/40 dark:bg-neutral-900/40 p-8 text-center">
+        <List className="w-8 h-8 text-neutral-300 dark:text-neutral-700 mx-auto mb-3" />
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">Nenhuma peça classificada</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
           Use o botão &quot;Classificar&quot; no PDF dos autos para extrair as peças
         </p>
       </div>
@@ -59,26 +59,26 @@ export function PecasIndex({ groups, depoimentos, activeId, onSelect, total }: P
   }
 
   return (
-    <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 overflow-hidden flex flex-col">
-      <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-neutral-900 overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
           Peças
         </span>
-        <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">
+        <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">
           {visibleCount}
           {search && total !== visibleCount ? ` / ${total}` : ""}
         </span>
       </div>
 
-      <div className="p-2 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="p-2 border-b border-neutral-200 dark:border-neutral-800">
         <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar peças..."
-            className="w-full text-xs pl-8 pr-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full text-xs pl-8 pr-3 py-1.5 rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </div>
       </div>
@@ -115,7 +115,7 @@ export function PecasIndex({ groups, depoimentos, activeId, onSelect, total }: P
           ))}
 
         {visibleCount === 0 && search && (
-          <div className="px-3 py-6 text-center text-xs text-zinc-500">
+          <div className="px-3 py-6 text-center text-xs text-neutral-500">
             Nenhuma peça encontrada para &quot;{search}&quot;
           </div>
         )}

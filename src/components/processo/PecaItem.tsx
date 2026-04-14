@@ -7,7 +7,7 @@ const TIER_DOT: Record<string, string> = {
   critico: "bg-red-500",
   alto: "bg-orange-500",
   medio: "bg-blue-500",
-  baixo: "bg-zinc-400",
+  baixo: "bg-neutral-400",
 };
 
 const TIPO_TO_TIER_LOCAL: Record<string, string> = {
@@ -50,8 +50,8 @@ export function PecaItem({ peca, active, onClick, compact }: PecaItemProps) {
       className={cn(
         "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors",
         active
-          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-          : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300",
+          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+          : "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300",
       )}
     >
       <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", active ? "bg-white" : TIER_DOT[tier])} />
@@ -66,7 +66,7 @@ export function PecaItem({ peca, active, onClick, compact }: PecaItemProps) {
       )}
       <span className={cn(
         "text-[10px] font-mono shrink-0 ml-auto",
-        active ? "text-white/50" : "text-zinc-400",
+        active ? "text-white/50" : "text-neutral-400",
       )}>
         {pageRange}
       </span>
