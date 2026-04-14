@@ -1,0 +1,7 @@
+{
+  "timeZone": "America/Bahia",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8"
+}
