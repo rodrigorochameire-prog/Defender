@@ -4,6 +4,8 @@
 import { cn } from "@/lib/utils";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
+import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
+import { isAtoAudiencia } from "@/lib/audiencia-parser";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
 import { FilterSectionsCompact } from "@/components/demandas-premium/filter-sections-compact";
 import { InfographicSelector } from "@/components/demandas-premium/infographic-selector";
@@ -606,6 +608,16 @@ export default function Demandas() {
     "situacao-prisional": "pizza",
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Modal de confirmação de audiência — disparado quando o ato é alterado
+  // para "Ciência designação/redesignação de audiência".
+  const [audienciaModal, setAudienciaModal] = useState<{
+    open: boolean;
+    demandaId: number | null;
+    assistidoNome?: string;
+    numeroAutos?: string;
+    sources: Array<string | null | undefined>;
+  }>({ open: false, demandaId: null, sources: [] });
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isChartConfigModalOpen, setIsChartConfigModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -720,6 +732,17 @@ export default function Demandas() {
     },
     onError: (error) => {
       toast.error("Erro ao criar demanda: " + error.message);
+    },
+  });
+
+  // Mutation para registrar audiência vinda do modal de confirmação
+  const createAudienciaMutation = trpc.audiencias.create.useMutation({
+    onSuccess: () => {
+      toast.success("Audiência registrada!");
+      setAudienciaModal({ open: false, demandaId: null, sources: [] });
+    },
+    onError: (error) => {
+      toast.error("Erro ao registrar audiência: " + error.message);
     },
   });
 
@@ -987,6 +1010,19 @@ export default function Demandas() {
     toast.success(`Ato alterado para "${newAto}"!`, {
       description: "O prazo será recalculado automaticamente conforme o tipo de ato."
     });
+
+    // Gatilho: "Ciência designação/redesignação de audiência" → abrir modal
+    // de confirmação, pré-preenchendo com dados detectados em providências.
+    if (!isNaN(numericId) && isAtoAudiencia(newAto)) {
+      const demanda = demandas.find((d) => d.id === demandaId);
+      setAudienciaModal({
+        open: true,
+        demandaId: numericId,
+        assistidoNome: demanda?.assistido,
+        numeroAutos: demanda?.processos?.[0]?.numero,
+        sources: [demanda?.providencias, demanda?.ato, newAto],
+      });
+    }
   };
 
   const handleProvidenciasChange = (demandaId: string, providencias: string) => {
@@ -2799,6 +2835,38 @@ export default function Demandas() {
         atribuicaoOptions={atribuicaoOptions}
         atoOptions={atoOptionsFiltered}
         statusOptions={statusOptions}
+      />
+
+      <AudienciaConfirmModal
+        isOpen={audienciaModal.open}
+        onClose={() => setAudienciaModal({ open: false, demandaId: null, sources: [] })}
+        assistidoNome={audienciaModal.assistidoNome}
+        numeroAutos={audienciaModal.numeroAutos}
+        sources={audienciaModal.sources}
+        saving={createAudienciaMutation.isPending}
+        onConfirm={(dados: AudienciaConfirmData) => {
+          if (!audienciaModal.demandaId) return;
+          const demanda = demandas.find((d) => parseInt(d.id, 10) === audienciaModal.demandaId);
+          // Backend precisa do processoId real — pegar da demanda via API
+          // Fazemos via updateDemanda para obter dados; aqui usamos o que temos
+          // localmente através do query do demandasDB.
+          const demandaDB = demandasDB.find((d: any) => d.id === audienciaModal.demandaId);
+          const processoId = demandaDB?.processoId;
+          const assistidoId = demandaDB?.assistidoId;
+          if (!processoId) {
+            toast.error("Não foi possível localizar o processo da demanda.");
+            return;
+          }
+          const dataAudiencia = `${dados.data}T${dados.hora}:00`;
+          createAudienciaMutation.mutate({
+            processoId,
+            assistidoId,
+            dataAudiencia,
+            tipo: dados.tipo,
+            horario: dados.hora,
+            titulo: `${dados.tipo} — ${demanda?.assistido ?? ""}`.trim(),
+          });
+        }}
       />
 
       {editingDemanda && (
