@@ -53,6 +53,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const autofix = new URL(req.url).searchParams.get("autofix") === "1";
 
+  // Budget: aborta cedo se já passou do limite da função (evita consumir
+  // compute à toa e garantir custo previsível). maxDuration=30s no vercel.json.
+  const budgetMs = 25_000;
+  const t0 = Date.now();
+  const overBudget = () => Date.now() - t0 > budgetMs;
+
   const ativas = await db
     .select({
       id: demandas.id,
@@ -90,6 +96,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const abas = [...new Set(Object.values(ATRIBUICAO_TO_SHEET))];
 
   for (const aba of abas) {
+    if (overBudget()) { stats.erros.push(`budget exceeded — aborted`); break; }
     let sheet: string[][];
     try {
       sheet = await readSheet(aba);
@@ -150,6 +157,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   if (autofix && faltantes.length > 0) {
     for (const d of faltantes) {
+      if (overBudget()) { stats.erros.push(`budget exceeded on autofix`); break; }
       const atribuicao = d.atribuicao ?? "SUBSTITUICAO";
       const sync: DemandaParaSync = {
         id: d.id,

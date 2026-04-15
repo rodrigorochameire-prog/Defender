@@ -6,6 +6,9 @@
   "functions": {
     "src/app/api/**/*": {
       "maxDuration": 60
+    },
+    "src/app/api/cron/reconcile-sheets/route.ts": {
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -15,7 +18,7 @@
     },
     {
       "path": "/api/cron/reconcile-sheets?autofix=1",
-      "schedule": "0 3 * * *"
+      "schedule": "0 3 * * 1-5"
     }
   ],
   "headers": [
