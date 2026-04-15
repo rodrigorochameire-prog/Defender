@@ -4,6 +4,7 @@ import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { partesVVD, processosVVD, intimacoesVVD } from "@/lib/db/schema/vvd";
 import { eq, and, sql } from "drizzle-orm";
 import type { IntimacaoPJeSimples } from "@/lib/pje-parser";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 type NovaIntimacaoPayload = {
   event: "nova_intimacao";
@@ -23,6 +24,7 @@ function detectArea(item: IntimacaoPJeSimples): "JURI" | "EXECUCAO_PENAL" | "VIO
 
 async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<number> {
   let processed = 0;
+  const atribuicoesAfetadas = new Set<string>();
 
   for (const item of intimacoes) {
     if (!item.assistido || !item.numeroProcesso) continue;
@@ -101,6 +103,7 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
         })
         .returning();
       demanda = created;
+      if (processo.atribuicao) atribuicoesAfetadas.add(processo.atribuicao);
       processed++;
     } else {
       demanda = existingDemanda;
@@ -175,6 +178,10 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
         demandaId: demanda.id,
       });
     }
+  }
+
+  for (const atr of atribuicoesAfetadas) {
+    triggerReorder(atr, "openclaw");
   }
 
   return processed;

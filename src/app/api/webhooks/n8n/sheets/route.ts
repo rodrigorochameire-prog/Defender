@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 /**
  * Webhook endpoint para importar dados do Google Sheets via n8n
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
       skipped: 0,
       errors: [] as string[],
     };
+    const atribuicoesAfetadas = new Set<string>();
 
     for (const row of rows) {
       try {
@@ -129,12 +131,17 @@ export async function POST(request: NextRequest) {
           providencias: row.providencias || null,
         });
 
+        if (processo.atribuicao) atribuicoesAfetadas.add(processo.atribuicao);
         results.imported++;
 
       } catch (error) {
         results.errors.push(`Erro ao processar ${row.assistido}: ${(error as Error).message}`);
         results.skipped++;
       }
+    }
+
+    for (const atr of atribuicoesAfetadas) {
+      triggerReorder(atr, "n8n-sheets");
     }
 
     return NextResponse.json({

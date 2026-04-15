@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, calendarEvents, movimentacoes, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // Resolver workspaceId a partir do defensorId
 async function getWorkspaceIdFromDefensor(defensorId: number | null | undefined): Promise<number | null> {
@@ -167,6 +168,13 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     workspaceId,
     reuPreso: Boolean(reuPreso),
   }).returning();
+
+  const [proc] = await db
+    .select({ atribuicao: processos.atribuicao })
+    .from(processos)
+    .where(eq(processos.id, Number(processoId)))
+    .limit(1);
+  triggerReorder(proc?.atribuicao ?? null, "n8n", demanda.id);
 
   return { demandaId: demanda.id };
 }

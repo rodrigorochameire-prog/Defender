@@ -9,6 +9,7 @@
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, and, gte, isNull, inArray, sql } from "drizzle-orm";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // ============================================================================
 // TIPOS
@@ -173,6 +174,7 @@ export async function importarDemandas(
   };
 
   const assistidoIdsImportados = new Set<number>();
+  const atribuicoesAfetadas = new Set<string>();
 
   for (const row of rows) {
     try {
@@ -393,10 +395,15 @@ export async function importarDemandas(
         } as any : undefined,
       });
 
+      atribuicoesAfetadas.add(String(targetAtribuicao));
       results.imported++;
     } catch (error) {
       results.errors.push(`${row.assistido}: ${(error as Error).message}`);
     }
+  }
+
+  for (const atr of atribuicoesAfetadas) {
+    triggerReorder(atr, "pje-import");
   }
 
   // Contar assistidos sem exportação ao Solar

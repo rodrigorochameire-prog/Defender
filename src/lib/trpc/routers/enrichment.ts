@@ -24,6 +24,7 @@ import {
   type EnrichTranscriptOutput,
   type EnrichAudienciaOutput,
 } from "@/lib/services/enrichment-client";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // ==========================================
 // SCHEMAS DE INPUT
@@ -816,6 +817,17 @@ export const enrichmentRouter = router({
               createdAt: new Date(),
               updatedAt: new Date(),
             } as any).returning({ id: demandas.id });
+
+            let atribuicaoDemanda: string | null = null;
+            if (processoId) {
+              const [proc] = await db
+                .select({ atribuicao: processos.atribuicao })
+                .from(processos)
+                .where(eq(processos.id, processoId))
+                .limit(1);
+              atribuicaoDemanda = proc?.atribuicao ?? null;
+            }
+            triggerReorder(atribuicaoDemanda, "enrichment", novaDemanda?.id);
 
             results.push({ type: "criar_demanda", success: true, id: novaDemanda?.id });
           }

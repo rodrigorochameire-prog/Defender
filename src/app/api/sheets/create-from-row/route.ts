@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, and, isNull, ilike } from "drizzle-orm";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // Mapeamento: nome da aba → atribuição do banco
 const SHEET_TO_ATRIBUICAO: Record<string, string> = {
@@ -183,6 +184,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         defensorId,
       })
       .returning({ id: demandas.id });
+
+    triggerReorder(atribuicao, "sheets-create-from-row", newDemanda.id);
 
     console.log(
       `[Sheets Create] Nova demanda ${newDemanda.id} criada — ${nomeStr} / ${numeroAutos}`

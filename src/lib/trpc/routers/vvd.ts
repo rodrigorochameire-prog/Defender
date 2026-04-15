@@ -15,6 +15,7 @@ import { eq, and, desc, asc, sql, isNull, isNotNull, or, ilike, gte, lte, count,
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 import { syncVVDIntimacoesToSheet } from "@/lib/services/vvd-sync";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // ==========================================
 // ROUTER VVD - VIOLÊNCIA DOMÉSTICA / MPU
@@ -992,6 +993,8 @@ export const vvdRouter = router({
           defensorId: ctx.user.id,
         })
         .returning();
+
+      triggerReorder("VVD_CAMACARI", "vvd-intimacao", demanda.id);
 
       // 5. Vincular demanda à intimação VVD
       await db

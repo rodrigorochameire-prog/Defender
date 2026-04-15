@@ -8,22 +8,8 @@ import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
-import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, getSheetName, type DemandaParaSync } from "@/lib/services/google-sheets";
-import { inngest } from "@/lib/inngest/client";
-
-/**
- * Dispara o Inngest de reorder debounced (30s) para a aba afetada.
- * Fire-and-forget — nunca bloqueia a mutação.
- */
-function triggerReorder(atribuicao: string | null | undefined, reason: string, demandaId?: number): void {
-  const sheetName = atribuicao ? getSheetName(atribuicao) : "__all__";
-  inngest
-    .send({
-      name: "sheets/reorder.requested",
-      data: { sheetName, reason, demandaId },
-    })
-    .catch((err) => console.error("[demandas] falha ao enfileirar reorder:", err));
-}
+import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 /**
  * Monta o objeto DemandaParaSync buscando dados relacionados.
