@@ -348,22 +348,45 @@ export async function importarDemandas(
       const substatus = statusKey || null;
 
       // 6. Atualizar existente ou inserir novo
+      //
+      // IMPORTANTE: status/substatus/prioridade/reuPreso refletem decisões manuais
+      // do defensor (na planilha ou no OMBUDS) e NUNCA devem ser sobrescritos por
+      // reimportação. A reimportação apenas enriquece campos vazios com dados
+      // factuais do PJe (ato, prazo, dataEntrada, providencias, metadata).
+      // Se o defensor quiser resetar explicitamente, esse caminho é outra operação.
       if (existingDemanda) {
         if (atualizarExistentes) {
-          await db.update(demandas)
-            .set({
-              ato: row.ato,
-              prazo: convertDate(row.prazo),
-              dataEntrada: convertDate(row.dataEntrada),
-              status: dbStatus as any,
-              substatus,
-              prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
-              reuPreso,
-              providencias: row.providencias || null,
-              updatedAt: new Date(),
-            })
-            .where(eq(demandas.id, existingDemanda.id));
-          results.updated++;
+          const patch: Record<string, unknown> = { updatedAt: new Date() };
+          // Enriquecer apenas campos de fato vazios/ausentes:
+          if (!existingDemanda.ato && row.ato) patch.ato = row.ato;
+          if (!existingDemanda.prazo && row.prazo) patch.prazo = convertDate(row.prazo);
+          if (!existingDemanda.dataEntrada && row.dataEntrada) {
+            patch.dataEntrada = convertDate(row.dataEntrada);
+          }
+          if (!existingDemanda.providencias && row.providencias) {
+            patch.providencias = row.providencias;
+          }
+
+          // Divergência de status NÃO é sobrescrita — só registrada.
+          const statusDivergente =
+            existingDemanda.status !== (dbStatus as any) ||
+            (existingDemanda.substatus ?? null) !== (substatus ?? null);
+          if (statusDivergente) {
+            console.log(
+              `[pje-import] dedup: demanda #${existingDemanda.id} mantém status ` +
+              `"${existingDemanda.status}/${existingDemanda.substatus ?? "-"}" ` +
+              `(reimport sugeriu "${dbStatus}/${substatus ?? "-"}") — edição manual preservada`,
+            );
+          }
+
+          if (Object.keys(patch).length > 1) {
+            await db.update(demandas)
+              .set(patch as any)
+              .where(eq(demandas.id, existingDemanda.id));
+            results.updated++;
+          } else {
+            results.skipped++;
+          }
         } else {
           results.skipped++;
         }
