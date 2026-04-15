@@ -17,6 +17,7 @@ export const atribuicaoEnum = pgEnum("atribuicao", [
   "CRIMINAL_LAURO_DE_FREITAS",// Varas Criminais Lauro de Freitas
   "CRIMINAL_CANDEIAS",        // Crime + Júri + Infância (integral)
   "CRIMINAL_ITAPARICA",       // Crime + Júri + EP + Infância (integral)
+  "CRIMINAL_2_GRAU_SALVADOR", // 2º Grau Criminal - TJBA Salvador
 ]);
 
 // Áreas de atuação da Defensoria (compatibilidade)
@@ -31,6 +32,7 @@ export const areaEnum = pgEnum("area", [
   "FAZENDA_PUBLICA",
   "CRIMINAL",              // Vara Criminal Comum
   "INFANCIA_JUVENTUDE",    // Infância e Juventude (infracional + protetivo)
+  "CRIMINAL_2_GRAU",       // 2º Grau Criminal (Tribunal de Justiça BA)
 ]);
 
 // Status prisional do assistido
@@ -553,4 +555,24 @@ export const feedbackStatusEnum = pgEnum("feedback_status", [
   "visto",
   "enviado_jira",
   "descartado",
+]);
+
+// 2º Grau Criminal
+export const classeRecursalEnum = pgEnum("classe_recursal", [
+  "APELACAO",
+  "AGRAVO_EXECUCAO",
+  "RESE",
+  "HC",
+  "EMBARGOS",
+  "REVISAO_CRIMINAL",
+  "CORREICAO_PARCIAL",
+]);
+
+export const resultadoJulgamentoEnum = pgEnum("resultado_julgamento", [
+  "PROVIDO",
+  "IMPROVIDO",
+  "PARCIAL",
+  "NAO_CONHECIDO",
+  "DILIGENCIA",
+  "PREJUDICADO",
 ]);

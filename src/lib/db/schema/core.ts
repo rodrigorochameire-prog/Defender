@@ -22,6 +22,8 @@ import {
   areaEnum,
   papelProcessoEnum,
   syncOrigemEnum,
+  classeRecursalEnum,
+  resultadoJulgamentoEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
 
@@ -205,6 +207,17 @@ export const processos = pgTable("processos", {
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+
+  // 2º Grau Criminal
+  classeRecursal: classeRecursalEnum("classe_recursal"),
+  camara: text("camara"),
+  relator: text("relator"),
+  dataDistribuicao: date("data_distribuicao"),
+  dataConclusao: date("data_conclusao"),
+  dataPauta: date("data_pauta"),
+  dataJulgamento: date("data_julgamento"),
+  resultadoJulgamento: resultadoJulgamentoEnum("resultado_julgamento"),
+  acordaoRecorridoNumero: text("acordao_recorrido_numero"),
 }, (table) => [
   index("processos_assistido_id_idx").on(table.assistidoId),
   index("processos_numero_autos_idx").on(table.numeroAutos),
