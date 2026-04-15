@@ -80,6 +80,7 @@ import { feedbacksRouter } from "./feedbacks";
 import { instanciaSuperiorRouter } from "./instancia-superior";
 import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
+import { encaminhamentosRouter } from "./encaminhamentos";
 
 
 export const appRouter = router({
@@ -377,6 +378,11 @@ export const appRouter = router({
   // PJE DOWNLOAD (scraping worker queue)
   // ==========================================
   pje: pjeRouter,
+
+  // ==========================================
+  // COWORK - ENCAMINHAMENTOS (TRANSFERÊNCIAS, ACOMPANHAMENTOS)
+  // ==========================================
+  encaminhamentos: encaminhamentosRouter,
 });
 
 export type AppRouter = typeof appRouter;
