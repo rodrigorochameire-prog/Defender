@@ -97,3 +97,10 @@ logs/
 # Cowork skills (copied from Desktop, not tracked)
 .claude/skills-cowork/
 *.docx
+
+# Scripts temporários de diagnóstico/investigação (convenção: prefixo `_`)
+scripts/_*.ts
+scripts/_*.js
+
+# Cache local de extração de documentos
+.kreuzberg/
