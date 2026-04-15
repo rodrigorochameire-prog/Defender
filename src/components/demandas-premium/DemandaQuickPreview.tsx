@@ -37,7 +37,9 @@ import {
   File,
   Image,
   FileSpreadsheet,
+  History,
 } from "lucide-react";
+import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
@@ -401,6 +403,7 @@ export function DemandaQuickPreview({
 }: DemandaQuickPreviewProps) {
   const [metadataOpen, setMetadataOpen] = useState(true);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
@@ -1200,6 +1203,13 @@ export function DemandaQuickPreview({
             Resolver
           </button>
           <button
+            onClick={() => setTimelineOpen(true)}
+            title="Histórico"
+            className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center justify-center"
+          >
+            <History className="w-3 h-3" />
+          </button>
+          <button
             onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
             className="h-8 px-3.5 rounded-xl bg-white/[0.08] text-neutral-500 dark:text-neutral-400 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-[11px] font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
           >
@@ -1214,6 +1224,12 @@ export function DemandaQuickPreview({
           </button>
         </div>
       </SheetContent>
+      <DemandaTimelineDrawer
+        isOpen={timelineOpen}
+        onClose={() => setTimelineOpen(false)}
+        demandaId={typeof demanda.id === "string" ? parseInt(demanda.id, 10) : demanda.id}
+        assistidoNome={demanda.assistido}
+      />
     </Sheet>
   );
 }
