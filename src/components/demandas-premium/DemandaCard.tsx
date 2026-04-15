@@ -35,8 +35,10 @@ import {
   Save,
   X,
   UserPlus,
+  Forward,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
@@ -128,6 +130,7 @@ export function DemandaCard({
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showAtoDropdown, setShowAtoDropdown] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showEncaminharModal, setShowEncaminharModal] = useState(false);
   const [showAtribuicaoDropdown, setShowAtribuicaoDropdown] = useState(false);
   const [isEditingProvidencias, setIsEditingProvidencias] = useState(false);
   const [providenciasTemp, setProvidenciasTemp] = useState(demanda.providencias || "");
@@ -778,6 +781,13 @@ export function DemandaCard({
                       </button>
                     )}
                     <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); setShowEncaminharModal(true); }}
+                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 transition-colors"
+                    >
+                      <Forward className="w-3.5 h-3.5" />
+                      Encaminhar
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(demanda); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors"
                     >
@@ -931,6 +941,16 @@ export function DemandaCard({
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+      <NovoEncaminhamentoModal
+        open={showEncaminharModal}
+        onOpenChange={setShowEncaminharModal}
+        contexto={{
+          demandaId: Number(demanda.id),
+          processoId: demanda.processoId ?? undefined,
+          assistidoId: demanda.assistidoId ?? undefined,
+          display: `${demanda.assistido} · ${demanda.ato ?? "Demanda"}`,
+        }}
+      />
     </div>
   );
 }
