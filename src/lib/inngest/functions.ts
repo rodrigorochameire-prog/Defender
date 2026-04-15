@@ -2286,6 +2286,31 @@ export const sheetsReorderDebouncedFn = inngest.createFunction(
   },
 );
 
+/**
+ * Cowork — dispara notificações (in-app + WhatsApp) quando um encaminhamento é criado.
+ * Fire-and-forget: 2 retries com backoff. Falhas parciais por destinatário são
+ * logadas mas não fazem a função toda falhar (comportamento em `dispatchNotificacoes`).
+ */
+export const dispatchEncaminhamentoNotificacaoFn = inngest.createFunction(
+  {
+    id: "cowork-encaminhamento-notificar",
+    name: "Notificar destinatários de encaminhamento",
+    retries: 2,
+  },
+  { event: "cowork/encaminhamento.criado" },
+  async ({ event, step }) => {
+    const { encaminhamentoId } = event.data as { encaminhamentoId: number };
+    await step.run("dispatch", async () => {
+      const { dispatchNotificacoes } = await import(
+        "@/lib/services/encaminhamentos-notifier"
+      );
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ombuds.vercel.app";
+      await dispatchNotificacoes(encaminhamentoId, baseUrl);
+    });
+    return { ok: true };
+  },
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -2315,4 +2340,5 @@ export const functions = [
   syncSheetPollingFn,
   sheetsReorderDebouncedFn,
   coworkImportAnalysisFn,
+  dispatchEncaminhamentoNotificacaoFn,
 ];

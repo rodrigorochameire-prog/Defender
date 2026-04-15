@@ -202,6 +202,13 @@ export type InngestEvents = {
     };
   };
 
+  // Cowork — encaminhamento criado → dispara notificações para destinatários
+  "cowork/encaminhamento.criado": {
+    data: {
+      encaminhamentoId: number;
+    };
+  };
+
   // Transcription (async via Inngest to avoid Vercel timeout)
   "drive/transcribe.file": {
     data: {
