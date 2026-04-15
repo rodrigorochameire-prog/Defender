@@ -300,38 +300,46 @@ export async function importarDemandas(
         }
       }
 
-      // 4. Verificar duplicata
+      // 4. Verificar duplicata — em 3 camadas, todas com filtro por assistidoId
+      // para não colidir corréus do mesmo processo:
+      //
+      //  (1) pjeDocumentoId igual → mesma intimação do PJe (chave primária)
+      //  (2) processoId + assistidoId + ato + dataExpedicao iguais → mesma intimação
+      //  (3) fallback: quando a nova linha não tem dataExpedicao, procurar
+      //      demanda no mesmo processo+assistido+ato sem dataEntrada e criada
+      //      nos últimos 30d (evita recriar em reimport imediato)
       let existingDemanda;
 
-      if (dataExpedicaoParaBusca) {
+      if (row.idDocumentoPje) {
         existingDemanda = await db.query.demandas.findFirst({
           where: and(
             eq(demandas.processoId, processo.id),
+            eq(demandas.pjeDocumentoId, row.idDocumentoPje),
+            isNull(demandas.deletedAt),
+          ),
+        });
+      }
+
+      if (!existingDemanda && dataExpedicaoParaBusca && row.ato) {
+        existingDemanda = await db.query.demandas.findFirst({
+          where: and(
+            eq(demandas.processoId, processo.id),
+            eq(demandas.assistidoId, assistido.id),
+            eq(demandas.ato, row.ato),
             eq(demandas.dataEntrada, dataExpedicaoParaBusca),
             isNull(demandas.deletedAt),
           ),
         });
       }
 
-      if (!existingDemanda && row.ato && row.ato !== "Demanda importada") {
-        existingDemanda = await db.query.demandas.findFirst({
-          where: and(
-            eq(demandas.processoId, processo.id),
-            eq(demandas.ato, row.ato),
-            dataExpedicaoParaBusca
-              ? eq(demandas.dataEntrada, dataExpedicaoParaBusca)
-              : isNull(demandas.dataEntrada),
-            isNull(demandas.deletedAt),
-          ),
-        });
-      }
-
-      if (!existingDemanda && !dataExpedicaoParaBusca) {
+      if (!existingDemanda && !dataExpedicaoParaBusca && row.ato && row.ato !== "Demanda importada") {
         const trintaDiasAtras = new Date();
         trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
         existingDemanda = await db.query.demandas.findFirst({
           where: and(
             eq(demandas.processoId, processo.id),
+            eq(demandas.assistidoId, assistido.id),
+            eq(demandas.ato, row.ato),
             isNull(demandas.dataEntrada),
             gte(demandas.createdAt, trintaDiasAtras),
             isNull(demandas.deletedAt),
@@ -397,6 +405,7 @@ export async function importarDemandas(
         processoId: processo.id,
         assistidoId: assistido.id,
         ato: row.ato,
+        pjeDocumentoId: row.idDocumentoPje || null,
         prazo: convertDate(row.prazo),
         dataEntrada: convertDate(row.dataEntrada),
         status: dbStatus as any,
