@@ -261,6 +261,9 @@ export const demandas = pgTable("demandas", {
   ordemManual: integer("ordem_manual"),
   importBatchId: text("import_batch_id"),
   ordemOriginal: integer("ordem_original"),
+  // ID do documento PJe — identificador estável entre reimportações.
+  // Unique parcial: (processo_id, pje_documento_id) WHERE deleted_at IS NULL
+  pjeDocumentoId: varchar("pje_documento_id", { length: 30 }),
   enrichmentData: jsonb("enrichment_data").$type<{
     crime?: string;
     artigos?: string[];

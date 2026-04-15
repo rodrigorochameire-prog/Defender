@@ -866,6 +866,7 @@ export default function Demandas() {
       substatus: d.substatus || null,
       photoUrl: d.assistido?.photoUrl || null,
       updatedAt: d.updatedAt ? new Date(d.updatedAt).toISOString() : null,
+      syncedAt: d.syncedAt ? new Date(d.syncedAt).toISOString() : null,
       // Defensor responsável (para filtro por profissional R/J/G)
       defensorId: d.defensorId ?? null,
       // Rastreamento de importação

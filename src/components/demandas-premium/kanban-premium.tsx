@@ -21,6 +21,7 @@ import {
   Upload,
   Eye,
   CheckCircle2,
+  CloudOff,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -75,6 +76,8 @@ interface KanbanDemanda {
   reuPreso?: boolean;
   providenciaResumo?: string | null;
   data?: string | null;
+  updatedAt?: string | null;
+  syncedAt?: string | null;
   [key: string]: unknown;
 }
 
@@ -220,6 +223,23 @@ function KanbanCard({
           <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
             {demanda.ato}
           </span>
+          {(() => {
+            // Indicador de não-sincronização: updatedAt mais novo que
+            // syncedAt por mais de 5min = algo ficou fora do ciclo
+            if (!demanda.updatedAt) return null;
+            const upd = new Date(demanda.updatedAt).getTime();
+            const syn = demanda.syncedAt ? new Date(demanda.syncedAt).getTime() : 0;
+            if (upd - syn <= 5 * 60 * 1000) return null;
+            const minutos = Math.max(1, Math.floor((Date.now() - upd) / 60000));
+            return (
+              <span
+                className="shrink-0 ml-auto inline-flex items-center gap-0.5 text-[8px] text-amber-500/80"
+                title={`Não sincronizado há ${minutos}min (última edição ${new Date(demanda.updatedAt).toLocaleString("pt-BR")})`}
+              >
+                <CloudOff className="w-2.5 h-2.5" />
+              </span>
+            );
+          })()}
           {demanda.data && (
             <span className="text-[8px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
               {demanda.data}

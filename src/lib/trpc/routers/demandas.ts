@@ -155,6 +155,7 @@ export const demandasRouter = router({
           ordemOriginal: demandas.ordemOriginal,
           createdAt: demandas.createdAt,
           updatedAt: demandas.updatedAt,
+          syncedAt: demandas.syncedAt,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,
@@ -1253,23 +1254,19 @@ export const demandasRouter = router({
             }
           }
 
-          // Dedup 1 (mais confiável): match pelo ID do documento PJe dentro de
-          // enrichmentData. Um mesmo documento PJe reimportado SEMPRE refere-se
-          // à mesma intimação lógica — evita criar duplicatas quando o parser
-          // detecta o ato de forma diferente na segunda leitura.
+          // Dedup 1 (mais confiável): match pelo ID do documento PJe (coluna
+          // `pje_documento_id`, coberta por índice único parcial). Um mesmo
+          // documento PJe reimportado SEMPRE refere-se à mesma intimação
+          // lógica — evita duplicatas quando o parser detecta o ato de forma
+          // diferente na segunda leitura.
           if (row.idDocumentoPje) {
-            const matchPje = await db.execute(sql`
-              SELECT id, ato, status, substatus, prazo, providencias,
-                     updated_at, synced_at
-              FROM demandas
-              WHERE processo_id = ${processo.id}
-                AND deleted_at IS NULL
-                AND enrichment_data ->> 'id_documento_pje' = ${row.idDocumentoPje}
-              LIMIT 1
-            `);
-            if ((matchPje as unknown as Array<{ id: number }>).length > 0) {
-              existingDemanda = (matchPje as unknown as Array<any>)[0];
-            }
+            existingDemanda = await db.query.demandas.findFirst({
+              where: and(
+                eq(demandas.processoId, processo.id),
+                eq(demandas.pjeDocumentoId, row.idDocumentoPje),
+                isNull(demandas.deletedAt),
+              ),
+            });
           }
 
           if (!existingDemanda && dataExpedicaoParaBusca) {
@@ -1393,6 +1390,7 @@ export const demandasRouter = router({
             processoId: processo.id,
             assistidoId: assistido.id,
             ato: row.ato,
+            pjeDocumentoId: row.idDocumentoPje || null, // protegido por índice único parcial
             syncedAt: new Date(), // marca estado inicial sincronizado para a regra "última edição vence"
             prazo: convertDate(row.prazo),
             dataEntrada: convertDate(row.dataEntrada),
@@ -2129,5 +2127,36 @@ export const demandasRouter = router({
         .returning({ id: demandas.id });
 
       return { deleted: excluidos.length };
+    }),
+
+  // Timeline unificada (audit_log + sync_log) de uma demanda, para observabilidade
+  timeline: protectedProcedure
+    .input(z.object({ demandaId: z.number() }))
+    .query(async ({ input }) => {
+      const audit = await db.execute(sql`
+        SELECT id, user_name AS who, action, metadata, created_at
+        FROM audit_logs
+        WHERE entity_type = 'demanda' AND entity_id = ${input.demandaId}
+        ORDER BY created_at DESC
+        LIMIT 100
+      `);
+      const sync = await db.execute(sql`
+        SELECT id, campo, valor_banco, valor_planilha, origem, conflito, created_at
+        FROM sync_log
+        WHERE demanda_id = ${input.demandaId}
+        ORDER BY created_at DESC
+        LIMIT 100
+      `);
+      return {
+        audit: audit as unknown as Array<{
+          id: number; who: string | null; action: string;
+          metadata: Record<string, unknown> | null; created_at: Date;
+        }>,
+        sync: sync as unknown as Array<{
+          id: number; campo: string; valor_banco: string | null;
+          valor_planilha: string | null; origem: string;
+          conflito: boolean; created_at: Date;
+        }>,
+      };
     }),
 });

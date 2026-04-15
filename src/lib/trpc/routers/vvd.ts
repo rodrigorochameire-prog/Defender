@@ -834,21 +834,40 @@ export const vvdRouter = router({
             createdAtPreciso.setMilliseconds(999 - intimacao.ordemOriginal);
           }
 
-          await db.insert(intimacoesVVD).values({
-            processoVVDId: processoExistente.id,
-            tipoIntimacao: intimacao.tipoIntimacao,
-            ato: intimacao.pjeTipoDocumento || "Intimação",
-            dataExpedicao: dataExpedicaoFormatada,
-            prazoDias: intimacao.prazo,
-            pjeDocumentoId: intimacao.pjeDocumentoId,
-            pjeTipoDocumento: intimacao.pjeTipoDocumento,
-            providencias: intimacao.tipoIntimacao === "CIENCIA"
-              ? "Classificar demanda"
-              : "Peticionar nos autos",
-            defensorId: ctx.user.id,
-            createdAt: createdAtPreciso,
-          });
-          resultados.intimacoesNovas++;
+          // Dedup: se já há intimação com o mesmo pjeDocumentoId neste processoVVD,
+          // NÃO criar nova. Respeita também a regra "última edição vence": se
+          // existir demanda vinculada com edição manual, não mexe.
+          let duplicada = false;
+          if (intimacao.pjeDocumentoId) {
+            const [existente] = await db
+              .select({ id: intimacoesVVD.id })
+              .from(intimacoesVVD)
+              .where(and(
+                eq(intimacoesVVD.processoVVDId, processoExistente.id),
+                eq(intimacoesVVD.pjeDocumentoId, intimacao.pjeDocumentoId),
+              ))
+              .limit(1);
+            if (existente) duplicada = true;
+          }
+          if (duplicada) {
+            // Pula silenciosamente — já importada antes
+          } else {
+            await db.insert(intimacoesVVD).values({
+              processoVVDId: processoExistente.id,
+              tipoIntimacao: intimacao.tipoIntimacao,
+              ato: intimacao.pjeTipoDocumento || "Intimação",
+              dataExpedicao: dataExpedicaoFormatada,
+              prazoDias: intimacao.prazo,
+              pjeDocumentoId: intimacao.pjeDocumentoId,
+              pjeTipoDocumento: intimacao.pjeTipoDocumento,
+              providencias: intimacao.tipoIntimacao === "CIENCIA"
+                ? "Classificar demanda"
+                : "Peticionar nos autos",
+              defensorId: ctx.user.id,
+              createdAt: createdAtPreciso,
+            });
+            resultados.intimacoesNovas++;
+          }
         } catch (error) {
           resultados.erros.push(
             `Erro ao importar ${intimacao.assistido}: ${error instanceof Error ? error.message : "Erro desconhecido"}`
