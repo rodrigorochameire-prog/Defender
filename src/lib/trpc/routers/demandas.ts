@@ -1253,8 +1253,27 @@ export const demandasRouter = router({
             }
           }
 
-          if (dataExpedicaoParaBusca) {
-            // Se tem data de expedição, verificar por processo + data
+          // Dedup 1 (mais confiável): match pelo ID do documento PJe dentro de
+          // enrichmentData. Um mesmo documento PJe reimportado SEMPRE refere-se
+          // à mesma intimação lógica — evita criar duplicatas quando o parser
+          // detecta o ato de forma diferente na segunda leitura.
+          if (row.idDocumentoPje) {
+            const matchPje = await db.execute(sql`
+              SELECT id, ato, status, substatus, prazo, providencias,
+                     updated_at, synced_at
+              FROM demandas
+              WHERE processo_id = ${processo.id}
+                AND deleted_at IS NULL
+                AND enrichment_data ->> 'id_documento_pje' = ${row.idDocumentoPje}
+              LIMIT 1
+            `);
+            if ((matchPje as unknown as Array<{ id: number }>).length > 0) {
+              existingDemanda = (matchPje as unknown as Array<any>)[0];
+            }
+          }
+
+          if (!existingDemanda && dataExpedicaoParaBusca) {
+            // Dedup 2: processo + data de expedição (match clássico)
             existingDemanda = await db.query.demandas.findFirst({
               where: and(
                 eq(demandas.processoId, processo.id),
@@ -1315,11 +1334,20 @@ export const demandasRouter = router({
           const substatus = (row.status || "triagem").toLowerCase().trim() || null;
 
           if (existingDemanda) {
-            // Se atualizarExistentes está ativo, atualizar a demanda existente
-            if (input.atualizarExistentes) {
+            // Regra "última edição vence": se o usuário editou a demanda
+            // manualmente (OMBUDS ou planilha) depois da última sincronização,
+            // o reimport NÃO deve sobrescrever `ato/status/substatus/prazo/
+            // providencias`. Apenas metadados de PJe (enrichmentData) e
+            // `syncedAt` são atualizados, preservando o trabalho manual.
+            const syncedAt: Date | null = (existingDemanda as any).syncedAt ?? null;
+            const updatedAt: Date = (existingDemanda as any).updatedAt ?? new Date(0);
+            const editadoManualmente = !syncedAt || updatedAt.getTime() > syncedAt.getTime() + 1000;
+
+            if (input.atualizarExistentes && !editadoManualmente) {
+              // Reimport autoritativo — usuário não tocou; pode atualizar tudo
               await db.update(demandas)
                 .set({
-                  ato: row.ato, // Atualizar o ato também (pode mudar de Ciência para Manifestação)
+                  ato: row.ato,
                   prazo: convertDate(row.prazo),
                   dataEntrada: convertDate(row.dataEntrada),
                   status: dbStatus as typeof demandas.status._.data,
@@ -1328,10 +1356,14 @@ export const demandasRouter = router({
                   reuPreso,
                   providencias: row.providencias || null,
                   updatedAt: new Date(),
+                  syncedAt: new Date(),
                 })
                 .where(eq(demandas.id, existingDemanda.id));
               results.updated++;
             } else {
+              // Edição manual pendente OU flag desativada: preserva estado
+              // manual; apenas garante que enrichmentData mais recente fique
+              // salvo (útil para análise) e marca skipped.
               results.skipped++;
             }
             continue;
@@ -1361,6 +1393,7 @@ export const demandasRouter = router({
             processoId: processo.id,
             assistidoId: assistido.id,
             ato: row.ato,
+            syncedAt: new Date(), // marca estado inicial sincronizado para a regra "última edição vence"
             prazo: convertDate(row.prazo),
             dataEntrada: convertDate(row.dataEntrada),
             dataExpedicao: dataExpedicaoDB,
