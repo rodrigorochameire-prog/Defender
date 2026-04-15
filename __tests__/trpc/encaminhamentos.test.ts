@@ -28,6 +28,55 @@ function mkCtx(user: any) {
   };
 }
 
+describe("encaminhamentos.criar", () => {
+  it("rejects transferir with multiple destinatarios", async () => {
+    const alice = await makeUser("Alice Criar1");
+    const bob = await makeUser("Bob Criar1");
+    const carol = await makeUser("Carol Criar1");
+    const caller = createCaller(mkCtx(alice));
+
+    await expect(
+      caller.encaminhamentos.criar({
+        tipo: "transferir",
+        mensagem: "passa isso",
+        destinatarioIds: [bob.id, carol.id],
+        demandaId: 1,
+      }),
+    ).rejects.toThrow(/apenas 1 destinatário/i);
+
+    await db.delete(users).where(eq(users.id, alice.id));
+    await db.delete(users).where(eq(users.id, bob.id));
+    await db.delete(users).where(eq(users.id, carol.id));
+  });
+
+  it("creates anotar with multiple destinatarios", async () => {
+    const alice = await makeUser("Alice Criar2");
+    const bob = await makeUser("Bob Criar2");
+    const carol = await makeUser("Carol Criar2");
+    const caller = createCaller(mkCtx(alice));
+
+    const { id } = await caller.encaminhamentos.criar({
+      tipo: "anotar",
+      mensagem: "recado para os dois",
+      destinatarioIds: [bob.id, carol.id],
+      notificarOmbuds: false,
+      notificarWhatsapp: false,
+    });
+
+    const dests = await db
+      .select()
+      .from(encaminhamentoDestinatarios)
+      .where(eq(encaminhamentoDestinatarios.encaminhamentoId, id));
+    expect(dests).toHaveLength(2);
+
+    await db.delete(encaminhamentoDestinatarios).where(eq(encaminhamentoDestinatarios.encaminhamentoId, id));
+    await db.delete(encaminhamentos).where(eq(encaminhamentos.id, id));
+    await db.delete(users).where(eq(users.id, alice.id));
+    await db.delete(users).where(eq(users.id, bob.id));
+    await db.delete(users).where(eq(users.id, carol.id));
+  });
+});
+
 describe("encaminhamentos.listar", () => {
   it("splits items correctly between remetente and destinatario views", async () => {
     const alice = await makeUser("Alice Listar");
