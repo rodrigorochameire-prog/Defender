@@ -90,7 +90,11 @@ function onEditTrigger(e) {
       if (!campo) return; // coluna não mapeada ou tracking — ignora
 
       const valor = e.value ?? "";
-      _enviarWebhook(Number(ombudsId), campo, valor);
+      // oldValue = o que estava na célula ANTES da edição. Servidor usa para
+      // detectar conflito real (se o banco mudou entre o último sync e a
+      // edição, oldValue não bate com o valor atual no banco).
+      const oldValue = e.oldValue ?? null;
+      _enviarWebhook(Number(ombudsId), campo, valor, oldValue);
 
       // Se o campo editado foi Status, reagrupar a aba localmente para que a
       // linha se mova imediatamente para o bloco correto (sem esperar o
@@ -173,9 +177,11 @@ function _reagruparPorStatus(sheet) {
 
 /**
  * Envia atualização de campo para o app (demanda já existente).
+ * `oldValue` é opcional — quando presente, habilita detecção de conflito
+ * real no servidor (evita sobrescrever banco que foi alterado em paralelo).
  */
-function _enviarWebhook(id, campo, valor) {
-  const payload = JSON.stringify({ id, campo, valor });
+function _enviarWebhook(id, campo, valor, oldValue) {
+  const payload = JSON.stringify({ id, campo, valor, oldValue: oldValue });
   const options = {
     method: "POST",
     contentType: "application/json",

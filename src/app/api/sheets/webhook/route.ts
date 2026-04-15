@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { logSyncAction, classifySync } from "@/lib/services/sync-engine";
-import { getSheetName } from "@/lib/services/google-sheets";
+import { getSheetName, statusParaLabel } from "@/lib/services/google-sheets";
 import { reorderAllSheets } from "@/lib/services/sheets-reorder";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
@@ -79,14 +79,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 2. Parse do body
-  let body: { id?: unknown; campo?: unknown; valor?: unknown };
+  let body: { id?: unknown; campo?: unknown; valor?: unknown; oldValue?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body inválido" }, { status: 400 });
   }
 
-  const { id, campo, valor } = body;
+  const { id, campo, valor, oldValue } = body;
+  const oldValueStr = oldValue != null ? String(oldValue).trim() : null;
 
   if (!id || !campo || typeof campo !== "string") {
     return NextResponse.json({ error: "Campos obrigatórios: id, campo, valor" }, { status: 400 });
@@ -112,6 +113,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       processoId: demandas.processoId,
       assistidoId: demandas.assistidoId,
       atribuicao: processos.atribuicao,
+      status: demandas.status,
+      substatus: demandas.substatus,
+      ato: demandas.ato,
+      prazo: demandas.prazo,
+      providencias: demandas.providencias,
     })
     .from(demandas)
     .leftJoin(processos, eq(demandas.processoId, processos.id))
@@ -129,22 +135,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, skipped: "banco_to_sheet_only" });
   }
 
-  // A planilha é a fonte de verdade para campos bidirecionais (status,
-  // providencias, prazo, etc.). Sempre aplicamos o valor vindo da planilha.
+  // Conflito real = Apps Script enviou `oldValue` (valor que estava na célula
+  // antes desta edição) e esse valor não bate com o que está no banco agora.
+  // Isso significa que o banco foi alterado entre a última leitura da planilha
+  // e esta edição — aceitar cegamente sobrescreveria a mudança de outro canal.
   //
-  // Antes havia detecção de conflito baseada em comparar `updatedAt > syncedAt`
-  // e strings raw. Isso produzia falso-positivo em 100% dos casos:
-  //   - `updatedAt` é tocado em toda escrita, então sempre > syncedAt
-  //   - Para `status`, banco guarda enum ("2_ATENDER") e planilha manda label
-  //     ("2 - Atender") — strings nunca iguais → todo edit virava "conflito"
-  //   - O Apps Script não envia o valor ANTERIOR, então não há como detectar
-  //     conflito real (quem editou o banco depois da última leitura da planilha)
-  //
-  // Resultado: nenhum edit da planilha chegava ao banco. Por isso a sync_log
-  // estava cheia de `CONFLITO_RESOLVIDO` e zero entradas de origem `PLANILHA`.
-  //
-  // A detecção de conflito foi removida. Se algum dia quisermos reintroduzir,
-  // o Apps Script precisa enviar `oldValue` para comparar corretamente.
+  // Política: planilha vence quando oldValue bate com banco (edição linear);
+  // quando não bate, registra o conflito e ainda aceita a edição (planilha
+  // continua sendo a fonte de verdade operacional, mas a divergência fica
+  // visível em sync_log).
+  if (oldValueStr !== null) {
+    let valorBancoAtual: string | null = null;
+    if (campoDb === "status") {
+      valorBancoAtual = statusParaLabel(demanda.status, demanda.substatus);
+    } else if (campoDb === "ato") {
+      valorBancoAtual = demanda.ato ?? "";
+    } else if (campoDb === "providencias") {
+      valorBancoAtual = demanda.providencias ?? "";
+    } else if (campoDb === "prazo") {
+      valorBancoAtual = demanda.prazo ?? "";
+    }
+    if (valorBancoAtual !== null && valorBancoAtual.trim() !== oldValueStr) {
+      // Conflito: alguém editou o banco desde que a planilha foi sincronizada
+      await logSyncAction(
+        demandaId,
+        campoDb,
+        valorBancoAtual,
+        `planilha_old="${oldValueStr}" planilha_new="${valorStr}"`,
+        "PLANILHA",
+      );
+      // Intencionalmente não bloqueia — planilha ainda vence operacionalmente
+    }
+  }
   // --- FIM DETECÇÃO DE CONFLITO ---
 
   // 4. Aplica a mudança com skipSheetSync (evita loop)
