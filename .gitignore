@@ -104,3 +104,4 @@ scripts/_*.js
 
 # Cache local de extração de documentos
 .kreuzberg/
+.superpowers/
