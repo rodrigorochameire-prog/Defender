@@ -89,15 +89,15 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
+    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
+      <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
             <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Equipe & Cowork</h3>
+            <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Equipe & Cowork</h3>
             <p className="text-[10px] text-muted-foreground tabular-nums">
               {delegacoesAtivas} delegações · {muralNaoLidas} mural · {equipeMembros} equipe · {coberturasAtivas} coberturas
               {pareceresPendentes > 0 && (
@@ -116,7 +116,7 @@ export function EquipeCoworkCard({
           Delegar
         </Button>
       </div>
-
+      
       {/* Body — ações rápidas */}
       <div className="p-4">
         <div className="flex flex-wrap gap-2">
@@ -127,7 +127,7 @@ export function EquipeCoworkCard({
                   key={i}
                   onClick={acao.onClick}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-lg",
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg",
                     "border border-neutral-200/60 dark:border-neutral-800/60",
                     "bg-neutral-50/50 dark:bg-neutral-800/30",
                     "hover:bg-emerald-50/60 dark:hover:bg-emerald-900/10",
@@ -136,8 +136,8 @@ export function EquipeCoworkCard({
                     "cursor-pointer transition-all duration-200"
                   )}
                 >
-                  <AcaoIcon className="w-4 h-4 text-emerald-600/80 dark:text-emerald-400/80" />
-                  <span className="text-xs font-medium text-neutral-700 dark:text-foreground/80">{acao.label}</span>
+                  <AcaoIcon className="w-3.5 h-3.5 text-emerald-600/80 dark:text-emerald-400/80" />
+                  <span className="text-[12px] font-medium text-neutral-700 dark:text-foreground/80">{acao.label}</span>
                 </button>
               );
             })}

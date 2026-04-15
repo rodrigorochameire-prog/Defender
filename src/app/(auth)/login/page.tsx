@@ -26,7 +26,7 @@ export default function LoginPage() {
               className="object-contain drop-shadow-[0_0_12px_rgba(16,185,129,0.2)]"
             />
           </div>
-          <h1 className="font-serif text-xl font-semibold text-foreground tracking-tight">
+          <h1 className="font-serif text-2xl font-semibold text-neutral-100 tracking-tight">
             OMBUDS
           </h1>
           <p className="text-[10px] font-light tracking-[0.2em] uppercase text-neutral-500 mt-1">
@@ -50,12 +50,6 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {/* Footer institucional */}
-        <div className="mt-10 pt-5 border-t border-border/50">
-          <p className="text-center text-[10px] text-neutral-700 tracking-wide">
-            Defensoria Pública do Estado da Bahia
-          </p>
-        </div>
       </div>
     </div>
   );

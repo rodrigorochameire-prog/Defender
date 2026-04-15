@@ -78,6 +78,7 @@ import {
   Calculator,
   ClipboardList,
   ListTodo,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   Popover,
@@ -874,22 +875,28 @@ export default function DashboardJuriPage() {
         </AnimatePresence>
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
-        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-          <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <Plus className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+              <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div>
-              <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Registro Rápido</h3>
+            <div className="flex-1">
+              <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Registro Rápido</h3>
               <p className="text-[11px] text-muted-foreground">Atendimento, diligência ou anotação</p>
             </div>
+            <button
+              type="button"
+              aria-label="Mais opções"
+              className="w-7 h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 hover:bg-white dark:hover:bg-neutral-800 transition-colors flex items-center justify-center"
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
-          <div className="p-5 space-y-4">
+          
+          <div className="p-4 space-y-3">
 
             {/* Row 1 — Assistido + Tipo lado a lado */}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
             <div className="space-y-1.5">
               {/* Row 1 — Busca de Assistido */}
               <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
@@ -899,7 +906,7 @@ export default function DashboardJuriPage() {
                     role="combobox"
                     aria-expanded={assistidoSearchOpen}
                     className={cn(
-                      "w-full h-9 justify-between text-sm transition-all duration-200",
+                      "w-full h-8 justify-between text-[13px] transition-all duration-200",
                       atendimentoRapido.assistidoId
                         ? cn(
                             getAtribuicaoColors(assistidoSelecionado?.atribuicaoPrimaria).bg,
@@ -1057,7 +1064,7 @@ export default function DashboardJuriPage() {
                 <select
                   value={atendimentoRapido.processoId || ""}
                   onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, processoId: e.target.value ? Number(e.target.value) : null }))}
-                  className="w-full h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                  className="w-full h-8 text-[13px] rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                 >
                   <option value="">
                     {processosDoAssistido.length === 0 ? "Sem processos vinculados" : "Processo (opcional)"}
@@ -1073,7 +1080,7 @@ export default function DashboardJuriPage() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-9 justify-between text-xs bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 text-muted-foreground hover:border-emerald-300 dark:hover:border-emerald-700"
+                      className="w-full h-8 justify-between text-[13px] bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 text-muted-foreground hover:border-emerald-300 dark:hover:border-emerald-700"
                     >
                       <span className="flex items-center gap-2">
                         <CalendarDays className="w-3.5 h-3.5" />
@@ -1214,7 +1221,7 @@ export default function DashboardJuriPage() {
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200",
+                      "flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200",
                       isDelegacao
                         ? cn(
                             "border border-rose-200 dark:border-rose-800/50",
@@ -1238,13 +1245,13 @@ export default function DashboardJuriPage() {
                     title={tipo.label}
                   >
                     <Icon className={cn(
-                      "w-3.5 h-3.5",
+                      "w-3.5 h-3.5 flex-shrink-0",
                       isDelegacao ? "text-rose-500 dark:text-rose-400"
                         : isSelected ? "text-emerald-600 dark:text-emerald-400"
                         : "text-muted-foreground"
                     )} />
                     <span className={cn(
-                      "text-[10px] sm:text-xs font-medium truncate",
+                      "text-[11.5px] font-medium truncate",
                       isDelegacao ? "text-rose-600 dark:text-rose-400"
                         : isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold"
                         : "text-muted-foreground"
@@ -1317,8 +1324,8 @@ export default function DashboardJuriPage() {
                 }
                 value={atendimentoRapido.descricao}
                 onChange={(e) => setAtendimentoRapido(prev => ({ ...prev, descricao: e.target.value }))}
-                rows={3}
-                className="w-full text-sm bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-lg resize-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                rows={2}
+                className="w-full text-[13px] bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-800/60 rounded-lg resize-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
               />
               {/* Ações pós-transcrição */}
               {audioTranscript && (
@@ -1349,7 +1356,7 @@ export default function DashboardJuriPage() {
             </div>
 
             {/* Footer: Detalhes opcionais + Botão Submit */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-200/60 dark:border-neutral-800/60">
+            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-neutral-200/60 dark:border-neutral-800/60">
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
                 className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground uppercase tracking-wide transition-colors"
@@ -1360,7 +1367,7 @@ export default function DashboardJuriPage() {
 
               <Button
                 size="sm"
-                className="h-8 px-4 text-[11px] font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm rounded-xl transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="h-8 px-4 text-[12px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!atendimentoRapido.descricao.trim() || !atendimentoRapido.assistidoId || createAtendimento.isPending}
                 onClick={() => {
                   if (!atendimentoRapido.assistidoId) {
@@ -1458,14 +1465,14 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-            <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+            <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <Sun className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
+                  <Sun className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Pendências Solar</h3>
+                  <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Pendências Solar</h3>
                   <p className="text-[10px] text-muted-foreground tabular-nums">
                     {solarSync.stats.pending} pendentes
                     {solarSync.stats.errors > 0 && <> · <span className="text-rose-500">{solarSync.stats.errors} erros</span></>}
@@ -1479,8 +1486,7 @@ export default function DashboardJuriPage() {
                 </Button>
               </Link>
             </div>
-            <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
+            
             <div className="px-5 pb-4">
               <div className="grid grid-cols-4 gap-2">
                 <div className="text-center p-2.5 rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent">
@@ -1571,14 +1577,14 @@ export default function DashboardJuriPage() {
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
-        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-          <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600 flex items-center justify-between">
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Prazos</h3>
+                <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Prazos</h3>
                 <p className="text-[10px] text-muted-foreground tabular-nums">
                   {demandasPorPrazo.length} total
                   {estatisticasPrazos.vencidos > 0 && (
@@ -1593,8 +1599,7 @@ export default function DashboardJuriPage() {
               </Button>
             </Link>
           </div>
-          <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
+          
           <div className="space-y-1.5 p-3 max-h-[420px] overflow-y-auto">
             {loadingDemandas ? (
               <div className="space-y-2">
@@ -1666,14 +1671,14 @@ export default function DashboardJuriPage() {
 
         {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
         {!isDefensorCriminalGeral && hasArea("JURI") && (
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-            <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+            <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                    <Gavel className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                    <Gavel className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Próximos Júris</h3>
+                  <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Próximos Júris</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                     {jurisProximos.length}
                   </span>
@@ -1706,8 +1711,7 @@ export default function DashboardJuriPage() {
                 </div>
               </div>
             </div>
-            <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
+            
             <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
               {loadingJuris ? (
                 <div className="space-y-2">
@@ -1777,14 +1781,14 @@ export default function DashboardJuriPage() {
         {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-            <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+            <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                    <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                    <CalendarDays className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="text-[13px] font-semibold text-foreground tracking-tight">Minhas Audiências</h3>
+                  <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">Minhas Audiências</h3>
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
                     {audienciasExibir.length}
                   </span>
@@ -1796,8 +1800,7 @@ export default function DashboardJuriPage() {
                 </Link>
               </div>
             </div>
-            <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
+            
             <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
               {loadingAudiencias ? (
                 <div className="p-4 space-y-2">
@@ -1847,14 +1850,14 @@ export default function DashboardJuriPage() {
           </Card>
         ) : (
           /* Especializado: Audiências da Semana */
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 dark:focus-within:border-neutral-700/60 transition-all duration-200">
-              <div className="px-5 py-4 border-l-[4px] border-l-neutral-300 dark:border-l-neutral-600">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+              <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                      <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                      <CalendarDays className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
+                    <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">
                       {mostrandoAlemDaSemana ? "Próximas Audiências" : "Audiências da Semana"}
                     </h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-muted-foreground font-medium">
@@ -1868,8 +1871,7 @@ export default function DashboardJuriPage() {
                   </Link>
                 </div>
               </div>
-              <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
+              
               <div className="space-y-1.5 p-3 max-h-[400px] overflow-y-auto">
                 {loadingAudiencias ? (
                   <div className="p-4 space-y-2">
@@ -2028,20 +2030,19 @@ export default function DashboardJuriPage() {
                 {areaCards.map((ac) => {
                   const AreaIcon = ac.icon;
                   return (
-                    <Card key={ac.area} className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200">
+                    <Card key={ac.area} className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-t-2 border-t-[#414144] dark:border-t-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200">
                       <div className={cn("px-5 py-4 border-l-[4px]", ac.borderColor)}>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
                             <AreaIcon className={cn("w-4 h-4", ac.color)} />
                           </div>
                           <div>
-                            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">{ac.label}</h3>
+                            <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">{ac.label}</h3>
                             <p className="text-[10px] text-muted-foreground tabular-nums">{ac.subtitle}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="mx-5 h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-                      <div className="p-3 grid grid-cols-2 gap-1.5">
+                                            <div className="p-3 grid grid-cols-2 gap-1.5">
                         {ac.links.map((link) => {
                           const LinkIcon = link.icon;
                           return (

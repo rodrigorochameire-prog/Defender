@@ -18,7 +18,7 @@ export function RadarWidget() {
 
   if (isLoading) {
     return (
-      <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+      <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden">
         <div className="p-5 space-y-3">
           <Skeleton className="h-5 w-32" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -37,14 +37,14 @@ export function RadarWidget() {
   const homicidios = stats.porTipo.find((t) => t.tipo === "homicidio")?.count ?? 0;
 
   return (
-    <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200">
-      <div className="px-5 py-4 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+    <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden transition-all duration-200">
+      <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
             <Radio className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-[13px] font-semibold text-foreground tracking-tight">
+            <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">
               Radar Criminal
             </h3>
             <p className="text-[11px] text-muted-foreground">Últimos 7 dias</p>
