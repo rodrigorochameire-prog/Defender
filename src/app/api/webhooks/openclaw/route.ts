@@ -92,6 +92,7 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
           ato,
           dataExpedicao: item.dataExpedicao || null,
           ordemOriginal: item.ordemOriginal ?? null,
+          syncedAt: new Date(),
           enrichmentData: {
             crime: item.crime,
             atribuicao_detectada: item.atribuicaoDetectada,
