@@ -167,6 +167,7 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     defensorId: defensorId ? Number(defensorId) : null,
     workspaceId,
     reuPreso: Boolean(reuPreso),
+    syncedAt: new Date(),
   }).returning();
 
   const [proc] = await db

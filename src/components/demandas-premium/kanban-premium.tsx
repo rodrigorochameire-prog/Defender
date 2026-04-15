@@ -225,10 +225,12 @@ function KanbanCard({
           </span>
           {(() => {
             // Indicador de não-sincronização: updatedAt mais novo que
-            // syncedAt por mais de 5min = algo ficou fora do ciclo
-            if (!demanda.updatedAt) return null;
+            // syncedAt por mais de 5min = algo ficou fora do ciclo.
+            // Se syncedAt nunca foi preenchido, não dá pra afirmar divergência;
+            // tratamos como "sistema não sabe" e não mostramos o badge.
+            if (!demanda.updatedAt || !demanda.syncedAt) return null;
             const upd = new Date(demanda.updatedAt).getTime();
-            const syn = demanda.syncedAt ? new Date(demanda.syncedAt).getTime() : 0;
+            const syn = new Date(demanda.syncedAt).getTime();
             if (upd - syn <= 5 * 60 * 1000) return null;
             const minutos = Math.max(1, Math.floor((Date.now() - upd) / 60000));
             return (

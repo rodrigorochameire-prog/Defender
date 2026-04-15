@@ -182,6 +182,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         reuPreso,
         providencias: body.providencias?.trim() || undefined,
         defensorId,
+        syncedAt: new Date(),
       })
       .returning({ id: demandas.id });
 
