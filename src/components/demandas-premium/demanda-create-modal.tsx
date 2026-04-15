@@ -216,7 +216,11 @@ export function DemandaCreateModal({
       processos: [{ tipo: "AP", numero: "" }],
       ato: "",
       providencias: "",
-      atribuicao: "Criminal Geral",
+      // Default vazio — o backend exige uma das atribuições mapeadas
+      // ("Tribunal do Júri", "Violência Doméstica", etc.). "Criminal Geral"
+      // (default antigo) não existe no enum → Postgres rejeitava e a demanda
+      // não persistia. Validação client-side exige seleção antes do submit.
+      atribuicao: "",
       estadoPrisional: "Solto",
     }
   );
@@ -241,8 +245,17 @@ export function DemandaCreateModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.assistido.trim()) {
+      alert("Informe o nome do assistido.");
+      return;
+    }
+    if (!formData.atribuicao) {
+      alert("Selecione uma atribuição.");
+      return;
+    }
     onSave(formData);
-    onClose();
+    // Não fecha aqui — o parent fecha no onSuccess da mutation (evita
+    // fechar o modal quando o backend rejeita o payload).
   };
 
   const addProcesso = () => {

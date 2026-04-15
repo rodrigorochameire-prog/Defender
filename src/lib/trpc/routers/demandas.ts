@@ -422,6 +422,19 @@ export const demandasRouter = router({
       };
       const atribuicaoEnum = ATRIBUICAO_LABEL_TO_ENUM[input.atribuicao] ?? input.atribuicao;
 
+      // Validação amigável — se o valor não é uma atribuição válida, rejeita
+      // com BAD_REQUEST antes de o Postgres retornar um erro opaco sobre enum.
+      const ATRIBUICOES_VALIDAS = new Set([
+        "JURI_CAMACARI", "GRUPO_JURI", "VVD_CAMACARI",
+        "EXECUCAO_PENAL", "SUBSTITUICAO", "SUBSTITUICAO_CIVEL",
+      ]);
+      if (!ATRIBUICOES_VALIDAS.has(atribuicaoEnum)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Atribuição inválida: "${input.atribuicao}". Escolha uma das opções da lista.`,
+        });
+      }
+
       // `area` é NOT NULL em `processos` — derivar do enum de atribuição.
       const ATRIBUICAO_TO_AREA: Record<string, string> = {
         JURI_CAMACARI: "JURI",
