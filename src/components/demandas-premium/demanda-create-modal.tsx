@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, User, Scale, FileText, MapPin, Save, X, Sparkles, Info, ChevronDown, Check } from "lucide-react";
+import { Plus, Trash2, User, Scale, FileText, MapPin, Save, X, Sparkles, Info, ChevronDown, Check, Calendar, Clock } from "lucide-react";
 import { calcularPrazoPorAto, obterDiasPrazoPorAto } from "@/lib/prazo-calculator";
 import { SITUACAO_PRISIONAL_OPTIONS } from "@/config/templates";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
@@ -396,12 +396,12 @@ export function DemandaCreateModal({
 
           {/* Form Content - Scrollable */}
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              
+            <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
+
               {/* Assistido */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-emerald-500" />
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                  <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   Nome do Assistido
                 </Label>
                 <Input
@@ -414,9 +414,9 @@ export function DemandaCreateModal({
 
               {/* Grid: Atribuição e Status */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <Scale className="w-3.5 h-3.5 text-emerald-500" />
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                    <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                     Atribuição
                   </Label>
                   <SimpleSelect
@@ -426,9 +426,9 @@ export function DemandaCreateModal({
                     placeholder="Selecione..."
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                     Status
                   </Label>
                   <SimpleSelect
@@ -440,9 +440,9 @@ export function DemandaCreateModal({
               </div>
 
               {/* Tipo de Ato */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-blue-500" />
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                  <FileText className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   Tipo de Ato
                 </Label>
                 <SimpleSelect
@@ -454,9 +454,9 @@ export function DemandaCreateModal({
               </div>
 
               {/* Estado Prisional */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   Situação Prisional
                 </Label>
                 <SimpleSelect
@@ -468,11 +468,9 @@ export function DemandaCreateModal({
 
               {/* Grid: Data e Prazo */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                     Data de Expedição
                     <span className="text-[10px] font-normal text-neutral-400 dark:text-neutral-500">(opcional)</span>
                   </Label>
@@ -484,11 +482,9 @@ export function DemandaCreateModal({
                     className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                     Prazo
                   </Label>
                   <Input
@@ -513,31 +509,29 @@ export function DemandaCreateModal({
               )}
 
               {/* Processos */}
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                    <Scale className="w-3.5 h-3.5 text-cyan-500" />
+                  <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                    <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                     Processos Vinculados
                   </Label>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
                     onClick={addProcesso}
-                    className="h-8 px-3 text-xs rounded-lg border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-400"
+                    className="h-7 px-2.5 text-[10px] font-medium rounded-lg border border-neutral-200/80 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-150 cursor-pointer flex items-center gap-1"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                    Adicionar Processo
-                  </Button>
+                    <Plus className="w-3 h-3" />
+                    Adicionar
+                  </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {formData.processos.map((processo, index) => (
-                    <div 
-                      key={index} 
-                      className="flex items-center gap-2 p-3 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/60 dark:to-neutral-800/30 rounded-xl border border-neutral-200/60 dark:border-neutral-700/50 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors group"
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 p-2 bg-neutral-50/50 dark:bg-neutral-800/30 rounded-lg border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 transition-all duration-150 group"
                     >
-                      <div className="w-32 flex-shrink-0">
+                      <div className="w-24 flex-shrink-0">
                         <SimpleSelect
                           value={processo.tipo}
                           onChange={(value) => updateProcesso(index, "tipo", value)}
@@ -567,9 +561,9 @@ export function DemandaCreateModal({
               </div>
 
               {/* Providências */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   Providências / Observações
                 </Label>
                 <textarea
