@@ -7,7 +7,7 @@ import {
   encaminhamentoRespostas,
   demandasAcompanhantes,
 } from "@/lib/db/schema/cowork";
-import { demandas } from "@/lib/db/schema/core";
+import { demandas, users } from "@/lib/db/schema/core";
 import { eq, and, desc, inArray, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { inngest } from "@/lib/inngest/client";
@@ -98,8 +98,22 @@ export const encaminhamentosRouter = router({
       }
 
       const rows = await db
-        .select()
+        .select({
+          id: encaminhamentos.id,
+          tipo: encaminhamentos.tipo,
+          titulo: encaminhamentos.titulo,
+          mensagem: encaminhamentos.mensagem,
+          status: encaminhamentos.status,
+          urgencia: encaminhamentos.urgencia,
+          createdAt: encaminhamentos.createdAt,
+          demandaId: encaminhamentos.demandaId,
+          processoId: encaminhamentos.processoId,
+          assistidoId: encaminhamentos.assistidoId,
+          remetenteId: encaminhamentos.remetenteId,
+          remetenteName: users.name,
+        })
         .from(encaminhamentos)
+        .leftJoin(users, eq(users.id, encaminhamentos.remetenteId))
         .where(whereClause)
         .orderBy(desc(encaminhamentos.createdAt))
         .limit(input.limit);

@@ -11,6 +11,21 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export const usersRouter = router({
   /**
+   * Lista colegas do mesmo workspace (exclui o próprio usuário).
+   * Usado pelo DestinatarioPicker do Cowork.
+   */
+  colegasDoWorkspace: protectedProcedure.query(async ({ ctx }) => {
+    const wsId = ctx.user!.workspaceId;
+    if (!wsId) return [] as Array<{ id: number; name: string }>;
+    const rows = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(and(eq(users.workspaceId, wsId), ne(users.id, ctx.user!.id)))
+      .orderBy(users.name);
+    return rows as Array<{ id: number; name: string }>;
+  }),
+
+  /**
    * Busca dados do usuário logado
    */
   me: protectedProcedure.query(async ({ ctx }) => {
