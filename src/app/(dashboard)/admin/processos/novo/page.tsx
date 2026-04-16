@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +22,37 @@ import {
   Gavel,
   Loader2,
   Plus,
+  Network,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+
+const INSTANCIA_OPTIONS = [
+  { value: "PRIMEIRA", label: "1º Grau" },
+  { value: "SEGUNDA", label: "2º Grau" },
+  { value: "STJ", label: "STJ" },
+  { value: "STF", label: "STF" },
+  { value: "SEEU", label: "SEEU" },
+];
+
+const CLASSE_RECURSAL_OPTIONS = [
+  { value: "APELACAO", label: "Apelação" },
+  { value: "AGRAVO_EXECUCAO", label: "Agravo em Execução" },
+  { value: "RESE", label: "RESE" },
+  { value: "HC", label: "HC" },
+  { value: "EMBARGOS", label: "Embargos" },
+  { value: "REVISAO_CRIMINAL", label: "Revisão Criminal" },
+  { value: "CORREICAO_PARCIAL", label: "Correição Parcial" },
+  { value: "MS", label: "MS" },
+  { value: "RESP", label: "Recurso Especial" },
+  { value: "RE", label: "Recurso Extraordinário" },
+  { value: "AGRAVO_RESP", label: "Agravo em REsp" },
+  { value: "AGRAVO_RE", label: "Agravo em RE" },
+  { value: "RECLAMACAO", label: "Reclamação" },
+  { value: "HC_STJ", label: "HC STJ" },
+  { value: "HC_STF", label: "HC STF" },
+];
 
 const ALL_AREA_OPTIONS = [
   { value: "JURI", label: "Tribunal do Júri" },
@@ -73,6 +100,14 @@ interface FormData {
   resultadoJuri: string;
   observacoes: string;
   linkDrive: string;
+  // Hierarquia recursal
+  instancia: string;
+  classeRecursal: string;
+  processoOrigemId: number | null;
+  defensor2gId: number | null;
+  defensorBrasiliaId: number | null;
+  camara: string;
+  relator: string;
 }
 
 export default function NovoProcessoPage() {
@@ -111,7 +146,56 @@ export default function NovoProcessoPage() {
     resultadoJuri: "",
     observacoes: "",
     linkDrive: "",
+    instancia: "PRIMEIRA",
+    classeRecursal: "",
+    processoOrigemId: null,
+    defensor2gId: null,
+    defensorBrasiliaId: null,
+    camara: "",
+    relator: "",
   });
+
+  // Autocompletar processo de origem
+  const [origemQuery, setOrigemQuery] = useState("");
+  const [origemSearch, setOrigemSearch] = useState("");
+  const [origemDropdownOpen, setOrigemDropdownOpen] = useState(false);
+  const origemDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data: origemResults } = trpc.processos.searchByNumero.useQuery(
+    { q: origemSearch },
+    { enabled: origemSearch.length >= 3 }
+  );
+
+  const handleOrigemInput = (value: string) => {
+    setOrigemQuery(value);
+    setOrigemDropdownOpen(true);
+    if (origemDebounceRef.current) clearTimeout(origemDebounceRef.current);
+    origemDebounceRef.current = setTimeout(() => {
+      setOrigemSearch(value);
+    }, 300);
+    if (!value) {
+      setFormData(prev => ({ ...prev, processoOrigemId: null }));
+    }
+  };
+
+  const handleOrigemSelect = (item: { id: number; numeroAutos: string | null; assistidoNome: string | null }) => {
+    setOrigemQuery(item.numeroAutos ?? "");
+    setFormData(prev => ({ ...prev, processoOrigemId: item.id }));
+    setOrigemDropdownOpen(false);
+  };
+
+  // Defensores 2G (instancia SEGUNDA, area CRIMINAL)
+  const { data: defensores2gData } = trpc.instanciaSuperior.listDefensores.useQuery(
+    { instancia: "SEGUNDA", area: "CRIMINAL" },
+    { enabled: formData.instancia === "SEGUNDA" }
+  );
+  const defensores2g = defensores2gData ?? [];
+
+  // Defensores Brasília (STJ/STF) — instancia SEGUNDA sem filtro de area para contemplar PGF/DPU
+  const { data: defensoresBrasiliaData } = trpc.instanciaSuperior.listDefensores.useQuery(
+    { instancia: "SEGUNDA" },
+    { enabled: formData.instancia === "STJ" || formData.instancia === "STF" }
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,6 +219,13 @@ export default function NovoProcessoPage() {
       classeProcessual: formData.classeProcessual || undefined,
       assunto: formData.assunto || undefined,
       isJuri: formData.isJuri,
+      instancia: formData.instancia as "PRIMEIRA" | "SEGUNDA" | "STJ" | "STF" | "SEEU",
+      classeRecursal: formData.classeRecursal ? (formData.classeRecursal as "APELACAO" | "AGRAVO_EXECUCAO" | "RESE" | "HC" | "EMBARGOS" | "REVISAO_CRIMINAL" | "CORREICAO_PARCIAL" | "MS" | "RESP" | "RE" | "AGRAVO_RESP" | "AGRAVO_RE" | "RECLAMACAO" | "HC_STJ" | "HC_STF") : undefined,
+      processoOrigemId: formData.processoOrigemId ?? undefined,
+      defensor2gId: formData.defensor2gId ?? undefined,
+      defensorBrasiliaId: formData.defensorBrasiliaId ?? undefined,
+      camara: formData.camara || undefined,
+      relator: formData.relator || undefined,
     });
   };
 
@@ -373,6 +464,162 @@ export default function NovoProcessoPage() {
                 placeholder="0,00"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Hierarquia Recursal */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              Hierarquia Recursal
+            </CardTitle>
+            <CardDescription>Instância processual e dados recursais</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="instancia">Instância</Label>
+              <Select
+                value={formData.instancia}
+                onValueChange={(value) => handleChange("instancia", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a instância" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTANCIA_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.instancia !== "PRIMEIRA" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="classeRecursal">Classe Recursal</Label>
+                  <Select
+                    value={formData.classeRecursal}
+                    onValueChange={(value) => handleChange("classeRecursal", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a classe recursal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLASSE_RECURSAL_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 relative">
+                  <Label htmlFor="processoOrigem">Processo de Origem (opcional)</Label>
+                  <Input
+                    id="processoOrigem"
+                    value={origemQuery}
+                    onChange={(e) => handleOrigemInput(e.target.value)}
+                    onFocus={() => origemQuery.length >= 3 && setOrigemDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setOrigemDropdownOpen(false), 200)}
+                    placeholder="Digite o número do processo de origem..."
+                    className="font-mono"
+                    autoComplete="off"
+                  />
+                  {formData.processoOrigemId && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400">Processo de origem selecionado (ID: {formData.processoOrigemId})</p>
+                  )}
+                  {origemDropdownOpen && origemResults && origemResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto">
+                      {origemResults.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                          onMouseDown={() => handleOrigemSelect(item)}
+                        >
+                          <span className="font-mono">{item.numeroAutos}</span>
+                          {item.assistidoNome && (
+                            <span className="ml-2 text-muted-foreground">— {item.assistidoNome}</span>
+                          )}
+                          {item.classeProcessual && (
+                            <span className="ml-2 text-xs text-muted-foreground">({item.classeProcessual})</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {formData.instancia === "SEGUNDA" && (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="camara">Câmara</Label>
+                    <Input
+                      id="camara"
+                      value={formData.camara}
+                      onChange={(e) => handleChange("camara", e.target.value)}
+                      placeholder="Ex: 1ª Câmara Criminal"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="relator">Relator</Label>
+                    <Input
+                      id="relator"
+                      value={formData.relator}
+                      onChange={(e) => handleChange("relator", e.target.value)}
+                      placeholder="Nome do relator"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="defensor2g">Defensor 2º Grau</Label>
+                  <Select
+                    value={formData.defensor2gId ? String(formData.defensor2gId) : ""}
+                    onValueChange={(value) => handleChange("defensor2gId", Number(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o defensor 2º grau" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {defensores2g.length === 0 ? (
+                        <SelectItem value="__empty" disabled>Nenhum defensor encontrado</SelectItem>
+                      ) : (
+                        defensores2g.map((d) => (
+                          <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {(formData.instancia === "STJ" || formData.instancia === "STF") && (
+              <div className="space-y-2">
+                <Label htmlFor="defensorBrasilia">Defensor Brasília</Label>
+                <Select
+                  value={formData.defensorBrasiliaId ? String(formData.defensorBrasiliaId) : ""}
+                  onValueChange={(value) => handleChange("defensorBrasiliaId", Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o defensor em Brasília" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(defensoresBrasiliaData ?? []).length === 0 ? (
+                      <SelectItem value="__empty" disabled>Nenhum defensor encontrado</SelectItem>
+                    ) : (
+                      (defensoresBrasiliaData ?? []).map((d) => (
+                        <SelectItem key={d.id} value={String(d.id)}>{d.nome}</SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </CardContent>
         </Card>
 

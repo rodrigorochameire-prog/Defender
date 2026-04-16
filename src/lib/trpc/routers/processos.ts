@@ -326,12 +326,19 @@ export const processosRouter = router({
         comarca: z.string().optional(),
         vara: z.string().optional(),
         area: z.enum([
-          "JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA", 
+          "JURI", "EXECUCAO_PENAL", "VIOLENCIA_DOMESTICA",
           "SUBSTITUICAO", "CURADORIA", "FAMILIA", "CIVEL", "FAZENDA_PUBLICA"
         ]),
         classeProcessual: z.string().optional(),
         assunto: z.string().optional(),
         isJuri: z.boolean().default(false),
+        instancia: z.enum(['PRIMEIRA','SEGUNDA','STJ','STF','SEEU']).default('PRIMEIRA'),
+        classeRecursal: z.enum(['APELACAO','AGRAVO_EXECUCAO','RESE','HC','EMBARGOS','REVISAO_CRIMINAL','CORREICAO_PARCIAL','MS','RESP','RE','AGRAVO_RESP','AGRAVO_RE','RECLAMACAO','HC_STJ','HC_STF']).optional(),
+        processoOrigemId: z.number().optional(),
+        defensor2gId: z.number().optional(),
+        defensorBrasiliaId: z.number().optional(),
+        camara: z.string().optional(),
+        relator: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -359,6 +366,13 @@ export const processosRouter = router({
           comarcaId: getComarcaId(ctx.user),
           tipoProcesso: tipo,
           isReferencia: isReferenceTipo(tipo),
+          instancia: input.instancia,
+          classeRecursal: input.classeRecursal ?? null,
+          processoOrigemId: input.processoOrigemId ?? null,
+          defensor2gId: input.defensor2gId ?? null,
+          defensorBrasiliaId: input.defensorBrasiliaId ?? null,
+          camara: input.camara ?? null,
+          relator: input.relator ?? null,
         })
         .returning();
 
@@ -963,6 +977,24 @@ export const processosRouter = router({
         .orderBy(desc(processos.createdAt));
 
       return result;
+    }),
+
+  // Buscar processos por número para autocompletar (processo de origem)
+  searchByNumero: protectedProcedure
+    .input(z.object({ q: z.string().min(3) }))
+    .query(async ({ input }) => {
+      return db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          instancia: processos.instancia,
+          classeProcessual: processos.classeProcessual,
+          assistidoNome: assistidos.nome,
+        })
+        .from(processos)
+        .leftJoin(assistidos, eq(assistidos.id, processos.assistidoId))
+        .where(ilike(processos.numeroAutos, `%${input.q}%`))
+        .limit(10);
     }),
 
   // Enriquecer processo com dados do DataJud (CNJ)
