@@ -112,7 +112,7 @@ def main():
     existing_ad["vvd_analyzed_at"] = datetime.now().isoformat()
 
     supabase_update("processos", args.processo_id, {
-        "analysis_data": json.dumps(existing_ad, ensure_ascii=False),
+        "analysis_data": existing_ad,
         "analysis_status": "completed",
         "analyzed_at": datetime.now().isoformat(),
     })
