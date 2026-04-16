@@ -843,7 +843,10 @@ def download_vvd_via_cdp(
             return m ? m[1] : null;
         }""")
         if not id_proc:
-            frame.screenshot(path="/tmp/pje-debug-vvd-search.png")
+            try:
+                page.screenshot(path="/tmp/pje-debug-vvd-search.png")
+            except Exception:
+                pass
             raise RuntimeError(
                 f"processo {numero} not found in PETICIONAR — "
                 f"may be under segredo de justiça"
@@ -964,19 +967,30 @@ def download_vvd_via_cdp(
                     api_url_holder["val"] = req.url
 
             dl_page.on("request", on_req)
-            # Find the Angular iframe and click its download button
+            # Find the Angular iframe and click the download button in the row
+            # that matches this processo number (not just the first one)
             for frm in dl_page.frames:
-                clicked = frm.evaluate("""() => {
+                clicked = frm.evaluate("""(numero) => {
                     var btns = document.querySelectorAll('button');
+                    // Collect candidates with their row's timestamp so we pick
+                    // the MOST RECENT matching row (newest download).
+                    var candidates = [];
                     for (var i = 0; i < btns.length; i++) {
-                        if (btns[i].querySelector('.pi-download')) {
-                            var parent = btns[i].closest('button') || btns[i];
-                            parent.click();
-                            return true;
-                        }
+                        if (!btns[i].querySelector('.pi-download')) continue;
+                        var row = btns[i].closest('tr') || btns[i].closest('[role="row"]');
+                        if (!row) continue;
+                        var txt = (row.textContent || '').trim();
+                        if (txt.indexOf(numero) < 0) continue;
+                        // Extract timestamp DD/MM/YYYY - HH:MM to compare freshness
+                        var m = txt.match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})\\s*-\\s*(\\d{2}):(\\d{2})/);
+                        var ts = m ? new Date(m[3], m[2]-1, m[1], m[4], m[5]).getTime() : 0;
+                        candidates.push({btn: btns[i], ts: ts});
                     }
-                    return false;
-                }""")
+                    if (!candidates.length) return false;
+                    candidates.sort(function(a,b){ return b.ts - a.ts; });
+                    candidates[0].btn.click();
+                    return true;
+                }""", numero)
                 if clicked:
                     break
             time.sleep(10)
