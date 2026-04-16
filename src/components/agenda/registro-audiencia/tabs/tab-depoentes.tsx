@@ -8,6 +8,7 @@ import { Plus, Users, Trash2, UserCheck, UserX, Mail, ChevronDown } from "lucide
 import { tipoDepoenteOptions, getDepoenteStyle } from "../constants";
 import { TabDepoenteForm } from "./tab-depoente-form";
 import type { Depoente } from "../types";
+import { DepoenteStatusBadges } from "../shared/depoente-status";
 
 interface TabDepoentesProps {
   depoentes: Depoente[];
@@ -118,26 +119,10 @@ export function TabDepoentes({
                   )}
                   onClick={() => setEditandoDepoente(depoente)}
                 >
-                  <div className="absolute -top-1 -right-1 flex gap-0.5">
-                    {depoente.presente ? (
-                      <div className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-neutral-950 flex items-center justify-center">
-                        <UserCheck className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4 rounded-full bg-rose-500 border-2 border-white dark:border-neutral-950 flex items-center justify-center">
-                        <UserX className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    )}
-                    {depoente.intimado && (
-                      <div className="w-4 h-4 rounded-full bg-neutral-500 border-2 border-white dark:border-neutral-950 flex items-center justify-center">
-                        <Mail className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    )}
-                  </div>
-
                   <div className="pr-5">
                     <p className="font-semibold text-xs truncate leading-tight">{depoente.nome}</p>
                     <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">{style.label}</p>
+                    <DepoenteStatusBadges dep={depoente} variant="compact" className="mt-1" />
                   </div>
 
                   <button

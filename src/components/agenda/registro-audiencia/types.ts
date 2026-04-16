@@ -5,9 +5,24 @@ export interface Depoente {
   lado?: "acusacao" | "defesa";
   intimado: boolean;
   presente: boolean;
-  statusIntimacao?: "intimado" | "nao-intimado" | "frustrada" | "mp-desistiu" | "dispensado" | "pendente";
+  statusIntimacao?:
+    | "intimado"
+    | "intimado-pessoalmente"
+    | "intimado-advogado"
+    | "intimado-edital"
+    | "nao-intimado"
+    | "sem-diligencia"
+    | "frustrada"
+    | "frustrada-nao-localizado"
+    | "frustrada-endereco-incorreto"
+    | "frustrada-mudou"
+    | "mp-desistiu"
+    | "dispensado"
+    | "pendente";
+  teorCertidao?: string;
+  dataCertidao?: string;
   motivoAusencia?: string;
-  jaOuvido?: "delegacia" | "audiencia-anterior" | "ambos" | "nenhum";
+  jaOuvido?: "delegacia" | "audiencia-anterior" | "juizo-anterior" | "ambos" | "nenhum";
   depoimentoDelegacia?: string;
   depoimentoAnterior?: string;
   pontosFortes?: string;

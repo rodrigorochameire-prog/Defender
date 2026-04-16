@@ -39,6 +39,7 @@ import {
   normalizeAreaToFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
+import { DepoenteCard } from "@/components/agenda/registro-audiencia/shared/depoente-card";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -74,20 +75,34 @@ function EmptyHint({ text }: { text: string }) {
   );
 }
 
+// Fallback: análises antigas gravaram o payload aninhado sob `vvd_analise_audiencia`
+// em vez de no topo. Olha primeiro no topo (schema atual), depois no aninhado.
 function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
   if (!obj) return [];
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (Array.isArray(val) && val.length > 0) return val;
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (Array.isArray(nv) && nv.length > 0) return nv;
+    }
   }
   return [];
 }
 
 function extractString(obj: Record<string, any> | null | undefined, ...keys: string[]): string | null {
   if (!obj) return null;
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (typeof val === "string" && val.trim().length > 0) return val.trim();
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === "string") return (val as string[]).join(", ");
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (typeof nv === "string" && nv.trim().length > 0) return nv.trim();
+      if (Array.isArray(nv) && nv.length > 0 && typeof nv[0] === "string") return (nv as string[]).join(", ");
+    }
   }
   return null;
 }
@@ -202,6 +217,9 @@ export function EventDetailSheet({
     return true;
   });
 
+  // 0. Resumo Executivo
+  const resumoExecutivo = extractString(ad, "resumo_executivo");
+
   // 7. Contradicoes
   const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao")
     .filter((item: any) => {
@@ -304,6 +322,14 @@ export function EventDetailSheet({
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
               </div>
+            )}
+
+            {!isLoading && resumoExecutivo && (
+              <SectionCard label="Resumo Executivo">
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                  {resumoExecutivo}
+                </p>
+              </SectionCard>
             )}
 
             {!isLoading && (
@@ -585,6 +611,29 @@ export function EventDetailSheet({
                     </ul>
                   ) : (
                     <EmptyHint text="Nenhuma diligência registrada." />
+                  )}
+                </SectionCard>
+
+                {/* 7b. DEPOENTES — cards ricos unificados (compact no sheet) */}
+                <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
+                  {depoentes.length > 0 ? (
+                    <div className="space-y-2">
+                      {depoentes.map((d: any, i: number) => {
+                        const lado = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
+                        const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM"
+                          ? "testemunha"
+                          : (d.tipo ?? "testemunha");
+                        return (
+                          <DepoenteCard
+                            key={d.id ?? `${i}-${d.nome}`}
+                            dep={{ ...d, lado, tipo: tipoNormalized }}
+                            variant="compact"
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <EmptyHint text="Nenhum depoente cadastrado." />
                   )}
                 </SectionCard>
 

@@ -16,6 +16,7 @@ import {
   Loader2,
   ExternalLink,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TabPreparacao } from "./tab-preparacao";
 import type { Depoente } from "../types";
+import { DepoenteCard } from "../shared/depoente-card";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -80,20 +82,34 @@ function EmptyHint({ text }: { text: string }) {
   );
 }
 
+// Fallback: análises antigas gravaram o payload aninhado sob `vvd_analise_audiencia`
+// em vez de no topo. Olha primeiro no topo (schema atual), depois no aninhado.
 function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
   if (!obj) return [];
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (Array.isArray(val) && val.length > 0) return val;
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (Array.isArray(nv) && nv.length > 0) return nv;
+    }
   }
   return [];
 }
 
 function extractString(obj: Record<string, any> | null | undefined, ...keys: string[]): string | null {
   if (!obj) return null;
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (typeof val === "string" && val.trim().length > 0) return val.trim();
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === "string") return (val as string[]).join(", ");
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (typeof nv === "string" && nv.trim().length > 0) return nv.trim();
+      if (Array.isArray(nv) && nv.length > 0 && typeof nv[0] === "string") return (nv as string[]).join(", ");
+    }
   }
   return null;
 }
@@ -163,6 +179,10 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     return true;
   });
 
+  // 0. Resumo Executivo (topo)
+  const resumoExecutivo = extractString(ad, "resumo_executivo");
+  const narrativaDenuncia = caso?.narrativaDenuncia ?? extractString(ad, "narrativa_denuncia");
+
   // 7. Contradicoes
   const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao")
     .filter((item: any) => {
@@ -190,6 +210,15 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
 
       {!isLoading && (
         <>
+          {/* 0. RESUMO EXECUTIVO */}
+          {resumoExecutivo && (
+            <SectionCard label="Resumo Executivo" icon={Sparkles} defaultOpen={true}>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                {resumoExecutivo}
+              </p>
+            </SectionCard>
+          )}
+
           {/* 1. IMPUTACAO */}
           <SectionCard label="Imputacao" icon={Scale}>
             {imputacao ? (
@@ -391,68 +420,23 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             )}
           </SectionCard>
 
-          {/* 6. DEPOENTES — with link to tab */}
+          {/* 6. DEPOENTES — cards ricos unificados */}
           <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`} icon={Users}>
             {depoentes.length > 0 ? (
-              <div>
-                <p className="text-[11px] text-zinc-400 mb-2">
-                  Veja detalhes completos na aba Depoentes do registro.
-                </p>
-                <ul className="space-y-1.5">
-                  {depoentes.map((d: any, i: number) => {
-                    const isAcusacao = d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA";
-                    const isDefesa = d.lado === "defesa" || d.tipo === "DEFESA";
-                    const borderColor = isAcusacao
-                      ? "border-l-rose-300"
-                      : isDefesa
-                        ? "border-l-emerald-300"
-                        : "border-l-zinc-300";
-                    const bgColor = isAcusacao
-                      ? "bg-rose-50/40 dark:bg-rose-950/10"
-                      : isDefesa
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/10"
-                        : "bg-white dark:bg-zinc-800/40";
-                    const nome = d.nome ?? d.name ?? "Sem nome";
-                    const resumo = d.resumo ?? d.versao_delegacia ?? d.versao ?? null;
-                    const statusLabel = d.status ?? d.situacao ?? null;
-
-                    return (
-                      <li
-                        key={i}
-                        className={cn(
-                          "rounded-lg border border-zinc-200/80 dark:border-zinc-700/60 border-l-[3px] px-3 py-2",
-                          borderColor,
-                          bgColor
-                        )}
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
-                            {nome}
-                          </span>
-                          {(d.lado || d.tipo) && (
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "text-[9px] py-0 px-1",
-                                isAcusacao ? "border-rose-300 text-rose-600" : isDefesa ? "border-emerald-300 text-emerald-600" : ""
-                              )}
-                            >
-                              {isAcusacao ? "ACUS" : isDefesa ? "DEF" : (d.tipo ?? "")}
-                            </Badge>
-                          )}
-                          {statusLabel && (
-                            <span className="text-[10px] text-zinc-400">{statusLabel}</span>
-                          )}
-                        </div>
-                        {resumo && (
-                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                            {resumo}
-                          </p>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+              <div className="space-y-2.5">
+                {depoentes.map((d: any, i: number) => {
+                  const lado = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
+                  const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM"
+                    ? "testemunha"
+                    : (d.tipo ?? "testemunha");
+                  return (
+                    <DepoenteCard
+                      key={d.id ?? `${i}-${d.nome}`}
+                      dep={{ ...d, lado, tipo: tipoNormalized }}
+                      variant="full"
+                    />
+                  );
+                })}
               </div>
             ) : (
               <EmptyHint text="Nenhum depoente cadastrado." />
