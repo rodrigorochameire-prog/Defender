@@ -40,6 +40,7 @@ import {
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
 import { DepoenteCard } from "@/components/agenda/registro-audiencia/shared/depoente-card";
+import { DepoentesStatusBlock } from "./depoentes-status-block";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -616,6 +617,25 @@ export function EventDetailSheet({
 
                 {/* 7b. DEPOENTES — cards ricos unificados (compact no sheet) */}
                 <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
+                  {depoentes.length > 0 && (
+                    <DepoentesStatusBlock
+                      depoentes={depoentes.map((d: any, i: number) => ({
+                        id: d.id ?? `${d.nome ?? d.name ?? "d"}-${i}`,
+                        nome: d.nome ?? d.name,
+                        tipo:
+                          d.tipo === "ACUSACAO" ||
+                          d.tipo === "DEFESA" ||
+                          d.tipo === "COMUM"
+                            ? "testemunha"
+                            : d.tipo,
+                        statusIntimacao: d.statusIntimacao,
+                        intimado: d.intimado,
+                        jaOuvido: d.jaOuvido,
+                      }))}
+                      mode="readonly"
+                      className="mb-3"
+                    />
+                  )}
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => {

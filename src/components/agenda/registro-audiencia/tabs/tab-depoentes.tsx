@@ -9,6 +9,10 @@ import { tipoDepoenteOptions, getDepoenteStyle } from "../constants";
 import { TabDepoenteForm } from "./tab-depoente-form";
 import type { Depoente } from "../types";
 import { DepoenteStatusBadges } from "../shared/depoente-status";
+import {
+  DepoentesStatusBlock,
+  type StatusIntimacao,
+} from "../../depoentes-status-block";
 
 interface TabDepoentesProps {
   depoentes: Depoente[];
@@ -45,10 +49,25 @@ export function TabDepoentes({
   toggleDepoenteDetails,
   evento,
 }: TabDepoentesProps) {
+  const handleStatusChange = (id: string, novo: StatusIntimacao) => {
+    const alvo = depoentes.find((d) => d.id === id);
+    if (!alvo) return;
+    handleUpdateDepoente({ ...alvo, statusIntimacao: novo });
+  };
+
   return (
     <>
+      {depoentes.length > 0 && (
+        <DepoentesStatusBlock
+          depoentes={depoentes}
+          mode="interactive"
+          onStatusChange={handleStatusChange}
+          className="mb-2"
+        />
+      )}
+
       {/* ========== DESKTOP: dual-panel layout (unchanged) ========== */}
-      <div className="hidden md:flex gap-3 h-[calc(98vh-165px)] overflow-hidden">
+      <div className="hidden md:flex gap-3 h-[calc(98vh-245px)] overflow-hidden">
         {/* Left panel - List */}
         <div className="w-[220px] flex flex-col gap-2 shrink-0 max-h-full">
           {/* Add form - desktop */}
