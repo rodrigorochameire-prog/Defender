@@ -108,6 +108,11 @@ export const processosRelations = relations(processos, ({ one, many }) => ({
   anotacoes: many(anotacoes),
   calendarEvents: many(calendarEvents),
   analisesCowork: many(analisesCowork),
+  // Hierarquia de instâncias
+  processoOrigem: one(processos, { fields: [processos.processoOrigemId], references: [processos.id], relationName: "processo_origem" }),
+  recursosVinculados: many(processos, { relationName: "processo_origem" }),
+  defensor2g: one(defensoresBa, { fields: [processos.defensor2gId], references: [defensoresBa.id], relationName: "defensor2g" }),
+  defensorBrasilia: one(defensoresBa, { fields: [processos.defensorBrasiliaId], references: [defensoresBa.id], relationName: "defensorBrasilia" }),
 }));
 
 export const demandasRelations = relations(demandas, ({ one, many }) => ({

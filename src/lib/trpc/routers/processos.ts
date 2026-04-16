@@ -56,12 +56,18 @@ export const processosRouter = router({
           const defensoresVisiveis = [ctx.user.id, ...parceirosIds];
           // Guard: inArray requires non-empty array (always safe — has at least ctx.user.id)
           const defensorFilter = inArray(processos.defensorId, defensoresVisiveis);
+          // L1b/L1c: processos em que o user é defensor 2G ou defensor Brasília (via defensorBaId)
+          const defensorBaId = ctx.user.defensorBaId ?? null;
+          const l1b = defensorBaId != null ? eq(processos.defensor2gId, defensorBaId) : null;
+          const l1c = defensorBaId != null ? eq(processos.defensorBrasiliaId, defensorBaId) : null;
+          const l1 = [defensorFilter, l1b, l1c].filter(Boolean) as NonNullable<typeof defensorFilter>[];
+          const l1Combined = l1.length > 1 ? or(...l1)! : l1[0]!;
           // Also include processos without assigned defensor that belong to the comarca
           const semDefensorFilter = and(
             isNull(processos.defensorId),
             eq(processos.comarcaId, getComarcaId(ctx.user))
           );
-          conditions.push(or(defensorFilter, semDefensorFilter)!);
+          conditions.push(or(l1Combined, semDefensorFilter)!);
         }
       }
 

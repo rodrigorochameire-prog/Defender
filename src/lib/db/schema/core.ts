@@ -24,6 +24,7 @@ import {
   syncOrigemEnum,
   classeRecursalEnum,
   resultadoJulgamentoEnum,
+  instanciaProcessoEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
 import { defensoresBa } from "./defensoria";
@@ -209,6 +210,12 @@ export const processos = pgTable("processos", {
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+
+  // Hierarquia de instâncias
+  instancia: instanciaProcessoEnum("instancia").default("PRIMEIRA"),
+  processoOrigemId: integer("processo_origem_id").references((): any => processos.id, { onDelete: "set null" }),
+  defensor2gId: integer("defensor_2g_id").references(() => defensoresBa.id, { onDelete: "set null" }),
+  defensorBrasiliaId: integer("defensor_brasilia_id").references(() => defensoresBa.id, { onDelete: "set null" }),
 
   // 2º Grau Criminal
   classeRecursal: classeRecursalEnum("classe_recursal"),

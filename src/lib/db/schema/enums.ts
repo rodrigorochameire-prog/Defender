@@ -557,6 +557,15 @@ export const feedbackStatusEnum = pgEnum("feedback_status", [
   "descartado",
 ]);
 
+// Instância processual
+export const instanciaProcessoEnum = pgEnum("instancia_processo", [
+  "PRIMEIRA",
+  "SEGUNDA",
+  "STJ",
+  "STF",
+  "SEEU",
+]);
+
 // 2º Grau Criminal
 export const classeRecursalEnum = pgEnum("classe_recursal", [
   "APELACAO",
@@ -566,6 +575,14 @@ export const classeRecursalEnum = pgEnum("classe_recursal", [
   "EMBARGOS",
   "REVISAO_CRIMINAL",
   "CORREICAO_PARCIAL",
+  "MS",
+  "RESP",
+  "RE",
+  "AGRAVO_RESP",
+  "AGRAVO_RE",
+  "RECLAMACAO",
+  "HC_STJ",
+  "HC_STF",
 ]);
 
 export const resultadoJulgamentoEnum = pgEnum("resultado_julgamento", [
