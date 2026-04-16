@@ -52,6 +52,9 @@ import { anotacoes, movimentacoes } from "./investigacao";
 // Comunicacao tables
 import { notifications } from "./comunicacao";
 
+// Defensoria tables
+import { defensoresBa } from "./defensoria";
+
 // ==========================================
 // RELATIONS - Core tables
 // ==========================================
@@ -73,6 +76,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   // Afastamentos
   afastamentosComoDefensor: many(afastamentos, { relationName: "defensorAfastado" }),
   afastamentosComoSubstituto: many(afastamentos, { relationName: "defensorSubstituto" }),
+  // Ponte para diretório institucional DPE-BA
+  defensorBa: one(defensoresBa, { fields: [users.defensorBaId], references: [defensoresBa.id] }),
 }));
 
 export const afastamentosRelations = relations(afastamentos, ({ one }) => ({

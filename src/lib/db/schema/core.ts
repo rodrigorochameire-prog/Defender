@@ -26,6 +26,7 @@ import {
   resultadoJulgamentoEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
+import { defensoresBa } from "./defensoria";
 
 // ==========================================
 // USUÁRIOS (DEFENSORES)
@@ -64,6 +65,7 @@ export const users = pgTable("users", {
   sheetsSpreadsheetUrl: text("sheets_spreadsheet_url"),
   sheetsSyncEnabled: boolean("sheets_sync_enabled").default(false),
   workspaceId: integer("workspace_id"),
+  defensorBaId: integer("defensor_ba_id").references(() => defensoresBa.id, { onDelete: "set null" }),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

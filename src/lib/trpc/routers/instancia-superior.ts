@@ -36,13 +36,32 @@ export const instanciaSuperiorRouter = router({
         camara: z.string().optional(),
         defensorDestinoId: z.number().optional(),
         assistidoId: z.number().optional(),
+        verTodos: z.boolean().optional(),
         limit: z.number().default(50),
         offset: z.number().default(0),
       }).optional()
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const filters = input ?? {};
       const conditions = [];
+      const isAdmin = ctx.user.role === "admin";
+
+      // Escopo automático: admin com verTodos=true vê tudo;
+      // defensor vê recursos onde é origem ou destino;
+      // sem ponte (defensorBaId null) e sem verTodos → lista vazia
+      if (isAdmin && input?.verTodos === true) {
+        // sem filtro de escopo
+      } else if (ctx.user.defensorBaId) {
+        conditions.push(
+          or(
+            eq(recursos.defensorOrigemId, ctx.user.defensorBaId),
+            eq(recursos.defensorDestinoId, ctx.user.defensorBaId)
+          )!
+        );
+      } else {
+        // sem ponte e não é admin verTodos → retorno defensivo vazio
+        return { rows: [], total: 0 };
+      }
 
       if (filters.tipo) conditions.push(eq(recursos.tipo, filters.tipo));
       if (filters.status) conditions.push(eq(recursos.status, filters.status));
