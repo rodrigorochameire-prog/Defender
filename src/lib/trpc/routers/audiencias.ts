@@ -1848,4 +1848,27 @@ export const audienciasRouter = router({
         .where(eq(audiencias.id, input.audienciaId));
       return { nota: novaNota };
     }),
+
+  marcarDepoenteOuvido: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      sinteseJuizo: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const updates: any = {
+        status: "OUVIDA",
+        ouvidoEm: new Date(),
+        updatedAt: new Date(),
+      };
+      if (input.sinteseJuizo) updates.sinteseJuizo = input.sinteseJuizo;
+      const [row] = await db
+        .update(testemunhas)
+        .set(updates)
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      }
+      return row;
+    }),
 });

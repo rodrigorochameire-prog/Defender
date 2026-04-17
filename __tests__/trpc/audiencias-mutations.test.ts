@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { audiencias } from "@/lib/db/schema/agenda";
+import { audiencias, testemunhas } from "@/lib/db/schema/agenda";
 import { processos, assistidos, users } from "@/lib/db/schema/core";
 import { eq } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
@@ -88,6 +88,73 @@ describe("audiencias.addQuickNote", { timeout: 30000 }, () => {
       ).rejects.toThrow();
     } finally {
       await cleanup({ audienciaId: audiencia.id, processoId: processo.id, assistidoId: assistido.id, userId: user.id });
+    }
+  });
+});
+
+async function seedTestemunha(user: any) {
+  const [assistido] = await db.insert(assistidos).values({
+    nome: "Assistido DepOuv " + Date.now(),
+    workspaceId: 1,
+  } as any).returning();
+  const [processo] = await db.insert(processos).values({
+    assistidoId: assistido.id,
+    numeroAutos: "DO-" + Date.now(),
+    area: "JURI",
+  } as any).returning();
+  const [testemunha] = await db.insert(testemunhas).values({
+    processoId: processo.id,
+    nome: "João Ouvido " + Date.now(),
+    tipo: "ACUSACAO",
+    status: "ARROLADA",
+  } as any).returning();
+  return { user, testemunha, processo, assistido };
+}
+
+async function cleanupTestemunha(ids: { testemunhaId: number; processoId: number; assistidoId: number }) {
+  await db.delete(testemunhas).where(eq(testemunhas.id, ids.testemunhaId));
+  await db.delete(processos).where(eq(processos.id, ids.processoId));
+  await db.delete(assistidos).where(eq(assistidos.id, ids.assistidoId));
+}
+
+describe("audiencias.marcarDepoenteOuvido", { timeout: 30000 }, () => {
+  it("seta status=OUVIDA e preenche ouvidoEm", async () => {
+    const [user] = await db.insert(users).values({
+      name: "User MDO",
+      email: `mdo-${Date.now()}@test.local`,
+      workspaceId: 1,
+    } as any).returning();
+    const { testemunha, processo, assistido } = await seedTestemunha(user);
+    try {
+      const caller = createCaller(mkCtx(user));
+      await caller.audiencias.marcarDepoenteOuvido({ depoenteId: testemunha.id });
+      const [row] = await db.select().from(testemunhas).where(eq(testemunhas.id, testemunha.id));
+      expect(row.status).toBe("OUVIDA");
+      expect(row.ouvidoEm).toBeInstanceOf(Date);
+    } finally {
+      await cleanupTestemunha({ testemunhaId: testemunha.id, processoId: processo.id, assistidoId: assistido.id });
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("grava sinteseJuizo quando fornecida", async () => {
+    const [user] = await db.insert(users).values({
+      name: "User MDO2",
+      email: `mdo2-${Date.now()}@test.local`,
+      workspaceId: 1,
+    } as any).returning();
+    const { testemunha, processo, assistido } = await seedTestemunha(user);
+    try {
+      const caller = createCaller(mkCtx(user));
+      await caller.audiencias.marcarDepoenteOuvido({
+        depoenteId: testemunha.id,
+        sinteseJuizo: "Confirmou fatos da denúncia com detalhes",
+      });
+      const [row] = await db.select().from(testemunhas).where(eq(testemunhas.id, testemunha.id));
+      expect(row.sinteseJuizo).toBe("Confirmou fatos da denúncia com detalhes");
+    } finally {
+      await cleanupTestemunha({ testemunhaId: testemunha.id, processoId: processo.id, assistidoId: assistido.id });
+      await db.delete(users).where(eq(users.id, user.id));
     }
   });
 });
