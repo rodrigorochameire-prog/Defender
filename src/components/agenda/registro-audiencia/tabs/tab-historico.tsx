@@ -1,27 +1,31 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  BookOpen, Calendar, CheckCircle2, Clock, MapPin,
-  Users, UserCheck, UserX, AlertTriangle, Gavel,
-} from "lucide-react";
-import { InfoBlock, DepoenteCard } from "../shared/depoente-card";
+import { useState } from "react";
+import { BookOpen } from "lucide-react";
+import { HistoricoSubTabs } from "../historico/historico-sub-tabs";
+import { RegistroPreviewCard } from "../historico/registro-preview-card";
+import { TimelineCard } from "../historico/timeline-card";
+import { countCompletude } from "../historico/count-completude";
+import type { RegistroAudienciaData } from "../types";
 
-interface TabHistoricoProps {
+interface Props {
   registrosAnteriores: any[];
-  registroAtual?: any;
+  registroAtual: RegistroAudienciaData;
   statusAtual?: string;
 }
 
-export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }: TabHistoricoProps) {
-  // Monta lista: registro atual (se tiver dados) + anteriores
-  const hasCurrentData = registroAtual && (registroAtual.resultado || registroAtual.anotacoesGerais || (registroAtual.depoentes?.length ?? 0) > 0);
-  const totalCount = registrosAnteriores.length + (hasCurrentData ? 1 : 0);
+export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }: Props) {
+  const [subTab, setSubTab] = useState<"edicao" | "anteriores">(
+    registrosAnteriores.length === 0 ? "edicao" : "anteriores"
+  );
+  const [openIdx, setOpenIdx] = useState<number | null>(
+    registrosAnteriores.length > 0 ? 0 : null
+  );
+
+  const completudeCount = countCompletude(registroAtual, statusAtual);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="bg-neutral-50/50 dark:bg-neutral-900/30 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 p-5">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center">
@@ -32,265 +36,49 @@ export function TabHistorico({ registrosAnteriores, registroAtual, statusAtual }
               Histórico de Audiências
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              {totalCount} registro{totalCount !== 1 ? "s" : ""} encontrado{totalCount !== 1 ? "s" : ""}
-              {hasCurrentData && " (inclui registro atual)"}
+              {registrosAnteriores.length} registro{registrosAnteriores.length !== 1 ? "s" : ""} salvo{registrosAnteriores.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Registro Atual (se houver dados) — mesmo formato rico dos anteriores */}
-      {hasCurrentData && (
-        <div className="rounded-xl border-2 border-emerald-300 dark:border-emerald-700 overflow-hidden">
-          <div className="bg-emerald-50/80 dark:bg-emerald-950/30 p-3 border-b border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">Registro Atual</span>
-            {statusAtual && (
-              <Badge className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
-                {statusAtual === "concluida" ? "Concluída" : statusAtual === "redesignada" ? "Redesignada" : statusAtual === "suspensa" ? "Suspensa" : statusAtual}
-              </Badge>
-            )}
-          </div>
-          <div className="p-4 space-y-4 bg-white dark:bg-neutral-950">
-            {/* Resultado */}
-            {registroAtual.resultado && (
-              <InfoBlock icon={Gavel} label="Resultado" borderColor="border-l-emerald-500">
-                <Badge variant="outline" className="text-xs capitalize mt-1">{registroAtual.resultado}</Badge>
-              </InfoBlock>
-            )}
+      <HistoricoSubTabs
+        active={subTab}
+        onChange={setSubTab}
+        anterioresCount={registrosAnteriores.length}
+        completudeCount={completudeCount}
+      />
 
-            {/* Depoentes com detalhe completo */}
-            {registroAtual.depoentes?.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5" />
-                  Depoentes ({registroAtual.depoentes.length})
-                </Label>
-                {registroAtual.depoentes.map((dep: any) => (
-                  <DepoenteCard key={dep.id || dep.nome} dep={dep} />
-                ))}
-              </div>
-            )}
-
-            {/* Manifestações */}
-            {(registroAtual.manifestacaoMP || registroAtual.manifestacaoDefesa || registroAtual.decisaoJuiz) && (
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Manifestações e Decisões</Label>
-                {registroAtual.manifestacaoMP && (
-                  <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-rose-400"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.manifestacaoMP}</p></InfoBlock>
-                )}
-                {registroAtual.manifestacaoDefesa && (
-                  <InfoBlock icon={Gavel} label="Defesa" borderColor="border-l-emerald-500"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.manifestacaoDefesa}</p></InfoBlock>
-                )}
-                {registroAtual.decisaoJuiz && (
-                  <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-blue-500"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.decisaoJuiz}</p></InfoBlock>
-                )}
-              </div>
-            )}
-
-            {registroAtual.encaminhamentos && (
-              <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-neutral-400"><p className="text-xs text-neutral-600 dark:text-neutral-400">{registroAtual.encaminhamentos}</p></InfoBlock>
-            )}
-            {registroAtual.anotacoesGerais && (
-              <InfoBlock icon={Gavel} label="Anotações" borderColor="border-l-neutral-400"><p className="text-xs text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap">{registroAtual.anotacoesGerais}</p></InfoBlock>
-            )}
-          </div>
-        </div>
+      {subTab === "edicao" && (
+        <RegistroPreviewCard
+          registro={registroAtual}
+          statusAudiencia={statusAtual}
+          variant="preview"
+        />
       )}
 
-      {/* Sem registros */}
-      {totalCount === 0 && (
-        <div className="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 p-8 text-center">
-          <BookOpen className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Nenhum registro ainda</p>
-          <p className="text-xs text-neutral-500 mt-1">Preencha os campos nas abas Depoentes, Anotações e Resultado, depois clique Salvar Registro.</p>
-        </div>
+      {subTab === "anteriores" && (
+        <>
+          {registrosAnteriores.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/30 p-8 text-center">
+              <BookOpen className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Nenhum registro ainda</p>
+              <p className="text-xs text-neutral-500 mt-1">Preencha as abas e clique em Salvar Registro.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {registrosAnteriores.map((reg, idx) => (
+                <TimelineCard
+                  key={reg.historicoId ?? idx}
+                  registro={reg}
+                  isOpen={openIdx === idx}
+                  onToggle={() => setOpenIdx(openIdx === idx ? null : idx)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
-
-      {/* Timeline */}
-      <div className="space-y-4 relative">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-neutral-200 dark:bg-neutral-800" />
-
-        {registrosAnteriores.map((reg, idx) => (
-          <div key={reg.historicoId} className="relative pl-16">
-            {/* Timeline indicator */}
-            <div className="absolute left-3 top-6 w-6 h-6 rounded-full bg-neutral-600 dark:bg-neutral-400 border-4 border-white dark:border-neutral-950 shadow-md flex items-center justify-center">
-              <span className="text-[10px] font-bold text-white dark:text-neutral-900">{idx + 1}</span>
-            </div>
-
-            {/* Card */}
-            <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
-              {/* Card Header */}
-              <div className="bg-neutral-50/50 dark:bg-neutral-900/50 p-4 border-b border-neutral-200/80 dark:border-neutral-800/80">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
-                    <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-                      {new Date(reg.dataRealizacao).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                        weekday: "long",
-                      })}
-                    </span>
-                    {reg.horarioInicio && (
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400">às {reg.horarioInicio}</span>
-                    )}
-                  </div>
-                  <Badge
-                    className={
-                      reg.realizada
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                    }
-                  >
-                    {reg.realizada ? (
-                      <><CheckCircle2 className="w-3 h-3 mr-1" />Concluída</>
-                    ) : (
-                      <><Calendar className="w-3 h-3 mr-1" />Redesignada</>
-                    )}
-                  </Badge>
-                </div>
-                {reg.local && (
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {reg.local}
-                  </div>
-                )}
-              </div>
-
-              {/* Card Content */}
-              <div className="p-4 space-y-4">
-                {/* Resultado */}
-                {reg.realizada && reg.resultado && (
-                  <InfoBlock icon={Gavel} label="Resultado da Audiência" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                    <Badge variant="outline" className="text-xs capitalize mt-1">{reg.resultado}</Badge>
-                  </InfoBlock>
-                )}
-
-                {/* Motivo não realização */}
-                {!reg.realizada && reg.motivoNaoRealizacao && (
-                  <InfoBlock icon={AlertTriangle} label="Motivo da Não Realização" borderColor="border-l-amber-500 dark:border-l-amber-400">
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{reg.motivoNaoRealizacao}</p>
-                  </InfoBlock>
-                )}
-
-                {/* Redesignação */}
-                {reg.resultado === "redesignada" && (
-                  <InfoBlock icon={Calendar} label="Audiência Redesignada" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                    {reg.motivoRedesignacao && (
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
-                        <span className="font-semibold">Motivo:</span> {reg.motivoRedesignacao}
-                      </p>
-                    )}
-                    {reg.dataRedesignacao && (
-                      <div className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span className="font-semibold">Nova data:</span>
-                        {new Date(reg.dataRedesignacao).toLocaleDateString("pt-BR")}
-                        {reg.horarioRedesignacao && ` às ${reg.horarioRedesignacao}`}
-                      </div>
-                    )}
-                  </InfoBlock>
-                )}
-
-                {/* Presença do Assistido — aceita ambos os nomes de campo por compatibilidade */}
-                {(() => {
-                  const presente = reg.assistidoCompareceu ?? reg.assistidoPresente;
-                  return (
-                    <InfoBlock icon={Users} label="Presença do Assistido" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                      <Badge
-                        className={
-                          presente
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 mt-1"
-                            : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 mt-1"
-                        }
-                      >
-                        {presente ? (
-                          <><UserCheck className="w-3 h-3 mr-1" />Presente</>
-                        ) : (
-                          <><UserX className="w-3 h-3 mr-1" />Ausente</>
-                        )}
-                      </Badge>
-                    </InfoBlock>
-                  );
-                })()}
-
-                {/* Depoentes */}
-                {reg.depoentes && reg.depoentes.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-neutral-600 dark:text-neutral-400" />
-                      Depoentes ({reg.depoentes.length})
-                    </Label>
-                    <div className="space-y-2.5">
-                      {reg.depoentes.map((dep: any) => (
-                        <DepoenteCard key={dep.id || dep.nome} dep={dep} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Manifestações */}
-                {(reg.manifestacaoMP || reg.manifestacaoDefesa || reg.decisaoJuiz) && (
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Manifestações e Decisões</Label>
-                    {reg.manifestacaoMP && (
-                      <InfoBlock icon={Gavel} label="Ministério Público" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.manifestacaoMP}</p>
-                      </InfoBlock>
-                    )}
-                    {reg.manifestacaoDefesa && (
-                      <InfoBlock icon={Gavel} label="Defesa" borderColor="border-l-emerald-500 dark:border-l-emerald-400">
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.manifestacaoDefesa}</p>
-                      </InfoBlock>
-                    )}
-                    {reg.decisaoJuiz && (
-                      <InfoBlock icon={Gavel} label="Decisão Judicial" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.decisaoJuiz}</p>
-                      </InfoBlock>
-                    )}
-                  </div>
-                )}
-
-                {/* Encaminhamentos */}
-                {reg.encaminhamentos && (
-                  <InfoBlock icon={Gavel} label="Encaminhamentos" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.encaminhamentos}</p>
-                  </InfoBlock>
-                )}
-
-                {/* Anotações */}
-                {reg.anotacoesGerais && (
-                  <InfoBlock icon={Gavel} label="Anotações Gerais" borderColor="border-l-neutral-400 dark:border-l-neutral-600">
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{reg.anotacoesGerais}</p>
-                  </InfoBlock>
-                )}
-              </div>
-
-              {/* Card Footer */}
-              <div className="bg-neutral-50/50 dark:bg-neutral-900/50 p-3 border-t border-neutral-200/80 dark:border-neutral-800/80 flex items-center justify-between">
-                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Registrado em{" "}
-                  {new Date(reg.dataRegistro).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-                <span className="text-[10px] font-mono text-neutral-400 bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                  #{reg.historicoId.slice(-8).toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
-
-/* Componentes migrados para ../shared/depoente-card */
