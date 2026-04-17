@@ -83,9 +83,11 @@ describe("EventDetailSheet", () => {
     assistido: "Maria",
   };
 
-  it("renderiza nome do depoente exatamente uma vez (regressão bug duplicação)", () => {
-    render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    expect(screen.getAllByText("João Único")).toHaveLength(1);
+  it("renderiza card de depoente exatamente uma vez (regressão bug duplicação)", () => {
+    // DepoenteCardV2 tem data-lado; DepoentesStatusBlock (status agregado, merge 2026-04-16) não.
+    // Bug original duplicava o bloco inteiro de cards. Status block é adição legítima.
+    const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
+    expect(container.querySelectorAll('[data-lado]').length).toBe(1);
   });
 
   it("renderiza bloco Documentos (novo, com tabs Autos/Assistido)", () => {
