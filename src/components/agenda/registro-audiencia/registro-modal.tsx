@@ -16,6 +16,7 @@ import { TabResultado } from "./tabs/tab-resultado";
 import { TabHistorico } from "./tabs/tab-historico";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
+import { countCompletude } from "./historico/count-completude";
 
 interface RegistroAudienciaModalProps {
   isOpen: boolean;
@@ -45,13 +46,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
   const visibleTabs = tabConfig;
 
   // Completude badge calculation: how many of 5 key fields are filled
-  const completudeItems = [
-    form.statusAudiencia, // always truthy since it has a default
-    form.registro.resultado,
-    form.registro.assistidoCompareceu !== undefined,
-    form.registro.anotacoesGerais,
-    form.registro.depoentes.length > 0,
-  ].filter(Boolean).length;
+  const completudeItems = countCompletude(form.registro, form.statusAudiencia);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
