@@ -21,6 +21,80 @@ const handlers = {
   onAbrirAudio: noop,
 };
 
+describe("DepoenteCardV2 (aberto)", () => {
+  const depoenteRico = {
+    ...baseDep,
+    versaoDelegacia: "Negou os fatos na delegacia",
+    versaoJuizo: "Admitiu parcialmente em juízo",
+  };
+
+  it("mostra síntese delegacia e juízo quando aberto", () => {
+    render(
+      <DepoenteCardV2 depoente={depoenteRico} isOpen={true} onToggle={noop} variant="sheet" {...handlers} />
+    );
+    expect(screen.getAllByText(/delegacia/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/negou os fatos/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/juízo/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/admitiu parcialmente/i)).toBeInTheDocument();
+  });
+
+  it("mostra 'vazio' quando síntese ausente", () => {
+    render(
+      <DepoenteCardV2 depoente={baseDep} isOpen={true} onToggle={noop} variant="sheet" {...handlers} />
+    );
+    expect(screen.getAllByText(/vazio/i).length).toBeGreaterThan(0);
+  });
+
+  it("chama onMarcarOuvido quando clicar no botão", () => {
+    const onMarcarOuvido = vi.fn();
+    render(
+      <DepoenteCardV2
+        depoente={baseDep}
+        isOpen
+        onToggle={noop}
+        variant="sheet"
+        {...handlers}
+        onMarcarOuvido={onMarcarOuvido}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /marcar ouvid/i }));
+    expect(onMarcarOuvido).toHaveBeenCalledWith(1, undefined);
+  });
+
+  it("chama onRedesignar", () => {
+    const onRedesignar = vi.fn();
+    render(
+      <DepoenteCardV2
+        depoente={baseDep}
+        isOpen
+        onToggle={noop}
+        variant="sheet"
+        {...handlers}
+        onRedesignar={onRedesignar}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /redesignar/i }));
+    expect(onRedesignar).toHaveBeenCalledWith(1);
+  });
+
+  it("mostra botão áudio apenas quando audioDriveFileId presente", () => {
+    const { rerender } = render(
+      <DepoenteCardV2 depoente={baseDep} isOpen onToggle={noop} variant="sheet" {...handlers} />
+    );
+    expect(screen.queryByRole("button", { name: /áudio/i })).toBeNull();
+    rerender(
+      <DepoenteCardV2
+        depoente={{ ...baseDep, audioDriveFileId: "abc" }}
+        isOpen
+        onToggle={noop}
+        variant="sheet"
+        {...handlers}
+      />
+    );
+    expect(screen.getByRole("button", { name: /áudio/i })).toBeInTheDocument();
+  });
+});
+
 describe("DepoenteCardV2 (fechado)", () => {
   it("mostra nome e qualidade", () => {
     render(
