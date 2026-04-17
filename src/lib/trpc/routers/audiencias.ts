@@ -1895,4 +1895,28 @@ export const audienciasRouter = router({
         .returning();
       return row;
     }),
+
+  marcarConcluida: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      resultado: z.enum(["sentenciado", "instrucao_encerrada", "outra"]),
+      observacao: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const [atual] = await db.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
+      if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+      const observacoesAtualizadas = input.observacao
+        ? [atual.observacoes, input.observacao].filter(Boolean).join("\n\n")
+        : atual.observacoes;
+      await db
+        .update(audiencias)
+        .set({
+          status: "concluida",
+          resultado: input.resultado,
+          observacoes: observacoesAtualizadas,
+          updatedAt: new Date(),
+        })
+        .where(eq(audiencias.id, input.audienciaId));
+      return { ok: true };
+    }),
 });
