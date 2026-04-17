@@ -28,3 +28,17 @@ describe("matchDepoenteAudio", () => {
     expect(matchDepoenteAudio("qualquer", [])).toBeNull();
   });
 });
+
+describe("matchDepoenteAudio com explicitAudioId", () => {
+  it("retorna explicitAudioId quando fornecido (prioridade)", () => {
+    expect(matchDepoenteAudio("Fulano", midias, "explicit-xyz")).toBe("explicit-xyz");
+  });
+
+  it("cai para heurística quando explicitAudioId é null", () => {
+    expect(matchDepoenteAudio("João Silva", midias, null)).toBe("m1");
+  });
+
+  it("cai para heurística quando explicitAudioId é undefined", () => {
+    expect(matchDepoenteAudio("João Silva", midias, undefined)).toBe("m1");
+  });
+});

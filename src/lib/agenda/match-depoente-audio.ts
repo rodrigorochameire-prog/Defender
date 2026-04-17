@@ -16,8 +16,10 @@ function normalize(s: string): string {
 
 export function matchDepoenteAudio(
   depoenteNome: string,
-  candidates: MediaFileCandidate[]
+  candidates: MediaFileCandidate[],
+  explicitAudioId?: string | null
 ): string | null {
+  if (explicitAudioId) return explicitAudioId;
   if (!depoenteNome || candidates.length === 0) return null;
   const nomeNorm = normalize(depoenteNome);
   const tokens = nomeNorm.split(" ").filter((t) => t.length >= 3);
