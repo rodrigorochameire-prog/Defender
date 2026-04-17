@@ -1822,4 +1822,30 @@ export const audienciasRouter = router({
 
       return { updated };
     }),
+
+  addQuickNote: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      texto: z.string().min(1, "Nota não pode ser vazia"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const [audiencia] = await db
+        .select({ anotacoesRapidas: audiencias.anotacoesRapidas })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId));
+      if (!audiencia) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+      }
+      const novaNota = {
+        texto: input.texto,
+        timestamp: new Date().toISOString(),
+        autorId: ctx.user.id,
+      };
+      const notasAtualizadas = [...(audiencia.anotacoesRapidas ?? []), novaNota];
+      await db
+        .update(audiencias)
+        .set({ anotacoesRapidas: notasAtualizadas, updatedAt: new Date() })
+        .where(eq(audiencias.id, input.audienciaId));
+      return { nota: novaNota };
+    }),
 });
