@@ -1,82 +1,29 @@
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Scale,
-  FileText,
-  Search,
-  Shield,
-  Users,
-  AlertTriangle,
-  ClipboardList,
-  Lightbulb,
-  Send,
-  Loader2,
-  ExternalLink,
-  Copy,
-  Check,
-  Clock,
-  Phone,
-  Printer,
-  X,
-  Building2,
-  Gavel,
-  FolderOpen,
-  ChevronDown,
-  ChevronRight,
+  AlertTriangle, Check, Copy, ExternalLink, FileText,
+  FolderOpen, Loader2, X,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  normalizeAreaToFilter,
-  SOLID_COLOR_MAP,
-} from "@/lib/config/atribuicoes";
-import { DepoenteCard } from "@/components/agenda/registro-audiencia/shared/depoente-card";
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-function SectionCard({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-4 hover:shadow-md transition-shadow duration-200",
-        className
-      )}
-    >
-      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-2 tracking-wide">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
+import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import { SheetToC, type ToCSection } from "./sheet/sheet-toc";
+import { CollapsibleSection } from "./sheet/collapsible-section";
+import { SheetActionFooter } from "./sheet/sheet-action-footer";
+import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
+import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 
 function EmptyHint({ text }: { text: string }) {
-  return (
-    <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>
-  );
+  return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
 }
 
-// Fallback: análises antigas gravaram o payload aninhado sob `vvd_analise_audiencia`
-// em vez de no topo. Olha primeiro no topo (schema atual), depois no aninhado.
 function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
   if (!obj) return [];
   const nested = (obj as any).vvd_analise_audiencia;
@@ -101,51 +48,44 @@ function extractString(obj: Record<string, any> | null | undefined, ...keys: str
     if (nested && typeof nested === "object") {
       const nv = nested[k];
       if (typeof nv === "string" && nv.trim().length > 0) return nv.trim();
-      if (Array.isArray(nv) && nv.length > 0 && typeof nv[0] === "string") return (nv as string[]).join(", ");
     }
   }
   return null;
 }
 
-// ─────────────────────────────────────────────
-// Props
-// ─────────────────────────────────────────────
-
-interface EventDetailSheetProps {
+interface Props {
   evento: any | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenRegistro?: () => void;
 }
 
-export function EventDetailSheet({
-  evento,
-  open,
-  onOpenChange,
-  onOpenRegistro,
-}: EventDetailSheetProps) {
+export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }: Props) {
   const [copied, setCopied] = useState(false);
-  const [quickNote, setQuickNote] = useState("");
-  const [expandedDepoente, setExpandedDepoente] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<string | undefined>();
+  const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Resolve numeric audiencia id
-  const audienciaIdNum = (() => {
-    if (evento?.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
-    if (evento?.fonte === "calendar") return null;
-    const raw = evento?.id;
+  const audienciaIdNum = useMemo(() => {
+    if (!evento) return null;
+    if (evento.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
+    if (evento.fonte === "calendar") return null;
+    const raw = evento.id;
     if (typeof raw === "number" && Number.isFinite(raw)) return raw;
     if (typeof raw === "string") {
-      const match = raw.match(/^audiencia-(\d+)$/);
-      if (match) return parseInt(match[1], 10);
+      const m = raw.match(/^audiencia-(\d+)$/);
+      if (m) return parseInt(m[1], 10);
       if (/^\d+$/.test(raw)) return parseInt(raw, 10);
     }
     return null;
-  })();
+  }, [evento]);
 
-  const { data: ctx, isLoading, error: ctxError } = trpc.audiencias.getAudienciaContext.useQuery(
+  const { data: ctx, isLoading } = trpc.audiencias.getAudienciaContext.useQuery(
     { audienciaId: audienciaIdNum ?? 0 },
     { enabled: !!audienciaIdNum && open, retry: false }
   );
+
+  const actions = useAudienciaStatusActions(audienciaIdNum);
 
   const copyProcesso = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -153,87 +93,101 @@ export function EventDetailSheet({
     setTimeout(() => setCopied(false), 1500);
   };
 
-  if (!evento) return null;
+  const dataHora = useMemo(() => {
+    if (!evento) return null;
+    if (evento.data && evento.horarioInicio) {
+      try { return new Date(`${evento.data}T${evento.horarioInicio}`); } catch { return null; }
+    }
+    return evento.dataHora ? new Date(evento.dataHora) : null;
+  }, [evento]);
 
-  // Derived data
-  const dataHora = evento.data && evento.horarioInicio
-    ? (() => { try { return new Date(`${evento.data}T${evento.horarioInicio}`); } catch { return null; } })()
-    : evento.dataHora ? new Date(evento.dataHora) : null;
+  const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento?.processo ?? null;
+  const assistidoNome = ctx?.assistido?.nome ?? evento?.assistido ?? null;
+  const vara = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
 
-  const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento.processo ?? evento.processoNumero ?? null;
-  const assistidoNome = ctx?.assistido?.nome ?? evento.assistido ?? evento.assistidoNome ?? null;
-  const crime = evento.crime ?? evento.assunto ?? null;
-  const juiz = (ctx?.processo as any)?.juiz ?? null;
-  const vara = (ctx?.processo as any)?.vara ?? evento.local ?? null;
-
-  // Analysis data shortcuts
   const ad = ctx?.analysisData;
   const caso = ctx?.caso;
+  const assistidoId = (ctx?.assistido as any)?.id ?? evento?.assistidoId ?? null;
+  const processoId = (ctx?.processo as any)?.id ?? evento?.processoId ?? null;
+  const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
 
-  // 1. Imputacao
-  const imputacao = extractString(ad, "imputacao", "crimes_imputados")
-    ?? extractString(caso, "foco")
-    ?? null;
-
-  // 2. Fatos
-  const fatos = caso?.narrativaDenuncia
-    ?? extractString(ad, "resumo_executivo", "narrativa_denuncia")
-    ?? null;
-
-  // 3. Elementos
+  const imputacao = extractString(ad, "imputacao", "crimes_imputados") ?? extractString(caso, "foco") ?? null;
+  const fatos = caso?.narrativaDenuncia ?? extractString(ad, "resumo_executivo", "narrativa_denuncia") ?? null;
   const laudos = extractArray(ad, "laudos", "laudos_mencionados", "laudos_periciais");
   const lacunas = extractArray(ad, "vulnerabilidades_acusacao", "lacunas_probatorias", "lacunas");
-
-  // 4. Versao do acusado
   const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
-  const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia", "versao_instrucao");
-  const atendimento = ctx?.atendimentos?.[0];
-  const versaoAtendimento = atendimento?.resumo
-    ?? atendimento?.transcricaoResumo
-    ?? (atendimento?.pontosChave as any)
-    ?? null;
-
-  // IDs for navigation
-  const assistidoId = (ctx?.assistido as any)?.id ?? evento.assistidoId ?? null;
-  const processoId = (ctx?.processo as any)?.id ?? evento.processoId ?? null;
-
-  // 5. Diligencias
+  const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia");
   const diligencias = ctx?.diligencias ?? [];
-
-  // 6. Depoentes / testemunhas
   const testemunhasDB = ctx?.testemunhas ?? [];
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
-  const allDepoentes = [
-    ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
-    ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", _source: "analysis" })),
-    ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", _source: "analysis" })),
-  ];
-  const seen = new Set<string>();
-  const depoentes = allDepoentes.filter((d) => {
-    const key = (d.nome ?? d.name ?? "").toLowerCase().trim();
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 
-  // 0. Resumo Executivo
-  const resumoExecutivo = extractString(ad, "resumo_executivo");
-
-  // 7. Contradicoes
-  const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao")
-    .filter((item: any) => {
-      if (typeof item === "string") return true;
-      return item?.tipo === "contradicao" || item?.contradicao;
+  const depoentes = useMemo(() => {
+    const all = [
+      ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
+      ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", tipo: "ACUSACAO" })),
+      ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", tipo: "DEFESA" })),
+    ];
+    const seen = new Set<string>();
+    return all.filter((d) => {
+      const key = (d.nome ?? "").toLowerCase().trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
+  }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa]);
 
-  // 8. Pendencias
-  const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias", "pendencias_operacionais");
+  useEffect(() => {
+    const firstPending = depoentes.findIndex((d: any) => d.status !== "OUVIDA");
+    setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
+  }, [audienciaIdNum, depoentes.length]);
 
-  // 9. Teses
-  const teses = extractArray(ad, "teses_defesa", "teses")
-    .filter(Boolean);
-  const teoriaDireito = caso?.teoriaDireito;
+  const resumoExecutivo = extractString(ad, "resumo_executivo");
+  const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao");
+  const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias");
+  const teses = extractArray(ad, "teses_defesa", "teses").filter(Boolean);
+
+  const tocSections: ToCSection[] = useMemo(() => {
+    const s: ToCSection[] = [];
+    if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
+    if (fatos) s.push({ id: "fatos", label: "Fatos" });
+    if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
+    if (depoentes.length) s.push({ id: "depoentes", label: "Depoentes", count: depoentes.length });
+    if (contradicoes.length) s.push({ id: "contradicoes", label: "Contradições" });
+    if (laudos.length) s.push({ id: "laudos", label: "Laudos" });
+    if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
+    if (pendencias.length) s.push({ id: "pendencias", label: "Pendências" });
+    if (teses.length) s.push({ id: "teses", label: "Teses" });
+    if (assistidoId || processoId) s.push({ id: "documentos", label: "Docs" });
+    return s;
+  }, [imputacao, fatos, versaoDelegacia, versaoJuizo, depoentes.length, contradicoes.length,
+      laudos.length, diligencias.length, pendencias.length, teses.length, assistidoId, processoId]);
+
+  useEffect(() => {
+    if (!open || !scrollContainerRef.current) return;
+    const root = scrollContainerRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.getAttribute("data-section-id") ?? undefined);
+      },
+      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+    const nodes = root.querySelectorAll("[data-section-id]");
+    nodes.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, [open, tocSections]);
+
+  const handleJump = (id: string) => {
+    const root = scrollContainerRef.current;
+    if (!root) return;
+    const target = root.querySelector(`[data-section-id="${id}"]`) as HTMLElement | null;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  if (!evento) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -243,28 +197,24 @@ export function EventDetailSheet({
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
-              Evento
-            </SheetTitle>
+        <div className="bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight">Evento</SheetTitle>
           </SheetHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
-            title="Fechar (Esc)"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
+            title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* ===== SCROLLABLE CONTENT ===== */}
-        <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+        <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+          <div className="mx-3 mt-3 mb-3 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40">
             <div className="flex items-start gap-3.5">
-              {/* Avatar com ring de atribuição */}
               {(() => {
                 const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
                 const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
@@ -288,15 +238,12 @@ export function EventDetailSheet({
                 <div className="flex items-center gap-2 flex-wrap mt-1">
                   {processoNum && (
                     <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyProcesso(processoNum);
-                      }}
-                      title="Copiar número do processo"
+                      onClick={(e) => { e.stopPropagation(); copyProcesso(processoNum); }}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 cursor-pointer"
+                      title="Copiar número"
                     >
-                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processoNum}</span>
-                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />}
+                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400">{processoNum}</span>
+                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500" />}
                     </button>
                   )}
                   {dataHora && (
@@ -305,18 +252,16 @@ export function EventDetailSheet({
                     </span>
                   )}
                 </div>
-                {(vara || evento.atribuicao) && (
-                  <p className="text-[10px] text-neutral-500 dark:text-neutral-500 mt-1.5 leading-snug">
+                {vara && (
+                  <p className="text-[10px] text-neutral-500 mt-1.5">
                     {vara}
-                    {vara && evento.atribuicao && " · "}
-                    {evento.atribuicao}
+                    {evento.atribuicao && ` · ${evento.atribuicao}`}
                   </p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* ===== SECTION CARDS ===== */}
           <div className="px-3 pb-4 space-y-2.5">
             {isLoading && (
               <div className="flex items-center justify-center py-12">
@@ -325,324 +270,67 @@ export function EventDetailSheet({
             )}
 
             {!isLoading && resumoExecutivo && (
-              <SectionCard label="Resumo Executivo">
-                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                  {resumoExecutivo}
-                </p>
-              </SectionCard>
+              <CollapsibleSection id="resumo" label="Resumo Executivo" defaultOpen>
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{resumoExecutivo}</p>
+              </CollapsibleSection>
             )}
 
             {!isLoading && (
               <>
-                {/* 1. IMPUTACAO */}
-                <SectionCard label="Imputação">
+                <CollapsibleSection id="imputacao" label="Imputação" defaultOpen>
                   {imputacao ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                      {typeof imputacao === "string"
-                        ? imputacao
-                        : Array.isArray(imputacao)
-                          ? (imputacao as string[]).join(", ")
-                          : String(imputacao)}
-                    </p>
-                  ) : (
-                    <EmptyHint text="Imputação não extraída — rode a análise IA." />
-                  )}
-                </SectionCard>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{imputacao}</p>
+                  ) : <EmptyHint text="Imputação não extraída — rode a análise IA." />}
+                </CollapsibleSection>
 
-                {/* 2. FATOS (DENUNCIA) */}
-                <SectionCard label="Fatos (Denúncia)">
+                <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
                   {fatos ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                      {fatos}
-                    </p>
-                  ) : (
-                    <EmptyHint text="Narrativa da denúncia não disponível." />
-                  )}
-                </SectionCard>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos}</p>
+                  ) : <EmptyHint text="Narrativa da denúncia não disponível." />}
+                </CollapsibleSection>
 
-                {/* 3. VERSAO DO ACUSADO */}
-                <SectionCard label="Versão do Acusado">
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Building2 className="w-3 h-3 text-neutral-400" />
-                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                          Delegacia
-                        </span>
-                      </div>
-                      {versaoDelegacia ? (
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {versaoDelegacia}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-neutral-400 italic pl-4">
-                          Versão na delegacia não extraída.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Shield className="w-3 h-3 text-neutral-400" />
-                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                          Atendimento Defensoria
-                        </span>
-                        {atendimento?.data && (
-                          <span className="text-[10px] text-neutral-400 ml-auto">
-                            {format(new Date(String(atendimento.data)), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
-                        )}
-                      </div>
-                      {versaoAtendimento ? (
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {typeof versaoAtendimento === "string" ? versaoAtendimento : JSON.stringify(versaoAtendimento)}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-neutral-400 italic pl-4">
-                          Nenhum atendimento registrado — agende entrevista.
-                        </p>
-                      )}
-                    </div>
-                    {versaoJuizo && (
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Gavel className="w-3 h-3 text-neutral-400" />
-                          <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                            Em Juízo
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {versaoJuizo}
-                        </p>
+                {(versaoDelegacia || versaoJuizo) && (
+                  <CollapsibleSection id="versao" label="Versão do Acusado">
+                    {versaoDelegacia && (
+                      <div className="mb-2">
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Delegacia</div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoDelegacia}</p>
                       </div>
                     )}
-                  </div>
-                </SectionCard>
+                    {versaoJuizo && (
+                      <div>
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Em Juízo</div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoJuizo}</p>
+                      </div>
+                    )}
+                  </CollapsibleSection>
+                )}
 
-                {/* 4. DEPOENTES — com dropdown */}
-                <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
-                  {depoentes.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {depoentes.map((d: any, i: number) => {
-                        const isAcusacao = d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA";
-                        const isDefesa = d.lado === "defesa" || d.tipo === "DEFESA";
-                        const borderColor = isAcusacao
-                          ? "border-l-rose-300/60"
-                          : isDefesa
-                            ? "border-l-emerald-300/60"
-                            : "border-l-neutral-200";
-                        const nome = d.nome ?? d.name ?? "Sem nome";
-                        const isOpen = expandedDepoente === i;
-
-                        // Qualidade/papel
-                        const qualidade = d.qualidade ?? d.papel ?? d.tipo ?? d.categoria ?? null;
-                        const qualidadeLabel = qualidade
-                          ? String(qualidade).replace(/^(ACUSACAO|DEFESA)$/i, "").trim()
-                          : null;
-
-                        // Sínteses por fase
-                        const sinteseDelegacia = d.versao_delegacia ?? d.depoimento_delegacia ?? d.sintese_delegacia ?? null;
-                        const sinteseJuizo = d.versao_juizo ?? d.depoimento_juizo ?? d.sintese_juizo ?? d.versao_audiencia ?? null;
-                        const resumoGeral = d.resumo ?? d.versao ?? d.sintese ?? null;
-                        const hasDetail = sinteseDelegacia || sinteseJuizo || resumoGeral;
-
-                        return (
-                          <li
-                            key={i}
-                            className={cn(
-                              "rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 border-l-[3px] overflow-hidden transition-all",
-                              borderColor
-                            )}
-                          >
-                            <button
-                              onClick={() => setExpandedDepoente(isOpen ? null : i)}
-                              className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors"
-                            >
-                              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 flex-1 min-w-0 truncate">
-                                {nome}
-                              </span>
-                              {qualidadeLabel && (
-                                <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                                  {qualidadeLabel}
-                                </span>
-                              )}
-                              {(d.lado || d.tipo) && (
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "text-[9px] py-0 px-1 shrink-0",
-                                    isAcusacao ? "border-rose-300/60 text-rose-500" : isDefesa ? "border-emerald-300/60 text-emerald-500" : ""
-                                  )}
-                                >
-                                  {isAcusacao ? "ACUS" : isDefesa ? "DEF" : (d.tipo ?? "")}
-                                </Badge>
-                              )}
-                              {hasDetail && (
-                                isOpen
-                                  ? <ChevronDown className="w-3 h-3 text-neutral-400 shrink-0" />
-                                  : <ChevronRight className="w-3 h-3 text-neutral-300 shrink-0" />
-                              )}
-                            </button>
-                            {isOpen && hasDetail && (
-                              <div className="px-3 pb-2.5 space-y-2 border-t border-neutral-100/80 dark:border-neutral-800/40 pt-2">
-                                {sinteseDelegacia && (
-                                  <div>
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <Building2 className="w-2.5 h-2.5 text-neutral-400" />
-                                      <span className="text-[9px] font-medium text-neutral-400">Delegacia</span>
-                                    </div>
-                                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                                      {sinteseDelegacia}
-                                    </p>
-                                  </div>
-                                )}
-                                {sinteseJuizo && (
-                                  <div>
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <Gavel className="w-2.5 h-2.5 text-neutral-400" />
-                                      <span className="text-[9px] font-medium text-neutral-400">Em Juízo</span>
-                                    </div>
-                                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                                      {sinteseJuizo}
-                                    </p>
-                                  </div>
-                                )}
-                                {resumoGeral && !sinteseDelegacia && !sinteseJuizo && (
-                                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                                    {resumoGeral}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <EmptyHint text="Nenhum depoente cadastrado." />
-                  )}
-                </SectionCard>
-
-                {/* 5. CONTRADICOES — logo após depoentes */}
-                <SectionCard label="Contradições">
-                  {contradicoes.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {contradicoes.map((c: any, i: number) => {
-                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
-                        const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
-                        return (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-400/70" : "text-amber-400/70")}>
-                              {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                            </span>
-                            <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                              {text}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma contradição identificada." />
-                  )}
-                </SectionCard>
-
-                {/* 6. LAUDOS */}
-                <SectionCard label="Laudos e Perícias">
-                  {laudos.length > 0 ? (
-                    <>
-                      <ul className="space-y-1">
-                        {laudos.map((l: any, i: number) => (
-                          <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                            <ClipboardList className="w-3 h-3 text-neutral-400 mt-0.5 flex-shrink-0" />
-                            <span>{typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {lacunas.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-                          <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
-                            Lacunas probatórias
-                          </p>
-                          <ul className="space-y-1">
-                            {lacunas.map((l: any, i: number) => (
-                              <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                                <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                                <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <EmptyHint text="Nenhum laudo ou perícia identificado." />
-                  )}
-                </SectionCard>
-
-                {/* 7. INVESTIGACAO DEFENSIVA */}
-                <SectionCard label="Investigação Defensiva">
-                  {diligencias.length > 0 ? (
-                    <ul className="space-y-2">
-                      {diligencias.map((d: any) => {
-                        const statusColor =
-                          d.status === "concluida" || d.status === "concluída"
-                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : d.status === "em_andamento" || d.status === "em andamento"
-                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400"
-                              : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400";
-                        return (
-                          <li key={d.id} className="text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-neutral-700 dark:text-neutral-300 font-medium flex-1 min-w-0 truncate">
-                                {d.titulo}
-                              </span>
-                              <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0", statusColor)}>
-                                {d.status ?? "pendente"}
-                              </span>
-                            </div>
-                            {d.resultado && (
-                              <p className="text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
-                                {d.resultado}
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma diligência registrada." />
-                  )}
-                </SectionCard>
-
-                {/* 7b. DEPOENTES — cards ricos unificados (compact no sheet) */}
-                <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
+                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
-                      {depoentes.map((d: any, i: number) => {
-                        const lado = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
-                        const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM"
-                          ? "testemunha"
-                          : (d.tipo ?? "testemunha");
-                        return (
-                          <DepoenteCard
-                            key={d.id ?? `${i}-${d.nome}`}
-                            dep={{ ...d, lado, tipo: tipoNormalized }}
-                            variant="compact"
-                          />
-                        );
-                      })}
+                      {depoentes.map((d: any, i: number) => (
+                        <DepoenteCardV2
+                          key={d.id ?? `${i}-${d.nome}`}
+                          depoente={d}
+                          isOpen={openDepoenteIdx === i}
+                          onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
+                          variant="sheet"
+                          onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
+                          onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
+                          onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
+                          onAbrirAudio={() => toast.info("Em breve (Fase 2)")}
+                        />
+                      ))}
                     </div>
-                  ) : (
-                    <EmptyHint text="Nenhum depoente cadastrado." />
-                  )}
-                </SectionCard>
+                  ) : <EmptyHint text="Nenhum depoente cadastrado." />}
+                </CollapsibleSection>
 
-                {/* 8. PENDENCIAS */}
-                <SectionCard label="Pendências">
-                  {pendencias.length > 0 ? (
-                    <ul className="space-y-1">
-                      {pendencias.map((p: any, i: number) => {
-                        const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
+                {contradicoes.length > 0 && (
+                  <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
+                    <ul className="space-y-1.5">
+                      {contradicoes.map((c: any, i: number) => {
+                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? JSON.stringify(c);
                         return (
                           <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                             <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
@@ -651,123 +339,110 @@ export function EventDetailSheet({
                         );
                       })}
                     </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma pendência registrada." />
-                  )}
-                </SectionCard>
+                  </CollapsibleSection>
+                )}
 
-                {/* 9. TESES */}
-                <SectionCard label="Teses">
-                  {teses.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {teses.map((t: any, i: number) => {
-                        const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? t.nome ?? JSON.stringify(t);
-                        const viabilidade = typeof t === "object" ? t.viabilidade ?? t.probabilidade : null;
-                        const color =
-                          viabilidade === "alta" || viabilidade === "forte"
-                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-200/60"
-                            : viabilidade === "media" || viabilidade === "moderada"
-                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200/60"
-                              : "bg-neutral-50 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200/60 dark:border-neutral-700";
+                {laudos.length > 0 && (
+                  <CollapsibleSection id="laudos" label="Laudos e Perícias" count={laudos.length}>
+                    <ul className="space-y-1">
+                      {laudos.map((l: any, i: number) => (
+                        <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                          • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
+                        </li>
+                      ))}
+                    </ul>
+                    {lacunas.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
+                        <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
+                        <ul className="space-y-1">
+                          {lacunas.map((l: any, i: number) => (
+                            <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                              • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CollapsibleSection>
+                )}
+
+                {diligencias.length > 0 && (
+                  <CollapsibleSection id="investigacao" label="Investigação Defensiva" count={diligencias.length}>
+                    <ul className="space-y-2">
+                      {diligencias.map((d: any) => (
+                        <li key={d.id} className="text-xs text-neutral-700 dark:text-neutral-300">
+                          <span className="font-medium">{d.titulo}</span>
+                          {d.resultado && <p className="text-neutral-500 mt-0.5">{d.resultado}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </CollapsibleSection>
+                )}
+
+                {pendencias.length > 0 && (
+                  <CollapsibleSection id="pendencias" label="Pendências" count={pendencias.length}>
+                    <ul className="space-y-1">
+                      {pendencias.map((p: any, i: number) => {
+                        const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? JSON.stringify(p);
                         return (
-                          <span
-                            key={i}
-                            className={cn(
-                              "text-[11px] px-2 py-0.5 rounded-full border font-medium",
-                              color
-                            )}
-                          >
-                            {text}
-                          </span>
+                          <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                            <span>{text}</span>
+                          </li>
                         );
                       })}
-                    </div>
-                  ) : teoriaDireito ? (
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                      {teoriaDireito}
-                    </p>
-                  ) : (
-                    <EmptyHint text="Nenhuma tese identificada." />
-                  )}
-                </SectionCard>
+                    </ul>
+                  </CollapsibleSection>
+                )}
 
-                {/* 10. DRIVE — acesso rápido aos arquivos */}
-                {(assistidoId || processoId) && (
-                  <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-4 hover:shadow-md transition-shadow duration-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FolderOpen className="w-3.5 h-3.5 text-neutral-400" />
-                      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 tracking-wide">
-                        Documentos
-                      </p>
+                {teses.length > 0 && (
+                  <CollapsibleSection id="teses" label="Teses" count={teses.length}>
+                    <div className="flex flex-wrap gap-1.5">
+                      {teses.map((t: any, i: number) => {
+                        const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? JSON.stringify(t);
+                        return <Badge key={i} variant="outline" className="text-[11px]">{text}</Badge>;
+                      })}
                     </div>
+                  </CollapsibleSection>
+                )}
+
+                {(assistidoId || processoId) && (
+                  <CollapsibleSection id="documentos" label="Documentos">
                     <div className="flex flex-wrap gap-2">
                       {assistidoId && (
                         <Link
                           href={`/admin/assistidos/${assistidoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/40 cursor-pointer"
                         >
-                          <FolderOpen className="w-3 h-3" />
-                          Pasta do Assistido
+                          <FolderOpen className="w-3 h-3" /> Pasta do Assistido
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                         </Link>
                       )}
                       {processoId && (
                         <Link
                           href={`/admin/processos/${processoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/40 cursor-pointer"
                         >
-                          <FileText className="w-3 h-3" />
-                          Autos do Processo
+                          <FileText className="w-3 h-3" /> Autos do Processo
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
                         </Link>
                       )}
                     </div>
-                  </div>
+                    <p className="text-[10px] text-neutral-400 italic mt-2">
+                      Preview inline + upload chegam na Fase 2.
+                    </p>
+                  </CollapsibleSection>
                 )}
               </>
             )}
           </div>
         </div>
 
-        {/* ===== STICKY FOOTER — Padrão Defender ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-4 py-3 space-y-2">
-          {/* Anotacao rapida */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Anotacao rapida..."
-              value={quickNote}
-              onChange={(e) => setQuickNote(e.target.value)}
-              className="text-xs h-8 rounded-lg bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-700 focus:ring-emerald-500/30"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && quickNote.trim()) {
-                  toast.success("Anotacao salva (em breve persistida).");
-                  setQuickNote("");
-                }
-              }}
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-neutral-400 hover:text-neutral-600"
-              disabled={!quickNote.trim()}
-              onClick={() => {
-                toast.success("Anotacao salva (em breve persistida).");
-                setQuickNote("");
-              }}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          {/* Abrir Registro Completo */}
-          {onOpenRegistro && (
-            <Button
-              onClick={onOpenRegistro}
-              className="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold h-9 shadow-sm cursor-pointer transition-all duration-150"
-            >
-              <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
-              Abrir Registro Completo
-            </Button>
-          )}
-        </div>
+        <SheetActionFooter
+          audienciaId={audienciaIdNum}
+          jaConcluida={jaConcluida}
+          onAbrirRegistroCompleto={() => onOpenRegistro?.()}
+        />
       </SheetContent>
     </Sheet>
   );
