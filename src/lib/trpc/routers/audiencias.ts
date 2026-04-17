@@ -1871,4 +1871,28 @@ export const audienciasRouter = router({
       }
       return row;
     }),
+
+  redesignarDepoente: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      novaData: z.string().optional(),
+      motivo: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const [atual] = await db.select().from(testemunhas).where(eq(testemunhas.id, input.depoenteId));
+      if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      const observacoesAtualizadas = input.motivo
+        ? [atual.observacoes, `[Redesignado: ${input.motivo}]`].filter(Boolean).join("\n")
+        : atual.observacoes;
+      const [row] = await db
+        .update(testemunhas)
+        .set({
+          redesignadoPara: input.novaData ?? null,
+          observacoes: observacoesAtualizadas,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      return row;
+    }),
 });
