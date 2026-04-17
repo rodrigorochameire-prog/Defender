@@ -1,10 +1,11 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 
 describe("CollapsibleSection", () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => cleanup());
 
   it("renderiza fechado por default", () => {
     render(
