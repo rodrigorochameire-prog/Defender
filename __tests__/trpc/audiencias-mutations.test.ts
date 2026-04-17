@@ -270,3 +270,51 @@ describe("audiencias.marcarDepoenteOuvido", { timeout: 30000 }, () => {
     }
   });
 });
+
+describe("audiencias.vincularAudioDepoente", { timeout: 30000 }, () => {
+  it("grava audioDriveFileId quando informado", async () => {
+    const [user] = await db.insert(users).values({
+      name: "User VAD",
+      email: `vad-${Date.now()}@test.local`,
+      workspaceId: 1,
+    } as any).returning();
+    const { testemunha, processo, assistido } = await seedTestemunha(user);
+    try {
+      const caller = createCaller(mkCtx(user));
+      await caller.audiencias.vincularAudioDepoente({
+        depoenteId: testemunha.id,
+        audioDriveFileId: "drive-file-abc",
+      });
+      const [row] = await db.select().from(testemunhas).where(eq(testemunhas.id, testemunha.id));
+      expect(row.audioDriveFileId).toBe("drive-file-abc");
+    } finally {
+      await cleanupTestemunha({ testemunhaId: testemunha.id, processoId: processo.id, assistidoId: assistido.id });
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("desvincula quando audioDriveFileId é null", async () => {
+    const [user] = await db.insert(users).values({
+      name: "User VAD2",
+      email: `vad2-${Date.now()}@test.local`,
+      workspaceId: 1,
+    } as any).returning();
+    const { testemunha, processo, assistido } = await seedTestemunha(user);
+    try {
+      const caller = createCaller(mkCtx(user));
+      await caller.audiencias.vincularAudioDepoente({
+        depoenteId: testemunha.id,
+        audioDriveFileId: "drive-abc",
+      });
+      await caller.audiencias.vincularAudioDepoente({
+        depoenteId: testemunha.id,
+        audioDriveFileId: null,
+      });
+      const [row] = await db.select().from(testemunhas).where(eq(testemunhas.id, testemunha.id));
+      expect(row.audioDriveFileId).toBeNull();
+    } finally {
+      await cleanupTestemunha({ testemunhaId: testemunha.id, processoId: processo.id, assistidoId: assistido.id });
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});

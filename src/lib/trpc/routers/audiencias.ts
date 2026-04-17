@@ -1872,6 +1872,26 @@ export const audienciasRouter = router({
       return row;
     }),
 
+  vincularAudioDepoente: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      audioDriveFileId: z.string().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const [row] = await db
+        .update(testemunhas)
+        .set({
+          audioDriveFileId: input.audioDriveFileId,
+          updatedAt: new Date(),
+        })
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      }
+      return row;
+    }),
+
   redesignarDepoente: protectedProcedure
     .input(z.object({
       depoenteId: z.number(),
