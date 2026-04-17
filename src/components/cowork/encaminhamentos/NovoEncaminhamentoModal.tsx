@@ -152,7 +152,7 @@ export function NovoEncaminhamentoModal({
               maxCount={maxDest}
             />
             <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-1.5">
-              <Lock className="w-3 h-3" /> Só quem está em "Para" consegue ver o conteúdo
+              <Lock className="w-3 h-3" /> Só quem está em &quot;Para&quot; consegue ver o conteúdo
             </p>
           </Section>
 

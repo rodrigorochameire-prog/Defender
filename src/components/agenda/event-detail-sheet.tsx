@@ -21,6 +21,7 @@ import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
+import { DepoentesStatusBlock } from "./depoentes-status-block";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
@@ -383,6 +384,25 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                 )}
 
                 <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
+                  {depoentes.length > 0 && (
+                    <DepoentesStatusBlock
+                      depoentes={depoentes.map((d: any, i: number) => ({
+                        id: d.id ?? `${d.nome ?? d.name ?? "d"}-${i}`,
+                        nome: d.nome ?? d.name,
+                        tipo:
+                          d.tipo === "ACUSACAO" ||
+                          d.tipo === "DEFESA" ||
+                          d.tipo === "COMUM"
+                            ? "testemunha"
+                            : d.tipo,
+                        statusIntimacao: d.statusIntimacao,
+                        intimado: d.intimado,
+                        jaOuvido: d.jaOuvido,
+                      }))}
+                      mode="readonly"
+                      className="mb-2"
+                    />
+                  )}
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => (
