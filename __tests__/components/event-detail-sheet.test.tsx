@@ -117,4 +117,19 @@ describe("EventDetailSheet", () => {
     expect(screen.queryByText(/^pasta do assistido$/i)).toBeNull();
     expect(screen.queryByText(/^autos do processo$/i)).toBeNull();
   });
+
+  it("mostra AnalyzeCTA quando imputação vazia", () => {
+    render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
+    // Pelo menos um botão "Rodar análise IA" deve existir (no bloco "Análise IA" top, em Imputação empty state, etc.)
+    const cta = screen.getAllByRole("button", { name: /rodar análise/i });
+    expect(cta.length).toBeGreaterThan(0);
+  });
+
+  it("FreshnessBadge não renderiza quando analyzedAt é null", () => {
+    render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
+    // Quando a query retorna ctx sem analyzedAt, não deve haver badge "hoje" / "Xd atrás" / "reanalisar"
+    expect(screen.queryByText(/^hoje$/i)).toBeNull();
+    expect(screen.queryByText(/atrás/i)).toBeNull();
+    expect(screen.queryByText(/reanalisar/i)).toBeNull();
+  });
 });
