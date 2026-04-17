@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
+import { db, withTransaction, audiencias, audienciasHistorico, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
 import { analysisJobs } from "@/lib/db/schema/core";
 import { atendimentos } from "@/lib/db/schema/agenda";
@@ -1918,5 +1918,48 @@ export const audienciasRouter = router({
         })
         .where(eq(audiencias.id, input.audienciaId));
       return { ok: true };
+    }),
+
+  redesignarAudiencia: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      novaData: z.string(),
+      novoHorario: z.string(),
+      motivo: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return withTransaction(async (tx) => {
+        const [atual] = await tx.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
+        if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+
+        const [maxRow] = await tx
+          .select({ versao: sql<number>`COALESCE(MAX(versao), 0)` })
+          .from(audienciasHistorico)
+          .where(eq(audienciasHistorico.audienciaId, input.audienciaId));
+        const novaVersao = (maxRow?.versao ?? 0) + 1;
+
+        await tx.insert(audienciasHistorico).values({
+          audienciaId: input.audienciaId,
+          versao: novaVersao,
+          anotacoes: `[REDESIGNADA] ${input.motivo ?? "Sem motivo informado"}\nData anterior: ${atual.dataAudiencia.toISOString()}`,
+          editadoPorId: ctx.user.id,
+        });
+
+        const [ano, mes, dia] = input.novaData.split("-").map(Number);
+        const [hh, mm] = input.novoHorario.split(":").map(Number);
+        const novaDataHora = new Date(ano, mes - 1, dia, hh, mm);
+
+        await tx
+          .update(audiencias)
+          .set({
+            dataAudiencia: novaDataHora,
+            horario: input.novoHorario,
+            status: "redesignada",
+            updatedAt: new Date(),
+          })
+          .where(eq(audiencias.id, input.audienciaId));
+
+        return { ok: true };
+      });
     }),
 });
