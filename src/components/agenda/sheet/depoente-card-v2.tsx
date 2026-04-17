@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { VincularAudioPopover } from "./vincular-audio-popover";
 
 export interface DepoenteV2 {
   id?: number;
@@ -30,6 +31,7 @@ interface Props {
   onRedesignar: (id: number) => void;
   onAdicionarPergunta: (id: number) => void;
   onAbrirAudio?: (id: number) => void;
+  assistidoId?: number | null;
 }
 
 function ladoOf(d: DepoenteV2): "acusacao" | "defesa" | "neutro" {
@@ -58,7 +60,7 @@ function qualidadeLabel(d: DepoenteV2): string | null {
   return null;
 }
 
-export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onRedesignar, onAdicionarPergunta, onAbrirAudio }: Props) {
+export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onRedesignar, onAdicionarPergunta, onAbrirAudio, assistidoId }: Props) {
   const lado = ladoOf(depoente);
   const status = statusLabel(depoente.status);
   const ladoBorder = {
@@ -153,6 +155,13 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
             >
               + Pergunta
             </button>
+            {depoente.id != null && assistidoId && (
+              <VincularAudioPopover
+                depoenteId={depoente.id}
+                currentAudioId={depoente.audioDriveFileId ?? null}
+                assistidoId={assistidoId}
+              />
+            )}
             {depoente.audioDriveFileId && onAbrirAudio && (
               <button
                 type="button"

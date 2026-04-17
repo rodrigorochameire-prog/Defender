@@ -19,6 +19,8 @@ import { DocumentosBlock } from "./sheet/documentos-block";
 import { MidiaBlock } from "./sheet/midia-block";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
+import { AnalyzeCTA } from "./sheet/analyze-cta";
+import { FreshnessBadge } from "./sheet/freshness-badge";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
@@ -82,7 +84,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
   const { data: ctx, isLoading } = trpc.audiencias.getAudienciaContext.useQuery(
     { audienciaId: audienciaIdNum ?? 0 },
-    { enabled: !!audienciaIdNum && open, retry: false }
+    {
+      enabled: !!audienciaIdNum && open,
+      retry: false,
+      refetchInterval: (query: any) => {
+        const data = query.state?.data ?? query.data;
+        const status = (data as any)?.processo?.analysisStatus;
+        return (status === "queued" || status === "processing") ? 5000 : false;
+      },
+    }
   );
 
   const actions = useAudienciaStatusActions(audienciaIdNum);
@@ -127,6 +137,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
   const assistidoId = (ctx?.assistido as any)?.id ?? evento?.assistidoId ?? null;
   const processoId = (ctx?.processo as any)?.id ?? evento?.processoId ?? null;
   const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
+  const analysisStatus = (ctx?.processo as any)?.analysisStatus ?? null;
+  const analyzedAt = (ctx?.processo as any)?.analyzedAt ?? null;
 
   const imputacao = extractString(ad, "imputacao", "crimes_imputados") ?? extractString(caso, "foco") ?? null;
   const fatos = caso?.narrativaDenuncia ?? extractString(ad, "resumo_executivo", "narrativa_denuncia") ?? null;
@@ -295,20 +307,66 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
             {!isLoading && (
               <>
+                {!imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0 && (
+                  <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
+                    <div className="space-y-2">
+                      <EmptyHint text="Nenhuma análise IA executada ainda." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
+                  </CollapsibleSection>
+                )}
+
                 <CollapsibleSection id="imputacao" label="Imputação" defaultOpen>
+                  {analyzedAt && (
+                    <div className="flex justify-end mb-1">
+                      <FreshnessBadge analyzedAt={analyzedAt} />
+                    </div>
+                  )}
                   {imputacao ? (
                     <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{imputacao}</p>
-                  ) : <EmptyHint text="Imputação não extraída — rode a análise IA." />}
+                  ) : (
+                    <div className="space-y-2">
+                      <EmptyHint text="Imputação não extraída — rode a análise IA." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
+                  )}
                 </CollapsibleSection>
 
                 <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
+                  {analyzedAt && (
+                    <div className="flex justify-end mb-1">
+                      <FreshnessBadge analyzedAt={analyzedAt} />
+                    </div>
+                  )}
                   {fatos ? (
                     <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos}</p>
-                  ) : <EmptyHint text="Narrativa da denúncia não disponível." />}
+                  ) : (
+                    <div className="space-y-2">
+                      <EmptyHint text="Narrativa da denúncia não disponível." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
+                  )}
                 </CollapsibleSection>
 
                 {(versaoDelegacia || versaoJuizo) && (
                   <CollapsibleSection id="versao" label="Versão do Acusado">
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     {versaoDelegacia && (
                       <div className="mb-2">
                         <div className="text-[10px] font-semibold text-neutral-500 mb-1">Delegacia</div>
@@ -332,7 +390,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                           key={d.id ?? `${i}-${d.nome}`}
                           depoente={{
                             ...d,
-                            audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates),
+                            audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
                           }}
                           isOpen={openDepoenteIdx === i}
                           onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
@@ -341,7 +399,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                           onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
                           onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
                           onAbrirAudio={() => {
-                            const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates);
+                            const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
                             if (!audioId) {
                               toast.info("Áudio não encontrado para este depoente");
                               return;
@@ -351,6 +409,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                             if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
                             toast.success("Rolando para o áudio…");
                           }}
+                          assistidoId={typeof assistidoId === "number" ? assistidoId : null}
                         />
                       ))}
                     </div>
@@ -359,6 +418,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
                 {contradicoes.length > 0 && (
                   <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     <ul className="space-y-1.5">
                       {contradicoes.map((c: any, i: number) => {
                         const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? JSON.stringify(c);
@@ -375,6 +439,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
                 {laudos.length > 0 && (
                   <CollapsibleSection id="laudos" label="Laudos e Perícias" count={laudos.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     <ul className="space-y-1">
                       {laudos.map((l: any, i: number) => (
                         <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
@@ -412,6 +481,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
                 {pendencias.length > 0 && (
                   <CollapsibleSection id="pendencias" label="Pendências" count={pendencias.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     <ul className="space-y-1">
                       {pendencias.map((p: any, i: number) => {
                         const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? JSON.stringify(p);
@@ -428,6 +502,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
                 {teses.length > 0 && (
                   <CollapsibleSection id="teses" label="Teses" count={teses.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1.5">
                       {teses.map((t: any, i: number) => {
                         const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? JSON.stringify(t);

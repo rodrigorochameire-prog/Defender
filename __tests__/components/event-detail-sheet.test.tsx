@@ -34,6 +34,10 @@ vi.mock("@/lib/trpc/client", () => ({
       marcarDepoenteOuvido: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       redesignarDepoente: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       addQuickNote: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      vincularAudioDepoente: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+    },
+    analise: {
+      criarTask: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
     drive: {
       filesByProcesso: { useQuery: () => ({ data: [], isLoading: false }) },
