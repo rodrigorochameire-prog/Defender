@@ -22,6 +22,7 @@ vi.mock("@/lib/trpc/client", () => ({
             processo: { id: 10, numeroAutos: "0000-00" },
             testemunhas: [{ id: 1, nome: "João Único", tipo: "ACUSACAO", status: "ARROLADA" }],
             diligencias: [],
+            atendimentos: [],
             analysisData: null,
             caso: null,
           },
@@ -34,7 +35,21 @@ vi.mock("@/lib/trpc/client", () => ({
       redesignarDepoente: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       addQuickNote: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
-    useUtils: () => ({ audiencias: { getAudienciaContext: { invalidate: vi.fn() } } }),
+    drive: {
+      filesByProcesso: { useQuery: () => ({ data: [], isLoading: false }) },
+      filesByAssistido: { useQuery: () => ({ data: [], isLoading: false }) },
+      getDriveStatusForProcesso: { useQuery: () => ({ data: null, isLoading: false }) },
+      getDriveStatusForAssistido: { useQuery: () => ({ data: null, isLoading: false }) },
+      uploadWithLink: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      midiasByAssistido: { useQuery: () => ({ data: null, isLoading: false }) },
+    },
+    useUtils: () => ({
+      audiencias: { getAudienciaContext: { invalidate: vi.fn() } },
+      drive: {
+        filesByProcesso: { invalidate: vi.fn() },
+        filesByAssistido: { invalidate: vi.fn() },
+      },
+    }),
   },
 }));
 

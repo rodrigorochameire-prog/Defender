@@ -6,18 +6,18 @@ import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, ExternalLink, FileText,
-  FolderOpen, Loader2, X,
+  AlertTriangle, Check, Copy, Loader2, X,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
 import { SheetToC, type ToCSection } from "./sheet/sheet-toc";
 import { CollapsibleSection } from "./sheet/collapsible-section";
 import { SheetActionFooter } from "./sheet/sheet-action-footer";
 import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
+import { DocumentosBlock } from "./sheet/documentos-block";
+import { MidiaBlock } from "./sheet/midia-block";
+import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 
 function EmptyHint({ text }: { text: string }) {
@@ -86,6 +86,23 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
   );
 
   const actions = useAudienciaStatusActions(audienciaIdNum);
+
+  const midiasQuery = trpc.drive.midiasByAssistido.useQuery(
+    { assistidoId: (ctx?.assistido as any)?.id ?? 0 },
+    { enabled: !!(ctx?.assistido as any)?.id && open, retry: false }
+  );
+
+  const allMediaCandidates = useMemo(() => {
+    const data: any = midiasQuery.data;
+    return [
+      ...(data?.processos ?? []).flatMap((p: any) => p.files ?? []),
+      ...(data?.ungrouped ?? []),
+    ].map((f: any) => ({
+      driveFileId: f.driveFileId,
+      name: f.name,
+      mimeType: f.mimeType,
+    }));
+  }, [midiasQuery.data]);
 
   const copyProcesso = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -158,10 +175,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
     if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
     if (pendencias.length) s.push({ id: "pendencias", label: "Pendências" });
     if (teses.length) s.push({ id: "teses", label: "Teses" });
-    if (assistidoId || processoId) s.push({ id: "documentos", label: "Docs" });
+    s.push({ id: "documentos", label: "Docs" });
+    s.push({ id: "midia", label: "Mídia" });
     return s;
   }, [imputacao, fatos, versaoDelegacia, versaoJuizo, depoentes.length, contradicoes.length,
-      laudos.length, diligencias.length, pendencias.length, teses.length, assistidoId, processoId]);
+      laudos.length, diligencias.length, pendencias.length, teses.length]);
 
   useEffect(() => {
     if (!open || !scrollContainerRef.current) return;
@@ -312,14 +330,27 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                       {depoentes.map((d: any, i: number) => (
                         <DepoenteCardV2
                           key={d.id ?? `${i}-${d.nome}`}
-                          depoente={d}
+                          depoente={{
+                            ...d,
+                            audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates),
+                          }}
                           isOpen={openDepoenteIdx === i}
                           onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
                           variant="sheet"
                           onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
                           onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
                           onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
-                          onAbrirAudio={() => toast.info("Em breve (Fase 2)")}
+                          onAbrirAudio={() => {
+                            const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates);
+                            if (!audioId) {
+                              toast.info("Áudio não encontrado para este depoente");
+                              return;
+                            }
+                            const root = scrollContainerRef.current;
+                            const target = root?.querySelector('[data-section-id="midia"]');
+                            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                            toast.success("Rolando para o áudio…");
+                          }}
                         />
                       ))}
                     </div>
@@ -406,33 +437,29 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                   </CollapsibleSection>
                 )}
 
-                {(assistidoId || processoId) && (
-                  <CollapsibleSection id="documentos" label="Documentos">
-                    <div className="flex flex-wrap gap-2">
-                      {assistidoId && (
-                        <Link
-                          href={`/admin/assistidos/${assistidoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/40 cursor-pointer"
-                        >
-                          <FolderOpen className="w-3 h-3" /> Pasta do Assistido
-                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                        </Link>
-                      )}
-                      {processoId && (
-                        <Link
-                          href={`/admin/processos/${processoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200/40 cursor-pointer"
-                        >
-                          <FileText className="w-3 h-3" /> Autos do Processo
-                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                        </Link>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-neutral-400 italic mt-2">
-                      Preview inline + upload chegam na Fase 2.
-                    </p>
-                  </CollapsibleSection>
-                )}
+                <CollapsibleSection id="documentos" label="Documentos" defaultOpen>
+                  <DocumentosBlock
+                    processoId={typeof processoId === "number" ? processoId : null}
+                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                  />
+                </CollapsibleSection>
+
+                {/* Mídia */}
+                <CollapsibleSection id="midia" label="Mídia">
+                  <MidiaBlock
+                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                    atendimentosComAudio={
+                      ((ctx?.atendimentos as any[]) ?? [])
+                        .filter((a: any) => !!a.audioDriveFileId)
+                        .map((a: any) => ({
+                          id: a.id,
+                          data: a.dataAtendimento ?? a.data ?? new Date(),
+                          audioDriveFileId: a.audioDriveFileId,
+                          transcricaoResumo: a.transcricaoResumo,
+                        }))
+                    }
+                  />
+                </CollapsibleSection>
               </>
             )}
           </div>
