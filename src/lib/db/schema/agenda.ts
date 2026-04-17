@@ -236,6 +236,7 @@ export const testemunhas = pgTable("testemunhas", {
   ouvidoEm: timestamp("ouvido_em"),
   redesignadoPara: date("redesignado_para"),
   sinteseJuizo: text("sintese_juizo"),
+  audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
