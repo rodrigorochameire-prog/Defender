@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Modal-side DepoenteCard: rich display component for tab-historico / tab-depoentes / tab-depoente-form.
+ *
+ * Not to be confused with `src/components/agenda/sheet/depoente-card-v2.tsx`, which is the
+ * sheet-side accordion card with inline actions (marcar ouvido, redesignar, etc.).
+ *
+ * Unification of both is deferred to Fase 3 (modal Histórico redesign), which will
+ * rework the modal UX and allow consolidating onto a single component without regression.
+ */
+
 import { Label } from "@/components/ui/label";
 import { BookOpen, Target, Quote, Eye, FileWarning } from "lucide-react";
 import { cn } from "@/lib/utils";
