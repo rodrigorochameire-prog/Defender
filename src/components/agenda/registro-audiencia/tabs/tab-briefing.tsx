@@ -275,37 +275,38 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
 
           {/* 4. VERSAO DO ACUSADO — expanded */}
           <CollapsibleSection id="versao-acusado" label="Versao do Acusado">
-            <div className="space-y-4">
-              {/* Delegacia */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Coluna 1: Delegacia */}
+              <div className="rounded-lg bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 p-3 flex flex-col">
+                <div className="flex items-center gap-1.5 mb-2">
                   <div className="w-2 h-2 rounded-full bg-blue-500" />
                   <span className="text-[10px] uppercase tracking-wider font-semibold text-blue-500">
                     Delegacia
                   </span>
                 </div>
                 {versaoDelegacia ? (
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed pl-3.5 whitespace-pre-wrap">
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
                     {versaoDelegacia}
                   </p>
                 ) : (
-                  <p className="text-xs text-neutral-400 italic pl-3.5">
-                    Versao na delegacia nao extraida.
+                  <p className="text-xs text-neutral-400 italic">
+                    Versão na delegacia não extraída.
                   </p>
                 )}
               </div>
-              {/* Atendimentos Defensoria — expanded: show all */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
+
+              {/* Coluna 2: Atendimentos Defensoria */}
+              <div className="rounded-lg bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 p-3 flex flex-col max-h-96 overflow-y-auto">
+                <div className="flex items-center gap-1.5 mb-2 sticky top-0 bg-white dark:bg-neutral-900 pb-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-500">
-                    Atendimentos Defensoria ({atendimentos.length})
+                    Defensoria ({atendimentos.length})
                   </span>
                 </div>
                 {atendimentos.length > 0 ? (
-                  <div className="space-y-3 pl-3.5">
+                  <div className="space-y-2.5">
                     {atendimentos.map((at: any, i: number) => (
-                      <div key={at.id ?? i} className="rounded-lg bg-white dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-700/60 px-3 py-2">
+                      <div key={at.id ?? i} className="rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-700/60 px-3 py-2">
                         <div className="flex items-center gap-2 mb-1">
                           {at.data && (
                             <span className="text-[10px] text-neutral-400 font-mono">
@@ -325,7 +326,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-neutral-400 italic pl-3.5">
+                  <p className="text-xs text-neutral-400 italic">
                     Nenhum atendimento registrado — agende entrevista.
                   </p>
                 )}
