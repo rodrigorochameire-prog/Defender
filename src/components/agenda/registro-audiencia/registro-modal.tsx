@@ -56,16 +56,16 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           Sistema para registro de audiencias com gestao de depoentes.
         </DialogDescription>
 
-        {/* Header - Padrao Defender */}
-        <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Gavel className="w-4 h-4 md:w-5 md:h-5 text-background" />
+        {/* Header - Linha 1: identidade + ações */}
+        <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Gavel className="w-5 h-5 text-background" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif text-sm md:text-lg font-semibold text-foreground truncate">
-                  {evento.titulo}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-serif text-lg font-semibold text-foreground">
+                  Registro de Audiência
                 </h2>
                 {form.registroSalvo && (
                   <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 flex items-center gap-1">
@@ -73,102 +73,97 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     Salvo
                   </Badge>
                 )}
-              </div>
-              <p className="text-xs md:text-sm font-semibold text-foreground/80 truncate">
-                {(() => {
-                  const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
-                  const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
-                  if (assistidoId) {
-                    return (
-                      <Link
-                        href={`/admin/assistidos/${assistidoId}`}
-                        target="_blank"
-                        rel="noopener"
-                        className="text-foreground/80 hover:text-foreground hover:underline transition-colors truncate"
-                      >
-                        {assistidoName}
-                      </Link>
-                    );
-                  }
-                  return assistidoName;
-                })()}
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[10px] md:text-xs text-muted-foreground truncate">
-                  {new Date(evento.data).toLocaleDateString("pt-BR")} {evento.horarioInicio && `\u2022 ${evento.horarioInicio}`}
-                  {evento.processo && (() => {
-                    const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
-                    const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
-                    if (processoId) {
-                      return (
-                        <>
-                          {" \u2022 "}
-                          <Link
-                            href={`/admin/processos/${processoId}`}
-                            target="_blank"
-                            rel="noopener"
-                            className="font-mono text-muted-foreground hover:text-foreground hover:underline transition-colors"
-                          >
-                            {processoDisplay}
-                          </Link>
-                        </>
-                      );
-                    }
-                    return ` \u2022 ${processoDisplay}`;
-                  })()}
-                </p>
-                {evento.atribuicao && (
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border text-muted-foreground">
-                    {evento.atribuicao}
-                  </Badge>
-                )}
-                {/* Inline Juiz / Promotor fields */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-muted-foreground">Juiz:</span>
-                  <input
-                    type="text"
-                    value={form.juiz}
-                    onChange={(e) => form.setJuiz(e.target.value)}
-                    placeholder="Nome do juiz"
-                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-muted-foreground">MP:</span>
-                  <input
-                    type="text"
-                    value={form.promotor}
-                    onChange={(e) => form.setPromotor(e.target.value)}
-                    placeholder="Nome do promotor"
-                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
-                  />
-                </div>
                 {form.registroSalvo && form.ultimoSalvamento && (
-                  <span className="text-[9px] text-muted-foreground">
-                    Ultimo salvamento: {form.ultimoSalvamento}
+                  <span className="text-[10px] text-muted-foreground">
+                    {form.ultimoSalvamento}
                   </span>
                 )}
               </div>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">
+                {(() => {
+                  const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
+                  const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
+                  const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
+                  const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
+                  return (
+                    <>
+                      {assistidoId ? (
+                        <Link
+                          href={`/admin/assistidos/${assistidoId}`}
+                          target="_blank"
+                          rel="noopener"
+                          className="font-medium text-foreground/90 hover:underline"
+                        >
+                          {assistidoName}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-foreground/90">{assistidoName}</span>
+                      )}
+                      {processoDisplay && (
+                        <>
+                          {" · "}
+                          {processoId ? (
+                            <Link
+                              href={`/admin/processos/${processoId}`}
+                              target="_blank"
+                              rel="noopener"
+                              className="font-mono hover:underline"
+                            >
+                              {processoDisplay}
+                            </Link>
+                          ) : (
+                            <span className="font-mono">{processoDisplay}</span>
+                          )}
+                        </>
+                      )}
+                      {" · "}
+                      {new Date(evento.data).toLocaleDateString("pt-BR")}
+                      {evento.horarioInicio && ` · ${evento.horarioInicio}`}
+                    </>
+                  );
+                })()}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {form.registroSalvo && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={form.handleSubmit}
-                className="hidden md:flex items-center gap-1.5 h-8 text-xs cursor-pointer"
-              >
-                <Save className="w-3.5 h-3.5" />
-                Atualizar
-              </Button>
-            )}
-            <button
-              onClick={onClose}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4 md:w-5 md:h-5 text-foreground/80" />
-            </button>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer flex-shrink-0"
+          >
+            <X className="w-5 h-5 text-foreground/80" />
+          </button>
+        </div>
+
+        {/* Linha 3: faixa de contexto (atribuição + vara + Juiz/MP) */}
+        <div className="bg-neutral-50 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-border/60 px-4 py-1.5 flex items-center gap-3 flex-wrap flex-shrink-0">
+          {evento.atribuicao && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
+              {evento.atribuicao}
+            </Badge>
+          )}
+          {evento.local && (
+            <span className="text-[11px] text-muted-foreground truncate max-w-[240px]">
+              {evento.local}
+            </span>
+          )}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">Juiz:</span>
+            <input
+              type="text"
+              value={form.juiz}
+              onChange={(e) => form.setJuiz(e.target.value)}
+              placeholder="Nome do juiz"
+              className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">MP:</span>
+            <input
+              type="text"
+              value={form.promotor}
+              onChange={(e) => form.setPromotor(e.target.value)}
+              placeholder="Nome do promotor"
+              className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+            />
           </div>
         </div>
 
