@@ -81,6 +81,7 @@ import { instanciaSuperiorRouter } from "./instancia-superior";
 import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
 import { encaminhamentosRouter } from "./encaminhamentos";
+import { pessoasRouter } from "./pessoas";
 
 
 export const appRouter = router({
@@ -383,6 +384,11 @@ export const appRouter = router({
   // COWORK - ENCAMINHAMENTOS (TRANSFERÊNCIAS, ACOMPANHAMENTOS)
   // ==========================================
   encaminhamentos: encaminhamentosRouter,
+
+  // ==========================================
+  // PESSOAS (FASE I-A — CADASTRO UNIFICADO)
+  // ==========================================
+  pessoas: pessoasRouter,
 });
 
 export type AppRouter = typeof appRouter;
