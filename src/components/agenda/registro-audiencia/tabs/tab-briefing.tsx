@@ -821,6 +821,10 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                   </div>
                 )}
               </div>
+            ) : teoriaDireito ? (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                {teoriaDireito}
+              </p>
             ) : (
               <EmptyHint text="Teses não extraídas." />
             )}
