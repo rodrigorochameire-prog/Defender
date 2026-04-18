@@ -2,6 +2,8 @@
 
 import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IntelDot } from "./intel-dot";
+import type { DotLevel } from "@/lib/pessoas/compute-dot-level";
 
 type PapelColor = "neutral" | "rose" | "indigo" | "violet" | "emerald" | "amber" | "slate" | "cyan";
 
@@ -54,6 +56,9 @@ export interface PessoaChipProps {
   clickable?: boolean;
   onClick?: (resolved: { id?: number; nome: string }) => void;
   className?: string;
+  dotLevel?: DotLevel;
+  showDot?: boolean;
+  ambiguityMark?: boolean;
 }
 
 /**
@@ -68,6 +73,9 @@ export function PessoaChip({
   clickable = true,
   onClick,
   className,
+  dotLevel,
+  showDot = true,
+  ambiguityMark = false,
 }: PessoaChipProps) {
   const color = papel ? PAPEL_COLOR_MAP[papel] ?? "neutral" : "neutral";
   const sizeClass =
@@ -92,6 +100,17 @@ export function PessoaChip({
       <User className={size === "xs" ? "w-2.5 h-2.5" : "w-3 h-3"} />
       <span className="truncate max-w-[200px]">{nome ?? "(sem nome)"}</span>
       {papel && <span className="text-[9px] opacity-70">{papel.replace(/-/g, " ")}</span>}
+      {showDot && dotLevel && dotLevel !== "none" && (
+        <IntelDot level={dotLevel} size={size === "xs" ? "xs" : "sm"} />
+      )}
+      {ambiguityMark && (
+        <span
+          className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400"
+          aria-label="Possível duplicata — ver merge-queue"
+        >
+          ?
+        </span>
+      )}
     </>
   );
 

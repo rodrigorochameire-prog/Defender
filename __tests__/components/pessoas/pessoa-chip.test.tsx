@@ -43,3 +43,31 @@ describe("PessoaChip (silencioso — Fase I-A)", () => {
     expect(container.firstElementChild?.className ?? "").toMatch(/emerald/);
   });
 });
+
+describe("PessoaChip v2 (I-B)", () => {
+  it("renderiza dot quando dotLevel !== none", () => {
+    const { container } = render(
+      <PessoaChip nome="Maria" dotLevel="normal" />
+    );
+    expect(container.querySelector('[role="img"]')).toBeTruthy();
+  });
+
+  it("não renderiza dot quando dotLevel=none", () => {
+    const { container } = render(
+      <PessoaChip nome="João" dotLevel="none" />
+    );
+    expect(container.querySelector('[role="img"]')).toBeNull();
+  });
+
+  it("mostra '?' quando ambiguityMark=true", () => {
+    render(<PessoaChip nome="Comum" ambiguityMark />);
+    expect(screen.getByText("?")).toBeInTheDocument();
+  });
+
+  it("showDot=false não renderiza dot mesmo com level", () => {
+    const { container } = render(
+      <PessoaChip nome="X" dotLevel="normal" showDot={false} />
+    );
+    expect(container.querySelector('[role="img"]')).toBeNull();
+  });
+});
