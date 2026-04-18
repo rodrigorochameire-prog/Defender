@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Send } from "lucide-react";
+import { BookOpen, Check, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConcluirDialog } from "./concluir-dialog";
 import { RedesignarDialog } from "./redesignar-dialog";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -68,18 +67,15 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
           >
             ↷ Redesignar
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="h-9 w-9 p-0 cursor-pointer">⋯</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onAbrirRegistroCompleto}>
-                Abrir registro completo
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>Decretar revelia (em breve)</DropdownMenuItem>
-              <DropdownMenuItem disabled>Suspender (em breve)</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 text-xs h-9 cursor-pointer"
+            disabled={!audienciaId}
+            onClick={onAbrirRegistroCompleto}
+          >
+            <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Registrar
+          </Button>
         </div>
       </div>
 
