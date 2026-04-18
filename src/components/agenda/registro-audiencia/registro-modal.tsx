@@ -32,6 +32,12 @@ function completudeStateColor(state: CompletudeState): string {
   return "bg-neutral-300 dark:bg-neutral-700";
 }
 
+const COMPLETUDE_LABEL: Record<CompletudeState, string> = {
+  full: "completo",
+  partial: "parcial",
+  empty: "vazio",
+};
+
 const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
   { key: "briefing", label: "Briefing", icon: Sparkles },
   { key: "depoentes", label: "Depoentes", icon: Users, countKey: "depoentes" },
@@ -212,7 +218,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                   )}
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${completudeStateColor(completude.byTab[tab.key])}`}
-                    title={`Completude: ${completude.byTab[tab.key]}`}
+                    title={`Completude: ${COMPLETUDE_LABEL[completude.byTab[tab.key]]}`}
                   />
                 </button>
               );
