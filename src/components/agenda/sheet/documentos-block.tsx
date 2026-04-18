@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { DocumentosItem, type DriveFileLite } from "./documentos-item";
 import { DropZone } from "./drop-zone";
 import { fileToBase64 } from "@/lib/agenda/file-to-base64";
+import { DocumentPreviewDialog } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
 
 type TabKey = "autos" | "assistido";
 
@@ -18,6 +19,7 @@ interface Props {
 export function DocumentosBlock({ processoId, assistidoId }: Props) {
   const [tab, setTab] = useState<TabKey>("autos");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<DriveFileLite | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -153,10 +155,20 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
               file={f}
               isOpen={openId === f.driveFileId}
               onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+              onExpand={setExpanded}
             />
           ))}
         </div>
       )}
+
+      <DocumentPreviewDialog
+        driveFileId={expanded?.driveFileId ?? null}
+        title={expanded?.name}
+        mimeType={expanded?.mimeType}
+        webViewLink={expanded?.webViewLink}
+        fileSize={expanded?.fileSize != null ? String(expanded.fileSize) : null}
+        onClose={() => setExpanded(null)}
+      />
     </div>
   );
 }

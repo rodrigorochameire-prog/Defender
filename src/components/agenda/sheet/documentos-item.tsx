@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Maximize2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DrivePreviewIframe } from "./drive-preview-iframe";
@@ -19,6 +19,7 @@ interface Props {
   file: DriveFileLite;
   isOpen: boolean;
   onToggle: () => void;
+  onExpand?: (file: DriveFileLite) => void;
 }
 
 function iconFor(mimeType: string): string {
@@ -38,7 +39,7 @@ function formatSize(bytes?: number | null): string {
   return `${Math.round(bytes / 1024)} KB`;
 }
 
-export function DocumentosItem({ file, isOpen, onToggle }: Props) {
+export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
   const dataStr = file.lastModifiedTime
     ? format(new Date(file.lastModifiedTime), "dd/MMM", { locale: ptBR })
     : "";
@@ -47,26 +48,53 @@ export function DocumentosItem({ file, isOpen, onToggle }: Props) {
       "rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden",
       isOpen && "bg-white dark:bg-neutral-900/50"
     )}>
-      <button
-        type="button"
-        aria-label={file.name}
-        onClick={onToggle}
-        className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
-      >
-        <span className="text-base">{iconFor(file.mimeType)}</span>
-        <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1 min-w-0 truncate">
-          {file.name}
-        </span>
-        {dataStr && <span className="text-[10px] text-neutral-400 tabular-nums">{dataStr}</span>}
-        {isOpen
-          ? <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-          : <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />}
-      </button>
+      <div className="flex items-center gap-1 px-3 py-2 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20">
+        <button
+          type="button"
+          aria-label={file.name}
+          onClick={onToggle}
+          className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
+        >
+          <span className="text-base">{iconFor(file.mimeType)}</span>
+          <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1 min-w-0 truncate">
+            {file.name}
+          </span>
+          {dataStr && <span className="text-[10px] text-neutral-400 tabular-nums">{dataStr}</span>}
+          {isOpen
+            ? <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
+            : <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />}
+        </button>
+        {onExpand && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpand(file);
+            }}
+            aria-label="Expandir visualização"
+            title="Expandir em tela cheia"
+            className="w-6 h-6 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer flex-shrink-0"
+          >
+            <Maximize2 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
       {isOpen && (
         <div className="px-3 pb-3 border-t border-neutral-100 dark:border-neutral-800/40 pt-2.5 space-y-2">
-          <div className="flex items-center gap-2 text-[10px] text-neutral-500">
-            <span>{file.mimeType}</span>
-            {file.fileSize && <span>· {formatSize(file.fileSize)}</span>}
+          <div className="flex items-center justify-between gap-2 text-[10px] text-neutral-500">
+            <div className="flex items-center gap-2">
+              <span>{file.mimeType}</span>
+              {file.fileSize && <span>· {formatSize(file.fileSize)}</span>}
+            </div>
+            {onExpand && (
+              <button
+                type="button"
+                onClick={() => onExpand(file)}
+                className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
+              >
+                <Maximize2 className="w-2.5 h-2.5" /> Expandir
+              </button>
+            )}
           </div>
           <DrivePreviewIframe driveFileId={file.driveFileId} />
           <div className="flex gap-1.5">
