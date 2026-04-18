@@ -13,6 +13,7 @@ export interface DriveFileLite {
   fileSize?: number | null;
   lastModifiedTime?: Date | string | null;
   webViewLink?: string | null;
+  enrichmentStatus?: string | null;
 }
 
 interface Props {

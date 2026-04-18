@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2, Maximize2, X } from "lucide-react";
+import { Check, Download, ExternalLink, Link as LinkIcon, Loader2, Maximize2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Props {
   driveFileId: string | null;
@@ -10,6 +11,7 @@ interface Props {
   mimeType?: string | null;
   webViewLink?: string | null;
   fileSize?: string | null;
+  enrichmentStatus?: string | null;
   onClose: () => void;
 }
 
@@ -44,9 +46,11 @@ export function DocumentPreviewDialog({
   mimeType,
   webViewLink,
   fileSize,
+  enrichmentStatus,
   onClose,
 }: Props) {
   const [iframeLoading, setIframeLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const open = !!driveFileId;
@@ -94,6 +98,30 @@ export function DocumentPreviewDialog({
     }
   };
 
+  const copyLink = async () => {
+    if (!driveUrl) return;
+    try {
+      await navigator.clipboard.writeText(driveUrl);
+      setCopied(true);
+      toast.success("Link copiado");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const downloadFile = () => {
+    if (!driveFileId) return;
+    const url = `/api/drive/proxy?fileId=${driveFileId}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = title || "documento";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   if (!open) return null;
 
   const fileTypeLabel = getFileTypeLabel(mime);
@@ -128,11 +156,43 @@ export function DocumentPreviewDialog({
                   {sizeLabel}
                 </span>
               )}
+              {enrichmentStatus === "completed" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  Extraído
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex-1" />
+
+        {driveFileId && (
+          <button
+            type="button"
+            onClick={downloadFile}
+            title="Baixar arquivo"
+            aria-label="Download"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Download
+          </button>
+        )}
+
+        {driveUrl && (
+          <button
+            type="button"
+            onClick={copyLink}
+            title="Copiar link do Drive"
+            aria-label="Copiar link"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <LinkIcon className="w-3.5 h-3.5" />}
+            {copied ? "Copiado" : "Copiar link"}
+          </button>
+        )}
 
         <button
           type="button"

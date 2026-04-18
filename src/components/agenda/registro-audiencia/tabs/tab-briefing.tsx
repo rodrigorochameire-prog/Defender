@@ -110,7 +110,7 @@ function DocumentosProcessoBlock({
   onPreview,
 }: {
   files: any[];
-  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null }) => void;
+  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null; enrichmentStatus?: string | null }) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -204,7 +204,7 @@ function DocumentosProcessoBlock({
                       {f.driveFileId && (
                         <button
                           type="button"
-                          onClick={() => onPreview({ id: f.driveFileId, title: fileName, mimeType: f.mimeType, webViewLink: f.webViewLink, fileSize: f.fileSize })}
+                          onClick={() => onPreview({ id: f.driveFileId, title: fileName, mimeType: f.mimeType, webViewLink: f.webViewLink, fileSize: f.fileSize, enrichmentStatus: f.enrichmentStatus })}
                           className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
                         >
                           Ver
@@ -269,7 +269,7 @@ function DepoentesBlock({
 }: {
   depoentes: any[];
   driveFiles: { driveFileId: string; name: string; mimeType?: string | null; webViewLink?: string | null }[];
-  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null }) => void;
+  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null; enrichmentStatus?: string | null }) => void;
 }) {
   const [vista, setVista] = useState<"status" | "lado">("status");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -557,6 +557,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     mimeType?: string | null;
     webViewLink?: string | null;
     fileSize?: string | null;
+    enrichmentStatus?: string | null;
   } | null>(null);
   const [expandedInvestigacao, setExpandedInvestigacao] = useState<{ titulo: string; texto: string } | null>(null);
 
@@ -713,6 +714,11 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             )}
           </CollapsibleSection>
 
+          {/* 2.5. DOCUMENTOS DO PROCESSO — fonte antes da extração */}
+          <CollapsibleSection id="documentos-processo" label="Documentos do Processo" count={driveFiles.length} defaultOpen>
+            <DocumentosProcessoBlock files={driveFiles} onPreview={setPreviewDoc} />
+          </CollapsibleSection>
+
           {/* 3. ELEMENTOS — expanded */}
           <CollapsibleSection id="elementos" label="Elementos">
             {laudos.length > 0 && (
@@ -781,10 +787,6 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             {laudos.length === 0 && lacunas.length === 0 && !teoriaProvas && (
               <EmptyHint text="Elementos probatorios nao extraidos." />
             )}
-          </CollapsibleSection>
-
-          <CollapsibleSection id="documentos-processo" label="Documentos do Processo" count={driveFiles.length}>
-            <DocumentosProcessoBlock files={driveFiles} onPreview={setPreviewDoc} />
           </CollapsibleSection>
 
           {/* 4. VERSAO DO ACUSADO — expanded */}
@@ -1137,6 +1139,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
         mimeType={previewDoc?.mimeType}
         webViewLink={previewDoc?.webViewLink}
         fileSize={previewDoc?.fileSize}
+        enrichmentStatus={previewDoc?.enrichmentStatus}
         onClose={() => setPreviewDoc(null)}
       />
     </div>

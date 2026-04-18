@@ -167,6 +167,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
         mimeType={expanded?.mimeType}
         webViewLink={expanded?.webViewLink}
         fileSize={expanded?.fileSize != null ? String(expanded.fileSize) : null}
+        enrichmentStatus={expanded?.enrichmentStatus}
         onClose={() => setExpanded(null)}
       />
     </div>
