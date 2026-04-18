@@ -110,7 +110,7 @@ function DocumentosProcessoBlock({
   onPreview,
 }: {
   files: any[];
-  onPreview: (p: { id: string; title: string }) => void;
+  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null }) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -204,7 +204,7 @@ function DocumentosProcessoBlock({
                       {f.driveFileId && (
                         <button
                           type="button"
-                          onClick={() => onPreview({ id: f.driveFileId, title: fileName })}
+                          onClick={() => onPreview({ id: f.driveFileId, title: fileName, mimeType: f.mimeType, webViewLink: f.webViewLink })}
                           className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
                         >
                           Ver
@@ -268,8 +268,8 @@ function DepoentesBlock({
   onPreview,
 }: {
   depoentes: any[];
-  driveFiles: { driveFileId: string; name: string; mimeType?: string | null }[];
-  onPreview: (p: { id: string; title: string }) => void;
+  driveFiles: { driveFileId: string; name: string; mimeType?: string | null; webViewLink?: string | null }[];
+  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null }) => void;
 }) {
   const [vista, setVista] = useState<"status" | "lado">("status");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -380,7 +380,7 @@ function DepoentesBlock({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}` });
+                            onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}`, mimeType: termoFile?.mimeType, webViewLink: (termoFile as any)?.webViewLink });
                           }}
                           className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                         >
@@ -394,7 +394,7 @@ function DepoentesBlock({
                         <DepoenteCard
                           dep={{ ...d, lado: lado2, tipo: tipoNormalized }}
                           variant="full"
-                          onVerTermo={termoId ? () => onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}` }) : undefined}
+                          onVerTermo={termoId ? () => onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}`, mimeType: termoFile?.mimeType, webViewLink: (termoFile as any)?.webViewLink }) : undefined}
                         />
                       </div>
                     )}
@@ -551,7 +551,12 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
 
   const actions = useAudienciaStatusActions(audienciaId);
 
-  const [previewDoc, setPreviewDoc] = useState<{ id: string; title: string } | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{
+    id: string;
+    title: string;
+    mimeType?: string | null;
+    webViewLink?: string | null;
+  } | null>(null);
   const [expandedInvestigacao, setExpandedInvestigacao] = useState<{ titulo: string; texto: string } | null>(null);
 
   // Analysis data shortcuts
@@ -720,6 +725,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                     const detalhes = typeof l === "object" ? l.resultado ?? l.conclusao ?? l.detalhes : null;
                     const Icon = iconeLaudo(text);
                     const laudoId = matchLaudo(text, driveFiles.map((f: any) => ({ driveFileId: f.driveFileId, name: f.fileName ?? f.name ?? "", mimeType: f.mimeType })));
+                    const laudoFile = laudoId ? driveFiles.find((f: any) => f.driveFileId === laudoId) : null;
                     return (
                       <li key={i} className="rounded-lg bg-white dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-700/60 px-3 py-2">
                         <div className="flex items-start gap-2 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
@@ -728,7 +734,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                           {laudoId && (
                             <button
                               type="button"
-                              onClick={() => setPreviewDoc({ id: laudoId, title: `Laudo — ${text}` })}
+                              onClick={() => setPreviewDoc({ id: laudoId, title: `Laudo — ${text}`, mimeType: (laudoFile as any)?.mimeType, webViewLink: (laudoFile as any)?.webViewLink })}
                               className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
                             >
                               <FileText className="w-3 h-3" /> Ver
@@ -1127,6 +1133,8 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
       <DocumentPreviewDialog
         driveFileId={previewDoc?.id ?? null}
         title={previewDoc?.title}
+        mimeType={previewDoc?.mimeType}
+        webViewLink={previewDoc?.webViewLink}
         onClose={() => setPreviewDoc(null)}
       />
     </div>
