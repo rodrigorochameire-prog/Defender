@@ -22,6 +22,9 @@ import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions"
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
+import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
+import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
+import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
@@ -167,6 +170,46 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
     });
   }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa]);
 
+  const participacoesQuery = trpc.pessoas.getParticipacoesDoProcesso.useQuery(
+    { processoId: processoId ?? 0 },
+    { enabled: !!processoId && open, retry: false },
+  );
+
+  const participacoesDoProcesso = participacoesQuery.data ?? [];
+  const pessoaIdsDoProcesso = participacoesDoProcesso.map((p: any) => p.pessoaId);
+
+  const participacaoByPessoaId = useMemo(() => {
+    const m = new Map<number, any>();
+    for (const p of participacoesDoProcesso) m.set(p.pessoaId, p);
+    return m;
+  }, [participacoesDoProcesso]);
+
+  const pessoaIdByTestemunhaId = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const p of participacoesDoProcesso) {
+      if (p.testemunhaId) m.set(p.testemunhaId, p.pessoaId);
+    }
+    return m;
+  }, [participacoesDoProcesso]);
+
+  const { getSignal } = usePessoaSignals(pessoaIdsDoProcesso);
+
+  const signalsComNome = useMemo(() => {
+    return pessoaIdsDoProcesso
+      .map((id: number) => getSignal(id))
+      .filter((s): s is NonNullable<typeof s> => !!s);
+  }, [pessoaIdsDoProcesso, getSignal]);
+
+  const [pessoaSheetId, setPessoaSheetId] = useState<number | null>(null);
+
+  const getNome = (pessoaId: number) => {
+    const t = depoentes.find((d: any) => {
+      const tid = d.id;
+      return pessoaIdByTestemunhaId.get(tid) === pessoaId;
+    });
+    return t?.nome ?? `Pessoa #${pessoaId}`;
+  };
+
   useEffect(() => {
     const firstPending = depoentes.findIndex((d: any) => d.status !== "OUVIDA");
     setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
@@ -243,6 +286,16 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
 
         <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+        </div>
+
+        <div className="px-3 pt-2">
+          <BannerInteligencia
+            contextType="audiencia"
+            contextId={audienciaIdNum ?? 0}
+            signals={signalsComNome}
+            getNome={getNome}
+            onPessoaClick={(id) => setPessoaSheetId(id)}
+          />
         </div>
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
@@ -388,33 +441,56 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                 <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
-                      {depoentes.map((d: any, i: number) => (
-                        <DepoenteCardV2
-                          key={d.id ?? `${i}-${d.nome}`}
-                          depoente={{
-                            ...d,
-                            audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
-                          }}
-                          isOpen={openDepoenteIdx === i}
-                          onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
-                          variant="sheet"
-                          onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
-                          onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
-                          onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
-                          onAbrirAudio={() => {
-                            const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
-                            if (!audioId) {
-                              toast.info("Áudio não encontrado para este depoente");
-                              return;
-                            }
-                            const root = scrollContainerRef.current;
-                            const target = root?.querySelector('[data-section-id="midia"]');
-                            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-                            toast.success("Rolando para o áudio…");
-                          }}
-                          assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                        />
-                      ))}
+                      {depoentes.map((d: any, i: number) => {
+                        const pessoaId = pessoaIdByTestemunhaId.get(d.id);
+                        const signal = pessoaId ? getSignal(pessoaId) : null;
+                        const dotLevel = signal ? computeDotLevel(signal) : "none";
+                        return (
+                          <div key={d.id ?? `${i}-${d.nome}`} className="relative">
+                            <DepoenteCardV2
+                              depoente={{
+                                ...d,
+                                audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
+                              }}
+                              isOpen={openDepoenteIdx === i}
+                              onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
+                              variant="sheet"
+                              onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
+                              onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
+                              onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
+                              onAbrirAudio={() => {
+                                const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
+                                if (!audioId) {
+                                  toast.info("Áudio não encontrado para este depoente");
+                                  return;
+                                }
+                                const root = scrollContainerRef.current;
+                                const target = root?.querySelector('[data-section-id="midia"]');
+                                if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                                toast.success("Rolando para o áudio…");
+                              }}
+                              assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                            />
+                            {pessoaId && dotLevel !== "none" && (
+                              <button
+                                type="button"
+                                onClick={() => setPessoaSheetId(pessoaId)}
+                                aria-label={`Abrir dossiê de ${d.nome}`}
+                                className="absolute top-2 right-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 hover:border-emerald-400 cursor-pointer"
+                              >
+                                <PessoaChip
+                                  pessoaId={pessoaId}
+                                  nome=""
+                                  papel={signal?.papelPrimario ?? undefined}
+                                  size="xs"
+                                  clickable={false}
+                                  dotLevel={dotLevel}
+                                />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : <EmptyHint text="Nenhum depoente cadastrado." />}
                 </CollapsibleSection>
@@ -643,6 +719,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
           audienciaId={audienciaIdNum}
           jaConcluida={jaConcluida}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
+        />
+        <PessoaSheet
+          pessoaId={pessoaSheetId}
+          open={pessoaSheetId !== null}
+          onOpenChange={(o) => !o && setPessoaSheetId(null)}
         />
       </SheetContent>
     </Sheet>

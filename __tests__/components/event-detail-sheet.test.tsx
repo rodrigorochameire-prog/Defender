@@ -47,6 +47,11 @@ vi.mock("@/lib/trpc/client", () => ({
       uploadWithLink: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
       midiasByAssistido: { useQuery: () => ({ data: { processos: [], ungrouped: [], stats: { total: 0, transcribed: 0, analyzed: 0 } }, isLoading: false }) },
     },
+    pessoas: {
+      getParticipacoesDoProcesso: { useQuery: () => ({ data: [], isLoading: false }) },
+      getBatchSignals: { useQuery: () => ({ data: [], isLoading: false }) },
+      getById: { useQuery: () => ({ data: null, isLoading: false }) },
+    },
     useUtils: () => ({
       audiencias: { getAudienciaContext: { invalidate: vi.fn() } },
       drive: {
