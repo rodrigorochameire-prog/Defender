@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
@@ -23,6 +24,7 @@ import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
 import { matchTermoDepoente } from "@/lib/agenda/match-document";
+import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -241,6 +243,107 @@ function DepoentesBlock({
 }
 
 // ─────────────────────────────────────────────
+// Pendências helpers
+// ─────────────────────────────────────────────
+
+function getPendenciaKey(audienciaId: number | null, texto: string): string {
+  const hash = texto.toLowerCase().trim().slice(0, 40);
+  return `pendencia-resolvida:${audienciaId ?? "no-aud"}:${hash}`;
+}
+
+function isPendenciaResolvida(audienciaId: number | null, texto: string): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(getPendenciaKey(audienciaId, texto)) === "1";
+}
+
+function setPendenciaResolvida(audienciaId: number | null, texto: string, resolvida: boolean): void {
+  if (typeof window === "undefined") return;
+  const key = getPendenciaKey(audienciaId, texto);
+  if (resolvida) window.localStorage.setItem(key, "1");
+  else window.localStorage.removeItem(key);
+}
+
+const PRIORIDADE_CLASS: Record<string, string> = {
+  alta: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-rose-200 dark:border-rose-800",
+  media: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800",
+  baixa: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700",
+};
+
+const PRIORIDADE_LABEL: Record<string, string> = {
+  alta: "Alta",
+  media: "Média",
+  baixa: "Baixa",
+};
+
+function normalizePrioridade(raw: unknown): "alta" | "media" | "baixa" {
+  const s = String(raw ?? "").toLowerCase();
+  if (s === "alta" || s === "high") return "alta";
+  if (s === "baixa" || s === "low") return "baixa";
+  return "media";
+}
+
+function PendenciasBlock({
+  pendencias,
+  audienciaId,
+  onAbordar,
+}: {
+  pendencias: any[];
+  audienciaId: number | null;
+  onAbordar: (texto: string) => void;
+}) {
+  const items = useMemo(
+    () =>
+      pendencias.map((p: any) => ({
+        texto: typeof p === "string" ? p : (p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p)),
+        prioridade: normalizePrioridade(typeof p === "object" ? p.prioridade : null),
+      })),
+    [pendencias]
+  );
+
+  const [tick, setTick] = useState(0);
+
+  return (
+    <ul className="space-y-2">
+      {items.map((p, i) => {
+        const resolvido = isPendenciaResolvida(audienciaId, p.texto);
+        return (
+          <li
+            key={i}
+            className="flex items-start gap-2.5 p-3 rounded-lg bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 hover:ring-neutral-300"
+          >
+            <Checkbox
+              checked={resolvido}
+              onCheckedChange={(c) => {
+                setPendenciaResolvida(audienciaId, p.texto, c === true);
+                setTick((t) => t + 1);
+              }}
+              className="mt-0.5"
+              aria-label={resolvido ? "Marcar como pendente" : "Marcar como resolvida"}
+            />
+            <p className={cn("flex-1 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300", resolvido && "line-through opacity-60")}>
+              {p.texto}
+            </p>
+            <Badge className={cn("text-[10px] px-1.5 py-0 border", PRIORIDADE_CLASS[p.prioridade])}>
+              {PRIORIDADE_LABEL[p.prioridade]}
+            </Badge>
+            {!resolvido && audienciaId && (
+              <button
+                type="button"
+                onClick={() => onAbordar(p.texto)}
+                className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
+                title="Criar anotação rápida e marcar como resolvida"
+              >
+                Abordar
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Props
 // ─────────────────────────────────────────────
 
@@ -264,6 +367,8 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     { enabled: !!processoId },
   );
   const driveFiles = filesByProcessoQuery.data ?? [];
+
+  const actions = useAudienciaStatusActions(audienciaId);
 
   const [previewDoc, setPreviewDoc] = useState<{ id: string; title: string } | null>(null);
 
@@ -597,17 +702,19 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
           {/* 8. PENDENCIAS */}
           {pendencias.length > 0 && (
             <CollapsibleSection id="pendencias" label="Pendencias" defaultOpen={true}>
-              <ul className="space-y-1">
-                {pendencias.map((p: any, i: number) => {
-                  const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
-                  return (
-                    <li key={i} className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
-                      <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                      <span>{text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
+              {pendencias.length > 0 ? (
+                <PendenciasBlock
+                  pendencias={pendencias}
+                  audienciaId={audienciaId}
+                  onAbordar={(texto) => {
+                    if (!audienciaId) return;
+                    actions.addNote.mutate({ audienciaId, texto: `Pendência: ${texto}` });
+                    setPendenciaResolvida(audienciaId, texto, true);
+                  }}
+                />
+              ) : (
+                <EmptyHint text="Nenhuma pendência registrada." />
+              )}
             </CollapsibleSection>
           )}
 
