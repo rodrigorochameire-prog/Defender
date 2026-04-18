@@ -110,7 +110,22 @@ function DocumentosProcessoBlock({
   onPreview,
 }: {
   files: any[];
-  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null; enrichmentStatus?: string | null }) => void;
+  onPreview: (p: {
+    id: string;
+    title: string;
+    mimeType?: string | null;
+    webViewLink?: string | null;
+    fileSize?: string | null;
+    enrichmentStatus?: string | null;
+    list?: Array<{
+      driveFileId: string;
+      name?: string | null;
+      mimeType?: string | null;
+      webViewLink?: string | null;
+      fileSize?: number | string | null;
+      enrichmentStatus?: string | null;
+    }>;
+  }) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -204,7 +219,24 @@ function DocumentosProcessoBlock({
                       {f.driveFileId && (
                         <button
                           type="button"
-                          onClick={() => onPreview({ id: f.driveFileId, title: fileName, mimeType: f.mimeType, webViewLink: f.webViewLink, fileSize: f.fileSize, enrichmentStatus: f.enrichmentStatus })}
+                          onClick={() =>
+                            onPreview({
+                              id: f.driveFileId,
+                              title: fileName,
+                              mimeType: f.mimeType,
+                              webViewLink: f.webViewLink,
+                              fileSize: f.fileSize,
+                              enrichmentStatus: f.enrichmentStatus,
+                              list: filtered.map((x: any) => ({
+                                driveFileId: x.driveFileId,
+                                name: x.name ?? x.fileName ?? "",
+                                mimeType: x.mimeType,
+                                webViewLink: x.webViewLink,
+                                fileSize: x.fileSize,
+                                enrichmentStatus: x.enrichmentStatus,
+                              })),
+                            })
+                          }
                           className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
                         >
                           Ver
@@ -269,7 +301,14 @@ function DepoentesBlock({
 }: {
   depoentes: any[];
   driveFiles: { driveFileId: string; name: string; mimeType?: string | null; webViewLink?: string | null }[];
-  onPreview: (p: { id: string; title: string; mimeType?: string | null; webViewLink?: string | null; fileSize?: string | null; enrichmentStatus?: string | null }) => void;
+  onPreview: (p: {
+    id: string;
+    title: string;
+    mimeType?: string | null;
+    webViewLink?: string | null;
+    fileSize?: string | null;
+    enrichmentStatus?: string | null;
+  }) => void;
 }) {
   const [vista, setVista] = useState<"status" | "lado">("status");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -558,6 +597,14 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     webViewLink?: string | null;
     fileSize?: string | null;
     enrichmentStatus?: string | null;
+    list?: Array<{
+      driveFileId: string;
+      name?: string | null;
+      mimeType?: string | null;
+      webViewLink?: string | null;
+      fileSize?: number | string | null;
+      enrichmentStatus?: string | null;
+    }>;
   } | null>(null);
   const [expandedInvestigacao, setExpandedInvestigacao] = useState<{ titulo: string; texto: string } | null>(null);
 
@@ -1140,6 +1187,19 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
         webViewLink={previewDoc?.webViewLink}
         fileSize={previewDoc?.fileSize}
         enrichmentStatus={previewDoc?.enrichmentStatus}
+        list={previewDoc?.list}
+        onNavigate={(next) => {
+          if (!previewDoc) return;
+          setPreviewDoc({
+            ...previewDoc,
+            id: next.driveFileId,
+            title: next.name ?? "Documento",
+            mimeType: next.mimeType,
+            webViewLink: next.webViewLink,
+            fileSize: next.fileSize != null ? String(next.fileSize) : null,
+            enrichmentStatus: next.enrichmentStatus,
+          });
+        }}
         onClose={() => setPreviewDoc(null)}
       />
     </div>

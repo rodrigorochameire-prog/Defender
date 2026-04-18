@@ -1,9 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Download, ExternalLink, Link as LinkIcon, Loader2, Maximize2, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  ExternalLink,
+  Link as LinkIcon,
+  Loader2,
+  Maximize2,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+export interface PreviewFile {
+  driveFileId: string;
+  name?: string | null;
+  mimeType?: string | null;
+  webViewLink?: string | null;
+  fileSize?: number | string | null;
+  enrichmentStatus?: string | null;
+}
 
 interface Props {
   driveFileId: string | null;
@@ -12,6 +32,8 @@ interface Props {
   webViewLink?: string | null;
   fileSize?: string | null;
   enrichmentStatus?: string | null;
+  list?: PreviewFile[];
+  onNavigate?: (file: PreviewFile) => void;
   onClose: () => void;
 }
 
@@ -47,6 +69,8 @@ export function DocumentPreviewDialog({
   webViewLink,
   fileSize,
   enrichmentStatus,
+  list,
+  onNavigate,
   onClose,
 }: Props) {
   const [iframeLoading, setIframeLoading] = useState(true);
@@ -61,20 +85,98 @@ export function DocumentPreviewDialog({
       ? "video"
       : "other";
 
-  // Docs/PDFs: iframe direto do Google Drive (rápido, sem roundtrip no servidor)
+  const currentIndex = useMemo(() => {
+    if (!list || !driveFileId) return -1;
+    return list.findIndex((f) => f.driveFileId === driveFileId);
+  }, [list, driveFileId]);
+  const hasNav = !!(list && list.length > 1 && currentIndex >= 0 && onNavigate);
+  const canPrev = hasNav && currentIndex > 0;
+  const canNext = hasNav && currentIndex < (list?.length ?? 0) - 1;
+
   const drivePreviewUrl = driveFileId
     ? `https://drive.google.com/file/d/${driveFileId}/preview`
     : null;
-  // Áudio/vídeo: via proxy local para suportar Range streaming + auth
   const streamUrl = driveFileId ? `/api/drive/proxy?fileId=${driveFileId}&stream=1` : null;
   const driveUrl =
     webViewLink ?? (driveFileId ? `https://drive.google.com/file/d/${driveFileId}/view` : null);
 
+  const goPrev = useCallback(() => {
+    if (!canPrev || !list || !onNavigate) return;
+    onNavigate(list[currentIndex - 1]);
+  }, [canPrev, list, currentIndex, onNavigate]);
+
+  const goNext = useCallback(() => {
+    if (!canNext || !list || !onNavigate) return;
+    onNavigate(list[currentIndex + 1]);
+  }, [canNext, list, currentIndex, onNavigate]);
+
+  const requestFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (el.requestFullscreen) {
+      el.requestFullscreen();
+    }
+  }, []);
+
+  const downloadFile = useCallback(() => {
+    if (!driveFileId) return;
+    const url = `/api/drive/proxy?fileId=${driveFileId}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = title || "documento";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, [driveFileId, title]);
+
+  const copyLink = useCallback(async () => {
+    if (!driveUrl) return;
+    try {
+      await navigator.clipboard.writeText(driveUrl);
+      setCopied(true);
+      toast.success("Link copiado");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  }, [driveUrl]);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      // Ignora se o foco está num input/textarea/editable
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+        return;
+      }
+      if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        requestFullscreen();
+        return;
+      }
+      if (e.key === "d" || e.key === "D") {
+        e.preventDefault();
+        downloadFile();
+      }
     },
-    [onClose],
+    [onClose, goPrev, goNext, requestFullscreen, downloadFile],
   );
 
   useEffect(() => {
@@ -87,40 +189,6 @@ export function DocumentPreviewDialog({
       document.body.style.overflow = "";
     };
   }, [open, handleKeyDown]);
-
-  const requestFullscreen = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (el.requestFullscreen) {
-      el.requestFullscreen();
-    }
-  };
-
-  const copyLink = async () => {
-    if (!driveUrl) return;
-    try {
-      await navigator.clipboard.writeText(driveUrl);
-      setCopied(true);
-      toast.success("Link copiado");
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error("Não foi possível copiar");
-    }
-  };
-
-  const downloadFile = () => {
-    if (!driveFileId) return;
-    const url = `/api/drive/proxy?fileId=${driveFileId}`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = title || "documento";
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
 
   if (!open) return null;
 
@@ -162,17 +230,47 @@ export function DocumentPreviewDialog({
                   Extraído
                 </span>
               )}
+              {hasNav && (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
+                  {currentIndex + 1} / {list?.length}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex-1" />
 
+        {hasNav && (
+          <div className="flex items-center gap-0.5 mr-1">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={!canPrev}
+              title="Anterior (←)"
+              aria-label="Anterior"
+              className="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!canNext}
+              title="Próximo (→)"
+              aria-label="Próximo"
+              className="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {driveFileId && (
           <button
             type="button"
             onClick={downloadFile}
-            title="Baixar arquivo"
+            title="Baixar arquivo (D)"
             aria-label="Download"
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
@@ -197,7 +295,7 @@ export function DocumentPreviewDialog({
         <button
           type="button"
           onClick={requestFullscreen}
-          title="Alternar tela cheia"
+          title="Tela cheia (F)"
           aria-label="Tela cheia"
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
         >
@@ -221,6 +319,7 @@ export function DocumentPreviewDialog({
           variant="ghost"
           size="icon"
           onClick={onClose}
+          title="Fechar (Esc)"
           className="h-8 w-8 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-300 shrink-0 cursor-pointer"
         >
           <X className="h-5 w-5" />
@@ -236,6 +335,7 @@ export function DocumentPreviewDialog({
                 {title}
               </div>
               <audio
+                key={streamUrl}
                 controls
                 autoPlay
                 preload="metadata"
@@ -252,6 +352,7 @@ export function DocumentPreviewDialog({
 
           {kind === "video" && streamUrl && (
             <video
+              key={streamUrl}
               controls
               preload="metadata"
               src={streamUrl}
@@ -274,6 +375,7 @@ export function DocumentPreviewDialog({
                 </div>
               )}
               <iframe
+                key={drivePreviewUrl}
                 src={drivePreviewUrl}
                 className="w-full h-full border-0"
                 title={title}

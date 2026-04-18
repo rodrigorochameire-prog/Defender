@@ -168,6 +168,18 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
         webViewLink={expanded?.webViewLink}
         fileSize={expanded?.fileSize != null ? String(expanded.fileSize) : null}
         enrichmentStatus={expanded?.enrichmentStatus}
+        list={activeList.map((f) => ({
+          driveFileId: f.driveFileId,
+          name: f.name,
+          mimeType: f.mimeType,
+          webViewLink: f.webViewLink,
+          fileSize: f.fileSize,
+          enrichmentStatus: f.enrichmentStatus,
+        }))}
+        onNavigate={(next) => {
+          const f = activeList.find((x) => x.driveFileId === next.driveFileId);
+          if (f) setExpanded(f);
+        }}
         onClose={() => setExpanded(null)}
       />
     </div>
