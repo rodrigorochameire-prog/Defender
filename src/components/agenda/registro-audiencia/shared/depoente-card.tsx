@@ -11,7 +11,7 @@
  */
 
 import { Label } from "@/components/ui/label";
-import { BookOpen, Target, Quote, Eye, FileWarning } from "lucide-react";
+import { BookOpen, Target, Quote, Eye, FileWarning, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDepoenteStyle } from "../constants";
 import { DepoenteStatusBadges } from "./depoente-status";
@@ -70,9 +70,10 @@ interface DepoenteCardProps {
   /** "compact" omite campos extensos (depoimento literal, análise) — use no Sheet lateral */
   variant?: "compact" | "full";
   className?: string;
+  onVerTermo?: () => void;
 }
 
-export function DepoenteCard({ dep, variant = "full", className }: DepoenteCardProps) {
+export function DepoenteCard({ dep, variant = "full", className, onVerTermo }: DepoenteCardProps) {
   const style = getDepoenteStyle(dep.tipo);
   const nome = dep.nome ?? dep.name ?? "Sem nome";
   const resumoPreparacao = dep.resumo ?? dep.depoimentoDelegacia ?? dep.versao_delegacia ?? null;
@@ -104,6 +105,16 @@ export function DepoenteCard({ dep, variant = "full", className }: DepoenteCardP
               {style.label}
             </span>
             <span className={cn("text-sm font-semibold truncate", style.text)}>{nome}</span>
+            {onVerTermo && (
+              <button
+                type="button"
+                onClick={onVerTermo}
+                className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                title="Abrir termo de depoimento"
+              >
+                <FileText className="w-3 h-3" /> Termo
+              </button>
+            )}
           </div>
           <DepoenteStatusBadges dep={dep} variant="full" />
         </div>

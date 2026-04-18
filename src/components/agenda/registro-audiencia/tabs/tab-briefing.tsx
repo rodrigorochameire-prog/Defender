@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Wand2,
   ChevronDown,
@@ -9,6 +9,8 @@ import {
   AlertTriangle,
   Check,
   Loader2,
+  Mail,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ import type { Depoente } from "../types";
 import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
+import { matchTermoDepoente } from "@/lib/agenda/match-document";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -61,6 +64,180 @@ function extractString(obj: Record<string, any> | null | undefined, ...keys: str
     }
   }
   return null;
+}
+
+// ─────────────────────────────────────────────
+// Depoentes block — toggle status/lado + grouped rows + compact row + "Ver termo"
+// ─────────────────────────────────────────────
+
+type DepoenteStatus = "ouvidos" | "ausentes" | "a-ouvir";
+type DepoenteLado = "acusacao" | "defesa" | "comum";
+
+function getDepoenteStatus(d: any): DepoenteStatus {
+  if (d.ouvidoEm || d.jaOuvido === true) return "ouvidos";
+  if (d.presente === false) return "ausentes";
+  return "a-ouvir";
+}
+
+function getDepoenteLado(d: any): DepoenteLado {
+  if (d.lado === "acusacao" || d.tipo === "VITIMA" || d.tipo === "ACUSACAO") return "acusacao";
+  if (d.lado === "defesa" || d.tipo === "DEFESA") return "defesa";
+  return "comum";
+}
+
+const STATUS_ORDER: DepoenteStatus[] = ["a-ouvir", "ouvidos", "ausentes"];
+const LADO_ORDER: DepoenteLado[] = ["acusacao", "defesa", "comum"];
+
+const STATUS_LABEL: Record<DepoenteStatus, string> = {
+  "a-ouvir": "A ouvir",
+  "ouvidos": "Ouvidos",
+  "ausentes": "Ausentes",
+};
+
+const LADO_LABEL: Record<DepoenteLado, string> = {
+  acusacao: "Acusação",
+  defesa: "Defesa",
+  comum: "Comum",
+};
+
+const LADO_BADGE_CLASS: Record<DepoenteLado, string> = {
+  acusacao: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+  defesa: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+  comum: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
+};
+
+function DepoentesBlock({
+  depoentes,
+  driveFiles,
+  onPreview,
+}: {
+  depoentes: any[];
+  driveFiles: { driveFileId: string; name: string; mimeType?: string | null }[];
+  onPreview: (p: { id: string; title: string }) => void;
+}) {
+  const [vista, setVista] = useState<"status" | "lado">("status");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const grupos = useMemo(() => {
+    if (vista === "status") {
+      const map: Record<DepoenteStatus, any[]> = { "a-ouvir": [], ouvidos: [], ausentes: [] };
+      depoentes.forEach((d) => map[getDepoenteStatus(d)].push(d));
+      return STATUS_ORDER
+        .map((k) => ({ key: k, label: STATUS_LABEL[k], items: map[k] }))
+        .filter((g) => g.items.length > 0);
+    } else {
+      const map: Record<DepoenteLado, any[]> = { acusacao: [], defesa: [], comum: [] };
+      depoentes.forEach((d) => map[getDepoenteLado(d)].push(d));
+      return LADO_ORDER
+        .map((k) => ({ key: k, label: LADO_LABEL[k], items: map[k] }))
+        .filter((g) => g.items.length > 0);
+    }
+  }, [depoentes, vista]);
+
+  return (
+    <div className="space-y-3">
+      {/* Toggle */}
+      <div className="inline-flex rounded-lg bg-neutral-100 dark:bg-neutral-800 p-0.5 text-[11px]">
+        <button
+          type="button"
+          onClick={() => setVista("status")}
+          className={cn(
+            "px-2.5 py-1 rounded-md font-medium cursor-pointer transition-colors",
+            vista === "status"
+              ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-sm"
+              : "text-neutral-500 hover:text-neutral-700"
+          )}
+        >
+          Por status
+        </button>
+        <button
+          type="button"
+          onClick={() => setVista("lado")}
+          className={cn(
+            "px-2.5 py-1 rounded-md font-medium cursor-pointer transition-colors",
+            vista === "lado"
+              ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 shadow-sm"
+              : "text-neutral-500 hover:text-neutral-700"
+          )}
+        >
+          Por lado
+        </button>
+      </div>
+
+      {/* Grupos */}
+      <div className="space-y-2">
+        {grupos.map((grupo) => (
+          <details key={grupo.key} open className="group">
+            <summary className="cursor-pointer bg-neutral-50 dark:bg-neutral-900/50 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 list-none [&::-webkit-details-marker]:hidden">
+              <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-0 -rotate-90" />
+              <span>{grupo.label}</span>
+              <span className="text-neutral-400 font-normal">({grupo.items.length})</span>
+            </summary>
+            <div className="mt-1.5 space-y-1">
+              {grupo.items.map((d: any, i: number) => {
+                const depId = d.id ?? `${d.nome}-${i}`;
+                const iniciais = (d.nome ?? "?")
+                  .split(" ")
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((n: string) => n[0])
+                  .join("")
+                  .toUpperCase();
+                const lado = getDepoenteLado(d);
+                const intimado = !!d.intimado || d.statusIntimacao === "intimado";
+                const ouvido = !!d.ouvidoEm || d.jaOuvido === true;
+                const termoId = matchTermoDepoente(d.nome ?? "", driveFiles);
+                const expanded = expandedId === depId;
+                const lado2 = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
+                const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM" ? "testemunha" : (d.tipo ?? "testemunha");
+
+                return (
+                  <div key={depId} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
+                    <div
+                      onClick={() => setExpandedId(expanded ? null : depId)}
+                      className="flex items-center gap-2 px-2 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 cursor-pointer"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400">{iniciais}</span>
+                      </div>
+                      <span className="flex-1 text-sm font-medium truncate">{d.nome}</span>
+                      <Badge className={cn("text-[9px] px-1.5 py-0", LADO_BADGE_CLASS[lado])}>
+                        {LADO_LABEL[lado]}
+                      </Badge>
+                      <Mail className={cn("w-3 h-3", intimado ? "text-emerald-500" : "text-neutral-300 dark:text-neutral-700")} />
+                      <Check className={cn("w-3 h-3", ouvido ? "text-emerald-500" : "text-neutral-300 dark:text-neutral-700")} />
+                      {termoId && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPreview({ id: termoId, title: `Termo — ${d.nome}` });
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                        >
+                          <FileText className="w-3 h-3" /> Termo
+                        </button>
+                      )}
+                      <ChevronDown className={cn("w-3.5 h-3.5 text-neutral-400 transition-transform", expanded && "rotate-180")} />
+                    </div>
+                    {expanded && (
+                      <div className="border-t border-neutral-200 dark:border-neutral-800 p-2 bg-white dark:bg-neutral-950">
+                        <DepoenteCard
+                          dep={{ ...d, lado: lado2, tipo: tipoNormalized }}
+                          variant="full"
+                          onVerTermo={termoId ? () => onPreview({ id: termoId, title: `Termo — ${d.nome}` }) : undefined}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -379,24 +556,14 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             )}
           </CollapsibleSection>
 
-          {/* 6. DEPOENTES — cards ricos unificados */}
+          {/* 6. DEPOENTES — toggle status/lado, linha compacta, preview do termo */}
           <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length}>
             {depoentes.length > 0 ? (
-              <div className="space-y-2.5">
-                {depoentes.map((d: any, i: number) => {
-                  const lado = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
-                  const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM"
-                    ? "testemunha"
-                    : (d.tipo ?? "testemunha");
-                  return (
-                    <DepoenteCard
-                      key={d.id ?? `${i}-${d.nome}`}
-                      dep={{ ...d, lado, tipo: tipoNormalized }}
-                      variant="full"
-                    />
-                  );
-                })}
-              </div>
+              <DepoentesBlock
+                depoentes={depoentes}
+                driveFiles={driveFiles.map((f: any) => ({ driveFileId: f.driveFileId, name: f.fileName ?? f.name ?? "", mimeType: f.mimeType }))}
+                onPreview={setPreviewDoc}
+              />
             ) : (
               <EmptyHint text="Nenhum depoente cadastrado." />
             )}
