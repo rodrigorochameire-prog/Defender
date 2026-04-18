@@ -11,6 +11,11 @@ import {
   Loader2,
   Mail,
   FileText,
+  Dna,
+  Target,
+  HeartPulse,
+  FlaskConical,
+  Brain,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,8 +28,10 @@ import type { Depoente } from "../types";
 import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
-import { matchTermoDepoente } from "@/lib/agenda/match-document";
+import { matchTermoDepoente, matchLaudo } from "@/lib/agenda/match-document";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
+import { FreshnessBadge } from "@/components/agenda/sheet/freshness-badge";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -344,6 +351,20 @@ function PendenciasBlock({
 }
 
 // ─────────────────────────────────────────────
+// Laudo icon helper
+// ─────────────────────────────────────────────
+
+function iconeLaudo(nome: string): React.ComponentType<{ className?: string }> {
+  const n = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/\bdna\b/.test(n)) return Dna;
+  if (/balistic/.test(n)) return Target;
+  if (/necropsia|cadaveric/.test(n)) return HeartPulse;
+  if (/toxicolog/.test(n)) return FlaskConical;
+  if (/psiquiatric/.test(n)) return Brain;
+  return ClipboardList;
+}
+
+// ─────────────────────────────────────────────
 // Props
 // ─────────────────────────────────────────────
 
@@ -371,6 +392,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
   const actions = useAudienciaStatusActions(audienciaId);
 
   const [previewDoc, setPreviewDoc] = useState<{ id: string; title: string } | null>(null);
+  const [expandedInvestigacao, setExpandedInvestigacao] = useState<{ titulo: string; texto: string } | null>(null);
 
   // Analysis data shortcuts
   const ad = ctx?.analysisData;
@@ -453,34 +475,62 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
           {/* 0. RESUMO EXECUTIVO */}
           {resumoExecutivo && (
             <CollapsibleSection id="resumo-executivo" label="Resumo Executivo" defaultOpen={true}>
-              <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                {resumoExecutivo}
-              </p>
+              <>
+                {ctx?.processo?.analyzedAt && (
+                  <div className="flex justify-end mb-2">
+                    <FreshnessBadge analyzedAt={ctx.processo.analyzedAt} />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {resumoExecutivo.split(/\n\n+/).map((p, i) => (
+                    <p key={i} className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+              </>
             </CollapsibleSection>
           )}
 
           {/* 1. IMPUTACAO */}
           <CollapsibleSection id="imputacao" label="Imputacao">
-            {imputacao ? (
-              <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                {typeof imputacao === "string"
-                  ? imputacao
-                  : Array.isArray(imputacao)
-                    ? (imputacao as string[]).join(", ")
-                    : String(imputacao)}
-              </p>
-            ) : (
-              <EmptyHint text="Imputacao nao extraida — rode a analise IA." />
-            )}
+            {(() => {
+              if (!imputacao) return <EmptyHint text="Imputação não extraída — rode a análise IA." />;
+              const items = Array.isArray(imputacao)
+                ? imputacao
+                : typeof imputacao === "string" && /[;,]/.test(imputacao)
+                  ? imputacao.split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+                  : null;
+              if (items && items.length > 1) {
+                return (
+                  <div className="flex flex-wrap gap-1.5">
+                    {items.map((c, i) => (
+                      <Badge key={i} variant="outline" className="text-xs px-2 py-0.5">
+                        {typeof c === "string" ? c : String(c)}
+                      </Badge>
+                    ))}
+                  </div>
+                );
+              }
+              return (
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                  {typeof imputacao === "string" ? imputacao : String(imputacao)}
+                </p>
+              );
+            })()}
           </CollapsibleSection>
 
           {/* 2. FATOS (DENUNCIA) — expanded */}
           <CollapsibleSection id="fatos" label="Fatos (Denuncia)">
             {fatos ? (
               <div className="space-y-2">
-                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
-                  {fatos}
-                </p>
+                <div className="space-y-2">
+                  {fatos.split(/\n\n+/).map((p, i) => (
+                    <p key={i} className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                      {p}
+                    </p>
+                  ))}
+                </div>
                 {teoriaFatos && (
                   <div className="mt-3 pt-3 border-t border-neutral-200/60 dark:border-neutral-700/60">
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 mb-1">
@@ -508,14 +558,25 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                   {laudos.map((l: any, i: number) => {
                     const text = typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l);
                     const detalhes = typeof l === "object" ? l.resultado ?? l.conclusao ?? l.detalhes : null;
+                    const Icon = iconeLaudo(text);
+                    const laudoId = matchLaudo(text, driveFiles.map((f: any) => ({ driveFileId: f.driveFileId, name: f.fileName ?? f.name ?? "", mimeType: f.mimeType })));
                     return (
                       <li key={i} className="rounded-lg bg-white dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-700/60 px-3 py-2">
-                        <div className="flex items-start gap-1.5 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                          <ClipboardList className="w-3 h-3 text-neutral-400 mt-0.5 flex-shrink-0" />
-                          <span>{text}</span>
+                        <div className="flex items-start gap-2 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
+                          <Icon className="w-3.5 h-3.5 text-neutral-500 mt-0.5 flex-shrink-0" />
+                          <span className="flex-1">{text}</span>
+                          {laudoId && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDoc({ id: laudoId, title: `Laudo — ${text}` })}
+                              className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
+                            >
+                              <FileText className="w-3 h-3" /> Ver
+                            </button>
+                          )}
                         </div>
                         {detalhes && (
-                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 pl-4.5 leading-relaxed">
+                          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 pl-5 leading-relaxed">
                             {detalhes}
                           </p>
                         )}
@@ -648,9 +709,20 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                         <p className="text-[11px] text-neutral-500 mt-0.5">Alvo: {d.nomePessoaAlvo}</p>
                       )}
                       {d.resultado && (
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-relaxed whitespace-pre-wrap">
-                          {d.resultado}
-                        </p>
+                        <div className="mt-1">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap line-clamp-3">
+                            {d.resultado}
+                          </p>
+                          {d.resultado.length > 200 && (
+                            <button
+                              type="button"
+                              onClick={() => setExpandedInvestigacao({ titulo: d.titulo, texto: d.resultado })}
+                              className="text-[10px] text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 underline cursor-pointer mt-0.5"
+                            >
+                              Ver mais
+                            </button>
+                          )}
+                        </div>
                       )}
                     </li>
                   );
@@ -721,30 +793,23 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
           {/* 9. TESES */}
           <CollapsibleSection id="teses" label="Teses Defensivas">
             {teses.length > 0 ? (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {teses.map((t: any, i: number) => {
-                    const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? t.nome ?? JSON.stringify(t);
-                    const viabilidade = typeof t === "object" ? t.viabilidade ?? t.probabilidade : null;
-                    const color =
-                      viabilidade === "alta" || viabilidade === "forte"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-300"
-                        : viabilidade === "media" || viabilidade === "moderada"
-                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300"
-                          : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-300 dark:border-neutral-700";
-                    return (
-                      <span
-                        key={i}
-                        className={cn(
-                          "text-[11px] px-2 py-0.5 rounded-full border font-medium",
-                          color
-                        )}
-                      >
-                        {text}
-                      </span>
-                    );
-                  })}
-                </div>
+              <div className="space-y-2">
+                {teses.map((t: any, i: number) => {
+                  const titulo = typeof t === "string" ? t : t.tese ?? t.titulo ?? t.descricao ?? JSON.stringify(t);
+                  const justificativa = typeof t === "object" ? t.justificativa ?? t.fundamentos : null;
+                  return (
+                    <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
+                      <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">
+                        {titulo}
+                      </p>
+                      {justificativa && (
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mt-1">
+                          {justificativa}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
                 {teoriaDireito && (
                   <div className="pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400 mb-1">
@@ -756,12 +821,8 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
                   </div>
                 )}
               </div>
-            ) : teoriaDireito ? (
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                {teoriaDireito}
-              </p>
             ) : (
-              <EmptyHint text="Nenhuma tese identificada." />
+              <EmptyHint text="Teses não extraídas." />
             )}
           </CollapsibleSection>
         </>
@@ -802,6 +863,16 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
           </div>
         )}
       </div>
+
+      <Dialog open={!!expandedInvestigacao} onOpenChange={(o) => !o && setExpandedInvestigacao(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle>{expandedInvestigacao?.titulo}</DialogTitle>
+          <DialogDescription className="sr-only">Detalhes da diligência</DialogDescription>
+          <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto">
+            {expandedInvestigacao?.texto}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <DocumentPreviewDialog
         driveFileId={previewDoc?.id ?? null}
