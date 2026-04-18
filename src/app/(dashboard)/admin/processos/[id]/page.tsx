@@ -16,6 +16,7 @@ import { DelitosTab } from "@/components/processo/delitos-tab";
 import { InstitutosTab } from "@/components/processo/institutos-tab";
 import { AtosInfracionaisTab } from "@/components/processo/atos-infracionais-tab";
 import { MedidasTab } from "@/components/processo/medidas-tab";
+import { PessoasTab } from "./_components/pessoas-tab";
 
 export default function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -214,6 +215,11 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
               assistidos={data.assistidos?.map((a: any) => ({ id: a.id, nome: a.nome })) ?? []}
             />
           </div>
+        )}
+
+        {/* PESSOAS */}
+        {tab === "pessoas" && (
+          <PessoasTab processoId={data.id} />
         )}
       </div>
       </div>
