@@ -3,6 +3,7 @@ import {
   normalizeName,
   matchTermoDepoente,
   matchLaudo,
+  getTermoKind,
 } from "../match-document";
 
 type File = { driveFileId: string; name: string; mimeType?: string | null };
@@ -72,5 +73,45 @@ describe("matchLaudo", () => {
 
   it("retorna null quando nenhum arquivo tem keyword laudo/pericia/exame", () => {
     expect(matchLaudo("Balística", [{ driveFileId: "x", name: "Notas.pdf" }])).toBeNull();
+  });
+});
+
+describe("matchTermoDepoente — mídia sem keyword", () => {
+  it("casa áudio com nome do depoente mesmo sem keyword termo/depoimento", () => {
+    const files = [{ driveFileId: "a", name: "Silvonei.m4a", mimeType: "audio/mp4" }];
+    expect(matchTermoDepoente("Silvonei Santos", files)).toBe("a");
+  });
+
+  it("casa vídeo com nome do depoente mesmo sem keyword", () => {
+    const files = [{ driveFileId: "a", name: "Maria Souza depoimento.mp4", mimeType: "video/mp4" }];
+    expect(matchTermoDepoente("Maria Souza", files)).toBe("a");
+  });
+
+  it("NÃO casa pdf sem keyword mesmo com nome do depoente", () => {
+    const files = [{ driveFileId: "a", name: "Silvonei.pdf", mimeType: "application/pdf" }];
+    expect(matchTermoDepoente("Silvonei Santos", files)).toBeNull();
+  });
+
+  it("mime null com pdf-like name exige keyword", () => {
+    const files = [{ driveFileId: "a", name: "Silvonei.pdf", mimeType: null }];
+    expect(matchTermoDepoente("Silvonei Santos", files)).toBeNull();
+  });
+});
+
+describe("getTermoKind", () => {
+  it("audio/mp4 → audio", () => {
+    expect(getTermoKind({ driveFileId: "a", name: "x.m4a", mimeType: "audio/mp4" })).toBe("audio");
+  });
+
+  it("video/mp4 → video", () => {
+    expect(getTermoKind({ driveFileId: "a", name: "x.mp4", mimeType: "video/mp4" })).toBe("video");
+  });
+
+  it("application/pdf → documento", () => {
+    expect(getTermoKind({ driveFileId: "a", name: "x.pdf", mimeType: "application/pdf" })).toBe("documento");
+  });
+
+  it("mime null → documento", () => {
+    expect(getTermoKind({ driveFileId: "a", name: "x", mimeType: null })).toBe("documento");
   });
 });

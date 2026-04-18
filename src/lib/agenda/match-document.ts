@@ -38,6 +38,15 @@ export function matchTermoDepoente(
 
   const candidates = files.filter((f) => {
     const n = normalizeName(f.name);
+    const mime = f.mimeType ?? "";
+    const isMedia = mime.startsWith("audio/") || mime.startsWith("video/");
+
+    if (isMedia) {
+      // For media files: match if at least one significant token appears in the filename
+      return tokens.some((t) => n.includes(t));
+    }
+
+    // For documents: require keyword AND all tokens
     const hasTermoKeyword = TERMO_KEYWORDS.some((k) => n.includes(k));
     if (!hasTermoKeyword) return false;
     return tokens.every((t) => n.includes(t));
@@ -45,6 +54,15 @@ export function matchTermoDepoente(
 
   if (candidates.length === 0) return null;
   return candidates[0].driveFileId;
+}
+
+export type TermoKind = "audio" | "video" | "documento";
+
+export function getTermoKind(file: DriveFile): TermoKind {
+  const m = file.mimeType ?? "";
+  if (m.startsWith("audio/")) return "audio";
+  if (m.startsWith("video/")) return "video";
+  return "documento";
 }
 
 export function matchLaudo(
