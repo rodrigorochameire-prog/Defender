@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas } from "@/lib/db/schema";
+import { pessoas, participacoesProcesso } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
@@ -139,7 +139,131 @@ export const pessoasRouter = router({
     .query(async ({ input }) => {
       const [pessoa] = await db.select().from(pessoas).where(eq(pessoas.id, input.id));
       if (!pessoa) throw new TRPCError({ code: "NOT_FOUND" });
-      // Participações serão populadas na Task 5 — por enquanto retorna vazio
-      return { pessoa, participacoes: [] as any[] };
+      const parts = await db
+        .select()
+        .from(participacoesProcesso)
+        .where(eq(participacoesProcesso.pessoaId, input.id))
+        .orderBy(desc(participacoesProcesso.createdAt));
+      return { pessoa, participacoes: parts };
     }),
+
+  // === BUSCA ===
+  searchForAutocomplete: protectedProcedure
+    .input(z.object({
+      query: z.string().min(1),
+      papel: papelEnum.optional(),
+      limit: z.number().min(1).max(20).default(10),
+    }))
+    .query(async ({ input }) => {
+      const q = normalizarNome(input.query);
+      const rows = await db
+        .select({
+          id: pessoas.id,
+          nome: pessoas.nome,
+          nomeNormalizado: pessoas.nomeNormalizado,
+          categoriaPrimaria: pessoas.categoriaPrimaria,
+          confidence: pessoas.confidence,
+        })
+        .from(pessoas)
+        .where(
+          and(
+            isNull(pessoas.mergedInto),
+            sql`${pessoas.nomeNormalizado} ILIKE ${'%' + q + '%'}`,
+          ),
+        )
+        .limit(input.limit);
+      return rows;
+    }),
+
+  getByCpf: protectedProcedure
+    .input(z.object({ cpf: z.string().min(11) }))
+    .query(async ({ input }) => {
+      const [row] = await db
+        .select()
+        .from(pessoas)
+        .where(and(eq(pessoas.cpf, input.cpf), isNull(pessoas.mergedInto)));
+      return row ?? null;
+    }),
+
+  // === PARTICIPAÇÕES ===
+  addParticipacao: protectedProcedure
+    .input(z.object({
+      pessoaId: z.number(),
+      processoId: z.number(),
+      papel: papelEnum,
+      lado: z.enum(["acusacao", "defesa", "neutro"]).optional(),
+      subpapel: z.string().max(40).optional(),
+      testemunhaId: z.number().optional(),
+      resumoNestaCausa: z.string().optional(),
+      observacoesNestaCausa: z.string().optional(),
+      fonte: z.enum(["manual", "backfill", "ia-atendimento", "ia-denuncia", "import-pje"]).default("manual"),
+      confidence: z.number().min(0).max(1).default(1.0),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const [row] = await db
+          .insert(participacoesProcesso)
+          .values({
+            pessoaId: input.pessoaId,
+            processoId: input.processoId,
+            papel: input.papel,
+            lado: input.lado ?? null,
+            subpapel: input.subpapel ?? null,
+            testemunhaId: input.testemunhaId ?? null,
+            resumoNestaCausa: input.resumoNestaCausa ?? null,
+            observacoesNestaCausa: input.observacoesNestaCausa ?? null,
+            fonte: input.fonte,
+            confidence: String(input.confidence),
+          } as any)
+          .returning();
+        return row;
+      } catch (e: any) {
+        if (e?.code === "23505") {
+          throw new TRPCError({ code: "CONFLICT", message: "Pessoa já tem esse papel nesse processo" });
+        }
+        throw e;
+      }
+    }),
+
+  updateParticipacao: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      papel: papelEnum.optional(),
+      lado: z.enum(["acusacao", "defesa", "neutro"]).nullable().optional(),
+      subpapel: z.string().max(40).nullable().optional(),
+      testemunhaId: z.number().nullable().optional(),
+      resumoNestaCausa: z.string().nullable().optional(),
+      observacoesNestaCausa: z.string().nullable().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const updates: any = { updatedAt: new Date() };
+      for (const k of ["papel", "lado", "subpapel", "testemunhaId", "resumoNestaCausa", "observacoesNestaCausa"] as const) {
+        if (input[k] !== undefined) updates[k] = input[k];
+      }
+      const [row] = await db
+        .update(participacoesProcesso)
+        .set(updates)
+        .where(eq(participacoesProcesso.id, input.id))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      return row;
+    }),
+
+  removeParticipacao: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.delete(participacoesProcesso).where(eq(participacoesProcesso.id, input.id));
+      return { ok: true };
+    }),
+
+  getParticipacoesDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      return db
+        .select()
+        .from(participacoesProcesso)
+        .where(eq(participacoesProcesso.processoId, input.processoId))
+        .orderBy(asc(participacoesProcesso.papel));
+    }),
+
 });

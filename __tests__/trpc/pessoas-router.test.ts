@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { pessoas } from "@/lib/db/schema";
-import { users } from "@/lib/db/schema/core";
+import { pessoas, participacoesProcesso } from "@/lib/db/schema";
+import { users, processos, assistidos } from "@/lib/db/schema/core";
 import { eq } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
@@ -135,3 +135,96 @@ describe("pessoas.update + pessoas.delete", { timeout: 30000 }, () => {
     }
   });
 });
+
+// ===== Task 5: Participações + busca =====
+
+describe("pessoas — participações", { timeout: 30000 }, () => {
+  async function seed() {
+    const user = await makeUser();
+    const [assistido] = await db.insert(assistidos).values({
+      nome: "Test Assistido " + Date.now(),
+      workspaceId: 1,
+    } as any).returning();
+    const [processo] = await db.insert(processos).values({
+      assistidoId: assistido.id,
+      numeroAutos: "PESSOAS-" + Date.now(),
+      area: "JURI",
+    } as any).returning();
+    return { user, assistido, processo };
+  }
+
+  async function cleanup(ids: { userId: number; assistidoId: number; processoId: number }) {
+    await db.delete(processos).where(eq(processos.id, ids.processoId));
+    await db.delete(assistidos).where(eq(assistidos.id, ids.assistidoId));
+    await db.delete(users).where(eq(users.id, ids.userId));
+  }
+
+  it("addParticipacao cria e getById retorna", async () => {
+    const { user, assistido, processo } = await seed();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const p = await caller.pessoas.create({ nome: "Test Part", fonteCriacao: "manual" });
+      try {
+        await caller.pessoas.addParticipacao({
+          pessoaId: p.id,
+          processoId: processo.id,
+          papel: "testemunha",
+          lado: "acusacao",
+          fonte: "manual",
+        });
+        const res = await caller.pessoas.getById({ id: p.id });
+        expect(res.participacoes).toHaveLength(1);
+        expect(res.participacoes[0].papel).toBe("testemunha");
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, p.id));
+      }
+    } finally {
+      await cleanup({ userId: user.id, assistidoId: assistido.id, processoId: processo.id });
+    }
+  });
+
+  it("searchForAutocomplete retorna matches", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const p = await caller.pessoas.create({ nome: "Zeferino Autocomplete " + Date.now(), fonteCriacao: "manual" });
+      try {
+        const res = await caller.pessoas.searchForAutocomplete({ query: "zeferino", limit: 5 });
+        expect(res.some((x: any) => x.id === p.id)).toBe(true);
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, p.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("addParticipacao bloqueia duplicata (mesmo papel)", async () => {
+    const { user, assistido, processo } = await seed();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const p = await caller.pessoas.create({ nome: "Unique Part", fonteCriacao: "manual" });
+      try {
+        await caller.pessoas.addParticipacao({
+          pessoaId: p.id,
+          processoId: processo.id,
+          papel: "testemunha",
+          fonte: "manual",
+        });
+        await expect(
+          caller.pessoas.addParticipacao({
+            pessoaId: p.id,
+            processoId: processo.id,
+            papel: "testemunha",
+            fonte: "manual",
+          }),
+        ).rejects.toThrow();
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, p.id));
+      }
+    } finally {
+      await cleanup({ userId: user.id, assistidoId: assistido.id, processoId: processo.id });
+    }
+  });
+});
+
