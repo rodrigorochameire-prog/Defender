@@ -228,3 +228,69 @@ describe("pessoas — participações", { timeout: 30000 }, () => {
   });
 });
 
+// ===== Task 6: Merge + distincts =====
+
+describe("pessoas — merge", { timeout: 30000 }, () => {
+  it("merge move participações e marca mergedInto", async () => {
+    const user = await makeUser();
+    const [assistido] = await db.insert(assistidos).values({
+      nome: "Merge Test " + Date.now(), workspaceId: 1,
+    } as any).returning();
+    const [proc] = await db.insert(processos).values({
+      assistidoId: assistido.id, numeroAutos: "MERGE-" + Date.now(), area: "JURI",
+    } as any).returning();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const from = await caller.pessoas.create({ nome: "Duplicata A " + Date.now(), fonteCriacao: "manual" });
+      const into = await caller.pessoas.create({ nome: "Duplicata B " + Date.now(), fonteCriacao: "manual" });
+      try {
+        await caller.pessoas.addParticipacao({
+          pessoaId: from.id, processoId: proc.id, papel: "testemunha", fonte: "manual",
+        });
+        await caller.pessoas.merge({ fromId: from.id, intoId: into.id, reason: "mesma pessoa" });
+
+        const [fromRow] = await db.select().from(pessoas).where(eq(pessoas.id, from.id));
+        expect(fromRow.mergedInto).toBe(into.id);
+        expect(fromRow.mergeReason).toBe("mesma pessoa");
+
+        const parts = await db
+          .select()
+          .from(participacoesProcesso)
+          .where(eq(participacoesProcesso.pessoaId, into.id));
+        expect(parts.some((p) => p.processoId === proc.id)).toBe(true);
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, from.id));
+        await db.delete(pessoas).where(eq(pessoas.id, into.id));
+      }
+    } finally {
+      await db.delete(processos).where(eq(processos.id, proc.id));
+      await db.delete(assistidos).where(eq(assistidos.id, assistido.id));
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("markAsDistinct grava em pessoas_distincts_confirmed", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const a = await caller.pessoas.create({ nome: "Distinct A " + Date.now(), fonteCriacao: "manual" });
+      const b = await caller.pessoas.create({ nome: "Distinct B " + Date.now(), fonteCriacao: "manual" });
+      try {
+        await caller.pessoas.markAsDistinct({ pessoaAId: a.id, pessoaBId: b.id });
+        const { pessoasDistinctsConfirmed } = await import("@/lib/db/schema");
+        const rows = await db.select().from(pessoasDistinctsConfirmed);
+        const pair = rows.find(
+          (r) =>
+            (r.pessoaAId === a.id && r.pessoaBId === b.id) ||
+            (r.pessoaAId === b.id && r.pessoaBId === a.id),
+        );
+        expect(pair).toBeTruthy();
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, a.id));
+        await db.delete(pessoas).where(eq(pessoas.id, b.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});

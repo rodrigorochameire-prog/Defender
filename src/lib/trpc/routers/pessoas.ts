@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas, participacoesProcesso } from "@/lib/db/schema";
+import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
@@ -266,4 +266,111 @@ export const pessoasRouter = router({
         .orderBy(asc(participacoesProcesso.papel));
     }),
 
+  // === MERGE / DEDUP ===
+  suggestMerges: protectedProcedure
+    .input(z.object({
+      pessoaId: z.number().optional(),
+      limit: z.number().min(1).max(50).default(20),
+    }))
+    .query(async ({ input }) => {
+      if (input.pessoaId) {
+        const [p] = await db.select().from(pessoas).where(eq(pessoas.id, input.pessoaId));
+        if (!p) return [];
+        const candidates = await db
+          .select()
+          .from(pessoas)
+          .where(
+            and(
+              eq(pessoas.nomeNormalizado, p.nomeNormalizado),
+              sql`${pessoas.id} != ${input.pessoaId}`,
+              isNull(pessoas.mergedInto),
+            ),
+          )
+          .limit(input.limit);
+
+        const excluded = await db.select().from(pessoasDistinctsConfirmed);
+        const excludedIds = new Set(
+          excluded
+            .filter((r) => r.pessoaAId === input.pessoaId || r.pessoaBId === input.pessoaId)
+            .map((r) => (r.pessoaAId === input.pessoaId ? r.pessoaBId : r.pessoaAId)),
+        );
+        return candidates.filter((c) => !excludedIds.has(c.id));
+      }
+
+      // Sem pessoaId: top pares globais por nome_normalizado duplicado
+      const rows = await db.execute(sql`
+        SELECT p1.id AS a, p2.id AS b, p1.nome_normalizado AS nome
+        FROM pessoas p1
+        JOIN pessoas p2 ON p1.nome_normalizado = p2.nome_normalizado
+          AND p1.id < p2.id
+          AND p1.merged_into IS NULL AND p2.merged_into IS NULL
+        WHERE NOT EXISTS (
+          SELECT 1 FROM pessoas_distincts_confirmed
+          WHERE pessoa_a_id = p1.id AND pessoa_b_id = p2.id
+        )
+        LIMIT ${input.limit}
+      `);
+      return (rows as any).rows ?? rows;
+    }),
+
+  merge: protectedProcedure
+    .input(z.object({ fromId: z.number(), intoId: z.number(), reason: z.string().min(3) }))
+    .mutation(async ({ input, ctx }) => {
+      if (input.fromId === input.intoId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "fromId = intoId" });
+      }
+      await db
+        .update(participacoesProcesso)
+        .set({ pessoaId: input.intoId, updatedAt: new Date() })
+        .where(eq(participacoesProcesso.pessoaId, input.fromId));
+
+      const [row] = await db
+        .update(pessoas)
+        .set({
+          mergedInto: input.intoId,
+          mergeReason: input.reason,
+          mergedAt: new Date(),
+          mergedBy: ctx.user?.id ?? null,
+          updatedAt: new Date(),
+        })
+        .where(eq(pessoas.id, input.fromId))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      return { ok: true };
+    }),
+
+  unmerge: protectedProcedure
+    .input(z.object({ pessoaId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [row] = await db
+        .update(pessoas)
+        .set({
+          mergedInto: null,
+          mergeReason: null,
+          mergedAt: null,
+          mergedBy: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(pessoas.id, input.pessoaId))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND" });
+      return row;
+    }),
+
+  markAsDistinct: protectedProcedure
+    .input(z.object({ pessoaAId: z.number(), pessoaBId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const [a, b] = input.pessoaAId < input.pessoaBId
+        ? [input.pessoaAId, input.pessoaBId]
+        : [input.pessoaBId, input.pessoaAId];
+      await db
+        .insert(pessoasDistinctsConfirmed)
+        .values({
+          pessoaAId: a,
+          pessoaBId: b,
+          confirmadoPor: ctx.user?.id ?? null,
+        } as any)
+        .onConflictDoNothing();
+      return { ok: true };
+    }),
 });
