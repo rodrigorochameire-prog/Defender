@@ -78,6 +78,7 @@ const MAIN_NAV: AssignmentMenuItem[] = [
 // 2. Cadastros - Assistidos, Processos, Casos, Solar, Mapa (azul)
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+  { label: "Pessoas", path: "/admin/pessoas", icon: "UsersRound" },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
