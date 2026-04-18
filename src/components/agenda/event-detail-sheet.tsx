@@ -21,7 +21,7 @@ import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
-import { DepoentesStatusBlock } from "./depoentes-status-block";
+import { cn } from "@/lib/utils";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
@@ -386,25 +386,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                 )}
 
                 <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
-                  {depoentes.length > 0 && (
-                    <DepoentesStatusBlock
-                      depoentes={depoentes.map((d: any, i: number) => ({
-                        id: d.id ?? `${d.nome ?? d.name ?? "d"}-${i}`,
-                        nome: d.nome ?? d.name,
-                        tipo:
-                          d.tipo === "ACUSACAO" ||
-                          d.tipo === "DEFESA" ||
-                          d.tipo === "COMUM"
-                            ? "testemunha"
-                            : d.tipo,
-                        statusIntimacao: d.statusIntimacao,
-                        intimado: d.intimado,
-                        jaOuvido: d.jaOuvido,
-                      }))}
-                      mode="readonly"
-                      className="mb-2"
-                    />
-                  )}
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => (
@@ -445,13 +426,63 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                         <FreshnessBadge analyzedAt={analyzedAt} />
                       </div>
                     )}
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-2">
                       {contradicoes.map((c: any, i: number) => {
-                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? JSON.stringify(c);
+                        if (typeof c === "string") {
+                          return (
+                            <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                              <span>{c}</span>
+                            </li>
+                          );
+                        }
+                        const ponto = c.ponto ?? c.descricao ?? c.contradicao ?? c.vulnerabilidade;
+                        const impacto = c.impacto;
+                        const vDeleg = c.versao_delegacia ?? c.versaoDelegacia;
+                        const vJuizo = c.versao_juizo_hoje ?? c.versao_juizo ?? c.versaoJuizo;
+                        if (!ponto && !impacto && !vDeleg && !vJuizo) {
+                          return (
+                            <li key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(c)}</li>
+                          );
+                        }
+                        const impactoClass =
+                          typeof impacto === "string" && /essencial|alta|forte/i.test(impacto)
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                            : typeof impacto === "string" && /media|moderad/i.test(impacto)
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
                         return (
-                          <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                            <span>{text}</span>
+                          <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{ponto}</p>
+                              {impacto && (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", impactoClass)}>
+                                  {impacto.split(/\s—\s/)[0]}
+                                </span>
+                              )}
+                            </div>
+                            {typeof impacto === "string" && impacto.includes("—") && (
+                              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed pl-5">
+                                {impacto.split(/\s—\s/).slice(1).join(" — ")}
+                              </p>
+                            )}
+                            {(vDeleg || vJuizo) && (
+                              <div className="grid grid-cols-1 gap-1 pl-5 pt-1">
+                                {vDeleg && (
+                                  <div className="text-[11px] leading-relaxed">
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Delegacia:</span>{" "}
+                                    <span className="text-neutral-600 dark:text-neutral-400">{vDeleg}</span>
+                                  </div>
+                                )}
+                                {vJuizo && (
+                                  <div className="text-[11px] leading-relaxed">
+                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Em juízo:</span>{" "}
+                                    <span className="text-neutral-600 dark:text-neutral-400">{vJuizo}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </li>
                         );
                       })}
@@ -529,10 +560,52 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
                         <FreshnessBadge analyzedAt={analyzedAt} />
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="space-y-2">
                       {teses.map((t: any, i: number) => {
-                        const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? JSON.stringify(t);
-                        return <Badge key={i} variant="outline" className="text-[11px]">{text}</Badge>;
+                        if (typeof t === "string") {
+                          return (
+                            <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
+                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{t}</p>
+                            </div>
+                          );
+                        }
+                        const nome = t.nome ?? t.tese ?? t.titulo ?? t.descricao;
+                        const forca = t.forca ?? t.força ?? t.viabilidade;
+                        const baseLegal = t.base_legal ?? t.baseLegal;
+                        const fundamentacao = t.fundamentacao ?? t.fundamentos ?? t.justificativa;
+                        if (!nome && !forca && !baseLegal && !fundamentacao) {
+                          return (
+                            <div key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(t)}</div>
+                          );
+                        }
+                        const forcaClass =
+                          typeof forca === "string" && /alta|forte/i.test(forca)
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : typeof forca === "string" && /media|moderad/i.test(forca)
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+                        return (
+                          <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              {nome && <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{nome}</p>}
+                              {forca && (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", forcaClass)}>
+                                  {forca}
+                                </span>
+                              )}
+                            </div>
+                            {baseLegal && (
+                              <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                                {baseLegal}
+                              </p>
+                            )}
+                            {fundamentacao && (
+                              <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                {fundamentacao}
+                              </p>
+                            )}
+                          </div>
+                        );
                       })}
                     </div>
                   </CollapsibleSection>

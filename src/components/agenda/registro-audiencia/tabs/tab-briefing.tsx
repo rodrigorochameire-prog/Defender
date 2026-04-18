@@ -915,19 +915,69 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             <CollapsibleSection id="contradicoes" label="Contradicoes">
               <ul className="space-y-2">
                 {contradicoes.map((c: any, i: number) => {
-                  const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
-                  const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
+                  if (typeof c === "string") {
+                    return (
+                      <li key={i} className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 border bg-rose-50/50 dark:bg-rose-950/10 border-rose-200 dark:border-rose-800/50 text-rose-700 dark:text-rose-400">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                        <span className="leading-relaxed">{c}</span>
+                      </li>
+                    );
+                  }
+                  const ponto = c.ponto ?? c.descricao ?? c.contradicao ?? c.vulnerabilidade;
+                  const impacto = c.impacto;
+                  const vDeleg = c.versao_delegacia ?? c.versaoDelegacia;
+                  const vJuizo = c.versao_juizo_hoje ?? c.versao_juizo ?? c.versaoJuizo;
+                  const isBom = c.favoravel === true || c.tipo === "favoravel";
+                  if (!ponto && !impacto && !vDeleg && !vJuizo) {
+                    return <li key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(c)}</li>;
+                  }
+                  const impactoClass =
+                    typeof impacto === "string" && /essencial|alta|forte/i.test(impacto)
+                      ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                      : typeof impacto === "string" && /media|moderad/i.test(impacto)
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
                   return (
                     <li key={i} className={cn(
-                      "flex items-start gap-2 text-xs rounded-lg px-3 py-2 border",
+                      "rounded-lg ring-1 p-3 space-y-1.5",
                       isBom
-                        ? "bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400"
-                        : "bg-rose-50/50 dark:bg-rose-950/10 border-rose-200 dark:border-rose-800/50 text-rose-700 dark:text-rose-400"
+                        ? "ring-emerald-200 dark:ring-emerald-800/50 bg-emerald-50/30 dark:bg-emerald-950/10"
+                        : "ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900"
                     )}>
-                      <span className="mt-0.5 flex-shrink-0">
-                        {isBom ? <Check className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-                      </span>
-                      <span className="leading-relaxed">{text}</span>
+                      <div className="flex items-start gap-2">
+                        {isBom ? (
+                          <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-emerald-500" />
+                        ) : (
+                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                        )}
+                        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{ponto}</p>
+                        {impacto && (
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", impactoClass)}>
+                            {typeof impacto === "string" ? impacto.split(/\s—\s/)[0] : String(impacto)}
+                          </span>
+                        )}
+                      </div>
+                      {typeof impacto === "string" && impacto.includes("—") && (
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed pl-5">
+                          {impacto.split(/\s—\s/).slice(1).join(" — ")}
+                        </p>
+                      )}
+                      {(vDeleg || vJuizo) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5 pt-1">
+                          {vDeleg && (
+                            <div className="text-xs leading-relaxed">
+                              <span className="font-semibold text-blue-600 dark:text-blue-400">Delegacia:</span>{" "}
+                              <span className="text-neutral-600 dark:text-neutral-400">{vDeleg}</span>
+                            </div>
+                          )}
+                          {vJuizo && (
+                            <div className="text-xs leading-relaxed">
+                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">Em juízo:</span>{" "}
+                              <span className="text-neutral-600 dark:text-neutral-400">{vJuizo}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -959,16 +1009,48 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             {teses.length > 0 ? (
               <div className="space-y-2">
                 {teses.map((t: any, i: number) => {
-                  const titulo = typeof t === "string" ? t : t.tese ?? t.titulo ?? t.descricao ?? JSON.stringify(t);
-                  const justificativa = typeof t === "object" ? t.justificativa ?? t.fundamentos : null;
+                  if (typeof t === "string") {
+                    return (
+                      <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
+                        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">{t}</p>
+                      </div>
+                    );
+                  }
+                  const nome = t.nome ?? t.tese ?? t.titulo ?? t.descricao;
+                  const forca = t.forca ?? t.força ?? t.viabilidade;
+                  const baseLegal = t.base_legal ?? t.baseLegal;
+                  const fundamentacao = t.fundamentacao ?? t.fundamentos ?? t.justificativa;
+                  if (!nome && !forca && !baseLegal && !fundamentacao) {
+                    return <div key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(t)}</div>;
+                  }
+                  const forcaClass =
+                    typeof forca === "string" && /alta|forte/i.test(forca)
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : typeof forca === "string" && /media|moderad/i.test(forca)
+                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
                   return (
-                    <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
-                      <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed">
-                        {titulo}
-                      </p>
-                      {justificativa && (
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mt-1">
-                          {justificativa}
+                    <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-3 space-y-1.5">
+                      <div className="flex items-start gap-2">
+                        {nome && (
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">
+                            {nome}
+                          </p>
+                        )}
+                        {forca && (
+                          <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", forcaClass)}>
+                            {forca}
+                          </span>
+                        )}
+                      </div>
+                      {baseLegal && (
+                        <p className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                          {baseLegal}
+                        </p>
+                      )}
+                      {fundamentacao && (
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                          {fundamentacao}
                         </p>
                       )}
                     </div>

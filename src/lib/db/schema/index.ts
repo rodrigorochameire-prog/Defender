@@ -48,6 +48,9 @@ export * from "./defensoria";
 export * from "./instancia-superior";
 export * from "./system";
 
+// Pessoas (Fase I-A — entity resolution)
+export * from "./pessoas";
+
 // Audit log
 export * from "./audit";
 
