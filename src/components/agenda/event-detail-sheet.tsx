@@ -224,74 +224,76 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
-        <div className="bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight">Evento</SheetTitle>
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
           </SheetHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
             title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+        <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+          <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+        </div>
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-          <div className="mx-3 mt-3 mb-3 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40">
-            <div className="flex items-start gap-3.5">
-              {(() => {
-                const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
-                const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
-                return (
-                  <div
-                    className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0"
-                    style={{ boxShadow: `0 0 0 2.5px ${atribColor}` }}
-                  >
+          {(() => {
+            const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
+            const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
+            return (
+              <div
+                className="mx-3 mt-3 mb-3 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
+                style={{ borderLeftColor: atribColor }}
+              >
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                       {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
                     </span>
                   </div>
-                );
-              })()}
-              <div className="flex-1 min-w-0 pt-0.5">
-                {assistidoNome && (
-                  <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
-                    {assistidoNome}
-                  </h2>
-                )}
-                <div className="flex items-center gap-2 flex-wrap mt-1">
-                  {processoNum && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); copyProcesso(processoNum); }}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 cursor-pointer"
-                      title="Copiar número"
-                    >
-                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400">{processoNum}</span>
-                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500" />}
-                    </button>
-                  )}
-                  {dataHora && (
-                    <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
-                      {format(dataHora, "HH:mm", { locale: ptBR })}
-                    </span>
-                  )}
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    {assistidoNome && (
+                      <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
+                        {assistidoNome}
+                      </h2>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                      {processoNum && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); copyProcesso(processoNum); }}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 cursor-pointer"
+                          title="Copiar número"
+                        >
+                          <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400">{processoNum}</span>
+                          {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500" />}
+                        </button>
+                      )}
+                      {dataHora && (
+                        <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
+                          {format(dataHora, "HH:mm", { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
+                    {vara && (
+                      <p className="text-[10px] text-neutral-500 mt-1.5">
+                        {vara}
+                        {evento.atribuicao && ` · ${evento.atribuicao}`}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {vara && (
-                  <p className="text-[10px] text-neutral-500 mt-1.5">
-                    {vara}
-                    {evento.atribuicao && ` · ${evento.atribuicao}`}
-                  </p>
-                )}
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           <div className="px-3 pb-4 space-y-2.5">
             {isLoading && (
