@@ -373,4 +373,56 @@ export const pessoasRouter = router({
         .onConflictDoNothing();
       return { ok: true };
     }),
+
+  getBatchSignals: protectedProcedure
+    .input(z.object({
+      pessoaIds: z.array(z.number()).max(500).default([]),
+    }))
+    .query(async ({ input }) => {
+      if (input.pessoaIds.length === 0) return [];
+      const idList = sql.join(input.pessoaIds.map((id) => sql`${id}`), sql`, `);
+      const rows = await db.execute<{
+        pessoa_id: number;
+        total_casos: number;
+        casos_recentes_6m: number;
+        casos_recentes_12m: number;
+        papeis_count: Record<string, number>;
+        papel_primario: string | null;
+        lado_acusacao: number;
+        lado_defesa: number;
+        last_seen_at: Date | null;
+        first_seen_at: Date | null;
+        ambiguity_flag: boolean;
+        contradicoes_conhecidas: number;
+        consistencias_detectadas: number;
+        high_value_flag: boolean;
+      }>(sql`
+        SELECT
+          pessoa_id, total_casos, casos_recentes_6m, casos_recentes_12m,
+          papeis_count, papel_primario, lado_acusacao, lado_defesa,
+          last_seen_at, first_seen_at, ambiguity_flag,
+          contradicoes_conhecidas, consistencias_detectadas, high_value_flag
+        FROM pessoas_intel_signals
+        WHERE pessoa_id IN (${idList})
+      `);
+
+      const data = (rows as any).rows ?? rows;
+      return data.map((r: any) => ({
+        pessoaId: r.pessoa_id,
+        totalCasos: r.total_casos,
+        casosRecentes6m: r.casos_recentes_6m,
+        casosRecentes12m: r.casos_recentes_12m,
+        papeisCount: r.papeis_count,
+        papelPrimario: r.papel_primario,
+        ladoAcusacao: r.lado_acusacao,
+        ladoDefesa: r.lado_defesa,
+        lastSeenAt: r.last_seen_at,
+        firstSeenAt: r.first_seen_at,
+        sameComarcaCount: 0,  // calculado client-side com processo atual
+        ambiguityFlag: r.ambiguity_flag,
+        contradicoesConhecidas: r.contradicoes_conhecidas,
+        consistenciasDetectadas: r.consistencias_detectadas,
+        highValueFlag: r.high_value_flag,
+      }));
+    }),
 });

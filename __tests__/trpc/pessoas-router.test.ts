@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { pessoas, participacoesProcesso } from "@/lib/db/schema";
 import { users, processos, assistidos } from "@/lib/db/schema/core";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
 
@@ -289,6 +289,50 @@ describe("pessoas — merge", { timeout: 30000 }, () => {
         await db.delete(pessoas).where(eq(pessoas.id, a.id));
         await db.delete(pessoas).where(eq(pessoas.id, b.id));
       }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
+
+describe("pessoas.getBatchSignals", { timeout: 30000 }, () => {
+  it("retorna signals por pessoaId batch", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const p = await caller.pessoas.create({ nome: "Test BatchSignal " + Date.now(), fonteCriacao: "manual" });
+      try {
+        // Refresh MV pra garantir pessoa recém-criada apareça
+        await db.execute(sql`REFRESH MATERIALIZED VIEW pessoas_intel_signals`);
+        const result = await caller.pessoas.getBatchSignals({ pessoaIds: [p.id] });
+        expect(result).toHaveLength(1);
+        expect(result[0].pessoaId).toBe(p.id);
+        expect(result[0].totalCasos).toBe(0);
+      } finally {
+        await db.delete(pessoas).where(eq(pessoas.id, p.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("retorna vazio para ids inexistentes", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const result = await caller.pessoas.getBatchSignals({ pessoaIds: [999999999] });
+      expect(result).toEqual([]);
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("aceita lista vazia", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const result = await caller.pessoas.getBatchSignals({ pessoaIds: [] });
+      expect(result).toEqual([]);
     } finally {
       await db.delete(users).where(eq(users.id, user.id));
     }
