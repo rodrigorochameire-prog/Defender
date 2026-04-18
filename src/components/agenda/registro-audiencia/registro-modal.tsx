@@ -16,7 +16,7 @@ import { TabResultado } from "./tabs/tab-resultado";
 import { TabHistorico } from "./tabs/tab-historico";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
-import { countCompletude } from "./historico/count-completude";
+import { countCompletude, getCompletudeBreakdown, type CompletudeState } from "./historico/count-completude";
 
 interface RegistroAudienciaModalProps {
   isOpen: boolean;
@@ -24,6 +24,12 @@ interface RegistroAudienciaModalProps {
   onSave: (registro: RegistroAudienciaData) => void;
   evento: any;
   onCriarNovoEvento?: (evento: any) => void;
+}
+
+function completudeStateColor(state: CompletudeState): string {
+  if (state === "full") return "bg-emerald-500";
+  if (state === "partial") return "bg-amber-400";
+  return "bg-neutral-300 dark:bg-neutral-700";
 }
 
 const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
@@ -47,6 +53,15 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
 
   // Completude badge calculation: how many of 5 key fields are filled
   const completudeItems = countCompletude(form.registro, form.statusAudiencia);
+
+  const briefingData: { imputacao?: string | null; fatos?: string | null } | undefined =
+    (form as any).briefingData ?? undefined;
+  const completude = getCompletudeBreakdown(
+    form.registro,
+    form.statusAudiencia,
+    briefingData,
+    form.registroSalvo,
+  );
 
   const identificacaoLinha = (() => {
     const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
@@ -195,6 +210,10 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                       {count}
                     </Badge>
                   )}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${completudeStateColor(completude.byTab[tab.key])}`}
+                    title={`Completude: ${completude.byTab[tab.key]}`}
+                  />
                 </button>
               );
             })}
