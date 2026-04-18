@@ -34,6 +34,30 @@ function normalizarNome(s) {
     .trim();
 }
 
+// Placeholders que NÃO são nomes reais (instruções de pipeline, ausências)
+const PLACEHOLDER_PATTERNS = [
+  /^\s*\[/,                                  // "[A EXTRAIR ..."
+  /\bA\s+EXTRAIR\b/i,
+  /\ba\s+confirmar\b/i,
+  /\ba\s+identificar\b/i,
+  /\bn[aã]o\s+identificad/i,
+  /\bn[aã]o\s+localizad/i,
+  /\bn[aã]o\s+consta\b/i,
+  /\bdesconhecid/i,
+  /\bequipe\b/i,
+  /\btestemunhas?\s+n[aã]o\b/i,
+  /\bv[ií]tima\s+(a\s+)?confirmar\b/i,
+  /^\s*sem\s+nome\s*$/i,
+  /^\s*\?+\s*$/,
+  /^\s*-+\s*$/,
+  /^\s*\.+\s*$/,
+];
+
+function isPlaceholder(nome) {
+  if (!nome || nome.trim().length < 3) return true;
+  return PLACEHOLDER_PATTERNS.some((re) => re.test(nome));
+}
+
 const sql = postgres(process.env.DATABASE_URL, { max: 3 });
 
 const counters = {
@@ -45,6 +69,10 @@ const counters = {
 };
 
 async function getOrCreatePessoa({ nome, fonte, categoriaPrimaria, confidence = 0.9 }) {
+  if (isPlaceholder(nome)) {
+    counters.warnings++;
+    return null;
+  }
   const nomeNorm = normalizarNome(nome);
   if (!nomeNorm || nomeNorm.length < 2) {
     counters.warnings++;
