@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
 
   // Histórico sempre visível — inclui o registro atual salvo + anteriores
   const visibleTabs = tabConfig;
+
+  const [completudePopoverOpen, setCompletudePopoverOpen] = useState(false);
 
   const briefingData: { imputacao?: string | null; fatos?: string | null } | undefined =
     (form as any).briefingData ?? undefined;
@@ -308,7 +311,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             <span>
               {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
             </span>
-            <Popover>
+            <Popover open={completudePopoverOpen} onOpenChange={setCompletudePopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -335,7 +338,10 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => form.setActiveTab(tab.key)}
+                      onClick={() => {
+                        form.setActiveTab(tab.key);
+                        setCompletudePopoverOpen(false);
+                      }}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-100 dark:hover:bg-muted text-xs text-left cursor-pointer"
                     >
                       <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${color}`} />
