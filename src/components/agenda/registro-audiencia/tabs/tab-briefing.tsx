@@ -16,6 +16,13 @@ import {
   HeartPulse,
   FlaskConical,
   Brain,
+  File,
+  FileAudio,
+  FileVideo,
+  FileImage,
+  Search,
+  Volume2,
+  Video,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,7 +35,13 @@ import type { Depoente } from "../types";
 import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
-import { matchTermoDepoente, matchLaudo } from "@/lib/agenda/match-document";
+import { matchTermoDepoente, matchLaudo, getTermoKind } from "@/lib/agenda/match-document";
+import {
+  categorizeDocument,
+  CATEGORY_ORDER,
+  CATEGORY_LABEL,
+  type DocumentCategory,
+} from "@/lib/agenda/document-category";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { FreshnessBadge } from "@/components/agenda/sheet/freshness-badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -73,6 +86,140 @@ function extractString(obj: Record<string, any> | null | undefined, ...keys: str
     }
   }
   return null;
+}
+
+// ─────────────────────────────────────────────
+// File icon helper
+// ─────────────────────────────────────────────
+
+function iconeArquivo(file: { name: string; mimeType?: string | null }): React.ComponentType<{ className?: string }> {
+  const m = file.mimeType ?? "";
+  if (m.startsWith("audio/")) return FileAudio;
+  if (m.startsWith("video/")) return FileVideo;
+  if (m.startsWith("image/")) return FileImage;
+  if (m === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) return FileText;
+  return File;
+}
+
+// ─────────────────────────────────────────────
+// Documentos do Processo block
+// ─────────────────────────────────────────────
+
+function DocumentosProcessoBlock({
+  files,
+  onPreview,
+}: {
+  files: any[];
+  onPreview: (p: { id: string; title: string }) => void;
+}) {
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return files;
+    const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return files.filter((f) =>
+      (f.name ?? f.fileName ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .includes(q),
+    );
+  }, [files, query]);
+
+  const grupos = useMemo(() => {
+    const map: Record<DocumentCategory, any[]> = {
+      inquerito: [],
+      "acao-penal": [],
+      laudo: [],
+      termo: [],
+      relatorio: [],
+      midia: [],
+      imagem: [],
+      outros: [],
+    };
+    filtered.forEach((f) => {
+      const cat = categorizeDocument({
+        name: f.name ?? f.fileName ?? "",
+        mimeType: f.mimeType ?? null,
+      });
+      map[cat].push(f);
+    });
+    Object.keys(map).forEach((k) => {
+      map[k as DocumentCategory].sort((a, b) => {
+        const da = new Date(a.lastModifiedTime ?? 0).getTime();
+        const db = new Date(b.lastModifiedTime ?? 0).getTime();
+        return db - da;
+      });
+    });
+    return CATEGORY_ORDER.map((k) => ({ key: k, label: CATEGORY_LABEL[k], items: map[k] })).filter(
+      (g) => g.items.length > 0,
+    );
+  }, [filtered]);
+
+  if (files.length === 0) {
+    return <EmptyHint text="Processo ainda sem arquivos no Drive." />;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400" />
+        <input
+          type="text"
+          placeholder="Buscar documento..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full text-xs pl-7 pr-2 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+        />
+      </div>
+
+      {grupos.length === 0 ? (
+        <EmptyHint text="Nenhum arquivo corresponde à busca." />
+      ) : (
+        <div className="space-y-2">
+          {grupos.map((grupo) => (
+            <details key={grupo.key} open className="group">
+              <summary className="cursor-pointer bg-neutral-50 dark:bg-neutral-900/50 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 list-none [&::-webkit-details-marker]:hidden">
+                <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-0 -rotate-90" />
+                <span>{grupo.label}</span>
+                <span className="text-neutral-400 font-normal">({grupo.items.length})</span>
+              </summary>
+              <ul className="mt-1.5 space-y-1">
+                {grupo.items.map((f: any) => {
+                  const fileName = f.name ?? f.fileName ?? "(sem nome)";
+                  const Icon = iconeArquivo({ name: fileName, mimeType: f.mimeType });
+                  const dataStr = f.lastModifiedTime
+                    ? format(new Date(f.lastModifiedTime), "dd/MM/yy", { locale: ptBR })
+                    : "";
+                  return (
+                    <li
+                      key={f.driveFileId ?? f.id ?? fileName}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 hover:ring-neutral-300"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
+                      <span className="flex-1 text-xs truncate">{fileName}</span>
+                      {dataStr && (
+                        <span className="text-[10px] text-neutral-400 font-mono flex-shrink-0">{dataStr}</span>
+                      )}
+                      {f.driveFileId && (
+                        <button
+                          type="button"
+                          onClick={() => onPreview({ id: f.driveFileId, title: fileName })}
+                          className="text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer flex-shrink-0"
+                        >
+                          Ver
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────
@@ -196,6 +343,19 @@ function DepoentesBlock({
                 const intimado = !!d.intimado || d.statusIntimacao === "intimado";
                 const ouvido = !!d.ouvidoEm || d.jaOuvido === true;
                 const termoId = matchTermoDepoente(d.nome ?? "", driveFiles);
+                const termoFile = termoId
+                  ? driveFiles.find((f: any) => f.driveFileId === termoId)
+                  : null;
+                const termoKind = termoFile
+                  ? getTermoKind({
+                      driveFileId: termoFile.driveFileId,
+                      name: termoFile.name ?? "",
+                      mimeType: termoFile.mimeType,
+                    })
+                  : null;
+                const termoLabel = termoKind === "audio" ? "Ouvir" : termoKind === "video" ? "Ver" : "Termo";
+                const TermoIcon = termoKind === "audio" ? Volume2 : termoKind === "video" ? Video : FileText;
+                const termoTitlePrefix = termoKind === "audio" ? "Áudio" : termoKind === "video" ? "Vídeo" : "Termo";
                 const expanded = expandedId === depId;
                 const lado2 = d.lado ?? (d.tipo === "ACUSACAO" || d.tipo === "VITIMA" ? "acusacao" : d.tipo === "DEFESA" ? "defesa" : null);
                 const tipoNormalized = d.tipo === "ACUSACAO" || d.tipo === "DEFESA" || d.tipo === "COMUM" ? "testemunha" : (d.tipo ?? "testemunha");
@@ -220,11 +380,11 @@ function DepoentesBlock({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onPreview({ id: termoId, title: `Termo — ${d.nome}` });
+                            onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}` });
                           }}
                           className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                         >
-                          <FileText className="w-3 h-3" /> Termo
+                          <TermoIcon className="w-3 h-3" /> {termoLabel}
                         </button>
                       )}
                       <ChevronDown className={cn("w-3.5 h-3.5 text-neutral-400 transition-transform", expanded && "rotate-180")} />
@@ -234,7 +394,7 @@ function DepoentesBlock({
                         <DepoenteCard
                           dep={{ ...d, lado: lado2, tipo: tipoNormalized }}
                           variant="full"
-                          onVerTermo={termoId ? () => onPreview({ id: termoId, title: `Termo — ${d.nome}` }) : undefined}
+                          onVerTermo={termoId ? () => onPreview({ id: termoId, title: `${termoTitlePrefix} — ${d.nome}` }) : undefined}
                         />
                       </div>
                     )}
@@ -614,6 +774,10 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             {laudos.length === 0 && lacunas.length === 0 && !teoriaProvas && (
               <EmptyHint text="Elementos probatorios nao extraidos." />
             )}
+          </CollapsibleSection>
+
+          <CollapsibleSection id="documentos-processo" label="Documentos do Processo" count={driveFiles.length}>
+            <DocumentosProcessoBlock files={driveFiles} onPreview={setPreviewDoc} />
           </CollapsibleSection>
 
           {/* 4. VERSAO DO ACUSADO — expanded */}
