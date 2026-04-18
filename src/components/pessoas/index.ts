@@ -5,3 +5,4 @@ export { PessoaForm } from "./pessoa-form";
 export { MergePairCard } from "./merge-pair-card";
 export { IntelDot } from "./intel-dot";
 export { PessoaPeek } from "./pessoa-peek";
+export { BannerInteligencia } from "./banner-inteligencia";
