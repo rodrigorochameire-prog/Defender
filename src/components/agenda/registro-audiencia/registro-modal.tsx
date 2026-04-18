@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Users, Notebook, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2,
+  Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed,
 } from "lucide-react";
 import { useRegistroForm } from "./hooks/use-registro-form";
 import { TabBriefing } from "./tabs/tab-briefing";
@@ -16,7 +17,7 @@ import { TabResultado } from "./tabs/tab-resultado";
 import { TabHistorico } from "./tabs/tab-historico";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
-import { countCompletude, getCompletudeBreakdown, type CompletudeState } from "./historico/count-completude";
+import { getCompletudeBreakdown, type CompletudeState } from "./historico/count-completude";
 
 interface RegistroAudienciaModalProps {
   isOpen: boolean;
@@ -56,9 +57,6 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
 
   // Histórico sempre visível — inclui o registro atual salvo + anteriores
   const visibleTabs = tabConfig;
-
-  // Completude badge calculation: how many of 5 key fields are filled
-  const completudeItems = countCompletude(form.registro, form.statusAudiencia);
 
   const briefingData: { imputacao?: string | null; fatos?: string | null } | undefined =
     (form as any).briefingData ?? undefined;
@@ -310,12 +308,43 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             <span>
               {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
             </span>
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 border-neutral-300 dark:border-neutral-700 text-neutral-500"
-            >
-              {completudeItems}/5 preenchidos
-            </Badge>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+                >
+                  {completude.filled}/{completude.total} preenchidos
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="top" className="w-56 p-1.5">
+                <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wide">
+                  Completude do registro
+                </div>
+                {tabConfig.map((tab) => {
+                  const state = completude.byTab[tab.key];
+                  const Icon = state === "full" ? CheckCircle2 : state === "partial" ? CircleDashed : Circle;
+                  const color =
+                    state === "full"
+                      ? "text-emerald-500"
+                      : state === "partial"
+                        ? "text-amber-500"
+                        : "text-neutral-400";
+                  const countSuffix = tab.countKey ? ` (${tabCounts[tab.countKey] ?? 0})` : "";
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => form.setActiveTab(tab.key)}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-100 dark:hover:bg-muted text-xs text-left cursor-pointer"
+                    >
+                      <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${color}`} />
+                      <span className="flex-1">{tab.label}{countSuffix}</span>
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
             {form.isDirty && (
               <span className="text-[10px] text-amber-600 dark:text-amber-400">Alteracoes nao salvas</span>
             )}
