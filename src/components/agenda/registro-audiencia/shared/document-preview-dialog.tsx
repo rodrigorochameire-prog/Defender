@@ -57,7 +57,11 @@ export function DocumentPreviewDialog({
       ? "video"
       : "other";
 
-  const proxyUrl = driveFileId ? `/api/drive/proxy?fileId=${driveFileId}` : null;
+  // Docs/PDFs: iframe direto do Google Drive (rápido, sem roundtrip no servidor)
+  const drivePreviewUrl = driveFileId
+    ? `https://drive.google.com/file/d/${driveFileId}/preview`
+    : null;
+  // Áudio/vídeo: via proxy local para suportar Range streaming + auth
   const streamUrl = driveFileId ? `/api/drive/proxy?fileId=${driveFileId}&stream=1` : null;
   const driveUrl =
     webViewLink ?? (driveFileId ? `https://drive.google.com/file/d/${driveFileId}/view` : null);
@@ -197,7 +201,7 @@ export function DocumentPreviewDialog({
             </video>
           )}
 
-          {kind === "other" && proxyUrl && (
+          {kind === "other" && drivePreviewUrl && (
             <>
               {iframeLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 z-10">
@@ -210,9 +214,11 @@ export function DocumentPreviewDialog({
                 </div>
               )}
               <iframe
-                src={proxyUrl}
+                src={drivePreviewUrl}
                 className="w-full h-full border-0"
                 title={title}
+                loading="eager"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 onLoad={() => setIframeLoading(false)}
               />
             </>
