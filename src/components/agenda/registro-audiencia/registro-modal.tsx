@@ -48,6 +48,49 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
   // Completude badge calculation: how many of 5 key fields are filled
   const completudeItems = countCompletude(form.registro, form.statusAudiencia);
 
+  const identificacaoLinha = (() => {
+    const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
+    const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
+    const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
+    const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
+    return (
+      <>
+        {assistidoId ? (
+          <Link
+            href={`/admin/assistidos/${assistidoId}`}
+            target="_blank"
+            rel="noopener"
+            className="font-medium text-foreground/90 hover:underline"
+          >
+            {assistidoName}
+          </Link>
+        ) : (
+          <span className="font-medium text-foreground/90">{assistidoName}</span>
+        )}
+        {processoDisplay && (
+          <>
+            {" · "}
+            {processoId ? (
+              <Link
+                href={`/admin/processos/${processoId}`}
+                target="_blank"
+                rel="noopener"
+                className="font-mono hover:underline"
+              >
+                {processoDisplay}
+              </Link>
+            ) : (
+              <span className="font-mono">{processoDisplay}</span>
+            )}
+          </>
+        )}
+        {" · "}
+        {new Date(evento.data).toLocaleDateString("pt-BR")}
+        {evento.horarioInicio && ` · ${evento.horarioInicio}`}
+      </>
+    );
+  })();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-none w-[98vw] md:w-[98vw] h-[98vh] flex flex-col overflow-hidden bg-white dark:bg-neutral-950 p-0 gap-0" hideClose>
@@ -80,53 +123,13 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 )}
               </div>
               <p className="text-xs md:text-sm text-muted-foreground truncate">
-                {(() => {
-                  const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
-                  const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
-                  const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
-                  const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
-                  return (
-                    <>
-                      {assistidoId ? (
-                        <Link
-                          href={`/admin/assistidos/${assistidoId}`}
-                          target="_blank"
-                          rel="noopener"
-                          className="font-medium text-foreground/90 hover:underline"
-                        >
-                          {assistidoName}
-                        </Link>
-                      ) : (
-                        <span className="font-medium text-foreground/90">{assistidoName}</span>
-                      )}
-                      {processoDisplay && (
-                        <>
-                          {" · "}
-                          {processoId ? (
-                            <Link
-                              href={`/admin/processos/${processoId}`}
-                              target="_blank"
-                              rel="noopener"
-                              className="font-mono hover:underline"
-                            >
-                              {processoDisplay}
-                            </Link>
-                          ) : (
-                            <span className="font-mono">{processoDisplay}</span>
-                          )}
-                        </>
-                      )}
-                      {" · "}
-                      {new Date(evento.data).toLocaleDateString("pt-BR")}
-                      {evento.horarioInicio && ` · ${evento.horarioInicio}`}
-                    </>
-                  );
-                })()}
+                {identificacaoLinha}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer flex-shrink-0"
           >
             <X className="w-5 h-5 text-foreground/80" />
@@ -145,7 +148,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               {evento.local}
             </span>
           )}
-          <div className="flex items-center gap-1.5">
+          <label className="flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground">Juiz:</span>
             <input
               type="text"
@@ -154,8 +157,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               placeholder="Nome do juiz"
               className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
             />
-          </div>
-          <div className="flex items-center gap-1.5">
+          </label>
+          <label className="flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground">MP:</span>
             <input
               type="text"
@@ -164,7 +167,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               placeholder="Nome do promotor"
               className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
             />
-          </div>
+          </label>
         </div>
 
         {/* Tabs */}
