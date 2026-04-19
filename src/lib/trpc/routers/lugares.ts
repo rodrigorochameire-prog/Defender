@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { lugares, participacoesLugar, lugaresAccessLog } from "@/lib/db/schema";
+import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed } from "@/lib/db/schema";
 import { eq, and, isNull, desc, sql, ilike, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarEndereco } from "@/lib/lugares/normalizar-endereco";
@@ -333,5 +333,62 @@ export const lugaresRouter = router({
       }).from(lugares)
         .where(and(...conds))
         .limit(input.limit);
+    }),
+
+  listDuplicates: protectedProcedure
+    .input(z.object({ limit: z.number().max(50).default(20), offset: z.number().default(0) }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const rows = await db.execute<{
+        a_id: number; b_id: number; tipo: string;
+        a_endereco: string; b_endereco: string;
+      }>(sql`
+        SELECT LEAST(a.id, b.id) AS a_id, GREATEST(a.id, b.id) AS b_id,
+               'mesmo-normalizado' AS tipo,
+               a.endereco_completo AS a_endereco, b.endereco_completo AS b_endereco
+        FROM lugares a
+        JOIN lugares b ON a.endereco_normalizado = b.endereco_normalizado
+          AND a.id < b.id
+          AND a.merged_into IS NULL AND b.merged_into IS NULL
+          AND a.workspace_id = ${workspaceId}
+          AND b.workspace_id = ${workspaceId}
+          AND NOT EXISTS (
+            SELECT 1 FROM lugares_distincts_confirmed d
+            WHERE d.lugar_a_id = LEAST(a.id, b.id) AND d.lugar_b_id = GREATEST(a.id, b.id)
+          )
+        ORDER BY a.id
+        LIMIT ${input.limit} OFFSET ${input.offset}
+      `);
+      const data = (rows as any).rows ?? rows;
+      return {
+        items: data.map((r: any) => ({
+          aId: r.a_id, bId: r.b_id, tipo: r.tipo,
+          aEndereco: r.a_endereco, bEndereco: r.b_endereco,
+        })),
+      };
+    }),
+
+  merge: protectedProcedure
+    .input(z.object({ keepId: z.number(), mergeId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      if (input.keepId === input.mergeId) throw new Error("keepId e mergeId não podem ser iguais");
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      await db.update(participacoesLugar)
+        .set({ lugarId: input.keepId })
+        .where(eq(participacoesLugar.lugarId, input.mergeId));
+      await db.update(lugares)
+        .set({ mergedInto: input.keepId, updatedAt: new Date() })
+        .where(and(eq(lugares.id, input.mergeId), eq(lugares.workspaceId, workspaceId)));
+      return { merged: true };
+    }),
+
+  markDistinct: protectedProcedure
+    .input(z.object({ aId: z.number(), bId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const [lo, hi] = input.aId < input.bId ? [input.aId, input.bId] : [input.bId, input.aId];
+      await db.insert(lugaresDistinctsConfirmed).values({
+        lugarAId: lo, lugarBId: hi, confirmedBy: ctx.user.id,
+      }).onConflictDoNothing();
+      return { marked: true };
     }),
 });

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { lugares, participacoesLugar, lugaresAccessLog } from "@/lib/db/schema";
+import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/core";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
 
@@ -159,6 +159,75 @@ describe("lugares participações + busca", { timeout: 30000 }, () => {
       const results = await caller.lugares.searchForAutocomplete({ query: "palmeir", limit: 8 });
       expect(results.map((r: any) => r.id)).toContain(l.id);
       await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
+
+describe("lugares merge-queue", { timeout: 30000 }, () => {
+  it("listDuplicates detecta mesmo normalizado", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const a = await caller.lugares.create({ logradouro: "R. X", numero: "10", fonte: "manual" });
+      const b = await caller.lugares.create({ logradouro: "Rua X", numero: "10", fonte: "manual" });
+      const dupes = await caller.lugares.listDuplicates({ limit: 20, offset: 0 });
+      const found = dupes.items.find((p: any) =>
+        (p.aId === a.id && p.bId === b.id) || (p.aId === b.id && p.bId === a.id)
+      );
+      expect(found).toBeTruthy();
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, a.id));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, b.id));
+      await db.delete(lugares).where(eq(lugares.id, a.id));
+      await db.delete(lugares).where(eq(lugares.id, b.id));
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("merge move participações e marca merged_into", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const keep = await caller.lugares.create({ logradouro: "Rua A", numero: "1", fonte: "manual" });
+      const dup = await caller.lugares.create({ logradouro: "Rua A dup", numero: "1", fonte: "manual" });
+      await caller.lugares.addParticipacao({ lugarId: dup.id, tipo: "local-do-fato" });
+      await caller.lugares.merge({ keepId: keep.id, mergeId: dup.id });
+      const got = await caller.lugares.getById({ id: dup.id });
+      expect(got?.mergedInto).toBe(keep.id);
+      const parts = await caller.lugares.getParticipacoesDoLugar({ lugarId: keep.id });
+      expect(parts.length).toBeGreaterThanOrEqual(1);
+      await db.delete(participacoesLugar).where(eq(participacoesLugar.lugarId, keep.id));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, keep.id));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, dup.id));
+      await db.delete(lugares).where(eq(lugares.id, dup.id));
+      await db.delete(lugares).where(eq(lugares.id, keep.id));
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("markDistinct impede re-aparecer em listDuplicates", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const a = await caller.lugares.create({ logradouro: "Rua Z", numero: "9", fonte: "manual" });
+      const b = await caller.lugares.create({ logradouro: "R. Z", numero: "9", fonte: "manual" });
+      await caller.lugares.markDistinct({ aId: a.id, bId: b.id });
+      const dupes = await caller.lugares.listDuplicates({ limit: 50, offset: 0 });
+      const found = dupes.items.find((p: any) =>
+        (p.aId === a.id && p.bId === b.id) || (p.aId === b.id && p.bId === a.id)
+      );
+      expect(found).toBeUndefined();
+      const lo = Math.min(a.id, b.id);
+      const hi = Math.max(a.id, b.id);
+      await db.delete(lugaresDistinctsConfirmed)
+        .where(and(eq(lugaresDistinctsConfirmed.lugarAId, lo), eq(lugaresDistinctsConfirmed.lugarBId, hi)));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, a.id));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, b.id));
+      await db.delete(lugares).where(eq(lugares.id, a.id));
+      await db.delete(lugares).where(eq(lugares.id, b.id));
     } finally {
       await db.delete(users).where(eq(users.id, user.id));
     }
