@@ -247,4 +247,91 @@ export const lugaresRouter = router({
 
       return rows[0];
     }),
+
+  getParticipacoesDoLugar: protectedProcedure
+    .input(z.object({ lugarId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      await db.insert(lugaresAccessLog).values({
+        lugarId: input.lugarId,
+        userId: ctx.user.id,
+        action: "get-participacoes",
+      } as any);
+      return await db.select().from(participacoesLugar)
+        .where(eq(participacoesLugar.lugarId, input.lugarId))
+        .orderBy(desc(participacoesLugar.createdAt));
+    }),
+
+  getParticipacoesDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      return await db.select({
+        participacao: participacoesLugar,
+        lugar: lugares,
+      })
+      .from(participacoesLugar)
+      .leftJoin(lugares, eq(lugares.id, participacoesLugar.lugarId))
+      .where(eq(participacoesLugar.processoId, input.processoId))
+      .orderBy(desc(participacoesLugar.createdAt));
+    }),
+
+  addParticipacao: protectedProcedure
+    .input(z.object({
+      lugarId: z.number(),
+      processoId: z.number().nullable().optional(),
+      pessoaId: z.number().nullable().optional(),
+      tipo: z.enum([
+        "local-do-fato","endereco-assistido","residencia-agressor",
+        "trabalho-agressor","local-atendimento","radar-noticia",
+      ]),
+      dataRelacionada: z.string().nullable().optional(),
+      sourceTable: z.string().nullable().optional(),
+      sourceId: z.number().nullable().optional(),
+      fonte: z.string().default("manual"),
+    }))
+    .mutation(async ({ input }) => {
+      const [row] = await db.insert(participacoesLugar).values({
+        lugarId: input.lugarId,
+        processoId: input.processoId ?? null,
+        pessoaId: input.pessoaId ?? null,
+        tipo: input.tipo,
+        dataRelacionada: input.dataRelacionada ?? null,
+        sourceTable: input.sourceTable ?? null,
+        sourceId: input.sourceId ?? null,
+        fonte: input.fonte,
+      } as any).onConflictDoNothing().returning({ id: participacoesLugar.id });
+      return { id: row?.id ?? null };
+    }),
+
+  removeParticipacao: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.delete(participacoesLugar).where(eq(participacoesLugar.id, input.id));
+      return { removed: true };
+    }),
+
+  searchForAutocomplete: protectedProcedure
+    .input(z.object({
+      query: z.string().min(1),
+      bairro: z.string().optional(),
+      limit: z.number().max(20).default(8),
+    }))
+    .query(async ({ input, ctx }) => {
+      const q = `%${input.query}%`;
+      const conds: any[] = [
+        eq(lugares.workspaceId, ctx.user.workspaceId ?? 1),
+        isNull(lugares.mergedInto),
+        or(ilike(lugares.logradouro, q), ilike(lugares.bairro, q), ilike(lugares.enderecoCompleto, q)),
+      ];
+      if (input.bairro) conds.push(ilike(lugares.bairro, `%${input.bairro}%`));
+      return await db.select({
+        id: lugares.id,
+        enderecoCompleto: lugares.enderecoCompleto,
+        logradouro: lugares.logradouro,
+        numero: lugares.numero,
+        bairro: lugares.bairro,
+        cidade: lugares.cidade,
+      }).from(lugares)
+        .where(and(...conds))
+        .limit(input.limit);
+    }),
 });

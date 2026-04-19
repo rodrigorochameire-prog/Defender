@@ -130,3 +130,37 @@ describe("lugares.delete", { timeout: 30000 }, () => {
     }
   });
 });
+
+describe("lugares participações + busca", { timeout: 30000 }, () => {
+  it("addParticipacao + getParticipacoesDoLugar", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const l = await caller.lugares.create({ logradouro: "Rua A", numero: "1", fonte: "manual" });
+      await caller.lugares.addParticipacao({
+        lugarId: l.id, processoId: null, pessoaId: null, tipo: "local-do-fato"
+      });
+      const parts = await caller.lugares.getParticipacoesDoLugar({ lugarId: l.id });
+      expect(parts).toHaveLength(1);
+      expect(parts[0].tipo).toBe("local-do-fato");
+      await db.delete(participacoesLugar).where(eq(participacoesLugar.lugarId, l.id));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, l.id));
+      await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("searchForAutocomplete encontra match", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const l = await caller.lugares.create({ logradouro: "Rua das Palmeiras", bairro: "Centro", fonte: "manual" });
+      const results = await caller.lugares.searchForAutocomplete({ query: "palmeir", limit: 8 });
+      expect(results.map((r: any) => r.id)).toContain(l.id);
+      await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
