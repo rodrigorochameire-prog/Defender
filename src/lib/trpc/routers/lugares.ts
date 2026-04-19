@@ -391,4 +391,61 @@ export const lugaresRouter = router({
       }).onConflictDoNothing();
       return { marked: true };
     }),
+
+  geocode: protectedProcedure
+    .input(z.object({ id: z.number(), force: z.boolean().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const rows = await db.select().from(lugares)
+        .where(and(eq(lugares.id, input.id), eq(lugares.workspaceId, workspaceId)))
+        .limit(1);
+      if (rows.length === 0) throw new Error("Lugar não encontrado");
+      const l = rows[0];
+
+      if (!input.force && l.latitude !== null && l.longitude !== null) {
+        return {
+          latitude: Number(l.latitude),
+          longitude: Number(l.longitude),
+          source: l.geocodingSource ?? "manual",
+        };
+      }
+
+      const { getGeocoder } = await import("@/lib/lugares/geocoder-instance");
+      const geocoder = getGeocoder();
+      const result = await geocoder.geocode({
+        logradouro: l.logradouro,
+        numero: l.numero,
+        bairro: l.bairro,
+        cidade: l.cidade,
+        uf: l.uf,
+      });
+
+      await db.insert(lugaresAccessLog).values({
+        lugarId: input.id,
+        userId: ctx.user.id,
+        action: "geocode",
+        context: { failed: result.failed ?? false },
+      } as any);
+
+      if (result.failed) {
+        await db.update(lugares).set({
+          geocodedAt: new Date(),
+          geocodingSource: "nominatim-fail",
+        } as any).where(eq(lugares.id, input.id));
+        return { source: "nominatim" as const, failed: true };
+      }
+
+      await db.update(lugares).set({
+        latitude: String(result.latitude),
+        longitude: String(result.longitude),
+        geocodedAt: new Date(),
+        geocodingSource: "nominatim",
+      } as any).where(eq(lugares.id, input.id));
+
+      return {
+        latitude: result.latitude,
+        longitude: result.longitude,
+        source: "nominatim" as const,
+      };
+    }),
 });

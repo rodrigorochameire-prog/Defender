@@ -5,6 +5,7 @@ import { users } from "@/lib/db/schema/core";
 import { eq, and } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
+import { _setGeocoderForTests } from "@/lib/lugares/geocoder-instance";
 
 const createCaller = createCallerFactory(appRouter);
 const mkCtx = (user: any) => ({
@@ -229,6 +230,71 @@ describe("lugares merge-queue", { timeout: 30000 }, () => {
       await db.delete(lugares).where(eq(lugares.id, a.id));
       await db.delete(lugares).where(eq(lugares.id, b.id));
     } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
+
+describe("lugares.geocode", { timeout: 30000 }, () => {
+  it("geocode salva lat/lng", async () => {
+    _setGeocoderForTests({
+      async geocode() { return { latitude: -12.697, longitude: -38.324, source: "nominatim" }; },
+    });
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const l = await caller.lugares.create({ logradouro: "Rua X", numero: "1", fonte: "manual" });
+      const r = await caller.lugares.geocode({ id: l.id });
+      expect(r.latitude).toBeCloseTo(-12.697);
+      const got = await caller.lugares.getById({ id: l.id });
+      expect(Number(got?.latitude)).toBeCloseTo(-12.697);
+      expect(got?.geocodingSource).toBe("nominatim");
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, l.id));
+      await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      _setGeocoderForTests(null);
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("geocode skip-if-exists sem force", async () => {
+    _setGeocoderForTests({
+      async geocode() { throw new Error("não deveria chamar"); },
+    });
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const l = await caller.lugares.create({ logradouro: "Rua Y", fonte: "manual" });
+      await caller.lugares.update({ id: l.id, patch: { latitude: -12, longitude: -38 } });
+      // Simular lugar já geocodado
+      await db.update(lugares).set({ geocodingSource: "manual", geocodedAt: new Date() })
+        .where(eq(lugares.id, l.id));
+      const r = await caller.lugares.geocode({ id: l.id });
+      expect(r.source).toBe("manual");
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, l.id));
+      await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      _setGeocoderForTests(null);
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+
+  it("geocode falha grava geocoding_source=nominatim-fail", async () => {
+    _setGeocoderForTests({
+      async geocode() { return { source: "nominatim", failed: true }; },
+    });
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const l = await caller.lugares.create({ logradouro: "Não existe", fonte: "manual" });
+      const r = await caller.lugares.geocode({ id: l.id });
+      expect(r.failed).toBe(true);
+      const got = await caller.lugares.getById({ id: l.id });
+      expect(got?.geocodingSource).toBe("nominatim-fail");
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, l.id));
+      await db.delete(lugares).where(eq(lugares.id, l.id));
+    } finally {
+      _setGeocoderForTests(null);
       await db.delete(users).where(eq(users.id, user.id));
     }
   });
