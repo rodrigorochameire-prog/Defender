@@ -51,6 +51,9 @@ export * from "./system";
 // Pessoas (Fase I-A — entity resolution)
 export * from "./pessoas";
 
+// Lugares (Fase II-A — entity resolution geoespacial)
+export * from "./lugares";
+
 // Audit log
 export * from "./audit";
 

@@ -82,6 +82,7 @@ import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
 import { encaminhamentosRouter } from "./encaminhamentos";
 import { pessoasRouter } from "./pessoas";
+import { lugaresRouter } from "./lugares";
 
 
 export const appRouter = router({
@@ -389,6 +390,11 @@ export const appRouter = router({
   // PESSOAS (FASE I-A — CADASTRO UNIFICADO)
   // ==========================================
   pessoas: pessoasRouter,
+
+  // ==========================================
+  // LUGARES (FASE II-A — ENTIDADE GEOESPACIAL)
+  // ==========================================
+  lugares: lugaresRouter,
 });
 
 export type AppRouter = typeof appRouter;
