@@ -8,6 +8,7 @@ import { DocumentosItem, type DriveFileLite } from "./documentos-item";
 import { DropZone } from "./drop-zone";
 import { fileToBase64 } from "@/lib/agenda/file-to-base64";
 import { DocumentPreviewDialog } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
+import { DocumentCompareModal } from "@/components/drive/DocumentCompareModal";
 
 type TabKey = "autos" | "assistido";
 
@@ -20,6 +21,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
   const [tab, setTab] = useState<TabKey>("autos");
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<DriveFileLite | null>(null);
+  const [compareFile, setCompareFile] = useState<DriveFileLite | null>(null);
 
   const utils = trpc.useUtils();
 
@@ -180,8 +182,25 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
           const f = activeList.find((x) => x.driveFileId === next.driveFileId);
           if (f) setExpanded(f);
         }}
+        onCompare={expanded ? () => setCompareFile(expanded) : undefined}
         onClose={() => setExpanded(null)}
       />
+
+      {compareFile && (
+        <DocumentCompareModal
+          isOpen={!!compareFile}
+          onClose={() => setCompareFile(null)}
+          initialFileA={{
+            id: (compareFile as any).id ?? 0,
+            name: compareFile.name,
+            webViewLink: compareFile.webViewLink ?? "",
+            driveFolderId: (compareFile as any).driveFolderId ?? "",
+            driveFileId: compareFile.driveFileId,
+          }}
+          currentFolderId={(compareFile as any).driveFolderId ?? undefined}
+          assistidoId={assistidoId ?? undefined}
+        />
+      )}
     </div>
   );
 }

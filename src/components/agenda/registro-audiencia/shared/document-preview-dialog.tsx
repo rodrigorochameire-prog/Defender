@@ -5,6 +5,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Columns,
   Download,
   ExternalLink,
   Link as LinkIcon,
@@ -32,8 +33,10 @@ interface Props {
   webViewLink?: string | null;
   fileSize?: string | null;
   enrichmentStatus?: string | null;
+  transcricao?: string | null;
   list?: PreviewFile[];
   onNavigate?: (file: PreviewFile) => void;
+  onCompare?: () => void;
   onClose: () => void;
 }
 
@@ -69,8 +72,10 @@ export function DocumentPreviewDialog({
   webViewLink,
   fileSize,
   enrichmentStatus,
+  transcricao,
   list,
   onNavigate,
+  onCompare,
   onClose,
 }: Props) {
   const [iframeLoading, setIframeLoading] = useState(true);
@@ -230,6 +235,12 @@ export function DocumentPreviewDialog({
                   Extraído
                 </span>
               )}
+              {enrichmentStatus === "processing" && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30">
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  Processando IA
+                </span>
+              )}
               {hasNav && (
                 <span className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
                   {currentIndex + 1} / {list?.length}
@@ -264,6 +275,19 @@ export function DocumentPreviewDialog({
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        )}
+
+        {onCompare && kind === "other" && (
+          <button
+            type="button"
+            onClick={onCompare}
+            title="Comparar com outro documento"
+            aria-label="Comparar"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <Columns className="w-3.5 h-3.5" />
+            Comparar
+          </button>
         )}
 
         {driveFileId && (
@@ -330,7 +354,7 @@ export function DocumentPreviewDialog({
       <div className="flex-1 p-3 min-h-0">
         <div className="w-full h-full rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 relative flex items-center justify-center">
           {kind === "audio" && streamUrl && (
-            <div className="w-full max-w-2xl flex flex-col items-center gap-4 p-8">
+            <div className="w-full max-w-3xl flex flex-col items-center gap-4 p-6 max-h-full overflow-y-auto">
               <div className="text-sm text-neutral-700 dark:text-neutral-300 text-center break-all max-w-full">
                 {title}
               </div>
@@ -344,9 +368,23 @@ export function DocumentPreviewDialog({
               >
                 Seu navegador não suporta áudio HTML5.
               </audio>
-              <p className="text-[11px] text-neutral-500 text-center">
-                Se o áudio não carregar, use "Abrir no Drive" para tocar na interface do Drive.
-              </p>
+              {transcricao ? (
+                <div className="w-full mt-2 rounded-lg bg-white dark:bg-neutral-950 ring-1 ring-neutral-200 dark:ring-neutral-800 p-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Sparkles className="w-3 h-3 text-emerald-500" />
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                      Transcrição / Resumo
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                    {transcricao}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[11px] text-neutral-500 text-center">
+                  Se o áudio não carregar, use "Abrir no Drive" para tocar na interface do Drive.
+                </p>
+              )}
             </div>
           )}
 

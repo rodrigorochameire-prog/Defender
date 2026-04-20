@@ -35,6 +35,7 @@ import type { Depoente } from "../types";
 import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
+import { DocumentCompareModal } from "@/components/drive/DocumentCompareModal";
 import { matchTermoDepoente, matchLaudo, getTermoKind } from "@/lib/agenda/match-document";
 import {
   categorizeDocument,
@@ -117,6 +118,8 @@ function DocumentosProcessoBlock({
     webViewLink?: string | null;
     fileSize?: string | null;
     enrichmentStatus?: string | null;
+    driveFolderId?: string | null;
+    dbId?: number | null;
     list?: Array<{
       driveFileId: string;
       name?: string | null;
@@ -227,6 +230,8 @@ function DocumentosProcessoBlock({
                               webViewLink: f.webViewLink,
                               fileSize: f.fileSize,
                               enrichmentStatus: f.enrichmentStatus,
+                              driveFolderId: f.driveFolderId,
+                              dbId: f.id,
                               list: filtered.map((x: any) => ({
                                 driveFileId: x.driveFileId,
                                 name: x.name ?? x.fileName ?? "",
@@ -582,6 +587,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
   );
 
   const processoId = ctx?.processo?.id ?? null;
+  const assistidoIdFromCtx = (ctx?.assistido as any)?.id ?? null;
   const filesByProcessoQuery = trpc.drive.filesByProcesso.useQuery(
     { processoId: processoId ?? 0 },
     { enabled: !!processoId },
@@ -597,6 +603,8 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     webViewLink?: string | null;
     fileSize?: string | null;
     enrichmentStatus?: string | null;
+    driveFolderId?: string | null;
+    dbId?: number | null;
     list?: Array<{
       driveFileId: string;
       name?: string | null;
@@ -606,6 +614,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
       enrichmentStatus?: string | null;
     }>;
   } | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [expandedInvestigacao, setExpandedInvestigacao] = useState<{ titulo: string; texto: string } | null>(null);
 
   // Analysis data shortcuts
@@ -1200,8 +1209,25 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             enrichmentStatus: next.enrichmentStatus,
           });
         }}
+        onCompare={previewDoc ? () => setCompareOpen(true) : undefined}
         onClose={() => setPreviewDoc(null)}
       />
+
+      {compareOpen && previewDoc && (
+        <DocumentCompareModal
+          isOpen={compareOpen}
+          onClose={() => setCompareOpen(false)}
+          initialFileA={{
+            id: previewDoc.dbId ?? 0,
+            name: previewDoc.title,
+            webViewLink: previewDoc.webViewLink ?? "",
+            driveFolderId: previewDoc.driveFolderId ?? "",
+            driveFileId: previewDoc.id,
+          }}
+          currentFolderId={previewDoc.driveFolderId ?? undefined}
+          assistidoId={typeof assistidoIdFromCtx === "number" ? assistidoIdFromCtx : undefined}
+        />
+      )}
     </div>
   );
 }

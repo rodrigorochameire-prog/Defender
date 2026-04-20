@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, ExternalLink, Maximize2 } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Loader2, Maximize2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DrivePreviewIframe } from "./drive-preview-iframe";
@@ -60,6 +60,12 @@ export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
           <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1 min-w-0 truncate">
             {file.name}
           </span>
+          {file.enrichmentStatus === "completed" && (
+            <Sparkles className="w-3 h-3 text-emerald-500 flex-shrink-0" aria-label="Extraído" />
+          )}
+          {file.enrichmentStatus === "processing" && (
+            <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" aria-label="Processando" />
+          )}
           {dataStr && <span className="text-[10px] text-neutral-400 tabular-nums">{dataStr}</span>}
           {isOpen
             ? <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
