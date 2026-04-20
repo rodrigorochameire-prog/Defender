@@ -36,6 +36,9 @@ import { DepoenteCard } from "../shared/depoente-card";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { DocumentPreviewDialog } from "../shared/document-preview-dialog";
 import { DocumentCompareModal } from "@/components/drive/DocumentCompareModal";
+import { DropZone } from "@/components/agenda/sheet/drop-zone";
+import { fileToBase64 } from "@/lib/agenda/file-to-base64";
+import { toast } from "sonner";
 import { matchTermoDepoente, matchLaudo, getTermoKind } from "@/lib/agenda/match-document";
 import {
   categorizeDocument,
@@ -108,9 +111,11 @@ function iconeArquivo(file: { name: string; mimeType?: string | null }): React.C
 
 function DocumentosProcessoBlock({
   files,
+  processoId,
   onPreview,
 }: {
   files: any[];
+  processoId: number | null;
   onPreview: (p: {
     id: string;
     title: string;
@@ -131,6 +136,41 @@ function DocumentosProcessoBlock({
   }) => void;
 }) {
   const [query, setQuery] = useState("");
+
+  const utils = trpc.useUtils();
+  const statusProcesso = trpc.drive.getDriveStatusForProcesso.useQuery(
+    { processoId: processoId ?? 0 },
+    { enabled: !!processoId, retry: false },
+  );
+  const folderId = (statusProcesso.data as any)?.folderId ?? null;
+  const upload = trpc.drive.uploadWithLink.useMutation({
+    onSuccess: () => {
+      toast.success("Arquivo enviado");
+      if (processoId) utils.drive.filesByProcesso.invalidate({ processoId });
+    },
+    onError: (e) => toast.error(e.message ?? "Erro no upload"),
+  });
+
+  const handleFiles = async (fileList: File[]) => {
+    if (!folderId || !processoId) {
+      toast.error("Pasta do Drive não configurada para este processo");
+      return;
+    }
+    for (const file of fileList) {
+      try {
+        const fileBase64 = await fileToBase64(file);
+        upload.mutate({
+          folderId,
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          fileBase64,
+          processoId,
+        });
+      } catch (err: any) {
+        toast.error(err?.message ?? "Erro ao ler arquivo");
+      }
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!query.trim()) return files;
@@ -174,12 +214,21 @@ function DocumentosProcessoBlock({
     );
   }, [filtered]);
 
-  if (files.length === 0) {
-    return <EmptyHint text="Processo ainda sem arquivos no Drive." />;
-  }
-
   return (
     <div className="space-y-3">
+      {folderId && (
+        <DropZone
+          onFiles={handleFiles}
+          onReject={(_, reason) => toast.error(reason)}
+          disabled={upload.isPending}
+          label={upload.isPending ? "Enviando…" : "Arraste ou clique para subir"}
+        />
+      )}
+
+      {files.length === 0 ? (
+        <EmptyHint text="Processo ainda sem arquivos no Drive." />
+      ) : (
+        <>
       <div className="relative">
         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400" />
         <input
@@ -254,6 +303,8 @@ function DocumentosProcessoBlock({
             </details>
           ))}
         </div>
+      )}
+      </>
       )}
     </div>
   );
@@ -772,7 +823,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
 
           {/* 2.5. DOCUMENTOS DO PROCESSO — fonte antes da extração */}
           <CollapsibleSection id="documentos-processo" label="Documentos do Processo" count={driveFiles.length} defaultOpen>
-            <DocumentosProcessoBlock files={driveFiles} onPreview={setPreviewDoc} />
+            <DocumentosProcessoBlock files={driveFiles} processoId={processoId} onPreview={setPreviewDoc} />
           </CollapsibleSection>
 
           {/* 3. ELEMENTOS — expanded */}

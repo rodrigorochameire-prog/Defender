@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<DriveFileLite | null>(null);
   const [compareFile, setCompareFile] = useState<DriveFileLite | null>(null);
+  const [query, setQuery] = useState("");
 
   const utils = trpc.useUtils();
 
@@ -53,7 +55,14 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
 
   const autosList: DriveFileLite[] = (autos.data as any) ?? [];
   const assistidoList: DriveFileLite[] = (assistido.data as any) ?? [];
-  const activeList = tab === "autos" ? autosList : assistidoList;
+  const rawList = tab === "autos" ? autosList : assistidoList;
+  const activeList = useMemo(() => {
+    if (!query.trim()) return rawList;
+    const q = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return rawList.filter((f) =>
+      (f.name ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q),
+    );
+  }, [rawList, query]);
 
   const folderId =
     tab === "autos"
@@ -138,6 +147,19 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
         />
       )}
 
+      {rawList.length > 3 && (
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400" />
+          <input
+            type="text"
+            placeholder="Buscar documento..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full text-[11px] pl-7 pr-2 py-1 rounded border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+          />
+        </div>
+      )}
+
       {!driveConnected && (
         <p className="text-[11px] text-neutral-500 italic py-4 text-center">
           Google Drive não conectado.{" "}
@@ -146,7 +168,9 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
       )}
       {driveConnected && activeList.length === 0 && (
         <p className="text-[11px] text-neutral-400 italic py-4 text-center">
-          Nenhum arquivo nesta pasta. Arraste um acima.
+          {query.trim()
+            ? `Nenhum arquivo corresponde à busca "${query}".`
+            : "Nenhum arquivo nesta pasta. Arraste um acima."}
         </p>
       )}
       {activeList.length > 0 && (
