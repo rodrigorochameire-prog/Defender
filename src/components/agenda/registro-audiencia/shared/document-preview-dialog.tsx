@@ -424,6 +424,38 @@ export function DocumentPreviewDialog({
             </>
           )}
         </div>
+
+        {/* Thumbnail strip para galeria de imagens */}
+        {mime.startsWith("image/") && list && list.length > 1 && onNavigate && (
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 px-1">
+            {list
+              .filter((f) => (f.mimeType ?? "").startsWith("image/"))
+              .map((f) => {
+                const isActive = f.driveFileId === driveFileId;
+                const thumbUrl = `https://drive.google.com/thumbnail?id=${f.driveFileId}&sz=w160`;
+                return (
+                  <button
+                    key={f.driveFileId}
+                    type="button"
+                    onClick={() => onNavigate(f)}
+                    title={f.name ?? ""}
+                    className={`relative flex-shrink-0 w-20 h-16 rounded-md overflow-hidden border-2 transition-all cursor-pointer ${
+                      isActive
+                        ? "border-emerald-500 ring-2 ring-emerald-500/30"
+                        : "border-neutral-300 dark:border-neutral-700 hover:border-neutral-400"
+                    }`}
+                  >
+                    <img
+                      src={thumbUrl}
+                      alt={f.name ?? ""}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
+          </div>
+        )}
       </div>
     </div>
   );
