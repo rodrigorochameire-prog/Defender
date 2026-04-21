@@ -656,6 +656,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
     enrichmentStatus?: string | null;
     driveFolderId?: string | null;
     dbId?: number | null;
+    transcricao?: string | null;
     list?: Array<{
       driveFileId: string;
       name?: string | null;
@@ -700,6 +701,24 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
 
   // 6. Depoentes / testemunhas
   const testemunhasDB = ctx?.testemunhas ?? [];
+
+  // Mapa driveFileId → transcrição (atendimentos + testemunhas com áudio vinculado)
+  const transcricoesByDriveId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const at of atendimentos as any[]) {
+      if (at?.audioDriveFileId) {
+        const t = at.transcricaoResumo ?? at.resumo ?? (typeof at.pontosChave === "string" ? at.pontosChave : null);
+        if (t) map[at.audioDriveFileId] = t;
+      }
+    }
+    for (const t of testemunhasDB as any[]) {
+      if (t?.audioDriveFileId) {
+        const texto = t.sinteseJuizo ?? t.resumoDepoimento ?? null;
+        if (texto) map[t.audioDriveFileId] = texto;
+      }
+    }
+    return map;
+  }, [atendimentos, testemunhasDB]);
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
   const allDepoentes = [
@@ -1247,6 +1266,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
         webViewLink={previewDoc?.webViewLink}
         fileSize={previewDoc?.fileSize}
         enrichmentStatus={previewDoc?.enrichmentStatus}
+        transcricao={previewDoc?.transcricao ?? (previewDoc ? transcricoesByDriveId[previewDoc.id] : null)}
         list={previewDoc?.list}
         onNavigate={(next) => {
           if (!previewDoc) return;
@@ -1258,6 +1278,7 @@ export function TabBriefing({ evento, audienciaId, onImportarParaDepoentes }: Ta
             webViewLink: next.webViewLink,
             fileSize: next.fileSize != null ? String(next.fileSize) : null,
             enrichmentStatus: next.enrichmentStatus,
+            transcricao: transcricoesByDriveId[next.driveFileId] ?? null,
           });
         }}
         onCompare={previewDoc ? () => setCompareOpen(true) : undefined}
