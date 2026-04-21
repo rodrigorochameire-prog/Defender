@@ -61,6 +61,7 @@ export const atendimentosTriagem = pgTable("atendimentos_triagem", {
   index("triagem_urgencia_idx").on(table.urgencia),
   index("triagem_created_at_idx").on(table.createdAt),
   index("triagem_processo_cnj_idx").on(table.processoCnj),
+  index("triagem_promovido_demanda_idx").on(table.promovidoParaDemandaId),
 ]);
 
 export type AtendimentoTriagem = typeof atendimentosTriagem.$inferSelect;
