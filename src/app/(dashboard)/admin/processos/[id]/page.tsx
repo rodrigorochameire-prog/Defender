@@ -17,6 +17,7 @@ import { InstitutosTab } from "@/components/processo/institutos-tab";
 import { AtosInfracionaisTab } from "@/components/processo/atos-infracionais-tab";
 import { MedidasTab } from "@/components/processo/medidas-tab";
 import { PessoasTab } from "./_components/pessoas-tab";
+import { CronologiaTab } from "./_components/cronologia-tab";
 
 export default function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -220,6 +221,11 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         {/* PESSOAS */}
         {tab === "pessoas" && (
           <PessoasTab processoId={data.id} />
+        )}
+
+        {/* CRONOLOGIA */}
+        {tab === "cronologia" && (
+          <CronologiaTab processoId={data.id} />
         )}
       </div>
       </div>
