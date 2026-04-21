@@ -388,3 +388,50 @@ export async function promoverAtendimento(input: PromoverInput): Promise<Promove
     ombudsUrl: `/demandas-premium/${novaDemanda.id}`,
   };
 }
+
+// ---- aplicarAcao ----
+
+export type AcaoAtendimento = "resolver" | "devolver" | "arquivar" | "reatribuir";
+
+export interface AplicarAcaoInput {
+  atendimentoId: number;
+  acao: AcaoAtendimento;
+  motivo?: string;
+  novoDefensorId?: number;
+  decididoPorId?: number;
+}
+
+const ACAO_TO_STATUS: Record<AcaoAtendimento, string> = {
+  resolver: "resolvido",
+  devolver: "devolvido",
+  arquivar: "arquivado",
+  reatribuir: "pendente_avaliacao",
+};
+
+export async function aplicarAcao(input: AplicarAcaoInput): Promise<{ ok: true; novoStatus: string }> {
+  const novoStatus = ACAO_TO_STATUS[input.acao];
+  if (!novoStatus) throw new Error(`Ação inválida: ${input.acao}`);
+
+  const updates: Record<string, unknown> = {
+    status: novoStatus,
+    decididoEm: new Date(),
+    decididoPorId: input.decididoPorId,
+  };
+
+  if (input.acao === "devolver") {
+    if (!input.motivo) throw new Error("motivo é obrigatório ao devolver");
+    updates.motivoDevolucao = input.motivo;
+  }
+  if (input.acao === "reatribuir") {
+    if (!input.novoDefensorId) throw new Error("novoDefensorId é obrigatório ao reatribuir");
+    updates.defensorAlvoId = input.novoDefensorId;
+    updates.motivoOverride = input.motivo;
+    updates.decididoEm = null; // volta a ser pendente
+  }
+
+  await db.update(atendimentosTriagem)
+    .set(updates)
+    .where(eq(atendimentosTriagem.id, input.atendimentoId));
+
+  return { ok: true, novoStatus };
+}

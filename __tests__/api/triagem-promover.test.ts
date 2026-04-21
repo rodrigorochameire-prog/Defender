@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { POST } from "@/app/api/triagem/atendimento/[id]/promover/route";
+import { PATCH } from "@/app/api/triagem/atendimento/[id]/route";
 import { db } from "@/lib/db";
 import { atendimentosTriagem, demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -163,5 +164,41 @@ describe("POST /api/triagem/atendimento/:id/promover", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toContain("defensorId");
+  });
+});
+
+describe("PATCH /api/triagem/atendimento/:id", () => {
+  const ids: number[] = [];
+
+  afterEach(async () => {
+    for (const id of ids) await db.delete(atendimentosTriagem).where(eq(atendimentosTriagem.id, id));
+    ids.length = 0;
+  });
+
+  it("resolve um atendimento", async () => {
+    const c = await createAtendimento({ aba: "VVD", linha: 5, payload: { assistido_nome: "Test resolver" } });
+    ids.push(c.atendimentoId);
+
+    const req = new Request(`http://localhost/api/triagem/atendimento/${c.atendimentoId}`, {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${SECRET}`, "content-type": "application/json" },
+      body: JSON.stringify({ acao: "resolver" }),
+    });
+    const res = await PATCH(req as any, { params: Promise.resolve({ id: String(c.atendimentoId) }) });
+    expect(res.status).toBe(200);
+    const [a] = await db.select().from(atendimentosTriagem).where(eq(atendimentosTriagem.id, c.atendimentoId));
+    expect(a.status).toBe("resolvido");
+  });
+
+  it("rejeita devolver sem motivo", async () => {
+    const c = await createAtendimento({ aba: "EP", linha: 5, payload: { assistido_nome: "Test devolver" } });
+    ids.push(c.atendimentoId);
+    const req = new Request(`http://localhost/api/triagem/atendimento/${c.atendimentoId}`, {
+      method: "PATCH",
+      headers: { authorization: `Bearer ${SECRET}`, "content-type": "application/json" },
+      body: JSON.stringify({ acao: "devolver" }),
+    });
+    const res = await PATCH(req as any, { params: Promise.resolve({ id: String(c.atendimentoId) }) });
+    expect(res.status).toBe(400);
   });
 });
