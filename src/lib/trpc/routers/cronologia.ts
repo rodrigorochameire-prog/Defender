@@ -291,4 +291,22 @@ export const cronologiaRouter = router({
       await db.delete(cautelares).where(eq(cautelares.id, input.id));
       return { deleted: true };
     }),
+
+  getCronologiaCompleta: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      await assertProcessoInWorkspace(input.processoId, ctx.user.workspaceId ?? 1);
+      const [marcosRows, prisoesRows, cautelaresRows] = await Promise.all([
+        db.select().from(marcosProcessuais)
+          .where(eq(marcosProcessuais.processoId, input.processoId))
+          .orderBy(marcosProcessuais.data),
+        db.select().from(prisoes)
+          .where(eq(prisoes.processoId, input.processoId))
+          .orderBy(desc(prisoes.dataInicio)),
+        db.select().from(cautelares)
+          .where(eq(cautelares.processoId, input.processoId))
+          .orderBy(desc(cautelares.dataInicio)),
+      ]);
+      return { marcos: marcosRows, prisoes: prisoesRows, cautelares: cautelaresRows };
+    }),
 });
