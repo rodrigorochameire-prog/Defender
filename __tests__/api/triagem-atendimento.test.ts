@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { POST } from "@/app/api/triagem/atendimento/route";
+import { GET } from "@/app/api/triagem/atendimentos/route";
 import { db } from "@/lib/db";
 import { atendimentosTriagem } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -65,5 +66,23 @@ describe("POST /api/triagem/atendimento", () => {
     const body = await res.json();
     expect(body.status).toBe("resolvido");
     createdIds.push(body.atendimentoId);
+  });
+});
+
+describe("GET /api/triagem/atendimentos", () => {
+  it("rejeita sem auth", async () => {
+    const req = new Request("http://localhost/api/triagem/atendimentos");
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("retorna lista filtrada por status", async () => {
+    const req = new Request("http://localhost/api/triagem/atendimentos?status=pendente_avaliacao", {
+      headers: { authorization: `Bearer ${SECRET}` },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.atendimentos)).toBe(true);
   });
 });

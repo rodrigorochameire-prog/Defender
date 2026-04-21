@@ -79,7 +79,7 @@ export function shouldAutoResolve({ documentoEntregue, demandaLivre }: AutoResol
 // ---- createAtendimento ----
 import { db } from "@/lib/db";
 import { atendimentosTriagem } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 
 export interface CreateAtendimentoInput {
   aba: "Juri" | "VVD" | "EP" | "Crime1" | "Crime2";
@@ -172,4 +172,46 @@ export async function createAtendimento(input: CreateAtendimentoInput): Promise<
   }
 
   throw new Error(`createAtendimento falhou após ${maxAttempts} tentativas: ${String(lastError)}`);
+}
+
+// ---- listAtendimentos ----
+
+export interface ListAtendimentosFilter {
+  defensorId?: number;
+  status?: string;
+  area?: string;
+  desde?: Date;
+  ate?: Date;
+  limit?: number;
+  offset?: number;
+}
+
+export async function listAtendimentos(f: ListAtendimentosFilter = {}) {
+  const conds = [];
+  if (f.defensorId) conds.push(eq(atendimentosTriagem.defensorAlvoId, f.defensorId));
+  if (f.status) conds.push(eq(atendimentosTriagem.status, f.status));
+  if (f.area) conds.push(eq(atendimentosTriagem.area, f.area));
+  if (f.desde) conds.push(gte(atendimentosTriagem.createdAt, f.desde));
+  if (f.ate) conds.push(lte(atendimentosTriagem.createdAt, f.ate));
+
+  const where = conds.length > 0 ? and(...conds) : undefined;
+
+  return db
+    .select()
+    .from(atendimentosTriagem)
+    .where(where)
+    .orderBy(desc(atendimentosTriagem.createdAt))
+    .limit(f.limit ?? 50)
+    .offset(f.offset ?? 0);
+}
+
+export async function countPendentesPorDefensor(defensorId: number): Promise<number> {
+  const r = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(atendimentosTriagem)
+    .where(and(
+      eq(atendimentosTriagem.defensorAlvoId, defensorId),
+      eq(atendimentosTriagem.status, "pendente_avaliacao"),
+    ));
+  return r[0]?.count ?? 0;
 }
