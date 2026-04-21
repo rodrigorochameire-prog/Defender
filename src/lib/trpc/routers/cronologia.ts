@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { marcosProcessuais, prisoes } from "@/lib/db/schema/cronologia";
+import { marcosProcessuais, prisoes, cautelares } from "@/lib/db/schema/cronologia";
 import { processos } from "@/lib/db/schema/core";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -201,6 +201,94 @@ export const cronologiaRouter = router({
         .limit(1);
       if (!row) throw new Error("Prisão não encontrada");
       await db.delete(prisoes).where(eq(prisoes.id, input.id));
+      return { deleted: true };
+    }),
+
+  listCautelares: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      await assertProcessoInWorkspace(input.processoId, ctx.user.workspaceId ?? 1);
+      return await db.select().from(cautelares)
+        .where(eq(cautelares.processoId, input.processoId))
+        .orderBy(desc(cautelares.dataInicio));
+    }),
+
+  createCautelar: protectedProcedure
+    .input(z.object({
+      processoId: z.number(),
+      pessoaId: z.number().nullable().optional(),
+      tipo: z.enum([
+        "monitoramento-eletronico","comparecimento-periodico","recolhimento-noturno",
+        "proibicao-contato","proibicao-frequentar","afastamento-lar","fianca",
+        "suspensao-porte-arma","suspensao-habilitacao","outro",
+      ]),
+      dataInicio: z.string(),
+      dataFim: z.string().nullable().optional(),
+      detalhes: z.string().nullable().optional(),
+      status: z.enum(["ativa","cumprida","descumprida","revogada","extinta"]).default("ativa"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      await assertProcessoInWorkspace(input.processoId, ctx.user.workspaceId ?? 1);
+      const [row] = await db.insert(cautelares).values({
+        processoId: input.processoId,
+        pessoaId: input.pessoaId ?? null,
+        tipo: input.tipo,
+        dataInicio: input.dataInicio,
+        dataFim: input.dataFim ?? null,
+        detalhes: input.detalhes ?? null,
+        status: input.status,
+        fonte: "manual",
+      }).returning({ id: cautelares.id });
+      return { id: row.id };
+    }),
+
+  updateCautelar: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      patch: z.object({
+        tipo: z.enum([
+          "monitoramento-eletronico","comparecimento-periodico","recolhimento-noturno",
+          "proibicao-contato","proibicao-frequentar","afastamento-lar","fianca",
+          "suspensao-porte-arma","suspensao-habilitacao","outro",
+        ]).optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().nullable().optional(),
+        detalhes: z.string().nullable().optional(),
+        status: z.enum(["ativa","cumprida","descumprida","revogada","extinta"]).optional(),
+        pessoaId: z.number().nullable().optional(),
+      }),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const [row] = await db.select({ id: cautelares.id })
+        .from(cautelares)
+        .innerJoin(processos, eq(processos.id, cautelares.processoId))
+        .where(and(eq(cautelares.id, input.id), eq(processos.workspaceId, workspaceId)))
+        .limit(1);
+      if (!row) throw new Error("Cautelar não encontrada");
+      await db.update(cautelares).set({
+        ...(input.patch.tipo !== undefined && { tipo: input.patch.tipo }),
+        ...(input.patch.dataInicio !== undefined && { dataInicio: input.patch.dataInicio }),
+        ...(input.patch.dataFim !== undefined && { dataFim: input.patch.dataFim }),
+        ...(input.patch.detalhes !== undefined && { detalhes: input.patch.detalhes }),
+        ...(input.patch.status !== undefined && { status: input.patch.status }),
+        ...(input.patch.pessoaId !== undefined && { pessoaId: input.patch.pessoaId }),
+        updatedAt: new Date(),
+      }).where(eq(cautelares.id, input.id));
+      return { id: input.id, updated: true };
+    }),
+
+  deleteCautelar: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const [row] = await db.select({ id: cautelares.id })
+        .from(cautelares)
+        .innerJoin(processos, eq(processos.id, cautelares.processoId))
+        .where(and(eq(cautelares.id, input.id), eq(processos.workspaceId, workspaceId)))
+        .limit(1);
+      if (!row) throw new Error("Cautelar não encontrada");
+      await db.delete(cautelares).where(eq(cautelares.id, input.id));
       return { deleted: true };
     }),
 });
