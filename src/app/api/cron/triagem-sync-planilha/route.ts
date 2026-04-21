@@ -69,10 +69,17 @@ async function sincronizarPlenarios() {
 
 async function handler(req: NextRequest): Promise<NextResponse> {
   const cronAuth = req.headers.get("x-vercel-cron") === "1";
-  const auth = req.headers.get("authorization") ?? "";
   const secret = process.env.SHEETS_WEBHOOK_SECRET ?? "";
-  if (!cronAuth && auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+  if (!cronAuth) {
+    // Not a Vercel cron call — must authenticate via Bearer token
+    if (!secret) {
+      return NextResponse.json({ error: "Servidor não configurado" }, { status: 500 });
+    }
+    const auth = req.headers.get("authorization") ?? "";
+    if (auth !== `Bearer ${secret}`) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
   }
 
   const url = new URL(req.url);
