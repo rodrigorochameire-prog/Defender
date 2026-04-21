@@ -42,11 +42,8 @@ export function AtendimentoActions({ atendimentoId }: { atendimentoId: number })
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() =>
-          // TODO: use session.user.id — project uses custom JWT (getSession server-only);
-          // no client-side user context hook available yet. Requires a UserProvider or
-          // dedicated GET /api/me route. For now, defensorId is resolved server-side
-          // from the session in the promover route (or passed as prop from parent page).
-          call(`/api/triagem/atendimento/${atendimentoId}/promover`, { defensorId: 1 })
+          // defensorId is resolved server-side from the cookie session in the promover route
+          call(`/api/triagem/atendimento/${atendimentoId}/promover`, {})
         }>
           Promover a demanda
         </DropdownMenuItem>
