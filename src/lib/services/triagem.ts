@@ -248,13 +248,58 @@ const AREA_TO_AREA_ENUM: Record<string, string> = {
   Crime2: "SUBSTITUICAO",
 };
 
+/** Prefix for sentinel processo numbers — one per assistido */
+const SENTINELA_NUMERO_AUTOS = "TRIAGEM-SEM-CNJ";
+
+/**
+ * Returns the shared "sentinel" processo for a given assistido.
+ * Instead of creating one ghost processo per atendimento, all triagem
+ * atendimentos that have no CNJ share ONE processo per assistido.
+ * Format: TRIAGEM-SEM-CNJ-<assistidoId>
+ */
+async function getOrCreateProcessoSentinela(
+  assistidoId: number,
+  defensorId: number,
+  area: string,
+): Promise<number> {
+  const numero = `${SENTINELA_NUMERO_AUTOS}-${assistidoId}`;
+
+  const [existing] = await db
+    .select({ id: processos.id })
+    .from(processos)
+    .where(eq(processos.numeroAutos, numero))
+    .limit(1);
+
+  if (existing) return existing.id;
+
+  const [novo] = await db
+    .insert(processos)
+    .values({
+      assistidoId,
+      atribuicao:
+        (AREA_TO_ATRIBUICAO[area] ??
+          "SUBSTITUICAO") as typeof processos.$inferInsert.atribuicao,
+      numeroAutos: numero,
+      area:
+        (AREA_TO_AREA_ENUM[area] ??
+          "SUBSTITUICAO") as typeof processos.$inferInsert.area,
+      defensorId,
+      situacao: "ativo",
+    })
+    .returning({ id: processos.id });
+
+  return novo.id;
+}
+
 /**
  * Promove um atendimento de triagem para uma demanda no OMBUDS.
  *
  * Fluxo:
  * 1. Valida o atendimento (existe + status correto)
- * 2. Upsert assistido (por nome; sem CPF não é possível deduplicar melhor aqui)
- * 3. Cria processo vinculado ao assistido
+ * 2. Upsert assistido (por CPF se disponível; senão cria novo)
+ * 3. Obtém ou cria processo:
+ *    - Se CNJ: upsert por numeroAutos
+ *    - Se sem CNJ: usa processo sentinela compartilhado (TRIAGEM-SEM-CNJ-<assistidoId>)
  * 4. Cria demanda com status 5_TRIAGEM vinculada ao processo + assistido
  * 5. Atualiza o atendimento para status "promovido"
  */
@@ -333,27 +378,49 @@ export async function promoverAtendimento(input: PromoverInput): Promise<Promove
     assistidoId = novoAssistido.id;
   }
 
-  // 2. Create processo
-  const numeroAutos =
-    atendimento.processoCnj ?? `TRIAGEM-${atendimento.tccRef}`;
+  // 2. Get or create processo
+  let processoId: number;
 
-  const [novoProcesso] = await db
-    .insert(processos)
-    .values({
+  if (atendimento.processoCnj) {
+    // Has CNJ: upsert by numeroAutos (CNJ digits)
+    const [existing] = await db
+      .select({ id: processos.id })
+      .from(processos)
+      .where(eq(processos.numeroAutos, atendimento.processoCnj))
+      .limit(1);
+
+    if (existing) {
+      processoId = existing.id;
+    } else {
+      const [novoProcesso] = await db
+        .insert(processos)
+        .values({
+          assistidoId,
+          atribuicao:
+            (AREA_TO_ATRIBUICAO[atendimento.area] ??
+              "SUBSTITUICAO") as typeof processos.$inferInsert.atribuicao,
+          numeroAutos: atendimento.processoCnj,
+          area:
+            (AREA_TO_AREA_ENUM[atendimento.area] ??
+              "SUBSTITUICAO") as typeof processos.$inferInsert.area,
+          vara: atendimento.vara ?? undefined,
+          defensorId: input.defensorId,
+          observacoes,
+          situacao: "ativo",
+        })
+        .returning({ id: processos.id });
+      processoId = novoProcesso.id;
+    }
+  } else {
+    // No CNJ: use shared sentinel processo for this assistido
+    processoId = await getOrCreateProcessoSentinela(
       assistidoId,
-      atribuicao:
-        (AREA_TO_ATRIBUICAO[atendimento.area] ??
-          "SUBSTITUICAO") as typeof processos.$inferInsert.atribuicao,
-      numeroAutos,
-      area:
-        (AREA_TO_AREA_ENUM[atendimento.area] ??
-          "SUBSTITUICAO") as typeof processos.$inferInsert.area,
-      vara: atendimento.vara ?? undefined,
-      defensorId: input.defensorId,
-      observacoes,
-      situacao: "ativo",
-    })
-    .returning({ id: processos.id });
+      input.defensorId,
+      atendimento.area,
+    );
+  }
+
+  const novoProcesso = { id: processoId };
 
   // 3. Create demanda
   const [novaDemanda] = await db
