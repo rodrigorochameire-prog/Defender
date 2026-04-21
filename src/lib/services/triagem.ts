@@ -78,7 +78,7 @@ export function shouldAutoResolve({ documentoEntregue, demandaLivre }: AutoResol
 
 // ---- createAtendimento ----
 import { db } from "@/lib/db";
-import { atendimentosTriagem } from "@/lib/db/schema";
+import { atendimentosTriagem, assistidos, processos, demandas } from "@/lib/db/schema";
 import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 
 export interface CreateAtendimentoInput {
@@ -214,4 +214,177 @@ export async function countPendentesPorDefensor(defensorId: number): Promise<num
       eq(atendimentosTriagem.status, "pendente_avaliacao"),
     ));
   return r[0]?.count ?? 0;
+}
+
+// ---- promoverAtendimento ----
+
+export interface PromoverInput {
+  atendimentoId: number;
+  defensorId: number;
+  delegarPara?: string;
+  decididoPorId?: number;
+}
+
+export interface PromoverResult {
+  demandaId: number;
+  ombudsUrl: string;
+}
+
+/** Maps triagem area → atribuicao enum value */
+const AREA_TO_ATRIBUICAO: Record<string, string> = {
+  Juri:   "JURI_CAMACARI",
+  VVD:    "VVD_CAMACARI",
+  EP:     "EXECUCAO_PENAL",
+  Crime1: "SUBSTITUICAO",
+  Crime2: "SUBSTITUICAO",
+};
+
+/** Maps triagem area → area enum value (for processos table) */
+const AREA_TO_AREA_ENUM: Record<string, string> = {
+  Juri:   "JURI",
+  VVD:    "VIOLENCIA_DOMESTICA",
+  EP:     "EXECUCAO_PENAL",
+  Crime1: "SUBSTITUICAO",
+  Crime2: "SUBSTITUICAO",
+};
+
+/**
+ * Promove um atendimento de triagem para uma demanda no OMBUDS.
+ *
+ * Fluxo:
+ * 1. Valida o atendimento (existe + status correto)
+ * 2. Upsert assistido (por nome; sem CPF não é possível deduplicar melhor aqui)
+ * 3. Cria processo vinculado ao assistido
+ * 4. Cria demanda com status 5_TRIAGEM vinculada ao processo + assistido
+ * 5. Atualiza o atendimento para status "promovido"
+ */
+export async function promoverAtendimento(input: PromoverInput): Promise<PromoverResult> {
+  const [atendimento] = await db
+    .select()
+    .from(atendimentosTriagem)
+    .where(eq(atendimentosTriagem.id, input.atendimentoId));
+
+  if (!atendimento) throw new Error("Atendimento não encontrado");
+
+  if (
+    atendimento.status !== "pendente_avaliacao" &&
+    atendimento.status !== "devolvido"
+  ) {
+    const err = new Error(
+      `Atendimento não pode ser promovido (status atual: ${atendimento.status})`,
+    );
+    (err as Error & { statusCode?: number }).statusCode = 409;
+    throw err;
+  }
+
+  const observacoes = [
+    `[${atendimento.tccRef}]`,
+    atendimento.demandaLivre,
+    atendimento.compareceu === "familiar" && atendimento.familiarNome
+      ? `Compareceu: ${atendimento.familiarNome} (${atendimento.familiarGrau ?? "familiar"})`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  // 1. Upsert assistido
+  //    If CPF is available, search by CPF first; otherwise create a new one.
+  let assistidoId: number;
+
+  if (atendimento.assistidoCpf) {
+    const [existing] = await db
+      .select({ id: assistidos.id })
+      .from(assistidos)
+      .where(eq(assistidos.cpf, atendimento.assistidoCpf))
+      .limit(1);
+
+    if (existing) {
+      assistidoId = existing.id;
+    } else {
+      const [novoAssistido] = await db
+        .insert(assistidos)
+        .values({
+          nome: atendimento.assistidoNome,
+          cpf: atendimento.assistidoCpf,
+          telefone: atendimento.assistidoTelefone ?? undefined,
+          defensorId: input.defensorId,
+          atribuicaoPrimaria:
+            (AREA_TO_ATRIBUICAO[atendimento.area] ??
+              "SUBSTITUICAO") as typeof assistidos.$inferInsert.atribuicaoPrimaria,
+          origemCadastro: "triagem",
+        })
+        .returning({ id: assistidos.id });
+      assistidoId = novoAssistido.id;
+    }
+  } else {
+    // No CPF — always create a new assistido to avoid false merges
+    const [novoAssistido] = await db
+      .insert(assistidos)
+      .values({
+        nome: atendimento.assistidoNome,
+        telefone: atendimento.assistidoTelefone ?? undefined,
+        defensorId: input.defensorId,
+        atribuicaoPrimaria:
+          (AREA_TO_ATRIBUICAO[atendimento.area] ??
+            "SUBSTITUICAO") as typeof assistidos.$inferInsert.atribuicaoPrimaria,
+        origemCadastro: "triagem",
+      })
+      .returning({ id: assistidos.id });
+    assistidoId = novoAssistido.id;
+  }
+
+  // 2. Create processo
+  const numeroAutos =
+    atendimento.processoCnj ?? `TRIAGEM-${atendimento.tccRef}`;
+
+  const [novoProcesso] = await db
+    .insert(processos)
+    .values({
+      assistidoId,
+      atribuicao:
+        (AREA_TO_ATRIBUICAO[atendimento.area] ??
+          "SUBSTITUICAO") as typeof processos.$inferInsert.atribuicao,
+      numeroAutos,
+      area:
+        (AREA_TO_AREA_ENUM[atendimento.area] ??
+          "SUBSTITUICAO") as typeof processos.$inferInsert.area,
+      vara: atendimento.vara ?? undefined,
+      defensorId: input.defensorId,
+      observacoes,
+      situacao: "ativo",
+    })
+    .returning({ id: processos.id });
+
+  // 3. Create demanda
+  const [novaDemanda] = await db
+    .insert(demandas)
+    .values({
+      processoId: novoProcesso.id,
+      assistidoId,
+      ato: atendimento.situacao ?? "Atendimento triagem",
+      providencias: observacoes,
+      status: "5_TRIAGEM",
+      defensorId: input.defensorId,
+      dataEntrada: atendimento.createdAt
+        ? atendimento.createdAt.toISOString().slice(0, 10)
+        : undefined,
+    })
+    .returning({ id: demandas.id });
+
+  // 4. Mark atendimento as promoted
+  await db
+    .update(atendimentosTriagem)
+    .set({
+      status: "promovido",
+      promovidoParaDemandaId: novaDemanda.id,
+      delegadoPara: input.delegarPara,
+      decididoEm: new Date(),
+      decididoPorId: input.decididoPorId,
+    })
+    .where(eq(atendimentosTriagem.id, input.atendimentoId));
+
+  return {
+    demandaId: novaDemanda.id,
+    ombudsUrl: `/demandas-premium/${novaDemanda.id}`,
+  };
 }
