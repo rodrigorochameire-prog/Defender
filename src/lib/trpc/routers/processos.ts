@@ -1034,4 +1034,12 @@ export const processosRouter = router({
         message: null,
       };
     }),
+
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const wid = ctx.user.workspaceId ?? 1;
+      return await db.select().from(processos)
+        .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
+    }),
 });
