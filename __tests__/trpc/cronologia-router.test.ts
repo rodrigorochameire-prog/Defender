@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
-import { marcosProcessuais } from "@/lib/db/schema/cronologia";
+import { marcosProcessuais, prisoes } from "@/lib/db/schema/cronologia";
 import { processos, assistidos, users } from "@/lib/db/schema/core";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
@@ -126,6 +126,39 @@ describe("cronologia.marcos CRUD", { timeout: 30000 }, () => {
         ).rejects.toThrow();
       } finally {
         await db.delete(marcosProcessuais).where(eq(marcosProcessuais.processoId, proc.id));
+        await db.delete(processos).where(eq(processos.id, proc.id));
+        await db.delete(assistidos).where(eq(assistidos.id, assistido.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
+
+describe("cronologia.prisoes CRUD", { timeout: 30000 }, () => {
+  it("createPrisao + listPrisoes + update + delete", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const { proc, assistido } = await makeProcesso(user.workspaceId ?? 1);
+      try {
+        const { id } = await caller.cronologia.createPrisao({
+          processoId: proc.id, tipo: "preventiva", dataInicio: "2025-03-20", situacao: "ativa",
+        });
+        const lista = await caller.cronologia.listPrisoes({ processoId: proc.id });
+        expect(lista).toHaveLength(1);
+        expect(lista[0].tipo).toBe("preventiva");
+        expect(lista[0].situacao).toBe("ativa");
+
+        await caller.cronologia.updatePrisao({ id, patch: { situacao: "relaxada", dataFim: "2025-06-10" } });
+        const after = await caller.cronologia.listPrisoes({ processoId: proc.id });
+        expect(after[0].situacao).toBe("relaxada");
+        expect(after[0].dataFim).toBe("2025-06-10");
+
+        await caller.cronologia.deletePrisao({ id });
+        expect((await caller.cronologia.listPrisoes({ processoId: proc.id })).length).toBe(0);
+      } finally {
+        await db.delete(prisoes).where(eq(prisoes.processoId, proc.id));
         await db.delete(processos).where(eq(processos.id, proc.id));
         await db.delete(assistidos).where(eq(assistidos.id, assistido.id));
       }
