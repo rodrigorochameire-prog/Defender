@@ -109,14 +109,6 @@ export async function createAtendimento(input: CreateAtendimentoInput): Promise<
 
   const normalized = normalizePayload(input.payload);
 
-  const year = new Date().getFullYear();
-  const seqResult = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(atendimentosTriagem)
-    .where(sql`extract(year from ${atendimentosTriagem.createdAt}) = ${year}`);
-  const seq = (seqResult[0]?.count ?? 0) + 1;
-  const tccRef = generateTccRef(year, seq);
-
   const initialStatus = shouldAutoResolve({
     documentoEntregue: normalized.documentoEntregue,
     demandaLivre: normalized.demandaLivre ?? null,
@@ -124,34 +116,60 @@ export async function createAtendimento(input: CreateAtendimentoInput): Promise<
     ? "resolvido"
     : "pendente_avaliacao";
 
-  const [row] = await db.insert(atendimentosTriagem).values({
-    tccRef,
-    area,
-    assistidoNome: normalized.assistidoNome,
-    assistidoTelefone: normalized.assistidoTelefone,
-    assistidoCpf: normalized.assistidoCpf,
-    compareceu: normalized.compareceu,
-    familiarNome: normalized.familiarNome,
-    familiarTelefone: normalized.familiarTelefone,
-    familiarGrau: normalized.familiarGrau,
-    processoCnj: normalized.processoCnj,
-    situacao: normalized.situacao,
-    vara: normalized.vara,
-    urgencia: normalized.urgencia,
-    urgenciaMotivo: normalized.urgenciaMotivo,
-    documentoEntregue: normalized.documentoEntregue,
-    demandaLivre: normalized.demandaLivre,
-    status: initialStatus,
-    abaPlanilha: input.aba,
-    linhaPlanilha: input.linha,
-    criadoPorAppsScript: input.appsScriptId,
-    decididoEm: initialStatus === "resolvido" ? new Date() : null,
-  }).returning();
+  const year = new Date().getFullYear();
+  const maxAttempts = 3;
+  let lastError: unknown;
 
-  return {
-    atendimentoId: row.id,
-    tccRef: row.tccRef,
-    status: row.status,
-    triagemUrl: `/triagem?id=${row.id}`,
-  };
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const seqResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(atendimentosTriagem)
+      .where(sql`extract(year from ${atendimentosTriagem.createdAt}) = ${year}`);
+    const seq = (seqResult[0]?.count ?? 0) + 1 + attempt; // incrementa em cada retry
+    const tccRef = generateTccRef(year, seq);
+
+    try {
+      const [row] = await db.insert(atendimentosTriagem).values({
+        tccRef,
+        area,
+        assistidoNome: normalized.assistidoNome,
+        assistidoTelefone: normalized.assistidoTelefone,
+        assistidoCpf: normalized.assistidoCpf,
+        compareceu: normalized.compareceu,
+        familiarNome: normalized.familiarNome,
+        familiarTelefone: normalized.familiarTelefone,
+        familiarGrau: normalized.familiarGrau,
+        processoCnj: normalized.processoCnj,
+        situacao: normalized.situacao,
+        vara: normalized.vara,
+        urgencia: normalized.urgencia,
+        urgenciaMotivo: normalized.urgenciaMotivo,
+        documentoEntregue: normalized.documentoEntregue,
+        demandaLivre: normalized.demandaLivre,
+        status: initialStatus,
+        abaPlanilha: input.aba,
+        linhaPlanilha: input.linha,
+        criadoPorAppsScript: input.appsScriptId,
+        decididoEm: initialStatus === "resolvido" ? new Date() : null,
+      }).returning();
+
+      return {
+        atendimentoId: row.id,
+        tccRef: row.tccRef,
+        status: row.status,
+        triagemUrl: `/triagem?id=${row.id}`,
+      };
+    } catch (e: unknown) {
+      lastError = e;
+      const pgCode = (e as { code?: string })?.code;
+      const message = e instanceof Error ? e.message : String(e);
+      // Retry only on unique violation of tccRef
+      if (pgCode === "23505" || message.includes("atendimentos_triagem_tcc_ref_unique")) {
+        continue;
+      }
+      throw e;
+    }
+  }
+
+  throw new Error(`createAtendimento falhou após ${maxAttempts} tentativas: ${String(lastError)}`);
 }
