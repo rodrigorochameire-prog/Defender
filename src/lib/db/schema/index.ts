@@ -54,6 +54,9 @@ export * from "./pessoas";
 // Lugares (Fase II-A — entity resolution geoespacial)
 export * from "./lugares";
 
+// Cronologia (Fase IV-A — marcos processuais, prisões, cautelares)
+export * from "./cronologia";
+
 // Audit log
 export * from "./audit";
 
