@@ -123,6 +123,11 @@ function onEditTrigger(e) {
       const prazo        = String(sheet.getRange(row, COL_PRAZO).getValue()        ?? "").trim();
       const providencias = String(sheet.getRange(row, COL_PROVIDENCIAS).getValue() ?? "").trim();
       const sheetName    = sheet.getName();
+      // Email do editor da planilha — usado pelo servidor para resolver o
+      // defensor dono da demanda. Sem isso o servidor cai em um fallback
+      // arbitrário (primeiro defensor do banco), o que já causou bug.
+      const defensorEmail = (e.user && e.user.getEmail && e.user.getEmail()) ||
+                            Session.getActiveUser().getEmail() || "";
 
       const demandaId = _criarDemanda({
         assistidoNome,
@@ -134,6 +139,7 @@ function onEditTrigger(e) {
         prazo,
         providencias,
         sheetName,
+        defensorEmail,
       });
 
       if (demandaId) {
