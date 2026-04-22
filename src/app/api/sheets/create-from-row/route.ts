@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, and, isNull, ilike } from "drizzle-orm";
+import { eq, and, isNull, ilike, inArray, asc } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // Mapeamento: nome da aba → atribuição do banco
@@ -101,10 +101,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     if (!defensorId) {
+      // Fallback determinístico: menor id entre admin/defensor.
+      // Aceita 'admin' porque o dono do OMBUDS pode ter role=admin (não defensor).
       const [firstDefensor] = await db
         .select({ id: users.id })
         .from(users)
-        .where(eq(users.role as never, "defensor" as never))
+        .where(inArray(users.role as never, ["admin", "defensor"] as never[]))
+        .orderBy(asc(users.id))
         .limit(1);
       defensorId = firstDefensor?.id ?? null;
     }
@@ -164,7 +167,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // 6. Create demanda
-    const statusNormalizado = normalizarStatus(body.status ?? "");
+    const { status, substatus } = normalizarStatus(body.status ?? "");
     const reuPreso =
       typeof body.reuPreso === "boolean"
         ? body.reuPreso
@@ -176,7 +179,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         processoId,
         assistidoId,
         ato: ato.trim(),
-        status: (statusNormalizado || "5_TRIAGEM") as never,
+        status: status as never,
+        substatus: substatus ?? undefined,
         prazo: parseDateValue(body.prazo ?? "") ?? undefined,
         dataEntrada: parseDateValue(body.dataEntrada ?? "") ?? undefined,
         reuPreso,
@@ -202,35 +206,53 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // HELPERS
 // ==========================================
 
-function normalizarStatus(valor: string): string {
+function normalizarStatus(valor: string): { status: string; substatus: string | null } {
   const upper = valor.toUpperCase().trim();
 
-  const mapa: Record<string, string> = {
-    "2 - ANALISAR": "2_ATENDER",
-    "2 - ELABORAR": "2_ATENDER",
-    "2 - ELABORANDO": "2_ATENDER",
-    "2 - ATENDER": "2_ATENDER",
-    "2_ATENDER": "2_ATENDER",
-    "4 - MONITORAR": "4_MONITORAR",
-    "4_MONITORAR": "4_MONITORAR",
-    "5 - FILA": "5_TRIAGEM",
-    "5 - TRIAGEM": "5_TRIAGEM",
-    "5_TRIAGEM": "5_TRIAGEM",
-    "7 - PROTOCOLADO": "7_PROTOCOLADO",
-    "7_PROTOCOLADO": "7_PROTOCOLADO",
-    "7 - CIÊNCIA": "7_CIENCIA",
-    "7 - CIENCIA": "7_CIENCIA",
-    "7_CIENCIA": "7_CIENCIA",
-    "7 - RESOLVIDO": "CONCLUIDO",
-    "7 - SEM ATUAÇÃO": "7_SEM_ATUACAO",
-    "7 - SEM ATUACAO": "7_SEM_ATUACAO",
-    "7_SEM_ATUACAO": "7_SEM_ATUACAO",
-    URGENTE: "URGENTE",
-    CONCLUIDO: "CONCLUIDO",
-    ARQUIVADO: "ARQUIVADO",
+  const mapa: Record<string, { status: string; substatus: string | null }> = {
+    "1 - URGENTE":            { status: "URGENTE",       substatus: null },
+    "2 - RELATÓRIO":          { status: "2_ATENDER",     substatus: "2 - Relatório" },
+    "2 - ANALISAR":           { status: "2_ATENDER",     substatus: "2 - Analisar" },
+    "2 - ATENDER":            { status: "2_ATENDER",     substatus: "2 - Atender" },
+    "2 - BUSCAR":             { status: "2_ATENDER",     substatus: "2 - Buscar" },
+    "2 - DILIGENCIAR":        { status: "2_ATENDER",     substatus: "2 - Diligenciar" },
+    "2 - INVESTIGAR":         { status: "2_ATENDER",     substatus: "2 - Investigar" },
+    "2 - ELABORAR":           { status: "2_ATENDER",     substatus: "2 - Elaborar" },
+    "2 - ELABORANDO":         { status: "2_ATENDER",     substatus: "2 - Elaborando" },
+    "2 - REVISAR":            { status: "2_ATENDER",     substatus: "2 - Revisar" },
+    "2 - REVISANDO":          { status: "2_ATENDER",     substatus: "2 - Revisando" },
+    "3 - PROTOCOLAR":         { status: "2_ATENDER",     substatus: "3 - Protocolar" },
+    "4 - AMANDA":             { status: "4_MONITORAR",   substatus: "4 - Amanda" },
+    "4 - ESTÁGIO - TAISSA":   { status: "4_MONITORAR",   substatus: "4 - Estágio - Taissa" },
+    "4 - EMILLY":             { status: "4_MONITORAR",   substatus: "4 - Emilly" },
+    "4 - MONITORAR":          { status: "4_MONITORAR",   substatus: "4 - Monitorar" },
+    "5 - FILA":               { status: "5_TRIAGEM",     substatus: null },
+    "5 - TRIAGEM":            { status: "5_TRIAGEM",     substatus: null },
+    "6 - DOCUMENTOS":         { status: "2_ATENDER",     substatus: "6 - Documentos" },
+    "6 - TESTEMUNHAS":        { status: "2_ATENDER",     substatus: "6 - Testemunhas" },
+    "7 - PROTOCOLADO":        { status: "7_PROTOCOLADO", substatus: null },
+    "7 - SIGAD":              { status: "7_PROTOCOLADO", substatus: "7 - Sigad" },
+    "7 - PETICIONAMENTO INTERMEDIÁRIO": { status: "7_PROTOCOLADO", substatus: "7 - Peticionamento intermediário" },
+    "7 - CIÊNCIA":            { status: "7_CIENCIA",     substatus: null },
+    "7 - CIENCIA":            { status: "7_CIENCIA",     substatus: null },
+    "7 - RESOLVIDO":          { status: "CONCLUIDO",     substatus: "7 - Resolvido" },
+    "7 - CONSTITUIU ADVOGADO":{ status: "CONCLUIDO",     substatus: "7 - Constituiu advogado" },
+    "7 - EXCLUÍDO":           { status: "CONCLUIDO",     substatus: "7 - Excluído" },
+    "7 - SEM ATUAÇÃO":        { status: "7_SEM_ATUACAO", substatus: null },
+    "7 - SEM ATUACAO":        { status: "7_SEM_ATUACAO", substatus: null },
+    // Formas "diretas" (enum DB sendo passado como label)
+    "2_ATENDER":              { status: "2_ATENDER",     substatus: null },
+    "4_MONITORAR":            { status: "4_MONITORAR",   substatus: null },
+    "5_TRIAGEM":              { status: "5_TRIAGEM",     substatus: null },
+    "7_PROTOCOLADO":          { status: "7_PROTOCOLADO", substatus: null },
+    "7_CIENCIA":              { status: "7_CIENCIA",     substatus: null },
+    "7_SEM_ATUACAO":          { status: "7_SEM_ATUACAO", substatus: null },
+    URGENTE:                  { status: "URGENTE",       substatus: null },
+    CONCLUIDO:                { status: "CONCLUIDO",     substatus: null },
+    ARQUIVADO:                { status: "ARQUIVADO",     substatus: null },
   };
 
-  return mapa[upper] ?? "5_TRIAGEM";
+  return mapa[upper] ?? { status: "5_TRIAGEM", substatus: null };
 }
 
 function parseDateValue(valor: string): string | null {
