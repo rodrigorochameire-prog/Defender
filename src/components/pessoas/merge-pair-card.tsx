@@ -20,7 +20,7 @@ interface Props {
 export function MergePairCard({ pair, onMerge, onDistinct }: Props) {
   return (
     <div className="border rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold">Possível duplicata: "{pair.a.nome}"</h3>
+      <h3 className="text-sm font-semibold">Possível duplicata: &ldquo;{pair.a.nome}&rdquo;</h3>
       <div className="grid grid-cols-2 gap-3">
         {[pair.a, pair.b].map((p) => (
           <div key={p.id} className="border rounded p-3 text-xs space-y-1 bg-neutral-50 dark:bg-neutral-900/40">
