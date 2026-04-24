@@ -67,7 +67,7 @@ export function AudienciaInlineForm({
         type="date"
         value={data}
         onChange={(e) => onChange({ data: e.target.value })}
-        className="h-7 w-36 text-xs border-emerald-200 focus-visible:ring-emerald-400 bg-white"
+        className="h-7 w-36 text-xs border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-400 bg-white dark:bg-neutral-900"
       />
 
       {/* Hora */}
@@ -77,7 +77,7 @@ export function AudienciaInlineForm({
           type="time"
           value={hora}
           onChange={(e) => onChange({ hora: e.target.value })}
-          className="h-7 w-28 text-xs border-emerald-200 focus-visible:ring-emerald-400 bg-white"
+          className="h-7 w-28 text-xs border-emerald-200 dark:border-emerald-800 focus-visible:ring-emerald-400 bg-white dark:bg-neutral-900"
         />
       </div>
 
@@ -86,7 +86,7 @@ export function AudienciaInlineForm({
         value={tipo || undefined}
         onValueChange={(value) => onChange({ tipo: value })}
       >
-        <SelectTrigger className="h-7 w-48 text-xs border-emerald-200 focus:ring-emerald-400 bg-white">
+        <SelectTrigger className="h-7 w-48 text-xs border-emerald-200 dark:border-emerald-800 focus:ring-emerald-400 bg-white dark:bg-neutral-900">
           <SelectValue placeholder="Tipo de audiência" />
         </SelectTrigger>
         <SelectContent>
