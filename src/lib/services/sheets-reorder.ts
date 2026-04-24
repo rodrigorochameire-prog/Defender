@@ -124,6 +124,7 @@ export async function reorderAllSheets(
       importBatchId: demandas.importBatchId,
       ordemOriginal: demandas.ordemOriginal,
       dataExpedicao: demandas.dataExpedicao,
+      defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -165,6 +166,7 @@ export async function reorderAllSheets(
       numeroAutos: r.numeroAutos ?? "",
       atribuicao,
       delegadoNome: r.delegadoNome ?? null,
+      defensorId: r.defensorId,
     };
 
     const enriched: Enriched = {

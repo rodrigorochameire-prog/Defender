@@ -70,6 +70,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ato: demandas.ato,
       prazo: demandas.prazo,
       providencias: demandas.providencias,
+      defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -173,6 +174,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         numeroAutos: d.numeroAutos ?? "",
         atribuicao,
         delegadoNome: null,
+        defensorId: d.defensorId,
       };
       try {
         const r = await pushDemanda(sync);

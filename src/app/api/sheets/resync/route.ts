@@ -35,6 +35,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       ato: demandas.ato,
       prazo: demandas.prazo,
       providencias: demandas.providencias,
+      defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     numeroAutos: r.numeroAutos ?? "",
     atribuicao: r.atribuicao ?? "SUBSTITUICAO",
     delegadoNome: r.delegadoNome ?? null,
+    defensorId: r.defensorId,
   }));
 
   let pushed = 0;

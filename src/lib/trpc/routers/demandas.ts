@@ -27,6 +27,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
       ato: demandas.ato,
       prazo: demandas.prazo,
       providencias: demandas.providencias,
+      defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -56,6 +57,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
     numeroAutos: row.numeroAutos ?? "",
     atribuicao: row.atribuicao ?? "SUBSTITUICAO",
     delegadoNome: row.delegadoNome ?? null,
+    defensorId: row.defensorId,
   };
 }
 

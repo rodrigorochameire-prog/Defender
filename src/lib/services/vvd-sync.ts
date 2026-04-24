@@ -38,6 +38,7 @@ export async function syncVVDIntimacoesToSheet(): Promise<VVDSyncStats> {
       prazo: intimacoesVVD.prazo,
       prazoDias: intimacoesVVD.prazoDias,
       providencias: intimacoesVVD.providencias,
+      defensorId: intimacoesVVD.defensorId,
       numeroAutos: processosVVD.numeroAutos,
       requeridoNome: partesVVD.nome,
     })
@@ -73,6 +74,7 @@ export async function syncVVDIntimacoesToSheet(): Promise<VVDSyncStats> {
         providencias: r.providencias ?? "Classificar demanda",
         delegadoNome: null,
         atribuicao: "VVD_CAMACARI",
+        defensorId: r.defensorId,
       };
 
       const res = await pushDemanda(demandaSync);
