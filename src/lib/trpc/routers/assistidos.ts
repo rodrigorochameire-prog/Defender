@@ -57,6 +57,58 @@ async function ensureDriveFolderForAssistido(
 }
 
 export const assistidosRouter = router({
+  // Lista placeholders criados pelo webhook PJe quando o parser não conseguiu
+  // identificar o réu (intimação só mostrava órgão/destinatário). Serve de
+  // fila de revisão — defensor consulta o PJe, identifica o réu e renomeia
+  // via `update`. Todas as demandas/processos ligados herdam o novo nome
+  // automaticamente (FK por id).
+  listPendentesRevisao: protectedProcedure.query(async () => {
+    const placeholders = await db
+      .select({
+        id: assistidos.id,
+        nome: assistidos.nome,
+        observacoes: assistidos.observacoes,
+        createdAt: assistidos.createdAt,
+      })
+      .from(assistidos)
+      .where(
+        and(
+          ilike(assistidos.nome, "⚠ A identificar%"),
+          isNull(assistidos.deletedAt),
+        ),
+      )
+      .orderBy(desc(assistidos.createdAt));
+
+    if (placeholders.length === 0) return [];
+
+    const ids = placeholders.map((p) => p.id);
+    const counts = await db
+      .select({
+        assistidoId: demandas.assistidoId,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(demandas)
+      .where(and(inArray(demandas.assistidoId, ids), isNull(demandas.deletedAt)))
+      .groupBy(demandas.assistidoId);
+
+    const countMap = new Map(counts.map((c) => [c.assistidoId, c.total]));
+
+    return placeholders.map((p) => {
+      // Formato do nome: "⚠ A identificar — <numeroCNJ>"
+      const match = p.nome.match(/—\s*(.+)$/);
+      const numeroAutos = match?.[1]?.trim() ?? "";
+      return {
+        id: p.id,
+        nome: p.nome,
+        numeroAutos,
+        destinatarioOriginal:
+          p.observacoes?.match(/Destinatário bruto:\s*(.+?)\./)?.[1]?.trim() ?? null,
+        demandasAtivas: countMap.get(p.id) ?? 0,
+        createdAt: p.createdAt,
+      };
+    });
+  }),
+
   // Listar assistidos — visibilidade por comarca em 3 camadas (ver comarca-scope.ts)
   list: protectedProcedure
     .input(
