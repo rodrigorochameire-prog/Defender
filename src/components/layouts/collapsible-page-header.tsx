@@ -139,7 +139,7 @@ export function CollapsiblePageHeader({
             {bottomRow && (
               <>
                 <div className="h-[2px] bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
-                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.10] rounded-b-xl">
+                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.10] dark:bg-white/[0.04] rounded-b-xl">
                   {bottomRow}
                 </div>
               </>
