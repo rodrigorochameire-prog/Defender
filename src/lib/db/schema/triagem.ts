@@ -16,6 +16,7 @@ export const atendimentosTriagem = pgTable("atendimentos_triagem", {
   id: serial("id").primaryKey(),
   tccRef: varchar("tcc_ref", { length: 20 }).notNull().unique(),
   area: varchar("area", { length: 20 }).notNull(),
+  workspaceId: integer("workspace_id"),
   defensorAlvoId: integer("defensor_alvo_id").references(() => users.id),
 
   assistidoNome: text("assistido_nome").notNull(),
@@ -62,6 +63,7 @@ export const atendimentosTriagem = pgTable("atendimentos_triagem", {
   index("triagem_created_at_idx").on(table.createdAt),
   index("triagem_processo_cnj_idx").on(table.processoCnj),
   index("triagem_promovido_demanda_idx").on(table.promovidoParaDemandaId),
+  index("triagem_workspace_id_idx").on(table.workspaceId),
 ]);
 
 export type AtendimentoTriagem = typeof atendimentosTriagem.$inferSelect;
