@@ -24,6 +24,7 @@ import {
   syncOrigemEnum,
   classeRecursalEnum,
   resultadoJulgamentoEnum,
+  demandaOrigemEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
 
@@ -277,6 +278,11 @@ export const demandas = pgTable("demandas", {
   // ID do documento PJe — identificador estável entre reimportações.
   // Unique parcial: (processo_id, pje_documento_id) WHERE deleted_at IS NULL
   pjeDocumentoId: varchar("pje_documento_id", { length: 30 }),
+  // Caminho que criou a demanda (auditoria + heurística do resolveDemanda).
+  origem: demandaOrigemEnum("origem"),
+  // Sinaliza criação ambígua (ex: ato distinto em processo já aberto sem PJe).
+  // Aparece em UI de triagem para o defensor decidir fundir ou manter.
+  revisaoPendente: boolean("revisao_pendente").default(false).notNull(),
   enrichmentData: jsonb("enrichment_data").$type<{
     crime?: string;
     artigos?: string[];

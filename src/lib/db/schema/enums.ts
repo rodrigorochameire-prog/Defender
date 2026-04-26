@@ -576,3 +576,13 @@ export const resultadoJulgamentoEnum = pgEnum("resultado_julgamento", [
   "DILIGENCIA",
   "PREJUDICADO",
 ]);
+
+// Origem de uma demanda — usado pelo resolveDemanda para auditoria/heurística
+export const demandaOrigemEnum = pgEnum("demanda_origem", [
+  "pje",
+  "planilha_apps_script",
+  "planilha_n8n",
+  "ombuds_ui",
+  "enrichment",
+  "manual",
+]);
