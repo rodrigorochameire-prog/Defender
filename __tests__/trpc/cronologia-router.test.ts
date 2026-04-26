@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { marcosProcessuais, prisoes, cautelares } from "@/lib/db/schema/cronologia";
 import { processos, assistidos, users } from "@/lib/db/schema/core";
+import { casos } from "@/lib/db/schema/casos";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
 
@@ -220,6 +221,53 @@ describe("cronologia.getCronologiaCompleta", { timeout: 30000 }, () => {
         await db.delete(cautelares).where(eq(cautelares.processoId, proc.id));
         await db.delete(processos).where(eq(processos.id, proc.id));
         await db.delete(assistidos).where(eq(assistidos.id, assistido.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
+
+describe("cronologia.getCronologiaDoCaso", { timeout: 30000 }, () => {
+  it("agrega marcos+prisoes+cautelares de todos processos do caso", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const wid = user.workspaceId ?? 1;
+
+      // Cria assistido pra caso (caso.assistidoId é base de ACL)
+      const [ass] = await db.insert(assistidos).values({
+        workspaceId: wid, nome: `Test ${Date.now()}`,
+      }).returning({ id: assistidos.id });
+      const [c] = await db.insert(casos).values({
+        workspaceId: wid, assistidoId: ass.id, titulo: "T",
+      }).returning({ id: casos.id });
+      // 2 processos no caso
+      const [p1] = await db.insert(processos).values({
+        workspaceId: wid, casoId: c.id, area: "JURI", assistidoId: ass.id,
+        numeroAutos: `P1-${Date.now()}`,
+      }).returning({ id: processos.id });
+      const [p2] = await db.insert(processos).values({
+        workspaceId: wid, casoId: c.id, area: "JURI", assistidoId: ass.id,
+        numeroAutos: `P2-${Date.now()}`,
+      }).returning({ id: processos.id });
+
+      try {
+        await caller.cronologia.createMarco({ processoId: p1.id, tipo: "fato", data: "2025-01-01" });
+        await caller.cronologia.createMarco({ processoId: p2.id, tipo: "denuncia", data: "2025-03-01" });
+        await caller.cronologia.createPrisao({ processoId: p1.id, tipo: "preventiva", dataInicio: "2025-02-01" });
+
+        const agg = await caller.cronologia.getCronologiaDoCaso({ casoId: c.id });
+        expect(agg.marcos).toHaveLength(2);
+        expect(agg.prisoes).toHaveLength(1);
+        expect(agg.cautelares).toHaveLength(0);
+        expect(agg.marcos[0].data).toBe("2025-01-01");
+      } finally {
+        await db.delete(marcosProcessuais).where(inArray(marcosProcessuais.processoId, [p1.id, p2.id]));
+        await db.delete(prisoes).where(inArray(prisoes.processoId, [p1.id, p2.id]));
+        await db.delete(processos).where(eq(processos.casoId, c.id));
+        await db.delete(casos).where(eq(casos.id, c.id));
+        await db.delete(assistidos).where(eq(assistidos.id, ass.id));
       }
     } finally {
       await db.delete(users).where(eq(users.id, user.id));

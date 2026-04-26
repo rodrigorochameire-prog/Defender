@@ -2,8 +2,9 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { marcosProcessuais, prisoes, cautelares } from "@/lib/db/schema/cronologia";
-import { processos } from "@/lib/db/schema/core";
-import { eq, and, desc } from "drizzle-orm";
+import { processos, assistidos } from "@/lib/db/schema/core";
+import { casos } from "@/lib/db/schema/casos";
+import { eq, and, desc, inArray } from "drizzle-orm";
 
 const MARCO_TIPO = z.enum([
   "fato",
@@ -308,5 +309,37 @@ export const cronologiaRouter = router({
           .orderBy(desc(cautelares.dataInicio)),
       ]);
       return { marcos: marcosRows, prisoes: prisoesRows, cautelares: cautelaresRows };
+    }),
+
+  getCronologiaDoCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const wid = ctx.user.workspaceId ?? 1;
+      // ACL via INNER JOIN — casos.workspaceId não existe; usa assistidos
+      const [caso] = await db.select({ id: casos.id })
+        .from(casos)
+        .innerJoin(assistidos, eq(assistidos.id, casos.assistidoId))
+        .where(and(eq(casos.id, input.casoId), eq(assistidos.workspaceId, wid)))
+        .limit(1);
+      if (!caso) throw new Error("Caso não encontrado");
+
+      const procs = await db.select({ id: processos.id })
+        .from(processos)
+        .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
+      if (procs.length === 0) return { marcos: [], prisoes: [], cautelares: [] };
+      const procIds = procs.map((p) => p.id);
+
+      const [marcos, prisoesRows, cautelaresRows] = await Promise.all([
+        db.select().from(marcosProcessuais)
+          .where(inArray(marcosProcessuais.processoId, procIds))
+          .orderBy(marcosProcessuais.data),
+        db.select().from(prisoes)
+          .where(inArray(prisoes.processoId, procIds))
+          .orderBy(desc(prisoes.dataInicio)),
+        db.select().from(cautelares)
+          .where(inArray(cautelares.processoId, procIds))
+          .orderBy(desc(cautelares.dataInicio)),
+      ]);
+      return { marcos, prisoes: prisoesRows, cautelares: cautelaresRows };
     }),
 });
