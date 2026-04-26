@@ -24,7 +24,8 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "daemon": "node scripts/claude-code-daemon.mjs",
-    "triagem:setup-sheet": "tsx scripts/triagem-setup-spreadsheet.ts"
+    "triagem:setup-sheet": "tsx scripts/triagem-setup-spreadsheet.ts",
+    "triagem:enrich-sheet": "tsx scripts/triagem-enrich-spreadsheet.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.10",
