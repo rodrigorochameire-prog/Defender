@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed } from "@/lib/db/schema";
-import { eq, and, isNull, desc, asc, sql } from "drizzle-orm";
+import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos } from "@/lib/db/schema";
+import { eq, and, isNull, desc, asc, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
 import { PAPEIS_VALIDOS } from "@/lib/pessoas/intel-config";
@@ -372,6 +372,19 @@ export const pessoasRouter = router({
         } as any)
         .onConflictDoNothing();
       return { ok: true };
+    }),
+
+  getParticipacoesDoCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const wid = ctx.user.workspaceId ?? 1;
+      const procs = await db.select({ id: processos.id })
+        .from(processos)
+        .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
+      if (procs.length === 0) return [];
+      const procIds = procs.map((p) => p.id);
+      return await db.select().from(participacoesProcesso)
+        .where(inArray(participacoesProcesso.processoId, procIds));
     }),
 
   getBatchSignals: protectedProcedure

@@ -8,6 +8,8 @@ import { TabInvestigacao } from "../_components/tab-investigacao";
 import { TabAudiencias } from "../_components/tab-audiencias";
 import { TabDocumentos } from "../_components/tab-documentos";
 import { TabMidias } from "../_components/tab-midias";
+import { TabPessoas } from "../_components/tab-pessoas";
+import { TabCronologia } from "../_components/tab-cronologia";
 
 export default function CasoAbaPage() {
   const params = useParams();
@@ -29,6 +31,10 @@ export default function CasoAbaPage() {
       return <TabDocumentos casoId={casoId} />;
     case "midias":
       return <TabMidias casoId={casoId} />;
+    case "pessoas":
+      return <TabPessoas casoId={casoId} />;
+    case "cronologia":
+      return <TabCronologia casoId={casoId} />;
     default:
       return (
         <p className="p-4 italic text-neutral-400">Aba &quot;{aba}&quot; ainda não implementada.</p>
