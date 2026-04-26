@@ -18,6 +18,9 @@ const SCOPES = [
   "https://www.googleapis.com/auth/drive",
 ];
 
+const FOLDER_ID = process.env.TRIAGEM_DRIVE_FOLDER_ID;
+const EXISTING_SPREADSHEET_ID = process.env.TRIAGEM_SPREADSHEET_ID;
+
 async function getAuth() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY não configurado");
@@ -69,29 +72,66 @@ function makeValidation(sheetId: number, columnIndex: number, opts: string[]) {
 
 async function main() {
   const auth = await getAuth();
+  const drive = google.drive({ version: "v3", auth });
   const sheets = google.sheets({ version: "v4", auth });
 
-  const created = await sheets.spreadsheets.create({
-    requestBody: {
-      properties: { title: "Triagem Criminal — DP Camaçari" },
-      sheets: [...ABAS_OPERACIONAIS, ...ABAS_AUTO, ...ABAS_REF].map((title, i) => ({
-        properties: {
-          title,
-          index: i,
-          gridProperties: { rowCount: 2000, columnCount: 20, frozenRowCount: 1 },
-        },
-      })),
-    },
-  });
+  let spreadsheetId: string;
 
-  const spreadsheetId = created.data.spreadsheetId!;
-  console.log(`✅ Planilha criada: ${spreadsheetId}`);
+  if (EXISTING_SPREADSHEET_ID) {
+    spreadsheetId = EXISTING_SPREADSHEET_ID;
+    console.log(`📋 Usando planilha existente: ${spreadsheetId}`);
+  } else {
+    if (!FOLDER_ID) {
+      console.error("ERRO: configure TRIAGEM_SPREADSHEET_ID (planilha pré-criada manualmente)");
+      console.error("OU TRIAGEM_DRIVE_FOLDER_ID (com Shared Drive — service account precisa de quota)");
+      console.error("");
+      console.error("Caminho mais simples: criar planilha vazia manualmente, compartilhar com");
+      console.error("ombuds-drive@vvd-automation.iam.gserviceaccount.com como Editor, e configurar");
+      console.error("TRIAGEM_SPREADSHEET_ID no .env.local com o ID da planilha.");
+      process.exit(1);
+    }
+    const driveCreate = await drive.files.create({
+      requestBody: {
+        name: "Triagem Criminal — DP Camaçari",
+        mimeType: "application/vnd.google-apps.spreadsheet",
+        parents: [FOLDER_ID],
+      },
+      fields: "id",
+      supportsAllDrives: true,
+    });
+    spreadsheetId = driveCreate.data.id!;
+    console.log(`✅ Planilha criada na pasta: ${spreadsheetId}`);
+  }
   console.log(`   URL: https://docs.google.com/spreadsheets/d/${spreadsheetId}`);
 
+  // 2. Adiciona as 12 abas + remove a "Sheet1" default
+  const allTabs = [...ABAS_OPERACIONAIS, ...ABAS_AUTO, ...ABAS_REF];
+  const addRequests = allTabs.map((title, i) => ({
+    addSheet: {
+      properties: {
+        title,
+        index: i,
+        gridProperties: { rowCount: 2000, columnCount: 20, frozenRowCount: 1 },
+      },
+    },
+  }));
+
+  const batch1 = await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: { requests: addRequests },
+  });
+
+  // Pega o sheetId default ("Sheet1") pra remover depois
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const defaultSheetId = meta.data.sheets?.find(
+    s => !allTabs.includes(s.properties?.title ?? ""),
+  )?.properties?.sheetId;
+
   const sheetIdByTitle = new Map<string, number>();
-  for (const s of created.data.sheets ?? []) {
-    if (s.properties?.title && s.properties.sheetId != null) {
-      sheetIdByTitle.set(s.properties.title, s.properties.sheetId);
+  for (const reply of batch1.data.replies ?? []) {
+    const props = reply.addSheet?.properties;
+    if (props?.title && props.sheetId != null) {
+      sheetIdByTitle.set(props.title, props.sheetId);
     }
   }
 
@@ -158,6 +198,11 @@ async function main() {
       start: { sheetId: pendId, rowIndex: 0, columnIndex: 0 },
     },
   });
+
+  // Remove a Sheet1 default criada pelo Drive
+  if (defaultSheetId != null) {
+    requests.push({ deleteSheet: { sheetId: defaultSheetId } });
+  }
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
