@@ -6,9 +6,11 @@
  * 1. Abrir a planilha "Triagem Criminal — DP Camaçari"
  * 2. Extensões → Apps Script
  * 3. Substituir conteúdo por este arquivo
+
  * 4. Configurar Script Properties (chave 🔧 no menu lateral):
  *      - SHEETS_WEBHOOK_SECRET = mesmo valor do .env do OMBUDS
  *      - OMBUDS_BASE_URL = ex: https://ombuds.vercel.app
+ *      - WORKSPACE_ID = ID numérico da sua comarca (isolamento por workspace)
  * 5. Salvar (Ctrl+S)
  * 6. Executar `instalarTriggers` uma vez
  * 7. Autorizar permissões
@@ -76,6 +78,7 @@ function enviarAtendimento(sheet, aba, row) {
   const props = PropertiesService.getScriptProperties();
   const SECRET = props.getProperty("SHEETS_WEBHOOK_SECRET");
   const BASE = props.getProperty("OMBUDS_BASE_URL") || "https://ombuds.vercel.app";
+  const WORKSPACE_ID = props.getProperty("WORKSPACE_ID"); // ID da comarca (ex: 9 = Camaçari)
 
   if (!SECRET) {
     sheet.getRange(row, COL.STATUS_SYNC).setValue("❌ SECRET ausente");
@@ -86,6 +89,7 @@ function enviarAtendimento(sheet, aba, row) {
     aba: ABA_TO_API[aba],
     linha: row,
     apps_script_id: ScriptApp.getScriptId(),
+    workspace_id: WORKSPACE_ID ? Number(WORKSPACE_ID) : null,
     payload: {
       assistido_nome:  sheet.getRange(row, COL.ASSISTIDO_NOME).getValue(),
       telefone:        sheet.getRange(row, COL.TELEFONE).getValue(),
