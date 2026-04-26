@@ -2,8 +2,8 @@ import { countPendentesPorDefensor } from "@/lib/services/triagem";
 import { Bell } from "lucide-react";
 import Link from "next/link";
 
-export async function TriagemBadge({ defensorId }: { defensorId: number }) {
-  const count = await countPendentesPorDefensor(defensorId);
+export async function TriagemBadge({ defensorId, workspaceId }: { defensorId: number; workspaceId: number }) {
+  const count = await countPendentesPorDefensor(defensorId, workspaceId);
   if (count === 0) return null;
 
   return (

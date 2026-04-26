@@ -18,7 +18,7 @@ export default async function AdminPage() {
       {user && (
         <div className="px-4 pt-4">
           <Suspense fallback={null}>
-            <AtendimentosPendentesCard defensorId={user.id} />
+            <AtendimentosPendentesCard defensorId={user.id} workspaceId={user.workspaceId} />
           </Suspense>
         </div>
       )}

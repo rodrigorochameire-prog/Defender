@@ -15,11 +15,11 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  const headerExtra = (
+  const headerExtra = user.workspaceId ? (
     <Suspense fallback={null}>
-      <TriagemBadge defensorId={user.id} />
+      <TriagemBadge defensorId={user.id} workspaceId={user.workspaceId} />
     </Suspense>
-  );
+  ) : null;
 
   return (
     <AdminSidebar userName={user.name} userEmail={user.email} headerExtra={headerExtra}>

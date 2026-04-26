@@ -1,17 +1,25 @@
 import { listAtendimentos } from "@/lib/services/triagem";
+import { getSession } from "@/lib/auth/session";
 import { AtendimentoCard } from "@/components/triagem/atendimento-card";
 import { TriagemFilters } from "@/components/triagem/triagem-filters";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   searchParams: Promise<{ status?: string; area?: string; busca?: string }>;
 }
 
 export default async function TriagemPage({ searchParams }: PageProps) {
+  const session = await getSession();
+  if (!session) {
+    redirect("/login");
+  }
+
   const sp = await searchParams;
   const atendimentos = await listAtendimentos({
     status: sp.status === "todos" ? undefined : (sp.status ?? "pendente_avaliacao"),
     area: sp.area === "todas" ? undefined : sp.area,
     limit: 100,
+    workspaceId: session.workspaceId ?? undefined,
   });
 
   const filtrados = sp.busca

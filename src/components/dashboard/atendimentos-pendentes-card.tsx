@@ -1,11 +1,12 @@
 import { listAtendimentos } from "@/lib/services/triagem";
 import Link from "next/link";
 
-export async function AtendimentosPendentesCard({ defensorId }: { defensorId: number }) {
+export async function AtendimentosPendentesCard({ defensorId, workspaceId }: { defensorId: number; workspaceId?: number | null }) {
   const atendimentos = await listAtendimentos({
     defensorId,
     status: "pendente_avaliacao",
     limit: 5,
+    workspaceId: workspaceId ?? undefined,
   });
 
   return (
