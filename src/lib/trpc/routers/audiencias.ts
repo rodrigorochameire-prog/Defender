@@ -464,6 +464,34 @@ export const audienciasRouter = router({
       return await query;
     }),
 
+  // Listar audiências por caso
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: audiencias.id,
+          processoId: audiencias.processoId,
+          casoId: audiencias.casoId,
+          assistidoId: audiencias.assistidoId,
+          dataHora: audiencias.dataAudiencia,
+          tipo: audiencias.tipo,
+          local: audiencias.local,
+          titulo: audiencias.titulo,
+          descricao: audiencias.descricao,
+          sala: audiencias.sala,
+          horario: audiencias.horario,
+          defensorId: audiencias.defensorId,
+          juiz: audiencias.juiz,
+          promotor: audiencias.promotor,
+          status: audiencias.status,
+          resultado: audiencias.resultado,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.casoId, input.casoId))
+        .orderBy(asc(audiencias.dataAudiencia));
+    }),
+
   // Buscar audiência por ID
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))

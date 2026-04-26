@@ -130,6 +130,23 @@ export const documentsRouter = router({
     }),
 
   /**
+   * Lista documentos por caso (alias listByCaso para consistência com tabs)
+   */
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const result = await db
+          .select()
+          .from(documentos)
+          .where(eq(documentos.casoId, input.casoId))
+          .orderBy(desc(documentos.createdAt));
+
+        return result;
+      }, "Erro ao buscar documentos do caso");
+    }),
+
+  /**
    * Upload de documento
    */
   upload: protectedProcedure
