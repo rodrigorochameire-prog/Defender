@@ -3,7 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
-import { CaseSwitcher } from "@/components/hierarquia/caso-switcher";
+import { CaseSwitcher, SituacaoAtualBlock } from "@/components/hierarquia";
 import { useVisibleCasoTabs } from "@/hooks/use-visible-caso-tabs";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,8 @@ export default function CasoLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
       </div>
+
+      <SituacaoAtualBlock casoId={casoId} />
 
       <nav className="border-b px-6 flex gap-1 bg-white dark:bg-neutral-950 overflow-x-auto">
         {tabs.map((t) => {
