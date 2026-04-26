@@ -28,6 +28,27 @@ import {
 } from "@/lib/services/plaud-api";
 
 export const atendimentosRouter = router({
+  /** Lista atendimentos vinculados a um caso específico. */
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: atendimentos.id,
+          dataAtendimento: atendimentos.dataAtendimento,
+          tipo: atendimentos.tipo,
+          assunto: atendimentos.assunto,
+          resumo: atendimentos.resumo,
+          status: atendimentos.status,
+          local: atendimentos.local,
+          duracao: atendimentos.duracao,
+          createdAt: atendimentos.createdAt,
+        })
+        .from(atendimentos)
+        .where(eq(atendimentos.casoId, input.casoId))
+        .orderBy(desc(atendimentos.dataAtendimento));
+    }),
+
   // ==========================================
   // CRUD DE ATENDIMENTOS
   // ==========================================

@@ -171,6 +171,29 @@ async function autoPreencherVariaveis(opts: {
 // ==========================================
 
 export const oficiosRouter = router({
+  /** Lista ofícios vinculados a um caso específico. */
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: documentosGerados.id,
+          titulo: documentosGerados.titulo,
+          metadata: documentosGerados.metadata,
+          googleDocUrl: documentosGerados.googleDocUrl,
+          driveFileId: documentosGerados.driveFileId,
+          createdAt: documentosGerados.createdAt,
+          updatedAt: documentosGerados.updatedAt,
+          modeloTitulo: documentoModelos.titulo,
+          processoNumero: processos.numeroAutos,
+        })
+        .from(documentosGerados)
+        .leftJoin(documentoModelos, eq(documentosGerados.modeloId, documentoModelos.id))
+        .leftJoin(processos, eq(documentosGerados.processoId, processos.id))
+        .where(and(eq(documentosGerados.casoId, input.casoId), eq(documentoModelos.tipoPeca, "oficio")))
+        .orderBy(desc(documentosGerados.updatedAt));
+    }),
+
   // ==========================================
   // CRUD DE OFÍCIOS
   // ==========================================

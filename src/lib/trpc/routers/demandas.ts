@@ -71,6 +71,26 @@ function inferirFaseProcessual(tipoDocumento?: string): string | undefined {
 }
 
 export const demandasRouter = router({
+  /** Lista demandas vinculadas a um caso específico. */
+  listByCaso: protectedProcedure
+    .input(z.object({ casoId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: demandas.id,
+          ato: demandas.ato,
+          status: demandas.status,
+          substatus: demandas.substatus,
+          prazo: demandas.prazo,
+          prioridade: demandas.prioridade,
+          reuPreso: demandas.reuPreso,
+          createdAt: demandas.createdAt,
+        })
+        .from(demandas)
+        .where(and(eq(demandas.casoId, input.casoId), isNull(demandas.deletedAt)))
+        .orderBy(desc(demandas.createdAt));
+    }),
+
   // Listar todas as demandas
   // ARQUITETURA: Cada defensor tem seu "banco de dados" de demandas
   // - Defensor: vê apenas suas demandas
