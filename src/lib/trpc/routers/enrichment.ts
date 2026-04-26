@@ -25,6 +25,7 @@ import {
   type EnrichAudienciaOutput,
 } from "@/lib/services/enrichment-client";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { resolveDemanda } from "@/lib/services/demandas-resolver";
 
 // ==========================================
 // SCHEMAS DE INPUT
@@ -798,14 +799,43 @@ export const enrichmentRouter = router({
       for (const action of input.actions) {
         try {
           if (action.type === "criar_demanda") {
-            // Create a demanda linked to the processo/assistido
-            const [novaDemanda] = await db.insert(demandas).values({
-              tipo: action.demandaTipo || "Providência",
-              descricao: `Demanda criada automaticamente a partir de enrichment do arquivo: ${file.name}`,
-              status: "pendente",
-              prioridade: "media",
-              processoId: processoId || undefined,
-              assistidoId: assistidoId || undefined,
+            if (!processoId || !assistidoId) {
+              results.push({
+                type: "criar_demanda",
+                success: false,
+                error: "processo/assistido não vinculados ao arquivo",
+              });
+              continue;
+            }
+
+            // Idempotência: se já há demanda ativa originada do MESMO drive_file_id,
+            // não cria outra (re-run do bridge no mesmo arquivo é no-op).
+            const [existingFromFile] = await db
+              .select({ id: demandas.id })
+              .from(demandas)
+              .where(
+                and(
+                  eq(demandas.processoId, processoId),
+                  isNull(demandas.deletedAt),
+                  sql`${demandas.enrichmentData}->>'drive_file_id' = ${String(file.id)}`,
+                ),
+              )
+              .limit(1);
+
+            if (existingFromFile) {
+              results.push({ type: "criar_demanda", success: true, id: existingFromFile.id });
+              continue;
+            }
+
+            const ato = action.demandaTipo || file.documentType || "Providência";
+            const result = await resolveDemanda({
+              processoId,
+              assistidoId,
+              ato,
+              origem: "enrichment",
+              status: "5_TRIAGEM",
+              prioridade: "NORMAL",
+              providencias: `Demanda derivada de enrichment do arquivo: ${file.name}`,
               defensorId: ctx.user.id,
               enrichmentData: {
                 origem: "enrichment_bridge",
@@ -814,22 +844,16 @@ export const enrichmentRouter = router({
                 documento_tipo: file.documentType,
                 categoria: file.categoria,
               },
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            } as any).returning({ id: demandas.id });
+            });
 
-            let atribuicaoDemanda: string | null = null;
-            if (processoId) {
-              const [proc] = await db
-                .select({ atribuicao: processos.atribuicao })
-                .from(processos)
-                .where(eq(processos.id, processoId))
-                .limit(1);
-              atribuicaoDemanda = proc?.atribuicao ?? null;
-            }
-            triggerReorder(atribuicaoDemanda, "enrichment", novaDemanda?.id);
+            const [proc] = await db
+              .select({ atribuicao: processos.atribuicao })
+              .from(processos)
+              .where(eq(processos.id, processoId))
+              .limit(1);
+            triggerReorder(proc?.atribuicao ?? null, `enrichment-${result.action}`, result.demandaId);
 
-            results.push({ type: "criar_demanda", success: true, id: novaDemanda?.id });
+            results.push({ type: "criar_demanda", success: true, id: result.demandaId });
           }
 
           if (action.type === "atualizar_processo" && processoId) {

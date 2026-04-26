@@ -9,9 +9,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { demandas, processos, assistidos, users } from "@/lib/db/schema";
-import { eq, and, isNull, ilike, desc } from "drizzle-orm";
+import { processos, assistidos, users } from "@/lib/db/schema";
+import { eq, and, isNull, ilike } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { resolveDemanda } from "@/lib/services/demandas-resolver";
 
 // Mapeamento: nome da aba → atribuição do banco
 const SHEET_TO_ATRIBUICAO: Record<string, string> = {
@@ -163,75 +164,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       processoId = newProcesso.id;
     }
 
-    // 6. Find-or-create demanda (era só create — gerava duplicatas quando linha
-    //    nova era adicionada à planilha para um processo que já tinha demanda).
-    const statusNormalizado = normalizarStatus(body.status ?? "");
+    // 6. Resolve demanda via helper centralizado (regras de identidade
+    //    em src/lib/services/demandas-resolver.ts).
     const reuPresoTyped =
       typeof body.reuPreso === "boolean"
         ? body.reuPreso
         : body.reuPreso === "true" || body.reuPreso === "Preso";
-    const reuPresoExplicit =
-      typeof body.reuPreso === "boolean" ||
-      body.reuPreso === "true" ||
-      body.reuPreso === "Preso" ||
-      body.reuPreso === "false";
 
-    const [existingDemanda] = await db
-      .select({ id: demandas.id })
-      .from(demandas)
-      .where(and(eq(demandas.processoId, processoId), isNull(demandas.deletedAt)))
-      .orderBy(desc(demandas.createdAt))
-      .limit(1);
+    const result = await resolveDemanda({
+      processoId,
+      assistidoId,
+      ato: ato.trim(),
+      origem: "planilha_apps_script",
+      status: normalizarStatus(body.status ?? "") || "5_TRIAGEM",
+      prazo: parseDateValue(body.prazo ?? ""),
+      dataEntrada: parseDateValue(body.dataEntrada ?? ""),
+      providencias: body.providencias?.trim() || null,
+      reuPreso: reuPresoTyped,
+      defensorId,
+    });
 
-    if (existingDemanda) {
-      // Atualiza só campos não-vazios para não sobrescrever providências
-      // ricas vindas do enrichment com strings vazias da captura manual.
-      const updates: Record<string, unknown> = {
-        ato: ato.trim(),
-        syncedAt: new Date(),
-      };
-      if (body.status?.trim()) updates.status = statusNormalizado as never;
-      const prazoParsed = parseDateValue(body.prazo ?? "");
-      if (prazoParsed) updates.prazo = prazoParsed;
-      const dataParsed = parseDateValue(body.dataEntrada ?? "");
-      if (dataParsed) updates.dataEntrada = dataParsed;
-      if (body.providencias?.trim()) updates.providencias = body.providencias.trim();
-      if (reuPresoExplicit) updates.reuPreso = reuPresoTyped;
-
-      await db.update(demandas).set(updates).where(eq(demandas.id, existingDemanda.id));
-
-      triggerReorder(atribuicao, "sheets-create-from-row-update", existingDemanda.id);
-
-      console.log(
-        `[Sheets Create] Demanda ${existingDemanda.id} atualizada (find-or-create) — ${nomeStr} / ${numeroAutos}`
-      );
-
-      return NextResponse.json({ ok: true, demandaId: existingDemanda.id, action: "updated" });
-    }
-
-    const [newDemanda] = await db
-      .insert(demandas)
-      .values({
-        processoId,
-        assistidoId,
-        ato: ato.trim(),
-        status: (statusNormalizado || "5_TRIAGEM") as never,
-        prazo: parseDateValue(body.prazo ?? "") ?? undefined,
-        dataEntrada: parseDateValue(body.dataEntrada ?? "") ?? undefined,
-        reuPreso: reuPresoTyped,
-        providencias: body.providencias?.trim() || undefined,
-        defensorId,
-        syncedAt: new Date(),
-      })
-      .returning({ id: demandas.id });
-
-    triggerReorder(atribuicao, "sheets-create-from-row", newDemanda.id);
+    triggerReorder(atribuicao, `sheets-create-from-row-${result.action}`, result.demandaId);
 
     console.log(
-      `[Sheets Create] Nova demanda ${newDemanda.id} criada — ${nomeStr} / ${numeroAutos}`
+      `[Sheets Create] ${result.action} demanda ${result.demandaId} (${result.reason}) — ${nomeStr} / ${numeroAutos}`
     );
 
-    return NextResponse.json({ ok: true, demandaId: newDemanda.id, action: "created" });
+    return NextResponse.json({
+      ok: true,
+      demandaId: result.demandaId,
+      action: result.action,
+      reason: result.reason,
+    });
   } catch (err) {
     console.error("[Sheets Create] Erro:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

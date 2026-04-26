@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { demandas, processos, assistidos } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { processos, assistidos } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { resolveDemanda } from "@/lib/services/demandas-resolver";
 
 /**
  * Webhook endpoint para importar dados do Google Sheets via n8n
@@ -64,7 +65,9 @@ export async function POST(request: NextRequest) {
     }
 
     const results = {
-      imported: 0,
+      created: 0,
+      updated: 0,
+      flagged: 0,
       skipped: 0,
       errors: [] as string[],
     };
@@ -107,34 +110,23 @@ export async function POST(request: NextRequest) {
           processo = newProcesso;
         }
 
-        // Verificar se a demanda já existe
-        const existingDemanda = await db.query.demandas.findFirst({
-          where: and(
-            eq(demandas.processoId, processo.id),
-            eq(demandas.ato, row.ato)
-          ),
-        });
-
-        if (existingDemanda) {
-          results.skipped++;
-          continue;
-        }
-
-        // Criar demanda
-        await db.insert(demandas).values({
+        // Resolver demanda via helper centralizado
+        const result = await resolveDemanda({
           processoId: processo.id,
           assistidoId: assistido.id,
           ato: row.ato,
+          origem: "planilha_n8n",
+          status: row.status || "5_TRIAGEM",
           prazo: row.prazo || null,
-          status: (row.status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
-          reuPreso: Boolean(row.reuPreso),
           providencias: row.providencias || null,
-          syncedAt: new Date(),
+          reuPreso: Boolean(row.reuPreso),
         });
 
-        if (processo.atribuicao) atribuicoesAfetadas.add(processo.atribuicao);
-        results.imported++;
+        if (result.action === "created") results.created++;
+        else if (result.action === "updated") results.updated++;
+        else if (result.action === "created_flagged") results.flagged++;
 
+        if (processo.atribuicao) atribuicoesAfetadas.add(processo.atribuicao);
       } catch (error) {
         results.errors.push(`Erro ao processar ${row.assistido}: ${(error as Error).message}`);
         results.skipped++;
