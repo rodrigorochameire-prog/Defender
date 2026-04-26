@@ -27,7 +27,8 @@ async function getAuth() {
   } catch {
     key = JSON.parse(Buffer.from(raw, "base64").toString("utf-8"));
   }
-  return new google.auth.JWT(key.client_email, undefined, key.private_key, SCOPES);
+  const auth = new google.auth.GoogleAuth({ credentials: key, scopes: SCOPES });
+  return auth.getClient();
 }
 
 const ABAS_OPERACIONAIS = ["Juri", "VVD", "EP", "1ª Crime", "2ª Crime"];
