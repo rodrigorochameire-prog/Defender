@@ -86,6 +86,7 @@ export interface CreateAtendimentoInput {
   linha: number;
   payload: Record<string, unknown>;
   appsScriptId?: string;
+  workspaceId?: number | null;
 }
 
 export interface CreateAtendimentoResult {
@@ -132,6 +133,7 @@ export async function createAtendimento(input: CreateAtendimentoInput): Promise<
       const [row] = await db.insert(atendimentosTriagem).values({
         tccRef,
         area,
+        workspaceId: input.workspaceId ?? null,
         assistidoNome: normalized.assistidoNome,
         assistidoTelefone: normalized.assistidoTelefone,
         assistidoCpf: normalized.assistidoCpf,
@@ -184,6 +186,7 @@ export interface ListAtendimentosFilter {
   ate?: Date;
   limit?: number;
   offset?: number;
+  workspaceId?: number | null;
 }
 
 export async function listAtendimentos(f: ListAtendimentosFilter = {}) {
@@ -193,6 +196,7 @@ export async function listAtendimentos(f: ListAtendimentosFilter = {}) {
   if (f.area) conds.push(eq(atendimentosTriagem.area, f.area));
   if (f.desde) conds.push(gte(atendimentosTriagem.createdAt, f.desde));
   if (f.ate) conds.push(lte(atendimentosTriagem.createdAt, f.ate));
+  if (f.workspaceId != null) conds.push(eq(atendimentosTriagem.workspaceId, f.workspaceId));
 
   const where = conds.length > 0 ? and(...conds) : undefined;
 
@@ -205,13 +209,14 @@ export async function listAtendimentos(f: ListAtendimentosFilter = {}) {
     .offset(f.offset ?? 0);
 }
 
-export async function countPendentesPorDefensor(defensorId: number): Promise<number> {
+export async function countPendentesPorDefensor(defensorId: number, workspaceId: number): Promise<number> {
   const r = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(atendimentosTriagem)
     .where(and(
       eq(atendimentosTriagem.defensorAlvoId, defensorId),
       eq(atendimentosTriagem.status, "pendente_avaliacao"),
+      eq(atendimentosTriagem.workspaceId, workspaceId),
     ));
   return r[0]?.count ?? 0;
 }
