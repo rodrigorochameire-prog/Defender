@@ -10,13 +10,15 @@ import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import type { ReactNode } from "react";
 
 interface HeaderUtilityRowProps {
   variant: "standalone" | "embedded";
   chatToggle?: () => void;
+  extra?: ReactNode;
 }
 
-export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps) {
+export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRowProps) {
   const handleChatToggle = chatToggle ?? (() => chatPanelActions.toggle());
 
   const content = (
@@ -62,6 +64,9 @@ export function HeaderUtilityRow({ variant, chatToggle }: HeaderUtilityRowProps)
 
         {/* Conflict badge */}
         <ConflictBadge />
+
+        {/* Extra slot (server-rendered badges, e.g. TriagemBadge) */}
+        {extra && <div className="text-white/80">{extra}</div>}
 
         {/* Controls */}
         <div className="flex items-center gap-1">

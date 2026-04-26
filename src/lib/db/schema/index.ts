@@ -57,6 +57,9 @@ export * from "./lugares";
 // Cronologia (Fase IV-A — marcos processuais, prisões, cautelares)
 export * from "./cronologia";
 
+// Triagem criminal (Camaçari MVP)
+export * from "./triagem";
+
 // Audit log
 export * from "./audit";
 

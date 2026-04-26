@@ -1,0 +1,2 @@
+ALTER TABLE "atendimentos_triagem" ADD COLUMN "workspace_id" integer;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "triagem_workspace_id_idx" ON "atendimentos_triagem" USING btree ("workspace_id");

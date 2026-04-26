@@ -198,3 +198,31 @@ describe("cronologia.cautelares CRUD", { timeout: 30000 }, () => {
     }
   });
 });
+
+describe("cronologia.getCronologiaCompleta", { timeout: 30000 }, () => {
+  it("retorna marcos + prisoes + cautelares em uma chamada", async () => {
+    const user = await makeUser();
+    try {
+      const caller = createCaller(mkCtx(user));
+      const { proc, assistido } = await makeProcesso(user.workspaceId ?? 1);
+      try {
+        await caller.cronologia.createMarco({ processoId: proc.id, tipo: "fato", data: "2025-01-15" });
+        await caller.cronologia.createPrisao({ processoId: proc.id, tipo: "preventiva", dataInicio: "2025-03-20" });
+        await caller.cronologia.createCautelar({ processoId: proc.id, tipo: "monitoramento-eletronico", dataInicio: "2025-04-01" });
+
+        const full = await caller.cronologia.getCronologiaCompleta({ processoId: proc.id });
+        expect(full.marcos).toHaveLength(1);
+        expect(full.prisoes).toHaveLength(1);
+        expect(full.cautelares).toHaveLength(1);
+      } finally {
+        await db.delete(marcosProcessuais).where(eq(marcosProcessuais.processoId, proc.id));
+        await db.delete(prisoes).where(eq(prisoes.processoId, proc.id));
+        await db.delete(cautelares).where(eq(cautelares.processoId, proc.id));
+        await db.delete(processos).where(eq(processos.id, proc.id));
+        await db.delete(assistidos).where(eq(assistidos.id, assistido.id));
+      }
+    } finally {
+      await db.delete(users).where(eq(users.id, user.id));
+    }
+  });
+});
