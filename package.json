@@ -78,7 +78,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
     "googleapis": "^171.2.0",
-    "inngest": "^3.49.1",
+    "inngest": "^3.54.0",
     "jose": "^5.9.6",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
