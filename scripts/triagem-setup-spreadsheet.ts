@@ -21,7 +21,12 @@ const SCOPES = [
 async function getAuth() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY não configurado");
-  const key = JSON.parse(raw);
+  let key: { client_email: string; private_key: string };
+  try {
+    key = JSON.parse(raw);
+  } catch {
+    key = JSON.parse(Buffer.from(raw, "base64").toString("utf-8"));
+  }
   return new google.auth.JWT(key.client_email, undefined, key.private_key, SCOPES);
 }
 
