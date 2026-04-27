@@ -5,8 +5,8 @@
  * - POST /api/sheets/reorder (trigger manual)
  * - Inngest `sheets-reorder-debounced` (trigger automático com debounce)
  *
- * Sort key: [rank por grupo do kanban ASC, ordemManual ASC NULLS LAST,
- *            createdAt DESC, prazo ASC NULLS LAST].
+ * Sort key: [rank de status ASC, relevância do ato ASC, ato (alfa) ASC,
+ *            dataExpedicao ASC NULLS LAST (fallback dataEntrada)].
  *
  * Se `sheetNameFilter` for passado, reordena só aquela aba. Caso contrário,
  * reordena todas as abas que tiverem demandas.
@@ -20,6 +20,7 @@ import {
   getSheetName,
   type DemandaParaSync,
 } from "@/lib/services/google-sheets";
+import { getAtoRelevanceRank } from "@/lib/utils/ato-rank";
 
 /**
  * Rank posicional que reflete a ordem visual do kanban
@@ -141,6 +142,7 @@ export async function reorderAllSheets(
     createdAt: Date;
     prazo: string | null;
     rank: number;
+    atoRank: number;
     importBatchId: string | null;
     ordemOriginal: number | null;
   };
@@ -175,6 +177,7 @@ export async function reorderAllSheets(
       createdAt: r.createdAt,
       prazo: r.prazo,
       rank: computeRank(r.status, r.substatus),
+      atoRank: getAtoRelevanceRank(r.ato),
       importBatchId: r.importBatchId,
       ordemOriginal: r.ordemOriginal,
     };
@@ -184,25 +187,28 @@ export async function reorderAllSheets(
   }
 
   const cmp = (a: Enriched, b: Enriched): number => {
+    // 1ª ordem: status (rank de coluna do Kanban)
     if (a.rank !== b.rank) return a.rank - b.rank;
 
-    // Espelha exatamente o sort da coluna do Kanban (kanban-premium.tsx:799):
-    // ordemOriginal ASC (NULLS LAST) → createdAt DESC → prazo ASC.
-    // `ordemManual` é legado e não é mais considerado pelas views.
-    const oa = a.ordemOriginal ?? 9999;
-    const ob = b.ordemOriginal ?? 9999;
-    if (oa !== ob) return oa - ob;
+    // 2ª ordem: relevância do tipo de ato (peças prazo curto > liberdade
+    // > recursos > diligências > intermediárias > ciências > outros).
+    if (a.atoRank !== b.atoRank) return a.atoRank - b.atoRank;
 
-    const ac = a.createdAt.getTime();
-    const bc = b.createdAt.getTime();
-    if (ac !== bc) return bc - ac;
+    // 2.b: agrupar atos com o mesmo nome dentro do mesmo rank
+    const aAto = (a.ato ?? "").toLowerCase();
+    const bAto = (b.ato ?? "").toLowerCase();
+    if (aAto !== bAto) return aAto.localeCompare(bAto, "pt-BR");
 
-    const ap = a.prazo;
-    const bp = b.prazo;
-    if (ap === bp) return 0;
-    if (ap === null) return 1;
-    if (bp === null) return -1;
-    return ap.localeCompare(bp);
+    // 3ª ordem: data de expedição mais antiga primeiro (intimações velhas no topo)
+    const ax = a.dataExpedicao ?? a.dataEntrada;
+    const bx = b.dataExpedicao ?? b.dataEntrada;
+    if (ax !== bx) {
+      if (!ax) return 1;
+      if (!bx) return -1;
+      return ax.localeCompare(bx);
+    }
+
+    return 0;
   };
 
   const results: Array<{ sheet: string; written: number; error?: string }> = [];

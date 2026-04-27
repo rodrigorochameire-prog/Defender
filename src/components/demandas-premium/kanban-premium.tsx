@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { getAtoRelevanceRank } from "@/lib/utils/ato-rank";
 import {
   ChevronRight,
   ChevronLeft,
@@ -816,18 +817,27 @@ export function KanbanPremium({
       }
     }
 
-    // Sort each column/subgroup by PJe order (ordemOriginal ASC, then createdAt DESC)
-    const sortRecent = (a: KanbanDemanda, b: KanbanDemanda) => {
-      const oa = Number(a.ordemOriginal ?? 9999);
-      const ob = Number(b.ordemOriginal ?? 9999);
-      if (oa !== ob) return oa - ob;
-      // Fallback: most recent created_at first
-      const da = String(a.dataInclusao || "");
-      const db = String(b.dataInclusao || "");
-      return db.localeCompare(da);
+    // Sort: relevância do ato ASC → ato (alfa) → dataExpedicao ASC NULLS LAST.
+    // Agrupa demandas do mesmo tipo dentro da coluna e mostra as intimações
+    // mais antigas no topo (devem ser resolvidas primeiro).
+    const sortByAtoAndExpedicao = (a: KanbanDemanda, b: KanbanDemanda) => {
+      const ra = getAtoRelevanceRank(a.ato);
+      const rb = getAtoRelevanceRank(b.ato);
+      if (ra !== rb) return ra - rb;
+
+      const aAto = (a.ato ?? "").toLowerCase();
+      const bAto = (b.ato ?? "").toLowerCase();
+      if (aAto !== bAto) return aAto.localeCompare(bAto, "pt-BR");
+
+      const ax = (a.dataExpedicaoRaw as string | null | undefined) ?? null;
+      const bx = (b.dataExpedicaoRaw as string | null | undefined) ?? null;
+      if (ax === bx) return 0;
+      if (!ax) return 1;
+      if (!bx) return -1;
+      return ax.localeCompare(bx);
     };
-    for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortRecent);
-    for (const key of Object.keys(subs)) (subs as any)[key].sort(sortRecent);
+    for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortByAtoAndExpedicao);
+    for (const key of Object.keys(subs)) (subs as any)[key].sort(sortByAtoAndExpedicao);
 
     return {
       columnDemandas: cols,
