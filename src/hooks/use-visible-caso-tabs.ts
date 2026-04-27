@@ -2,15 +2,21 @@ import { useMemo } from "react";
 import { inferCasoArea, type Area } from "@/lib/hierarquia/infer-caso-area";
 import { computeVisibleCasoTabs, type CasoTab } from "@/lib/hierarquia/visible-caso-tabs";
 
-interface ProcessoMin {
+interface ProcessoLike {
   id: number;
-  area: Area | null;
-  isReferencia: boolean;
+  area: string | null | undefined;
+  isReferencia?: boolean | null;
+  [k: string]: unknown;
 }
 
-export function useVisibleCasoTabs(processos: ProcessoMin[] | null | undefined): CasoTab[] {
+export function useVisibleCasoTabs(processos: ProcessoLike[] | null | undefined): CasoTab[] {
   return useMemo(() => {
-    const area = inferCasoArea(processos ?? []);
+    const normalized = (processos ?? []).map((p) => ({
+      id: p.id,
+      area: (p.area ?? null) as Area | null,
+      isReferencia: !!p.isReferencia,
+    }));
+    const area = inferCasoArea(normalized);
     return computeVisibleCasoTabs(area);
   }, [processos]);
 }

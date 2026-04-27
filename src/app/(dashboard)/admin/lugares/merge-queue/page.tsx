@@ -11,7 +11,7 @@ export default function MergeQueueLugares() {
 
   if (isLoading) return <p className="p-6 italic text-neutral-400">Carregando…</p>;
 
-  const items = data?.items ?? [];
+  const items = (data?.items ?? []) as Array<{ aId: number; bId: number; aEndereco: string; bEndereco: string }>;
 
   return (
     <div className="p-6 max-w-4xl">
