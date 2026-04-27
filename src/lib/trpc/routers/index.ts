@@ -85,6 +85,7 @@ import { pessoasRouter } from "./pessoas";
 import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
 import { execucaoPenalRouter } from "./execucao-penal";
+import { objetosRouter } from "./objetos";
 
 
 export const appRouter = router({
@@ -407,6 +408,11 @@ export const appRouter = router({
   // EXECUÇÃO PENAL (FASE IX — ATRIBUTO DO PROCESSO)
   // ==========================================
   execucaoPenal: execucaoPenalRouter,
+
+  // ==========================================
+  // OBJETOS APREENDIDOS (FASE V — CATÁLOGO + PARTICIPAÇÕES)
+  // ==========================================
+  objetos: objetosRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
+  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Package
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -85,6 +85,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
+  { label: "Objetos", path: "/admin/objetos", icon: "Package" },
 ];
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
@@ -200,7 +201,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Package
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";

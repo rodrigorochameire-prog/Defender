@@ -60,6 +60,9 @@ export * from "./cronologia";
 // Execução Penal (Fase IX — atributo do processo)
 export * from "./execucao-penal";
 
+// Objetos Apreendidos (Fase V — catálogo + participações)
+export * from "./objetos";
+
 // Triagem criminal (Camaçari MVP)
 export * from "./triagem";
 
