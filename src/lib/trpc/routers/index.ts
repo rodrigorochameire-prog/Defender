@@ -84,6 +84,7 @@ import { encaminhamentosRouter } from "./encaminhamentos";
 import { pessoasRouter } from "./pessoas";
 import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
+import { tipificacoesRouter } from "./tipificacoes";
 
 
 export const appRouter = router({
@@ -401,6 +402,11 @@ export const appRouter = router({
   // CRONOLOGIA (FASE IV-A — MARCOS, PRISÕES, CAUTELARES)
   // ==========================================
   cronologia: cronologiaRouter,
+
+  // ==========================================
+  // TIPIFICACOES (FASE III-A — CATÁLOGO + VÍNCULO AO PROCESSO)
+  // ==========================================
+  tipificacoes: tipificacoesRouter,
 });
 
 export type AppRouter = typeof appRouter;

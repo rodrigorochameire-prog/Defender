@@ -38,6 +38,7 @@ export * from "./factual";
 export * from "./biblioteca";
 export * from "./institutos";
 export * from "./delitos";
+export * from "./delitos-catalogo";
 export * from "./atos-infracionais";
 export * from "./medidas-socioeducativas";
 export * from "./subscriptions";
