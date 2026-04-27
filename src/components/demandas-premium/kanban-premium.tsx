@@ -2,7 +2,12 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { getAtoRelevanceRank } from "@/lib/utils/ato-rank";
+import {
+  getAtoRelevanceRank,
+  getAtoCategory,
+  ATO_CATEGORIES,
+  type AtoCategory,
+} from "@/lib/utils/ato-rank";
 import {
   ChevronRight,
   ChevronLeft,
@@ -92,6 +97,134 @@ interface KanbanPremiumProps {
 }
 
 // StatusChangePopover replaced by StatusPipelineSelector
+
+// ==========================================
+// AGRUPAMENTO POR CATEGORIA DE ATO
+// ==========================================
+
+/**
+ * Renderiza uma lista de demandas agrupada por categoria de ato (urgentes →
+ * recursos → liberdade → ... → ciências → outros), com headers minúsculos
+ * entre os grupos. Quando há apenas 1 categoria na lista, os headers são
+ * omitidos (degrade gracioso). Categorias menos críticas (Ciências, Outros)
+ * começam colapsadas.
+ *
+ * Espera que `items` já venha ordenado pelo sort global do Kanban — esse
+ * componente apenas insere os divisores visuais.
+ */
+function GroupedByAtoList({
+  items,
+  renderCard,
+  storageKey,
+  enabled = true,
+}: {
+  items: KanbanDemanda[];
+  renderCard: (d: KanbanDemanda) => React.ReactNode;
+  /** Chave única para persistir colapso por coluna em localStorage */
+  storageKey: string;
+  enabled?: boolean;
+}) {
+  // Agrupa por categoria preservando a ordem de chegada (já vem ordenada)
+  const groups = useMemo(() => {
+    const map = new Map<AtoCategory, KanbanDemanda[]>();
+    for (const d of items) {
+      const cat = getAtoCategory(d.ato);
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(d);
+    }
+    // Ordena as categorias pela order do meta
+    return Array.from(map.entries()).sort(
+      ([a], [b]) => ATO_CATEGORIES[a].order - ATO_CATEGORIES[b].order,
+    );
+  }, [items]);
+
+  const [collapsed, setCollapsed] = useState<Set<AtoCategory>>(() => {
+    if (typeof window === "undefined") {
+      return new Set(
+        Object.values(ATO_CATEGORIES)
+          .filter((m) => m.collapsedByDefault)
+          .map((m) => m.key),
+      );
+    }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return new Set(JSON.parse(raw) as AtoCategory[]);
+    } catch {
+      // ignore
+    }
+    return new Set(
+      Object.values(ATO_CATEGORIES)
+        .filter((m) => m.collapsedByDefault)
+        .map((m) => m.key),
+    );
+  });
+
+  const toggle = useCallback(
+    (cat: AtoCategory) => {
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (next.has(cat)) next.delete(cat);
+        else next.add(cat);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [storageKey],
+  );
+
+  // Se desabilitado ou só 1 categoria, render flat (sem headers)
+  if (!enabled || groups.length <= 1) {
+    return <>{items.map(renderCard)}</>;
+  }
+
+  return (
+    <>
+      {groups.map(([cat, list]) => {
+        const meta = ATO_CATEGORIES[cat];
+        const isCollapsed = collapsed.has(cat);
+        return (
+          <div key={cat} className="space-y-2">
+            <button
+              type="button"
+              onClick={() => toggle(cat)}
+              className="
+                w-full flex items-center gap-1.5 pt-1 pb-0.5 cursor-pointer
+                text-neutral-500 dark:text-neutral-400
+                hover:text-neutral-700 dark:hover:text-neutral-200
+                transition-colors duration-150 group/grouphdr
+              "
+            >
+              <ChevronDown
+                className={cn(
+                  "w-2.5 h-2.5 shrink-0 transition-transform duration-200",
+                  isCollapsed && "-rotate-90",
+                )}
+              />
+              <span className="text-[9px] font-bold uppercase tracking-wider">
+                {meta.label}
+              </span>
+              <span
+                className="ml-auto text-[9px] font-mono tabular-nums opacity-70"
+                aria-label={`${list.length} demandas`}
+              >
+                {list.length}
+              </span>
+            </button>
+            {!isCollapsed && (
+              <div className="space-y-2">
+                {list.map(renderCard)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 // ==========================================
 // CARD COMPONENT
@@ -555,8 +688,12 @@ function EmAndamentoExpanded({
                   );
                 })
               ) : (
-                // Render flat (no sections — e.g. Diligências)
-                items.slice(0, 30).map(renderCard)
+                // Render flat agrupado por categoria de ato (Diligências, Acompanhar, Saída)
+                <GroupedByAtoList
+                  items={items.slice(0, 30)}
+                  renderCard={renderCard}
+                  storageKey={`kanban:atogroup:subgroup:${sg}`}
+                />
               )}
               {!sections && items.length > 30 && (
                 <p className="text-[10px] text-center text-neutral-400 py-2">
@@ -1053,24 +1190,28 @@ export function KanbanPremium({
                     />
                   ) : (
                     <div className="space-y-2.5 flex-1">
-                      {items.slice(0, 30).map((d) => {
-                        const rawKey2 = (d.substatus || d.status || "triagem");
-                        const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
-                        const sCfg = getStatusConfig(statusKey);
-                        return (
-                          <KanbanCard
-                            key={d.id}
-                            demanda={d}
-                            group={sCfg.group as StatusGroup}
-                            onCardClick={onCardClick}
-                            onStatusChange={onStatusChange}
-                            copyToClipboard={copyToClipboard}
-                            isDragging={draggedDemandaId === String(d.id)}
-                            onDragStart={setDraggedDemandaId}
-                            onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
-                          />
-                        );
-                      })}
+                      <GroupedByAtoList
+                        items={items.slice(0, 30)}
+                        storageKey="kanban:atogroup:em_andamento_collapsed"
+                        renderCard={(d) => {
+                          const rawKey2 = (d.substatus || d.status || "triagem");
+                          const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+                          const sCfg = getStatusConfig(statusKey);
+                          return (
+                            <KanbanCard
+                              key={d.id}
+                              demanda={d}
+                              group={sCfg.group as StatusGroup}
+                              onCardClick={onCardClick}
+                              onStatusChange={onStatusChange}
+                              copyToClipboard={copyToClipboard}
+                              isDragging={draggedDemandaId === String(d.id)}
+                              onDragStart={setDraggedDemandaId}
+                              onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
+                            />
+                          );
+                        }}
+                      />
                       {items.length > 30 && (
                         <p className="text-[10px] text-center text-neutral-400 py-2">
                           +{items.length - 30} mais
@@ -1117,19 +1258,23 @@ export function KanbanPremium({
                   <ColumnHeader group={groupKey} count={items.length} />
                 </div>
                 <div className="space-y-2.5 flex-1">
-                  {items.slice(0, 30).map((d) => (
-                    <KanbanCard
-                      key={d.id}
-                      demanda={d}
-                      group={groupKey}
-                      onCardClick={onCardClick}
-                      onStatusChange={onStatusChange}
-                      copyToClipboard={copyToClipboard}
-                      isDragging={draggedDemandaId === String(d.id)}
-                      onDragStart={setDraggedDemandaId}
-                      onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
-                    />
-                  ))}
+                  <GroupedByAtoList
+                    items={items.slice(0, 30)}
+                    storageKey={`kanban:atogroup:col:${col}`}
+                    renderCard={(d) => (
+                      <KanbanCard
+                        key={d.id}
+                        demanda={d}
+                        group={groupKey}
+                        onCardClick={onCardClick}
+                        onStatusChange={onStatusChange}
+                        copyToClipboard={copyToClipboard}
+                        isDragging={draggedDemandaId === String(d.id)}
+                        onDragStart={setDraggedDemandaId}
+                        onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
+                      />
+                    )}
+                  />
                   {items.length > 30 && (
                     <p className="text-[10px] text-center text-neutral-400 py-2">
                       +{items.length - 30} mais
