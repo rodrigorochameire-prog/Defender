@@ -392,6 +392,35 @@ export const lugaresRouter = router({
       return { marked: true };
     }),
 
+  getBatchSignals: protectedProcedure
+    .input(z.object({ lugarIds: z.array(z.number()).max(500).default([]) }))
+    .query(async ({ input, ctx }) => {
+      if (input.lugarIds.length === 0) return [];
+      const wid = ctx.user.workspaceId ?? 1;
+      const rows = await db.execute<{
+        lugar_id: number;
+        bairro: string | null;
+        total_processos: number;
+        recentes_12m: number;
+        total_participacoes: number;
+        bairro_total_12m: number;
+      }>(sql`
+        SELECT lugar_id, bairro, total_processos, recentes_12m, total_participacoes, bairro_total_12m
+        FROM lugares_intel_signals
+        WHERE workspace_id = ${wid}
+          AND lugar_id IN (${sql.join(input.lugarIds.map(id => sql`${id}`), sql`, `)})
+      `);
+      const data = (rows as any).rows ?? rows;
+      return data.map((r: any) => ({
+        lugarId: r.lugar_id,
+        bairro: r.bairro,
+        totalProcessos: r.total_processos,
+        recentes12m: r.recentes_12m,
+        totalParticipacoes: r.total_participacoes,
+        bairroTotal12m: r.bairro_total_12m,
+      }));
+    }),
+
   geocode: protectedProcedure
     .input(z.object({ id: z.number(), force: z.boolean().optional() }))
     .mutation(async ({ input, ctx }) => {

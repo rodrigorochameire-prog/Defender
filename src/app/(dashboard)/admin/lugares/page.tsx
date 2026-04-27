@@ -5,6 +5,7 @@ import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { LugarChip, LugarSheet } from "@/components/lugares";
 import { Plus } from "lucide-react";
+import { computeLugarDotLevel } from "@/lib/lugares/compute-lugar-dot";
 
 export default function LugaresCatalogoPage() {
   const [search, setSearch] = useState("");
@@ -24,6 +25,13 @@ export default function LugaresCatalogoPage() {
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+
+  const lugarIds = items.map((l) => l.id);
+  const { data: signals = [] } = trpc.lugares.getBatchSignals.useQuery(
+    { lugarIds },
+    { enabled: lugarIds.length > 0 }
+  );
+  const signalMap = new Map((signals as any[]).map((s: any) => [s.lugarId, s]));
 
   return (
     <div className="p-6">
@@ -76,7 +84,10 @@ export default function LugaresCatalogoPage() {
       )}
 
       <div className="space-y-1.5">
-        {items.map((l) => (
+        {items.map((l) => {
+          const sig = signalMap.get(l.id);
+          const dot = sig ? computeLugarDotLevel(sig) : "none";
+          return (
           <div key={l.id} className="rounded border px-3 py-2 flex items-center gap-2">
             <LugarChip
               lugarId={l.id}
@@ -84,13 +95,15 @@ export default function LugaresCatalogoPage() {
               bairro={l.bairro}
               onClick={() => setSheetId(l.id)}
               size="sm"
+              dotLevel={dot}
             />
             <span className="text-xs text-neutral-400 ml-auto">
               {l.latitude != null ? "🗺" : "📍"}{" "}
               {(l as any).geocodingSource ?? ""}
             </span>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {total > limit && (
