@@ -3,6 +3,7 @@
 import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ProcessoTimeline } from "@/components/hierarquia";
 
 interface Props { casoId: number; }
 
@@ -15,6 +16,13 @@ export function TabCronologia({ casoId }: Props) {
 
   return (
     <div className="p-4 space-y-6">
+      {(marcos.length > 0 || prisoesData.length > 0) && (
+        <section className="border-b pb-3">
+          <h3 className="text-base font-semibold mb-2">Timeline</h3>
+          <ProcessoTimeline marcos={marcos as any} prisoes={prisoesData as any} />
+        </section>
+      )}
+
       <section>
         <h3 className="text-base font-semibold mb-2">Marcos ({marcos.length})</h3>
         {marcos.length === 0 ? (

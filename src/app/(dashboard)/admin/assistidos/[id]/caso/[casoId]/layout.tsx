@@ -3,7 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
-import { CaseSwitcher, SituacaoAtualBlock } from "@/components/hierarquia";
+import { CaseSwitcher, SituacaoAtualBlock, BadgePresoHaXDias } from "@/components/hierarquia";
 import { useVisibleCasoTabs } from "@/hooks/use-visible-caso-tabs";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,7 @@ export default function CasoLayout({ children }: { children: React.ReactNode }) 
             <span className="text-xs text-neutral-500">·</span>
             <span className="text-xs">{caso.status ?? "—"}</span>
             {caso.fase && <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-200 dark:bg-neutral-800">{caso.fase}</span>}
+            <BadgePresoHaXDias casoId={casoId} />
           </>
         )}
       </div>
