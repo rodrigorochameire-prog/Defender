@@ -1,136 +1,122 @@
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Scale,
-  FileText,
-  Search,
-  Shield,
-  Users,
-  AlertTriangle,
-  ClipboardList,
-  Lightbulb,
-  Send,
-  Loader2,
-  ExternalLink,
-  Copy,
-  Check,
-  Clock,
-  Phone,
-  Printer,
-  X,
-  Building2,
-  Gavel,
-  FolderOpen,
-  ChevronDown,
-  ChevronRight,
+  AlertTriangle, Check, Copy, Loader2, X,
 } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  normalizeAreaToFilter,
-  SOLID_COLOR_MAP,
-} from "@/lib/config/atribuicoes";
-
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
-
-function SectionCard({
-  label,
-  children,
-  className,
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-4 hover:shadow-md transition-shadow duration-200",
-        className
-      )}
-    >
-      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-2 tracking-wide">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
+import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import { SheetToC, type ToCSection } from "./sheet/sheet-toc";
+import { CollapsibleSection } from "./sheet/collapsible-section";
+import { SheetActionFooter } from "./sheet/sheet-action-footer";
+import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
+import { DocumentosBlock } from "./sheet/documentos-block";
+import { MidiaBlock } from "./sheet/midia-block";
+import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
+import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
+import { AnalyzeCTA } from "./sheet/analyze-cta";
+import { FreshnessBadge } from "./sheet/freshness-badge";
+import { cn } from "@/lib/utils";
+import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
+import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
+import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
 
 function EmptyHint({ text }: { text: string }) {
-  return (
-    <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>
-  );
+  return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
 }
 
 function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
   if (!obj) return [];
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (Array.isArray(val) && val.length > 0) return val;
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (Array.isArray(nv) && nv.length > 0) return nv;
+    }
   }
   return [];
 }
 
 function extractString(obj: Record<string, any> | null | undefined, ...keys: string[]): string | null {
   if (!obj) return null;
+  const nested = (obj as any).vvd_analise_audiencia;
   for (const k of keys) {
     const val = obj[k];
     if (typeof val === "string" && val.trim().length > 0) return val.trim();
+    if (Array.isArray(val) && val.length > 0 && typeof val[0] === "string") return (val as string[]).join(", ");
+    if (nested && typeof nested === "object") {
+      const nv = nested[k];
+      if (typeof nv === "string" && nv.trim().length > 0) return nv.trim();
+    }
   }
   return null;
 }
 
-// ─────────────────────────────────────────────
-// Props
-// ─────────────────────────────────────────────
-
-interface EventDetailSheetProps {
+interface Props {
   evento: any | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenRegistro?: () => void;
 }
 
-export function EventDetailSheet({
-  evento,
-  open,
-  onOpenChange,
-  onOpenRegistro,
-}: EventDetailSheetProps) {
+export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }: Props) {
   const [copied, setCopied] = useState(false);
-  const [quickNote, setQuickNote] = useState("");
-  const [expandedDepoente, setExpandedDepoente] = useState<number | null>(null);
+  const [activeSection, setActiveSection] = useState<string | undefined>();
+  const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Resolve numeric audiencia id
-  const audienciaIdNum = (() => {
-    if (evento?.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
-    if (evento?.fonte === "calendar") return null;
-    const raw = evento?.id;
+  const audienciaIdNum = useMemo(() => {
+    if (!evento) return null;
+    if (evento.fonte === "audiencias" && typeof evento.rawId === "number") return evento.rawId;
+    if (evento.fonte === "calendar") return null;
+    const raw = evento.id;
     if (typeof raw === "number" && Number.isFinite(raw)) return raw;
     if (typeof raw === "string") {
-      const match = raw.match(/^audiencia-(\d+)$/);
-      if (match) return parseInt(match[1], 10);
+      const m = raw.match(/^audiencia-(\d+)$/);
+      if (m) return parseInt(m[1], 10);
       if (/^\d+$/.test(raw)) return parseInt(raw, 10);
     }
     return null;
-  })();
+  }, [evento]);
 
-  const { data: ctx, isLoading, error: ctxError } = trpc.audiencias.getAudienciaContext.useQuery(
+  const { data: ctx, isLoading } = trpc.audiencias.getAudienciaContext.useQuery(
     { audienciaId: audienciaIdNum ?? 0 },
-    { enabled: !!audienciaIdNum && open, retry: false }
+    {
+      enabled: !!audienciaIdNum && open,
+      retry: false,
+      refetchInterval: (query: any) => {
+        const data = query.state?.data ?? query.data;
+        const status = (data as any)?.processo?.analysisStatus;
+        return (status === "queued" || status === "processing") ? 5000 : false;
+      },
+    }
   );
+
+  const actions = useAudienciaStatusActions(audienciaIdNum);
+
+  const midiasQuery = trpc.drive.midiasByAssistido.useQuery(
+    { assistidoId: (ctx?.assistido as any)?.id ?? 0 },
+    { enabled: !!(ctx?.assistido as any)?.id && open, retry: false }
+  );
+
+  const allMediaCandidates = useMemo(() => {
+    const data: any = midiasQuery.data;
+    return [
+      ...(data?.processos ?? []).flatMap((p: any) => p.files ?? []),
+      ...(data?.ungrouped ?? []),
+    ].map((f: any) => ({
+      driveFileId: f.driveFileId,
+      name: f.name,
+      mimeType: f.mimeType,
+    }));
+  }, [midiasQuery.data]);
 
   const copyProcesso = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -138,167 +124,230 @@ export function EventDetailSheet({
     setTimeout(() => setCopied(false), 1500);
   };
 
-  if (!evento) return null;
+  const dataHora = useMemo(() => {
+    if (!evento) return null;
+    if (evento.data && evento.horarioInicio) {
+      try { return new Date(`${evento.data}T${evento.horarioInicio}`); } catch { return null; }
+    }
+    return evento.dataHora ? new Date(evento.dataHora) : null;
+  }, [evento]);
 
-  // Derived data
-  const dataHora = evento.data && evento.horarioInicio
-    ? (() => { try { return new Date(`${evento.data}T${evento.horarioInicio}`); } catch { return null; } })()
-    : evento.dataHora ? new Date(evento.dataHora) : null;
+  const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento?.processo ?? null;
+  const assistidoNome = ctx?.assistido?.nome ?? evento?.assistido ?? null;
+  const vara = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
 
-  const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento.processo ?? evento.processoNumero ?? null;
-  const assistidoNome = ctx?.assistido?.nome ?? evento.assistido ?? evento.assistidoNome ?? null;
-  const crime = evento.crime ?? evento.assunto ?? null;
-  const juiz = (ctx?.processo as any)?.juiz ?? null;
-  const vara = (ctx?.processo as any)?.vara ?? evento.local ?? null;
-
-  // Analysis data shortcuts
   const ad = ctx?.analysisData;
   const caso = ctx?.caso;
+  const assistidoId = (ctx?.assistido as any)?.id ?? evento?.assistidoId ?? null;
+  const processoId = (ctx?.processo as any)?.id ?? evento?.processoId ?? null;
+  const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
+  const analysisStatus = (ctx?.processo as any)?.analysisStatus ?? null;
+  const analyzedAt = (ctx?.processo as any)?.analyzedAt ?? null;
 
-  // 1. Imputacao
-  const imputacao = extractString(ad, "imputacao", "crimes_imputados")
-    ?? extractString(caso, "foco")
-    ?? null;
-
-  // 2. Fatos
-  const fatos = caso?.narrativaDenuncia
-    ?? extractString(ad, "resumo_executivo", "narrativa_denuncia")
-    ?? null;
-
-  // 3. Elementos
+  const imputacao = extractString(ad, "imputacao", "crimes_imputados") ?? extractString(caso, "foco") ?? null;
+  const fatos = caso?.narrativaDenuncia ?? extractString(ad, "resumo_executivo", "narrativa_denuncia") ?? null;
   const laudos = extractArray(ad, "laudos", "laudos_mencionados", "laudos_periciais");
   const lacunas = extractArray(ad, "vulnerabilidades_acusacao", "lacunas_probatorias", "lacunas");
-
-  // 4. Versao do acusado
   const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
-  const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia", "versao_instrucao");
-  const atendimento = ctx?.atendimentos?.[0];
-  const versaoAtendimento = atendimento?.resumo
-    ?? atendimento?.transcricaoResumo
-    ?? (atendimento?.pontosChave as any)
-    ?? null;
-
-  // IDs for navigation
-  const assistidoId = (ctx?.assistido as any)?.id ?? evento.assistidoId ?? null;
-  const processoId = (ctx?.processo as any)?.id ?? evento.processoId ?? null;
-
-  // 5. Diligencias
+  const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia");
   const diligencias = ctx?.diligencias ?? [];
-
-  // 6. Depoentes / testemunhas
   const testemunhasDB = ctx?.testemunhas ?? [];
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
-  const allDepoentes = [
-    ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
-    ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", _source: "analysis" })),
-    ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", _source: "analysis" })),
-  ];
-  const seen = new Set<string>();
-  const depoentes = allDepoentes.filter((d) => {
-    const key = (d.nome ?? d.name ?? "").toLowerCase().trim();
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 
-  // 7. Contradicoes
-  const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao")
-    .filter((item: any) => {
-      if (typeof item === "string") return true;
-      return item?.tipo === "contradicao" || item?.contradicao;
+  const depoentes = useMemo(() => {
+    const all = [
+      ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
+      ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", tipo: "ACUSACAO" })),
+      ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", tipo: "DEFESA" })),
+    ];
+    const seen = new Set<string>();
+    return all.filter((d) => {
+      const key = (d.nome ?? "").toLowerCase().trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
+  }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa]);
 
-  // 8. Pendencias
-  const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias", "pendencias_operacionais");
+  const participacoesQuery = trpc.pessoas.getParticipacoesDoProcesso.useQuery(
+    { processoId: processoId ?? 0 },
+    { enabled: !!processoId && open, retry: false },
+  );
 
-  // 9. Teses
-  const teses = extractArray(ad, "teses_defesa", "teses")
-    .filter(Boolean);
-  const teoriaDireito = caso?.teoriaDireito;
+  const participacoesDoProcesso = participacoesQuery.data ?? [];
+  const pessoaIdsDoProcesso = participacoesDoProcesso.map((p: any) => p.pessoaId);
+
+  const participacaoByPessoaId = useMemo(() => {
+    const m = new Map<number, any>();
+    for (const p of participacoesDoProcesso) m.set(p.pessoaId, p);
+    return m;
+  }, [participacoesDoProcesso]);
+
+  const pessoaIdByTestemunhaId = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const p of participacoesDoProcesso) {
+      if (p.testemunhaId) m.set(p.testemunhaId, p.pessoaId);
+    }
+    return m;
+  }, [participacoesDoProcesso]);
+
+  const { getSignal } = usePessoaSignals(pessoaIdsDoProcesso);
+
+  const signalsComNome = useMemo(() => {
+    return pessoaIdsDoProcesso
+      .map((id: number) => getSignal(id))
+      .filter((s): s is NonNullable<typeof s> => !!s);
+  }, [pessoaIdsDoProcesso, getSignal]);
+
+  const [pessoaSheetId, setPessoaSheetId] = useState<number | null>(null);
+
+  const getNome = (pessoaId: number) => {
+    const t = depoentes.find((d: any) => {
+      const tid = d.id;
+      return pessoaIdByTestemunhaId.get(tid) === pessoaId;
+    });
+    return t?.nome ?? `Pessoa #${pessoaId}`;
+  };
+
+  useEffect(() => {
+    const firstPending = depoentes.findIndex((d: any) => d.status !== "OUVIDA");
+    setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
+  }, [audienciaIdNum, depoentes.length]);
+
+  const resumoExecutivo = extractString(ad, "resumo_executivo");
+  const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao");
+  const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias");
+  const teses = extractArray(ad, "teses_defesa", "teses").filter(Boolean);
+
+  const tocSections: ToCSection[] = useMemo(() => {
+    const s: ToCSection[] = [];
+    if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
+    if (fatos) s.push({ id: "fatos", label: "Fatos" });
+    if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
+    if (depoentes.length) s.push({ id: "depoentes", label: "Depoentes", count: depoentes.length });
+    if (contradicoes.length) s.push({ id: "contradicoes", label: "Contradições" });
+    if (laudos.length) s.push({ id: "laudos", label: "Laudos" });
+    if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
+    if (pendencias.length) s.push({ id: "pendencias", label: "Pendências" });
+    if (teses.length) s.push({ id: "teses", label: "Teses" });
+    s.push({ id: "documentos", label: "Docs" });
+    s.push({ id: "midia", label: "Mídia" });
+    return s;
+  }, [imputacao, fatos, versaoDelegacia, versaoJuizo, depoentes.length, contradicoes.length,
+      laudos.length, diligencias.length, pendencias.length, teses.length]);
+
+  useEffect(() => {
+    if (!open || !scrollContainerRef.current) return;
+    const root = scrollContainerRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) setActiveSection(visible[0].target.getAttribute("data-section-id") ?? undefined);
+      },
+      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+    const nodes = root.querySelectorAll("[data-section-id]");
+    nodes.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, [open, tocSections]);
+
+  const handleJump = (id: string) => {
+    const root = scrollContainerRef.current;
+    if (!root) return;
+    const target = root.querySelector(`[data-section-id="${id}"]`) as HTMLElement | null;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  if (!evento) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
+        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
-              Evento
-            </SheetTitle>
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
           </SheetHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
-            title="Fechar (Esc)"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
+            title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* ===== SCROLLABLE CONTENT ===== */}
-        <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
-            <div className="flex items-start gap-3.5">
-              {/* Avatar com ring de atribuição */}
-              {(() => {
-                const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
-                const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
-                return (
-                  <div
-                    className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0"
-                    style={{ boxShadow: `0 0 0 2.5px ${atribColor}` }}
-                  >
+        <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+          <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+        </div>
+
+        <div className="px-3 pt-2">
+          <BannerInteligencia
+            contextType="audiencia"
+            contextId={audienciaIdNum ?? 0}
+            signals={signalsComNome}
+            getNome={getNome}
+            onPessoaClick={(id) => setPessoaSheetId(id)}
+          />
+        </div>
+
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+          {(() => {
+            const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
+            const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
+            return (
+              <div
+                className="mx-3 mt-3 mb-3 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
+                style={{ borderLeftColor: atribColor }}
+              >
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                       {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
                     </span>
                   </div>
-                );
-              })()}
-              <div className="flex-1 min-w-0 pt-0.5">
-                {assistidoNome && (
-                  <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
-                    {assistidoNome}
-                  </h2>
-                )}
-                <div className="flex items-center gap-2 flex-wrap mt-1">
-                  {processoNum && (
-                    <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyProcesso(processoNum);
-                      }}
-                      title="Copiar número do processo"
-                    >
-                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processoNum}</span>
-                      {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />}
-                    </button>
-                  )}
-                  {dataHora && (
-                    <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
-                      {format(dataHora, "HH:mm", { locale: ptBR })}
-                    </span>
-                  )}
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    {assistidoNome && (
+                      <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
+                        {assistidoNome}
+                      </h2>
+                    )}
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                      {processoNum && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); copyProcesso(processoNum); }}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 cursor-pointer"
+                          title="Copiar número"
+                        >
+                          <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400">{processoNum}</span>
+                          {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500" />}
+                        </button>
+                      )}
+                      {dataHora && (
+                        <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
+                          {format(dataHora, "HH:mm", { locale: ptBR })}
+                        </span>
+                      )}
+                    </div>
+                    {vara && (
+                      <p className="text-[10px] text-neutral-500 mt-1.5">
+                        {vara}
+                        {evento.atribuicao && ` · ${evento.atribuicao}`}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {(vara || evento.atribuicao) && (
-                  <p className="text-[10px] text-neutral-500 dark:text-neutral-500 mt-1.5 leading-snug">
-                    {vara}
-                    {vara && evento.atribuicao && " · "}
-                    {evento.atribuicao}
-                  </p>
-                )}
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
-          {/* ===== SECTION CARDS ===== */}
           <div className="px-3 pb-4 space-y-2.5">
             {isLoading && (
               <div className="flex items-center justify-center py-12">
@@ -306,184 +355,207 @@ export function EventDetailSheet({
               </div>
             )}
 
+            {!isLoading && resumoExecutivo && (
+              <CollapsibleSection id="resumo" label="Resumo Executivo" defaultOpen>
+                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{resumoExecutivo}</p>
+              </CollapsibleSection>
+            )}
+
             {!isLoading && (
               <>
-                {/* 1. IMPUTACAO */}
-                <SectionCard label="Imputação">
+                {!imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0 && (
+                  <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
+                    <div className="space-y-2">
+                      <EmptyHint text="Nenhuma análise IA executada ainda." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                <CollapsibleSection id="imputacao" label="Imputação" defaultOpen>
+                  {analyzedAt && (
+                    <div className="flex justify-end mb-1">
+                      <FreshnessBadge analyzedAt={analyzedAt} />
+                    </div>
+                  )}
                   {imputacao ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                      {typeof imputacao === "string"
-                        ? imputacao
-                        : Array.isArray(imputacao)
-                          ? (imputacao as string[]).join(", ")
-                          : String(imputacao)}
-                    </p>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{imputacao}</p>
                   ) : (
-                    <EmptyHint text="Imputação não extraída — rode a análise IA." />
+                    <div className="space-y-2">
+                      <EmptyHint text="Imputação não extraída — rode a análise IA." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
                   )}
-                </SectionCard>
+                </CollapsibleSection>
 
-                {/* 2. FATOS (DENUNCIA) */}
-                <SectionCard label="Fatos (Denúncia)">
+                <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
+                  {analyzedAt && (
+                    <div className="flex justify-end mb-1">
+                      <FreshnessBadge analyzedAt={analyzedAt} />
+                    </div>
+                  )}
                   {fatos ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                      {fatos}
-                    </p>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos}</p>
                   ) : (
-                    <EmptyHint text="Narrativa da denúncia não disponível." />
+                    <div className="space-y-2">
+                      <EmptyHint text="Narrativa da denúncia não disponível." />
+                      <AnalyzeCTA
+                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                        processoId={typeof processoId === "number" ? processoId : null}
+                        analysisStatus={analysisStatus}
+                      />
+                    </div>
                   )}
-                </SectionCard>
+                </CollapsibleSection>
 
-                {/* 3. VERSAO DO ACUSADO */}
-                <SectionCard label="Versão do Acusado">
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Building2 className="w-3 h-3 text-neutral-400" />
-                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                          Delegacia
-                        </span>
-                      </div>
-                      {versaoDelegacia ? (
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {versaoDelegacia}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-neutral-400 italic pl-4">
-                          Versão na delegacia não extraída.
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Shield className="w-3 h-3 text-neutral-400" />
-                        <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                          Atendimento Defensoria
-                        </span>
-                        {atendimento?.data && (
-                          <span className="text-[10px] text-neutral-400 ml-auto">
-                            {format(new Date(String(atendimento.data)), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
-                        )}
-                      </div>
-                      {versaoAtendimento ? (
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {typeof versaoAtendimento === "string" ? versaoAtendimento : JSON.stringify(versaoAtendimento)}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-neutral-400 italic pl-4">
-                          Nenhum atendimento registrado — agende entrevista.
-                        </p>
-                      )}
-                    </div>
-                    {versaoJuizo && (
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Gavel className="w-3 h-3 text-neutral-400" />
-                          <span className="text-[10px] tracking-wide font-semibold text-neutral-500 dark:text-neutral-400">
-                            Em Juízo
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                          {versaoJuizo}
-                        </p>
+                {(versaoDelegacia || versaoJuizo) && (
+                  <CollapsibleSection id="versao" label="Versão do Acusado">
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
                       </div>
                     )}
-                  </div>
-                </SectionCard>
+                    {versaoDelegacia && (
+                      <div className="mb-2">
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Delegacia</div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoDelegacia}</p>
+                      </div>
+                    )}
+                    {versaoJuizo && (
+                      <div>
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Em Juízo</div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoJuizo}</p>
+                      </div>
+                    )}
+                  </CollapsibleSection>
+                )}
 
-                {/* 4. DEPOENTES — com dropdown */}
-                <SectionCard label={`Depoentes${depoentes.length > 0 ? ` (${depoentes.length})` : ""}`}>
+                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
                   {depoentes.length > 0 ? (
-                    <ul className="space-y-1.5">
+                    <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => {
-                        const isAcusacao = d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "vitima" || d.tipo === "VITIMA";
-                        const isDefesa = d.lado === "defesa" || d.tipo === "DEFESA";
-                        const borderColor = isAcusacao
-                          ? "border-l-rose-300/60"
-                          : isDefesa
-                            ? "border-l-emerald-300/60"
-                            : "border-l-neutral-200";
-                        const nome = d.nome ?? d.name ?? "Sem nome";
-                        const isOpen = expandedDepoente === i;
-
-                        // Qualidade/papel
-                        const qualidade = d.qualidade ?? d.papel ?? d.tipo ?? d.categoria ?? null;
-                        const qualidadeLabel = qualidade
-                          ? String(qualidade).replace(/^(ACUSACAO|DEFESA)$/i, "").trim()
-                          : null;
-
-                        // Sínteses por fase
-                        const sinteseDelegacia = d.versao_delegacia ?? d.depoimento_delegacia ?? d.sintese_delegacia ?? null;
-                        const sinteseJuizo = d.versao_juizo ?? d.depoimento_juizo ?? d.sintese_juizo ?? d.versao_audiencia ?? null;
-                        const resumoGeral = d.resumo ?? d.versao ?? d.sintese ?? null;
-                        const hasDetail = sinteseDelegacia || sinteseJuizo || resumoGeral;
-
+                        const pessoaId = pessoaIdByTestemunhaId.get(d.id);
+                        const signal = pessoaId ? getSignal(pessoaId) : null;
+                        const dotLevel = signal ? computeDotLevel(signal) : "none";
                         return (
-                          <li
-                            key={i}
-                            className={cn(
-                              "rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 border-l-[3px] overflow-hidden transition-all",
-                              borderColor
+                          <div key={d.id ?? `${i}-${d.nome}`} className="relative">
+                            <DepoenteCardV2
+                              depoente={{
+                                ...d,
+                                audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
+                              }}
+                              isOpen={openDepoenteIdx === i}
+                              onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
+                              variant="sheet"
+                              onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
+                              onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
+                              onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
+                              onAbrirAudio={() => {
+                                const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
+                                if (!audioId) {
+                                  toast.info("Áudio não encontrado para este depoente");
+                                  return;
+                                }
+                                const root = scrollContainerRef.current;
+                                const target = root?.querySelector('[data-section-id="midia"]');
+                                if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                                toast.success("Rolando para o áudio…");
+                              }}
+                              assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                            />
+                            {pessoaId && dotLevel !== "none" && (
+                              <button
+                                type="button"
+                                onClick={() => setPessoaSheetId(pessoaId)}
+                                aria-label={`Abrir dossiê de ${d.nome}`}
+                                className="absolute top-2 right-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 hover:border-emerald-400 cursor-pointer"
+                              >
+                                <PessoaChip
+                                  pessoaId={pessoaId}
+                                  nome=""
+                                  papel={signal?.papelPrimario ?? undefined}
+                                  size="xs"
+                                  clickable={false}
+                                  dotLevel={dotLevel}
+                                />
+                              </button>
                             )}
-                          >
-                            <button
-                              onClick={() => setExpandedDepoente(isOpen ? null : i)}
-                              className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors"
-                            >
-                              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 flex-1 min-w-0 truncate">
-                                {nome}
-                              </span>
-                              {qualidadeLabel && (
-                                <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                                  {qualidadeLabel}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : <EmptyHint text="Nenhum depoente cadastrado." />}
+                </CollapsibleSection>
+
+                {contradicoes.length > 0 && (
+                  <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
+                    <ul className="space-y-2">
+                      {contradicoes.map((c: any, i: number) => {
+                        if (typeof c === "string") {
+                          return (
+                            <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                              <span>{c}</span>
+                            </li>
+                          );
+                        }
+                        const ponto = c.ponto ?? c.descricao ?? c.contradicao ?? c.vulnerabilidade;
+                        const impacto = c.impacto;
+                        const vDeleg = c.versao_delegacia ?? c.versaoDelegacia;
+                        const vJuizo = c.versao_juizo_hoje ?? c.versao_juizo ?? c.versaoJuizo;
+                        if (!ponto && !impacto && !vDeleg && !vJuizo) {
+                          return (
+                            <li key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(c)}</li>
+                          );
+                        }
+                        const impactoClass =
+                          typeof impacto === "string" && /essencial|alta|forte/i.test(impacto)
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                            : typeof impacto === "string" && /media|moderad/i.test(impacto)
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+                        return (
+                          <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{ponto}</p>
+                              {impacto && (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", impactoClass)}>
+                                  {impacto.split(/\s—\s/)[0]}
                                 </span>
                               )}
-                              {(d.lado || d.tipo) && (
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "text-[9px] py-0 px-1 shrink-0",
-                                    isAcusacao ? "border-rose-300/60 text-rose-500" : isDefesa ? "border-emerald-300/60 text-emerald-500" : ""
-                                  )}
-                                >
-                                  {isAcusacao ? "ACUS" : isDefesa ? "DEF" : (d.tipo ?? "")}
-                                </Badge>
-                              )}
-                              {hasDetail && (
-                                isOpen
-                                  ? <ChevronDown className="w-3 h-3 text-neutral-400 shrink-0" />
-                                  : <ChevronRight className="w-3 h-3 text-neutral-300 shrink-0" />
-                              )}
-                            </button>
-                            {isOpen && hasDetail && (
-                              <div className="px-3 pb-2.5 space-y-2 border-t border-neutral-100/80 dark:border-neutral-800/40 pt-2">
-                                {sinteseDelegacia && (
-                                  <div>
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <Building2 className="w-2.5 h-2.5 text-neutral-400" />
-                                      <span className="text-[9px] font-medium text-neutral-400">Delegacia</span>
-                                    </div>
-                                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                                      {sinteseDelegacia}
-                                    </p>
+                            </div>
+                            {typeof impacto === "string" && impacto.includes("—") && (
+                              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed pl-5">
+                                {impacto.split(/\s—\s/).slice(1).join(" — ")}
+                              </p>
+                            )}
+                            {(vDeleg || vJuizo) && (
+                              <div className="grid grid-cols-1 gap-1 pl-5 pt-1">
+                                {vDeleg && (
+                                  <div className="text-[11px] leading-relaxed">
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Delegacia:</span>{" "}
+                                    <span className="text-neutral-600 dark:text-neutral-400">{vDeleg}</span>
                                   </div>
                                 )}
-                                {sinteseJuizo && (
-                                  <div>
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      <Gavel className="w-2.5 h-2.5 text-neutral-400" />
-                                      <span className="text-[9px] font-medium text-neutral-400">Em Juízo</span>
-                                    </div>
-                                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed pl-4">
-                                      {sinteseJuizo}
-                                    </p>
+                                {vJuizo && (
+                                  <div className="text-[11px] leading-relaxed">
+                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Em juízo:</span>{" "}
+                                    <span className="text-neutral-600 dark:text-neutral-400">{vJuizo}</span>
                                   </div>
-                                )}
-                                {resumoGeral && !sinteseDelegacia && !sinteseJuizo && (
-                                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                                    {resumoGeral}
-                                  </p>
                                 )}
                               </div>
                             )}
@@ -491,109 +563,61 @@ export function EventDetailSheet({
                         );
                       })}
                     </ul>
-                  ) : (
-                    <EmptyHint text="Nenhum depoente cadastrado." />
-                  )}
-                </SectionCard>
+                  </CollapsibleSection>
+                )}
 
-                {/* 5. CONTRADICOES — logo após depoentes */}
-                <SectionCard label="Contradições">
-                  {contradicoes.length > 0 ? (
-                    <ul className="space-y-1.5">
-                      {contradicoes.map((c: any, i: number) => {
-                        const text = typeof c === "string" ? c : c.descricao ?? c.contradicao ?? c.vulnerabilidade ?? JSON.stringify(c);
-                        const isBom = typeof c === "object" && (c.favoravel === true || c.tipo === "favoravel");
-                        return (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <span className={cn("mt-0.5 flex-shrink-0", isBom ? "text-emerald-400/70" : "text-amber-400/70")}>
-                              {isBom ? <Check className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                            </span>
-                            <span className="text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                              {text}
-                            </span>
-                          </li>
-                        );
-                      })}
+                {laudos.length > 0 && (
+                  <CollapsibleSection id="laudos" label="Laudos e Perícias" count={laudos.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
+                    <ul className="space-y-1">
+                      {laudos.map((l: any, i: number) => (
+                        <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                          • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
+                        </li>
+                      ))}
                     </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma contradição identificada." />
-                  )}
-                </SectionCard>
+                    {lacunas.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
+                        <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
+                        <ul className="space-y-1">
+                          {lacunas.map((l: any, i: number) => (
+                            <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                              • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CollapsibleSection>
+                )}
 
-                {/* 6. LAUDOS */}
-                <SectionCard label="Laudos e Perícias">
-                  {laudos.length > 0 ? (
-                    <>
-                      <ul className="space-y-1">
-                        {laudos.map((l: any, i: number) => (
-                          <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                            <ClipboardList className="w-3 h-3 text-neutral-400 mt-0.5 flex-shrink-0" />
-                            <span>{typeof l === "string" ? l : l.nome ?? l.titulo ?? l.descricao ?? JSON.stringify(l)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {lacunas.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-                          <p className="text-[10px] tracking-wide font-medium text-neutral-400 mb-1">
-                            Lacunas probatórias
-                          </p>
-                          <ul className="space-y-1">
-                            {lacunas.map((l: any, i: number) => (
-                              <li key={i} className="flex items-start gap-1.5 text-xs text-neutral-600 dark:text-neutral-400">
-                                <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                                <span>{typeof l === "string" ? l : l.descricao ?? l.vulnerabilidade ?? JSON.stringify(l)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <EmptyHint text="Nenhum laudo ou perícia identificado." />
-                  )}
-                </SectionCard>
-
-                {/* 7. INVESTIGACAO DEFENSIVA */}
-                <SectionCard label="Investigação Defensiva">
-                  {diligencias.length > 0 ? (
+                {diligencias.length > 0 && (
+                  <CollapsibleSection id="investigacao" label="Investigação Defensiva" count={diligencias.length}>
                     <ul className="space-y-2">
-                      {diligencias.map((d: any) => {
-                        const statusColor =
-                          d.status === "concluida" || d.status === "concluída"
-                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400"
-                            : d.status === "em_andamento" || d.status === "em andamento"
-                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400"
-                              : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400";
-                        return (
-                          <li key={d.id} className="text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-neutral-700 dark:text-neutral-300 font-medium flex-1 min-w-0 truncate">
-                                {d.titulo}
-                              </span>
-                              <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0", statusColor)}>
-                                {d.status ?? "pendente"}
-                              </span>
-                            </div>
-                            {d.resultado && (
-                              <p className="text-neutral-500 dark:text-neutral-400 mt-0.5 leading-relaxed">
-                                {d.resultado}
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
+                      {diligencias.map((d: any) => (
+                        <li key={d.id} className="text-xs text-neutral-700 dark:text-neutral-300">
+                          <span className="font-medium">{d.titulo}</span>
+                          {d.resultado && <p className="text-neutral-500 mt-0.5">{d.resultado}</p>}
+                        </li>
+                      ))}
                     </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma diligência registrada." />
-                  )}
-                </SectionCard>
+                  </CollapsibleSection>
+                )}
 
-                {/* 8. PENDENCIAS */}
-                <SectionCard label="Pendências">
-                  {pendencias.length > 0 ? (
+                {pendencias.length > 0 && (
+                  <CollapsibleSection id="pendencias" label="Pendências" count={pendencias.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
                     <ul className="space-y-1">
                       {pendencias.map((p: any, i: number) => {
-                        const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? p.titulo ?? JSON.stringify(p);
+                        const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? JSON.stringify(p);
                         return (
                           <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
                             <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
@@ -602,123 +626,105 @@ export function EventDetailSheet({
                         );
                       })}
                     </ul>
-                  ) : (
-                    <EmptyHint text="Nenhuma pendência registrada." />
-                  )}
-                </SectionCard>
+                  </CollapsibleSection>
+                )}
 
-                {/* 9. TESES */}
-                <SectionCard label="Teses">
-                  {teses.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
+                {teses.length > 0 && (
+                  <CollapsibleSection id="teses" label="Teses" count={teses.length}>
+                    {analyzedAt && (
+                      <div className="flex justify-end mb-1">
+                        <FreshnessBadge analyzedAt={analyzedAt} />
+                      </div>
+                    )}
+                    <div className="space-y-2">
                       {teses.map((t: any, i: number) => {
-                        const text = typeof t === "string" ? t : t.tese ?? t.descricao ?? t.nome ?? JSON.stringify(t);
-                        const viabilidade = typeof t === "object" ? t.viabilidade ?? t.probabilidade : null;
-                        const color =
-                          viabilidade === "alta" || viabilidade === "forte"
-                            ? "bg-emerald-50 text-emerald-600/80 dark:bg-emerald-900/20 dark:text-emerald-400 border-emerald-200/60"
-                            : viabilidade === "media" || viabilidade === "moderada"
-                              ? "bg-amber-50 text-amber-600/80 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200/60"
-                              : "bg-neutral-50 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200/60 dark:border-neutral-700";
+                        if (typeof t === "string") {
+                          return (
+                            <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
+                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{t}</p>
+                            </div>
+                          );
+                        }
+                        const nome = t.nome ?? t.tese ?? t.titulo ?? t.descricao;
+                        const forca = t.forca ?? t.força ?? t.viabilidade;
+                        const baseLegal = t.base_legal ?? t.baseLegal;
+                        const fundamentacao = t.fundamentacao ?? t.fundamentos ?? t.justificativa;
+                        if (!nome && !forca && !baseLegal && !fundamentacao) {
+                          return (
+                            <div key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(t)}</div>
+                          );
+                        }
+                        const forcaClass =
+                          typeof forca === "string" && /alta|forte/i.test(forca)
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : typeof forca === "string" && /media|moderad/i.test(forca)
+                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
                         return (
-                          <span
-                            key={i}
-                            className={cn(
-                              "text-[11px] px-2 py-0.5 rounded-full border font-medium",
-                              color
+                          <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              {nome && <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{nome}</p>}
+                              {forca && (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", forcaClass)}>
+                                  {forca}
+                                </span>
+                              )}
+                            </div>
+                            {baseLegal && (
+                              <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                                {baseLegal}
+                              </p>
                             )}
-                          >
-                            {text}
-                          </span>
+                            {fundamentacao && (
+                              <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                                {fundamentacao}
+                              </p>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
-                  ) : teoriaDireito ? (
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                      {teoriaDireito}
-                    </p>
-                  ) : (
-                    <EmptyHint text="Nenhuma tese identificada." />
-                  )}
-                </SectionCard>
-
-                {/* 10. DRIVE — acesso rápido aos arquivos */}
-                {(assistidoId || processoId) && (
-                  <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-4 hover:shadow-md transition-shadow duration-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <FolderOpen className="w-3.5 h-3.5 text-neutral-400" />
-                      <p className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 tracking-wide">
-                        Documentos
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {assistidoId && (
-                        <Link
-                          href={`/admin/assistidos/${assistidoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
-                        >
-                          <FolderOpen className="w-3 h-3" />
-                          Pasta do Assistido
-                        </Link>
-                      )}
-                      {processoId && (
-                        <Link
-                          href={`/admin/processos/${processoId}?tab=drive`}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2.5 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700/40 transition-all cursor-pointer"
-                        >
-                          <FileText className="w-3 h-3" />
-                          Autos do Processo
-                        </Link>
-                      )}
-                    </div>
-                  </div>
+                  </CollapsibleSection>
                 )}
+
+                <CollapsibleSection id="documentos" label="Documentos" defaultOpen>
+                  <DocumentosBlock
+                    processoId={typeof processoId === "number" ? processoId : null}
+                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                  />
+                </CollapsibleSection>
+
+                {/* Mídia */}
+                <CollapsibleSection id="midia" label="Mídia">
+                  <MidiaBlock
+                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                    atendimentosComAudio={
+                      ((ctx?.atendimentos as any[]) ?? [])
+                        .filter((a: any) => !!a.audioDriveFileId)
+                        .map((a: any) => ({
+                          id: a.id,
+                          data: a.dataAtendimento ?? a.data ?? new Date(),
+                          audioDriveFileId: a.audioDriveFileId,
+                          transcricaoResumo: a.transcricaoResumo,
+                        }))
+                    }
+                  />
+                </CollapsibleSection>
               </>
             )}
           </div>
         </div>
 
-        {/* ===== STICKY FOOTER — Padrão Defender ===== */}
-        <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-4 py-3 space-y-2">
-          {/* Anotacao rapida */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Anotacao rapida..."
-              value={quickNote}
-              onChange={(e) => setQuickNote(e.target.value)}
-              className="text-xs h-8 rounded-lg bg-white dark:bg-neutral-900 border-neutral-200/60 dark:border-neutral-700 focus:ring-emerald-500/30"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && quickNote.trim()) {
-                  toast.success("Anotacao salva (em breve persistida).");
-                  setQuickNote("");
-                }
-              }}
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-neutral-400 hover:text-neutral-600"
-              disabled={!quickNote.trim()}
-              onClick={() => {
-                toast.success("Anotacao salva (em breve persistida).");
-                setQuickNote("");
-              }}
-            >
-              <Send className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-
-          {/* Abrir Registro Completo */}
-          {onOpenRegistro && (
-            <Button
-              onClick={onOpenRegistro}
-              className="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold h-9 shadow-sm cursor-pointer transition-all duration-150"
-            >
-              <ClipboardList className="w-3.5 h-3.5 mr-1.5" />
-              Abrir Registro Completo
-            </Button>
-          )}
-        </div>
+        <SheetActionFooter
+          audienciaId={audienciaIdNum}
+          jaConcluida={jaConcluida}
+          onAbrirRegistroCompleto={() => onOpenRegistro?.()}
+        />
+        <PessoaSheet
+          pessoaId={pessoaSheetId}
+          open={pessoaSheetId !== null}
+          onOpenChange={(o) => !o && setPessoaSheetId(null)}
+        />
       </SheetContent>
     </Sheet>
   );

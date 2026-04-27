@@ -48,6 +48,18 @@ export * from "./defensoria";
 export * from "./instancia-superior";
 export * from "./system";
 
+// Pessoas (Fase I-A — entity resolution)
+export * from "./pessoas";
+
+// Lugares (Fase II-A — entity resolution geoespacial)
+export * from "./lugares";
+
+// Cronologia (Fase IV-A — marcos processuais, prisões, cautelares)
+export * from "./cronologia";
+
+// Triagem criminal (Camaçari MVP)
+export * from "./triagem";
+
 // Audit log
 export * from "./audit";
 

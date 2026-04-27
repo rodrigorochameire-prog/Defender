@@ -406,6 +406,7 @@ export async function importarDemandas(
         assistidoId: assistido.id,
         ato: row.ato,
         pjeDocumentoId: row.idDocumentoPje || null,
+        syncedAt: new Date(),
         prazo: convertDate(row.prazo),
         dataEntrada: convertDate(row.dataEntrada),
         status: dbStatus as any,

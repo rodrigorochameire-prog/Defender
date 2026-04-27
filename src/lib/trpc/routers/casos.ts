@@ -1270,4 +1270,92 @@ export const casosRouter = router({
         audienciasFuturas: audienciasFuturas?.count || 0,
       };
     }),
+
+  // ==========================================
+  // HIERARQUIA — Fase X
+  // ==========================================
+
+  getCasosDoAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      // ACL: garante que o assistido pertence ao workspace do usuário
+      return await db
+        .select({
+          id: casos.id,
+          titulo: casos.titulo,
+          codigo: casos.codigo,
+          atribuicao: casos.atribuicao,
+          status: casos.status,
+          fase: casos.fase,
+          prioridade: casos.prioridade,
+          assistidoId: casos.assistidoId,
+          createdAt: casos.createdAt,
+          updatedAt: casos.updatedAt,
+        })
+        .from(casos)
+        .innerJoin(assistidos, eq(casos.assistidoId, assistidos.id))
+        .where(
+          and(
+            eq(casos.assistidoId, input.assistidoId),
+            eq(assistidos.workspaceId, workspaceId),
+            isNull(casos.deletedAt),
+          )
+        )
+        .orderBy(desc(casos.updatedAt));
+    }),
+
+  getCasoById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      // ACL via assistido: caso vinculado a assistido de outro workspace retorna null
+      const rows = await db
+        .select()
+        .from(casos)
+        .innerJoin(assistidos, eq(casos.assistidoId, assistidos.id))
+        .where(
+          and(
+            eq(casos.id, input.id),
+            eq(assistidos.workspaceId, workspaceId),
+            isNull(casos.deletedAt),
+          )
+        )
+        .limit(1);
+      if (!rows[0]) return null;
+      return rows[0].casos;
+    }),
+
+  setReferenciaProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const [proc] = await db
+        .select({ id: processos.id, casoId: processos.casoId })
+        .from(processos)
+        .where(
+          and(
+            eq(processos.id, input.processoId),
+            eq(processos.workspaceId, workspaceId),
+          )
+        )
+        .limit(1);
+      if (!proc || !proc.casoId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Processo não encontrado ou sem caso",
+        });
+      }
+      // Desmarca todos do mesmo caso
+      await db
+        .update(processos)
+        .set({ isReferencia: false })
+        .where(eq(processos.casoId, proc.casoId));
+      // Marca o alvo
+      await db
+        .update(processos)
+        .set({ isReferencia: true })
+        .where(eq(processos.id, input.processoId));
+      return { ok: true };
+    }),
 });

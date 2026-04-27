@@ -81,6 +81,9 @@ import { instanciaSuperiorRouter } from "./instancia-superior";
 import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
 import { encaminhamentosRouter } from "./encaminhamentos";
+import { pessoasRouter } from "./pessoas";
+import { lugaresRouter } from "./lugares";
+import { cronologiaRouter } from "./cronologia";
 
 
 export const appRouter = router({
@@ -383,6 +386,21 @@ export const appRouter = router({
   // COWORK - ENCAMINHAMENTOS (TRANSFERÊNCIAS, ACOMPANHAMENTOS)
   // ==========================================
   encaminhamentos: encaminhamentosRouter,
+
+  // ==========================================
+  // PESSOAS (FASE I-A — CADASTRO UNIFICADO)
+  // ==========================================
+  pessoas: pessoasRouter,
+
+  // ==========================================
+  // LUGARES (FASE II-A — ENTIDADE GEOESPACIAL)
+  // ==========================================
+  lugares: lugaresRouter,
+
+  // ==========================================
+  // CRONOLOGIA (FASE IV-A — MARCOS, PRISÕES, CAUTELARES)
+  // ==========================================
+  cronologia: cronologiaRouter,
 });
 
 export type AppRouter = typeof appRouter;

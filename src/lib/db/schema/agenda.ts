@@ -42,6 +42,11 @@ export const audiencias = pgTable("audiencias", {
   anotacoes: text("anotacoes"),
   anotacoesVersao: integer("anotacoes_versao").default(1),
   registroAudiencia: jsonb("registro_audiencia"),
+  anotacoesRapidas: jsonb("anotacoes_rapidas").$type<Array<{
+    texto: string;
+    timestamp: string;
+    autorId: number;
+  }>>().default([]),
   resumoDefesa: text("resumo_defesa"),
   googleCalendarEventId: text("google_calendar_event_id"),
   gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
@@ -228,6 +233,10 @@ export const testemunhas = pgTable("testemunhas", {
   perguntasSugeridas: text("perguntas_sugeridas"),
   ordemInquiricao: integer("ordem_inquiricao"),
   observacoes: text("observacoes"),
+  ouvidoEm: timestamp("ouvido_em"),
+  redesignadoPara: date("redesignado_para"),
+  sinteseJuizo: text("sintese_juizo"),
+  audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

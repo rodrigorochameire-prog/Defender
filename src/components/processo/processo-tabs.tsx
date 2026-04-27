@@ -1,13 +1,15 @@
 "use client";
 
-import { Brain, Scale, Library, Baby, Shield } from "lucide-react";
+import { Brain, Scale, Library, Baby, Shield, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
 
-export type MainTab = "analise" | "delitos" | "institutos" | "atos_infracionais" | "medidas";
+export type MainTab = "analise" | "delitos" | "institutos" | "atos_infracionais" | "medidas" | "pessoas" | "cronologia";
 
 const BASE_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [
   { key: "analise", label: "Análise", icon: Brain },
+  { key: "pessoas", label: "Pessoas", icon: Users },
+  { key: "cronologia", label: "Cronologia", icon: Clock },
 ];
 
 const CRIMINAL_TABS: { key: MainTab; label: string; icon: React.ElementType }[] = [

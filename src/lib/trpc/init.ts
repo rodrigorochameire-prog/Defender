@@ -202,6 +202,7 @@ const rateLimiter = t.middleware(async ({ ctx, next, path }) => {
 // ==========================================
 
 export const router = t.router;
+export const createCallerFactory = t.createCallerFactory;
 
 /**
  * Procedure pública

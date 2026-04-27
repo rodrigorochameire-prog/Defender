@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Users, Notebook, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2,
+  Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed,
 } from "lucide-react";
 import { useRegistroForm } from "./hooks/use-registro-form";
 import { TabBriefing } from "./tabs/tab-briefing";
@@ -16,6 +18,7 @@ import { TabResultado } from "./tabs/tab-resultado";
 import { TabHistorico } from "./tabs/tab-historico";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
+import { getCompletudeBreakdown, type CompletudeState } from "./historico/count-completude";
 
 interface RegistroAudienciaModalProps {
   isOpen: boolean;
@@ -24,6 +27,18 @@ interface RegistroAudienciaModalProps {
   evento: any;
   onCriarNovoEvento?: (evento: any) => void;
 }
+
+function completudeStateColor(state: CompletudeState): string {
+  if (state === "full") return "bg-emerald-500";
+  if (state === "partial") return "bg-amber-400";
+  return "bg-neutral-300 dark:bg-neutral-700";
+}
+
+const COMPLETUDE_LABEL: Record<CompletudeState, string> = {
+  full: "completo",
+  partial: "parcial",
+  empty: "vazio",
+};
 
 const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
   { key: "briefing", label: "Briefing", icon: Sparkles },
@@ -44,14 +59,59 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
   // Histórico sempre visível — inclui o registro atual salvo + anteriores
   const visibleTabs = tabConfig;
 
-  // Completude badge calculation: how many of 5 key fields are filled
-  const completudeItems = [
-    form.statusAudiencia, // always truthy since it has a default
-    form.registro.resultado,
-    form.registro.assistidoCompareceu !== undefined,
-    form.registro.anotacoesGerais,
-    form.registro.depoentes.length > 0,
-  ].filter(Boolean).length;
+  const [completudePopoverOpen, setCompletudePopoverOpen] = useState(false);
+
+  const briefingData: { imputacao?: string | null; fatos?: string | null } | undefined =
+    (form as any).briefingData ?? undefined;
+  const completude = getCompletudeBreakdown(
+    form.registro,
+    form.statusAudiencia,
+    briefingData,
+    form.registroSalvo,
+  );
+
+  const identificacaoLinha = (() => {
+    const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
+    const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
+    const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
+    const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
+    return (
+      <>
+        {assistidoId ? (
+          <Link
+            href={`/admin/assistidos/${assistidoId}`}
+            target="_blank"
+            rel="noopener"
+            className="font-medium text-foreground/90 hover:underline"
+          >
+            {assistidoName}
+          </Link>
+        ) : (
+          <span className="font-medium text-foreground/90">{assistidoName}</span>
+        )}
+        {processoDisplay && (
+          <>
+            {" · "}
+            {processoId ? (
+              <Link
+                href={`/admin/processos/${processoId}`}
+                target="_blank"
+                rel="noopener"
+                className="font-mono hover:underline"
+              >
+                {processoDisplay}
+              </Link>
+            ) : (
+              <span className="font-mono">{processoDisplay}</span>
+            )}
+          </>
+        )}
+        {" · "}
+        {new Date(evento.data).toLocaleDateString("pt-BR")}
+        {evento.horarioInicio && ` · ${evento.horarioInicio}`}
+      </>
+    );
+  })();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,16 +121,16 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           Sistema para registro de audiencias com gestao de depoentes.
         </DialogDescription>
 
-        {/* Header - Padrao Defender */}
-        <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-3 py-2.5 md:px-4 md:py-3 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Gavel className="w-4 h-4 md:w-5 md:h-5 text-background" />
+        {/* Header - Linha 1: identidade + ações */}
+        <div className="bg-white dark:bg-neutral-950 border-b border-neutral-200/80 dark:border-border/80 px-4 py-3 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Gavel className="w-5 h-5 text-background" />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif text-sm md:text-lg font-semibold text-foreground truncate">
-                  {evento.titulo}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-serif text-lg font-semibold text-foreground">
+                  Registro de Audiência
                 </h2>
                 {form.registroSalvo && (
                   <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] px-1.5 py-0 flex items-center gap-1">
@@ -78,103 +138,58 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     Salvo
                   </Badge>
                 )}
-              </div>
-              <p className="text-xs md:text-sm font-semibold text-foreground/80 truncate">
-                {(() => {
-                  const assistidoName = typeof evento.assistido === "string" ? evento.assistido : evento.assistido?.nome;
-                  const assistidoId = typeof evento.assistido === "object" ? evento.assistido?.id : evento.assistidoId;
-                  if (assistidoId) {
-                    return (
-                      <Link
-                        href={`/admin/assistidos/${assistidoId}`}
-                        target="_blank"
-                        rel="noopener"
-                        className="text-foreground/80 hover:text-foreground hover:underline transition-colors truncate"
-                      >
-                        {assistidoName}
-                      </Link>
-                    );
-                  }
-                  return assistidoName;
-                })()}
-              </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-[10px] md:text-xs text-muted-foreground truncate">
-                  {new Date(evento.data).toLocaleDateString("pt-BR")} {evento.horarioInicio && `\u2022 ${evento.horarioInicio}`}
-                  {evento.processo && (() => {
-                    const processoDisplay = typeof evento.processo === "string" ? evento.processo : evento.processo?.numero;
-                    const processoId = typeof evento.processo === "object" ? evento.processo?.id : evento.processoId;
-                    if (processoId) {
-                      return (
-                        <>
-                          {" \u2022 "}
-                          <Link
-                            href={`/admin/processos/${processoId}`}
-                            target="_blank"
-                            rel="noopener"
-                            className="font-mono text-muted-foreground hover:text-foreground hover:underline transition-colors"
-                          >
-                            {processoDisplay}
-                          </Link>
-                        </>
-                      );
-                    }
-                    return ` \u2022 ${processoDisplay}`;
-                  })()}
-                </p>
-                {evento.atribuicao && (
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-border text-muted-foreground">
-                    {evento.atribuicao}
-                  </Badge>
-                )}
-                {/* Inline Juiz / Promotor fields */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-muted-foreground">Juiz:</span>
-                  <input
-                    type="text"
-                    value={form.juiz}
-                    onChange={(e) => form.setJuiz(e.target.value)}
-                    placeholder="Nome do juiz"
-                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
-                  />
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-muted-foreground">MP:</span>
-                  <input
-                    type="text"
-                    value={form.promotor}
-                    onChange={(e) => form.setPromotor(e.target.value)}
-                    placeholder="Nome do promotor"
-                    className="text-[10px] md:text-xs px-1.5 py-0.5 h-5 w-28 md:w-36 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
-                  />
-                </div>
                 {form.registroSalvo && form.ultimoSalvamento && (
-                  <span className="text-[9px] text-muted-foreground">
-                    Ultimo salvamento: {form.ultimoSalvamento}
+                  <span className="text-[10px] text-muted-foreground">
+                    {form.ultimoSalvamento}
                   </span>
                 )}
               </div>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">
+                {identificacaoLinha}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {form.registroSalvo && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={form.handleSubmit}
-                className="hidden md:flex items-center gap-1.5 h-8 text-xs cursor-pointer"
-              >
-                <Save className="w-3.5 h-3.5" />
-                Atualizar
-              </Button>
-            )}
-            <button
-              onClick={onClose}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4 md:w-5 md:h-5 text-foreground/80" />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            aria-label="Fechar"
+            className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer flex-shrink-0"
+          >
+            <X className="w-5 h-5 text-foreground/80" />
+          </button>
+        </div>
+
+        {/* Linha 3: faixa de contexto (atribuição + vara + Juiz/MP) */}
+        <div className="bg-neutral-50 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-border/60 px-4 py-1.5 flex items-center gap-3 flex-wrap flex-shrink-0">
+          {evento.atribuicao && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
+              {evento.atribuicao}
+            </Badge>
+          )}
+          {evento.local && (
+            <span className="text-[11px] text-muted-foreground truncate max-w-[240px]">
+              {evento.local}
+            </span>
+          )}
+          <label className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">Juiz:</span>
+            <input
+              type="text"
+              value={form.juiz}
+              onChange={(e) => form.setJuiz(e.target.value)}
+              placeholder="Nome do juiz"
+              className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+            />
+          </label>
+          <label className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground">MP:</span>
+            <input
+              type="text"
+              value={form.promotor}
+              onChange={(e) => form.setPromotor(e.target.value)}
+              placeholder="Nome do promotor"
+              className="text-xs px-1.5 py-0.5 h-5 w-32 md:w-40 border border-neutral-200 dark:border-neutral-800 rounded bg-white dark:bg-neutral-950 text-foreground focus:outline-none focus:ring-1 focus:ring-neutral-500/20 focus:border-neutral-500"
+            />
+          </label>
         </div>
 
         {/* Tabs */}
@@ -202,6 +217,10 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                       {count}
                     </Badge>
                   )}
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${completudeStateColor(completude.byTab[tab.key])}`}
+                    title={`Completude: ${COMPLETUDE_LABEL[completude.byTab[tab.key]]}`}
+                  />
                 </button>
               );
             })}
@@ -292,12 +311,46 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             <span>
               {form.registro.depoentes.length} depoente{form.registro.depoentes.length !== 1 ? "s" : ""}
             </span>
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 border-neutral-300 dark:border-neutral-700 text-neutral-500"
-            >
-              {completudeItems}/5 preenchidos
-            </Badge>
+            <Popover open={completudePopoverOpen} onOpenChange={setCompletudePopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+                >
+                  {completude.filled}/{completude.total} preenchidos
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="top" className="w-56 p-1.5">
+                <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wide">
+                  Completude do registro
+                </div>
+                {tabConfig.map((tab) => {
+                  const state = completude.byTab[tab.key];
+                  const Icon = state === "full" ? CheckCircle2 : state === "partial" ? CircleDashed : Circle;
+                  const color =
+                    state === "full"
+                      ? "text-emerald-500"
+                      : state === "partial"
+                        ? "text-amber-500"
+                        : "text-neutral-400";
+                  const countSuffix = tab.countKey ? ` (${tabCounts[tab.countKey] ?? 0})` : "";
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => {
+                        form.setActiveTab(tab.key);
+                        setCompletudePopoverOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-100 dark:hover:bg-muted text-xs text-left cursor-pointer"
+                    >
+                      <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${color}`} />
+                      <span className="flex-1">{tab.label}{countSuffix}</span>
+                    </button>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
             {form.isDirty && (
               <span className="text-[10px] text-amber-600 dark:text-amber-400">Alteracoes nao salvas</span>
             )}

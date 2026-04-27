@@ -21,8 +21,10 @@
     "import:csv": "tsx scripts/import-csv.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
-    "daemon": "node scripts/claude-code-daemon.mjs"
+    "daemon": "node scripts/claude-code-daemon.mjs",
+    "triagem:setup-sheet": "tsx scripts/triagem-setup-spreadsheet.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.10",
@@ -76,7 +78,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
     "googleapis": "^171.2.0",
-    "inngest": "^3.49.1",
+    "inngest": "^3.54.0",
     "jose": "^5.9.6",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
@@ -115,10 +117,15 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.20",
     "cheerio": "^1.2.0",
@@ -126,6 +133,7 @@
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.1.0",
     "google-auth-library": "^10.6.2",
+    "happy-dom": "^20.9.0",
     "postcss": "^8.4.49",
     "serwist": "^9.5.6",
     "tailwindcss": "^3.4.16",

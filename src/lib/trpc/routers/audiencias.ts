@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, audiencias, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
+import { db, withTransaction, audiencias, audienciasHistorico, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
 import { analysisJobs } from "@/lib/db/schema/core";
 import { atendimentos } from "@/lib/db/schema/agenda";
@@ -1821,5 +1821,165 @@ export const audienciasRouter = router({
       }
 
       return { updated };
+    }),
+
+  addQuickNote: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      texto: z.string().min(1, "Nota não pode ser vazia"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const [audiencia] = await db
+        .select({ anotacoesRapidas: audiencias.anotacoesRapidas })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId));
+      if (!audiencia) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+      }
+      const novaNota = {
+        texto: input.texto,
+        timestamp: new Date().toISOString(),
+        autorId: ctx.user.id,
+      };
+      const notasAtualizadas = [...(audiencia.anotacoesRapidas ?? []), novaNota];
+      await db
+        .update(audiencias)
+        .set({ anotacoesRapidas: notasAtualizadas, updatedAt: new Date() })
+        .where(eq(audiencias.id, input.audienciaId));
+      return { nota: novaNota };
+    }),
+
+  marcarDepoenteOuvido: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      sinteseJuizo: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const updates: any = {
+        status: "OUVIDA",
+        ouvidoEm: new Date(),
+        updatedAt: new Date(),
+      };
+      if (input.sinteseJuizo) updates.sinteseJuizo = input.sinteseJuizo;
+      const [row] = await db
+        .update(testemunhas)
+        .set(updates)
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      }
+      return row;
+    }),
+
+  vincularAudioDepoente: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      audioDriveFileId: z.string().nullable(),
+    }))
+    .mutation(async ({ input }) => {
+      const [row] = await db
+        .update(testemunhas)
+        .set({
+          audioDriveFileId: input.audioDriveFileId,
+          updatedAt: new Date(),
+        })
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      }
+      return row;
+    }),
+
+  redesignarDepoente: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      novaData: z.string().optional(),
+      motivo: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const [atual] = await db.select().from(testemunhas).where(eq(testemunhas.id, input.depoenteId));
+      if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Depoente não encontrado" });
+      const observacoesAtualizadas = input.motivo
+        ? [atual.observacoes, `[Redesignado: ${input.motivo}]`].filter(Boolean).join("\n")
+        : atual.observacoes;
+      const [row] = await db
+        .update(testemunhas)
+        .set({
+          redesignadoPara: input.novaData ?? null,
+          observacoes: observacoesAtualizadas,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(testemunhas.id, input.depoenteId))
+        .returning();
+      return row;
+    }),
+
+  marcarConcluida: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      resultado: z.enum(["sentenciado", "instrucao_encerrada", "outra"]),
+      observacao: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const [atual] = await db.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
+      if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+      const observacoesAtualizadas = input.observacao
+        ? [atual.observacoes, input.observacao].filter(Boolean).join("\n\n")
+        : atual.observacoes;
+      await db
+        .update(audiencias)
+        .set({
+          status: "concluida",
+          resultado: input.resultado,
+          observacoes: observacoesAtualizadas,
+          updatedAt: new Date(),
+        })
+        .where(eq(audiencias.id, input.audienciaId));
+      return { ok: true };
+    }),
+
+  redesignarAudiencia: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      novaData: z.string(),
+      novoHorario: z.string(),
+      motivo: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return withTransaction(async (tx) => {
+        const [atual] = await tx.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
+        if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+
+        const [maxRow] = await tx
+          .select({ versao: sql<number>`COALESCE(MAX(versao), 0)` })
+          .from(audienciasHistorico)
+          .where(eq(audienciasHistorico.audienciaId, input.audienciaId));
+        const novaVersao = (maxRow?.versao ?? 0) + 1;
+
+        await tx.insert(audienciasHistorico).values({
+          audienciaId: input.audienciaId,
+          versao: novaVersao,
+          anotacoes: `[REDESIGNADA] ${input.motivo ?? "Sem motivo informado"}\nData anterior: ${atual.dataAudiencia.toISOString()}`,
+          editadoPorId: ctx.user.id,
+        });
+
+        const [ano, mes, dia] = input.novaData.split("-").map(Number);
+        const [hh, mm] = input.novoHorario.split(":").map(Number);
+        const novaDataHora = new Date(ano, mes - 1, dia, hh, mm);
+
+        await tx
+          .update(audiencias)
+          .set({
+            dataAudiencia: novaDataHora,
+            horario: input.novoHorario,
+            status: "redesignada",
+            updatedAt: new Date(),
+          })
+          .where(eq(audiencias.id, input.audienciaId));
+
+        return { ok: true };
+      });
     }),
 });

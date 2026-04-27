@@ -323,35 +323,61 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
                 {depoente.lado === "acusacao" ? "ACUS" : "DEF"}
               </span>
             )}
-            {/* Status intimação */}
+            {/* Status intimação — cycle inclui variantes de frustrada + sem-diligencia */}
             <button type="button" onClick={() => {
-              const cycle: Array<Depoente["statusIntimacao"]> = ["intimado", "nao-intimado", "frustrada", "mp-desistiu", "dispensado", "pendente"];
-              const curr = depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado");
+              const cycle: Array<NonNullable<Depoente["statusIntimacao"]>> = [
+                "intimado-pessoalmente", "intimado-advogado", "intimado-edital",
+                "sem-diligencia",
+                "frustrada-nao-localizado", "frustrada-endereco-incorreto", "frustrada-mudou",
+                "mp-desistiu", "dispensado", "pendente",
+              ];
+              const curr = (depoente.statusIntimacao || (depoente.intimado ? "intimado-pessoalmente" : "pendente")) as typeof cycle[number];
               const next = cycle[(cycle.indexOf(curr) + 1) % cycle.length]!;
-              onUpdate({ ...depoente, statusIntimacao: next, intimado: next === "intimado" });
+              const isIntimado = next.startsWith("intimado");
+              onUpdate({ ...depoente, statusIntimacao: next, intimado: isIntimado });
             }} className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", {
-              "bg-emerald-600 text-white": (depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado")) === "intimado",
-              "bg-neutral-300 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300": (depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado")) === "nao-intimado",
-              "bg-amber-500 text-white": depoente.statusIntimacao === "frustrada",
+              "bg-emerald-600 text-white": (depoente.statusIntimacao || "").startsWith("intimado"),
+              "bg-amber-500 text-white": (depoente.statusIntimacao || "").startsWith("frustrada"),
+              "bg-orange-500 text-white": depoente.statusIntimacao === "sem-diligencia",
               "bg-rose-600 text-white": depoente.statusIntimacao === "mp-desistiu",
               "bg-sky-500 text-white": depoente.statusIntimacao === "dispensado",
-              "bg-neutral-500 text-white": depoente.statusIntimacao === "pendente",
+              "bg-neutral-500 text-white": !depoente.statusIntimacao || depoente.statusIntimacao === "pendente" || depoente.statusIntimacao === "nao-intimado",
             })}>
-              {{ intimado: "Intimado", "nao-intimado": "Não intim.", frustrada: "Frustrada", "mp-desistiu": "MP desistiu", dispensado: "Dispensado", pendente: "Pendente" }[(depoente.statusIntimacao || (depoente.intimado ? "intimado" : "nao-intimado"))] || "Não intim."}
+              {({
+                "intimado": "Intimado",
+                "intimado-pessoalmente": "Int. pessoal",
+                "intimado-advogado": "Int. advogado",
+                "intimado-edital": "Int. edital",
+                "sem-diligencia": "Sem diligência",
+                "frustrada": "Frustrada",
+                "frustrada-nao-localizado": "Não localizado",
+                "frustrada-endereco-incorreto": "End. incorreto",
+                "frustrada-mudou": "Mudou",
+                "nao-intimado": "Não intim.",
+                "mp-desistiu": "MP desistiu",
+                "dispensado": "Dispensado",
+                "pendente": "Pendente",
+              } as Record<string, string>)[(depoente.statusIntimacao || (depoente.intimado ? "intimado-pessoalmente" : "pendente"))] || "Pendente"}
             </button>
-            {/* Já ouvido */}
+            {/* Já ouvido (juízo prioritário) */}
             <button type="button" onClick={() => {
-              const cycle: Array<NonNullable<Depoente["jaOuvido"]>> = ["nenhum", "delegacia", "audiencia-anterior", "ambos"];
-              const curr = depoente.jaOuvido || "nenhum";
+              const cycle: Array<NonNullable<Depoente["jaOuvido"]>> = ["nenhum", "delegacia", "juizo-anterior", "ambos"];
+              const curr = (depoente.jaOuvido === "audiencia-anterior" ? "juizo-anterior" : (depoente.jaOuvido || "nenhum")) as typeof cycle[number];
               const next = cycle[(cycle.indexOf(curr) + 1) % cycle.length]!;
               onUpdate({ ...depoente, jaOuvido: next });
             }} className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", {
               "bg-neutral-200 dark:bg-neutral-800 text-neutral-500": !depoente.jaOuvido || depoente.jaOuvido === "nenhum",
               "bg-blue-500 text-white": depoente.jaOuvido === "delegacia",
-              "bg-violet-500 text-white": depoente.jaOuvido === "audiencia-anterior",
+              "bg-violet-500 text-white": depoente.jaOuvido === "juizo-anterior" || depoente.jaOuvido === "audiencia-anterior",
               "bg-indigo-600 text-white": depoente.jaOuvido === "ambos",
             })}>
-              {{ nenhum: "1ª vez", delegacia: "Ouvido DP", "audiencia-anterior": "Ouvido AIJ", ambos: "DP+AIJ" }[depoente.jaOuvido || "nenhum"]}
+              {({
+                "nenhum": "1ª vez",
+                "delegacia": "Ouvido DP",
+                "juizo-anterior": "Ouvido juízo",
+                "audiencia-anterior": "Ouvido juízo",
+                "ambos": "DP + juízo",
+              } as Record<string, string>)[depoente.jaOuvido || "nenhum"]}
             </button>
             {/* Presente na audiência atual */}
             <button type="button" onClick={() => onUpdate({ ...depoente, presente: !depoente.presente })} className={cn("px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer", depoente.presente ? "bg-emerald-500 text-white" : "bg-rose-500 text-white")}>
@@ -359,6 +385,22 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
             </button>
           </div>
         </div>
+
+        {/* Teor da certidão — editável, visível quando status indica ausência de intimação */}
+        {(depoente.teorCertidao || (depoente.statusIntimacao || "").startsWith("frustrada") || depoente.statusIntimacao === "sem-diligencia") && (
+          <div className="mx-1 mb-1 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 p-2.5">
+            <p className="text-[10px] uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-400 mb-1">
+              Teor da certidão {depoente.dataCertidao ? `(${depoente.dataCertidao})` : ""}
+            </p>
+            <textarea
+              value={depoente.teorCertidao ?? ""}
+              onChange={(e) => onUpdate({ ...depoente, teorCertidao: e.target.value })}
+              placeholder="Ex.: Certifico que, em diligência no endereço..., não localizei a testemunha..."
+              rows={3}
+              className="w-full text-xs text-neutral-800 dark:text-neutral-200 bg-white/60 dark:bg-neutral-900/40 border border-amber-200/80 dark:border-amber-900/40 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 resize-y"
+            />
+          </div>
+        )}
 
         {/* Depoimentos anteriores (delegacia / audiência anterior) — read-only se importado */}
         {(depoente.depoimentoDelegacia || depoente.depoimentoAnterior || depoente.pontosFortes || depoente.pontosFracos) && (

@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet, Landmark
+  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -60,6 +60,7 @@ interface AdminSidebarProps {
   children: ReactNode;
   userName: string;
   userEmail?: string;
+  headerExtra?: ReactNode;
 }
 
 // ==========================================
@@ -78,6 +79,8 @@ const MAIN_NAV: AssignmentMenuItem[] = [
 // 2. Cadastros - Assistidos, Processos, Casos, Solar, Mapa (azul)
 const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
+  { label: "Pessoas", path: "/admin/pessoas", icon: "UsersRound" },
+  { label: "Lugares", path: "/admin/lugares", icon: "MapPin" },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
@@ -197,21 +200,21 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
 const DEFAULT_WIDTH = 260;
 
-function ConditionalHeader() {
+function ConditionalHeader({ extra }: { extra?: ReactNode }) {
   const { hasPageHeader } = usePageHeader();
 
   if (hasPageHeader) return null;
 
-  return <HeaderUtilityRow variant="standalone" />;
+  return <HeaderUtilityRow variant="standalone" extra={extra} />;
 }
 
-export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
+export function AdminSidebar({ children, userName, userEmail, headerExtra }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const [mounted, setMounted] = useState(false);
 
@@ -226,7 +229,7 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   return (
     <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": `${currentWidth}px` } as CSSProperties}>
       <EntitySheetProvider>
-        <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail}>
+        <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail} headerExtra={headerExtra}>
           {children}
         </AdminSidebarContent>
       </EntitySheetProvider>
@@ -1521,11 +1524,12 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
 // CONTEÚDO PRINCIPAL DA SIDEBAR - ESTILO PREMIUM
 // ==========================================
 
-function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }: {
+function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, headerExtra }: {
   children: ReactNode;
   setSidebarWidth: (width: number) => void;
   userName: string;
   userEmail?: string;
+  headerExtra?: ReactNode;
 }) {
   const pathname = usePathname();
   const { state, open, setOpen, openMobile, setOpenMobile } = useSidebar();
@@ -1817,7 +1821,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-[#f5f5f5]")}>
         <ReadOnlyFieldset>
           <PageHeaderProvider>
-            <ConditionalHeader />
+            <ConditionalHeader extra={headerExtra} />
 
             {/* Scroll container — sticky funciona aqui */}
             <div className="flex-1 overflow-y-auto pb-16 md:pb-0">

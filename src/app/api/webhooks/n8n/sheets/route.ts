@@ -129,6 +129,7 @@ export async function POST(request: NextRequest) {
           status: (row.status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
           reuPreso: Boolean(row.reuPreso),
           providencias: row.providencias || null,
+          syncedAt: new Date(),
         });
 
         if (processo.atribuicao) atribuicoesAfetadas.add(processo.atribuicao);
