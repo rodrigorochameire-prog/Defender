@@ -382,7 +382,7 @@ export function DocumentPreviewDialog({
                 </div>
               ) : (
                 <p className="text-[11px] text-neutral-500 text-center">
-                  Se o áudio não carregar, use "Abrir no Drive" para tocar na interface do Drive.
+                  Se o áudio não carregar, use &ldquo;Abrir no Drive&rdquo; para tocar na interface do Drive.
                 </p>
               )}
             </div>
