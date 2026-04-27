@@ -84,6 +84,7 @@ import { encaminhamentosRouter } from "./encaminhamentos";
 import { pessoasRouter } from "./pessoas";
 import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
+import { execucaoPenalRouter } from "./execucao-penal";
 
 
 export const appRouter = router({
@@ -401,6 +402,11 @@ export const appRouter = router({
   // CRONOLOGIA (FASE IV-A — MARCOS, PRISÕES, CAUTELARES)
   // ==========================================
   cronologia: cronologiaRouter,
+
+  // ==========================================
+  // EXECUÇÃO PENAL (FASE IX — ATRIBUTO DO PROCESSO)
+  // ==========================================
+  execucaoPenal: execucaoPenalRouter,
 });
 
 export type AppRouter = typeof appRouter;

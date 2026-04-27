@@ -57,6 +57,9 @@ export * from "./lugares";
 // Cronologia (Fase IV-A — marcos processuais, prisões, cautelares)
 export * from "./cronologia";
 
+// Execução Penal (Fase IX — atributo do processo)
+export * from "./execucao-penal";
+
 // Triagem criminal (Camaçari MVP)
 export * from "./triagem";
 
