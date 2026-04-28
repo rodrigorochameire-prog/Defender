@@ -1576,6 +1576,13 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
     { enabled: !!primaryConfigId, refetchInterval: 30000 }
   );
 
+  // Triagem badge — demandas em status 5_TRIAGEM aguardando análise
+  const { data: triagemDemandas } = trpc.demandas.list.useQuery(
+    { status: "5_TRIAGEM", limit: 200 },
+    { staleTime: 30_000 },
+  );
+  const triagemCount = triagemDemandas?.length ?? 0;
+
   const mainNavWithBadge = useMemo(() => {
     return MAIN_NAV
       .filter(item => {
@@ -1587,9 +1594,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
         if (item.label === "WhatsApp" && whatsappStats?.unreadMessages) {
           return { ...item, badge: whatsappStats.unreadMessages };
         }
+        if (item.path === "/admin/demandas" && triagemCount > 0) {
+          return { ...item, badge: triagemCount };
+        }
         return item;
       });
-  }, [whatsappStats?.unreadMessages, features.drive, features.whatsapp]);
+  }, [whatsappStats?.unreadMessages, features.drive, features.whatsapp, triagemCount]);
 
   // Radar Criminal pending matches badge
   const { data: radarPendentesData } = trpc.radar.matchesPendentesCount.useQuery(undefined, {
