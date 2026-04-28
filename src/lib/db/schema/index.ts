@@ -65,3 +65,5 @@ export * from "./audit";
 
 // Cross-domain relations (core + casos relations that reference other domains)
 export * from "./relations";
+
+export * from "./demanda-eventos";
