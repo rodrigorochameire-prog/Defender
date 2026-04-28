@@ -9,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EventFormDiligencia } from "./event-form-diligencia";
-// Stubs — Tasks 13/14 implement Atendimento and Observação forms
+import { EventFormAtendimento } from "./event-form-atendimento";
+// Stub — Task 14 implements Observação form
 
 interface Props {
   demandaId: number;
@@ -50,7 +51,11 @@ export function TimelineFAB({ demandaId }: Props) {
         open={open === "diligencia"}
         onOpenChange={(v) => setOpen(v ? "diligencia" : null)}
       />
-      {/* Task 13: form para atendimento */}
+      <EventFormAtendimento
+        demandaId={demandaId}
+        open={open === "atendimento"}
+        onOpenChange={(v) => setOpen(v ? "atendimento" : null)}
+      />
       {/* Task 14: form para observação */}
     </>
   );
