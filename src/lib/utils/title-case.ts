@@ -66,8 +66,9 @@ function capitalize(word: string): string {
 /**
  * Converte texto para Title Case respeitando siglas e conectivos do português.
  *
- * - Siglas conhecidas (whitelist) e tokens curtos (≤ 4 chars) já em caixa alta no
- *   input permanecem em caixa alta.
+ * - Siglas conhecidas (whitelist) permanecem em caixa alta. A heurística também
+ *   trata como sigla tokens curtos (≤ 4 chars) em caixa alta SEM vogais
+ *   (ex.: XYZ, JKLM) — tokens com vogais como CASO recebem Title Case normal.
  * - Conectivos (de, da, do, e, com, etc.) ficam minúsculos exceto se forem o
  *   primeiro token da string.
  * - Demais palavras: primeira letra maiúscula, resto minúsculo.
