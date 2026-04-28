@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
+import { TimelineFAB } from "@/components/demanda-eventos/timeline-fab";
 
 type Tab = "timeline" | "pendentes" | "atendimentos";
 
@@ -171,18 +172,8 @@ export function DemandaEventsDrawer({ isOpen, onClose, demandaId }: Props) {
           ))}
         </div>
 
-        {/* FAB stub — Task 12 will replace with full menu */}
-        <button
-          type="button"
-          onClick={() => {
-            // TODO Task 12: open registration menu
-            alert("Registrar novo evento — implementação na Task 12");
-          }}
-          aria-label="Registrar novo evento"
-          className="absolute bottom-6 right-6 size-12 rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center text-2xl leading-none"
-        >
-          +
-        </button>
+        {/* FAB com dropdown — Diligência implementada, Atendimento/Observação stubs */}
+        {demandaId !== null && <TimelineFAB demandaId={demandaId} />}
       </div>
     </>
   );
