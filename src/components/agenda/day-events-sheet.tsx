@@ -39,6 +39,7 @@ import {
   normalizeAreaToFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
+import { extrairTipo } from "./extrair-tipo";
 
 interface DayEventsSheetProps {
   isOpen: boolean;
@@ -56,56 +57,6 @@ const isEventoCancelado = (status: string) =>
   status === "cancelado" || status === "cancelada" ||
   status === "remarcado" || status === "redesignado" || status === "reagendada";
 
-// Extrair tipo de audiência do título (sem o nome do assistido)
-const tipoAbreviacoes: Record<string, string> = {
-  "Audiência de Instrução e Julgamento": "AIJ",
-  "Instrução e Julgamento": "AIJ",
-  "Audiência de Custódia": "Custódia",
-  "Audiência de Justificação": "Justificação",
-  "Audiência Preliminar": "Preliminar",
-  "Audiência de Apresentação": "Apresentação",
-  "Audiência Concentrada": "Concentrada",
-  "Audiência de Conciliação": "Conciliação",
-  "Sessão de Julgamento do Tribunal do Júri": "Júri",
-  "Sessão do Tribunal do Júri": "Júri",
-  "Tribunal do Júri": "Júri",
-  "Sessão de Júri": "Júri",
-  "Plenário do Júri": "Júri",
-  "Produção Antecipada de Provas": "PAP",
-  "Acordo de Não Persecução Penal": "ANPP",
-  "Audiência Admonitória": "Admonitória",
-  "Oitiva Especial": "Oitiva Especial",
-  "Audiência de Retratação": "Retratação",
-  "Audiência de Execução": "Execução",
-  "Audiência de Progressão": "Progressão",
-  "Audiência de Livramento": "Livramento",
-  "Audiência de Unificação": "Unificação",
-  "Audiência Adminitória": "Adminitória",
-  "Adminitória": "Adminitória",
-  "Retratação": "Retratação",
-  "Audiência de Medidas Protetivas": "Med. Protetivas",
-  "Medidas Protetivas": "Med. Protetivas",
-  "Audiência": "Audiência",
-  "Atendimento": "Atendimento",
-  "Reunião": "Reunião",
-  "Diligência": "Diligência",
-};
-
-function extrairTipo(titulo: string): string {
-  // Remove prefixo ADV se presente
-  const clean = titulo.replace(/^ADV\s*[-–]\s*/i, "").replace(/^ADV\s+/i, "");
-  // Tenta encontrar tipo no título antes do primeiro " - "
-  const firstSegment = clean.split(/\s*[-–]\s*/)[0]?.trim() || "";
-
-  // Verificar match direto ou parcial
-  if (tipoAbreviacoes[firstSegment]) return tipoAbreviacoes[firstSegment];
-  for (const [chave, abrev] of Object.entries(tipoAbreviacoes)) {
-    if (firstSegment.includes(chave)) return abrev;
-  }
-  // Se o primeiro segmento é muito curto (tipo "AIJ"), retornar como está
-  if (firstSegment.length <= 20) return firstSegment;
-  return firstSegment.substring(0, 20) + "…";
-}
 
 function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado: boolean }) {
   const [copied, setCopied] = useState(false);
