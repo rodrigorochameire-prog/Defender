@@ -725,6 +725,23 @@ export default function Demandas() {
     { enabled: processoSearchQuery.length >= 2 }
   );
 
+  // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
+  const demandaIdsForEventos = useMemo(() => {
+    return (demandasDB || [])
+      .map((d: any) => Number(d.id))
+      .filter((id: number) => Number.isInteger(id) && id > 0);
+  }, [demandasDB]);
+
+  const { data: lastEventosByDemanda = {} } = trpc.demandaEventos.lastByDemandaIds.useQuery(
+    { demandaIds: demandaIdsForEventos },
+    { enabled: demandaIdsForEventos.length > 0, staleTime: 10_000 },
+  );
+
+  const { data: pendentesEventosByDemanda = {} } = trpc.demandaEventos.pendentesByDemandaIds.useQuery(
+    { demandaIds: demandaIdsForEventos },
+    { enabled: demandaIdsForEventos.length > 0, staleTime: 10_000 },
+  );
+
   // Mutation para criar demanda
   const createDemandaMutation = trpc.demandas.create.useMutation({
     onSuccess: () => {
@@ -1769,6 +1786,29 @@ export default function Demandas() {
     });
   }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
 
+  // Adapta linha snake_case (raw SQL de demandaEventos) ao shape camelCase EventoLine
+  function toEventoLine(row: any): any {
+    if (!row) return null;
+    return {
+      id: row.id,
+      tipo: row.tipo,
+      subtipo: row.subtipo ?? null,
+      status: row.status ?? null,
+      resumo: row.resumo,
+      prazo: row.prazo ?? null,
+      createdAt: row.created_at ?? row.createdAt ?? new Date(),
+    };
+  }
+
+  // Enriquecimento das demandas filtradas com last/pendente eventos para o Kanban
+  const demandasFiltradasComEventos = useMemo(() => {
+    return demandasFiltradas.map((d: any) => ({
+      ...d,
+      lastEvento: toEventoLine((lastEventosByDemanda as any)[Number(d.id)]),
+      pendenteEvento: toEventoLine((pendentesEventosByDemanda as any)[Number(d.id)]),
+    }));
+  }, [demandasFiltradas, lastEventosByDemanda, pendentesEventosByDemanda]);
+
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {
     setDemandas((prev) => {
@@ -2790,7 +2830,7 @@ export default function Demandas() {
           <div className="space-y-3">
             {/* Kanban Premium Board */}
             <KanbanPremium
-              demandas={demandasFiltradas}
+              demandas={demandasFiltradasComEventos}
               onCardClick={(id) => setPreviewDemandaId(id)}
               onStatusChange={handleStatusChange}
               copyToClipboard={copyToClipboard}

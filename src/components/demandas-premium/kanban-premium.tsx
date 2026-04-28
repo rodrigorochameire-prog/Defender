@@ -42,6 +42,7 @@ import {
 } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
+import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -81,6 +82,8 @@ interface KanbanDemanda {
   delegadoPara?: string | null;
   reuPreso?: boolean;
   providenciaResumo?: string | null;
+  lastEvento?: EventoLine | null;
+  pendenteEvento?: EventoLine | null;
   data?: string | null;
   updatedAt?: string | null;
   syncedAt?: string | null;
@@ -487,15 +490,28 @@ function KanbanCard({
           </div>
         )}
 
-        {/* Providência resumida — só se preenchida */}
-        {demanda.providenciaResumo && (
+        {/* Pendência — só se houver diligência pendente */}
+        {demanda.pendenteEvento && (
           <div className="mt-1.5 pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40">
-            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 italic truncate block">
-              <span className="opacity-40 mr-1">↳</span>
-              {demanda.providenciaResumo}
-            </span>
+            <EventLine evento={demanda.pendenteEvento} variant="pendente" />
           </div>
         )}
+        {/* Última atividade — sempre presente; placeholder se não há eventos */}
+        <div
+          className={`mt-1.5 ${
+            demanda.pendenteEvento
+              ? ""
+              : "pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40"
+          }`}
+        >
+          {demanda.lastEvento ? (
+            <EventLine evento={demanda.lastEvento} />
+          ) : (
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">
+              <span className="opacity-50 mr-1">+</span>registrar atividade
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
