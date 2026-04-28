@@ -94,6 +94,13 @@ interface KanbanDemanda {
 interface KanbanPremiumProps {
   demandas: KanbanDemanda[];
   onCardClick: (id: string | number) => void;
+  /**
+   * Opens the dedicated events drawer (timeline of user-facing events:
+   * atendimento / diligência / observação). When provided, the inline
+   * "Ver todos →" button on the card preview will trigger this instead of
+   * opening the QuickPreview side-sheet (legacy fallback).
+   */
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
@@ -238,6 +245,7 @@ function KanbanCard({
   demanda,
   group,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   isDragging: isBeingDragged,
@@ -248,6 +256,7 @@ function KanbanCard({
   demanda: KanbanDemanda;
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
@@ -566,8 +575,12 @@ function KanbanCard({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO Task 11: abrir drawer dedicado
-                      onCardClick(demanda.id);
+                      if (onOpenEventsDrawer) {
+                        onOpenEventsDrawer(Number(demanda.id));
+                      } else {
+                        // Legacy fallback — open QuickPreview if drawer not wired
+                        onCardClick(demanda.id);
+                      }
                     }}
                     className="text-[10px] text-emerald-600 hover:underline mt-1"
                   >
@@ -692,6 +705,7 @@ function SubGroupHeader({
 function EmAndamentoExpanded({
   subGroupDemandas,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   draggedDemandaId,
@@ -700,6 +714,7 @@ function EmAndamentoExpanded({
 }: {
   subGroupDemandas: Record<EmAndamentoSubGroup, KanbanDemanda[]>;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
@@ -735,6 +750,7 @@ function EmAndamentoExpanded({
             demanda={d}
             group={sg}
             onCardClick={onCardClick}
+            onOpenEventsDrawer={onOpenEventsDrawer}
             onStatusChange={onStatusChange}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
@@ -932,6 +948,7 @@ function MobileCardList({
   items,
   group,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   draggedDemandaId,
@@ -941,6 +958,7 @@ function MobileCardList({
   items: KanbanDemanda[];
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
@@ -963,6 +981,7 @@ function MobileCardList({
           demanda={d}
           group={group}
           onCardClick={onCardClick}
+          onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
@@ -986,6 +1005,7 @@ function MobileCardList({
 export function KanbanPremium({
   demandas,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   selectedAtribuicoes = [],
@@ -1181,6 +1201,7 @@ export function KanbanPremium({
           items={mobileCards}
           group={mobileGroupKey}
           onCardClick={onCardClick}
+          onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
@@ -1266,6 +1287,7 @@ export function KanbanPremium({
                     <EmAndamentoExpanded
                       subGroupDemandas={subGroupDemandas}
                       onCardClick={onCardClick}
+                      onOpenEventsDrawer={onOpenEventsDrawer}
                       onStatusChange={onStatusChange}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
@@ -1287,6 +1309,7 @@ export function KanbanPremium({
                               demanda={d}
                               group={sCfg.group as StatusGroup}
                               onCardClick={onCardClick}
+                              onOpenEventsDrawer={onOpenEventsDrawer}
                               onStatusChange={onStatusChange}
                               copyToClipboard={copyToClipboard}
                               isDragging={draggedDemandaId === String(d.id)}
@@ -1351,6 +1374,7 @@ export function KanbanPremium({
                         demanda={d}
                         group={groupKey}
                         onCardClick={onCardClick}
+                        onOpenEventsDrawer={onOpenEventsDrawer}
                         onStatusChange={onStatusChange}
                         copyToClipboard={copyToClipboard}
                         isDragging={draggedDemandaId === String(d.id)}

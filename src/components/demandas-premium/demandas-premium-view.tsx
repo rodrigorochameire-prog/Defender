@@ -29,6 +29,7 @@ const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-mod
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
+import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
@@ -2062,6 +2063,7 @@ export default function Demandas() {
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+  const [eventsDrawerDemandaId, setEventsDrawerDemandaId] = useState<number | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
   const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
   const handlePreviewNavigate = useCallback((direction: "prev" | "next") => {
@@ -2832,6 +2834,7 @@ export default function Demandas() {
             <KanbanPremium
               demandas={demandasFiltradasComEventos}
               onCardClick={(id) => setPreviewDemandaId(id)}
+              onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
@@ -3105,6 +3108,13 @@ export default function Demandas() {
         atribuicaoIcons={atribuicaoIcons}
         currentIndex={previewIndex >= 0 ? previewIndex : undefined}
         totalCount={demandasOrdenadas.length}
+      />
+
+      {/* Drawer de eventos (timeline / pendentes / atendimentos) — Task 11 */}
+      <DemandaEventsDrawer
+        isOpen={eventsDrawerDemandaId !== null}
+        onClose={() => setEventsDrawerDemandaId(null)}
+        demandaId={eventsDrawerDemandaId}
       />
     </div>
   );
