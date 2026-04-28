@@ -8,6 +8,7 @@ import { casosRouter } from "./casos";
 import { assistidosRouter } from "./assistidos";
 import { processosRouter } from "./processos";
 import { demandasRouter } from "./demandas";
+import { demandaEventosRouter } from "./demanda-eventos";
 import { juriRouter } from "./juri";
 import { avaliacaoJuriRouter } from "./avaliacaoJuri";
 import { audienciasRouter } from "./audiencias";
@@ -99,6 +100,7 @@ export const appRouter = router({
   assistidos: assistidosRouter,
   processos: processosRouter,
   demandas: demandasRouter,
+  demandaEventos: demandaEventosRouter,
   juri: juriRouter,
   avaliacaoJuri: avaliacaoJuriRouter,
   audiencias: audienciasRouter,
