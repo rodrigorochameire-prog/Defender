@@ -10,7 +10,7 @@
 set -uo pipefail
 
 SESSION="${PJE_SESSION:-pje8}"
-OUTPUT_DIR="$HOME/Desktop/pje-autos-juri"
+OUTPUT_DIR="${PJE_OUTPUT_DIR:-$HOME/Desktop/pje-autos-juri}"
 LIST_FILE="${1:-$HOME/Desktop/juri-pendentes.txt}"
 RELOGIN_EVERY=8
 

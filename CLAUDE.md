@@ -46,6 +46,9 @@
 │   │ # Ideação
 │   ├── ideias-defesa.md      # /ideias-defesa - Gerador de ideias
 │   │
+│   │ # Revisão
+│   ├── revisao.md            # /revisao - Revisar peça de estagiário(a)
+│   │
 │   │ # Scraping & Drive
 │   ├── pje-download.md       # /pje-download - Download Autos PJe (pipeline 3 etapas)
 │   ├── pje-intimacoes.md     # /pje-intimacoes - Baixar/organizar intimações PJe
@@ -90,6 +93,7 @@ Detalhes: `/tool-selection`
 | "documenta isso", "atualiza a doc" | `/update-docs` |
 | "faz commit" | `/commit` |
 | "corrige estilo", "padrão defender" | `/fix-style` |
+| "revisa a peça", "minuta do estagiário", "revisão" | `/revisao` |
 | "ideias", "sugere funcionalidade", "próxima feature" | `/ideias-defesa` |
 | "criar TDD", "design doc", "especificação técnica" | `/tdd` |
 | "jira", "ticket", "backlog", "sprint", "card" | `/jira` |

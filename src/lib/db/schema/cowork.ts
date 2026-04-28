@@ -13,6 +13,36 @@ import { relations } from "drizzle-orm";
 import { users, processos, assistidos, demandas } from "./core";
 
 // ==========================================
+// COWORK - ENCAMINHAMENTOS
+// ==========================================
+
+export const encaminhamentos = pgTable("encaminhamentos", {
+  id: serial("id").primaryKey(),
+  remetenteId: integer("remetente_id").notNull().references(() => users.id),
+  tipo: varchar("tipo", { length: 30 }).notNull(), // "transferir" | "encaminhar" | "acompanhar" | "anotar" | "parecer"
+  mensagem: text("mensagem").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("pendente"), // "pendente" | "ciente" | "aceito" | "respondido" | "concluido" | "arquivado"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("encaminhamentos_remetente_id_idx").on(table.remetenteId),
+  index("encaminhamentos_status_idx").on(table.status),
+]);
+
+export type Encaminhamento = typeof encaminhamentos.$inferSelect;
+export type InsertEncaminhamento = typeof encaminhamentos.$inferInsert;
+
+export const encaminhamentoDestinatarios = pgTable("encaminhamento_destinatarios", {
+  id: serial("id").primaryKey(),
+  encaminhamentoId: integer("encaminhamento_id").notNull().references(() => encaminhamentos.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+}, (table) => [
+  index("enc_dest_encaminhamento_id_idx").on(table.encaminhamentoId),
+  index("enc_dest_user_id_idx").on(table.userId),
+]);
+
+export type EncaminhamentoDestinatario = typeof encaminhamentoDestinatarios.$inferSelect;
+
+// ==========================================
 // COWORK - PARECERES (CONSULTAS RAPIDAS)
 // ==========================================
 
