@@ -43,6 +43,7 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
+import { useRealtimeDemandaEventos } from "@/hooks/use-realtime-demanda-eventos";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -741,6 +742,18 @@ export default function Demandas() {
   const { data: pendentesEventosByDemanda = {} } = trpc.demandaEventos.pendentesByDemandaIds.useQuery(
     { demandaIds: demandaIdsForEventos },
     { enabled: demandaIdsForEventos.length > 0, staleTime: 10_000 },
+  );
+
+  // Realtime: invalida queries em qualquer mudança em `demanda_eventos` para
+  // qualquer demanda visível no Kanban (sem polling). Só ativa quando há ids
+  // a observar para evitar canal sem propósito.
+  useRealtimeDemandaEventos(
+    demandaIdsForEventos,
+    () => {
+      utils.demandaEventos.lastByDemandaIds.invalidate();
+      utils.demandaEventos.pendentesByDemandaIds.invalidate();
+    },
+    demandaIdsForEventos.length > 0,
   );
 
   // Mutation para criar demanda

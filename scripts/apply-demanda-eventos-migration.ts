@@ -103,6 +103,18 @@ CREATE INDEX IF NOT EXISTS "demanda_eventos_atendimento_idx"
 
 CREATE INDEX IF NOT EXISTS "demanda_eventos_deleted_idx"
   ON "demanda_eventos" USING btree ("deleted_at");
+
+-- Realtime publication: garante que `demanda_eventos` seja transmitida
+-- pelo Supabase Realtime. Idempotente. Em DBs locais sem a publication
+-- (ex.: Postgres puro), o EXCEPTION evita falhar a migração.
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'demanda_eventos'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.demanda_eventos;
+  END IF;
+EXCEPTION WHEN OTHERS THEN NULL; END $$;
 `;
 
 async function main() {
