@@ -43,6 +43,7 @@ import {
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -266,6 +267,13 @@ function KanbanCard({
   // Status popover state
   const [showStatusPopover, setShowStatusPopover] = useState(false);
   const badgeRef = useRef<HTMLButtonElement>(null);
+
+  // Inline expand state (timeline preview)
+  const [expanded, setExpanded] = useState(false);
+  const { data: timelineData } = trpc.demandaEventos.list.useQuery(
+    { demandaId: Number(demanda.id), limit: 4 },
+    { enabled: expanded, staleTime: 10_000 },
+  );
 
   const handleBadgeClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -504,12 +512,72 @@ function KanbanCard({
               : "pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40"
           }`}
         >
-          {demanda.lastEvento ? (
-            <EventLine evento={demanda.lastEvento} />
-          ) : (
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">
-              <span className="opacity-50 mr-1">+</span>registrar atividade
-            </span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              {demanda.lastEvento ? (
+                <EventLine evento={demanda.lastEvento} />
+              ) : (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">
+                  <span className="opacity-50 mr-1">+</span>registrar atividade
+                </span>
+              )}
+            </div>
+            {demanda.lastEvento && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
+                aria-label={expanded ? "Colapsar" : "Expandir"}
+                className="shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition"
+              >
+                <ChevronDown
+                  className={`size-3 transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
+                />
+              </button>
+            )}
+          </div>
+          {expanded && (
+            <div className="mt-2 pt-2 border-t border-neutral-200/40 dark:border-neutral-700/40 space-y-1">
+              {timelineData?.items ? (
+                <>
+                  {/* Pula o primeiro item porque já é o "lastEvento" mostrado acima */}
+                  {timelineData.items.slice(1, 4).map(({ evento }) => (
+                    <EventLine
+                      key={evento.id}
+                      evento={{
+                        id: evento.id,
+                        tipo: evento.tipo,
+                        subtipo: evento.subtipo,
+                        status: evento.status as EventoLine["status"],
+                        resumo: evento.resumo,
+                        prazo: evento.prazo,
+                        createdAt: evento.createdAt,
+                      }}
+                    />
+                  ))}
+                  {timelineData.items.length <= 1 && (
+                    <span className="text-[10px] text-neutral-400 italic">
+                      Sem eventos anteriores.
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO Task 11: abrir drawer dedicado
+                      onCardClick(demanda.id);
+                    }}
+                    className="text-[10px] text-emerald-600 hover:underline mt-1"
+                  >
+                    Ver todos →
+                  </button>
+                </>
+              ) : (
+                <span className="text-[10px] text-neutral-400 italic">Carregando…</span>
+              )}
+            </div>
           )}
         </div>
       </div>
