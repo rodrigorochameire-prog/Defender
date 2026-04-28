@@ -2,9 +2,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { demandaEventos } from "@/lib/db/schema/demanda-eventos";
+import { demandaEventos, atendimentoDemandas } from "@/lib/db/schema/demanda-eventos";
 import { demandas, users } from "@/lib/db/schema/core";
-import { and, eq, isNull, desc, sql } from "drizzle-orm";
+import { atendimentos } from "@/lib/db/schema/agenda";
+import { and, eq, isNull, desc, sql, notInArray } from "drizzle-orm";
 import {
   createEventoSchema,
   updateEventoSchema,
@@ -38,6 +39,47 @@ async function loadEventoById(id: number) {
     .where(eq(demandaEventos.id, id))
     .limit(1);
   return e;
+}
+
+export async function autoVincularAtendimentoADemandas(args: {
+  atendimentoId: number;
+  processoId: number;
+  autorId: number;
+  resumoBase: string;
+}): Promise<{ vinculadas: number }> {
+  const abertas = await db
+    .select({ id: demandas.id })
+    .from(demandas)
+    .where(
+      and(
+        eq(demandas.processoId, args.processoId),
+        isNull(demandas.deletedAt),
+        notInArray(demandas.status, ["CONCLUIDO", "ARQUIVADO"]),
+      ),
+    );
+  if (abertas.length === 0) return { vinculadas: 0 };
+
+  await db
+    .insert(atendimentoDemandas)
+    .values(
+      abertas.map((d) => ({
+        atendimentoId: args.atendimentoId,
+        demandaId: d.id,
+      })),
+    )
+    .onConflictDoNothing();
+
+  const resumo = (args.resumoBase || "Atendimento").slice(0, 140);
+  await db.insert(demandaEventos).values(
+    abertas.map((d) => ({
+      demandaId: d.id,
+      tipo: "atendimento" as const,
+      resumo,
+      atendimentoId: args.atendimentoId,
+      autorId: args.autorId,
+    })),
+  );
+  return { vinculadas: abertas.length };
 }
 
 export const demandaEventosRouter = router({
@@ -353,5 +395,110 @@ export const demandaEventosRouter = router({
         .where(eq(demandaEventos.id, input.id));
 
       return { ok: true as const, id: input.id };
+    }),
+
+  vincularAtendimento: protectedProcedure
+    .input(
+      z.object({
+        demandaId: z.number().int().positive(),
+        atendimentoId: z.number().int().positive(),
+        resumo: z.string().min(1).max(140).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const demanda = await loadDemandaForPermission(input.demandaId);
+      if (!demanda) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Demanda não encontrada",
+        });
+      }
+      if (!canWriteOnDemanda(demanda, userId, isAdmin)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Sem permissão na demanda",
+        });
+      }
+
+      const [a] = await db
+        .select({ id: atendimentos.id, assunto: atendimentos.assunto })
+        .from(atendimentos)
+        .where(eq(atendimentos.id, input.atendimentoId))
+        .limit(1);
+      if (!a) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Atendimento não encontrado",
+        });
+      }
+
+      await db
+        .insert(atendimentoDemandas)
+        .values({
+          atendimentoId: input.atendimentoId,
+          demandaId: input.demandaId,
+        })
+        .onConflictDoNothing();
+
+      const resumo = (input.resumo ?? a.assunto ?? "Atendimento").slice(0, 140);
+      const [created] = await db
+        .insert(demandaEventos)
+        .values({
+          demandaId: input.demandaId,
+          tipo: "atendimento",
+          resumo,
+          atendimentoId: input.atendimentoId,
+          autorId: userId,
+        })
+        .returning();
+      return created;
+    }),
+
+  desvincularAtendimento: protectedProcedure
+    .input(
+      z.object({
+        demandaId: z.number().int().positive(),
+        atendimentoId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const demanda = await loadDemandaForPermission(input.demandaId);
+      if (!demanda) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Demanda não encontrada",
+        });
+      }
+      if (!canWriteOnDemanda(demanda, userId, isAdmin)) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+
+      await db
+        .update(demandaEventos)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(demandaEventos.demandaId, input.demandaId),
+            eq(demandaEventos.atendimentoId, input.atendimentoId),
+            isNull(demandaEventos.deletedAt),
+          ),
+        );
+
+      await db
+        .delete(atendimentoDemandas)
+        .where(
+          and(
+            eq(atendimentoDemandas.demandaId, input.demandaId),
+            eq(atendimentoDemandas.atendimentoId, input.atendimentoId),
+          ),
+        );
+
+      return { ok: true };
     }),
 });

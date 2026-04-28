@@ -26,6 +26,7 @@ import {
   extractKeyPointsWithAI,
   processApprovedRecording,
 } from "@/lib/services/plaud-api";
+import { autoVincularAtendimentoADemandas } from "./demanda-eventos";
 
 export const atendimentosRouter = router({
   // ==========================================
@@ -212,6 +213,15 @@ export const atendimentosRouter = router({
           atendidoPorId: ctx.user.id,
         })
         .returning();
+
+      if (created.processoId) {
+        await autoVincularAtendimentoADemandas({
+          atendimentoId: created.id,
+          processoId: created.processoId,
+          autorId: ctx.user.id,
+          resumoBase: created.assunto || "Atendimento",
+        });
+      }
 
       return created;
     }),
