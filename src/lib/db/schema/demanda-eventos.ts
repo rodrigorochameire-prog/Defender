@@ -63,7 +63,8 @@ export const atendimentoDemandas = pgTable("atendimento_demandas", {
 export type DemandaEvento = typeof demandaEventos.$inferSelect;
 export type InsertDemandaEvento = typeof demandaEventos.$inferInsert;
 export type AtendimentoDemanda = typeof atendimentoDemandas.$inferSelect;
+export type InsertAtendimentoDemanda = typeof atendimentoDemandas.$inferInsert;
 
-export const DEMANDA_EVENTO_TIPOS = ["atendimento","diligencia","observacao"] as const;
+export const DEMANDA_EVENTO_TIPOS = demandaEventoTipoEnum.enumValues;
 export const DILIGENCIA_SUBTIPOS = ["peticao","contato_cartorio","contato_orgao","juntada","recurso","outro"] as const;
 export const DILIGENCIA_STATUS = ["pendente","feita","cancelada"] as const;

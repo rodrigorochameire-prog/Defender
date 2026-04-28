@@ -55,6 +55,9 @@ import { notifications } from "./comunicacao";
 // Defensoria tables
 import { defensoresBa } from "./defensoria";
 
+// Demanda eventos
+import { demandaEventos, atendimentoDemandas } from "./demanda-eventos";
+
 // ==========================================
 // RELATIONS - Core tables
 // ==========================================
@@ -229,8 +232,6 @@ export const analisesCoworkRelations = relations(analisesCowork, ({ one }) => ({
 // ==========================================
 // RELATIONS - Demanda eventos (timeline)
 // ==========================================
-
-import { demandaEventos, atendimentoDemandas } from "./demanda-eventos";
 
 export const demandaEventosRelations = relations(demandaEventos, ({ one }) => ({
   demanda: one(demandas, { fields: [demandaEventos.demandaId], references: [demandas.id] }),
