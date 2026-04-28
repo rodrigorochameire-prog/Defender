@@ -1,9 +1,44 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { demandaEventos } from "@/lib/db/schema/demanda-eventos";
 import { demandas, users } from "@/lib/db/schema/core";
 import { and, eq, isNull, desc, sql } from "drizzle-orm";
+import {
+  createEventoSchema,
+  updateEventoSchema,
+} from "@/lib/trpc/zod/demanda-eventos";
+
+async function loadDemandaForPermission(id: number) {
+  const [d] = await db
+    .select({
+      id: demandas.id,
+      defensorId: demandas.defensorId,
+      delegadoParaId: demandas.delegadoParaId,
+    })
+    .from(demandas)
+    .where(eq(demandas.id, id))
+    .limit(1);
+  return d;
+}
+
+function canWriteOnDemanda(
+  d: { defensorId: number | null; delegadoParaId: number | null },
+  userId: number,
+  isAdmin: boolean,
+) {
+  return isAdmin || d.defensorId === userId || d.delegadoParaId === userId;
+}
+
+async function loadEventoById(id: number) {
+  const [e] = await db
+    .select()
+    .from(demandaEventos)
+    .where(eq(demandaEventos.id, id))
+    .limit(1);
+  return e;
+}
 
 export const demandaEventosRouter = router({
   list: protectedProcedure
@@ -138,5 +173,175 @@ export const demandaEventosRouter = router({
         )
         .orderBy(desc(demandaEventos.createdAt))
         .limit(input.limit);
+    }),
+
+  create: protectedProcedure
+    .input(createEventoSchema)
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const demanda = await loadDemandaForPermission(input.demandaId);
+      if (!demanda) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Demanda não encontrada",
+        });
+      }
+      if (!canWriteOnDemanda(demanda, userId, isAdmin)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Você não tem permissão para criar eventos nesta demanda",
+        });
+      }
+
+      const payload: Record<string, any> = {
+        demandaId: input.demandaId,
+        tipo: input.tipo,
+        resumo: input.resumo,
+        descricao: input.descricao ?? null,
+        responsavelId: input.responsavelId ?? null,
+        autorId: userId,
+      };
+
+      if (input.tipo === "diligencia") {
+        payload.subtipo = input.subtipo;
+        payload.status = input.status;
+        payload.prazo = input.prazo ?? null;
+        if (input.status === "feita") {
+          payload.dataConclusao = new Date();
+        }
+      } else if (input.tipo === "atendimento") {
+        payload.atendimentoId = input.atendimentoId;
+      }
+
+      const [created] = await db
+        .insert(demandaEventos)
+        .values(payload as any)
+        .returning();
+
+      return created;
+    }),
+
+  update: protectedProcedure
+    .input(updateEventoSchema)
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const evento = await loadEventoById(input.id);
+      if (!evento || evento.deletedAt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evento não encontrado",
+        });
+      }
+
+      if (!isAdmin && evento.autorId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o autor do evento pode editá-lo",
+        });
+      }
+
+      const patch: Record<string, any> = {
+        updatedAt: new Date(),
+      };
+
+      if (input.resumo !== undefined) patch.resumo = input.resumo;
+      if (input.descricao !== undefined) patch.descricao = input.descricao;
+      if (input.prazo !== undefined) patch.prazo = input.prazo;
+
+      if (input.status !== undefined) {
+        if (evento.tipo !== "diligencia") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Apenas eventos do tipo diligência podem ter status",
+          });
+        }
+        patch.status = input.status;
+        if (input.status === "feita" && !evento.dataConclusao) {
+          patch.dataConclusao = new Date();
+        }
+      }
+
+      const [updated] = await db
+        .update(demandaEventos)
+        .set(patch)
+        .where(eq(demandaEventos.id, input.id))
+        .returning();
+
+      return updated;
+    }),
+
+  marcarFeita: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const evento = await loadEventoById(input.id);
+      if (!evento || evento.deletedAt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evento não encontrado",
+        });
+      }
+
+      if (evento.tipo !== "diligencia") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Apenas diligências podem ser marcadas como feitas",
+        });
+      }
+
+      if (!isAdmin && evento.autorId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o autor do evento pode marcá-lo como feito",
+        });
+      }
+
+      const now = new Date();
+      const [updated] = await db
+        .update(demandaEventos)
+        .set({
+          status: "feita",
+          dataConclusao: now,
+          updatedAt: now,
+        })
+        .where(eq(demandaEventos.id, input.id))
+        .returning();
+
+      return updated;
+    }),
+
+  archive: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user.id;
+      const isAdmin = ctx.user.role === "admin";
+
+      const evento = await loadEventoById(input.id);
+      if (!evento || evento.deletedAt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Evento não encontrado",
+        });
+      }
+
+      if (!isAdmin && evento.autorId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Apenas o autor do evento pode arquivá-lo",
+        });
+      }
+
+      await db
+        .update(demandaEventos)
+        .set({ deletedAt: new Date() })
+        .where(eq(demandaEventos.id, input.id));
+
+      return { ok: true as const, id: input.id };
     }),
 });
