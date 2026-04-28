@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { demandaEventos, atendimentoDemandas } from "@/lib/db/schema/demanda-eventos";
 import { demandas, users } from "@/lib/db/schema/core";
 import { atendimentos } from "@/lib/db/schema/agenda";
-import { and, eq, isNull, desc, sql, notInArray } from "drizzle-orm";
+import { and, eq, isNull, desc, sql, notInArray, or } from "drizzle-orm";
 import {
   createEventoSchema,
   updateEventoSchema,
@@ -215,6 +215,86 @@ export const demandaEventosRouter = router({
         )
         .orderBy(desc(demandaEventos.createdAt))
         .limit(input.limit);
+    }),
+
+  kpisSummary: protectedProcedure
+    .input(
+      z
+        .object({
+          defensorId: z.number().int().positive().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const isAdmin = ctx.user.role === "admin";
+      // Default scope: current user's demandas. Admin can pass explicit defensorId
+      // (or omit to see all demandas).
+      const targetDefensorId: number | null = isAdmin
+        ? (input?.defensorId ?? null)
+        : ctx.user.id;
+
+      // Filtro de escopo via JOIN com demandas:
+      // - se targetDefensorId != null: defensor_id = X OR delegado_para_id = X
+      // - se targetDefensorId == null (admin sem filtro): sem filtro de defensor
+      const defensorFilter =
+        targetDefensorId !== null
+          ? or(
+              eq(demandas.defensorId, targetDefensorId),
+              eq(demandas.delegadoParaId, targetDefensorId),
+            )
+          : undefined;
+
+      const baseEventoFilters = [
+        isNull(demandaEventos.deletedAt),
+        isNull(demandas.deletedAt),
+      ];
+      if (defensorFilter) baseEventoFilters.push(defensorFilter);
+
+      // 1. Diligências pendentes
+      const pendentesRows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(demandaEventos)
+        .innerJoin(demandas, eq(demandas.id, demandaEventos.demandaId))
+        .where(
+          and(
+            ...baseEventoFilters,
+            eq(demandaEventos.tipo, "diligencia"),
+            eq(demandaEventos.status, "pendente"),
+          ),
+        );
+
+      // 2. Diligências vencidas (pendentes com prazo no passado ou hoje)
+      const vencidasRows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(demandaEventos)
+        .innerJoin(demandas, eq(demandas.id, demandaEventos.demandaId))
+        .where(
+          and(
+            ...baseEventoFilters,
+            eq(demandaEventos.tipo, "diligencia"),
+            eq(demandaEventos.status, "pendente"),
+            sql`${demandaEventos.prazo} IS NOT NULL`,
+            sql`${demandaEventos.prazo} <= CURRENT_DATE`,
+          ),
+        );
+
+      // 3. Atividade nos últimos 7 dias (qualquer tipo)
+      const atividade7dRows = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(demandaEventos)
+        .innerJoin(demandas, eq(demandas.id, demandaEventos.demandaId))
+        .where(
+          and(
+            ...baseEventoFilters,
+            sql`${demandaEventos.createdAt} >= NOW() - INTERVAL '7 days'`,
+          ),
+        );
+
+      return {
+        pendentes: Number(pendentesRows[0]?.count ?? 0),
+        vencidas: Number(vencidasRows[0]?.count ?? 0),
+        atividade7d: Number(atividade7dRows[0]?.count ?? 0),
+      };
     }),
 
   create: protectedProcedure
