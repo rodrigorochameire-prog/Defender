@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen, AlertCircle, Scale } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen, AlertCircle, Scale, History } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { HEADER_STYLE, LIST_ITEM } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -40,11 +40,12 @@ import { AnaliseTab } from "./_components/analise-tab";
 import { CasoBar } from "@/components/processo/caso-bar";
 import { AtendimentosTab } from "@/components/atendimentos/atendimentos-tab";
 import { ProcessoTab } from "@/components/processo/ProcessoTab";
+import { AssistidoHistoricoView } from "@/components/assistido/assistido-historico-view";
 // CaseFilter absorbed into header card
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "demandas" | "drive" | "audiencias" | "atendimentos" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar" | "processo";
+type Tab = "demandas" | "drive" | "audiencias" | "atendimentos" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar" | "processo" | "historico";
 
 interface TranscriptionData {
   transcript: string;
@@ -325,6 +326,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "audiencias", label: "Audiências", icon: Calendar, count: data.audiencias.length },
     { key: "processo", label: "Processo", icon: Scale },
     { key: "atendimentos", label: "Atendimentos", icon: ContactRound },
+    { key: "historico", label: "Histórico", icon: History },
     { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
     { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
     { key: "oficios", label: "Ofícios", icon: Send, count: oficiosData?.total ?? 0 },
@@ -804,6 +806,10 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
             assistidoNome={data.nome}
             processos={data.processos.map(p => ({ id: p.id, numeroAutos: p.numeroAutos ?? "" }))}
           />
+        )}
+
+        {tab === "historico" && (
+          <AssistidoHistoricoView assistidoId={Number(id)} />
         )}
 
         {tab === "midias" && (
