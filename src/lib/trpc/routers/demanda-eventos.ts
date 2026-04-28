@@ -263,6 +263,16 @@ export const demandaEventosRouter = router({
         if (input.status === "feita" && !evento.dataConclusao) {
           patch.dataConclusao = new Date();
         }
+        // Diligência pendente exige prazo — invariante consistente com createEventoSchema.
+        if (input.status === "pendente") {
+          const prazoAposPatch = input.prazo !== undefined ? input.prazo : evento.prazo;
+          if (!prazoAposPatch) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Diligência pendente requer prazo",
+            });
+          }
+        }
       }
 
       const [updated] = await db
