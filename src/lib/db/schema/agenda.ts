@@ -136,25 +136,29 @@ export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InsertCalendarEvent = typeof calendarEvents.$inferInsert;
 
 // ==========================================
-// ATENDIMENTOS
+// REGISTROS (antes: atendimentos — renomeado em 2026-04-29)
 // ==========================================
 
-export const atendimentos = pgTable("atendimentos", {
+export const registros = pgTable("registros", {
   id: serial("id").primaryKey(),
   assistidoId: integer("assistido_id")
     .notNull()
     .references(() => assistidos.id, { onDelete: "cascade" }),
   processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
   casoId: integer("caso_id"),
-  dataAtendimento: timestamp("data_atendimento").notNull(),
+  demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
+  audienciaId: integer("audiencia_id").references(() => audiencias.id, { onDelete: "set null" }),
+  dataRegistro: timestamp("data_registro").notNull(),
   duracao: integer("duracao"),
   tipo: varchar("tipo", { length: 30 }).notNull(),
+  titulo: varchar("titulo", { length: 120 }),
   local: text("local"),
   assunto: text("assunto"),
-  resumo: text("resumo"),
+  conteudo: text("conteudo"),
   acompanhantes: text("acompanhantes"),
   status: varchar("status", { length: 20 }).default("agendado"),
   interlocutor: varchar("interlocutor", { length: 30 }).default("assistido"),
+  // Audio/Plaud (preservados — só usados quando tipo='atendimento')
   audioUrl: text("audio_url"),
   audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
   audioMimeType: varchar("audio_mime_type", { length: 50 }),
@@ -189,25 +193,33 @@ export const atendimentos = pgTable("atendimentos", {
     confidence?: number;
   }>(),
   enrichedAt: timestamp("enriched_at"),
-  atendidoPorId: integer("atendido_por_id")
+  autorId: integer("autor_id")
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
-  index("atendimentos_assistido_id_idx").on(table.assistidoId),
-  index("atendimentos_processo_id_idx").on(table.processoId),
-  index("atendimentos_caso_id_idx").on(table.casoId),
-  index("atendimentos_data_idx").on(table.dataAtendimento),
-  index("atendimentos_tipo_idx").on(table.tipo),
-  index("atendimentos_status_idx").on(table.status),
-  index("atendimentos_atendido_por_idx").on(table.atendidoPorId),
-  index("atendimentos_enrichment_status_idx").on(table.enrichmentStatus),
-  index("atendimentos_plaud_recording_id_idx").on(table.plaudRecordingId),
-  index("atendimentos_transcricao_status_idx").on(table.transcricaoStatus),
+  index("registros_assistido_id_idx").on(table.assistidoId),
+  index("registros_processo_id_idx").on(table.processoId),
+  index("registros_caso_id_idx").on(table.casoId),
+  index("registros_demanda_id_idx").on(table.demandaId),
+  index("registros_audiencia_id_idx").on(table.audienciaId),
+  index("registros_data_idx").on(table.dataRegistro),
+  index("registros_tipo_idx").on(table.tipo),
+  index("registros_status_idx").on(table.status),
+  index("registros_autor_idx").on(table.autorId),
+  index("registros_enrichment_status_idx").on(table.enrichmentStatus),
+  index("registros_plaud_recording_id_idx").on(table.plaudRecordingId),
+  index("registros_transcricao_status_idx").on(table.transcricaoStatus),
 ]);
 
-export type Atendimento = typeof atendimentos.$inferSelect;
-export type InsertAtendimento = typeof atendimentos.$inferInsert;
+export type Registro = typeof registros.$inferSelect;
+export type InsertRegistro = typeof registros.$inferInsert;
+
+// Backwards-compat aliases — remover na Task 9 do plano registros-tipados.
+// Mantém referências legadas a `atendimentos` funcionando enquanto Tasks 2-3 migram o resto do código.
+export const atendimentos = registros;
+export type Atendimento = Registro;
+export type InsertAtendimento = InsertRegistro;
 
 // ==========================================
 // TESTEMUNHAS E DEPOIMENTOS
@@ -272,11 +284,16 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
   createdBy: one(users, { fields: [calendarEvents.createdById], references: [users.id] }),
 }));
 
-export const atendimentosRelations = relations(atendimentos, ({ one, many }) => ({
-  assistido: one(assistidos, { fields: [atendimentos.assistidoId], references: [assistidos.id] }),
-  processo: one(processos, { fields: [atendimentos.processoId], references: [processos.id] }),
-  atendidoPor: one(users, { fields: [atendimentos.atendidoPorId], references: [users.id] }),
+export const registrosRelations = relations(registros, ({ one }) => ({
+  assistido: one(assistidos, { fields: [registros.assistidoId], references: [assistidos.id] }),
+  processo: one(processos, { fields: [registros.processoId], references: [processos.id] }),
+  demanda: one(demandas, { fields: [registros.demandaId], references: [demandas.id] }),
+  audiencia: one(audiencias, { fields: [registros.audienciaId], references: [audiencias.id] }),
+  autor: one(users, { fields: [registros.autorId], references: [users.id] }),
 }));
+
+// Backwards-compat alias — remover na Task 9.
+export const atendimentosRelations = registrosRelations;
 
 export const testemunhasRelations = relations(testemunhas, ({ one }) => ({
   processo: one(processos, { fields: [testemunhas.processoId], references: [processos.id] }),
