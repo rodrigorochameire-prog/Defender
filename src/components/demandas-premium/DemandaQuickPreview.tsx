@@ -551,31 +551,29 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
-              Demanda
-            </SheetTitle>
+        {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Demanda</SheetTitle>
           </SheetHeader>
           <div className="flex items-center gap-1">
             {onNavigate && (
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
                   title="Anterior (↑)"
                 >
                   <ChevronUp className="w-3.5 h-3.5" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-white/60 tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
                   title="Próximo (↓)"
                 >
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -584,7 +582,7 @@ export function DemandaQuickPreview({
             )}
             <button
               onClick={() => onOpenChange(false)}
-              className="w-7 h-7 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center ml-1"
+              className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer ml-1"
               title="Fechar (Esc)"
             >
               <X className="w-3.5 h-3.5" />
@@ -594,11 +592,14 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          {/* ===== HERO CARD — branco com outline + accent esquerdo (Padrão Defender) ===== */}
+          <div
+            className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
+            style={{ borderLeftColor: atribuicaoColor }}
+          >
             <div className="flex items-start gap-3.5">
-              {/* Avatar com ring de atribuição */}
-              <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}` }}>
+              {/* Avatar */}
+              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                 <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
@@ -609,7 +610,7 @@ export function DemandaQuickPreview({
                     {demanda.assistido}
                   </h2>
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/60 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
@@ -621,7 +622,7 @@ export function DemandaQuickPreview({
                 {/* Processo — chip */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -639,7 +640,7 @@ export function DemandaQuickPreview({
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver assistido →
                     </Link>
@@ -647,7 +648,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver processo →
                     </Link>
@@ -765,16 +766,18 @@ export function DemandaQuickPreview({
                 Quando demanda.assistidoId está disponível, mostra timeline + botão para
                 criar novo registro com tipoDefault="providencia". */}
             {demanda.assistidoId ? (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
+              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
                 <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
-                  <span className="text-[11px] text-foreground font-semibold">Registros desta demanda</span>
-                  <NovoRegistroButton
-                    assistidoId={demanda.assistidoId}
-                    processoId={demanda.processoId ?? undefined}
-                    demandaId={Number(demanda.id)}
-                    tipoDefault="providencia"
-                    label="Adicionar registro"
-                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold uppercase tracking-wide">Registros</span>
+                    <NovoRegistroButton
+                      assistidoId={demanda.assistidoId}
+                      processoId={demanda.processoId ?? undefined}
+                      demandaId={Number(demanda.id)}
+                      tipoDefault="providencia"
+                      label="Adicionar"
+                    />
+                  </div>
                   <RegistrosTimeline
                     assistidoId={demanda.assistidoId}
                     processoId={demanda.processoId ?? undefined}

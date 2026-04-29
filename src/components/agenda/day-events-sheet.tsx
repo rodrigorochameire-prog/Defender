@@ -180,11 +180,11 @@ export function DayEventsSheet({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          {/* ===== HERO CARD — branco com outline (Padrão Defender) ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800">
             <div className="flex items-start gap-3.5">
               {/* Avatar calendário */}
-              <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 border border-neutral-200/60 dark:border-neutral-600/40 flex flex-col items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center shrink-0">
                 <span className="text-[9px] font-medium text-neutral-500 dark:text-neutral-500 leading-none uppercase">
                   {format(date, "EEE", { locale: ptBR }).replace(".", "")}
                 </span>
@@ -214,7 +214,7 @@ export function DayEventsSheet({
                           className={cn(
                             "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
                             isActive
-                              ? "bg-neutral-200/80 dark:bg-neutral-700"
+                              ? "bg-neutral-100 dark:bg-neutral-800"
                               : "opacity-40 hover:opacity-70",
                           )}
                           style={{ color }}
@@ -224,7 +224,7 @@ export function DayEventsSheet({
                         </button>
                       );
                     })}
-                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-neutral-700/60">
+                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
                     {filteredEventos.length} evento
                     {filteredEventos.length !== 1 ? "s" : ""}
                   </span>

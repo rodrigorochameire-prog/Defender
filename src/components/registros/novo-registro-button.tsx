@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { RegistroEditor } from "./registro-editor";
 import type { TipoRegistro } from "./registro-tipo-config";
 
@@ -30,14 +29,13 @@ export function NovoRegistroButton(props: Props) {
   }
 
   return (
-    <Button
+    <button
+      type="button"
       onClick={() => setOpen(true)}
-      variant="outline"
-      size="sm"
-      className="w-full justify-center gap-1.5 h-9 border-dashed text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+      className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer px-2 py-1 -ml-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
     >
       <Plus className="w-3.5 h-3.5" />
       {props.label ?? "Novo registro"}
-    </Button>
+    </button>
   );
 }

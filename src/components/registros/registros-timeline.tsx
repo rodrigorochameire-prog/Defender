@@ -58,19 +58,19 @@ export function RegistrosTimeline({
 
   return (
     <div className="space-y-3">
-      {/* Filtro por tipo */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      {/* Filtro por tipo — neutro por padrão, accent no ativo */}
+      <div className="flex items-center gap-1 flex-wrap">
         <button
           type="button"
           onClick={() => setFiltroTipo(null)}
           className={cn(
             "text-[11px] px-2 py-1 rounded-md font-medium transition-colors",
             !filtroTipo
-              ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-              : "text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+              ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+              : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200",
           )}
         >
-          Todos ({registros.length})
+          Todos {registros.length > 0 && <span className="opacity-50">· {registros.length}</span>}
         </button>
         {tipos.map((t) => {
           const cfg = REGISTRO_TIPOS[t];
@@ -85,20 +85,14 @@ export function RegistrosTimeline({
               className={cn(
                 "text-[11px] px-2 py-1 rounded-md font-medium transition-colors flex items-center gap-1",
                 isActive
-                  ? "ring-2 ring-offset-1 dark:ring-offset-neutral-900"
-                  : "opacity-70 hover:opacity-100",
-                cfg.bg,
-                cfg.text,
+                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200",
               )}
-              style={
-                isActive
-                  ? ({ ["--tw-ring-color"]: cfg.color } as React.CSSProperties)
-                  : undefined
-              }
+              style={isActive ? { color: cfg.color } : undefined}
             >
               <Icon className="w-3 h-3" />
-              {cfg.shortLabel}
-              {count > 0 && <span className="opacity-60">·{count}</span>}
+              <span className={isActive ? undefined : ""}>{cfg.shortLabel}</span>
+              {count > 0 && <span className="opacity-50">· {count}</span>}
             </button>
           );
         })}
@@ -106,7 +100,7 @@ export function RegistrosTimeline({
 
       {/* Lista */}
       {registros.length === 0 ? (
-        <p className="text-[13px] text-neutral-500 dark:text-neutral-500 italic px-1 py-4">
+        <p className="text-[12px] text-neutral-400 dark:text-neutral-500 px-1 py-3">
           {emptyHint ?? "Nenhum registro ainda."}
         </p>
       ) : (
