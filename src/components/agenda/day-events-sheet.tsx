@@ -53,6 +53,7 @@ interface DayEventsSheetProps {
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
+  onDuplicate?: (evento: any) => void;
 }
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
@@ -117,6 +118,7 @@ export function DayEventsSheet({
   onEditEvento,
   onDeleteEvento,
   onStatusChange,
+  onDuplicate,
 }: DayEventsSheetProps) {
   const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(
     null,
@@ -473,6 +475,28 @@ export function DayEventsSheet({
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-[11px]">
                                 Editar
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+
+                          {onDuplicate && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDuplicate(evento);
+                                  }}
+                                  aria-label="Duplicar"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Duplicar
                               </TooltipContent>
                             </Tooltip>
                           )}

@@ -615,6 +615,18 @@ export default function AgendaPage() {
   const [selectedEvento, setSelectedEvento] = useState<any | null>(null);
   // Quick-create: pre-filled date/time from clicking an empty slot
   const [quickCreateData, setQuickCreateData] = useState<{ data?: string; horarioInicio?: string } | null>(null);
+  // Duplicar: pré-preenche identidade do evento original (sem data/hora/descrição)
+  const [eventoPrefill, setEventoPrefill] = useState<{
+    assistidoId?: number | null;
+    assistido?: string;
+    processoId?: number | null;
+    processo?: string;
+    atribuicao?: string;
+    tipo?: string;
+    local?: string;
+    duracao?: number;
+    titulo?: string;
+  } | null>(null);
 
   // Buscar audiências do banco via tRPC (sem limite para mostrar todos os eventos)
   const { data: audienciasData, isLoading: isLoadingAudiencias, refetch } = trpc.audiencias.list.useQuery();
@@ -1170,6 +1182,25 @@ export default function AgendaPage() {
     // 1 clique → abre Sheet lateral (leitura rápida)
     setSelectedEvento(evento);
     setIsSheetOpen(true);
+  };
+
+  // Duplicar: abre modal de criação pré-preenchido com a identidade do evento.
+  // Data/hora NÃO são copiadas (usuário escolhe ativamente).
+  // Descrição/observações também não são copiadas (são contextuais ao evento original).
+  const handleDuplicateEvento = (evento: any) => {
+    setQuickCreateData(null);
+    setEventoPrefill({
+      assistidoId: evento?.assistidoId ?? evento?.assistido?.id ?? null,
+      assistido: typeof evento?.assistido === "string" ? evento.assistido : evento?.assistido?.nome ?? "",
+      processoId: evento?.processoId ?? evento?.processo?.id ?? null,
+      processo: typeof evento?.processo === "string" ? evento.processo : evento?.processo?.numero ?? "",
+      atribuicao: evento?.atribuicao ?? evento?.atribuicaoKey ?? undefined,
+      tipo: evento?.tipo,
+      local: evento?.local,
+      duracao: evento?.duracao,
+      titulo: evento?.titulo,
+    });
+    setIsCreateModalOpen(true);
   };
 
   // Filtros e ordenação
@@ -1788,6 +1819,7 @@ export default function AgendaPage() {
                 onEditEvento={handleEditEvento}
                 onDeleteEvento={handleDeleteEvento}
                 onStatusChange={handleStatusChange}
+                onDuplicateEvento={handleDuplicateEvento}
                 onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
                 onOpenModal={handleOpenRegistro}
                 headerRight={calendarHeaderRight}
@@ -1975,9 +2007,11 @@ export default function AgendaPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setQuickCreateData(null);
+          setEventoPrefill(null);
         }}
         onSave={handleSaveNewEvento}
         defaultData={quickCreateData}
+        prefill={eventoPrefill}
       />
 
       <EventoCreateModal
@@ -2041,6 +2075,10 @@ export default function AgendaPage() {
         onOpenRegistro={() => {
           setIsSheetOpen(false);
           setIsRegistroModalOpen(true);
+        }}
+        onDuplicate={(evento) => {
+          setIsSheetOpen(false);
+          handleDuplicateEvento(evento);
         }}
       />
 

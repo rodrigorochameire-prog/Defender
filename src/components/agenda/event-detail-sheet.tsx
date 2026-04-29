@@ -64,9 +64,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenRegistro?: () => void;
+  onDuplicate?: (evento: any) => void;
 }
 
-export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }: Props) {
+export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, onDuplicate }: Props) {
   const [copied, setCopied] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
@@ -719,6 +720,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro }:
           audienciaId={audienciaIdNum}
           jaConcluida={jaConcluida}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
+          onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
         />
         <PessoaSheet
           pessoaId={pessoaSheetId}

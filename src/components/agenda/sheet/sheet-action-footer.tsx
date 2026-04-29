@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Check, Send } from "lucide-react";
+import { BookOpen, Check, Copy, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConcluirDialog } from "./concluir-dialog";
 import { RedesignarDialog } from "./redesignar-dialog";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -12,9 +13,10 @@ interface Props {
   audienciaId: number | null;
   jaConcluida: boolean;
   onAbrirRegistroCompleto: () => void;
+  onDuplicar?: () => void;
 }
 
-export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCompleto }: Props) {
+export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCompleto, onDuplicar }: Props) {
   const [quickNote, setQuickNote] = useState("");
   const [concluirOpen, setConcluirOpen] = useState(false);
   const [redesignarOpen, setRedesignarOpen] = useState(false);
@@ -76,6 +78,26 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
           >
             <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Registrar
           </Button>
+          {onDuplicar && (
+            <TooltipProvider delayDuration={250}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-9 px-3 cursor-pointer"
+                    onClick={onDuplicar}
+                    aria-label="Duplicar"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-[11px]">
+                  Duplicar
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
 
