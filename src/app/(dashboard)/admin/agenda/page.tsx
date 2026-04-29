@@ -27,6 +27,7 @@ import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
+import { PrepararAudienciasButton } from "@/components/agenda/preparar-audiencias-button";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
 import { AgendaExportModal } from "@/components/agenda/agenda-export-modal";
 import { PJeAgendaImportModal } from "@/components/agenda/pje-agenda-import-modal";
@@ -1441,37 +1442,26 @@ export default function AgendaPage() {
         </TooltipProvider>,
         headerSlot
       )}
-      {/* ====== CHARCOAL HEADER ====== */}
+      {/* ====== CHARCOAL HEADER (modo merged: utility + page header numa só linha) ====== */}
       <CollapsiblePageHeader
         title="Agenda"
         icon={CalendarIcon}
-        collapsedStats={
-          <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
-              {stats.hoje} hoje
-            </span>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums ml-1">
-              {stats.semana} semana
-            </span>
-          </>
-        }
+        mergeUtilityRow
       >
-        {/* Linha única: título + filtros centrais + cluster de ações */}
+        {/* Linha única: título compacto + filtros centrais + cluster de ações */}
         <div className="flex items-center gap-2.5">
-          {/* Título + stats */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <CalendarIcon className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Agenda</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {stats.hoje} hoje · {stats.semana} semana
-              </p>
-            </div>
+          {/* Título compacto — inline */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <CalendarIcon className="w-4 h-4 text-white/70" />
+            <h1 className="text-white text-[13px] font-semibold tracking-tight leading-none">
+              Agenda
+            </h1>
+            <span className="text-[10px] text-white/55 tabular-nums leading-none">
+              {stats.hoje} · {stats.semana}
+            </span>
           </div>
 
-          <div className="w-px h-7 bg-white/[0.10] shrink-0" />
+          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
           {/* Centro — pills de atribuição (encolhe/scrolla) */}
           <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-dark-subtle">
@@ -1644,6 +1634,7 @@ export default function AgendaPage() {
             >
               <Download className="w-[15px] h-[15px]" />
             </button>
+            <PrepararAudienciasButton variant="dark" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"

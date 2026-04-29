@@ -325,24 +325,23 @@ export function CalendarMonthView({
   return (
     <div className="flex flex-col gap-4 h-full min-h-0">
       {/* ==========================================
-          HEADER DO CALENDÁRIO — linha única compacta
+          HEADER DO CALENDÁRIO — compacto
           ========================================== */}
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-        {/* Month navigation */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => onDateChange(subMonths(currentDate, 1))}
-          className="h-7 w-7 shrink-0"
+          className="h-6 w-6 shrink-0"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-3.5 h-3.5" />
         </Button>
 
-        <div className="flex items-baseline gap-1.5 shrink-0">
-          <h2 className="font-serif text-xl font-semibold text-neutral-900 dark:text-neutral-100 capitalize leading-none">
+        <div className="flex items-baseline gap-1 shrink-0">
+          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-200 capitalize leading-none">
             {format(currentDate, "MMMM", { locale: ptBR })}
           </h2>
-          <span className="text-sm text-neutral-400 dark:text-neutral-500 font-normal tabular-nums">
+          <span className="text-[11px] text-neutral-400 dark:text-neutral-500 font-normal tabular-nums">
             {format(currentDate, "yyyy")}
           </span>
         </div>
@@ -351,26 +350,26 @@ export function CalendarMonthView({
           variant="ghost"
           size="icon"
           onClick={() => onDateChange(addMonths(currentDate, 1))}
-          className="h-7 w-7 shrink-0"
+          className="h-6 w-6 shrink-0"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-3.5 h-3.5" />
         </Button>
 
-        {/* Extra content: stats — hidden on mobile to avoid overlap */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDateChange(new Date())}
+          className="h-6 px-1.5 text-[10px] shrink-0 rounded-md text-neutral-500 hover:text-neutral-700"
+        >
+          Hoje
+        </Button>
+
+        {/* Extra content: stats por período — empurrados pra direita */}
         {headerRight && (
           <div className="hidden sm:flex flex-1 min-w-0 items-center justify-end gap-2">
             {headerRight}
           </div>
         )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onDateChange(new Date())}
-          className="h-6 px-2 text-[10px] shrink-0 rounded-md"
-        >
-          Hoje
-        </Button>
       </div>
 
       {/* ==========================================
