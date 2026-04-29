@@ -160,17 +160,17 @@ export function DayEventsSheet({
         side="right"
         className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
-        {/* ===== STICKY NAV HEADER — Padrão charcoal (combina com event-detail-sheet) ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">
-              Agenda
-            </SheetTitle>
+        <SheetTitle className="sr-only">Agenda do dia</SheetTitle>
+
+        {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Agenda</SheetTitle>
           </SheetHeader>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-            title="Fechar (Esc)"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
+            title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
           </button>
