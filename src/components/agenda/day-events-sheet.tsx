@@ -14,6 +14,7 @@ import {
   XCircle,
   RefreshCw,
   ExternalLink,
+  Maximize2,
   User,
   Scale,
 } from "lucide-react";
@@ -29,6 +30,12 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   getAtribuicaoColors,
   getAtribuicaoIcon,
   normalizeAreaToFilter,
@@ -42,6 +49,7 @@ interface DayEventsSheetProps {
   eventos: any[];
   onClose: () => void;
   onEventClick: (evento: any) => void;
+  onOpenModal?: (evento: any) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
@@ -105,6 +113,7 @@ export function DayEventsSheet({
   eventos,
   onClose,
   onEventClick,
+  onOpenModal,
   onEditEvento,
   onDeleteEvento,
   onStatusChange,
@@ -151,16 +160,16 @@ export function DayEventsSheet({
         side="right"
         className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        {/* ===== STICKY NAV HEADER — Padrão charcoal (combina com event-detail-sheet) ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">
               Agenda
             </SheetTitle>
           </SheetHeader>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
             title="Fechar (Esc)"
           >
             <X className="w-3.5 h-3.5" />
@@ -366,87 +375,131 @@ export function DayEventsSheet({
                         Detalhes
                       </Button>
 
+                      {onOpenModal && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenModal(evento);
+                          }}
+                        >
+                          <Maximize2 className="w-3 h-3" />
+                          <span className="hidden sm:inline">Tela cheia</span>
+                        </Button>
+                      )}
+
                       <span className="flex-1" />
 
-                      {/* SECUNDÁRIAS — só no hover do card */}
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
-                        {!concluido && !cancelado && onStatusChange && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStatusChange(evento.id, "cancelado");
-                              toast.success("Evento cancelado.");
-                            }}
-                            title="Cancelar"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
+                      {/* SECUNDÁRIAS — só no hover do card. Tooltip side="top" evita o
+                          tooltip cobrir os ícones vizinhos. */}
+                      <TooltipProvider delayDuration={250}>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                          {!concluido && !cancelado && onStatusChange && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStatusChange(evento.id, "cancelado");
+                                    toast.success("Evento cancelado.");
+                                  }}
+                                  aria-label="Cancelar"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Cancelar
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
 
-                        {evento.assistidoId && (
-                          <Link
-                            href={`/admin/assistidos/${evento.assistidoId}`}
-                            onClick={(e) => e.stopPropagation()}
-                            title="Ver assistido"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                            >
-                              <User className="w-3.5 h-3.5" />
-                            </Button>
-                          </Link>
-                        )}
+                          {evento.assistidoId && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  href={`/admin/assistidos/${evento.assistidoId}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label="Ver assistido"
+                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
+                                >
+                                  <User className="w-3.5 h-3.5" />
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Ver assistido
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
 
-                        {evento.vinculoDemanda && (
-                          <Link
-                            href={`/admin/demandas/${evento.vinculoDemanda}`}
-                            onClick={(e) => e.stopPropagation()}
-                            title="Ver demanda"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                            >
-                              <Scale className="w-3.5 h-3.5" />
-                            </Button>
-                          </Link>
-                        )}
+                          {evento.vinculoDemanda && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  href={`/admin/demandas/${evento.vinculoDemanda}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label="Ver demanda"
+                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
+                                >
+                                  <Scale className="w-3.5 h-3.5" />
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Ver demanda
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
 
-                        {onEditEvento && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditEvento(evento);
-                            }}
-                            title="Editar"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                        {onDeleteEvento && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteEvento(evento.id);
-                            }}
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
+                          {onEditEvento && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditEvento(evento);
+                                  }}
+                                  aria-label="Editar"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Editar
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+
+                          {onDeleteEvento && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteEvento(evento.id);
+                                  }}
+                                  aria-label="Excluir"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Excluir
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TooltipProvider>
                     </div>
                   </div>
                 );

@@ -53,6 +53,8 @@ interface CalendarMonthViewProps {
   onStatusChange?: (id: string, status: string) => void;
   onArchiveEvento?: (id: string) => void;
   onEventDoubleClick?: (evento: any) => void;
+  /** Abre o modal de detalhes completo (Tela cheia) — opcional, distinto do onEventClick que abre o sheet. */
+  onOpenModal?: (evento: any) => void;
   /** Extra content rendered inline in the header (defensor avatars, stats, etc.) */
   headerRight?: React.ReactNode;
 }
@@ -276,6 +278,7 @@ export function CalendarMonthView({
   onStatusChange,
   onArchiveEvento,
   onEventDoubleClick,
+  onOpenModal,
   headerRight,
 }: CalendarMonthViewProps) {
   const [sheetDate, setSheetDate] = useState<Date | null>(null);
@@ -493,6 +496,7 @@ export function CalendarMonthView({
         eventos={sheetDate ? getEventosForDate(sheetDate) : []}
         onClose={() => setSheetDate(null)}
         onEventClick={onEventClick}
+        onOpenModal={onOpenModal}
         onEditEvento={onEditEvento}
         onDeleteEvento={onDeleteEvento}
         onStatusChange={onStatusChange}
