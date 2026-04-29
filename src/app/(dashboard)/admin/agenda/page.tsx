@@ -1412,7 +1412,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+    <div className="h-[100dvh] flex flex-col bg-neutral-100 dark:bg-[#0f0f11] overflow-hidden">
       {/* G/R/J avatars — portal no header breadcrumb */}
       {headerSlot && createPortal(
         <TooltipProvider delayDuration={200}>
@@ -1683,7 +1683,7 @@ export default function AgendaPage() {
       </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
+      <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3 overflow-y-auto">
 
       {/* ==========================================
           VISUALIZAÇÃO PRINCIPAL
@@ -1809,22 +1809,24 @@ export default function AgendaPage() {
       {!selectedPeriodo && (
         <>
           {viewMode === "calendar" ? (
-            <CalendarMonthView
-              eventos={eventosFiltrados}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              onEventClick={handleEventClick}
-              onDateClick={(date) => {
-                setCurrentDate(date);
-                setViewMode("list");
-              }}
-              onCreateClick={handleMonthQuickCreate}
-              onEditEvento={handleEditEvento}
-              onDeleteEvento={handleDeleteEvento}
-              onStatusChange={handleStatusChange}
-              onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
-              headerRight={calendarHeaderRight}
-            />
+            <div className="flex-1 min-h-0 flex flex-col pb-4">
+              <CalendarMonthView
+                eventos={eventosFiltrados}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onEventClick={handleEventClick}
+                onDateClick={(date) => {
+                  setCurrentDate(date);
+                  setViewMode("list");
+                }}
+                onCreateClick={handleMonthQuickCreate}
+                onEditEvento={handleEditEvento}
+                onDeleteEvento={handleDeleteEvento}
+                onStatusChange={handleStatusChange}
+                onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
+                headerRight={calendarHeaderRight}
+              />
+            </div>
           ) : viewMode === "week" ? (
             <CalendarWeekView
               eventos={eventosFiltrados}

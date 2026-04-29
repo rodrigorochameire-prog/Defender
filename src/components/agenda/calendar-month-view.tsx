@@ -363,7 +363,7 @@ export function CalendarMonthView({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       {/* ==========================================
           HEADER DO CALENDÁRIO — linha única compacta
           ========================================== */}
@@ -416,7 +416,7 @@ export function CalendarMonthView({
       {/* ==========================================
           GRADE DO CALENDÁRIO
           ========================================== */}
-      <Card className="overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <Card className="overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex-1 min-h-0 flex flex-col">
         {/* Cabeçalho - Dias da Semana */}
         <div className="grid grid-cols-7 border-b border-neutral-200 dark:border-neutral-800">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dayName, index) => (
@@ -430,11 +430,11 @@ export function CalendarMonthView({
         </div>
 
         {/* Corpo - Dias do Mês */}
-        <div>
+        <div className="flex-1 min-h-0 grid" style={{ gridTemplateRows: `repeat(${rows.length}, minmax(0, 1fr))` }}>
           {rows.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7"
+              className="grid grid-cols-7 min-h-0"
             >
               {week.map((date, dayIndex) => {
                 const dayEvents = getEventosForDate(date);
@@ -449,7 +449,7 @@ export function CalendarMonthView({
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 transition-all duration-150 cursor-pointer
+                      group relative min-h-0 overflow-hidden p-1 sm:p-2 transition-all duration-150 cursor-pointer flex flex-col
                       border-r border-b border-neutral-100/60 dark:border-neutral-800/40
                       ${isOtherMonth
                         ? "bg-neutral-50/30 dark:bg-neutral-900/20"
@@ -486,7 +486,7 @@ export function CalendarMonthView({
                     </div>
 
                     {/* Lista de Eventos */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
                       {dayEvents.slice(0, 3).map((evento) => (
                         <EventoCompacto
                           key={evento.id}
