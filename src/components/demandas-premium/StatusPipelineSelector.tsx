@@ -38,14 +38,53 @@ export function StatusPipelineSelector({
   // Dropdown position (must be before early returns)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 
+  // Mede o popup depois de renderizado e flipa pra cima se não couber abaixo.
+  // Reage a resize/scroll para reposicionar quando o anchor se mover.
   useEffect(() => {
-    if (variant === "dropdown" && anchorRef?.current) {
-      const rect = anchorRef.current.getBoundingClientRect();
+    if (variant !== "dropdown" || !anchorRef?.current) return;
+
+    const VIEWPORT_PADDING = 8;
+
+    const compute = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const popupHeight = ref.current?.offsetHeight ?? 340; // estimativa pré-render
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      const fitsBelow = spaceBelow >= popupHeight + VIEWPORT_PADDING + 8;
+      const top = fitsBelow
+        ? rect.bottom + 8
+        : // Se também não couber acima, ancorar no topo da viewport com padding
+          Math.max(VIEWPORT_PADDING, rect.top - popupHeight - 8);
+
+      // Se nem acima cabe, garante que o popup não passe da borda inferior.
+      const clampedTop =
+        !fitsBelow && spaceAbove < popupHeight + VIEWPORT_PADDING + 8
+          ? Math.max(
+              VIEWPORT_PADDING,
+              window.innerHeight - popupHeight - VIEWPORT_PADDING,
+            )
+          : top;
+
       setPos({
-        top: rect.bottom + 8,
+        top: clampedTop,
         right: window.innerWidth - rect.right,
       });
-    }
+    };
+
+    // Primeira passada (sem altura real) e segunda passada (com a altura medida)
+    compute();
+    const raf = requestAnimationFrame(compute);
+
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
   }, [variant, anchorRef]);
 
   // Click-outside (not needed for inline)
