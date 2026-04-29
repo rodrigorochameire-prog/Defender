@@ -1789,7 +1789,7 @@ export default function AgendaPage() {
                 onDeleteEvento={handleDeleteEvento}
                 onStatusChange={handleStatusChange}
                 onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
-                onOpenModal={(evento) => { setSelectedEvento(evento); setIsDetailModalOpen(true); }}
+                onOpenModal={handleOpenRegistro}
                 headerRight={calendarHeaderRight}
               />
             </div>
