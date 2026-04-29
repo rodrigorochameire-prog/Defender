@@ -10,6 +10,7 @@ import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, type DemandaParaSync } from "@/lib/services/google-sheets";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 /**
  * Monta o objeto DemandaParaSync buscando dados relacionados.
@@ -51,7 +52,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
     dataExpedicao: row.dataExpedicao,
     ato: row.ato,
     prazo: row.prazo,
-    providencias: "",
+    providencias: await buildProvidenciasCell(row.id),
     assistidoNome: row.assistidoNome ?? "",
     numeroAutos: row.numeroAutos ?? "",
     atribuicao: row.atribuicao ?? "SUBSTITUICAO",
