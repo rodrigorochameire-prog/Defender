@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
+import { extrairTipo } from "@/components/agenda/extrair-tipo";
 import {
   format,
   startOfMonth,
@@ -151,49 +152,6 @@ const detectarAdvogadoConstituido = (titulo: string): boolean => {
   return /^ADV\b/i.test(tipoRaw);
 };
 
-// Extrair tipo de audiência do título, removendo prefixo "ADV"
-const extrairTipoDoTitulo = (titulo: string): string => {
-  const parts = titulo.split(" - ");
-  let tipo = parts[0]?.trim().replace(/^ADV\s*/i, "").trim() || "";
-  // Se o primeiro segmento era só "ADV", tentar o segundo segmento
-  if (!tipo && parts.length >= 3) {
-    tipo = parts[1]?.trim() || "";
-  }
-  // Tentar abreviar o tipo extraído
-  if (tipo) {
-    for (const [chave, abrev] of Object.entries({
-      "Audiência de Instrução e Julgamento": "AIJ",
-      "Instrução e Julgamento": "AIJ",
-      "Audiência de Custódia": "Custódia",
-      "Audiência de Justificação": "Justificação",
-      "Sessão de Julgamento do Tribunal do Júri": "Júri",
-      "Sessão do Tribunal do Júri": "Júri",
-      "Tribunal do Júri": "Júri",
-      "Produção Antecipada de Provas": "PAP",
-      "Acordo de Não Persecução Penal": "ANPP",
-      "Audiência Admonitória": "Admonitória",
-      "Audiência Concentrada": "Concentrada",
-      "Audiência de Conciliação": "Conciliação",
-    })) {
-      if (tipo.includes(chave)) return abrev;
-    }
-  }
-  return tipo || "";
-};
-
-// Mapa de abreviações → nome completo (tipo de audiência)
-const tipoNomeCompleto: Record<string, string> = {
-  "AIJ": "Instrução e Julgamento",
-  "Júri": "Sessão do Tribunal do Júri",
-  "Custódia": "Audiência de Custódia",
-  "Justificação": "Audiência de Justificação",
-  "PAP": "Produção Antecipada de Provas",
-  "ANPP": "Acordo de Não Persecução Penal",
-  "Admonitória": "Audiência Admonitória",
-  "Concentrada": "Audiência Concentrada",
-  "Conciliação": "Audiência de Conciliação",
-};
-
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
   status === "cancelado" || status === "cancelada" ||
@@ -228,9 +186,8 @@ function EventoCompacto({
   // Advogado constituído (detecta prefixo "ADV" no título)
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
 
-  // Tipo de audiência extraído e expandido
-  const tipoAbrev = extrairTipoDoTitulo(evento.titulo);
-  const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
+  // Tipo de audiência extraído (compartilhado com o sheet)
+  const tipoAbrev = extrairTipo(evento.titulo);
 
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;

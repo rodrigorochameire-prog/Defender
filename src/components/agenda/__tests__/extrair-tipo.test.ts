@@ -24,10 +24,13 @@ describe("extrairTipo", () => {
     expect(extrairTipo("Acordo de Não Persecução Penal — Maria")).toBe("ANPP");
   });
 
+  it("preserva abreviações de tipos mapeados (Concentrada/Preliminar)", () => {
+    expect(extrairTipo("AUDIÊNCIA CONCENTRADA — Joao")).toBe("Concentrada");
+    expect(extrairTipo("AUDIÊNCIA PRELIMINAR — Maria")).toBe("Preliminar");
+  });
+
   it("aplica Title Case quando não há sigla mapeada", () => {
-    expect(extrairTipo("AUDIÊNCIA CONCENTRADA — Joao")).toBe(
-      "Audiência Concentrada"
-    );
+    expect(extrairTipo("OITIVA INFORMAL — Joao")).toBe("Oitiva Informal");
   });
 
   it("remove prefixo ADV", () => {

@@ -5,6 +5,7 @@ const tipoAbreviacoes: Record<string, string> = {
   "Instrução e Julgamento": "AIJ",
   "Audiência de Custódia": "Custódia",
   "Audiência de Justificação": "Justificação",
+  "Audiência Concentrada": "Concentrada",
   "Audiência Preliminar": "Preliminar",
   "Audiência de Apresentação": "Apresentação",
   "Audiência de Conciliação": "Conciliação",

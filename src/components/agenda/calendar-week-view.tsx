@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { extrairTipo } from "@/components/agenda/extrair-tipo";
 
 interface CalendarWeekViewProps {
   eventos: any[];
@@ -87,15 +88,6 @@ const COR_EVENTO_CANCELADO = "#a1a1aa";
 const detectarAdvogadoConstituido = (titulo: string): boolean => {
   const tipoRaw = titulo.split(" - ")[0]?.trim() || "";
   return /^ADV\b/i.test(tipoRaw);
-};
-
-// Extrair tipo de audiência do título, removendo prefixo "ADV"
-const extrairTipoDoTitulo = (titulo: string): string => {
-  const parts = titulo.split(" - ");
-  if (parts.length >= 2) {
-    return parts[0].trim().replace(/^ADV\s+/i, "");
-  }
-  return titulo.replace(/^ADV\s+/i, "");
 };
 
 // Mapa de abreviações → nome completo (tipo de audiência)
@@ -136,7 +128,7 @@ function EventoSemana({
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
 
   // Tipo de audiência extraído e expandido
-  const tipoAbrev = extrairTipoDoTitulo(evento.titulo);
+  const tipoAbrev = extrairTipo(evento.titulo);
   const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
   return (
