@@ -537,5 +537,6 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     toggleDepoenteDetails,
     setRegistro,
     audienciaId,
+    assistidoId: assistidoIdNum,
   };
 }
