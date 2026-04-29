@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen, AlertCircle, Scale, History } from "lucide-react";
+import { ArrowLeft, User, ClipboardList, Plus, Sparkles, Pencil, Clock, Send, Calendar, HardDrive, ContactRound, ChevronDown, Brain, MoreHorizontal, FileText, FolderOpen, AlertCircle, Scale, History, NotebookPen } from "lucide-react";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { HEADER_STYLE, LIST_ITEM } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -41,11 +41,13 @@ import { CasoBar } from "@/components/processo/caso-bar";
 import { AtendimentosTab } from "@/components/atendimentos/atendimentos-tab";
 import { ProcessoTab } from "@/components/processo/ProcessoTab";
 import { AssistidoHistoricoView } from "@/components/assistido/assistido-historico-view";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
 // CaseFilter absorbed into header card
 
 const PRESOS = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"] as const;
 
-type Tab = "demandas" | "drive" | "audiencias" | "atendimentos" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar" | "processo" | "historico";
+type Tab = "demandas" | "drive" | "audiencias" | "atendimentos" | "midias" | "timeline" | "oficios" | "analise" | "investigacao" | "radar" | "processo" | "historico" | "registros";
 
 interface TranscriptionData {
   transcript: string;
@@ -326,6 +328,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
     { key: "audiencias", label: "Audiências", icon: Calendar, count: data.audiencias.length },
     { key: "processo", label: "Processo", icon: Scale },
     { key: "atendimentos", label: "Atendimentos", icon: ContactRound },
+    { key: "registros", label: "Registros", icon: NotebookPen },
     { key: "historico", label: "Histórico", icon: History },
     { key: "drive", label: "Drive", icon: HardDrive, count: data.driveFiles.length },
     { key: "midias", label: "Mídias", icon: Clock, count: mediaFiles.length },
@@ -810,6 +813,19 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
 
         {tab === "historico" && (
           <AssistidoHistoricoView assistidoId={Number(id)} />
+        )}
+
+        {tab === "registros" && (
+          <div className="space-y-3">
+            <NovoRegistroButton
+              assistidoId={Number(id)}
+              tipoDefault="atendimento"
+            />
+            <RegistrosTimeline
+              assistidoId={Number(id)}
+              emptyHint="Sem registros para este assistido."
+            />
+          </div>
         )}
 
         {tab === "midias" && (

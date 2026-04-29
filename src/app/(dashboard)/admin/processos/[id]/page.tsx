@@ -19,6 +19,8 @@ import { MedidasTab } from "@/components/processo/medidas-tab";
 import { PessoasTab } from "./_components/pessoas-tab";
 import { CronologiaTab } from "./_components/cronologia-tab";
 import { ProcessoHistoricoView } from "@/components/processo/processo-historico-view";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
 
 export default function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -233,6 +235,27 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         {tab === "historico" && (
           <div className="px-6 py-4">
             <ProcessoHistoricoView processoId={data.id} />
+          </div>
+        )}
+
+        {/* REGISTROS (timeline tipada) */}
+        {tab === "registros" && (
+          <div className="px-6 py-4 space-y-3">
+            {data.assistidos?.[0]?.id ? (
+              <NovoRegistroButton
+                assistidoId={data.assistidos[0].id as number}
+                processoId={data.id}
+                tipoDefault="atendimento"
+              />
+            ) : (
+              <p className="text-[12px] text-neutral-500 italic">
+                Vincule um assistido ao processo para criar registros.
+              </p>
+            )}
+            <RegistrosTimeline
+              processoId={data.id}
+              emptyHint="Sem registros neste processo."
+            />
           </div>
         )}
       </div>

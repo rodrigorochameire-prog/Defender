@@ -59,6 +59,22 @@ interface EventoCreateModalProps {
   editData?: EventoFormData | null;
   /** Pre-fill date and/or time when opening via quick-create (click on empty slot) */
   defaultData?: { data?: string; horarioInicio?: string } | null;
+  /**
+   * Pre-fill identity fields when duplicating an event. Date/hora are NEVER
+   * copied — user must consciously choose. Descrição/observações are NEVER
+   * copied either (contextual to the original event).
+   */
+  prefill?: {
+    assistidoId?: number | null;
+    assistido?: string;
+    processoId?: number | null;
+    processo?: string;
+    atribuicao?: string;
+    tipo?: string;
+    local?: string;
+    duracao?: number;
+    titulo?: string;
+  } | null;
 }
 
 const tipoOptions = [
@@ -114,7 +130,7 @@ const lembreteOptions = [
   { value: "1sem", label: "1 semana antes" },
 ];
 
-export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultData }: EventoCreateModalProps) {
+export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultData, prefill }: EventoCreateModalProps) {
   const isEditMode = !!editData;
 
   const emptyForm: EventoFormData = {
@@ -146,6 +162,21 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
   useEffect(() => {
     if (editData) {
       setFormData(editData);
+    } else if (prefill) {
+      // Duplicar: pré-preenche identidade, mas NUNCA data/hora ou descrição/observações
+      setFormData({
+        ...emptyForm,
+        titulo: prefill.titulo ?? emptyForm.titulo,
+        tipo: prefill.tipo ?? emptyForm.tipo,
+        local: prefill.local ?? emptyForm.local,
+        assistido: prefill.assistido ?? emptyForm.assistido,
+        processo: prefill.processo ?? emptyForm.processo,
+        atribuicao: prefill.atribuicao ?? emptyForm.atribuicao,
+        // data, horarioInicio, horarioFim ficam vazios — usuário escolhe ativamente
+        // descricao, observacoes ficam vazios — contextuais ao evento original
+        data: defaultData?.data || "",
+        horarioInicio: defaultData?.horarioInicio || "",
+      });
     } else {
       setFormData({
         ...emptyForm,
@@ -154,7 +185,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editData, defaultData, isOpen]);
+  }, [editData, defaultData, prefill, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,10 +243,14 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-900">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-            {isEditMode ? "Editar Evento" : "Novo Evento"}
+            {isEditMode ? "Editar Evento" : prefill ? "Duplicar Evento" : "Novo Evento"}
           </DialogTitle>
           <DialogDescription className="text-sm text-neutral-500 dark:text-neutral-400">
-            {isEditMode ? "Atualize os detalhes do evento." : "Crie um novo evento."}
+            {isEditMode
+              ? "Atualize os detalhes do evento."
+              : prefill
+                ? "Confira os dados pré-preenchidos e escolha a nova data/horário."
+                : "Crie um novo evento."}
           </DialogDescription>
         </DialogHeader>
 

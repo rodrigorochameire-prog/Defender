@@ -52,6 +52,7 @@ interface CalendarMonthViewProps {
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
   onArchiveEvento?: (id: string) => void;
+  onDuplicateEvento?: (evento: any) => void;
   onEventDoubleClick?: (evento: any) => void;
   /** Abre o modal de detalhes completo (Tela cheia) — opcional, distinto do onEventClick que abre o sheet. */
   onOpenModal?: (evento: any) => void;
@@ -277,6 +278,7 @@ export function CalendarMonthView({
   onDeleteEvento,
   onStatusChange,
   onArchiveEvento,
+  onDuplicateEvento,
   onEventDoubleClick,
   onOpenModal,
   headerRight,
@@ -499,6 +501,7 @@ export function CalendarMonthView({
         onEditEvento={onEditEvento}
         onDeleteEvento={onDeleteEvento}
         onStatusChange={onStatusChange}
+        onDuplicate={onDuplicateEvento}
       />
     </div>
   );

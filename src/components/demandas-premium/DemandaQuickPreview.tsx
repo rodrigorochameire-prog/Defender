@@ -44,10 +44,9 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
-import { EditableTextInline } from "@/components/shared/editable-text-inline";
-import { AudioRecorderButton } from "@/components/shared/audio-recorder";
-import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -90,7 +89,7 @@ interface DemandaQuickPreviewProps {
   onOpenChange: (open: boolean) => void;
   onStatusChange: (id: string, status: string) => void;
   onAtoChange: (id: string, ato: string) => void;
-  onProvidenciasChange: (id: string, providencias: string) => void;
+  onProvidenciasChange?: (id: string, providencias: string) => void;
   onPrazoChange: (id: string, prazo: string) => void;
   onAtribuicaoChange: (id: string, atribuicao: string) => void;
   onArchive: (id: string) => void;
@@ -390,7 +389,6 @@ export function DemandaQuickPreview({
   onOpenChange,
   onStatusChange,
   onAtoChange,
-  onProvidenciasChange,
   onPrazoChange,
   onAtribuicaoChange,
   onArchive,
@@ -479,64 +477,9 @@ export function DemandaQuickPreview({
     [driveFolder?.folderId, demanda?.id, uploadFile, refetchDriveFolder]
   );
 
-  // Upload audio to assistido's Drive folder
-  const handleAudioUpload = useCallback(
-    async (fileOrBlob: File | Blob, mimeTypeOrName?: string) => {
-      if (!demanda?.assistidoId) return;
-
-      try {
-        // Get assistido's driveFolderId
-        const isFile = fileOrBlob instanceof File;
-        const fileName = isFile
-          ? (fileOrBlob as File).name
-          : `gravacao-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.webm`;
-        const mimeType = isFile
-          ? (fileOrBlob as File).type || "audio/mp4"
-          : mimeTypeOrName || "audio/webm";
-
-        // Convert to base64
-        const arrayBuffer = await fileOrBlob.arrayBuffer();
-        const base64 = btoa(
-          new Uint8Array(arrayBuffer).reduce(
-            (data, byte) => data + String.fromCharCode(byte),
-            ""
-          )
-        );
-
-        // We need the assistido's folder — fetch it
-        const res = await fetch(
-          `/api/trpc/assistidos.getById?batch=1&input=${encodeURIComponent(
-            JSON.stringify({ "0": { json: { id: demanda.assistidoId } } })
-          )}`
-        );
-        const data = await res.json();
-        const folderId = data?.[0]?.result?.data?.json?.driveFolderId;
-
-        if (!folderId) {
-          toast.info("Audio transcrito", {
-            description: "Assistido sem pasta no Drive — audio nao foi salvo.",
-          });
-          return;
-        }
-
-        await uploadFile.mutateAsync({
-          folderId,
-          fileName,
-          mimeType,
-          fileBase64: `data:${mimeType};base64,${base64}`,
-          description: `Audio gravado via OMBUDS — Demanda ${demanda.id}`,
-        });
-
-        toast.success("Audio salvo no Drive", {
-          description: `${fileName} vinculado ao assistido.`,
-        });
-      } catch (err) {
-        console.error("[DemandaQuickPreview] Upload audio error:", err);
-        // Don't show error toast — transcription already succeeded
-      }
-    },
-    [demanda?.assistidoId, demanda?.id, uploadFile]
-  );
+  // Task 6 (registros tipados): handleAudioUpload removido junto com o textarea de
+  // Providências. Áudios agora são tratados pela timeline de registros (tipo=atendimento)
+  // através do RegistroEditor, que oferece o fluxo unificado de áudio + Plaud.
 
   if (!demanda) return null;
 
@@ -817,51 +760,36 @@ export function DemandaQuickPreview({
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Card 1: Providências */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
-              {/* Providências */}
-              <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] text-foreground font-semibold">Providências</span>
-                  <div className="flex items-center gap-0.5">
-                    <AudioRecorderButton
-                      compact
-                      onTranscriptReady={(text) => {
-                        const current = demanda.providencias || "";
-                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
-                      }}
-                      onAudioBlob={(blob, mimeType) => handleAudioUpload(blob, mimeType)}
-                    />
-                    <VoiceMemosButton
-                      compact
-                      onTranscriptReady={(text) => {
-                        const current = demanda.providencias || "";
-                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
-                      }}
-                      onAudioFile={(file) => handleAudioUpload(file)}
-                      assistidoId={demanda.assistidoId}
-                      processoId={demanda.processoId}
-                    />
-                  </div>
+            {/* Card 1: Registros (Task 6 — registros tipados) */}
+            {/* Substitui o textarea legado de "Providências" pela timeline tipada.
+                Quando demanda.assistidoId está disponível, mostra timeline + botão para
+                criar novo registro com tipoDefault="providencia". */}
+            {demanda.assistidoId ? (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
+                <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
+                  <span className="text-[11px] text-foreground font-semibold">Registros desta demanda</span>
+                  <NovoRegistroButton
+                    assistidoId={demanda.assistidoId}
+                    processoId={demanda.processoId ?? undefined}
+                    demandaId={Number(demanda.id)}
+                    tipoDefault="providencia"
+                    label="Adicionar registro"
+                  />
+                  <RegistrosTimeline
+                    assistidoId={demanda.assistidoId}
+                    processoId={demanda.processoId ?? undefined}
+                    demandaId={Number(demanda.id)}
+                    emptyHint="Sem registros nesta demanda."
+                  />
                 </div>
-                <EditableTextInline
-                  value={demanda.providencias || ""}
-                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                  placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[10.5px] leading-[1.7] tracking-[0.015em] text-neutral-500 dark:text-neutral-400 font-[system-ui]"
-                  multiline
-                />
-                {/* Timestamp última edição */}
-                {demanda.updatedAt && (
-                  <div className="flex items-center gap-1 mt-1.5 px-1">
-                    <Clock className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600" />
-                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-                      Editado {new Date(demanda.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                )}
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+                <div className="px-3.5 sm:px-4 py-4 text-[11px] text-muted-foreground italic">
+                  Vincule um assistido para registrar providências e atendimentos.
+                </div>
+              </div>
+            )}
 
             {/* Section divider: Classificação */}
             <div className="flex items-center gap-3 mt-1">

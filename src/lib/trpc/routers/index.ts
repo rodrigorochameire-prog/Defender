@@ -17,6 +17,7 @@ import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
 import { diligenciasRouter } from "./diligencias";
 import { atendimentosRouter } from "./atendimentos";
+import { registrosRouter } from "./registros";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -141,9 +142,14 @@ export const appRouter = router({
   whatsappChat: whatsappChatRouter,
 
   // ==========================================
-  // ATENDIMENTOS (PLAUD INTEGRATION)
+  // ATENDIMENTOS (PLAUD INTEGRATION) — legado, será substituído por `registros`
   // ==========================================
   atendimentos: atendimentosRouter,
+
+  // ==========================================
+  // REGISTROS (diário de bordo tipado: 7 tipos)
+  // ==========================================
+  registros: registrosRouter,
 
   // ==========================================
   // JURISPRUDÊNCIA - BANCO DE JULGADOS

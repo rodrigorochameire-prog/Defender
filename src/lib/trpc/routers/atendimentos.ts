@@ -59,7 +59,7 @@ export const atendimentosRouter = router({
       if (!isAdmin) {
         const parceirosIds = await getParceirosIds(ctx.user.id);
         const defensoresVisiveis = [ctx.user.id, ...parceirosIds];
-        conditions.push(inArray(atendimentos.atendidoPorId, defensoresVisiveis));
+        conditions.push(inArray(atendimentos.autorId, defensoresVisiveis));
       }
 
       if (input.assistidoId) {
@@ -88,10 +88,10 @@ export const atendimentosRouter = router({
         );
       }
       if (input.dateFrom) {
-        conditions.push(sql`${atendimentos.dataAtendimento} >= ${new Date(input.dateFrom)}`);
+        conditions.push(sql`${atendimentos.dataRegistro} >= ${new Date(input.dateFrom)}`);
       }
       if (input.dateTo) {
-        conditions.push(sql`${atendimentos.dataAtendimento} <= ${new Date(input.dateTo)}`);
+        conditions.push(sql`${atendimentos.dataRegistro} <= ${new Date(input.dateTo)}`);
       }
 
       const result = await db
@@ -101,17 +101,17 @@ export const atendimentosRouter = router({
             assistidoId: atendimentos.assistidoId,
             processoId: atendimentos.processoId,
             casoId: atendimentos.casoId,
-            dataAtendimento: atendimentos.dataAtendimento,
+            dataRegistro: atendimentos.dataRegistro,
             duracao: atendimentos.duracao,
             tipo: atendimentos.tipo,
             local: atendimentos.local,
             assunto: atendimentos.assunto,
-            resumo: atendimentos.resumo,
+            resumo: atendimentos.conteudo,
             acompanhantes: atendimentos.acompanhantes,
             status: atendimentos.status,
             enrichmentStatus: atendimentos.enrichmentStatus,
             transcricaoStatus: atendimentos.transcricaoStatus,
-            atendidoPorId: atendimentos.atendidoPorId,
+            autorId: atendimentos.autorId,
             pontosChave: atendimentos.pontosChave,
             plaudRecordingId: atendimentos.plaudRecordingId,
             audioUrl: atendimentos.audioUrl,
@@ -132,9 +132,9 @@ export const atendimentosRouter = router({
         })
         .from(atendimentos)
         .leftJoin(assistidos, eq(atendimentos.assistidoId, assistidos.id))
-        .leftJoin(users, eq(atendimentos.atendidoPorId, users.id))
+        .leftJoin(users, eq(atendimentos.autorId, users.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(atendimentos.dataAtendimento))
+        .orderBy(desc(atendimentos.dataRegistro))
         .limit(input.limit)
         .offset(input.offset);
 
@@ -142,7 +142,7 @@ export const atendimentosRouter = router({
         .select({ count: sql<number>`count(*)::int` })
         .from(atendimentos)
         .leftJoin(assistidos, eq(atendimentos.assistidoId, assistidos.id))
-        .leftJoin(users, eq(atendimentos.atendidoPorId, users.id))
+        .leftJoin(users, eq(atendimentos.autorId, users.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined);
 
       return { items: result, total: countResult?.count ?? 0 };
@@ -178,7 +178,7 @@ export const atendimentosRouter = router({
         .from(atendimentos)
         .leftJoin(assistidos, eq(atendimentos.assistidoId, assistidos.id))
         .leftJoin(processos, eq(atendimentos.processoId, processos.id))
-        .leftJoin(users, eq(atendimentos.atendidoPorId, users.id))
+        .leftJoin(users, eq(atendimentos.autorId, users.id))
         .where(eq(atendimentos.id, input.id))
         .limit(1);
 
@@ -194,11 +194,11 @@ export const atendimentosRouter = router({
         assistidoId: z.number(),
         processoId: z.number().optional(),
         casoId: z.number().optional(),
-        dataAtendimento: z.string().transform((s) => new Date(s)),
+        dataRegistro: z.string().transform((s) => new Date(s)),
         tipo: z.string(),
         local: z.string().optional(),
         assunto: z.string().optional(),
-        resumo: z.string().optional(),
+        conteudo: z.string().optional(),
         duracao: z.number().optional(),
         acompanhantes: z.string().optional(),
         status: z.string().default("agendado"),
@@ -210,7 +210,7 @@ export const atendimentosRouter = router({
         .insert(atendimentos)
         .values({
           ...input,
-          atendidoPorId: ctx.user.id,
+          autorId: ctx.user.id,
         })
         .returning();
 
@@ -236,7 +236,7 @@ export const atendimentosRouter = router({
         assistidoId: z.number().optional(),
         processoId: z.number().optional().nullable(),
         casoId: z.number().optional().nullable(),
-        dataAtendimento: z
+        dataRegistro: z
           .string()
           .transform((s) => new Date(s))
           .optional(),
@@ -244,7 +244,7 @@ export const atendimentosRouter = router({
         tipo: z.string().optional(),
         local: z.string().optional().nullable(),
         assunto: z.string().optional().nullable(),
-        resumo: z.string().optional().nullable(),
+        conteudo: z.string().optional().nullable(),
         status: z.string().optional(),
         acompanhantes: z.string().optional().nullable(),
         interlocutor: z.enum(["assistido", "familiar", "testemunha", "outro"]).optional(),
@@ -404,12 +404,12 @@ export const atendimentosRouter = router({
           assistidoId: input.assistidoId,
           processoId: input.processoId ?? null,
           casoId: input.casoId ?? null,
-          dataAtendimento: new Date(),
+          dataRegistro: new Date(),
           tipo: input.tipo,
           assunto: input.descricao,
           status: "realizado",
           transcricaoStatus: "awaiting_plaud",
-          atendidoPorId: ctx.user.id,
+          autorId: ctx.user.id,
         } as any)
         .returning();
 
@@ -583,7 +583,7 @@ export const atendimentosRouter = router({
         .where(
           and(
             ...(conditions.length > 0 ? conditions : []),
-            sql`${atendimentos.dataAtendimento} >= ${startDate}`
+            sql`${atendimentos.dataRegistro} >= ${startDate}`
           )
         );
 
@@ -614,7 +614,7 @@ export const atendimentosRouter = router({
       return await db
         .select({
           id: atendimentos.id,
-          dataAtendimento: atendimentos.dataAtendimento,
+          dataRegistro: atendimentos.dataRegistro,
           tipo: atendimentos.tipo,
           assunto: atendimentos.assunto,
           status: atendimentos.status,
@@ -622,9 +622,9 @@ export const atendimentosRouter = router({
           atendidoPor: users.name,
         })
         .from(atendimentos)
-        .leftJoin(users, eq(atendimentos.atendidoPorId, users.id))
+        .leftJoin(users, eq(atendimentos.autorId, users.id))
         .where(eq(atendimentos.assistidoId, input.assistidoId))
-        .orderBy(desc(atendimentos.dataAtendimento))
+        .orderBy(desc(atendimentos.dataRegistro))
         .limit(input.limit);
     }),
 
@@ -732,12 +732,12 @@ export const atendimentosRouter = router({
           const [novo] = await tx.insert(atendimentos).values({
             assistidoId: input.assistidoId,
             processoId: input.processoId || null,
-            dataAtendimento: new Date(),
+            dataRegistro: new Date(),
             tipo: input.novoAtendimento.tipo,
             assunto: input.novoAtendimento.descricao || null,
             status: "realizado",
             transcricaoStatus: "completed",
-            atendidoPorId: ctx.user.id,
+            autorId: ctx.user.id,
           } as any).returning();
           atenId = novo.id;
         }

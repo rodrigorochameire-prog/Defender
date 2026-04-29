@@ -1106,22 +1106,13 @@ export default function Demandas() {
     }
   };
 
-  const handleProvidenciasChange = (demandaId: string, providencias: string) => {
-    // Atualizar localmente para feedback imediato
-    setDemandas((prev) =>
-      prev.map((d) => (d.id === demandaId ? { ...d, providencias } : d))
-    );
-
-    // Atualizar no banco (id precisa ser número)
-    const numericId = parseInt(demandaId, 10);
-    if (!isNaN(numericId)) {
-      updateDemandaMutation.mutate({
-        id: numericId,
-        providencias,
-      });
-    }
-
-    toast.success("Providências atualizadas!");
+  // Task 6 (registros tipados): handleProvidenciasChange foi removido.
+  // A edição de providências agora ocorre via timeline de registros (RegistrosTimeline +
+  // NovoRegistroButton com tipoDefault="providencia"). O editor inline antigo foi
+  // desconectado — sub-componentes que aceitam onProvidenciasChange devem receber undefined
+  // ou um stub que orienta o usuário para o painel novo.
+  const handleProvidenciasChangeLegacy = () => {
+    toast.info("Use a timeline de registros para registrar uma providência.");
   };
 
   const handleAssistidoChange = (demandaId: string, nome: string) => {
@@ -2530,7 +2521,6 @@ export default function Demandas() {
                   onDelegate={handleDelegateDirectly}
                   copyToClipboard={copyToClipboard}
                   onAtoChange={handleAtoChange}
-                  onProvidenciasChange={handleProvidenciasChange}
                   onAssistidoChange={handleAssistidoChange}
                   isSelectMode={isSelectMode}
                   selectedIds={selectedIds}
@@ -2582,7 +2572,6 @@ export default function Demandas() {
                             onDelete={handleDeleteDemanda}
                             onDelegate={handleDelegateDirectly}
                             copyToClipboard={copyToClipboard}
-                            onProvidenciasChange={handleProvidenciasChange}
                             onAtribuicaoChange={handleAtribuicaoChange}
                             isSelectMode={isSelectMode}
                             isSelected={selectedIds.has(demanda.id)}
@@ -2601,7 +2590,7 @@ export default function Demandas() {
                   atribuicaoColors={ATRIBUICAO_BORDER_COLORS}
                   onStatusChange={handleStatusChange}
                   onAtoChange={handleAtoChange}
-                  onProvidenciasChange={handleProvidenciasChange}
+                  onProvidenciasChange={handleProvidenciasChangeLegacy}
                   onPrazoChange={handlePrazoChange}
                   onAtribuicaoChange={handleAtribuicaoChange}
                   onAssistidoChange={handleAssistidoChange}
@@ -3111,7 +3100,6 @@ export default function Demandas() {
         onOpenChange={(open) => { if (!open) setPreviewDemandaId(null); }}
         onStatusChange={handleStatusChange}
         onAtoChange={handleAtoChange}
-        onProvidenciasChange={handleProvidenciasChange}
         onPrazoChange={handlePrazoChange}
         onAtribuicaoChange={handleAtribuicaoChange}
         onArchive={handleArchiveDemanda}
