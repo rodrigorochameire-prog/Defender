@@ -732,7 +732,6 @@ export const processosRouter = router({
           data: demandas.dataExpedicao,
           tipo: demandas.tipoAto,
           status: demandas.status,
-          providencias: demandas.providencias,
         })
         .from(demandas)
         .where(and(
@@ -796,7 +795,7 @@ export const processosRouter = router({
           data: new Date(d.data),
           tipo: d.tipo || "demanda",
           categoria: "demanda",
-          titulo: d.providencias || `Demanda - ${d.tipo || "geral"}`,
+          titulo: `Demanda - ${d.tipo || "geral"}`,
           status: d.status || undefined,
         });
       });

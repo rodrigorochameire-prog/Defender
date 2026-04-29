@@ -83,7 +83,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const demandaId = Number(idStr);
       const sheetStatus = String(row[COL.STATUS] ?? "").trim();
       const sheetAto = String(row[COL.ATO] ?? "").trim();
-      const sheetProv = String(row[COL.PROVIDENCIAS] ?? "").trim();
       const sheetAssistido = String(row[COL.ASSISTIDO] ?? "").trim();
 
       // Buscar demanda atual no banco
@@ -92,7 +91,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           status: demandas.status,
           substatus: demandas.substatus,
           ato: demandas.ato,
-          providencias: demandas.providencias,
         })
         .from(demandas)
         .where(eq(demandas.id, demandaId))
@@ -121,11 +119,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         updates.ato = sheetAto;
       }
 
-      // Providências: planilha → banco (só se planilha tem algo e banco está vazio ou diferente)
-      if (sheetProv && sheetProv !== String(current.providencias ?? "")) {
-        changes.push({ demandaId, row: i + 1, assistido: sheetAssistido, field: "providencias", from: String(current.providencias ?? "(vazio)"), to: sheetProv });
-        updates.providencias = sheetProv;
-      }
+      // Providências: coluna foi migrada para tabela "registros". Não importar da planilha.
 
       // Aplicar se modo = apply
       if (mode === "apply" && Object.keys(updates).length > 0) {

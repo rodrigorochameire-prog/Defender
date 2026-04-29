@@ -4,7 +4,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { demandas, users } from "./core";
-import { atendimentos } from "./agenda";
+import { registros as atendimentos } from "./agenda";
 
 export const demandaEventoTipoEnum = pgEnum("demanda_evento_tipo", [
   "atendimento",

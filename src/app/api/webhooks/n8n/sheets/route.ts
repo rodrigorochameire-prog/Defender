@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
           prazo: row.prazo || null,
           status: (row.status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
           reuPreso: Boolean(row.reuPreso),
-          providencias: row.providencias || null,
+          // providencias migrada para tabela "registros"
           syncedAt: new Date(),
         });
 

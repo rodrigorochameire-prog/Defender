@@ -26,7 +26,6 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
       dataExpedicao: demandas.dataExpedicao,
       ato: demandas.ato,
       prazo: demandas.prazo,
-      providencias: demandas.providencias,
       defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
@@ -52,7 +51,7 @@ async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | nu
     dataExpedicao: row.dataExpedicao,
     ato: row.ato,
     prazo: row.prazo,
-    providencias: row.providencias,
+    providencias: "",
     assistidoNome: row.assistidoNome ?? "",
     numeroAutos: row.numeroAutos ?? "",
     atribuicao: row.atribuicao ?? "SUBSTITUICAO",
@@ -146,8 +145,6 @@ export const demandasRouter = router({
           status: demandas.status,
           substatus: demandas.substatus,
           prioridade: demandas.prioridade,
-          providencias: demandas.providencias,
-          providenciaResumo: demandas.providenciaResumo,
           reuPreso: demandas.reuPreso,
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
@@ -213,7 +210,6 @@ export const demandasRouter = router({
           status: demandas.status,
           substatus: demandas.substatus,
           prioridade: demandas.prioridade,
-          providencias: demandas.providencias,
           reuPreso: demandas.reuPreso,
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
@@ -409,7 +405,7 @@ export const demandasRouter = router({
         dataExpedicao: z.string().optional(), // YYYY-MM-DD ou DD/MM/YYYY
         dataEntrada: z.string().optional(),
         prazo: z.string().optional(),
-        providencias: z.string().optional(),
+        providencias: z.string().optional(), // ignorado — coluna foi migrada para tabela "registros"
         reuPreso: z.boolean().optional(),
       }),
     )
@@ -561,7 +557,6 @@ export const demandasRouter = router({
           prazo: prazoDB,
           dataEntrada: dataEntradaDB,
           dataExpedicao: dataExpedicaoDB,
-          providencias: input.providencias?.trim() || null,
           reuPreso: input.reuPreso ?? false,
           prioridade: input.reuPreso ? "REU_PRESO" : "NORMAL",
           defensorId: defensorId || ctx.user.id,
@@ -604,7 +599,7 @@ export const demandasRouter = router({
           "7_CIENCIA", "7_SEM_ATUACAO", "URGENTE", "CONCLUIDO", "ARQUIVADO"
         ]).default("5_TRIAGEM"),
         prioridade: z.enum(["BAIXA", "NORMAL", "ALTA", "URGENTE", "REU_PRESO"]).default("NORMAL"),
-        providencias: z.string().optional(),
+        providencias: z.string().optional(), // ignorado — coluna foi migrada para tabela "registros"
         reuPreso: z.boolean().default(false),
       })
     )
@@ -628,10 +623,12 @@ export const demandasRouter = router({
       }
 
       // Demanda é criada vinculada ao defensor responsável
+      // providencias é ignorada — coluna foi migrada para tabela "registros"
+      const { providencias: _ignored, ...inputSemProvidencias } = input;
       const [novaDemanda] = await db
         .insert(demandas)
         .values({
-          ...input,
+          ...inputSemProvidencias,
           prazo: input.prazo || null,
           dataEntrada: input.dataEntrada || null,
           defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
@@ -672,7 +669,7 @@ export const demandasRouter = router({
         ]).optional(),
         substatus: z.string().max(50).optional().nullable(),
         prioridade: z.enum(["BAIXA", "NORMAL", "ALTA", "URGENTE", "REU_PRESO"]).optional(),
-        providencias: z.string().optional(),
+        providencias: z.string().optional(), // ignorado — coluna foi migrada para tabela "registros"
         reuPreso: z.boolean().optional(),
         // Atribuição - atualiza o processo vinculado
         atribuicao: z.enum([
@@ -689,7 +686,7 @@ export const demandasRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, atribuicao, assistidoNome, processoNumero, assistidoId: newAssistidoId, processoId: newProcessoId, ...data } = input;
+      const { id, atribuicao, assistidoNome, processoNumero, assistidoId: newAssistidoId, processoId: newProcessoId, providencias: _providenciasIgnored, ...data } = input;
       const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
 
       // TODO: replace with strict Drizzle insert type once all optional fields are mapped
@@ -734,7 +731,7 @@ export const demandasRouter = router({
         const changes = diffFields(
           anterior as unknown as Record<string, unknown>,
           data as Record<string, unknown>,
-          ["status", "prioridade", "ato", "providencias", "reuPreso", "substatus"]
+          ["status", "prioridade", "ato", "reuPreso", "substatus"]
         );
         const isStatusChange = data.status && data.status !== anterior.status;
         logAudit({
@@ -958,7 +955,7 @@ export const demandasRouter = router({
             dataInclusao: z.string().optional(),
             status: z.string().optional(),
             estadoPrisional: z.string().optional(),
-            providencias: z.string().optional(),
+            providencias: z.string().optional(), // ignorado — coluna foi migrada para tabela "registros"
             atribuicao: z.string().optional(),
             // Rastreamento de importação
             importBatchId: z.string().optional(), // UUID do lote de importação
@@ -1353,7 +1350,6 @@ export const demandasRouter = router({
                   substatus: substatus,
                   prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
                   reuPreso,
-                  providencias: row.providencias || null,
                   updatedAt: new Date(),
                   syncedAt: new Date(),
                 })
@@ -1401,7 +1397,6 @@ export const demandasRouter = router({
             substatus: substatus, // Status granular preservado
             prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
             reuPreso,
-            providencias: row.providencias || null,
             defensorId: defensorId || ctx.user.id,
             importBatchId: row.importBatchId || null,
             ordemOriginal: row.ordemOriginal ?? null,
@@ -1692,7 +1687,6 @@ export const demandasRouter = router({
           ato: demandas.ato,
           dataEntrada: demandas.dataEntrada,
           prazo: demandas.prazo,
-          providencias: demandas.providencias,
           reuPreso: demandas.reuPreso,
           prioridade: demandas.prioridade,
           createdAt: demandas.createdAt,
@@ -1888,7 +1882,6 @@ export const demandasRouter = router({
           dataEntrada: demandas.dataEntrada,
           status: demandas.status,
           substatus: demandas.substatus,
-          providencias: demandas.providencias,
           processo: {
             numeroAutos: processos.numeroAutos,
             atribuicao: processos.atribuicao,
@@ -1955,7 +1948,7 @@ export const demandasRouter = router({
         r.ato || "",
         formatDate(r.prazo),
         formatDate(r.dataEntrada),
-        r.providencias || "",
+        "",
         ATRIBUICAO_LABELS[r.processo?.atribuicao ?? ""] || r.processo?.atribuicao || "",
       ]);
 

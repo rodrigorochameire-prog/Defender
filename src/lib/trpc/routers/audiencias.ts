@@ -3,7 +3,7 @@ import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, audienciasHistorico, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
 import { analysisJobs } from "@/lib/db/schema/core";
-import { atendimentos } from "@/lib/db/schema/agenda";
+import { registros as atendimentos } from "@/lib/db/schema/agenda";
 import { diligencias, anotacoes } from "@/lib/db/schema/investigacao";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
 import { addDays } from "date-fns";

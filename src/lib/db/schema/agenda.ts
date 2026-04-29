@@ -215,12 +215,6 @@ export const registros = pgTable("registros", {
 export type Registro = typeof registros.$inferSelect;
 export type InsertRegistro = typeof registros.$inferInsert;
 
-// Backwards-compat aliases — remover na Task 9 do plano registros-tipados.
-// Mantém referências legadas a `atendimentos` funcionando enquanto Tasks 2-3 migram o resto do código.
-export const atendimentos = registros;
-export type Atendimento = Registro;
-export type InsertAtendimento = InsertRegistro;
-
 // ==========================================
 // TESTEMUNHAS E DEPOIMENTOS
 // ==========================================
@@ -291,9 +285,6 @@ export const registrosRelations = relations(registros, ({ one }) => ({
   audiencia: one(audiencias, { fields: [registros.audienciaId], references: [audiencias.id] }),
   autor: one(users, { fields: [registros.autorId], references: [users.id] }),
 }));
-
-// Backwards-compat alias — remover na Task 9.
-export const atendimentosRelations = registrosRelations;
 
 export const testemunhasRelations = relations(testemunhas, ({ one }) => ({
   processo: one(processos, { fields: [testemunhas.processoId], references: [processos.id] }),

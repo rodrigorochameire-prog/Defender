@@ -184,7 +184,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         prazo: parseDateValue(body.prazo ?? "") ?? undefined,
         dataEntrada: parseDateValue(body.dataEntrada ?? "") ?? undefined,
         reuPreso,
-        providencias: body.providencias?.trim() || undefined,
+        // providencias migrada para tabela "registros"
         defensorId,
         syncedAt: new Date(),
       })

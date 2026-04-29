@@ -196,7 +196,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
   };
 
   const handleEditProvidencias = () => {
-    setProvidenciasText(demanda.providencias || "");
+    setProvidenciasText("");
     setEditingProvidencias(true);
   };
 
@@ -601,10 +601,6 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               </Button>
             </div>
           </div>
-        ) : demanda.providencias ? (
-          <p className="text-sm text-neutral-900 dark:text-neutral-100 whitespace-pre-wrap leading-relaxed">
-            {demanda.providencias}
-          </p>
         ) : (
           <button
             onClick={handleEditProvidencias}

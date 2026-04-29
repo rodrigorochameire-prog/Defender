@@ -25,7 +25,7 @@ const CAMPO_MAP: Record<string, string> = {
   autos: "numeroAutos",       // tratamento especial
   ato: "ato",
   prazo: "prazo",
-  providencias: "providencias",
+  // providencias: removida — coluna foi migrada para tabela "registros"
   delegadoPara: "delegadoPara", // tratamento especial
 };
 
@@ -117,7 +117,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       substatus: demandas.substatus,
       ato: demandas.ato,
       prazo: demandas.prazo,
-      providencias: demandas.providencias,
     })
     .from(demandas)
     .leftJoin(processos, eq(demandas.processoId, processos.id))
@@ -150,8 +149,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       valorBancoAtual = statusParaLabel(demanda.status, demanda.substatus);
     } else if (campoDb === "ato") {
       valorBancoAtual = demanda.ato ?? "";
-    } else if (campoDb === "providencias") {
-      valorBancoAtual = demanda.providencias ?? "";
     } else if (campoDb === "prazo") {
       valorBancoAtual = demanda.prazo ?? "";
     }
@@ -219,14 +216,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         await db
           .update(demandas)
           .set({ ato: valorStr || undefined, updatedAt: new Date() })
-          .where(eq(demandas.id, demandaId));
-        break;
-      }
-
-      case "providencias": {
-        await db
-          .update(demandas)
-          .set({ providencias: valorStr || undefined, updatedAt: new Date() })
           .where(eq(demandas.id, demandaId));
         break;
       }

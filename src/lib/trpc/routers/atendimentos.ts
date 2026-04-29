@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import {
-  atendimentos,
+  registros as atendimentos,
   assistidos,
   processos,
   assistidosProcessos,
