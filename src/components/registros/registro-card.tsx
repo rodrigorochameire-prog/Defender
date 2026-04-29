@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Edit3, Trash2, Mic } from "lucide-react";
 import { RegistroTipoChip } from "./registro-tipo-chip";
-import type { TipoRegistro } from "./registro-tipo-config";
+import { REGISTRO_TIPOS, type TipoRegistro } from "./registro-tipo-config";
 
 export interface RegistroCardData {
   id: number;
@@ -29,11 +29,15 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
       ? new Date(registro.dataRegistro)
       : registro.dataRegistro;
   const hasAudio = !!registro.audioUrl;
+  const tipoColor = REGISTRO_TIPOS[registro.tipo]?.color ?? "#a1a1aa";
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3.5 space-y-2 group">
+    <div
+      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px] px-3.5 py-3 space-y-1.5 group"
+      style={{ borderLeftColor: tipoColor }}
+    >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           <RegistroTipoChip tipo={registro.tipo} />
           {hasAudio && (
             <Mic
@@ -45,32 +49,32 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
             {format(data, "dd 'de' MMM, HH:mm", { locale: ptBR })}
           </span>
           {registro.autor?.name && (
-            <span className="text-[11px] text-neutral-500 dark:text-neutral-500">
+            <span className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate">
               · {registro.autor.name}
             </span>
           )}
         </div>
-        <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex gap-1">
+        <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex gap-0.5 shrink-0">
           {onEdit && (
             <button
               type="button"
               onClick={() => onEdit(registro.id)}
-              className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
               title="Editar"
               aria-label="Editar registro"
             >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-500" />
+              <Edit3 className="w-3.5 h-3.5 text-neutral-400" />
             </button>
           )}
           {onDelete && (
             <button
               type="button"
               onClick={() => onDelete(registro.id)}
-              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40"
+              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
               title="Excluir"
               aria-label="Excluir registro"
             >
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-red-500" />
             </button>
           )}
         </div>
