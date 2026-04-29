@@ -4,14 +4,10 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   X,
-  MapPin,
   FileText,
-  Clock,
   Calendar as CalendarIcon,
   Edit3,
   Trash2,
-  ChevronDown,
-  ChevronRight,
   Copy,
   Check,
   CheckCircle2,
@@ -20,7 +16,6 @@ import {
   ExternalLink,
   User,
   Scale,
-  StickyNote,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
@@ -102,7 +97,6 @@ export function DayEventsSheet({
   onDeleteEvento,
   onStatusChange,
 }: DayEventsSheetProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(null);
 
   const sortedEventos = [...eventos].sort((a, b) =>
@@ -211,261 +205,215 @@ export function DayEventsSheet({
               </div>
             ) : (
               filteredEventos.map((evento) => {
-                const cancelado = isEventoCancelado(evento.status);
-                const isExpanded = expandedId === evento.id;
-                const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
-                const solidColor = cancelado ? "#a1a1aa" : (colors as any).color || "#71717a";
-                const tipo = extrairTipo(evento.titulo);
-                const assistidoNome = evento.assistido || "";
-                const processo = evento.processo || "";
+  const cancelado = isEventoCancelado(evento.status);
+  const concluido = evento.status === "concluido";
+  const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
+  const solidColor = cancelado ? "#a1a1aa" : (colors as any).color || "#71717a";
+  const tipo = extrairTipo(evento.titulo);
+  const assistidoNome = evento.assistido || "";
+  const processo = evento.processo || "";
 
-                return (
-                  <div
-                    key={evento.id}
-                    className={cn(
-                      "rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200 group",
-                      cancelado ? "opacity-50" : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80"
-                    )}
-                  >
-                    {/* Row */}
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : evento.id)}
-                      className="w-full text-left flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
-                    >
-                      {/* Color dot */}
-                      <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: solidColor }}
-                      />
+  return (
+    <div
+      key={evento.id}
+      className={cn(
+        "group rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200",
+        cancelado
+          ? "opacity-60"
+          : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80"
+      )}
+    >
+      {/* Linha principal: dot + tipo/assistido/processo */}
+      <div className="flex items-start gap-3 px-3.5 pt-3">
+        <div
+          className="w-2 h-2 rounded-full shrink-0 mt-1.5"
+          style={{ backgroundColor: solidColor }}
+        />
 
-                      <div className="flex-1 min-w-0">
-                        {/* Linha 1: Horário + Tipo */}
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-sm font-bold tabular-nums shrink-0",
-                            cancelado ? "text-neutral-400 line-through" : "text-neutral-800 dark:text-neutral-200"
-                          )}>
-                            {evento.horarioInicio || "--:--"}
-                          </span>
-                          <span
-                            className={cn(
-                              "text-xs font-medium shrink-0",
-                              cancelado ? "text-neutral-400" : ""
-                            )}
-                            style={cancelado ? undefined : { color: solidColor }}
-                          >
-                            {tipo}
-                          </span>
-                          {cancelado && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
-                              {evento.status}
-                            </span>
-                          )}
-                        </div>
+        <div className="flex-1 min-w-0">
+          {/* Linha 1: hora + tipo */}
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "text-sm font-bold tabular-nums shrink-0",
+                cancelado
+                  ? "text-neutral-400 line-through"
+                  : "text-neutral-800 dark:text-neutral-200"
+              )}
+            >
+              {evento.horarioInicio || "--:--"}
+            </span>
+            <span
+              className={cn(
+                "text-xs font-medium shrink-0 truncate",
+                cancelado ? "text-neutral-400" : ""
+              )}
+              style={cancelado ? undefined : { color: solidColor }}
+            >
+              {tipo}
+            </span>
+            {cancelado && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
+                {evento.status}
+              </span>
+            )}
+          </div>
 
-                        {/* Linha 2: Nome do assistido */}
-                        {assistidoNome && (
-                          <p className={cn(
-                            "text-[13px] font-medium truncate mt-0.5",
-                            cancelado ? "text-neutral-400 line-through" : "text-neutral-700 dark:text-neutral-300"
-                          )}>
-                            {assistidoNome}
-                          </p>
-                        )}
+          {/* Linha 2: nome do assistido */}
+          {assistidoNome && (
+            <p
+              className={cn(
+                "text-[13px] font-medium truncate mt-0.5",
+                cancelado
+                  ? "text-neutral-400 line-through"
+                  : "text-neutral-700 dark:text-neutral-300"
+              )}
+            >
+              {assistidoNome}
+            </p>
+          )}
 
-                        {/* Linha 3: Processo (com botão copiar) */}
-                        {processo && (
-                          <ProcessoCopyRow processo={processo} cancelado={cancelado} />
-                        )}
-                      </div>
+          {/* Linha 3: processo */}
+          {processo && <ProcessoCopyRow processo={processo} cancelado={cancelado} />}
+        </div>
+      </div>
 
-                      {/* Expand indicator */}
-                      <div className="shrink-0">
-                        {isExpanded ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-400" />
-                        )}
-                      </div>
-                    </button>
+      {/* Faixa de ações */}
+      <div className="mt-2 px-3 pb-2 pt-1.5 border-t border-neutral-100/80 dark:border-neutral-800/40 flex items-center gap-1">
+        {/* PRIMÁRIAS — sempre visíveis */}
+        {concluido ? (
+          <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-2">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Realizado
+          </span>
+        ) : cancelado ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStatusChange?.(evento.id, "confirmado");
+              toast.success("Evento restaurado!");
+            }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Restaurar
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStatusChange?.(evento.id, "concluido");
+              toast.success("Marcado como realizado!");
+            }}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Realizado
+          </Button>
+        )}
 
-                    {/* Expanded details */}
-                    {isExpanded && (
-                      <div className="bg-neutral-50/60 dark:bg-neutral-800/20 px-4 py-3 border-t border-neutral-100/80 dark:border-neutral-800/40 space-y-2.5">
-                        {/* Info rows */}
-                        {evento.local && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{evento.local}</span>
-                          </div>
-                        )}
-                        {evento.atribuicao && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            {(() => {
-                              const Icon = getAtribuicaoIcon(evento.atribuicaoKey || evento.atribuicao);
-                              return <Icon className="w-3.5 h-3.5 shrink-0" />;
-                            })()}
-                            <span>{evento.atribuicao}</span>
-                          </div>
-                        )}
-                        {evento.horarioFim && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                            <span>{evento.horarioInicio} — {evento.horarioFim}</span>
-                          </div>
-                        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEventClick(evento);
+          }}
+        >
+          <ExternalLink className="w-3 h-3" />
+          Detalhes
+        </Button>
 
-                        {/* Observações */}
-                        {evento.observacoes && (
-                          <div className="flex items-start gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{evento.observacoes}</span>
-                          </div>
-                        )}
+        <span className="flex-1" />
 
-                        {/* Status quick-change */}
-                        {onStatusChange && (
-                          <div className="flex items-center gap-1 pt-0.5">
-                            {!cancelado && evento.status !== "concluido" && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onStatusChange(evento.id, "concluido");
-                                    toast.success("Marcado como realizado!");
-                                  }}
-                                >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Realizado
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer gap-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onStatusChange(evento.id, "cancelado");
-                                    toast.success("Evento cancelado.");
-                                  }}
-                                >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                  Cancelar
-                                </Button>
-                              </>
-                            )}
-                            {cancelado && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onStatusChange(evento.id, "confirmado");
-                                  toast.success("Evento restaurado!");
-                                }}
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Restaurar
-                              </Button>
-                            )}
-                            {evento.status === "concluido" && (
-                              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Realizado
-                              </span>
-                            )}
-                          </div>
-                        )}
+        {/* SECUNDÁRIAS — só no hover do card */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          {!concluido && !cancelado && onStatusChange && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(evento.id, "cancelado");
+                toast.success("Evento cancelado.");
+              }}
+              title="Cancelar"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+            </Button>
+          )}
 
-                        {/* Separator */}
-                        <div className="h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
+          {evento.assistidoId && (
+            <Link
+              href={`/admin/assistidos/${evento.assistidoId}`}
+              onClick={(e) => e.stopPropagation()}
+              title="Ver assistido"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+              >
+                <User className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          )}
 
-                        {/* Navigation + Actions */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEventClick(evento);
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Detalhes
-                          </Button>
+          {evento.vinculoDemanda && (
+            <Link
+              href={`/admin/demandas/${evento.vinculoDemanda}`}
+              onClick={(e) => e.stopPropagation()}
+              title="Ver demanda"
+            >
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+              >
+                <Scale className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          )}
 
-                          {evento.assistidoId && (
-                            <Link
-                              href={`/admin/assistidos/${evento.assistidoId}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                              >
-                                <User className="w-3 h-3" />
-                                Assistido
-                              </Button>
-                            </Link>
-                          )}
-
-                          {evento.vinculoDemanda && (
-                            <Link
-                              href={`/admin/demandas/${evento.vinculoDemanda}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                              >
-                                <Scale className="w-3 h-3" />
-                                Demanda
-                              </Button>
-                            </Link>
-                          )}
-
-                          <span className="flex-1" />
-
-                          {onEditEvento && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditEvento(evento);
-                              }}
-                              title="Editar"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          {onDeleteEvento && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteEvento(evento.id);
-                              }}
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+          {onEditEvento && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditEvento(evento);
+              }}
+              title="Editar"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          {onDeleteEvento && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteEvento(evento.id);
+              }}
+              title="Excluir"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+})
             )}
           </div>
         </div>
