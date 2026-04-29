@@ -1412,7 +1412,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-neutral-100 dark:bg-[#0f0f11] overflow-hidden">
+    <div className="h-full flex flex-col bg-neutral-100 dark:bg-[#0f0f11] overflow-hidden">
       {/* G/R/J avatars — portal no header breadcrumb */}
       {headerSlot && createPortal(
         <TooltipProvider delayDuration={200}>
@@ -1683,7 +1683,7 @@ export default function AgendaPage() {
       </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3 overflow-y-auto">
+      <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3">
 
       {/* ==========================================
           VISUALIZAÇÃO PRINCIPAL
@@ -1691,7 +1691,7 @@ export default function AgendaPage() {
       
       {/* Visualização detalhada de Hoje/Amanhã */}
       {(selectedPeriodo === "hoje" || selectedPeriodo === "amanha") && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Header do período */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1828,20 +1828,22 @@ export default function AgendaPage() {
               />
             </div>
           ) : viewMode === "week" ? (
-            <CalendarWeekView
-              eventos={eventosFiltrados}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              onEventClick={handleEventClick}
-              onDateClick={(date) => {
-                setCurrentDate(date);
-                setViewMode("list");
-              }}
-              onCreateClick={handleWeekQuickCreate}
-              onEditEvento={handleEditEvento}
-              onDeleteEvento={handleDeleteEvento}
-              headerRight={calendarHeaderRight}
-            />
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <CalendarWeekView
+                eventos={eventosFiltrados}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onEventClick={handleEventClick}
+                onDateClick={(date) => {
+                  setCurrentDate(date);
+                  setViewMode("list");
+                }}
+                onCreateClick={handleWeekQuickCreate}
+                onEditEvento={handleEditEvento}
+                onDeleteEvento={handleDeleteEvento}
+                headerRight={calendarHeaderRight}
+              />
+            </div>
           ) : (
             <Card className="border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               {/* Header da Lista */}
