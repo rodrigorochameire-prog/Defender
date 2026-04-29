@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
+import { usePrepararAudiencias } from "@/hooks/use-preparar-audiencias";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,7 +90,7 @@ function progressIcon(status: ProgressItem["status"]) {
 // ---------------------------------------------------------------------------
 
 export function PrepararAudienciasModal() {
-  const [open, setOpen] = useState(false);
+  const { isOpen: open, setOpen } = usePrepararAudiencias();
   const [phase, setPhase] = useState<Phase>("levantamento");
 
   // Progress state
@@ -472,25 +473,6 @@ export function PrepararAudienciasModal() {
 
   return (
     <>
-      {/* Trigger button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-        onClick={() => handleOpen(true)}
-      >
-        <Target className="mr-1.5 h-4 w-4" />
-        <span className="text-xs">Preparar Audiências</span>
-        {totalPendentes > 0 && (
-          <Badge
-            variant="secondary"
-            className="ml-1.5 bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0"
-          >
-            {totalPendentes}
-          </Badge>
-        )}
-      </Button>
-
       <Dialog open={open} onOpenChange={handleOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

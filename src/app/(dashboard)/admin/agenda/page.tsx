@@ -27,6 +27,7 @@ import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
+import { PrepararAudienciasButton } from "@/components/agenda/preparar-audiencias-button";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
 import { AgendaExportModal } from "@/components/agenda/agenda-export-modal";
 import { PJeAgendaImportModal } from "@/components/agenda/pje-agenda-import-modal";
@@ -1644,6 +1645,7 @@ export default function AgendaPage() {
             >
               <Download className="w-[15px] h-[15px]" />
             </button>
+            <PrepararAudienciasButton variant="dark" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"
