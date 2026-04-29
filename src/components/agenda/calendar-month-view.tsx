@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
+import { extrairTipo } from "@/components/agenda/extrair-tipo";
 import {
   format,
   startOfMonth,
@@ -52,6 +53,8 @@ interface CalendarMonthViewProps {
   onStatusChange?: (id: string, status: string) => void;
   onArchiveEvento?: (id: string) => void;
   onEventDoubleClick?: (evento: any) => void;
+  /** Abre o modal de detalhes completo (Tela cheia) — opcional, distinto do onEventClick que abre o sheet. */
+  onOpenModal?: (evento: any) => void;
   /** Extra content rendered inline in the header (defensor avatars, stats, etc.) */
   headerRight?: React.ReactNode;
 }
@@ -151,49 +154,6 @@ const detectarAdvogadoConstituido = (titulo: string): boolean => {
   return /^ADV\b/i.test(tipoRaw);
 };
 
-// Extrair tipo de audiência do título, removendo prefixo "ADV"
-const extrairTipoDoTitulo = (titulo: string): string => {
-  const parts = titulo.split(" - ");
-  let tipo = parts[0]?.trim().replace(/^ADV\s*/i, "").trim() || "";
-  // Se o primeiro segmento era só "ADV", tentar o segundo segmento
-  if (!tipo && parts.length >= 3) {
-    tipo = parts[1]?.trim() || "";
-  }
-  // Tentar abreviar o tipo extraído
-  if (tipo) {
-    for (const [chave, abrev] of Object.entries({
-      "Audiência de Instrução e Julgamento": "AIJ",
-      "Instrução e Julgamento": "AIJ",
-      "Audiência de Custódia": "Custódia",
-      "Audiência de Justificação": "Justificação",
-      "Sessão de Julgamento do Tribunal do Júri": "Júri",
-      "Sessão do Tribunal do Júri": "Júri",
-      "Tribunal do Júri": "Júri",
-      "Produção Antecipada de Provas": "PAP",
-      "Acordo de Não Persecução Penal": "ANPP",
-      "Audiência Admonitória": "Admonitória",
-      "Audiência Concentrada": "Concentrada",
-      "Audiência de Conciliação": "Conciliação",
-    })) {
-      if (tipo.includes(chave)) return abrev;
-    }
-  }
-  return tipo || "";
-};
-
-// Mapa de abreviações → nome completo (tipo de audiência)
-const tipoNomeCompleto: Record<string, string> = {
-  "AIJ": "Instrução e Julgamento",
-  "Júri": "Sessão do Tribunal do Júri",
-  "Custódia": "Audiência de Custódia",
-  "Justificação": "Audiência de Justificação",
-  "PAP": "Produção Antecipada de Provas",
-  "ANPP": "Acordo de Não Persecução Penal",
-  "Admonitória": "Audiência Admonitória",
-  "Concentrada": "Audiência Concentrada",
-  "Conciliação": "Audiência de Conciliação",
-};
-
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
   status === "cancelado" || status === "cancelada" ||
@@ -228,9 +188,8 @@ function EventoCompacto({
   // Advogado constituído (detecta prefixo "ADV" no título)
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
 
-  // Tipo de audiência extraído e expandido
-  const tipoAbrev = extrairTipoDoTitulo(evento.titulo);
-  const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
+  // Tipo de audiência extraído (compartilhado com o sheet)
+  const tipoAbrev = extrairTipo(evento.titulo);
 
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;
@@ -319,6 +278,7 @@ export function CalendarMonthView({
   onStatusChange,
   onArchiveEvento,
   onEventDoubleClick,
+  onOpenModal,
   headerRight,
 }: CalendarMonthViewProps) {
   const [sheetDate, setSheetDate] = useState<Date | null>(null);
@@ -363,7 +323,7 @@ export function CalendarMonthView({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4 h-full min-h-0">
       {/* ==========================================
           HEADER DO CALENDÁRIO — linha única compacta
           ========================================== */}
@@ -416,7 +376,7 @@ export function CalendarMonthView({
       {/* ==========================================
           GRADE DO CALENDÁRIO
           ========================================== */}
-      <Card className="overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <Card className="overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex-1 min-h-0 flex flex-col">
         {/* Cabeçalho - Dias da Semana */}
         <div className="grid grid-cols-7 border-b border-neutral-200 dark:border-neutral-800">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((dayName, index) => (
@@ -430,11 +390,11 @@ export function CalendarMonthView({
         </div>
 
         {/* Corpo - Dias do Mês */}
-        <div>
+        <div className="flex-1 min-h-0 grid" style={{ gridTemplateRows: `repeat(${rows.length}, minmax(0, 1fr))` }}>
           {rows.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7"
+              className="grid grid-cols-7 min-h-0"
             >
               {week.map((date, dayIndex) => {
                 const dayEvents = getEventosForDate(date);
@@ -449,7 +409,7 @@ export function CalendarMonthView({
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      group relative min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 transition-all duration-150 cursor-pointer
+                      group relative min-h-0 overflow-hidden p-1 sm:p-2 transition-all duration-150 cursor-pointer flex flex-col
                       border-r border-b border-neutral-100/60 dark:border-neutral-800/40
                       ${isOtherMonth
                         ? "bg-neutral-50/30 dark:bg-neutral-900/20"
@@ -486,7 +446,7 @@ export function CalendarMonthView({
                     </div>
 
                     {/* Lista de Eventos */}
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
                       {dayEvents.slice(0, 3).map((evento) => (
                         <EventoCompacto
                           key={evento.id}
@@ -536,6 +496,7 @@ export function CalendarMonthView({
         eventos={sheetDate ? getEventosForDate(sheetDate) : []}
         onClose={() => setSheetDate(null)}
         onEventClick={onEventClick}
+        onOpenModal={onOpenModal}
         onEditEvento={onEditEvento}
         onDeleteEvento={onDeleteEvento}
         onStatusChange={onStatusChange}

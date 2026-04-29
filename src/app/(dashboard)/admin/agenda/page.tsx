@@ -1412,7 +1412,7 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+    <div className="h-full flex flex-col bg-neutral-100 dark:bg-[#0f0f11] overflow-hidden">
       {/* G/R/J avatars — portal no header breadcrumb */}
       {headerSlot && createPortal(
         <TooltipProvider delayDuration={200}>
@@ -1455,11 +1455,26 @@ export default function AgendaPage() {
             </span>
           </>
         }
-        bottomRow={
-          <div className="flex items-center gap-2.5">
-          {/* ========= LEFT GROUP — pills + (opt) month nav — pode encolher ========= */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-            {/* AtribuicaoPills dark variant */}
+      >
+        {/* Linha única: título + filtros centrais + cluster de ações */}
+        <div className="flex items-center gap-2.5">
+          {/* Título + stats */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
+              <CalendarIcon className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Agenda</h1>
+              <p className="text-[10px] text-white/55 tabular-nums">
+                {stats.hoje} hoje · {stats.semana} semana
+              </p>
+            </div>
+          </div>
+
+          <div className="w-px h-7 bg-white/[0.10] shrink-0" />
+
+          {/* Centro — pills de atribuição (encolhe/scrolla) */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-dark-subtle">
             <AtribuicaoPills
               variant="dark"
               options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
@@ -1473,37 +1488,9 @@ export default function AgendaPage() {
               )}
               compact
             />
-
-            {/* Month navigation — só em telas largas (lg+). Na calendar abaixo há nav própria. */}
-            <div className="hidden lg:flex items-center gap-2.5 shrink-0">
-              <div className="w-px h-5 bg-white/[0.10]" />
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-[13px] h-[13px] text-white/70" />
-                </button>
-                <span className="text-[12px] font-semibold text-white min-w-[96px] text-center capitalize tabular-nums">
-                  {format(currentDate, "MMMM yyyy", { locale: ptBR })}
-                </span>
-                <button
-                  onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer"
-                >
-                  <ChevronRight className="w-[13px] h-[13px] text-white/70" />
-                </button>
-                <button
-                  onClick={() => setCurrentDate(new Date())}
-                  className="ml-1 text-[10px] font-semibold text-white/70 bg-white/[0.08] ring-1 ring-white/[0.05] px-2 py-1 rounded-md hover:text-white hover:bg-white/[0.14] transition-colors cursor-pointer"
-                >
-                  Hoje
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* ========= RIGHT CLUSTER — view + busca + filtros — sempre visível ========= */}
+          {/* Direita — view + busca + filtros + ações */}
           <div className="flex items-center gap-1.5 shrink-0">
             <ViewModeDropdown
               options={AGENDA_VIEW_OPTIONS}
@@ -1513,6 +1500,7 @@ export default function AgendaPage() {
             />
 
             <div className="w-px h-5 bg-white/[0.10]" />
+
             {/* Search toggle */}
             {isSearchOpen ? (
               <div className="relative animate-in slide-in-from-right-2 duration-200">
@@ -1543,6 +1531,7 @@ export default function AgendaPage() {
                 <Search className="w-[13px] h-[13px]" />
               </button>
             )}
+
             <div className="relative">
               <button
                 onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
@@ -1622,24 +1611,9 @@ export default function AgendaPage() {
                 </>
               )}
             </div>
-          </div>
-        </div>
-        }
-      >
-        {/* Row 1: Icon + Title + inline stats + actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <CalendarIcon className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Agenda</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {stats.hoje} hoje · {stats.semana} semana
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
+
+            <div className="w-px h-5 bg-white/[0.10]" />
+
             {/* Overflow menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1683,7 +1657,7 @@ export default function AgendaPage() {
       </CollapsiblePageHeader>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
+      <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3">
 
       {/* ==========================================
           VISUALIZAÇÃO PRINCIPAL
@@ -1691,7 +1665,7 @@ export default function AgendaPage() {
       
       {/* Visualização detalhada de Hoje/Amanhã */}
       {(selectedPeriodo === "hoje" || selectedPeriodo === "amanha") && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Header do período */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1809,37 +1783,42 @@ export default function AgendaPage() {
       {!selectedPeriodo && (
         <>
           {viewMode === "calendar" ? (
-            <CalendarMonthView
-              eventos={eventosFiltrados}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              onEventClick={handleEventClick}
-              onDateClick={(date) => {
-                setCurrentDate(date);
-                setViewMode("list");
-              }}
-              onCreateClick={handleMonthQuickCreate}
-              onEditEvento={handleEditEvento}
-              onDeleteEvento={handleDeleteEvento}
-              onStatusChange={handleStatusChange}
-              onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
-              headerRight={calendarHeaderRight}
-            />
+            <div className="flex-1 min-h-0 flex flex-col pb-4">
+              <CalendarMonthView
+                eventos={eventosFiltrados}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onEventClick={handleEventClick}
+                onDateClick={(date) => {
+                  setCurrentDate(date);
+                  setViewMode("list");
+                }}
+                onCreateClick={handleMonthQuickCreate}
+                onEditEvento={handleEditEvento}
+                onDeleteEvento={handleDeleteEvento}
+                onStatusChange={handleStatusChange}
+                onEventDoubleClick={(evento) => { setSelectedEvento(evento); setIsSheetOpen(true); }}
+                onOpenModal={(evento) => { setSelectedEvento(evento); setIsDetailModalOpen(true); }}
+                headerRight={calendarHeaderRight}
+              />
+            </div>
           ) : viewMode === "week" ? (
-            <CalendarWeekView
-              eventos={eventosFiltrados}
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              onEventClick={handleEventClick}
-              onDateClick={(date) => {
-                setCurrentDate(date);
-                setViewMode("list");
-              }}
-              onCreateClick={handleWeekQuickCreate}
-              onEditEvento={handleEditEvento}
-              onDeleteEvento={handleDeleteEvento}
-              headerRight={calendarHeaderRight}
-            />
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <CalendarWeekView
+                eventos={eventosFiltrados}
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                onEventClick={handleEventClick}
+                onDateClick={(date) => {
+                  setCurrentDate(date);
+                  setViewMode("list");
+                }}
+                onCreateClick={handleWeekQuickCreate}
+                onEditEvento={handleEditEvento}
+                onDeleteEvento={handleDeleteEvento}
+                headerRight={calendarHeaderRight}
+              />
+            </div>
           ) : (
             <Card className="border border-neutral-200 dark:border-neutral-800 overflow-hidden">
               {/* Header da Lista */}

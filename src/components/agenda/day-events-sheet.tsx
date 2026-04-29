@@ -4,23 +4,19 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   X,
-  MapPin,
   FileText,
-  Clock,
   Calendar as CalendarIcon,
   Edit3,
   Trash2,
-  ChevronDown,
-  ChevronRight,
   Copy,
   Check,
   CheckCircle2,
   XCircle,
   RefreshCw,
   ExternalLink,
+  Maximize2,
   User,
   Scale,
-  StickyNote,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
@@ -34,11 +30,18 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   getAtribuicaoColors,
   getAtribuicaoIcon,
   normalizeAreaToFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
+import { extrairTipo } from "./extrair-tipo";
 
 interface DayEventsSheetProps {
   isOpen: boolean;
@@ -46,6 +49,7 @@ interface DayEventsSheetProps {
   eventos: any[];
   onClose: () => void;
   onEventClick: (evento: any) => void;
+  onOpenModal?: (evento: any) => void;
   onEditEvento?: (evento: any) => void;
   onDeleteEvento?: (id: string) => void;
   onStatusChange?: (id: string, status: string) => void;
@@ -53,69 +57,31 @@ interface DayEventsSheetProps {
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
-  status === "cancelado" || status === "cancelada" ||
-  status === "remarcado" || status === "redesignado" || status === "reagendada";
+  status === "cancelado" ||
+  status === "cancelada" ||
+  status === "remarcado" ||
+  status === "redesignado" ||
+  status === "reagendada";
 
-// Extrair tipo de audiência do título (sem o nome do assistido)
-const tipoAbreviacoes: Record<string, string> = {
-  "Audiência de Instrução e Julgamento": "AIJ",
-  "Instrução e Julgamento": "AIJ",
-  "Audiência de Custódia": "Custódia",
-  "Audiência de Justificação": "Justificação",
-  "Audiência Preliminar": "Preliminar",
-  "Audiência de Apresentação": "Apresentação",
-  "Audiência Concentrada": "Concentrada",
-  "Audiência de Conciliação": "Conciliação",
-  "Sessão de Julgamento do Tribunal do Júri": "Júri",
-  "Sessão do Tribunal do Júri": "Júri",
-  "Tribunal do Júri": "Júri",
-  "Sessão de Júri": "Júri",
-  "Plenário do Júri": "Júri",
-  "Produção Antecipada de Provas": "PAP",
-  "Acordo de Não Persecução Penal": "ANPP",
-  "Audiência Admonitória": "Admonitória",
-  "Oitiva Especial": "Oitiva Especial",
-  "Audiência de Retratação": "Retratação",
-  "Audiência de Execução": "Execução",
-  "Audiência de Progressão": "Progressão",
-  "Audiência de Livramento": "Livramento",
-  "Audiência de Unificação": "Unificação",
-  "Audiência Adminitória": "Adminitória",
-  "Adminitória": "Adminitória",
-  "Retratação": "Retratação",
-  "Audiência de Medidas Protetivas": "Med. Protetivas",
-  "Medidas Protetivas": "Med. Protetivas",
-  "Audiência": "Audiência",
-  "Atendimento": "Atendimento",
-  "Reunião": "Reunião",
-  "Diligência": "Diligência",
-};
-
-function extrairTipo(titulo: string): string {
-  // Remove prefixo ADV se presente
-  const clean = titulo.replace(/^ADV\s*[-–]\s*/i, "").replace(/^ADV\s+/i, "");
-  // Tenta encontrar tipo no título antes do primeiro " - "
-  const firstSegment = clean.split(/\s*[-–]\s*/)[0]?.trim() || "";
-
-  // Verificar match direto ou parcial
-  if (tipoAbreviacoes[firstSegment]) return tipoAbreviacoes[firstSegment];
-  for (const [chave, abrev] of Object.entries(tipoAbreviacoes)) {
-    if (firstSegment.includes(chave)) return abrev;
-  }
-  // Se o primeiro segmento é muito curto (tipo "AIJ"), retornar como está
-  if (firstSegment.length <= 20) return firstSegment;
-  return firstSegment.substring(0, 20) + "…";
-}
-
-function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado: boolean }) {
+function ProcessoCopyRow({
+  processo,
+  cancelado,
+}: {
+  processo: string;
+  cancelado: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-1.5 mt-0.5 group/processo">
       <FileText className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
-      <span className={cn(
-        "text-[11px] font-mono truncate",
-        cancelado ? "text-neutral-400" : "text-neutral-400 dark:text-neutral-500"
-      )}>
+      <span
+        className={cn(
+          "text-[11px] font-mono truncate",
+          cancelado
+            ? "text-neutral-400"
+            : "text-neutral-400 dark:text-neutral-500",
+        )}
+      >
         {processo}
       </span>
       <span
@@ -131,7 +97,7 @@ function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado:
           "shrink-0 p-0.5 rounded transition-all cursor-pointer",
           copied
             ? "text-emerald-500 opacity-100"
-            : "text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300 opacity-0 group-hover/processo:opacity-100"
+            : "text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300 opacity-0 group-hover/processo:opacity-100",
         )}
         title="Copiar número do processo"
       >
@@ -147,22 +113,26 @@ export function DayEventsSheet({
   eventos,
   onClose,
   onEventClick,
+  onOpenModal,
   onEditEvento,
   onDeleteEvento,
   onStatusChange,
 }: DayEventsSheetProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(null);
+  const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(
+    null,
+  );
 
   const sortedEventos = [...eventos].sort((a, b) =>
-    (a.horarioInicio || "").localeCompare(b.horarioInicio || "")
+    (a.horarioInicio || "").localeCompare(b.horarioInicio || ""),
   );
 
   // Atribuições presentes no dia (deduplicadas por filterKey)
   const dayAtribuicoes = useMemo(() => {
     const seen = new Map<string, { key: string; color: string; Icon: any }>();
     for (const ev of eventos) {
-      const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+      const filterKey = normalizeAreaToFilter(
+        ev.atribuicaoKey || ev.atribuicao,
+      );
       if (filterKey === "all" || seen.has(filterKey)) continue;
       const color = SOLID_COLOR_MAP[filterKey] || "#71717a";
       const Icon = getAtribuicaoIcon(filterKey);
@@ -174,7 +144,9 @@ export function DayEventsSheet({
   // Filtrar por atribuição se ativo
   const filteredEventos = activeAtribFilter
     ? sortedEventos.filter((ev) => {
-        const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+        const filterKey = normalizeAreaToFilter(
+          ev.atribuicaoKey || ev.atribuicao,
+        );
         return filterKey === activeAtribFilter;
       })
     : sortedEventos;
@@ -188,16 +160,16 @@ export function DayEventsSheet({
         side="right"
         className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
+        {/* ===== STICKY NAV HEADER — Padrão charcoal (combina com event-detail-sheet) ===== */}
+        <div className="sticky top-0 z-10 bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">
               Agenda
             </SheetTitle>
           </SheetHeader>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
             title="Fechar (Esc)"
           >
             <X className="w-3.5 h-3.5" />
@@ -219,32 +191,40 @@ export function DayEventsSheet({
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">{dayName}</p>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">
+                  {dayName}
+                </p>
                 <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight capitalize">
                   {dayDate}
                 </h2>
 
                 {/* Filtro de atribuições inline */}
                 <div className="flex items-center gap-1.5 mt-2">
-                  {dayAtribuicoes.length > 1 && dayAtribuicoes.map(({ key, color, Icon }) => {
-                    const isActive = activeAtribFilter === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setActiveAtribFilter(isActive ? null : key)}
-                        className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                          isActive ? "bg-neutral-200/80 dark:bg-neutral-700" : "opacity-40 hover:opacity-70"
-                        )}
-                        style={{ color }}
-                        title={getAtribuicaoColors(key).label}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </button>
-                    );
-                  })}
+                  {dayAtribuicoes.length > 1 &&
+                    dayAtribuicoes.map(({ key, color, Icon }) => {
+                      const isActive = activeAtribFilter === key;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() =>
+                            setActiveAtribFilter(isActive ? null : key)
+                          }
+                          className={cn(
+                            "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                            isActive
+                              ? "bg-neutral-200/80 dark:bg-neutral-700"
+                              : "opacity-40 hover:opacity-70",
+                          )}
+                          style={{ color }}
+                          title={getAtribuicaoColors(key).label}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </button>
+                      );
+                    })}
                   <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-neutral-700/60">
-                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                    {filteredEventos.length} evento
+                    {filteredEventos.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>
@@ -261,9 +241,13 @@ export function DayEventsSheet({
             ) : (
               filteredEventos.map((evento) => {
                 const cancelado = isEventoCancelado(evento.status);
-                const isExpanded = expandedId === evento.id;
-                const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
-                const solidColor = cancelado ? "#a1a1aa" : (colors as any).color || "#71717a";
+                const concluido = evento.status === "concluido";
+                const colors = getAtribuicaoColors(
+                  evento.atribuicaoKey || evento.atribuicao,
+                );
+                const solidColor = cancelado
+                  ? "#a1a1aa"
+                  : (colors as any).color || "#71717a";
                 const tipo = extrairTipo(evento.titulo);
                 const assistidoNome = evento.assistido || "";
                 const processo = evento.processo || "";
@@ -272,36 +256,40 @@ export function DayEventsSheet({
                   <div
                     key={evento.id}
                     className={cn(
-                      "rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-all duration-200 group",
-                      cancelado ? "opacity-50" : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80"
+                      "group rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200",
+                      cancelado
+                        ? "opacity-60"
+                        : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80",
                     )}
                   >
-                    {/* Row */}
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : evento.id)}
-                      className="w-full text-left flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
-                    >
-                      {/* Color dot */}
+                    {/* Linha principal: dot + tipo/assistido/processo */}
+                    <div className="flex items-start gap-3 px-3.5 pt-3">
                       <div
-                        className="w-2 h-2 rounded-full shrink-0"
+                        className="w-2 h-2 rounded-full shrink-0 mt-1.5"
                         style={{ backgroundColor: solidColor }}
                       />
 
                       <div className="flex-1 min-w-0">
-                        {/* Linha 1: Horário + Tipo */}
+                        {/* Linha 1: hora + tipo */}
                         <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-sm font-bold tabular-nums shrink-0",
-                            cancelado ? "text-neutral-400 line-through" : "text-neutral-800 dark:text-neutral-200"
-                          )}>
+                          <span
+                            className={cn(
+                              "text-sm font-bold tabular-nums shrink-0",
+                              cancelado
+                                ? "text-neutral-400 line-through"
+                                : "text-neutral-800 dark:text-neutral-200",
+                            )}
+                          >
                             {evento.horarioInicio || "--:--"}
                           </span>
                           <span
                             className={cn(
-                              "text-xs font-medium shrink-0",
-                              cancelado ? "text-neutral-400" : ""
+                              "text-xs font-medium shrink-0 truncate",
+                              cancelado ? "text-neutral-400" : "",
                             )}
-                            style={cancelado ? undefined : { color: solidColor }}
+                            style={
+                              cancelado ? undefined : { color: solidColor }
+                            }
                           >
                             {tipo}
                           </span>
@@ -312,206 +300,207 @@ export function DayEventsSheet({
                           )}
                         </div>
 
-                        {/* Linha 2: Nome do assistido */}
+                        {/* Linha 2: nome do assistido */}
                         {assistidoNome && (
-                          <p className={cn(
-                            "text-[13px] font-medium truncate mt-0.5",
-                            cancelado ? "text-neutral-400 line-through" : "text-neutral-700 dark:text-neutral-300"
-                          )}>
+                          <p
+                            className={cn(
+                              "text-[13px] font-medium truncate mt-0.5",
+                              cancelado
+                                ? "text-neutral-400 line-through"
+                                : "text-neutral-700 dark:text-neutral-300",
+                            )}
+                          >
                             {assistidoNome}
                           </p>
                         )}
 
-                        {/* Linha 3: Processo (com botão copiar) */}
+                        {/* Linha 3: processo */}
                         {processo && (
-                          <ProcessoCopyRow processo={processo} cancelado={cancelado} />
+                          <ProcessoCopyRow
+                            processo={processo}
+                            cancelado={cancelado}
+                          />
                         )}
                       </div>
+                    </div>
 
-                      {/* Expand indicator */}
-                      <div className="shrink-0">
-                        {isExpanded ? (
-                          <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-400" />
-                        )}
-                      </div>
-                    </button>
+                    {/* Faixa de ações */}
+                    <div className="mt-2 px-3 pb-2 pt-1.5 border-t border-neutral-100/80 dark:border-neutral-800/40 flex items-center gap-1">
+                      {/* PRIMÁRIAS — sempre visíveis */}
+                      {concluido ? (
+                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-2">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Realizado
+                        </span>
+                      ) : cancelado && onStatusChange ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(evento.id, "confirmado");
+                            toast.success("Evento restaurado!");
+                          }}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Restaurar
+                        </Button>
+                      ) : !cancelado && onStatusChange ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(evento.id, "concluido");
+                            toast.success("Marcado como realizado!");
+                          }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Realizado
+                        </Button>
+                      ) : null}
 
-                    {/* Expanded details */}
-                    {isExpanded && (
-                      <div className="bg-neutral-50/60 dark:bg-neutral-800/20 px-4 py-3 border-t border-neutral-100/80 dark:border-neutral-800/40 space-y-2.5">
-                        {/* Info rows */}
-                        {evento.local && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="truncate">{evento.local}</span>
-                          </div>
-                        )}
-                        {evento.atribuicao && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            {(() => {
-                              const Icon = getAtribuicaoIcon(evento.atribuicaoKey || evento.atribuicao);
-                              return <Icon className="w-3.5 h-3.5 shrink-0" />;
-                            })()}
-                            <span>{evento.atribuicao}</span>
-                          </div>
-                        )}
-                        {evento.horarioFim && (
-                          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                            <span>{evento.horarioInicio} — {evento.horarioFim}</span>
-                          </div>
-                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(evento);
+                        }}
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Detalhes
+                      </Button>
 
-                        {/* Observações */}
-                        {evento.observacoes && (
-                          <div className="flex items-start gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                            <StickyNote className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">{evento.observacoes}</span>
-                          </div>
-                        )}
+                      {onOpenModal && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenModal(evento);
+                          }}
+                        >
+                          <Maximize2 className="w-3 h-3" />
+                          <span className="hidden sm:inline">Tela cheia</span>
+                        </Button>
+                      )}
 
-                        {/* Status quick-change */}
-                        {onStatusChange && (
-                          <div className="flex items-center gap-1 pt-0.5">
-                            {!cancelado && evento.status !== "concluido" && (
-                              <>
+                      <span className="flex-1" />
+
+                      {/* SECUNDÁRIAS — só no hover do card. Tooltip side="top" evita o
+                          tooltip cobrir os ícones vizinhos. */}
+                      <TooltipProvider delayDuration={250}>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                          {!concluido && !cancelado && onStatusChange && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onStatusChange(evento.id, "concluido");
-                                    toast.success("Marcado como realizado!");
-                                  }}
-                                >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Realizado
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer gap-1"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onStatusChange(evento.id, "cancelado");
                                     toast.success("Evento cancelado.");
                                   }}
+                                  aria-label="Cancelar"
                                 >
                                   <XCircle className="w-3.5 h-3.5" />
-                                  Cancelar
                                 </Button>
-                              </>
-                            )}
-                            {cancelado && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onStatusChange(evento.id, "confirmado");
-                                  toast.success("Evento restaurado!");
-                                }}
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                Restaurar
-                              </Button>
-                            )}
-                            {evento.status === "concluido" && (
-                              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Realizado
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Separator */}
-                        <div className="h-px bg-neutral-200/40 dark:bg-neutral-800/40" />
-
-                        {/* Navigation + Actions */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEventClick(evento);
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Detalhes
-                          </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Cancelar
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
 
                           {evento.assistidoId && (
-                            <Link
-                              href={`/admin/assistidos/${evento.assistidoId}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                              >
-                                <User className="w-3 h-3" />
-                                Assistido
-                              </Button>
-                            </Link>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  href={`/admin/assistidos/${evento.assistidoId}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label="Ver assistido"
+                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
+                                >
+                                  <User className="w-3.5 h-3.5" />
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Ver assistido
+                              </TooltipContent>
+                            </Tooltip>
                           )}
 
                           {evento.vinculoDemanda && (
-                            <Link
-                              href={`/admin/demandas/${evento.vinculoDemanda}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                              >
-                                <Scale className="w-3 h-3" />
-                                Demanda
-                              </Button>
-                            </Link>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  href={`/admin/demandas/${evento.vinculoDemanda}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  aria-label="Ver demanda"
+                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
+                                >
+                                  <Scale className="w-3.5 h-3.5" />
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Ver demanda
+                              </TooltipContent>
+                            </Tooltip>
                           )}
-
-                          <span className="flex-1" />
 
                           {onEditEvento && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditEvento(evento);
-                              }}
-                              title="Editar"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditEvento(evento);
+                                  }}
+                                  aria-label="Editar"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Editar
+                              </TooltipContent>
+                            </Tooltip>
                           )}
+
                           {onDeleteEvento && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteEvento(evento.id);
-                              }}
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteEvento(evento.id);
+                                  }}
+                                  aria-label="Excluir"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-[11px]">
+                                Excluir
+                              </TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
-                      </div>
-                    )}
+                      </TooltipProvider>
+                    </div>
                   </div>
                 );
               })
