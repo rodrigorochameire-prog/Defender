@@ -9,9 +9,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { demandas, processos, assistidos, users } from "@/lib/db/schema";
+import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
 import { eq, and, isNull, ilike, inArray, asc } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { parseProvidenciasCell, PROVIDENCIAS_MARKER } from "@/lib/services/registros-summary";
 
 // Mapeamento: nome da aba → atribuição do banco
 const SHEET_TO_ATRIBUICAO: Record<string, string> = {
@@ -189,6 +190,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         syncedAt: new Date(),
       })
       .returning({ id: demandas.id });
+
+    // Captura o que o usuário escreveu na coluna Providências como anotação.
+    // Em linha nova, ainda não há marker — todo o texto é input livre. Se
+    // já houver marker (caso raro: usuário copiou de outra linha), extrai só
+    // a parte abaixo. Em ambos os casos o texto vira registro tipo='anotacao'.
+    const provRaw = (body.providencias ?? "").trim();
+    if (provRaw) {
+      const conteudo = provRaw.includes(PROVIDENCIAS_MARKER)
+        ? parseProvidenciasCell(provRaw).userNote
+        : provRaw;
+      if (conteudo) {
+        await db.insert(registros).values({
+          tipo: "anotacao",
+          assistidoId,
+          processoId,
+          demandaId: newDemanda.id,
+          conteudo,
+          dataRegistro: new Date(),
+          autorId: defensorId,
+          status: "realizado",
+          interlocutor: "outro",
+        });
+      }
+    }
 
     triggerReorder(atribuicao, "sheets-create-from-row", newDemanda.id);
 
