@@ -31,6 +31,12 @@ interface CollapsiblePageHeaderProps {
   collapsedStats?: ReactNode;
   /** Extra className for the outer container */
   className?: string;
+  /**
+   * Quando true, funde a utility row e o page header numa barra charcoal única
+   * — sem expand/collapse. Útil em páginas que precisam ganhar altura vertical
+   * (ex.: agenda). `bottomRow` é ignorado nesse modo.
+   */
+  mergeUtilityRow?: boolean;
 }
 
 export function CollapsiblePageHeader({
@@ -42,6 +48,7 @@ export function CollapsiblePageHeader({
   collapsedSearch,
   collapsedStats,
   className,
+  mergeUtilityRow,
 }: CollapsiblePageHeaderProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
@@ -55,8 +62,10 @@ export function CollapsiblePageHeader({
     return () => setHasPageHeader(false);
   }, [setHasPageHeader]);
 
-  // Smooth progressive scroll — interpolate between expanded/collapsed
+  // Smooth progressive scroll — interpolate between expanded/collapsed.
+  // No-op no modo merged (não há transição: barra é sempre compacta).
   useEffect(() => {
+    if (mergeUtilityRow) return;
     const el = outerRef.current;
     const expanded = expandedRef.current;
     const collapsed = collapsedRef.current;
@@ -107,7 +116,53 @@ export function CollapsiblePageHeader({
       scrollTarget.removeEventListener("scroll", handleScroll);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, []);
+  }, [mergeUtilityRow]);
+
+  // Modo "merged": utility row + page header colapsados numa barra única
+  // charcoal. Não tem expand/collapse — sempre compacto.
+  if (mergeUtilityRow) {
+    return (
+      <div
+        ref={outerRef}
+        className={cn(
+          "sticky top-0 z-50 shrink-0",
+          HEADER_STYLE.utilityRow,
+          HEADER_STYLE.shellShadow,
+          className,
+        )}
+      >
+        <div className="flex h-12 items-center px-3 gap-2.5 w-full">
+          {/* Esquerda — sidebar + breadcrumbs + slot de header (avatares de defensores etc.) */}
+          <SidebarTrigger className="h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+          <div className="shrink-0">
+            <Breadcrumbs />
+          </div>
+          <div id="header-slot" className="flex items-center shrink-0" />
+
+          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+
+          {/* Centro — children da página (título, filtros, ações) */}
+          <div className="flex-1 min-w-0">{children}</div>
+
+          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+
+          {/* Direita — utility controls */}
+          <ConflictBadge />
+          <CommandPalette />
+          <ThemeToggle />
+          <NotificationsPopover />
+          <button
+            onClick={() => chatPanelActions.toggle()}
+            title="Assistente OMBUDS"
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
