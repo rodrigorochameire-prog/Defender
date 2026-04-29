@@ -1474,7 +1474,7 @@ export default function AgendaPage() {
           <div className="w-px h-7 bg-white/[0.10] shrink-0" />
 
           {/* Centro — pills de atribuição (encolhe/scrolla) */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-dark-subtle">
             <AtribuicaoPills
               variant="dark"
               options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
