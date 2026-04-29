@@ -49,19 +49,31 @@ interface DayEventsSheetProps {
 
 // Verifica se o evento não ocorrerá (cancelado ou redesignado)
 const isEventoCancelado = (status: string) =>
-  status === "cancelado" || status === "cancelada" ||
-  status === "remarcado" || status === "redesignado" || status === "reagendada";
+  status === "cancelado" ||
+  status === "cancelada" ||
+  status === "remarcado" ||
+  status === "redesignado" ||
+  status === "reagendada";
 
-
-function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado: boolean }) {
+function ProcessoCopyRow({
+  processo,
+  cancelado,
+}: {
+  processo: string;
+  cancelado: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-1.5 mt-0.5 group/processo">
       <FileText className="w-3 h-3 text-neutral-300 dark:text-neutral-600 shrink-0" />
-      <span className={cn(
-        "text-[11px] font-mono truncate",
-        cancelado ? "text-neutral-400" : "text-neutral-400 dark:text-neutral-500"
-      )}>
+      <span
+        className={cn(
+          "text-[11px] font-mono truncate",
+          cancelado
+            ? "text-neutral-400"
+            : "text-neutral-400 dark:text-neutral-500",
+        )}
+      >
         {processo}
       </span>
       <span
@@ -77,7 +89,7 @@ function ProcessoCopyRow({ processo, cancelado }: { processo: string; cancelado:
           "shrink-0 p-0.5 rounded transition-all cursor-pointer",
           copied
             ? "text-emerald-500 opacity-100"
-            : "text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300 opacity-0 group-hover/processo:opacity-100"
+            : "text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300 opacity-0 group-hover/processo:opacity-100",
         )}
         title="Copiar número do processo"
       >
@@ -97,17 +109,21 @@ export function DayEventsSheet({
   onDeleteEvento,
   onStatusChange,
 }: DayEventsSheetProps) {
-  const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(null);
+  const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(
+    null,
+  );
 
   const sortedEventos = [...eventos].sort((a, b) =>
-    (a.horarioInicio || "").localeCompare(b.horarioInicio || "")
+    (a.horarioInicio || "").localeCompare(b.horarioInicio || ""),
   );
 
   // Atribuições presentes no dia (deduplicadas por filterKey)
   const dayAtribuicoes = useMemo(() => {
     const seen = new Map<string, { key: string; color: string; Icon: any }>();
     for (const ev of eventos) {
-      const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+      const filterKey = normalizeAreaToFilter(
+        ev.atribuicaoKey || ev.atribuicao,
+      );
       if (filterKey === "all" || seen.has(filterKey)) continue;
       const color = SOLID_COLOR_MAP[filterKey] || "#71717a";
       const Icon = getAtribuicaoIcon(filterKey);
@@ -119,7 +135,9 @@ export function DayEventsSheet({
   // Filtrar por atribuição se ativo
   const filteredEventos = activeAtribFilter
     ? sortedEventos.filter((ev) => {
-        const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+        const filterKey = normalizeAreaToFilter(
+          ev.atribuicaoKey || ev.atribuicao,
+        );
         return filterKey === activeAtribFilter;
       })
     : sortedEventos;
@@ -164,32 +182,40 @@ export function DayEventsSheet({
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">{dayName}</p>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">
+                  {dayName}
+                </p>
                 <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight capitalize">
                   {dayDate}
                 </h2>
 
                 {/* Filtro de atribuições inline */}
                 <div className="flex items-center gap-1.5 mt-2">
-                  {dayAtribuicoes.length > 1 && dayAtribuicoes.map(({ key, color, Icon }) => {
-                    const isActive = activeAtribFilter === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => setActiveAtribFilter(isActive ? null : key)}
-                        className={cn(
-                          "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                          isActive ? "bg-neutral-200/80 dark:bg-neutral-700" : "opacity-40 hover:opacity-70"
-                        )}
-                        style={{ color }}
-                        title={getAtribuicaoColors(key).label}
-                      >
-                        <Icon className="w-3.5 h-3.5" />
-                      </button>
-                    );
-                  })}
+                  {dayAtribuicoes.length > 1 &&
+                    dayAtribuicoes.map(({ key, color, Icon }) => {
+                      const isActive = activeAtribFilter === key;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() =>
+                            setActiveAtribFilter(isActive ? null : key)
+                          }
+                          className={cn(
+                            "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                            isActive
+                              ? "bg-neutral-200/80 dark:bg-neutral-700"
+                              : "opacity-40 hover:opacity-70",
+                          )}
+                          style={{ color }}
+                          title={getAtribuicaoColors(key).label}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                        </button>
+                      );
+                    })}
                   <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-white/50 dark:bg-neutral-700/60">
-                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                    {filteredEventos.length} evento
+                    {filteredEventos.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>
@@ -205,215 +231,226 @@ export function DayEventsSheet({
               </div>
             ) : (
               filteredEventos.map((evento) => {
-  const cancelado = isEventoCancelado(evento.status);
-  const concluido = evento.status === "concluido";
-  const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
-  const solidColor = cancelado ? "#a1a1aa" : (colors as any).color || "#71717a";
-  const tipo = extrairTipo(evento.titulo);
-  const assistidoNome = evento.assistido || "";
-  const processo = evento.processo || "";
+                const cancelado = isEventoCancelado(evento.status);
+                const concluido = evento.status === "concluido";
+                const colors = getAtribuicaoColors(
+                  evento.atribuicaoKey || evento.atribuicao,
+                );
+                const solidColor = cancelado
+                  ? "#a1a1aa"
+                  : (colors as any).color || "#71717a";
+                const tipo = extrairTipo(evento.titulo);
+                const assistidoNome = evento.assistido || "";
+                const processo = evento.processo || "";
 
-  return (
-    <div
-      key={evento.id}
-      className={cn(
-        "group rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200",
-        cancelado
-          ? "opacity-60"
-          : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80"
-      )}
-    >
-      {/* Linha principal: dot + tipo/assistido/processo */}
-      <div className="flex items-start gap-3 px-3.5 pt-3">
-        <div
-          className="w-2 h-2 rounded-full shrink-0 mt-1.5"
-          style={{ backgroundColor: solidColor }}
-        />
+                return (
+                  <div
+                    key={evento.id}
+                    className={cn(
+                      "group rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200",
+                      cancelado
+                        ? "opacity-60"
+                        : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80",
+                    )}
+                  >
+                    {/* Linha principal: dot + tipo/assistido/processo */}
+                    <div className="flex items-start gap-3 px-3.5 pt-3">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0 mt-1.5"
+                        style={{ backgroundColor: solidColor }}
+                      />
 
-        <div className="flex-1 min-w-0">
-          {/* Linha 1: hora + tipo */}
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "text-sm font-bold tabular-nums shrink-0",
-                cancelado
-                  ? "text-neutral-400 line-through"
-                  : "text-neutral-800 dark:text-neutral-200"
-              )}
-            >
-              {evento.horarioInicio || "--:--"}
-            </span>
-            <span
-              className={cn(
-                "text-xs font-medium shrink-0 truncate",
-                cancelado ? "text-neutral-400" : ""
-              )}
-              style={cancelado ? undefined : { color: solidColor }}
-            >
-              {tipo}
-            </span>
-            {cancelado && (
-              <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
-                {evento.status}
-              </span>
-            )}
-          </div>
+                      <div className="flex-1 min-w-0">
+                        {/* Linha 1: hora + tipo */}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "text-sm font-bold tabular-nums shrink-0",
+                              cancelado
+                                ? "text-neutral-400 line-through"
+                                : "text-neutral-800 dark:text-neutral-200",
+                            )}
+                          >
+                            {evento.horarioInicio || "--:--"}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-xs font-medium shrink-0 truncate",
+                              cancelado ? "text-neutral-400" : "",
+                            )}
+                            style={
+                              cancelado ? undefined : { color: solidColor }
+                            }
+                          >
+                            {tipo}
+                          </span>
+                          {cancelado && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
+                              {evento.status}
+                            </span>
+                          )}
+                        </div>
 
-          {/* Linha 2: nome do assistido */}
-          {assistidoNome && (
-            <p
-              className={cn(
-                "text-[13px] font-medium truncate mt-0.5",
-                cancelado
-                  ? "text-neutral-400 line-through"
-                  : "text-neutral-700 dark:text-neutral-300"
-              )}
-            >
-              {assistidoNome}
-            </p>
-          )}
+                        {/* Linha 2: nome do assistido */}
+                        {assistidoNome && (
+                          <p
+                            className={cn(
+                              "text-[13px] font-medium truncate mt-0.5",
+                              cancelado
+                                ? "text-neutral-400 line-through"
+                                : "text-neutral-700 dark:text-neutral-300",
+                            )}
+                          >
+                            {assistidoNome}
+                          </p>
+                        )}
 
-          {/* Linha 3: processo */}
-          {processo && <ProcessoCopyRow processo={processo} cancelado={cancelado} />}
-        </div>
-      </div>
+                        {/* Linha 3: processo */}
+                        {processo && (
+                          <ProcessoCopyRow
+                            processo={processo}
+                            cancelado={cancelado}
+                          />
+                        )}
+                      </div>
+                    </div>
 
-      {/* Faixa de ações */}
-      <div className="mt-2 px-3 pb-2 pt-1.5 border-t border-neutral-100/80 dark:border-neutral-800/40 flex items-center gap-1">
-        {/* PRIMÁRIAS — sempre visíveis */}
-        {concluido ? (
-          <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-2">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Realizado
-          </span>
-        ) : cancelado ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStatusChange?.(evento.id, "confirmado");
-              toast.success("Evento restaurado!");
-            }}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Restaurar
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStatusChange?.(evento.id, "concluido");
-              toast.success("Marcado como realizado!");
-            }}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Realizado
-          </Button>
-        )}
+                    {/* Faixa de ações */}
+                    <div className="mt-2 px-3 pb-2 pt-1.5 border-t border-neutral-100/80 dark:border-neutral-800/40 flex items-center gap-1">
+                      {/* PRIMÁRIAS — sempre visíveis */}
+                      {concluido ? (
+                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-2">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Realizado
+                        </span>
+                      ) : cancelado && onStatusChange ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(evento.id, "confirmado");
+                            toast.success("Evento restaurado!");
+                          }}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          Restaurar
+                        </Button>
+                      ) : !cancelado && onStatusChange ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange(evento.id, "concluido");
+                            toast.success("Marcado como realizado!");
+                          }}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Realizado
+                        </Button>
+                      ) : null}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEventClick(evento);
-          }}
-        >
-          <ExternalLink className="w-3 h-3" />
-          Detalhes
-        </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(evento);
+                        }}
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Detalhes
+                      </Button>
 
-        <span className="flex-1" />
+                      <span className="flex-1" />
 
-        {/* SECUNDÁRIAS — só no hover do card */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-          {!concluido && !cancelado && onStatusChange && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange(evento.id, "cancelado");
-                toast.success("Evento cancelado.");
-              }}
-              title="Cancelar"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-            </Button>
-          )}
+                      {/* SECUNDÁRIAS — só no hover do card */}
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                        {!concluido && !cancelado && onStatusChange && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onStatusChange(evento.id, "cancelado");
+                              toast.success("Evento cancelado.");
+                            }}
+                            title="Cancelar"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
 
-          {evento.assistidoId && (
-            <Link
-              href={`/admin/assistidos/${evento.assistidoId}`}
-              onClick={(e) => e.stopPropagation()}
-              title="Ver assistido"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
-          )}
+                        {evento.assistidoId && (
+                          <Link
+                            href={`/admin/assistidos/${evento.assistidoId}`}
+                            onClick={(e) => e.stopPropagation()}
+                            title="Ver assistido"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                            >
+                              <User className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        )}
 
-          {evento.vinculoDemanda && (
-            <Link
-              href={`/admin/demandas/${evento.vinculoDemanda}`}
-              onClick={(e) => e.stopPropagation()}
-              title="Ver demanda"
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-              >
-                <Scale className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
-          )}
+                        {evento.vinculoDemanda && (
+                          <Link
+                            href={`/admin/demandas/${evento.vinculoDemanda}`}
+                            onClick={(e) => e.stopPropagation()}
+                            title="Ver demanda"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                            >
+                              <Scale className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        )}
 
-          {onEditEvento && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditEvento(evento);
-              }}
-              title="Editar"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </Button>
-          )}
-          {onDeleteEvento && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeleteEvento(evento.id);
-              }}
-              title="Excluir"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-})
+                        {onEditEvento && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditEvento(evento);
+                            }}
+                            title="Editar"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        {onDeleteEvento && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteEvento(evento.id);
+                            }}
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
