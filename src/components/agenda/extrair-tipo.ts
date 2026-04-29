@@ -68,6 +68,7 @@ export function extrairTipo(titulo: string): string {
   if (matched) return matched;
 
   const titled = toTitleCase(firstSegment);
+  // ≤ 21 mantém "Audiência Concentrada" (21 chars) intacta — sem isso, cortaria.
   if (titled.length <= 21) return titled;
   return titled.substring(0, 20) + "…";
 }
