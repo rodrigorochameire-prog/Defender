@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, isNull } from "drizzle-orm";
 import { pushDemanda, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 function getWebhookSecret(): string {
   return process.env.SHEETS_WEBHOOK_SECRET ?? "";
@@ -46,21 +47,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .leftJoin(users, eq(demandas.delegadoParaId, users.id))
     .where(isNull(demandas.deletedAt));
 
-  const lista: DemandaParaSync[] = rows.map((r) => ({
-    id: r.id,
-    status: r.status,
-    substatus: r.substatus ?? null,
-    reuPreso: r.reuPreso,
-    dataEntrada: r.dataEntrada,
-    ato: r.ato,
-    prazo: r.prazo,
-    providencias: "",
-    assistidoNome: r.assistidoNome ?? "",
-    numeroAutos: r.numeroAutos ?? "",
-    atribuicao: r.atribuicao ?? "SUBSTITUICAO",
-    delegadoNome: r.delegadoNome ?? null,
-    defensorId: r.defensorId,
-  }));
+  const lista: DemandaParaSync[] = await Promise.all(
+    rows.map(async (r) => ({
+      id: r.id,
+      status: r.status,
+      substatus: r.substatus ?? null,
+      reuPreso: r.reuPreso,
+      dataEntrada: r.dataEntrada,
+      ato: r.ato,
+      prazo: r.prazo,
+      providencias: await buildProvidenciasCell(r.id),
+      assistidoNome: r.assistidoNome ?? "",
+      numeroAutos: r.numeroAutos ?? "",
+      atribuicao: r.atribuicao ?? "SUBSTITUICAO",
+      delegadoNome: r.delegadoNome ?? null,
+      defensorId: r.defensorId,
+    })),
+  );
 
   let pushed = 0;
   let conflicts = 0;

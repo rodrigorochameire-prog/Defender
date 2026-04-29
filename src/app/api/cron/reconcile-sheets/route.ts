@@ -27,6 +27,7 @@ import {
 } from "@/lib/services/google-sheets";
 import { reorderAllSheets } from "@/lib/services/sheets-reorder";
 import { logSyncAction } from "@/lib/services/sync-engine";
+import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 const DATA_START = 4;
 const ATRIBUICAO_TO_SHEET: Record<string, string> = {
@@ -168,7 +169,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         dataExpedicao: d.dataExpedicao,
         ato: d.ato,
         prazo: d.prazo,
-        providencias: "",
+        providencias: await buildProvidenciasCell(d.id),
         assistidoNome: d.assistidoNome ?? "",
         numeroAutos: d.numeroAutos ?? "",
         atribuicao,

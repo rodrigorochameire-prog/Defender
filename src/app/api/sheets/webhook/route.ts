@@ -15,6 +15,8 @@ import { eq, and, isNull } from "drizzle-orm";
 import { logSyncAction, classifySync } from "@/lib/services/sync-engine";
 import { getSheetName, statusParaLabel } from "@/lib/services/google-sheets";
 import { reorderAllSheets } from "@/lib/services/sheets-reorder";
+import { parseProvidenciasCell } from "@/lib/services/registros-summary";
+import { registros as registrosTable } from "@/lib/db/schema";
 
 // Mapeamento: nome do campo no Apps Script → campo no banco
 const CAMPO_MAP: Record<string, string> = {
@@ -25,7 +27,7 @@ const CAMPO_MAP: Record<string, string> = {
   autos: "numeroAutos",       // tratamento especial
   ato: "ato",
   prazo: "prazo",
-  // providencias: removida — coluna foi migrada para tabela "registros"
+  providencias: "providencias", // tratamento especial — captura anotação livre
   delegadoPara: "delegadoPara", // tratamento especial
 };
 
@@ -236,6 +238,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             .update(processos)
             .set({ numeroAutos: valorStr })
             .where(eq(processos.id, demanda.processoId));
+        }
+        break;
+      }
+
+      case "providencias": {
+        // 2-way sync: extrai apenas o que o usuário escreveu abaixo do marker
+        // e cria um registro tipo='anotacao'. O resumo automático é ignorado
+        // (será reescrito no próximo sync).
+        const cellRaw = valor != null ? String(valor) : "";
+        const { userNote } = parseProvidenciasCell(cellRaw);
+        if (userNote && demanda.assistidoId) {
+          await db.insert(registrosTable).values({
+            tipo: "anotacao",
+            assistidoId: demanda.assistidoId,
+            processoId: demanda.processoId ?? null,
+            demandaId: demandaId,
+            conteudo: userNote,
+            dataRegistro: new Date(),
+            autorId: null, // editor da planilha não é rastreado
+            status: "realizado",
+            interlocutor: "outro",
+          });
         }
         break;
       }

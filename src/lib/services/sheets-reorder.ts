@@ -21,6 +21,7 @@ import {
   type DemandaParaSync,
 } from "@/lib/services/google-sheets";
 import { getAtoRelevanceRank } from "@/lib/utils/ato-rank";
+import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 /**
  * Rank posicional que reflete a ordem visual do kanban
@@ -147,40 +148,54 @@ export async function reorderAllSheets(
   };
   const bySheet = new Map<string, Enriched[]>();
 
-  for (const r of rows) {
-    const atribuicao = r.atribuicao ?? "SUBSTITUICAO";
-    const sheetName = getSheetName(atribuicao);
+  // Filtrar primeiro pelo sheetName antes do build em paralelo, evitando
+  // queries de registros para abas que não vão ser reordenadas.
+  const candidates = rows
+    .map((r) => {
+      const atribuicao = r.atribuicao ?? "SUBSTITUICAO";
+      const sheetName = getSheetName(atribuicao);
+      return { r, atribuicao, sheetName };
+    })
+    .filter(({ sheetName }) =>
+      sheetNameFilter ? sheetName === sheetNameFilter : true,
+    );
 
-    if (sheetNameFilter && sheetName !== sheetNameFilter) continue;
+  const enrichedList: Array<{ sheetName: string; enriched: Enriched }> =
+    await Promise.all(
+      candidates.map(async ({ r, atribuicao, sheetName }) => {
+        const sync: DemandaParaSync = {
+          id: r.id,
+          status: r.status,
+          substatus: r.substatus ?? null,
+          reuPreso: r.reuPreso,
+          dataEntrada: r.dataEntrada,
+          dataExpedicao: r.dataExpedicao,
+          ato: r.ato,
+          prazo: r.prazo,
+          providencias: await buildProvidenciasCell(r.id),
+          assistidoNome: r.assistidoNome ?? "",
+          numeroAutos: r.numeroAutos ?? "",
+          atribuicao,
+          delegadoNome: r.delegadoNome ?? null,
+          defensorId: r.defensorId,
+        };
 
-    const sync: DemandaParaSync = {
-      id: r.id,
-      status: r.status,
-      substatus: r.substatus ?? null,
-      reuPreso: r.reuPreso,
-      dataEntrada: r.dataEntrada,
-      dataExpedicao: r.dataExpedicao,
-      ato: r.ato,
-      prazo: r.prazo,
-      providencias: "",
-      assistidoNome: r.assistidoNome ?? "",
-      numeroAutos: r.numeroAutos ?? "",
-      atribuicao,
-      delegadoNome: r.delegadoNome ?? null,
-      defensorId: r.defensorId,
-    };
+        const enriched: Enriched = {
+          ...sync,
+          ordemManual: r.ordemManual,
+          createdAt: r.createdAt,
+          prazo: r.prazo,
+          rank: computeRank(r.status, r.substatus),
+          atoRank: getAtoRelevanceRank(r.ato),
+          importBatchId: r.importBatchId,
+          ordemOriginal: r.ordemOriginal,
+        };
 
-    const enriched: Enriched = {
-      ...sync,
-      ordemManual: r.ordemManual,
-      createdAt: r.createdAt,
-      prazo: r.prazo,
-      rank: computeRank(r.status, r.substatus),
-      atoRank: getAtoRelevanceRank(r.ato),
-      importBatchId: r.importBatchId,
-      ordemOriginal: r.ordemOriginal,
-    };
+        return { sheetName, enriched };
+      }),
+    );
 
+  for (const { sheetName, enriched } of enrichedList) {
     if (!bySheet.has(sheetName)) bySheet.set(sheetName, []);
     bySheet.get(sheetName)!.push(enriched);
   }
