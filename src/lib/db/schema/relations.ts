@@ -38,7 +38,7 @@ import {
 } from "./casos";
 
 // Agenda tables
-import { audiencias, calendarEvents, atendimentos } from "./agenda";
+import { audiencias, calendarEvents, registros as atendimentos } from "./agenda";
 
 // Juri tables
 import { sessoesJuri, jurados } from "./juri";

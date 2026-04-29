@@ -4,7 +4,7 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { demandaEventos, atendimentoDemandas } from "@/lib/db/schema/demanda-eventos";
 import { demandas, users } from "@/lib/db/schema/core";
-import { atendimentos } from "@/lib/db/schema/agenda";
+import { registros as atendimentos } from "@/lib/db/schema/agenda";
 import { and, eq, isNull, desc, sql, notInArray, or } from "drizzle-orm";
 import {
   createEventoSchema,

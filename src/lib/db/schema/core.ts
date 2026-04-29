@@ -269,8 +269,6 @@ export const demandas = pgTable("demandas", {
   status: statusDemandaEnum("status").default("5_TRIAGEM"),
   substatus: varchar("substatus", { length: 50 }),
   prioridade: prioridadeEnum("prioridade").default("NORMAL"),
-  providencias: text("providencias"),
-  providenciaResumo: varchar("providencia_resumo", { length: 100 }),
   defensorId: integer("defensor_id").references(() => users.id),
   delegadoParaId: integer("delegado_para_id").references(() => users.id),
   dataDelegacao: timestamp("data_delegacao"),

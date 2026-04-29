@@ -1008,7 +1008,7 @@ export const vvdRouter = router({
           dataExpedicao: dados.intimacao.dataExpedicao || undefined,
           status: "2_ATENDER",
           prioridade: "ALTA",
-          providencias: "Peticionar nos autos — originado de intimação VVD",
+          // providencias migrada para tabela "registros"
           defensorId: ctx.user.id,
         })
         .returning();

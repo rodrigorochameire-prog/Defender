@@ -798,7 +798,6 @@ export const briefingRouter = router({
           const prazoStr = d.prazo ? new Date(d.prazo).toLocaleDateString("pt-BR") : "sem prazo";
           const urgente = d.prazo && new Date(d.prazo) < now;
           lines.push(`- **${d.ato}** — prazo: ${prazoStr}${urgente ? " ⚠️ VENCIDO" : ""} [${d.status}]${d.reuPreso ? " [RÉU PRESO]" : ""}`);
-          if (d.providencias) lines.push(`  → ${d.providencias}`);
         }
         lines.push("");
       }

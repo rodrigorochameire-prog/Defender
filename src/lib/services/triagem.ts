@@ -434,7 +434,7 @@ export async function promoverAtendimento(input: PromoverInput): Promise<Promove
       processoId: novoProcesso.id,
       assistidoId,
       ato: atendimento.situacao ?? "Atendimento triagem",
-      providencias: observacoes,
+      // providencias migrada para tabela "registros"
       status: "5_TRIAGEM",
       defensorId: input.defensorId,
       dataEntrada: atendimento.createdAt

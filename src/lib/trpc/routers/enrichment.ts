@@ -15,7 +15,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
-import { documentos, atendimentos, demandas, driveFiles, processos, assistidos, scanIntimacoesJobs } from "@/lib/db/schema";
+import { documentos, registros as atendimentos, demandas, driveFiles, processos, assistidos, scanIntimacoesJobs } from "@/lib/db/schema";
 import { eq, and, or, isNull, notInArray, sql } from "drizzle-orm";
 import {
   enrichmentClient,

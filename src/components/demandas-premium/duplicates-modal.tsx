@@ -240,10 +240,10 @@ export function DuplicatesModal({ isOpen, onClose, onResolved }: DuplicatesModal
                                 {/* Prazo */}
                                 <td className="px-3 py-2">{d.prazo || "-"}</td>
 
-                                {/* Providências */}
+                                {/* Providências (coluna migrada para tabela "registros") */}
                                 <td className="px-3 py-2">
-                                  <span className="truncate block max-w-[200px]" title={d.providencias || ""}>
-                                    {d.providencias || "-"}
+                                  <span className="truncate block max-w-[200px]">
+                                    -
                                   </span>
                                 </td>
 

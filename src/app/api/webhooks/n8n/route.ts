@@ -163,7 +163,7 @@ async function handleCreateDemanda(data: Record<string, unknown>) {
     dataEntrada: dataEntrada ? String(dataEntrada) : null,
     status: (status as "5_TRIAGEM" | "2_ATENDER" | "4_MONITORAR" | "7_PROTOCOLADO") || "5_TRIAGEM",
     prioridade: (prioridade as "NORMAL" | "ALTA" | "URGENTE" | "REU_PRESO") || "NORMAL",
-    providencias: providencias ? String(providencias) : null,
+    // providencias migrada para tabela "registros"
     defensorId: defensorId ? Number(defensorId) : null,
     workspaceId,
     reuPreso: Boolean(reuPreso),

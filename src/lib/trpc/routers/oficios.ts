@@ -1296,7 +1296,6 @@ export const oficiosRouter = router({
         .select({
           id: demandas.id,
           ato: demandas.ato,
-          providencias: demandas.providencias,
           assistidoId: demandas.assistidoId,
           processoId: demandas.processoId,
         })
@@ -1309,7 +1308,8 @@ export const oficiosRouter = router({
       }
 
       const ato = (demanda.ato || "").toLowerCase().trim();
-      const providencias = (demanda.providencias || "").toLowerCase().trim();
+      // providencias migrada para tabela "registros" — não disponível neste contexto
+      const providencias = "";
 
       // Mapping: ato => tipo de ofício sugerido
       let tipoOficio: string | null = null;

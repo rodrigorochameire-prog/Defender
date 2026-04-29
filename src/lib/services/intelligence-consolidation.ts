@@ -12,7 +12,7 @@ import {
   assistidosProcessos,
   processos,
   documentos,
-  atendimentos,
+  registros as atendimentos,
   demandas,
   caseFacts,
   casePersonas,

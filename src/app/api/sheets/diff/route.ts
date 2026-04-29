@@ -107,7 +107,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         dataEntrada: demandas.dataEntrada,
         prazo: demandas.prazo,
         reuPreso: demandas.reuPreso,
-        providencias: demandas.providencias,
         assistidoNome: assistidos.nome,
         numeroAutos: processos.numeroAutos,
         atribuicao: processos.atribuicao,
@@ -179,12 +178,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         diffs.push({ campo: "autos", planilha: sheetAutos, banco: dbAutos });
       }
 
-      // Providências
-      const sheetProv = String(sheet.data[COL.PROVIDENCIAS] ?? "").trim();
-      const dbProv = String(db.providencias ?? "").trim();
-      if (sheetProv !== dbProv) {
-        diffs.push({ campo: "providencias", planilha: sheetProv || "(vazio)", banco: dbProv || "(vazio)" });
-      }
+      // Providências: coluna foi migrada para tabela "registros". Não comparar.
 
       if (diffs.length > 0) {
         divergencias.push({

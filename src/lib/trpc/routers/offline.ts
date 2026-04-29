@@ -5,7 +5,7 @@ import {
   assistidos,
   processos,
   demandas,
-  atendimentos,
+  registros as atendimentos,
   casos,
 } from "@/lib/db/schema";
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
@@ -75,7 +75,6 @@ const demandaColumns = {
   status: demandas.status,
   substatus: demandas.substatus,
   prioridade: demandas.prioridade,
-  providencias: demandas.providencias,
   defensorId: demandas.defensorId,
   delegadoParaId: demandas.delegadoParaId,
   reuPreso: demandas.reuPreso,
