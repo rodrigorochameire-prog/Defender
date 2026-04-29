@@ -529,16 +529,16 @@ export const audienciasRouter = router({
         atendimentosResult = await db
           .select({
             id: atendimentos.id,
-            data: atendimentos.dataAtendimento,
+            data: atendimentos.dataRegistro,
             tipo: atendimentos.tipo,
-            resumo: atendimentos.resumo,
+            resumo: atendimentos.conteudo,
             transcricaoResumo: atendimentos.transcricaoResumo,
             pontosChave: atendimentos.pontosChave,
             assunto: atendimentos.assunto,
           })
           .from(atendimentos)
           .where(conditions)
-          .orderBy(desc(atendimentos.dataAtendimento))
+          .orderBy(desc(atendimentos.dataRegistro))
           .limit(5);
       }
 

@@ -237,7 +237,7 @@ export const enrichmentRouter = router({
         .select({
           id: atendimentos.id,
           transcricao: atendimentos.transcricao,
-          resumo: atendimentos.resumo,
+          resumo: atendimentos.conteudo,
           assistidoId: atendimentos.assistidoId,
           processoId: atendimentos.processoId,
           casoId: atendimentos.casoId,

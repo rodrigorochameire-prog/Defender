@@ -45,7 +45,7 @@ export function EventFormAtendimento({ demandaId, open, onOpenChange }: Props) {
   const [tipo, setTipo] = useState<(typeof TIPOS)[number]["value"]>("telefone");
   const [interlocutor, setInterlocutor] =
     useState<(typeof INTERLOCUTORES)[number]["value"]>("assistido");
-  const [dataAtendimento, setDataAtendimento] = useState(nowDatetimeLocal());
+  const [dataRegistro, setDataAtendimento] = useState(nowDatetimeLocal());
   const [assunto, setAssunto] = useState("");
   const [resumo, setResumo] = useState("");
   const [acompanhantes, setAcompanhantes] = useState("");
@@ -96,7 +96,7 @@ export function EventFormAtendimento({ demandaId, open, onOpenChange }: Props) {
             <label className="text-xs text-muted-foreground">Quando</label>
             <Input
               type="datetime-local"
-              value={dataAtendimento}
+              value={dataRegistro}
               onChange={(e) => setDataAtendimento(e.target.value)}
               className="mt-1"
             />
@@ -201,11 +201,11 @@ export function EventFormAtendimento({ demandaId, open, onOpenChange }: Props) {
               mut.mutate({
                 assistidoId,
                 processoId: processoId ?? undefined,
-                dataAtendimento: new Date(dataAtendimento).toISOString(),
+                dataRegistro: new Date(dataRegistro).toISOString(),
                 tipo,
                 interlocutor,
                 assunto: assunto.trim(),
-                resumo: resumo.trim() || undefined,
+                conteudo: resumo.trim() || undefined,
                 acompanhantes: acompanhantes.trim() || undefined,
                 status: "realizado",
               });
