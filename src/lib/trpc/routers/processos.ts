@@ -1079,4 +1079,84 @@ export const processosRouter = router({
       return await db.select().from(processos)
         .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
     }),
+
+  /**
+   * Retorna processos vinculados a um caso (mesmo casoId) ou, em fallback,
+   * via processoOrigemId. Hierarquia: principal (processoOrigemId=null)
+   * primeiro, incidentais depois, ordenados por id.
+   */
+  vinculados: protectedProcedure
+    .input(z.object({
+      processoId: z.number().optional(),
+      casoId: z.number().optional(),
+      excluirId: z.number().optional(),
+    }))
+    .query(async ({ input, ctx }) => {
+      if (!input.processoId && !input.casoId) return [];
+      const wid = ctx.user.workspaceId ?? 1;
+
+      let casoId = input.casoId;
+      if (!casoId && input.processoId) {
+        const [p] = await db
+          .select({ casoId: processos.casoId })
+          .from(processos)
+          .where(and(eq(processos.id, input.processoId), eq(processos.workspaceId, wid)))
+          .limit(1);
+        casoId = p?.casoId ?? undefined;
+      }
+
+      const baseColumns = {
+        id: processos.id,
+        numeroAutos: processos.numeroAutos,
+        tipoProcesso: processos.tipoProcesso,
+        processoOrigemId: processos.processoOrigemId,
+        classeProcessual: processos.classeProcessual,
+        situacao: processos.situacao,
+        isReferencia: processos.isReferencia,
+      } as const;
+
+      let rows: Array<{
+        id: number;
+        numeroAutos: string | null;
+        tipoProcesso: string | null;
+        processoOrigemId: number | null;
+        classeProcessual: string | null;
+        situacao: string | null;
+        isReferencia: boolean | null;
+      }>;
+
+      if (casoId) {
+        rows = await db
+          .select(baseColumns)
+          .from(processos)
+          .where(and(
+            eq(processos.casoId, casoId),
+            eq(processos.workspaceId, wid),
+            isNull(processos.deletedAt),
+            input.excluirId ? ne(processos.id, input.excluirId) : undefined,
+          ));
+      } else if (input.processoId) {
+        // Fallback via processoOrigemId
+        rows = await db
+          .select(baseColumns)
+          .from(processos)
+          .where(and(
+            or(
+              eq(processos.processoOrigemId, input.processoId),
+              eq(processos.id, input.processoId),
+            ),
+            eq(processos.workspaceId, wid),
+            isNull(processos.deletedAt),
+            input.excluirId ? ne(processos.id, input.excluirId) : undefined,
+          ));
+      } else {
+        rows = [];
+      }
+
+      return rows.sort((a, b) => {
+        if (a.processoOrigemId === null && b.processoOrigemId !== null) return -1;
+        if (b.processoOrigemId === null && a.processoOrigemId !== null) return 1;
+        return a.id - b.id;
+      });
+    }),
 });
