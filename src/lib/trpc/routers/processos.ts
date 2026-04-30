@@ -251,6 +251,7 @@ export const processosRouter = router({
         numeroAutos: string | null;
         tipoProcesso: string | null;
         isReferencia: boolean | null;
+        processoOrigemId: number | null;
         classeProcessual: string | null;
         assistidosNomes: string[];
       }[] = [];
@@ -269,6 +270,7 @@ export const processosRouter = router({
             numeroAutos: processos.numeroAutos,
             tipoProcesso: processos.tipoProcesso,
             isReferencia: processos.isReferencia,
+            processoOrigemId: processos.processoOrigemId,
             classeProcessual: processos.classeProcessual,
           })
           .from(processos)
@@ -1078,6 +1080,101 @@ export const processosRouter = router({
       const wid = ctx.user.workspaceId ?? 1;
       return await db.select().from(processos)
         .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
+    }),
+
+  /**
+   * Cria um processo incidental vinculado a um processo principal. Garante
+   * que ambos compartilhem o mesmo `casoId` (cria caso se necessário) e que
+   * o novo processo aponte ao principal via `processoOrigemId`.
+   *
+   * Se `moverDemandaId` for informado, transfere a demanda do processo
+   * principal para o recém-criado.
+   */
+  criarVinculado: protectedProcedure
+    .input(
+      z.object({
+        processoOrigemId: z.number(),
+        numeroAutos: z
+          .string()
+          .min(15, "Número dos autos inválido")
+          .max(30, "Número dos autos inválido"),
+        tipoProcesso: z.enum(["REVOGACAO", "HC", "RECURSO", "MPU", "IP", "PEDIDO"]),
+        classeProcessual: z.string().optional(),
+        assunto: z.string().optional(),
+        moverDemandaId: z.number().optional(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const wid = ctx.user.workspaceId ?? 1;
+      const { mapAreaParaAtribuicao } = await import("@/lib/processos/tipos");
+
+      return await db.transaction(async (tx) => {
+        const [origem] = await tx
+          .select()
+          .from(processos)
+          .where(and(eq(processos.id, input.processoOrigemId), eq(processos.workspaceId, wid)))
+          .limit(1);
+
+        if (!origem) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Processo de origem não encontrado" });
+        }
+
+        // Garantir caso comum
+        let casoId = origem.casoId;
+        if (!casoId) {
+          const [assistido] = await tx
+            .select({ nome: assistidos.nome })
+            .from(assistidos)
+            .where(eq(assistidos.id, origem.assistidoId))
+            .limit(1);
+
+          const [novoCaso] = await tx
+            .insert(casos)
+            .values({
+              titulo: `${assistido?.nome ?? "Caso"} — ${origem.area}`,
+              atribuicao: mapAreaParaAtribuicao(origem.area) as any,
+              assistidoId: origem.assistidoId,
+              defensorId: ctx.user.id,
+              status: "ativo",
+            })
+            .returning({ id: casos.id });
+          casoId = novoCaso.id;
+
+          await tx
+            .update(processos)
+            .set({ casoId })
+            .where(eq(processos.id, origem.id));
+        }
+
+        const [novoProc] = await tx
+          .insert(processos)
+          .values({
+            assistidoId: origem.assistidoId,
+            numeroAutos: input.numeroAutos,
+            comarca: origem.comarca,
+            comarcaId: origem.comarcaId,
+            vara: origem.vara,
+            area: origem.area,
+            classeProcessual: input.classeProcessual ?? null,
+            assunto: input.assunto ?? null,
+            tipoProcesso: input.tipoProcesso,
+            processoOrigemId: origem.id,
+            casoId,
+            defensorId: ctx.user.id,
+            situacao: "ativo",
+            workspaceId: wid,
+          })
+          .returning();
+
+        if (input.moverDemandaId) {
+          await tx
+            .update(demandas)
+            .set({ processoId: novoProc.id, updatedAt: new Date() })
+            .where(eq(demandas.id, input.moverDemandaId));
+        }
+
+        return novoProc;
+      });
     }),
 
   /**

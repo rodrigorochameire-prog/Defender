@@ -19,14 +19,16 @@ export const TIPOS_PROCESSO = {
 
 export type TipoProcesso = keyof typeof TIPOS_PROCESSO;
 
-export const TIPOS_INCIDENTAIS: TipoProcesso[] = [
+export const TIPOS_INCIDENTAIS = [
   "REVOGACAO",
   "HC",
   "RECURSO",
   "MPU",
   "IP",
   "PEDIDO",
-];
+] as const;
+
+export type TipoProcessoIncidental = (typeof TIPOS_INCIDENTAIS)[number];
 
 export function tipoProcessoLabel(tipo: string | null | undefined): string {
   if (!tipo) return "Processo";

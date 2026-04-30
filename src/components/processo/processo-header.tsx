@@ -41,6 +41,7 @@ interface ProcessoHeaderProps {
     numeroAutos: string | null;
     tipoProcesso: string | null;
     isReferencia: boolean | null;
+    processoOrigemId?: number | null;
     assistidosNomes: string[];
   }[];
 }
@@ -167,12 +168,13 @@ export function ProcessoHeader({
           </div>
         )}
 
-        {/* CasoBar — linked processes */}
-        {casoInfo && processosVinculados && processosVinculados.length > 0 && (
+        {/* CasoBar — linked processes (sempre exibe quando há caso, p/ permitir criar vinculado) */}
+        {casoInfo && (
           <CasoBar
             casoTitulo={casoInfo.titulo}
             currentProcessoId={id}
-            processos={processosVinculados}
+            processos={processosVinculados ?? []}
+            showCreateButton
           />
         )}
       </div>
