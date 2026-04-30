@@ -36,9 +36,11 @@ import {
   X,
   UserPlus,
   Forward,
+  FileSymlink,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
+import { NovoProcessoVinculadoDialog } from "@/components/processo/novo-processo-vinculado-dialog";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
@@ -131,6 +133,7 @@ export function DemandaCard({
   const [showAtoDropdown, setShowAtoDropdown] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showEncaminharModal, setShowEncaminharModal] = useState(false);
+  const [showMoverApartadosDialog, setShowMoverApartadosDialog] = useState(false);
   const [showAtribuicaoDropdown, setShowAtribuicaoDropdown] = useState(false);
   const [isEditingProvidencias, setIsEditingProvidencias] = useState(false);
   const [providenciasTemp, setProvidenciasTemp] = useState(demanda.providencias || "");
@@ -794,6 +797,15 @@ export function DemandaCard({
                       <Edit className="w-3.5 h-3.5" />
                       Editar
                     </button>
+                    {demanda.processoId && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowMenu(false); setShowMoverApartadosDialog(true); }}
+                        className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-blue-600 dark:text-blue-400 transition-colors"
+                      >
+                        <FileSymlink className="w-3.5 h-3.5" />
+                        Mover para autos apartados
+                      </button>
+                    )}
                     {demanda.arquivado ? (
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowMenu(false); onUnarchive(demanda.id); }}
@@ -951,6 +963,14 @@ export function DemandaCard({
           display: `${demanda.assistido} · ${demanda.ato ?? "Demanda"}`,
         }}
       />
+      {demanda.processoId && (
+        <NovoProcessoVinculadoDialog
+          open={showMoverApartadosDialog}
+          onOpenChange={setShowMoverApartadosDialog}
+          processoOrigemId={demanda.processoId}
+          moverDemandaId={Number(demanda.id)}
+        />
+      )}
     </div>
   );
 }

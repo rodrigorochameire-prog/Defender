@@ -414,6 +414,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     numeroAutos: p.numeroAutos,
                     tipoProcesso: p.tipoProcesso,
                     isReferencia: p.isReferencia,
+                    processoOrigemId: p.processoOrigemId,
                     ativo: p.isDoProprio ? p.ativo : null,
                   }))}
                   stats={{
@@ -421,6 +422,7 @@ export default function AssistidoPage({ params }: { params: Promise<{ id: string
                     audiencias: data.audiencias.length,
                     arquivos: data.driveFiles.length,
                   }}
+                  showCreateButton
                 />
               ))
             ) : (
