@@ -1255,6 +1255,7 @@ export default function Demandas() {
 
     createFromFormMutation.mutate({
       assistidoNome: demandaData.assistido,
+      assistidoId: demandaData.assistidoId ?? undefined,
       numeroAutos: primeiroProcesso?.numero || undefined,
       tipoProcesso: primeiroProcesso?.tipo || undefined,
       atribuicao: demandaData.atribuicao,

@@ -398,6 +398,7 @@ export const demandasRouter = router({
     .input(
       z.object({
         assistidoNome: z.string().min(1),
+        assistidoId: z.number().optional(), // se vier do picker, usa direto (evita falso-positivo em find-or-create por nome)
         numeroAutos: z.string().optional(),
         tipoProcesso: z.string().optional(),
         atribuicao: z.string().min(1), // aceita label ("Tribunal do Júri") ou enum ("JURI_CAMACARI")
@@ -493,13 +494,25 @@ export const demandasRouter = router({
       const dataEntradaDB = normalizeDate(input.dataEntrada) ?? dataExpedicaoDB;
       const prazoDB = normalizeDate(input.prazo);
 
-      // 4. Find-or-create assistido pelo nome (case-insensitive)
+      // 4. Resolver assistido — preferir id explícito do picker; fallback find-or-create por nome
       const nomeTrimmed = input.assistidoNome.trim();
-      let [assistido] = await db
-        .select({ id: assistidos.id })
-        .from(assistidos)
-        .where(and(ilike(assistidos.nome, nomeTrimmed), isNull(assistidos.deletedAt)))
-        .limit(1);
+      let assistido: { id: number } | undefined;
+      if (input.assistidoId) {
+        const [byId] = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(and(eq(assistidos.id, input.assistidoId), isNull(assistidos.deletedAt)))
+          .limit(1);
+        assistido = byId;
+      }
+      if (!assistido) {
+        const [byName] = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(and(ilike(assistidos.nome, nomeTrimmed), isNull(assistidos.deletedAt)))
+          .limit(1);
+        assistido = byName;
+      }
       if (!assistido) {
         const [novo] = await db
           .insert(assistidos)

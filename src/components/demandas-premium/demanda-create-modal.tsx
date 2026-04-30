@@ -10,10 +10,12 @@ import { SITUACAO_PRISIONAL_OPTIONS } from "@/config/templates";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { cn } from "@/lib/utils";
+import { AssistidoPicker, type AssistidoSelected } from "@/components/assistido/assistido-picker";
 
 export interface DemandaFormData {
   id?: string;
   assistido: string;
+  assistidoId?: number | null;
   status: string;
   data: string;
   prazo: string;
@@ -402,13 +404,36 @@ export function DemandaCreateModal({
               <div className="space-y-1.5">
                 <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
                   <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  Nome do Assistido
+                  Assistido
                 </Label>
-                <Input
-                  value={formData.assistido}
-                  onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
-                  placeholder="Nome completo do assistido"
-                  className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                <AssistidoPicker
+                  value={
+                    formData.assistidoId && formData.assistido
+                      ? {
+                          id: formData.assistidoId,
+                          nome: formData.assistido,
+                          statusPrisional: formData.estadoPrisional ?? null,
+                        }
+                      : null
+                  }
+                  preloadId={formData.assistidoId ?? null}
+                  onChange={(a: AssistidoSelected | null) => {
+                    if (!a) {
+                      setFormData({ ...formData, assistidoId: null, assistido: "" });
+                      return;
+                    }
+                    const preso =
+                      a.statusPrisional && a.statusPrisional !== "SOLTO";
+                    setFormData({
+                      ...formData,
+                      assistidoId: a.id,
+                      assistido: a.nome,
+                      estadoPrisional: a.statusPrisional ?? formData.estadoPrisional,
+                      reuPreso: preso ? true : formData.reuPreso,
+                    });
+                  }}
+                  placeholder="Buscar assistido por nome ou CPF..."
+                  className="h-9 text-xs"
                 />
               </div>
 
