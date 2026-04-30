@@ -498,6 +498,7 @@ export const assistidosRouter = router({
           numeroAutos: string | null;
           tipoProcesso: string | null;
           isReferencia: boolean | null;
+          processoOrigemId: number | null;
           ativo: boolean;
           papel: string;
           isDoProprio: boolean;
@@ -517,6 +518,7 @@ export const assistidosRouter = router({
             numeroAutos: processos.numeroAutos,
             tipoProcesso: processos.tipoProcesso,
             isReferencia: processos.isReferencia,
+            processoOrigemId: processos.processoOrigemId,
           })
           .from(processos)
           .where(
@@ -542,6 +544,7 @@ export const assistidosRouter = router({
                 numeroAutos: p.numeroAutos,
                 tipoProcesso: p.tipoProcesso,
                 isReferencia: p.isReferencia,
+                processoOrigemId: p.processoOrigemId,
                 ativo: v?.ativo ?? false,
                 papel: v?.papel ?? "",
                 isDoProprio: !!v,
