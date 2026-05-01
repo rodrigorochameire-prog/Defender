@@ -418,6 +418,10 @@ function SidebarPopoverMenu({
     return () => cancelTimers();
   }, []);
 
+  useEffect(() => {
+    cancelTimers();
+  }, [isMobile]);
+
   return (
     <SidebarMenuItem>
       <CollapsedTooltip label={label} open={open}>
