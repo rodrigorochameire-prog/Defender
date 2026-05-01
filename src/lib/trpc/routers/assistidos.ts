@@ -354,6 +354,19 @@ export const assistidosRouter = router({
       });
     }),
 
+  // Lightweight: retorna só o driveFolderId do assistido. Usado em sheets/previews
+  // para criar link "Abrir no Drive" sem puxar a query getById inteira (que é cara).
+  getDriveFolder: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [row] = await db
+        .select({ driveFolderId: assistidos.driveFolderId, nome: assistidos.nome })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.id))
+        .limit(1);
+      return row ?? null;
+    }),
+
   // Buscar assistido por ID (enriquecido)
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))

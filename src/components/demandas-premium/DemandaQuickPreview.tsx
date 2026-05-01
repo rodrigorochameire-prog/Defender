@@ -432,6 +432,16 @@ export function DemandaQuickPreview({
     (a: any) => a.processoId === demanda?.processoId || a.processo?.id === demanda?.processoId
   );
 
+  // Pasta do assistido no Drive — onde ficam PDFs de análise + mídias.
+  // Query lightweight (só driveFolderId), só corre quando o sheet está aberto.
+  const { data: assistidoDrive } = trpc.assistidos.getDriveFolder.useQuery(
+    { id: demanda?.assistidoId ?? 0 },
+    { enabled: !!demanda?.assistidoId && open },
+  );
+  const driveFolderUrl = assistidoDrive?.driveFolderId
+    ? `https://drive.google.com/drive/folders/${assistidoDrive.driveFolderId}`
+    : null;
+
   // Close popover when demanda changes or sheet closes
   useEffect(() => {
     setActiveStagePopover(null);
@@ -636,7 +646,7 @@ export function DemandaQuickPreview({
                 )}
 
                 {/* Action links */}
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-3 mt-2 flex-wrap">
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
@@ -644,6 +654,21 @@ export function DemandaQuickPreview({
                     >
                       Ver assistido →
                     </Link>
+                  )}
+                  {/* Drive do assistido — abre a pasta com PDFs de análise + mídias */}
+                  {driveFolderUrl && (
+                    <a
+                      href={driveFolderUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                      title="Abrir pasta do assistido no Drive (análises, mídias)"
+                    >
+                      <FolderOpen className="w-3 h-3" />
+                      Drive
+                      <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                    </a>
                   )}
                   {demanda.processoId && (
                     <Link
