@@ -423,11 +423,15 @@ function SidebarPopoverMenu({
   }, [isMobile]);
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <CollapsedTooltip label={label} open={open}>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
+              onClick={() => {
+                cancelTimers();
+                setOpen((o) => !o);
+              }}
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
                 hasActiveItem
@@ -442,6 +446,8 @@ function SidebarPopoverMenu({
             side="right"
             align="start"
             sideOffset={28}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
             className="w-56 p-0 glass-dark shadow-2xl shadow-black/40 border-white/[0.08] rounded-xl overflow-hidden"
           >
             {/* Header com ícone + título */}
