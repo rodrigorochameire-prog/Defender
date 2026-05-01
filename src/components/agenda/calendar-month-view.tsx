@@ -16,6 +16,8 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
+  isBefore,
+  startOfDay,
   addMonths,
   subMonths,
   isWeekend,
@@ -209,8 +211,9 @@ function EventoCompacto({
             style={{ backgroundColor: displayColor }}
           />
 
-          {/* Conteúdo do card */}
-          <div className="pl-[9px] pr-1.5 sm:pr-2 py-1 sm:py-1.5">
+          {/* Conteúdo do card — compacto (sem padding extra em sm para caber 2 cards
+              inteiros em min-h-[120px] sem corte) */}
+          <div className="pl-[9px] pr-1.5 sm:pr-2 py-0.5">
             {/* Linha 1: horário + tipo + dots */}
             <div className="flex items-center gap-1 sm:gap-1.5">
               {/* Status icons */}
@@ -228,7 +231,7 @@ function EventoCompacto({
                 {evento.horarioInicio}
               </span>
 
-              {/* Tipo — separado por dot sutil */}
+              {/* Tipo — sempre visível, com truncate no caso de cell muito estreito */}
               {tipoAbrev && !eventoCancelado && (
                 <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 shrink-0 truncate">
                   {tipoAbrev}
@@ -251,13 +254,14 @@ function EventoCompacto({
               </span>
             </div>
 
-            {/* Linha 2: nome completo do assistido — truncate via CSS */}
+            {/* Linha 2: nome completo do assistido — truncate via CSS, leading
+                e margem mínimos para caber 2 cards completos em 120px de célula. */}
             {assistidoNome && !eventoCancelado ? (
-              <p className="hidden sm:block text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate leading-tight mt-0.5">
+              <p className="hidden sm:block text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate leading-none">
                 {assistidoNome}
               </p>
             ) : !eventoCancelado ? (
-              <p className="hidden sm:block text-[10px] text-neutral-400 dark:text-neutral-500 truncate leading-tight mt-0.5">
+              <p className="hidden sm:block text-[10px] text-neutral-400 dark:text-neutral-500 truncate leading-none">
                 {abreviarTitulo(evento.titulo)}
               </p>
             ) : null}
@@ -404,29 +408,34 @@ export function CalendarMonthView({
                 const isWeekendDay = isWeekend(date);
                 const isOtherMonth = !isCurrentMonth;
                 const hasEvents = dayEvents.length > 0;
+                // Dia anterior a hoje (mesmo dentro do mês corrente). Conteúdo não é
+                // mais acionável, então perde peso visual em favor dos dias futuros.
+                const isPastDay = !isDayToday && isBefore(date, startOfDay(new Date()));
 
                 return (
                   <div
                     key={dayIndex}
                     onClick={(e) => handleDayClick(date, e)}
                     className={`
-                      group relative min-h-0 overflow-hidden p-1 sm:p-2 transition-all duration-150 cursor-pointer flex flex-col
+                      group relative min-h-[80px] sm:min-h-[112px] lg:min-h-[148px] overflow-hidden p-1 sm:p-2 transition-all duration-150 cursor-pointer flex flex-col
                       border-r border-b border-neutral-100/60 dark:border-neutral-800/40
                       ${isOtherMonth
                         ? "bg-neutral-50/30 dark:bg-neutral-900/20"
-                        : "bg-white dark:bg-neutral-900"
+                        : isWeekendDay
+                          ? "bg-neutral-50/40 dark:bg-neutral-900/30"
+                          : "bg-white dark:bg-neutral-900"
                       }
-                      ${isDayToday ? "shadow-[inset_0_0_0_1px_#a1a1aa] dark:shadow-[inset_0_0_0_1px_#525252] z-[1] relative" : ""}
-                      ${isCurrentMonth && !isDayToday && "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30"}
+                      ${isPastDay && isCurrentMonth ? "opacity-50" : ""}
+                      ${isCurrentMonth && !isDayToday && "hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30"}
                     `}
                   >
-                    {/* Número do Dia */}
-                    <div className="flex items-start justify-between mb-2">
+                    {/* Número + dots de atribuição + badge "+N" clicável */}
+                    <div className="flex items-center gap-1 mb-1 sm:mb-1.5">
                       <span
                         className={`
-                          text-xs sm:text-sm w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
+                          text-xs sm:text-sm w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 relative
                           ${isDayToday
-                            ? "bg-neutral-700 text-white font-semibold"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/40 font-semibold"
                             : isOtherMonth
                               ? "text-neutral-300/70 font-normal"
                               : hasEvents
@@ -437,41 +446,80 @@ export function CalendarMonthView({
                       >
                         {format(date, "d")}
                       </span>
-                      
-                      {/* Badge de contagem */}
+
+                      {/* Dots de atribuição: 1 ponto por atribuição única no dia,
+                          colorido pelo ATRIBUICAO_COLORS. Máximo 4. Sutis: 3px
+                          com 50% opacidade, sem title (não polui hover). */}
+                      {hasEvents && (() => {
+                        const seen = new Set<string>();
+                        const keys: string[] = [];
+                        for (const ev of dayEvents) {
+                          const k = ev.atribuicaoKey || ev.atribuicao || "CRIMINAL";
+                          if (!seen.has(k)) { seen.add(k); keys.push(k); }
+                        }
+                        return (
+                          <div className="flex items-center gap-[2px] min-w-0 flex-1 opacity-50">
+                            {keys.slice(0, 4).map((k) => {
+                              const c = getAtribuicaoColors(k);
+                              return (
+                                <span
+                                  key={k}
+                                  className="w-[3px] h-[3px] rounded-full shrink-0"
+                                  style={{ backgroundColor: (c as any).color || "#a1a1aa" }}
+                                />
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Badge "+N" — responsivo: mobile +N a partir de 3 eventos,
+                          sm/md a partir de 3, lg+ a partir de 4. Único ponto de
+                          entrada para a sheet completa do dia. */}
+                      {dayEvents.length > 2 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetDate(date);
+                          }}
+                          className="lg:hidden ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer shrink-0"
+                          title="Ver todos os eventos do dia"
+                        >
+                          +{dayEvents.length - 2}
+                        </button>
+                      )}
                       {dayEvents.length > 3 && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetDate(date);
+                          }}
+                          className="hidden lg:inline-flex ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer shrink-0"
+                          title="Ver todos os eventos do dia"
+                        >
                           +{dayEvents.length - 3}
-                        </span>
+                        </button>
                       )}
                     </div>
 
-                    {/* Lista de Eventos */}
-                    <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
-                      {dayEvents.slice(0, 3).map((evento) => (
-                        <EventoCompacto
+                    {/* Lista de Eventos — sempre 2 cards inteiros visíveis;
+                        no lg+ mostra 3 (cabe no min-h-[164px]). */}
+                    <div className="space-y-0.5 sm:space-y-1 flex-1 min-h-0 overflow-hidden">
+                      {dayEvents.slice(0, 3).map((evento, idx) => (
+                        <div
                           key={evento.id}
-                          evento={evento}
-                          onEventClick={onEventClick}
-                          onEditEvento={onEditEvento}
-                          onDeleteEvento={onDeleteEvento}
-                          onEventDoubleClick={onEventDoubleClick}
-                        />
+                          className={idx < 2 ? "" : "hidden lg:block"}
+                        >
+                          <EventoCompacto
+                            evento={evento}
+                            onEventClick={onEventClick}
+                            onEditEvento={onEditEvento}
+                            onDeleteEvento={onDeleteEvento}
+                            onEventDoubleClick={onEventDoubleClick}
+                          />
+                        </div>
                       ))}
                     </div>
-
-                    {/* Indicador de mais eventos */}
-                    {dayEvents.length > 3 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDayClick(date, e);
-                        }}
-                        className="mt-1 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors"
-                      >
-                        Ver todos
-                      </button>
-                    )}
 
                     {/* Quick-create ghost placeholder — only on current-month empty days */}
                     {isCurrentMonth && dayEvents.length === 0 && onCreateClick && (

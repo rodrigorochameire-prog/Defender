@@ -17,6 +17,7 @@ import {
   Maximize2,
   User,
   Scale,
+  MoreVertical,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import Link from "next/link";
@@ -35,6 +36,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   getAtribuicaoColors,
   getAtribuicaoIcon,
@@ -258,14 +266,19 @@ export function DayEventsSheet({
                   <div
                     key={evento.id}
                     className={cn(
-                      "group rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200",
+                      "group rounded-xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200 flex",
                       cancelado
                         ? "opacity-60"
                         : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80",
                     )}
                   >
-                    {/* Linha principal: dot + tipo/assistido/processo */}
-                    <div className="flex items-start gap-3 px-3.5 pt-3">
+                    {/* Body — clicável: abre detalhes (substitui botão "Detalhes") */}
+                    <button
+                      type="button"
+                      onClick={() => onEventClick(evento)}
+                      className="flex-1 min-w-0 flex items-start gap-3 px-3.5 py-3 text-left cursor-pointer rounded-l-xl"
+                      aria-label="Ver detalhes"
+                    >
                       <div
                         className="w-2 h-2 rounded-full shrink-0 mt-1.5"
                         style={{ backgroundColor: solidColor }}
@@ -300,6 +313,13 @@ export function DayEventsSheet({
                               {evento.status}
                             </span>
                           )}
+                          {/* Indicador "realizado" sutil — só ícone discreto à direita,
+                              quando concluído. */}
+                          {concluido && !cancelado && (
+                            <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-emerald-600/80 dark:text-emerald-500/70 shrink-0">
+                              <CheckCircle2 className="w-3 h-3" />
+                            </span>
+                          )}
                         </div>
 
                         {/* Linha 2: nome do assistido */}
@@ -324,207 +344,182 @@ export function DayEventsSheet({
                           />
                         )}
                       </div>
-                    </div>
+                    </button>
 
-                    {/* Faixa de ações */}
-                    <div className="mt-2 px-3 pb-2 pt-1.5 border-t border-neutral-100/80 dark:border-neutral-800/40 flex items-center gap-1">
-                      {/* PRIMÁRIAS — sempre visíveis */}
-                      {concluido ? (
-                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 px-2">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Realizado
-                        </span>
-                      ) : cancelado && onStatusChange ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange(evento.id, "confirmado");
-                            toast.success("Evento restaurado!");
-                          }}
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          Restaurar
-                        </Button>
-                      ) : !cancelado && onStatusChange ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 cursor-pointer gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange(evento.id, "concluido");
-                            toast.success("Marcado como realizado!");
-                          }}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Realizado
-                        </Button>
-                      ) : null}
+                    {/* Coluna vertical de ações à direita — sempre visível, compacta.
+                        Substitui a faixa horizontal "Realizado / Detalhes / Tela cheia".
+                        justify-evenly distribui os 4 botões na altura do body, mantendo
+                        as colunas visualmente equilibradas. */}
+                    <TooltipProvider delayDuration={250}>
+                      <div className="flex flex-col justify-evenly border-l border-neutral-100 dark:border-neutral-800/60 py-1">
+                        {/* Toggle realizado — checkbox-style discreto. Cinza vazio
+                            por padrão, verde preenchido quando concluído. */}
+                        {onStatusChange && !cancelado && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (concluido) {
+                                    onStatusChange(evento.id, "confirmado");
+                                    toast.success("Marcado como pendente.");
+                                  } else {
+                                    onStatusChange(evento.id, "concluido");
+                                    toast.success("Marcado como realizado.");
+                                  }
+                                }}
+                                className={cn(
+                                  "px-2 py-0.5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer",
+                                  concluido
+                                    ? "text-emerald-500/80 hover:text-emerald-600"
+                                    : "text-neutral-300 hover:text-neutral-500",
+                                )}
+                                aria-label={concluido ? "Desmarcar como realizado" : "Marcar como realizado"}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-[11px]">
+                              {concluido ? "Desmarcar realizado" : "Marcar como realizado"}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(evento);
-                        }}
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Detalhes
-                      </Button>
+                        {/* Restaurar (só se cancelado) — substitui o toggle de realizado */}
+                        {onStatusChange && cancelado && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onStatusChange(evento.id, "confirmado");
+                                  toast.success("Evento restaurado.");
+                                }}
+                                className="px-2 py-0.5 text-blue-500/80 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer"
+                                aria-label="Restaurar"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-[11px]">
+                              Restaurar
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                      {onOpenModal && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-neutral-600 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 cursor-pointer gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenModal(evento);
-                          }}
-                        >
-                          <Maximize2 className="w-3 h-3" />
-                          <span className="hidden sm:inline">Tela cheia</span>
-                        </Button>
-                      )}
+                        {/* Tela cheia — abre o modal completo */}
+                        {onOpenModal && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenModal(evento);
+                                }}
+                                className="px-2 py-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer"
+                                aria-label="Tela cheia"
+                              >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-[11px]">
+                              Tela cheia
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                      <span className="flex-1" />
+                        {/* Editar — ação rápida frequente que substitui "Detalhes" no slot */}
+                        {onEditEvento && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onEditEvento(evento);
+                                }}
+                                className="px-2 py-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer"
+                                aria-label="Editar"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="text-[11px]">
+                              Editar
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
-                      {/* SECUNDÁRIAS — só no hover do card. Tooltip side="top" evita o
-                          tooltip cobrir os ícones vizinhos. */}
-                      <TooltipProvider delayDuration={250}>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
-                          {!concluido && !cancelado && onStatusChange && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                        {/* Menu kebab — secundárias (cancelar, duplicar, excluir, ver assistido, ver demanda) */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-2 py-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 cursor-pointer"
+                              aria-label="Mais ações"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {evento.assistidoId && (
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/assistidos/${evento.assistidoId}`}>
+                                  <User className="w-3.5 h-3.5 mr-2" /> Ver assistido
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            {evento.vinculoDemanda && (
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/demandas/${evento.vinculoDemanda}`}>
+                                  <Scale className="w-3.5 h-3.5 mr-2" /> Ver demanda
+                                </Link>
+                              </DropdownMenuItem>
+                            )}
+                            {onDuplicate && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDuplicate(evento);
+                                }}
+                              >
+                                <Copy className="w-3.5 h-3.5 mr-2" /> Duplicar
+                              </DropdownMenuItem>
+                            )}
+                            {!cancelado && !concluido && onStatusChange && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     onStatusChange(evento.id, "cancelado");
                                     toast.success("Evento cancelado.");
                                   }}
-                                  aria-label="Cancelar"
+                                  className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/30"
                                 >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Cancelar
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {evento.assistidoId && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Link
-                                  href={`/admin/assistidos/${evento.assistidoId}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label="Ver assistido"
-                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
-                                >
-                                  <User className="w-3.5 h-3.5" />
-                                </Link>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Ver assistido
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {evento.vinculoDemanda && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Link
-                                  href={`/admin/demandas/${evento.vinculoDemanda}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  aria-label="Ver demanda"
-                                  className="h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-600 cursor-pointer flex items-center justify-center hover:bg-accent"
-                                >
-                                  <Scale className="w-3.5 h-3.5" />
-                                </Link>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Ver demanda
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {onEditEvento && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onEditEvento(evento);
-                                  }}
-                                  aria-label="Editar"
-                                >
-                                  <Edit3 className="w-3.5 h-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Editar
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {onDuplicate && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDuplicate(evento);
-                                  }}
-                                  aria-label="Duplicar"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Duplicar
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-
-                          {onDeleteEvento && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-neutral-400 hover:text-red-500 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onDeleteEvento(evento.id);
-                                  }}
-                                  aria-label="Excluir"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-[11px]">
-                                Excluir
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </TooltipProvider>
-                    </div>
+                                  <XCircle className="w-3.5 h-3.5 mr-2" /> Cancelar
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {onDeleteEvento && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteEvento(evento.id);
+                                }}
+                                className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/30"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TooltipProvider>
                   </div>
                 );
               })
