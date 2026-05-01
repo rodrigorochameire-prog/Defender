@@ -52,7 +52,7 @@ import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { useTheme } from "@/contexts/theme-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
-import { CSSProperties, ReactNode, useEffect, useMemo, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -381,6 +381,42 @@ function SidebarPopoverMenu({
   const hasActiveItem = items.some(item =>
     item.exactMatch ? pathname === item.path : pathname.startsWith(item.path)
   );
+
+  // Hover-to-open (apenas desktop; mobile/touch usa clique)
+  const isMobile = useIsMobile();
+  const openTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const HOVER_OPEN_DELAY = 120;
+  const HOVER_CLOSE_DELAY = 150;
+
+  const cancelTimers = () => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const handleEnter = () => {
+    if (isMobile) return;
+    cancelTimers();
+    if (open) return;
+    openTimerRef.current = setTimeout(() => setOpen(true), HOVER_OPEN_DELAY);
+  };
+
+  const handleLeave = () => {
+    if (isMobile) return;
+    cancelTimers();
+    closeTimerRef.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY);
+  };
+
+  useEffect(() => {
+    return () => cancelTimers();
+  }, []);
 
   return (
     <SidebarMenuItem>
