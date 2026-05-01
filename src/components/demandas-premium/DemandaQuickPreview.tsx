@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Sheet,
@@ -38,6 +38,9 @@ import {
   Image,
   FileSpreadsheet,
   History,
+  Mic,
+  Video,
+  FileSignature,
 } from "lucide-react";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
@@ -442,6 +445,27 @@ export function DemandaQuickPreview({
     ? `https://drive.google.com/drive/folders/${assistidoDrive.driveFolderId}`
     : null;
 
+  // Mídias do assistido (áudios/vídeos) — strip de thumbnails inline.
+  const { data: midiasData } = trpc.drive.midiasByAssistido.useQuery(
+    { assistidoId: demanda?.assistidoId ?? 0 },
+    { enabled: !!demanda?.assistidoId && open },
+  );
+  const midiasFlat: any[] = useMemo(() => {
+    if (!midiasData) return [];
+    const fromGroups = (midiasData.processos ?? []).flatMap((g: any) => g.files);
+    return [...fromGroups, ...(midiasData.ungrouped ?? [])];
+  }, [midiasData]);
+
+  // PDFs do assistido — todos os arquivos PDF na pasta.
+  const { data: allFiles } = trpc.drive.filesByAssistido.useQuery(
+    { assistidoId: demanda?.assistidoId ?? 0 },
+    { enabled: !!demanda?.assistidoId && open },
+  );
+  const pdfFiles: any[] = useMemo(() => {
+    if (!allFiles) return [];
+    return (allFiles as any[]).filter((f) => f.mimeType === "application/pdf");
+  }, [allFiles]);
+
   // Close popover when demanda changes or sheet closes
   useEffect(() => {
     setActiveStagePopover(null);
@@ -779,6 +803,141 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
+            {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive ===== */}
+            {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Recursos</span>
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                </div>
+
+                {/* Mídias strip — áudios e vídeos. Cada pill clica e abre o webView. */}
+                {midiasFlat.length > 0 && (
+                  <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                        Mídias
+                        <span className="ml-1.5 text-neutral-400 font-normal normal-case">
+                          {midiasFlat.length}
+                        </span>
+                      </span>
+                      {driveFolderUrl && (
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                        >
+                          Drive →
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1">
+                      {midiasFlat.slice(0, 6).map((m: any) => {
+                        const isAudio = (m.mimeType || "").startsWith("audio/");
+                        const Icon = isAudio ? Mic : Video;
+                        return (
+                          <a
+                            key={m.id}
+                            href={m.webViewLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 max-w-[180px] group/m transition-colors"
+                            title={m.name}
+                          >
+                            <Icon className={`w-3 h-3 shrink-0 ${isAudio ? "text-amber-600 dark:text-amber-400" : "text-purple-600 dark:text-purple-400"}`} />
+                            <span className="text-[10px] text-neutral-700 dark:text-neutral-300 truncate">{m.name}</span>
+                            {m.hasAnalysis && (
+                              <span className="shrink-0 w-1 h-1 rounded-full bg-emerald-500" title="Analisado" />
+                            )}
+                          </a>
+                        );
+                      })}
+                      {midiasFlat.length > 6 && driveFolderUrl && (
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="shrink-0 flex items-center px-2 py-1 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-[10px] text-neutral-500 transition-colors"
+                        >
+                          +{midiasFlat.length - 6}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* PDFs strip — todos os PDFs da pasta. Os de análise costumam ter
+                    "Análise" / "Relatório" no nome — destacamos esses com cor sutil. */}
+                {pdfFiles.length > 0 && (
+                  <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                        PDFs
+                        <span className="ml-1.5 text-neutral-400 font-normal normal-case">
+                          {pdfFiles.length}
+                        </span>
+                      </span>
+                      {driveFolderUrl && (
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                        >
+                          Drive →
+                        </a>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {pdfFiles.slice(0, 5).map((f: any) => {
+                        const nameLower = (f.name || "").toLowerCase();
+                        const isAnalise =
+                          nameLower.includes("análise") ||
+                          nameLower.includes("analise") ||
+                          nameLower.includes("relatório") ||
+                          nameLower.includes("relatorio");
+                        const Icon = isAnalise ? FileSignature : FileText;
+                        return (
+                          <a
+                            key={f.id}
+                            href={f.webViewLink || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group/pdf"
+                            title={f.name}
+                          >
+                            <Icon className={`w-3.5 h-3.5 shrink-0 ${isAnalise ? "text-sky-600 dark:text-sky-400" : "text-neutral-400"}`} />
+                            <span className={`text-[11px] truncate flex-1 min-w-0 ${isAnalise ? "text-neutral-800 dark:text-neutral-200 font-medium" : "text-neutral-600 dark:text-neutral-400"}`}>
+                              {f.name}
+                            </span>
+                            <ExternalLink className="w-2.5 h-2.5 shrink-0 text-neutral-400 opacity-0 group-hover/pdf:opacity-100 transition-opacity" />
+                          </a>
+                        );
+                      })}
+                      {pdfFiles.length > 5 && driveFolderUrl && (
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="block text-center text-[10px] text-neutral-500 hover:text-emerald-600 py-1 transition-colors"
+                        >
+                          +{pdfFiles.length - 5} no Drive →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
             {/* Section divider: Ação */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
