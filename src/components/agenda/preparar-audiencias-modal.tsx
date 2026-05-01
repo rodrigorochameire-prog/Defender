@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
+import { usePrepararAudiencias } from "@/hooks/use-preparar-audiencias";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,7 +90,7 @@ function progressIcon(status: ProgressItem["status"]) {
 // ---------------------------------------------------------------------------
 
 export function PrepararAudienciasModal() {
-  const [open, setOpen] = useState(false);
+  const { isOpen: open, setOpen } = usePrepararAudiencias();
   const [phase, setPhase] = useState<Phase>("levantamento");
 
   // Progress state
@@ -472,25 +473,6 @@ export function PrepararAudienciasModal() {
 
   return (
     <>
-      {/* Trigger button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-        onClick={() => handleOpen(true)}
-      >
-        <Target className="mr-1.5 h-4 w-4" />
-        <span className="text-xs">Preparar Audiências</span>
-        {totalPendentes > 0 && (
-          <Badge
-            variant="secondary"
-            className="ml-1.5 bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0"
-          >
-            {totalPendentes}
-          </Badge>
-        )}
-      </Button>
-
       <Dialog open={open} onOpenChange={handleOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -546,15 +528,15 @@ export function PrepararAudienciasModal() {
                       <tr
                         key={a.id}
                         className={cn(
-                          "border-b border-zinc-100",
-                          i % 2 === 0 ? "bg-white" : "bg-zinc-50/50",
+                          "border-b border-zinc-100 dark:border-zinc-800",
+                          i % 2 === 0 ? "bg-white dark:bg-neutral-900" : "bg-zinc-50/50 dark:bg-neutral-900/50",
                         )}
                       >
-                        <td className="px-3 py-2 text-zinc-400">{i + 1}</td>
-                        <td className="px-3 py-2 font-medium text-zinc-700">
+                        <td className="px-3 py-2 text-zinc-400 dark:text-zinc-500">{i + 1}</td>
+                        <td className="px-3 py-2 font-medium text-zinc-700 dark:text-zinc-200">
                           {a.assistidoNome}
                         </td>
-                        <td className="px-3 py-2 text-zinc-500">
+                        <td className="px-3 py-2 text-zinc-500 dark:text-zinc-400">
                           {new Date(a.dataAudiencia).toLocaleDateString(
                             "pt-BR",
                             {
@@ -667,11 +649,11 @@ export function PrepararAudienciasModal() {
                       "flex items-start justify-between rounded px-3 py-1.5 text-xs gap-3",
                       item.status === "current" && "bg-emerald-50",
                       item.status === "done" && "bg-zinc-50",
-                      item.status === "unchanged" && "bg-zinc-50/50",
-                      item.status === "failed" && "bg-rose-50",
-                      item.status === "queued" && "bg-violet-50",
-                      item.status === "no-docs" && "bg-amber-50",
-                      item.status === "waiting" && "bg-white",
+                      item.status === "unchanged" && "bg-zinc-50/50 dark:bg-zinc-800/50",
+                      item.status === "failed" && "bg-rose-50 dark:bg-rose-950/30",
+                      item.status === "queued" && "bg-violet-50 dark:bg-violet-950/30",
+                      item.status === "no-docs" && "bg-amber-50 dark:bg-amber-950/30",
+                      item.status === "waiting" && "bg-white dark:bg-neutral-900",
                     )}
                   >
                     <div className="flex items-start gap-2 min-w-0 flex-1">

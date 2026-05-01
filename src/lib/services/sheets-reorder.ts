@@ -5,8 +5,8 @@
  * - POST /api/sheets/reorder (trigger manual)
  * - Inngest `sheets-reorder-debounced` (trigger automático com debounce)
  *
- * Sort key: [rank por grupo do kanban ASC, ordemManual ASC NULLS LAST,
- *            createdAt DESC, prazo ASC NULLS LAST].
+ * Sort key: [rank de status ASC, relevância do ato ASC, ato (alfa) ASC,
+ *            dataExpedicao ASC NULLS LAST (fallback dataEntrada)].
  *
  * Se `sheetNameFilter` for passado, reordena só aquela aba. Caso contrário,
  * reordena todas as abas que tiverem demandas.
@@ -20,6 +20,8 @@ import {
   getSheetName,
   type DemandaParaSync,
 } from "@/lib/services/google-sheets";
+import { getAtoRelevanceRank } from "@/lib/utils/ato-rank";
+import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 /**
  * Rank posicional que reflete a ordem visual do kanban
@@ -118,12 +120,12 @@ export async function reorderAllSheets(
       dataEntrada: demandas.dataEntrada,
       ato: demandas.ato,
       prazo: demandas.prazo,
-      providencias: demandas.providencias,
       ordemManual: demandas.ordemManual,
       createdAt: demandas.createdAt,
       importBatchId: demandas.importBatchId,
       ordemOriginal: demandas.ordemOriginal,
       dataExpedicao: demandas.dataExpedicao,
+      defensorId: demandas.defensorId,
       assistidoNome: assistidos.nome,
       numeroAutos: processos.numeroAutos,
       atribuicao: processos.atribuicao,
@@ -140,67 +142,87 @@ export async function reorderAllSheets(
     createdAt: Date;
     prazo: string | null;
     rank: number;
+    atoRank: number;
     importBatchId: string | null;
     ordemOriginal: number | null;
   };
   const bySheet = new Map<string, Enriched[]>();
 
-  for (const r of rows) {
-    const atribuicao = r.atribuicao ?? "SUBSTITUICAO";
-    const sheetName = getSheetName(atribuicao);
+  // Filtrar primeiro pelo sheetName antes do build em paralelo, evitando
+  // queries de registros para abas que não vão ser reordenadas.
+  const candidates = rows
+    .map((r) => {
+      const atribuicao = r.atribuicao ?? "SUBSTITUICAO";
+      const sheetName = getSheetName(atribuicao);
+      return { r, atribuicao, sheetName };
+    })
+    .filter(({ sheetName }) =>
+      sheetNameFilter ? sheetName === sheetNameFilter : true,
+    );
 
-    if (sheetNameFilter && sheetName !== sheetNameFilter) continue;
+  const enrichedList: Array<{ sheetName: string; enriched: Enriched }> =
+    await Promise.all(
+      candidates.map(async ({ r, atribuicao, sheetName }) => {
+        const sync: DemandaParaSync = {
+          id: r.id,
+          status: r.status,
+          substatus: r.substatus ?? null,
+          reuPreso: r.reuPreso,
+          dataEntrada: r.dataEntrada,
+          dataExpedicao: r.dataExpedicao,
+          ato: r.ato,
+          prazo: r.prazo,
+          providencias: await buildProvidenciasCell(r.id),
+          assistidoNome: r.assistidoNome ?? "",
+          numeroAutos: r.numeroAutos ?? "",
+          atribuicao,
+          delegadoNome: r.delegadoNome ?? null,
+          defensorId: r.defensorId,
+        };
 
-    const sync: DemandaParaSync = {
-      id: r.id,
-      status: r.status,
-      substatus: r.substatus ?? null,
-      reuPreso: r.reuPreso,
-      dataEntrada: r.dataEntrada,
-      dataExpedicao: r.dataExpedicao,
-      ato: r.ato,
-      prazo: r.prazo,
-      providencias: r.providencias,
-      assistidoNome: r.assistidoNome ?? "",
-      numeroAutos: r.numeroAutos ?? "",
-      atribuicao,
-      delegadoNome: r.delegadoNome ?? null,
-    };
+        const enriched: Enriched = {
+          ...sync,
+          ordemManual: r.ordemManual,
+          createdAt: r.createdAt,
+          prazo: r.prazo,
+          rank: computeRank(r.status, r.substatus),
+          atoRank: getAtoRelevanceRank(r.ato),
+          importBatchId: r.importBatchId,
+          ordemOriginal: r.ordemOriginal,
+        };
 
-    const enriched: Enriched = {
-      ...sync,
-      ordemManual: r.ordemManual,
-      createdAt: r.createdAt,
-      prazo: r.prazo,
-      rank: computeRank(r.status, r.substatus),
-      importBatchId: r.importBatchId,
-      ordemOriginal: r.ordemOriginal,
-    };
+        return { sheetName, enriched };
+      }),
+    );
 
+  for (const { sheetName, enriched } of enrichedList) {
     if (!bySheet.has(sheetName)) bySheet.set(sheetName, []);
     bySheet.get(sheetName)!.push(enriched);
   }
 
   const cmp = (a: Enriched, b: Enriched): number => {
+    // 1ª ordem: status (rank de coluna do Kanban)
     if (a.rank !== b.rank) return a.rank - b.rank;
 
-    // Espelha exatamente o sort da coluna do Kanban (kanban-premium.tsx:799):
-    // ordemOriginal ASC (NULLS LAST) → createdAt DESC → prazo ASC.
-    // `ordemManual` é legado e não é mais considerado pelas views.
-    const oa = a.ordemOriginal ?? 9999;
-    const ob = b.ordemOriginal ?? 9999;
-    if (oa !== ob) return oa - ob;
+    // 2ª ordem: relevância do tipo de ato (peças prazo curto > liberdade
+    // > recursos > diligências > intermediárias > ciências > outros).
+    if (a.atoRank !== b.atoRank) return a.atoRank - b.atoRank;
 
-    const ac = a.createdAt.getTime();
-    const bc = b.createdAt.getTime();
-    if (ac !== bc) return bc - ac;
+    // 2.b: agrupar atos com o mesmo nome dentro do mesmo rank
+    const aAto = (a.ato ?? "").toLowerCase();
+    const bAto = (b.ato ?? "").toLowerCase();
+    if (aAto !== bAto) return aAto.localeCompare(bAto, "pt-BR");
 
-    const ap = a.prazo;
-    const bp = b.prazo;
-    if (ap === bp) return 0;
-    if (ap === null) return 1;
-    if (bp === null) return -1;
-    return ap.localeCompare(bp);
+    // 3ª ordem: data de expedição mais antiga primeiro (intimações velhas no topo)
+    const ax = a.dataExpedicao ?? a.dataEntrada;
+    const bx = b.dataExpedicao ?? b.dataEntrada;
+    if (ax !== bx) {
+      if (!ax) return 1;
+      if (!bx) return -1;
+      return ax.localeCompare(bx);
+    }
+
+    return 0;
   };
 
   const results: Array<{ sheet: string; written: number; error?: string }> = [];

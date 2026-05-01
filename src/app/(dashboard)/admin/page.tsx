@@ -1,5 +1,3 @@
-"use client";
-
 import DashboardJuriPage from "./dashboard/page";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
 
@@ -9,7 +7,7 @@ import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias
  * O DashboardJuriPage já trata internamente perfis alternativos
  * (estagiário, servidor, triagem) via DashboardPorPerfil.
  */
-export default function AdminPage() {
+export default async function AdminPage() {
   return (
     <>
       <DashboardJuriPage />

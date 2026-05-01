@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "triagem_promovido_demanda_idx" ON "atendimentos_triagem" USING btree ("promovido_para_demanda_id");

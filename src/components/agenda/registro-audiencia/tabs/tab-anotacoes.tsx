@@ -2,15 +2,19 @@
 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Notebook, MessageSquare } from "lucide-react";
+import { Notebook, MessageSquare, NotebookPen } from "lucide-react";
 import type { RegistroAudienciaData } from "../types";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
 
 interface TabAnotacoesProps {
   registro: RegistroAudienciaData;
   updateRegistro: (partial: Partial<RegistroAudienciaData>) => void;
+  audienciaId?: number | null;
+  assistidoId?: number;
 }
 
-export function TabAnotacoes({ registro, updateRegistro }: TabAnotacoesProps) {
+export function TabAnotacoes({ registro, updateRegistro, audienciaId, assistidoId }: TabAnotacoesProps) {
   return (
     <div className="space-y-3 max-w-4xl mx-auto">
       {/* Section Header */}
@@ -121,6 +125,32 @@ export function TabAnotacoes({ registro, updateRegistro }: TabAnotacoesProps) {
           className="text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800"
         />
       </div>
+
+      {/* Registros tipados — timeline da audiência */}
+      {audienciaId ? (
+        <div className="mt-6 space-y-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-9 h-9 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center">
+              <NotebookPen className="w-4 h-4 text-white dark:text-neutral-900" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Registros</h3>
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Anotações tipadas vinculadas a esta audiência</p>
+            </div>
+          </div>
+          {assistidoId ? (
+            <NovoRegistroButton
+              assistidoId={assistidoId}
+              audienciaId={audienciaId}
+              tipoDefault="anotacao"
+            />
+          ) : null}
+          <RegistrosTimeline
+            audienciaId={audienciaId}
+            emptyHint="Sem registros nesta audiência."
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import {
   plaudConfig,
   plaudRecordings,
-  atendimentos,
+  registros as atendimentos,
   assistidos,
   driveFiles,
   notifications,

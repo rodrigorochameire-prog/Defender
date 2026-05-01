@@ -8,6 +8,7 @@ import { casosRouter } from "./casos";
 import { assistidosRouter } from "./assistidos";
 import { processosRouter } from "./processos";
 import { demandasRouter } from "./demandas";
+import { demandaEventosRouter } from "./demanda-eventos";
 import { juriRouter } from "./juri";
 import { avaliacaoJuriRouter } from "./avaliacaoJuri";
 import { audienciasRouter } from "./audiencias";
@@ -16,6 +17,7 @@ import { driveRouter } from "./drive";
 import { profissionaisRouter } from "./profissionais";
 import { diligenciasRouter } from "./diligencias";
 import { atendimentosRouter } from "./atendimentos";
+import { registrosRouter } from "./registros";
 
 // Routers compartilhados
 import { calendarRouter } from "./calendar";
@@ -100,6 +102,7 @@ export const appRouter = router({
   assistidos: assistidosRouter,
   processos: processosRouter,
   demandas: demandasRouter,
+  demandaEventos: demandaEventosRouter,
   juri: juriRouter,
   avaliacaoJuri: avaliacaoJuriRouter,
   audiencias: audienciasRouter,
@@ -140,9 +143,14 @@ export const appRouter = router({
   whatsappChat: whatsappChatRouter,
 
   // ==========================================
-  // ATENDIMENTOS (PLAUD INTEGRATION)
+  // ATENDIMENTOS (PLAUD INTEGRATION) — legado, será substituído por `registros`
   // ==========================================
   atendimentos: atendimentosRouter,
+
+  // ==========================================
+  // REGISTROS (diário de bordo tipado: 7 tipos)
+  // ==========================================
+  registros: registrosRouter,
 
   // ==========================================
   // JURISPRUDÊNCIA - BANCO DE JULGADOS

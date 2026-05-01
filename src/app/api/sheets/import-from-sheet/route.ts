@@ -13,9 +13,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { demandas } from "@/lib/db/schema";
+import { demandas, registros as registrosTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { readSheet, statusParaLabel } from "@/lib/services/google-sheets";
+import { parseProvidenciasCell } from "@/lib/services/registros-summary";
 
 const COL = { ID: 0, STATUS: 1, PRESO: 2, DATA: 3, ASSISTIDO: 4, AUTOS: 5, ATO: 6, PRAZO: 7, PROVIDENCIAS: 8 };
 
@@ -83,8 +84,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const demandaId = Number(idStr);
       const sheetStatus = String(row[COL.STATUS] ?? "").trim();
       const sheetAto = String(row[COL.ATO] ?? "").trim();
-      const sheetProv = String(row[COL.PROVIDENCIAS] ?? "").trim();
       const sheetAssistido = String(row[COL.ASSISTIDO] ?? "").trim();
+      // Não dar trim aqui — o conteúdo abaixo do marker pode ter quebras
+      // significativas. parseProvidenciasCell faz o trim.
+      const sheetProvidenciasRaw = row[COL.PROVIDENCIAS] != null
+        ? String(row[COL.PROVIDENCIAS])
+        : "";
 
       // Buscar demanda atual no banco
       const [current] = await db
@@ -92,7 +97,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           status: demandas.status,
           substatus: demandas.substatus,
           ato: demandas.ato,
-          providencias: demandas.providencias,
+          assistidoId: demandas.assistidoId,
+          processoId: demandas.processoId,
         })
         .from(demandas)
         .where(eq(demandas.id, demandaId))
@@ -121,10 +127,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         updates.ato = sheetAto;
       }
 
-      // Providências: planilha → banco (só se planilha tem algo e banco está vazio ou diferente)
-      if (sheetProv && sheetProv !== String(current.providencias ?? "")) {
-        changes.push({ demandaId, row: i + 1, assistido: sheetAssistido, field: "providencias", from: String(current.providencias ?? "(vazio)"), to: sheetProv });
-        updates.providencias = sheetProv;
+      // Providências: 2-way sync. Extrai apenas o que está abaixo do marker
+      // (texto livre que o usuário escreveu) e cria um registro tipo='anotacao'.
+      // O resumo automático no topo é ignorado.
+      const { userNote } = parseProvidenciasCell(sheetProvidenciasRaw);
+      if (userNote && current.assistidoId) {
+        changes.push({
+          demandaId,
+          row: i + 1,
+          assistido: sheetAssistido,
+          field: "providencias",
+          from: "(novo registro)",
+          to: userNote.length > 80 ? userNote.slice(0, 79) + "…" : userNote,
+        });
+        if (mode === "apply") {
+          await db.insert(registrosTable).values({
+            tipo: "anotacao",
+            assistidoId: current.assistidoId,
+            processoId: current.processoId ?? null,
+            demandaId: demandaId,
+            conteudo: userNote,
+            dataRegistro: new Date(),
+            autorId: null,
+            status: "realizado",
+            interlocutor: "outro",
+          });
+        }
       }
 
       // Aplicar se modo = apply

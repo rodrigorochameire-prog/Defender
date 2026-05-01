@@ -54,7 +54,7 @@ import {
 } from "@/lib/services/google-drive";
 import { inngest } from "@/lib/inngest/client";
 import { getFolderIdForAtribuicao, mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
-import { processos, assistidos, casos, demandas, atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
+import { processos, assistidos, casos, demandas, registros as atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
 import {
   enrichmentClient,
   type TranscribeOutput,

@@ -29,6 +29,7 @@ const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-mod
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
+import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
@@ -42,6 +43,7 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
+import { useRealtimeDemandaEventos } from "@/hooks/use-realtime-demanda-eventos";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -725,6 +727,35 @@ export default function Demandas() {
     { enabled: processoSearchQuery.length >= 2 }
   );
 
+  // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
+  const demandaIdsForEventos = useMemo(() => {
+    return (demandasDB || [])
+      .map((d: any) => Number(d.id))
+      .filter((id: number) => Number.isInteger(id) && id > 0);
+  }, [demandasDB]);
+
+  const { data: lastEventosByDemanda = {} } = trpc.demandaEventos.lastByDemandaIds.useQuery(
+    { demandaIds: demandaIdsForEventos },
+    { enabled: demandaIdsForEventos.length > 0, staleTime: 10_000 },
+  );
+
+  const { data: pendentesEventosByDemanda = {} } = trpc.demandaEventos.pendentesByDemandaIds.useQuery(
+    { demandaIds: demandaIdsForEventos },
+    { enabled: demandaIdsForEventos.length > 0, staleTime: 10_000 },
+  );
+
+  // Realtime: invalida queries em qualquer mudança em `demanda_eventos` para
+  // qualquer demanda visível no Kanban (sem polling). Só ativa quando há ids
+  // a observar para evitar canal sem propósito.
+  useRealtimeDemandaEventos(
+    demandaIdsForEventos,
+    () => {
+      utils.demandaEventos.lastByDemandaIds.invalidate();
+      utils.demandaEventos.pendentesByDemandaIds.invalidate();
+    },
+    demandaIdsForEventos.length > 0,
+  );
+
   // Mutation para criar demanda
   const createDemandaMutation = trpc.demandas.create.useMutation({
     onSuccess: () => {
@@ -849,6 +880,8 @@ export default function Demandas() {
       status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "triagem", // "triagem" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
       data: d.dataExpedicao ? new Date(d.dataExpedicao + "T12:00:00").toLocaleDateString("pt-BR") : d.dataEntrada ? new Date(d.dataEntrada + "T12:00:00").toLocaleDateString("pt-BR") : "",
+      // dataExpedicaoRaw: YYYY-MM-DD (lexicograficamente ordenável) usado pelo Kanban para sort por antiguidade
+      dataExpedicaoRaw: (d.dataExpedicao ?? d.dataEntrada ?? null) as string | null,
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
       dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
       processos: d.processo?.numeroAutos
@@ -1073,22 +1106,13 @@ export default function Demandas() {
     }
   };
 
-  const handleProvidenciasChange = (demandaId: string, providencias: string) => {
-    // Atualizar localmente para feedback imediato
-    setDemandas((prev) =>
-      prev.map((d) => (d.id === demandaId ? { ...d, providencias } : d))
-    );
-
-    // Atualizar no banco (id precisa ser número)
-    const numericId = parseInt(demandaId, 10);
-    if (!isNaN(numericId)) {
-      updateDemandaMutation.mutate({
-        id: numericId,
-        providencias,
-      });
-    }
-
-    toast.success("Providências atualizadas!");
+  // Task 6 (registros tipados): handleProvidenciasChange foi removido.
+  // A edição de providências agora ocorre via timeline de registros (RegistrosTimeline +
+  // NovoRegistroButton com tipoDefault="providencia"). O editor inline antigo foi
+  // desconectado — sub-componentes que aceitam onProvidenciasChange devem receber undefined
+  // ou um stub que orienta o usuário para o painel novo.
+  const handleProvidenciasChangeLegacy = () => {
+    toast.info("Use a timeline de registros para registrar uma providência.");
   };
 
   const handleAssistidoChange = (demandaId: string, nome: string) => {
@@ -1767,6 +1791,29 @@ export default function Demandas() {
     });
   }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
 
+  // Adapta linha snake_case (raw SQL de demandaEventos) ao shape camelCase EventoLine
+  function toEventoLine(row: any): any {
+    if (!row) return null;
+    return {
+      id: row.id,
+      tipo: row.tipo,
+      subtipo: row.subtipo ?? null,
+      status: row.status ?? null,
+      resumo: row.resumo,
+      prazo: row.prazo ?? null,
+      createdAt: row.created_at ?? row.createdAt ?? new Date(),
+    };
+  }
+
+  // Enriquecimento das demandas filtradas com last/pendente eventos para o Kanban
+  const demandasFiltradasComEventos = useMemo(() => {
+    return demandasFiltradas.map((d: any) => ({
+      ...d,
+      lastEvento: toEventoLine((lastEventosByDemanda as any)[Number(d.id)]),
+      pendenteEvento: toEventoLine((pendentesEventosByDemanda as any)[Number(d.id)]),
+    }));
+  }, [demandasFiltradas, lastEventosByDemanda, pendentesEventosByDemanda]);
+
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {
     setDemandas((prev) => {
@@ -2020,6 +2067,7 @@ export default function Demandas() {
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+  const [eventsDrawerDemandaId, setEventsDrawerDemandaId] = useState<number | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
   const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
   const handlePreviewNavigate = useCallback((direction: "prev" | "next") => {
@@ -2473,7 +2521,6 @@ export default function Demandas() {
                   onDelegate={handleDelegateDirectly}
                   copyToClipboard={copyToClipboard}
                   onAtoChange={handleAtoChange}
-                  onProvidenciasChange={handleProvidenciasChange}
                   onAssistidoChange={handleAssistidoChange}
                   isSelectMode={isSelectMode}
                   selectedIds={selectedIds}
@@ -2525,7 +2572,6 @@ export default function Demandas() {
                             onDelete={handleDeleteDemanda}
                             onDelegate={handleDelegateDirectly}
                             copyToClipboard={copyToClipboard}
-                            onProvidenciasChange={handleProvidenciasChange}
                             onAtribuicaoChange={handleAtribuicaoChange}
                             isSelectMode={isSelectMode}
                             isSelected={selectedIds.has(demanda.id)}
@@ -2544,7 +2590,7 @@ export default function Demandas() {
                   atribuicaoColors={ATRIBUICAO_BORDER_COLORS}
                   onStatusChange={handleStatusChange}
                   onAtoChange={handleAtoChange}
-                  onProvidenciasChange={handleProvidenciasChange}
+                  onProvidenciasChange={handleProvidenciasChangeLegacy}
                   onPrazoChange={handlePrazoChange}
                   onAtribuicaoChange={handleAtribuicaoChange}
                   onAssistidoChange={handleAssistidoChange}
@@ -2788,8 +2834,9 @@ export default function Demandas() {
           <div className="space-y-3">
             {/* Kanban Premium Board */}
             <KanbanPremium
-              demandas={demandasFiltradas}
+              demandas={demandasFiltradasComEventos}
               onCardClick={(id) => setPreviewDemandaId(id)}
+              onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
@@ -3053,7 +3100,6 @@ export default function Demandas() {
         onOpenChange={(open) => { if (!open) setPreviewDemandaId(null); }}
         onStatusChange={handleStatusChange}
         onAtoChange={handleAtoChange}
-        onProvidenciasChange={handleProvidenciasChange}
         onPrazoChange={handlePrazoChange}
         onAtribuicaoChange={handleAtribuicaoChange}
         onArchive={handleArchiveDemanda}
@@ -3063,6 +3109,13 @@ export default function Demandas() {
         atribuicaoIcons={atribuicaoIcons}
         currentIndex={previewIndex >= 0 ? previewIndex : undefined}
         totalCount={demandasOrdenadas.length}
+      />
+
+      {/* Drawer de eventos (timeline / pendentes / atendimentos) — Task 11 */}
+      <DemandaEventsDrawer
+        isOpen={eventsDrawerDemandaId !== null}
+        onClose={() => setEventsDrawerDemandaId(null)}
+        demandaId={eventsDrawerDemandaId}
       />
     </div>
   );

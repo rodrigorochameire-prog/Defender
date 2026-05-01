@@ -189,6 +189,30 @@ export interface DemandaParaSync {
   providencias: string | null;
   delegadoNome: string | null;
   atribuicao: string; // valor do enum
+  defensorId?: number | null; // usado para filtrar por owner quando ENV está configurada
+}
+
+/**
+ * Filtro de ownership na planilha global. Quando
+ * `OMBUDS_SHEETS_OWNER_DEFENSOR_ID` está setado no ambiente, apenas demandas
+ * desse defensor são empurradas/reordenadas na planilha compartilhada.
+ *
+ * Contexto: enquanto o multi-tenant per-user (withSheetsAuth) não está
+ * configurado para todos, múltiplos defensores da mesma comarca escrevem na
+ * mesma planilha global e misturam lançamentos. Esse filtro evita o
+ * "vazamento" de demandas de outros defensores na planilha do owner.
+ */
+function getOwnerDefensorId(): number | null {
+  const raw = (process.env.OMBUDS_SHEETS_OWNER_DEFENSOR_ID ?? "").trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function demandaPertenceAoOwner(defensorId: number | null | undefined): boolean {
+  const owner = getOwnerDefensorId();
+  if (owner === null) return true;
+  return defensorId === owner;
 }
 
 // Labels válidos da planilha (dropdown de status)
@@ -822,6 +846,12 @@ export async function pushDemanda(demanda: DemandaParaSync): Promise<{ pushed: b
     return { pushed: false, conflict: false };
   }
 
+  if (!demandaPertenceAoOwner(demanda.defensorId)) {
+    // Filtro de ownership: outra pessoa atua no mesmo deploy/planilha e essa
+    // demanda não é do owner configurado. Não empurra pra evitar vazamento.
+    return { pushed: false, conflict: false };
+  }
+
   const sheetName = getSheetName(demanda.atribuicao);
   if (MANUAL_SHEETS.has(sheetName)) return { pushed: false, conflict: false };
 
@@ -875,15 +905,20 @@ export async function reorderSheet(
 
   await ensureSheet(sheetName);
 
+  // Filtro de ownership: ao reordenar, descarta demandas de outros defensores
+  // (mantém apenas as do owner). Sem isso a planilha global é reescrita com
+  // dados de todos misturados.
+  const demandasFiltradas = sortedDemandas.filter(d => demandaPertenceAoOwner(d.defensorId));
+
   const lastCol = colToLetter(HEADERS.length);
   // 1. Clear data rows (keep title + separator + headers intactos)
   const clearRange = `${sheetName}!A${DATA_START_ROW}:${lastCol}`;
   await sheetsPost(`/values/${encodeURIComponent(clearRange)}:clear`, {});
 
-  if (sortedDemandas.length === 0) return { written: 0 };
+  if (demandasFiltradas.length === 0) return { written: 0 };
 
   // 2. Write all rows em um único PUT
-  const values = sortedDemandas.map(demandaToRow);
+  const values = demandasFiltradas.map(demandaToRow);
   const endRow = DATA_START_ROW + values.length - 1;
   const writeRange = `${sheetName}!A${DATA_START_ROW}:${lastCol}${endRow}`;
   await sheetsPut(

@@ -87,8 +87,10 @@ export const CARD_STYLE = {
 // aresta crisp sem precisar de hue shift.
 
 export const HEADER_STYLE = {
-  /** Page Header — card (HSL 240 2% 26%) */
-  container: "rounded-xl bg-[#414144]",
+  /** Page Header — card
+   *  Light: HSL 240 2% 26% (#414144) — escuro sobre fundo claro
+   *  Dark:  HSL 240 2% 14% (#232325) — mais escuro, com borda sutil para separar do bg */
+  container: "rounded-xl bg-[#414144] dark:bg-[#232325] dark:border dark:border-white/[0.06]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",
@@ -97,16 +99,19 @@ export const HEADER_STYLE = {
   bottomRow: "bg-white/[0.06] rounded-lg px-3.5 py-2.5",
   stat: "text-white/90 font-semibold",
   statLabel: "text-white/60",
-  /** Utility Bar — acima do page header (HSL 240 2% 28%) */
-  utilityRow: "bg-[#464649] border-b border-white/[0.08]",
+  /** Utility Bar — acima do page header
+   *  Light: HSL 240 2% 28% (#464649)
+   *  Dark:  HSL 240 2% 12% (#1e1e20) — quase funde com bg, borda dá aresta */
+  utilityRow: "bg-[#464649] dark:bg-[#1e1e20] border-b border-white/[0.08]",
   utilityText: "text-white/60 text-[10px]",
   utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
   utilityIcon: "w-[13px] h-[13px] text-white/50",
   /** Collapsed — mesmo tom do utility */
-  collapsedBar: "bg-[#464649] border-b border-white/[0.08]",
+  collapsedBar: "bg-[#464649] dark:bg-[#1e1e20] border-b border-white/[0.08]",
   collapsedText: "text-white/90 text-[11px] font-semibold",
-  /** Shell shadow — top inset highlight + subtle drop shadow pra dar "lift" do fundo claro */
-  shellShadow: "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)]",
+  /** Shell shadow — top inset highlight + subtle drop shadow
+   *  Dark: sombra mais sutil, inset mais visível */
+  shellShadow: "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03),0_2px_8px_-4px_rgba(0,0,0,0.30)]",
 } as const;
 
 // ============================================

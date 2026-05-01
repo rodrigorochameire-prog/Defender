@@ -3,6 +3,12 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
+  getAtoRelevanceRank,
+  getAtoCategory,
+  ATO_CATEGORIES,
+  type AtoCategory,
+} from "@/lib/utils/ato-rank";
+import {
   ChevronRight,
   ChevronLeft,
   ChevronDown,
@@ -36,6 +42,8 @@ import {
 } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
+import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
+import { trpc } from "@/lib/trpc/client";
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -75,6 +83,8 @@ interface KanbanDemanda {
   delegadoPara?: string | null;
   reuPreso?: boolean;
   providenciaResumo?: string | null;
+  lastEvento?: EventoLine | null;
+  pendenteEvento?: EventoLine | null;
   data?: string | null;
   updatedAt?: string | null;
   syncedAt?: string | null;
@@ -84,6 +94,13 @@ interface KanbanDemanda {
 interface KanbanPremiumProps {
   demandas: KanbanDemanda[];
   onCardClick: (id: string | number) => void;
+  /**
+   * Opens the dedicated events drawer (timeline of user-facing events:
+   * atendimento / diligência / observação). When provided, the inline
+   * "Ver todos →" button on the card preview will trigger this instead of
+   * opening the QuickPreview side-sheet (legacy fallback).
+   */
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
@@ -93,6 +110,134 @@ interface KanbanPremiumProps {
 // StatusChangePopover replaced by StatusPipelineSelector
 
 // ==========================================
+// AGRUPAMENTO POR CATEGORIA DE ATO
+// ==========================================
+
+/**
+ * Renderiza uma lista de demandas agrupada por categoria de ato (urgentes →
+ * recursos → liberdade → ... → ciências → outros), com headers minúsculos
+ * entre os grupos. Quando há apenas 1 categoria na lista, os headers são
+ * omitidos (degrade gracioso). Categorias menos críticas (Ciências, Outros)
+ * começam colapsadas.
+ *
+ * Espera que `items` já venha ordenado pelo sort global do Kanban — esse
+ * componente apenas insere os divisores visuais.
+ */
+function GroupedByAtoList({
+  items,
+  renderCard,
+  storageKey,
+  enabled = true,
+}: {
+  items: KanbanDemanda[];
+  renderCard: (d: KanbanDemanda) => React.ReactNode;
+  /** Chave única para persistir colapso por coluna em localStorage */
+  storageKey: string;
+  enabled?: boolean;
+}) {
+  // Agrupa por categoria preservando a ordem de chegada (já vem ordenada)
+  const groups = useMemo(() => {
+    const map = new Map<AtoCategory, KanbanDemanda[]>();
+    for (const d of items) {
+      const cat = getAtoCategory(d.ato);
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(d);
+    }
+    // Ordena as categorias pela order do meta
+    return Array.from(map.entries()).sort(
+      ([a], [b]) => ATO_CATEGORIES[a].order - ATO_CATEGORIES[b].order,
+    );
+  }, [items]);
+
+  const [collapsed, setCollapsed] = useState<Set<AtoCategory>>(() => {
+    if (typeof window === "undefined") {
+      return new Set(
+        Object.values(ATO_CATEGORIES)
+          .filter((m) => m.collapsedByDefault)
+          .map((m) => m.key),
+      );
+    }
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return new Set(JSON.parse(raw) as AtoCategory[]);
+    } catch {
+      // ignore
+    }
+    return new Set(
+      Object.values(ATO_CATEGORIES)
+        .filter((m) => m.collapsedByDefault)
+        .map((m) => m.key),
+    );
+  });
+
+  const toggle = useCallback(
+    (cat: AtoCategory) => {
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (next.has(cat)) next.delete(cat);
+        else next.add(cat);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [storageKey],
+  );
+
+  // Se desabilitado ou só 1 categoria, render flat (sem headers)
+  if (!enabled || groups.length <= 1) {
+    return <>{items.map(renderCard)}</>;
+  }
+
+  return (
+    <>
+      {groups.map(([cat, list]) => {
+        const meta = ATO_CATEGORIES[cat];
+        const isCollapsed = collapsed.has(cat);
+        return (
+          <div key={cat} className="space-y-2">
+            <button
+              type="button"
+              onClick={() => toggle(cat)}
+              className="
+                w-full flex items-center gap-1.5 pt-1 pb-0.5 cursor-pointer
+                text-neutral-500 dark:text-neutral-400
+                hover:text-neutral-700 dark:hover:text-neutral-200
+                transition-colors duration-150 group/grouphdr
+              "
+            >
+              <ChevronDown
+                className={cn(
+                  "w-2.5 h-2.5 shrink-0 transition-transform duration-200",
+                  isCollapsed && "-rotate-90",
+                )}
+              />
+              <span className="text-[9px] font-bold uppercase tracking-wider">
+                {meta.label}
+              </span>
+              <span
+                className="ml-auto text-[9px] font-mono tabular-nums opacity-70"
+                aria-label={`${list.length} demandas`}
+              >
+                {list.length}
+              </span>
+            </button>
+            {!isCollapsed && (
+              <div className="space-y-2">
+                {list.map(renderCard)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+// ==========================================
 // CARD COMPONENT
 // ==========================================
 
@@ -100,6 +245,7 @@ function KanbanCard({
   demanda,
   group,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   isDragging: isBeingDragged,
@@ -110,6 +256,7 @@ function KanbanCard({
   demanda: KanbanDemanda;
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
@@ -129,6 +276,13 @@ function KanbanCard({
   // Status popover state
   const [showStatusPopover, setShowStatusPopover] = useState(false);
   const badgeRef = useRef<HTMLButtonElement>(null);
+
+  // Inline expand state (timeline preview)
+  const [expanded, setExpanded] = useState(false);
+  const { data: timelineData } = trpc.demandaEventos.list.useQuery(
+    { demandaId: Number(demanda.id), limit: 4 },
+    { enabled: expanded, staleTime: 10_000 },
+  );
 
   const handleBadgeClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -353,15 +507,92 @@ function KanbanCard({
           </div>
         )}
 
-        {/* Providência resumida — só se preenchida */}
-        {demanda.providenciaResumo && (
+        {/* Pendência — só se houver diligência pendente */}
+        {demanda.pendenteEvento && (
           <div className="mt-1.5 pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40">
-            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 italic truncate block">
-              <span className="opacity-40 mr-1">↳</span>
-              {demanda.providenciaResumo}
-            </span>
+            <EventLine evento={demanda.pendenteEvento} variant="pendente" />
           </div>
         )}
+        {/* Última atividade — sempre presente; placeholder se não há eventos */}
+        <div
+          className={`mt-1.5 ${
+            demanda.pendenteEvento
+              ? ""
+              : "pt-1.5 border-t border-neutral-200/40 dark:border-neutral-700/40"
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 min-w-0">
+              {demanda.lastEvento ? (
+                <EventLine evento={demanda.lastEvento} />
+              ) : (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">
+                  <span className="opacity-50 mr-1">+</span>registrar atividade
+                </span>
+              )}
+            </div>
+            {demanda.lastEvento && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
+                aria-label={expanded ? "Colapsar" : "Expandir"}
+                className="shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition"
+              >
+                <ChevronDown
+                  className={`size-3 transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
+                />
+              </button>
+            )}
+          </div>
+          {expanded && (
+            <div className="mt-2 pt-2 border-t border-neutral-200/40 dark:border-neutral-700/40 space-y-1">
+              {timelineData?.items ? (
+                <>
+                  {/* Pula o primeiro item porque já é o "lastEvento" mostrado acima */}
+                  {timelineData.items.slice(1, 4).map(({ evento }) => (
+                    <EventLine
+                      key={evento.id}
+                      evento={{
+                        id: evento.id,
+                        tipo: evento.tipo,
+                        subtipo: evento.subtipo,
+                        status: evento.status as EventoLine["status"],
+                        resumo: evento.resumo,
+                        prazo: evento.prazo,
+                        createdAt: evento.createdAt,
+                      }}
+                    />
+                  ))}
+                  {timelineData.items.length <= 1 && (
+                    <span className="text-[10px] text-neutral-400 italic">
+                      Sem eventos anteriores.
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onOpenEventsDrawer) {
+                        onOpenEventsDrawer(Number(demanda.id));
+                      } else {
+                        // Legacy fallback — open QuickPreview if drawer not wired
+                        onCardClick(demanda.id);
+                      }
+                    }}
+                    className="text-[10px] text-emerald-600 hover:underline mt-1"
+                  >
+                    Ver todos →
+                  </button>
+                </>
+              ) : (
+                <span className="text-[10px] text-neutral-400 italic">Carregando…</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -474,6 +705,7 @@ function SubGroupHeader({
 function EmAndamentoExpanded({
   subGroupDemandas,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   draggedDemandaId,
@@ -482,6 +714,7 @@ function EmAndamentoExpanded({
 }: {
   subGroupDemandas: Record<EmAndamentoSubGroup, KanbanDemanda[]>;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
@@ -517,6 +750,7 @@ function EmAndamentoExpanded({
             demanda={d}
             group={sg}
             onCardClick={onCardClick}
+            onOpenEventsDrawer={onOpenEventsDrawer}
             onStatusChange={onStatusChange}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
@@ -554,8 +788,12 @@ function EmAndamentoExpanded({
                   );
                 })
               ) : (
-                // Render flat (no sections — e.g. Diligências)
-                items.slice(0, 30).map(renderCard)
+                // Render flat agrupado por categoria de ato (Diligências, Acompanhar, Saída)
+                <GroupedByAtoList
+                  items={items.slice(0, 30)}
+                  renderCard={renderCard}
+                  storageKey={`kanban:atogroup:subgroup:${sg}`}
+                />
               )}
               {!sections && items.length > 30 && (
                 <p className="text-[10px] text-center text-neutral-400 py-2">
@@ -710,6 +948,7 @@ function MobileCardList({
   items,
   group,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   draggedDemandaId,
@@ -719,6 +958,7 @@ function MobileCardList({
   items: KanbanDemanda[];
   group: StatusGroup;
   onCardClick: (id: string | number) => void;
+  onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
@@ -741,6 +981,7 @@ function MobileCardList({
           demanda={d}
           group={group}
           onCardClick={onCardClick}
+          onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
@@ -764,6 +1005,7 @@ function MobileCardList({
 export function KanbanPremium({
   demandas,
   onCardClick,
+  onOpenEventsDrawer,
   onStatusChange,
   copyToClipboard,
   selectedAtribuicoes = [],
@@ -818,18 +1060,27 @@ export function KanbanPremium({
       }
     }
 
-    // Sort each column/subgroup by PJe order (ordemOriginal ASC, then createdAt DESC)
-    const sortRecent = (a: KanbanDemanda, b: KanbanDemanda) => {
-      const oa = Number(a.ordemOriginal ?? 9999);
-      const ob = Number(b.ordemOriginal ?? 9999);
-      if (oa !== ob) return oa - ob;
-      // Fallback: most recent created_at first
-      const da = String(a.dataInclusao || "");
-      const db = String(b.dataInclusao || "");
-      return db.localeCompare(da);
+    // Sort: relevância do ato ASC → ato (alfa) → dataExpedicao ASC NULLS LAST.
+    // Agrupa demandas do mesmo tipo dentro da coluna e mostra as intimações
+    // mais antigas no topo (devem ser resolvidas primeiro).
+    const sortByAtoAndExpedicao = (a: KanbanDemanda, b: KanbanDemanda) => {
+      const ra = getAtoRelevanceRank(a.ato);
+      const rb = getAtoRelevanceRank(b.ato);
+      if (ra !== rb) return ra - rb;
+
+      const aAto = (a.ato ?? "").toLowerCase();
+      const bAto = (b.ato ?? "").toLowerCase();
+      if (aAto !== bAto) return aAto.localeCompare(bAto, "pt-BR");
+
+      const ax = (a.dataExpedicaoRaw as string | null | undefined) ?? null;
+      const bx = (b.dataExpedicaoRaw as string | null | undefined) ?? null;
+      if (ax === bx) return 0;
+      if (!ax) return 1;
+      if (!bx) return -1;
+      return ax.localeCompare(bx);
     };
-    for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortRecent);
-    for (const key of Object.keys(subs)) (subs as any)[key].sort(sortRecent);
+    for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortByAtoAndExpedicao);
+    for (const key of Object.keys(subs)) (subs as any)[key].sort(sortByAtoAndExpedicao);
 
     return {
       columnDemandas: cols,
@@ -950,6 +1201,7 @@ export function KanbanPremium({
           items={mobileCards}
           group={mobileGroupKey}
           onCardClick={onCardClick}
+          onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
@@ -1035,6 +1287,7 @@ export function KanbanPremium({
                     <EmAndamentoExpanded
                       subGroupDemandas={subGroupDemandas}
                       onCardClick={onCardClick}
+                      onOpenEventsDrawer={onOpenEventsDrawer}
                       onStatusChange={onStatusChange}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
@@ -1043,24 +1296,29 @@ export function KanbanPremium({
                     />
                   ) : (
                     <div className="space-y-2.5 flex-1">
-                      {items.slice(0, 30).map((d) => {
-                        const rawKey2 = (d.substatus || d.status || "triagem");
-                        const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
-                        const sCfg = getStatusConfig(statusKey);
-                        return (
-                          <KanbanCard
-                            key={d.id}
-                            demanda={d}
-                            group={sCfg.group as StatusGroup}
-                            onCardClick={onCardClick}
-                            onStatusChange={onStatusChange}
-                            copyToClipboard={copyToClipboard}
-                            isDragging={draggedDemandaId === String(d.id)}
-                            onDragStart={setDraggedDemandaId}
-                            onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
-                          />
-                        );
-                      })}
+                      <GroupedByAtoList
+                        items={items.slice(0, 30)}
+                        storageKey="kanban:atogroup:em_andamento_collapsed"
+                        renderCard={(d) => {
+                          const rawKey2 = (d.substatus || d.status || "triagem");
+                          const statusKey = rawKey2.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+                          const sCfg = getStatusConfig(statusKey);
+                          return (
+                            <KanbanCard
+                              key={d.id}
+                              demanda={d}
+                              group={sCfg.group as StatusGroup}
+                              onCardClick={onCardClick}
+                              onOpenEventsDrawer={onOpenEventsDrawer}
+                              onStatusChange={onStatusChange}
+                              copyToClipboard={copyToClipboard}
+                              isDragging={draggedDemandaId === String(d.id)}
+                              onDragStart={setDraggedDemandaId}
+                              onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
+                            />
+                          );
+                        }}
+                      />
                       {items.length > 30 && (
                         <p className="text-[10px] text-center text-neutral-400 py-2">
                           +{items.length - 30} mais
@@ -1107,19 +1365,24 @@ export function KanbanPremium({
                   <ColumnHeader group={groupKey} count={items.length} />
                 </div>
                 <div className="space-y-2.5 flex-1">
-                  {items.slice(0, 30).map((d) => (
-                    <KanbanCard
-                      key={d.id}
-                      demanda={d}
-                      group={groupKey}
-                      onCardClick={onCardClick}
-                      onStatusChange={onStatusChange}
-                      copyToClipboard={copyToClipboard}
-                      isDragging={draggedDemandaId === String(d.id)}
-                      onDragStart={setDraggedDemandaId}
-                      onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
-                    />
-                  ))}
+                  <GroupedByAtoList
+                    items={items.slice(0, 30)}
+                    storageKey={`kanban:atogroup:col:${col}`}
+                    renderCard={(d) => (
+                      <KanbanCard
+                        key={d.id}
+                        demanda={d}
+                        group={groupKey}
+                        onCardClick={onCardClick}
+                        onOpenEventsDrawer={onOpenEventsDrawer}
+                        onStatusChange={onStatusChange}
+                        copyToClipboard={copyToClipboard}
+                        isDragging={draggedDemandaId === String(d.id)}
+                        onDragStart={setDraggedDemandaId}
+                        onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
+                      />
+                    )}
+                  />
                   {items.length > 30 && (
                     <p className="text-[10px] text-center text-neutral-400 py-2">
                       +{items.length - 30} mais

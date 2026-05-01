@@ -25,8 +25,10 @@ import {
   classeRecursalEnum,
   resultadoJulgamentoEnum,
   demandaOrigemEnum,
+  instanciaProcessoEnum,
 } from "./enums";
 import { comarcas } from "./comarcas";
+import { defensoresBa } from "./defensoria";
 
 // ==========================================
 // USUÁRIOS (DEFENSORES)
@@ -65,6 +67,7 @@ export const users = pgTable("users", {
   sheetsSpreadsheetUrl: text("sheets_spreadsheet_url"),
   sheetsSyncEnabled: boolean("sheets_sync_enabled").default(false),
   workspaceId: integer("workspace_id"),
+  defensorBaId: integer("defensor_ba_id").references(() => defensoresBa.id, { onDelete: "set null" }),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -209,6 +212,12 @@ export const processos = pgTable("processos", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 
+  // Hierarquia de instâncias
+  instancia: instanciaProcessoEnum("instancia").default("PRIMEIRA"),
+  processoOrigemId: integer("processo_origem_id").references((): any => processos.id, { onDelete: "set null" }),
+  defensor2gId: integer("defensor_2g_id").references(() => defensoresBa.id, { onDelete: "set null" }),
+  defensorBrasiliaId: integer("defensor_brasilia_id").references(() => defensoresBa.id, { onDelete: "set null" }),
+
   // 2º Grau Criminal
   classeRecursal: classeRecursalEnum("classe_recursal"),
   camara: text("camara"),
@@ -261,8 +270,6 @@ export const demandas = pgTable("demandas", {
   status: statusDemandaEnum("status").default("5_TRIAGEM"),
   substatus: varchar("substatus", { length: 50 }),
   prioridade: prioridadeEnum("prioridade").default("NORMAL"),
-  providencias: text("providencias"),
-  providenciaResumo: varchar("providencia_resumo", { length: 100 }),
   defensorId: integer("defensor_id").references(() => users.id),
   delegadoParaId: integer("delegado_para_id").references(() => users.id),
   dataDelegacao: timestamp("data_delegacao"),

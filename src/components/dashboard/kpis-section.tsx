@@ -26,6 +26,7 @@ import {
   Activity,
   CalendarClock,
   PlusCircle,
+  ClipboardList,
 } from "lucide-react";
 import {
   Bar,
@@ -377,6 +378,10 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
     enabled: showRelatorioDetail,
   });
   const comarcasQ = trpc.comarcas.listRMS.useQuery();
+  const eventosKpisQ = trpc.demandaEventos.kpisSummary.useQuery({
+    defensorId: selectedDefensorId ?? undefined,
+  });
+  const eventosKpis = eventosKpisQ.data;
 
   const utils = trpc.useUtils();
   const isRefreshing =
@@ -384,7 +389,8 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
     throughputQ.isFetching ||
     backlogQ.isFetching ||
     prazosQ.isFetching ||
-    agingQ.isFetching;
+    agingQ.isFetching ||
+    eventosKpisQ.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -399,6 +405,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
       utils.kpis.audienciasProximas.invalidate(),
       utils.kpis.semAtendimento.invalidate(),
       utils.kpis.relatorioResumo.invalidate(),
+      utils.demandaEventos.kpisSummary.invalidate(),
     ]);
   };
 
@@ -667,6 +674,34 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
             accent="success"
             sublabel={`${summary?.concluidas ?? 0} no histórico`}
             delay={0.15}
+          />
+        </div>
+
+        {/* ============================================================ */}
+        {/* TIMELINE DE EVENTOS — sinais novos do registro estruturado    */}
+        {/* ============================================================ */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <MainStatCard
+            label="Diligências pendentes"
+            value={eventosKpis?.pendentes ?? 0}
+            icon={ClipboardList}
+            sublabel="aguardando ação"
+            delay={0.18}
+          />
+          <MainStatCard
+            label="Diligências vencidas"
+            value={eventosKpis?.vencidas ?? 0}
+            icon={AlertTriangle}
+            accent={(eventosKpis?.vencidas ?? 0) > 0 ? "danger" : "neutral"}
+            sublabel="prazo expirado"
+            delay={0.22}
+          />
+          <MainStatCard
+            label="Atividade 7d"
+            value={eventosKpis?.atividade7d ?? 0}
+            icon={Activity}
+            sublabel="eventos registrados"
+            delay={0.26}
           />
         </div>
 

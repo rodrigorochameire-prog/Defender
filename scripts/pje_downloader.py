@@ -269,7 +269,7 @@ def _search_peticionar(page: Page, numero: str):
         // Extract idProcesso from onclick of first link
         var firstLink = row.querySelector('a');
         var onclick = firstLink ? (firstLink.getAttribute('onclick') || '') : '';
-        var idMatch = onclick.match(/idProcesso[':]+\\s*(\\d+)/);
+        var idMatch = onclick.match(/idProcesso(?:Selecionado)?['"\\s:]+(\\d+)/);
         var idProcesso = idMatch ? idMatch[1] : null;
         // Check for Autos Digitais link
         var autosLink = row.querySelector('a[title="Autos Digitais"]');
@@ -812,44 +812,130 @@ def download_vvd_via_cdp(
             time.sleep(8)
         _log(f"VVD CDP: connected to {page.url[:60]}")
 
-        # --- Step 1: PETICIONAR search to get idProcesso ---
-        page.evaluate("""() => {
-            var el = document.getElementById('tabPeticionar_shifted');
-            if (el) { var ev = new MouseEvent('click', {bubbles:true});
-                       el.dispatchEvent(ev); if (el.onclick) el.onclick(ev); }
-        }""")
+        # --- Step 1: search in PETICIONAR (pending tasks); fallback ACERVO (full caseload) ---
+        def _open_tab(tab_key: str) -> str:
+            """Click one of the painel tabs. tab_key in {'Peticionar','Acervo','Expedientes'}.
+            Returns status string for logging."""
+            return page.evaluate(
+                """(key) => {
+                    // Tabs are TABLEs with id like tabPeticionar_shifted
+                    var tab = document.getElementById('tab' + key + '_shifted');
+                    if (!tab) return 'tab-not-found';
+                    // Prefer synthetic mouse event — RichFaces attaches real handlers to onclick
+                    try {
+                        var ev = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});
+                        tab.dispatchEvent(ev);
+                        return 'dispatch-ok';
+                    } catch (e) {
+                        // Fallback: wrap onclick in a function so return statements are legal
+                        var oc = tab.getAttribute('onclick');
+                        if (oc) {
+                            try { (new Function('event', oc))(new MouseEvent('click')); return 'wrap-ok'; }
+                            catch (e2) { return 'wrap-err:' + e2.message; }
+                        }
+                        return 'no-onclick';
+                    }
+                }""",
+                tab_key,
+            )
+
+        def _search_in_current_iframe(numero: str) -> str | None:
+            """Perform search in whatever tab iframe is currently loaded. Returns idProcesso or None."""
+            iframe_el_inner = page.query_selector("iframe")
+            if not iframe_el_inner:
+                return None
+            frame_inner = iframe_el_inner.content_frame()
+            try:
+                frame_inner.wait_for_selector('input[id*="numeroSequencial"]', timeout=30_000)
+            except Exception:
+                return None
+            # Clear previous state and wait for result table to empty before searching
+            frame_inner.evaluate("""() => {
+                var c = document.querySelector('input[id*="clearButton"], input[value="Limpar"]');
+                if (c) {
+                    var oc = c.getAttribute('onclick');
+                    if (oc) { try { (new Function('event', oc))(new Event('click')); return; } catch (e) {} }
+                    c.click();
+                }
+            }""")
+            # Wait for previous result rows to disappear (up to 8s)
+            for _ in range(16):
+                time.sleep(0.5)
+                n_rows = frame_inner.evaluate(
+                    "() => document.querySelectorAll('tr.rich-table-row').length"
+                )
+                if n_rows == 0:
+                    break
+            parts_inner = _parse_numero(numero)
+            frame_inner.evaluate("""(p) => {
+                document.querySelector('input[id*="numeroSequencial"]').value = p.seq;
+                document.querySelector('input[id*="Verificador"]').value = p.dig;
+                document.querySelector('input[id*="Ano"]').value = p.ano;
+                document.querySelector('input[id*="OrgaoJustica"]').value = p.org;
+            }""", parts_inner)
+            # Invoke via evaluate to avoid "Frame detached" when the overlay intercepts clicks
+            frame_inner.evaluate("""() => {
+                var btn = document.querySelector('input[id*="searchProcessos"]');
+                if (!btn) return 'no-btn';
+                var oc = btn.getAttribute('onclick');
+                if (oc) {
+                    try { (new Function('event', oc))(new Event('click')); return 'search-ok'; }
+                    catch (e) { return 'search-err:' + e.message; }
+                }
+                btn.click();
+                return 'click-fallback';
+            }""")
+            for _a in range(12):
+                time.sleep(2)
+                idp = frame_inner.evaluate(
+                    """(n) => {
+                        // Strict: only return idProcesso when a row actually matches this numero.
+                        // No fallback to first row — prevents stale-state leakage across searches.
+                        var rows = document.querySelectorAll('tr.rich-table-row');
+                        for (var i = 0; i < rows.length; i++) {
+                            if ((rows[i].textContent || '').indexOf(n) === -1) continue;
+                            var links = rows[i].querySelectorAll('a');
+                            for (var j = 0; j < links.length; j++) {
+                                var m = (links[j].getAttribute('onclick') || '').match(/idProcesso(?:Selecionado)?['"\\s:]+(\\d+)/);
+                                if (m) return m[1];
+                            }
+                        }
+                        return null;
+                    }""",
+                    numero,
+                )
+                if idp:
+                    return idp
+            return None
+
+        r1 = _open_tab("Peticionar")
+        _log(f"VVD CDP: open Peticionar → {r1}")
         time.sleep(15)
-        iframe_el = page.query_selector("#framePeticionar") or page.query_selector("iframe")
+        id_proc = _search_in_current_iframe(numero)
+        if id_proc:
+            _log(f"VVD CDP: found in PETICIONAR — idProcesso={id_proc}")
+        else:
+            _log("VVD CDP: not in PETICIONAR — falling back to ACERVO")
+            r2 = _open_tab("Acervo")
+            _log(f"VVD CDP: open Acervo → {r2}")
+            time.sleep(15)
+            id_proc = _search_in_current_iframe(numero)
+            if id_proc:
+                _log(f"VVD CDP: found in ACERVO — idProcesso={id_proc}")
+
+        iframe_el = page.query_selector("iframe")
         if not iframe_el:
-            raise RuntimeError("PETICIONAR iframe not found")
+            raise RuntimeError("iframe not found after tab open")
         frame = iframe_el.content_frame()
-        frame.wait_for_selector('input[id*="numeroSequencial"]', timeout=60_000)
-        _log("VVD CDP: PETICIONAR loaded")
 
-        parts = _parse_numero(numero)
-        frame.evaluate("""(p) => {
-            document.querySelector('input[id*="numeroSequencial"]').value = p.seq;
-            document.querySelector('input[id*="Verificador"]').value = p.dig;
-            document.querySelector('input[id*="Ano"]').value = p.ano;
-            document.querySelector('input[id*="OrgaoJustica"]').value = p.org;
-        }""", parts)
-        frame.click('input[id*="searchProcessos"]')
-        time.sleep(8)
-
-        id_proc = frame.evaluate("""() => {
-            var r = document.querySelector('tr.rich-table-row a');
-            if (!r) return null;
-            var m = (r.getAttribute('onclick') || '').match(/idProcesso[':]+\\s*(\\d+)/);
-            return m ? m[1] : null;
-        }""")
         if not id_proc:
             try:
-                page.screenshot(path="/tmp/pje-debug-vvd-search.png")
+                page.screenshot(path=f"/tmp/pje-debug-vvd-search-{numero}.png")
             except Exception:
                 pass
             raise RuntimeError(
-                f"processo {numero} not found in PETICIONAR — "
-                f"may be under segredo de justiça"
+                f"processo {numero} not found in PETICIONAR nor ACERVO — "
+                f"may require 'Solicitar habilitação' or be under strict segredo"
             )
         _log(f"VVD CDP: idProcesso={id_proc}")
 
@@ -857,10 +943,21 @@ def download_vvd_via_cdp(
         popup = None
         try:
             with ctx.expect_page(timeout=15_000) as popup_info:
-                frame.evaluate("""() => {
-                    var a = document.querySelector('tr.rich-table-row a');
-                    a.onclick ? a.onclick(new Event('click')) : a.click();
-                }""")
+                frame.evaluate(
+                    """(n) => {
+                        var rows = document.querySelectorAll('tr.rich-table-row');
+                        for (var i = 0; i < rows.length; i++) {
+                            if ((rows[i].textContent || '').indexOf(n) === -1) continue;
+                            var a = rows[i].querySelector('a');
+                            if (!a) continue;
+                            a.onclick ? a.onclick(new Event('click')) : a.click();
+                            return;
+                        }
+                        var f = document.querySelector('tr.rich-table-row a');
+                        if (f) { f.onclick ? f.onclick(new Event('click')) : f.click(); }
+                    }""",
+                    numero,
+                )
             popup = popup_info.value
         except Exception:
             _log("VVD CDP: expect_page timeout, checking open pages")
@@ -939,24 +1036,39 @@ def download_vvd_via_cdp(
             )
             for attempt in range(36):  # 360s max
                 time.sleep(10)
+                # Only consider "ready" when the row matching this numero has status Sucesso
+                ready = False
                 for frm in dl_page.frames:
-                    if frm.evaluate(
-                        "(n) => (document.body.textContent||'').indexOf(n)>=0",
+                    status = frm.evaluate(
+                        """(n) => {
+                            var rows = document.querySelectorAll('tr, [role="row"]');
+                            for (var i = 0; i < rows.length; i++) {
+                                var txt = rows[i].textContent || '';
+                                if (txt.indexOf(n) === -1) continue;
+                                if (txt.indexOf('Sucesso') !== -1 || txt.indexOf('sucesso') !== -1) return 'ready';
+                                if (txt.indexOf('Erro') !== -1 || txt.indexOf('Falha') !== -1) return 'error';
+                                return 'pending';
+                            }
+                            return 'missing';
+                        }""",
                         numero,
-                    ):
-                        _log(f"VVD CDP: found in Área de Download (attempt {attempt+1})")
+                    )
+                    if status == "ready":
+                        _log(f"VVD CDP: row {numero} Sucesso (attempt {attempt+1})")
+                        ready = True
                         break
-                else:
-                    if attempt % 3 == 2:
-                        _log(f"VVD CDP: polling... {(attempt+1)*10}s")
-                        dl_page.reload()
-                        time.sleep(5)
-                    continue
-                break
+                    if status == "error":
+                        raise RuntimeError(f"Área de Download returned Erro for {numero}")
+                if ready:
+                    break
+                if attempt % 3 == 2:
+                    _log(f"VVD CDP: polling... {(attempt+1)*10}s (still pending/missing)")
+                    dl_page.reload()
+                    time.sleep(5)
             else:
                 dl_page.screenshot(path="/tmp/pje-debug-vvd-area.png")
                 raise RuntimeError(
-                    f"processo not found in Área de Download after 360s"
+                    f"processo {numero} not Sucesso in Área de Download after 360s"
                 )
 
             # --- Step 6: Click download button, capture API URL ---
@@ -967,30 +1079,35 @@ def download_vvd_via_cdp(
                     api_url_holder["val"] = req.url
 
             dl_page.on("request", on_req)
-            # Find the Angular iframe and click the download button in the row
-            # that matches this processo number (not just the first one)
+            # Find the Angular iframe and click the download button belonging
+            # to the row matching THIS processo. When multiple rows match
+            # (re-downloads), pick the MOST RECENT by timestamp.
             for frm in dl_page.frames:
-                clicked = frm.evaluate("""(numero) => {
-                    var btns = document.querySelectorAll('button');
-                    // Collect candidates with their row's timestamp so we pick
-                    // the MOST RECENT matching row (newest download).
-                    var candidates = [];
-                    for (var i = 0; i < btns.length; i++) {
-                        if (!btns[i].querySelector('.pi-download')) continue;
-                        var row = btns[i].closest('tr') || btns[i].closest('[role="row"]');
-                        if (!row) continue;
-                        var txt = (row.textContent || '').trim();
-                        if (txt.indexOf(numero) < 0) continue;
-                        // Extract timestamp DD/MM/YYYY - HH:MM to compare freshness
-                        var m = txt.match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})\\s*-\\s*(\\d{2}):(\\d{2})/);
-                        var ts = m ? new Date(m[3], m[2]-1, m[1], m[4], m[5]).getTime() : 0;
-                        candidates.push({btn: btns[i], ts: ts});
-                    }
-                    if (!candidates.length) return false;
-                    candidates.sort(function(a,b){ return b.ts - a.ts; });
-                    candidates[0].btn.click();
-                    return true;
-                }""", numero)
+                clicked = frm.evaluate(
+                    """(numero) => {
+                        var rows = document.querySelectorAll('tr, [role="row"]');
+                        var candidates = [];
+                        for (var i = 0; i < rows.length; i++) {
+                            var text = rows[i].textContent || '';
+                            if (text.indexOf(numero) === -1) continue;
+                            // Only act if status is Sucesso (avoid pressing download while still Processing)
+                            if (text.indexOf('Sucesso') === -1 && text.indexOf('sucesso') === -1) continue;
+                            var btn = rows[i].querySelector('button .pi-download');
+                            if (!btn) continue;
+                            var parent = btn.closest('button');
+                            if (!parent) continue;
+                            // Extract timestamp DD/MM/YYYY - HH:MM to pick the freshest match
+                            var m = text.match(/(\\d{2})\\/(\\d{2})\\/(\\d{4})\\s*-\\s*(\\d{2}):(\\d{2})/);
+                            var ts = m ? new Date(m[3], m[2]-1, m[1], m[4], m[5]).getTime() : 0;
+                            candidates.push({btn: parent, ts: ts});
+                        }
+                        if (!candidates.length) return false;
+                        candidates.sort(function(a, b) { return b.ts - a.ts; });
+                        candidates[0].btn.click();
+                        return true;
+                    }""",
+                    numero,
+                )
                 if clicked:
                     break
             time.sleep(10)

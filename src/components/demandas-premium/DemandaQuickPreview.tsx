@@ -44,10 +44,9 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
-import { EditableTextInline } from "@/components/shared/editable-text-inline";
-import { AudioRecorderButton } from "@/components/shared/audio-recorder";
-import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -90,7 +89,7 @@ interface DemandaQuickPreviewProps {
   onOpenChange: (open: boolean) => void;
   onStatusChange: (id: string, status: string) => void;
   onAtoChange: (id: string, ato: string) => void;
-  onProvidenciasChange: (id: string, providencias: string) => void;
+  onProvidenciasChange?: (id: string, providencias: string) => void;
   onPrazoChange: (id: string, prazo: string) => void;
   onAtribuicaoChange: (id: string, atribuicao: string) => void;
   onArchive: (id: string) => void;
@@ -390,7 +389,6 @@ export function DemandaQuickPreview({
   onOpenChange,
   onStatusChange,
   onAtoChange,
-  onProvidenciasChange,
   onPrazoChange,
   onAtribuicaoChange,
   onArchive,
@@ -479,64 +477,9 @@ export function DemandaQuickPreview({
     [driveFolder?.folderId, demanda?.id, uploadFile, refetchDriveFolder]
   );
 
-  // Upload audio to assistido's Drive folder
-  const handleAudioUpload = useCallback(
-    async (fileOrBlob: File | Blob, mimeTypeOrName?: string) => {
-      if (!demanda?.assistidoId) return;
-
-      try {
-        // Get assistido's driveFolderId
-        const isFile = fileOrBlob instanceof File;
-        const fileName = isFile
-          ? (fileOrBlob as File).name
-          : `gravacao-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, "-")}.webm`;
-        const mimeType = isFile
-          ? (fileOrBlob as File).type || "audio/mp4"
-          : mimeTypeOrName || "audio/webm";
-
-        // Convert to base64
-        const arrayBuffer = await fileOrBlob.arrayBuffer();
-        const base64 = btoa(
-          new Uint8Array(arrayBuffer).reduce(
-            (data, byte) => data + String.fromCharCode(byte),
-            ""
-          )
-        );
-
-        // We need the assistido's folder — fetch it
-        const res = await fetch(
-          `/api/trpc/assistidos.getById?batch=1&input=${encodeURIComponent(
-            JSON.stringify({ "0": { json: { id: demanda.assistidoId } } })
-          )}`
-        );
-        const data = await res.json();
-        const folderId = data?.[0]?.result?.data?.json?.driveFolderId;
-
-        if (!folderId) {
-          toast.info("Audio transcrito", {
-            description: "Assistido sem pasta no Drive — audio nao foi salvo.",
-          });
-          return;
-        }
-
-        await uploadFile.mutateAsync({
-          folderId,
-          fileName,
-          mimeType,
-          fileBase64: `data:${mimeType};base64,${base64}`,
-          description: `Audio gravado via OMBUDS — Demanda ${demanda.id}`,
-        });
-
-        toast.success("Audio salvo no Drive", {
-          description: `${fileName} vinculado ao assistido.`,
-        });
-      } catch (err) {
-        console.error("[DemandaQuickPreview] Upload audio error:", err);
-        // Don't show error toast — transcription already succeeded
-      }
-    },
-    [demanda?.assistidoId, demanda?.id, uploadFile]
-  );
+  // Task 6 (registros tipados): handleAudioUpload removido junto com o textarea de
+  // Providências. Áudios agora são tratados pela timeline de registros (tipo=atendimento)
+  // através do RegistroEditor, que oferece o fluxo unificado de áudio + Plaud.
 
   if (!demanda) return null;
 
@@ -608,31 +551,29 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        {/* ===== STICKY NAV HEADER — Padrão Defender sheet bar ===== */}
-        <div className="sticky top-0 z-10 bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0 space-y-0">
-            <SheetTitle className="text-[13px] font-semibold text-foreground tracking-tight">
-              Demanda
-            </SheetTitle>
+        {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+          <SheetHeader className="p-0">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Demanda</SheetTitle>
           </SheetHeader>
           <div className="flex items-center gap-1">
             {onNavigate && (
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
                   title="Anterior (↑)"
                 >
                   <ChevronUp className="w-3.5 h-3.5" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-white/60 tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 hover:ring-neutral-300 dark:hover:ring-neutral-700 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
                   title="Próximo (↓)"
                 >
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -641,7 +582,7 @@ export function DemandaQuickPreview({
             )}
             <button
               onClick={() => onOpenChange(false)}
-              className="w-7 h-7 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-all duration-150 cursor-pointer flex items-center justify-center ml-1"
+              className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer ml-1"
               title="Fechar (Esc)"
             >
               <X className="w-3.5 h-3.5" />
@@ -651,11 +592,14 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO HEADER — cinza claro com texto escuro ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-[#c8c8cc] dark:bg-neutral-800/60 border border-neutral-300/40 dark:border-neutral-700/40 shadow-sm shadow-black/[0.03]">
+          {/* ===== HERO CARD — branco com outline + accent esquerdo (Padrão Defender) ===== */}
+          <div
+            className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
+            style={{ borderLeftColor: atribuicaoColor }}
+          >
             <div className="flex items-start gap-3.5">
-              {/* Avatar com ring de atribuição */}
-              <div className="w-11 h-11 rounded-xl bg-white dark:bg-neutral-700 flex items-center justify-center shrink-0" style={{ boxShadow: `0 0 0 2.5px ${atribuicaoColor}` }}>
+              {/* Avatar */}
+              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                 <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
@@ -666,7 +610,7 @@ export function DemandaQuickPreview({
                     {demanda.assistido}
                   </h2>
                   {isPreso && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/60 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 shrink-0">
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 shrink-0">
                       <Lock className="w-2.5 h-2.5" /> Preso
                     </span>
                   )}
@@ -678,7 +622,7 @@ export function DemandaQuickPreview({
                 {/* Processo — chip */}
                 {processo && (
                   <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-all duration-150"
+                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
@@ -696,7 +640,7 @@ export function DemandaQuickPreview({
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver assistido →
                     </Link>
@@ -704,7 +648,7 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-neutral-600 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
                       Ver processo →
                     </Link>
@@ -817,51 +761,38 @@ export function DemandaQuickPreview({
               <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             </div>
 
-            {/* Card 1: Providências */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden hover:shadow-md hover:border-neutral-300/80 dark:hover:border-neutral-700/60 focus-within:shadow-md focus-within:border-neutral-300/80 transition-all duration-200">
-              {/* Providências */}
-              <div className="px-3.5 sm:px-4 pt-2.5 pb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] text-foreground font-semibold">Providências</span>
-                  <div className="flex items-center gap-0.5">
-                    <AudioRecorderButton
-                      compact
-                      onTranscriptReady={(text) => {
-                        const current = demanda.providencias || "";
-                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
-                      }}
-                      onAudioBlob={(blob, mimeType) => handleAudioUpload(blob, mimeType)}
-                    />
-                    <VoiceMemosButton
-                      compact
-                      onTranscriptReady={(text) => {
-                        const current = demanda.providencias || "";
-                        onProvidenciasChange(demanda.id, current ? `${current}\n\n${text}` : text);
-                      }}
-                      onAudioFile={(file) => handleAudioUpload(file)}
+            {/* Card 1: Registros (Task 6 — registros tipados) */}
+            {/* Substitui o textarea legado de "Providências" pela timeline tipada.
+                Quando demanda.assistidoId está disponível, mostra timeline + botão para
+                criar novo registro com tipoDefault="providencia". */}
+            {demanda.assistidoId ? (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
+                <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold uppercase tracking-wide">Registros</span>
+                    <NovoRegistroButton
                       assistidoId={demanda.assistidoId}
-                      processoId={demanda.processoId}
+                      processoId={demanda.processoId ?? undefined}
+                      demandaId={Number(demanda.id)}
+                      tipoDefault="providencia"
+                      label="Adicionar"
                     />
                   </div>
+                  <RegistrosTimeline
+                    assistidoId={demanda.assistidoId}
+                    processoId={demanda.processoId ?? undefined}
+                    demandaId={Number(demanda.id)}
+                    emptyHint="Sem registros nesta demanda."
+                  />
                 </div>
-                <EditableTextInline
-                  value={demanda.providencias || ""}
-                  onSave={(v) => onProvidenciasChange(demanda.id, v)}
-                  placeholder="O que precisa ser feito?"
-                  className="cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30 min-h-[48px] bg-neutral-50/50 dark:bg-neutral-800/20 rounded-lg px-3 py-2.5 border border-neutral-200/30 dark:border-neutral-800/40 focus-within:border-neutral-300/60 dark:focus-within:border-neutral-800/60 transition-all group/edit text-[10.5px] leading-[1.7] tracking-[0.015em] text-neutral-500 dark:text-neutral-400 font-[system-ui]"
-                  multiline
-                />
-                {/* Timestamp última edição */}
-                {demanda.updatedAt && (
-                  <div className="flex items-center gap-1 mt-1.5 px-1">
-                    <Clock className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600" />
-                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-                      Editado {new Date(demanda.updatedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                )}
               </div>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+                <div className="px-3.5 sm:px-4 py-4 text-[11px] text-muted-foreground italic">
+                  Vincule um assistido para registrar providências e atendimentos.
+                </div>
+              </div>
+            )}
 
             {/* Section divider: Classificação */}
             <div className="flex items-center gap-3 mt-1">

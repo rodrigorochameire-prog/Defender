@@ -38,7 +38,7 @@ import {
 } from "./casos";
 
 // Agenda tables
-import { audiencias, calendarEvents, atendimentos } from "./agenda";
+import { audiencias, calendarEvents, registros as atendimentos } from "./agenda";
 
 // Juri tables
 import { sessoesJuri, jurados } from "./juri";
@@ -51,6 +51,12 @@ import { anotacoes, movimentacoes } from "./investigacao";
 
 // Comunicacao tables
 import { notifications } from "./comunicacao";
+
+// Defensoria tables
+import { defensoresBa } from "./defensoria";
+
+// Demanda eventos
+import { demandaEventos, atendimentoDemandas } from "./demanda-eventos";
 
 // ==========================================
 // RELATIONS - Core tables
@@ -73,6 +79,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   // Afastamentos
   afastamentosComoDefensor: many(afastamentos, { relationName: "defensorAfastado" }),
   afastamentosComoSubstituto: many(afastamentos, { relationName: "defensorSubstituto" }),
+  // Ponte para diretório institucional DPE-BA
+  defensorBa: one(defensoresBa, { fields: [users.defensorBaId], references: [defensoresBa.id] }),
 }));
 
 export const afastamentosRelations = relations(afastamentos, ({ one }) => ({
@@ -103,6 +111,11 @@ export const processosRelations = relations(processos, ({ one, many }) => ({
   anotacoes: many(anotacoes),
   calendarEvents: many(calendarEvents),
   analisesCowork: many(analisesCowork),
+  // Hierarquia de instâncias
+  processoOrigem: one(processos, { fields: [processos.processoOrigemId], references: [processos.id], relationName: "processo_origem" }),
+  recursosVinculados: many(processos, { relationName: "processo_origem" }),
+  defensor2g: one(defensoresBa, { fields: [processos.defensor2gId], references: [defensoresBa.id], relationName: "defensor2g" }),
+  defensorBrasilia: one(defensoresBa, { fields: [processos.defensorBrasiliaId], references: [defensoresBa.id], relationName: "defensorBrasilia" }),
 }));
 
 export const demandasRelations = relations(demandas, ({ one, many }) => ({
@@ -214,4 +227,31 @@ export const analisesCoworkRelations = relations(analisesCowork, ({ one }) => ({
   assistido: one(assistidos, { fields: [analisesCowork.assistidoId], references: [assistidos.id] }),
   processo: one(processos, { fields: [analisesCowork.processoId], references: [processos.id] }),
   audiencia: one(audiencias, { fields: [analisesCowork.audienciaId], references: [audiencias.id] }),
+}));
+
+// ==========================================
+// RELATIONS - Demanda eventos (timeline)
+// ==========================================
+
+export const demandaEventosRelations = relations(demandaEventos, ({ one }) => ({
+  demanda: one(demandas, { fields: [demandaEventos.demandaId], references: [demandas.id] }),
+  autor: one(users, {
+    fields: [demandaEventos.autorId],
+    references: [users.id],
+    relationName: "evento_autor",
+  }),
+  responsavel: one(users, {
+    fields: [demandaEventos.responsavelId],
+    references: [users.id],
+    relationName: "evento_responsavel",
+  }),
+  atendimento: one(atendimentos, {
+    fields: [demandaEventos.atendimentoId],
+    references: [atendimentos.id],
+  }),
+}));
+
+export const atendimentoDemandasRelations = relations(atendimentoDemandas, ({ one }) => ({
+  atendimento: one(atendimentos, { fields: [atendimentoDemandas.atendimentoId], references: [atendimentos.id] }),
+  demanda: one(demandas, { fields: [atendimentoDemandas.demandaId], references: [demandas.id] }),
 }));

@@ -371,9 +371,7 @@ export async function importarDemandas(
           if (!existingDemanda.dataEntrada && row.dataEntrada) {
             patch.dataEntrada = convertDate(row.dataEntrada);
           }
-          if (!existingDemanda.providencias && row.providencias) {
-            patch.providencias = row.providencias;
-          }
+          // Providências: não enriquece mais — coluna foi migrada para tabela "registros".
 
           // Divergência de status NÃO é sobrescrita — só registrada.
           const statusDivergente =
@@ -413,7 +411,6 @@ export async function importarDemandas(
         substatus,
         prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
         reuPreso,
-        providencias: row.providencias || null,
         defensorId,
         importBatchId: row.importBatchId || null,
         ordemOriginal: row.ordemOriginal ?? null,

@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
           origem: "planilha_n8n",
           status: row.status || "5_TRIAGEM",
           prazo: row.prazo || null,
-          providencias: row.providencias || null,
           reuPreso: Boolean(row.reuPreso),
+          // providencias migrada para tabela "registros" — não passar aqui
         });
 
         if (result.action === "created") results.created++;

@@ -77,7 +77,7 @@ export function QuickRegister({
       tipo,
       assunto: assunto.trim(),
       interlocutor,
-      dataAtendimento: new Date().toISOString(),
+      dataRegistro: new Date().toISOString(),
       status: "realizado",
     });
   }

@@ -23,10 +23,10 @@ import { Label } from "@/components/ui/label";
 
 interface AtendimentoData {
   id: number;
-  dataAtendimento: Date | string;
+  dataRegistro: Date | string;
   tipo: string;
   assunto: string | null;
-  resumo: string | null;
+  conteudo: string | null;
   duracao: number | null;
   status: string | null;
   interlocutor: string | null;
@@ -93,14 +93,14 @@ export function RegistroCompletoSheet({
 
   const [formData, setFormData] = useState({
     tipo: "presencial",
-    dataAtendimento: new Date().toISOString().slice(0, 16),
+    dataRegistro: new Date().toISOString().slice(0, 16),
     duracao: "",
     status: "realizado",
     processoId: "",
     interlocutor: "assistido",
     local: "",
     assunto: "",
-    resumo: "",
+    conteudo: "",
     acompanhantes: "",
   });
 
@@ -108,27 +108,27 @@ export function RegistroCompletoSheet({
     if (atendimento) {
       setFormData({
         tipo: atendimento.tipo ?? "presencial",
-        dataAtendimento: toDatetimeLocal(atendimento.dataAtendimento),
+        dataRegistro: toDatetimeLocal(atendimento.dataRegistro),
         duracao: atendimento.duracao != null ? String(atendimento.duracao) : "",
         status: atendimento.status ?? "realizado",
         processoId: atendimento.processoId != null ? String(atendimento.processoId) : "",
         interlocutor: atendimento.interlocutor ?? "assistido",
         local: atendimento.local ?? "",
         assunto: atendimento.assunto ?? "",
-        resumo: atendimento.resumo ?? "",
+        conteudo: atendimento.conteudo ?? "",
         acompanhantes: atendimento.acompanhantes ?? "",
       });
     } else {
       setFormData({
         tipo: "presencial",
-        dataAtendimento: new Date().toISOString().slice(0, 16),
+        dataRegistro: new Date().toISOString().slice(0, 16),
         duracao: "",
         status: "realizado",
         processoId: processoIdAtivo ? String(processoIdAtivo) : "",
         interlocutor: "assistido",
         local: "",
         assunto: "",
-        resumo: "",
+        conteudo: "",
         acompanhantes: "",
       });
     }
@@ -163,8 +163,8 @@ export function RegistroCompletoSheet({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   function handleSave() {
-    const dataAtendimento = formData.dataAtendimento
-      ? new Date(formData.dataAtendimento).toISOString()
+    const dataRegistro = formData.dataRegistro
+      ? new Date(formData.dataRegistro).toISOString()
       : new Date().toISOString();
 
     const duracao = formData.duracao ? Number(formData.duracao) : undefined;
@@ -174,27 +174,27 @@ export function RegistroCompletoSheet({
       updateMutation.mutate({
         id: atendimento.id,
         tipo: formData.tipo,
-        dataAtendimento,
+        dataRegistro,
         duracao,
         status: formData.status || undefined,
         processoId: processoId ?? null,
         interlocutor: (formData.interlocutor as "assistido" | "familiar" | "testemunha" | "outro") || undefined,
         local: formData.local || undefined,
         assunto: formData.assunto || undefined,
-        resumo: formData.resumo || undefined,
+        conteudo: formData.conteudo || undefined,
         acompanhantes: formData.acompanhantes || undefined,
       });
     } else {
       createMutation.mutate({
         assistidoId,
         tipo: formData.tipo,
-        dataAtendimento,
+        dataRegistro,
         status: formData.status,
         processoId,
         interlocutor: formData.interlocutor as "assistido" | "familiar" | "testemunha" | "outro",
         local: formData.local || undefined,
         assunto: formData.assunto || undefined,
-        resumo: formData.resumo || undefined,
+        conteudo: formData.conteudo || undefined,
       });
     }
   }
@@ -235,8 +235,8 @@ export function RegistroCompletoSheet({
               <Label>Data / Hora</Label>
               <input
                 type="datetime-local"
-                value={formData.dataAtendimento}
-                onChange={(e) => set("dataAtendimento", e.target.value)}
+                value={formData.dataRegistro}
+                onChange={(e) => set("dataRegistro", e.target.value)}
                 className={cn(
                   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm",
                   "text-neutral-900 dark:text-neutral-100",
@@ -352,8 +352,8 @@ export function RegistroCompletoSheet({
               <textarea
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
                 placeholder="Resumo do atendimento..."
-                value={formData.resumo}
-                onChange={(e) => set("resumo", e.target.value)}
+                value={formData.conteudo}
+                onChange={(e) => set("conteudo", e.target.value)}
               />
             </div>
 

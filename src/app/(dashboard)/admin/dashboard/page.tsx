@@ -1381,8 +1381,8 @@ export default function DashboardJuriPage() {
                   createAtendimento.mutate({
                     assistidoId: atendimentoRapido.assistidoId,
                     tipo: atendimentoRapido.tipo,
-                    resumo: atendimentoRapido.descricao.trim(),
-                    dataAtendimento: new Date().toISOString(),
+                    conteudo: atendimentoRapido.descricao.trim(),
+                    dataRegistro: new Date().toISOString(),
                     ...(atendimentoRapido.processoId ? { processoId: atendimentoRapido.processoId } : {}),
                     ...(atendimentoRapido.local ? { local: atendimentoRapido.local } : {}),
                     ...(atendimentoRapido.assunto ? { assunto: atendimentoRapido.assunto.trim() } : {}),

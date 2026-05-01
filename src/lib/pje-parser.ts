@@ -12,7 +12,14 @@ export interface IntimacaoPJeSimples {
   camposNaoExtraidos?: string[]; // Lista de campos que precisam ser preenchidos manualmente
   isMPU?: boolean; // Se é processo de Medida Protetiva de Urgência (MPUMPCrim)
   ordemOriginal?: number; // Posição original na lista do PJe (para ordenação por "recentes")
+  assistidoNaoIdentificado?: boolean; // parser só achou órgãos, defensor precisa identificar o réu
+  destinatarioOriginal?: string; // nome do destinatário bruto (ex: "Deam Camaçari") quando assistido não foi resolvido
 }
+
+// Marker literal gravado em `assistido` quando o parser não consegue identificar
+// o réu real (só órgãos no texto). O webhook transforma isso em um assistido
+// individualizado por processo, visível em lista de pendências de revisão.
+export const ASSISTIDO_A_IDENTIFICAR = "⚠ A identificar";
 
 export interface ResultadoParser {
   intimacoes: IntimacaoPJeSimples[];
@@ -301,7 +308,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Ex: "MPUMPCrim 8005252-02.2026.8.05.0039 Maus Tratos"
   // Ex: "APOrd 8011331-31.2025.8.05.0039 Ameaça"
   // Ex: "APri 8236693-68.2025.8.05.0001 Contra a Mulher"
-  const regexTipoProcessoCrime = /^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*(.*)?$/i;
+  const regexTipoProcessoCrime = /^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD|PePrPr|CauInomCrim|MPCA)\s+(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\s*(.*)?$/i;
 
   // Regex para partes do processo (VÍTIMA X RÉU)
   // Captura o nome após o "X" que é o RÉU (nosso assistido)
@@ -310,6 +317,31 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   // Regex para detectar nome do intimado que aparece ANTES do tipo de documento
   // No PJe, o formato é: "NOME_ASSISTIDO\nTipo Documento (ID)\nExpedição..."
   const regexNomeAssistidoSolo = /^([A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇa-zàáâãéêíóôõúç\s]+)$/;
+
+  // Guarda compartilhada: detecta nomes que são órgãos/autoridades, não pessoas.
+  // Usada em todos os ramos que elegem o assistido para evitar que destinatários
+  // da intimação (Defensoria, DEAM, DT, Vara, Cartório, etc.) poluam o cadastro.
+  const ehOrgaoOuAutoridade = (nome: string): boolean => {
+    if (!nome) return false;
+    const nomeUpper = nome.toUpperCase();
+    return nomeUpper.includes('MINISTÉRIO PÚBLICO') ||
+           nomeUpper.includes('MINISTERIO PUBLICO') ||
+           nomeUpper.includes('MINISTÉRIO PUBLICO') ||
+           nomeUpper.includes('MINISTERIO PÚBLICO') ||
+           /^\d+[ªº]?\s*DH\b/i.test(nome) ||
+           /^\d+[ªº]?\s*DT\b/i.test(nome) ||
+           /\bDELEGACIA\b/i.test(nomeUpper) ||
+           /\bDEAM\b/i.test(nomeUpper) ||
+           /\bPOL[ÍI]CIA\b/i.test(nomeUpper) ||
+           /\bVARA\s+(DO|DA|DE)\b/i.test(nomeUpper) ||
+           /\bCART[ÓO]RIO\b/i.test(nomeUpper) ||
+           /\bSECRETARIA\b/i.test(nomeUpper) ||
+           nomeUpper.includes('COORDENAÇÃO DE POLÍCIA') ||
+           nomeUpper.includes('COORDENACAO DE POLICIA') ||
+           nomeUpper.includes('DEFENSORIA PUB') ||
+           nomeUpper.includes('ESTADO DA BAHIA') ||
+           nomeUpper.includes('PODER JUDICI');
+  };
 
   let intimacaoAtual: Partial<IntimacaoPJeSimples> = {};
   let idDocumentoAtual = '';
@@ -337,7 +369,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             !nomeCandidato.match(/\d{7}-/) &&
             !nomeCandidato.match(/\d{2}\/\d{2}\/\d{4}/) &&
             !nomeCandidato.startsWith('/') &&
-            !nomeCandidato.match(/^(Juri|InsanAc|LibProv|PetCrim|EP|VD|MPUMPCrim|APOrd|APSum|APri|AuPrFl|APFD)\s/i) &&
+            !nomeCandidato.match(/^(Juri|InsanAc|LibProv|PetCrim|EP|VD|MPUMPCrim|APOrd|APSum|APri|AuPrFl|APFD|PePrPr|CauInomCrim|MPCA)\s/i) &&
             !nomeCandidato.match(/^(Expedição|Diário|Prazo|Conclusos|Juntada|Mandado)/i) &&
             !isNoiseLine(nomeCandidato) &&
             nomeCandidato.split(' ').length >= 2) {
@@ -358,6 +390,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
           const camposNaoExtraidos: string[] = [];
           if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
           if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
+          if (intimacaoAtual.assistidoNaoIdentificado) camposNaoExtraidos.push('assistido');
           const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
           intimacoes.push({
             assistido: intimacaoAtual.assistido,
@@ -370,6 +403,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             crime: intimacaoAtual.crime,
             vara: intimacaoAtual.vara || varaDetectada || undefined,
             atribuicaoDetectada: atribuicaoDetectada || undefined,
+            assistidoNaoIdentificado: intimacaoAtual.assistidoNaoIdentificado || undefined,
+            destinatarioOriginal: intimacaoAtual.destinatarioOriginal || undefined,
             camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
             isMPU,
             ordemOriginal: contadorOrdem++,
@@ -424,7 +459,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             !regexPartes.test(proximaLinha) &&
             !proximaLinha.startsWith('/') &&
             !isNoiseLine(proximaLinha) &&
-            !proximaLinha.match(/^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD)\s/i) &&
+            !proximaLinha.match(/^(MPUMPCrim|APOrd|APSum|APri|PetCrim|AuPrFl|Juri|InsanAc|LibProv|EP|VD|APFD|PePrPr|CauInomCrim|MPCA)\s/i) &&
             proximaLinha.length > 3 &&
             proximaLinha.length < 60) {
           intimacaoAtual.crime = proximaLinha;
@@ -459,18 +494,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       // 6. "DEFENSORIA PUBLICA X MP" → sem assistido individual, pular
       // 7. "FULANO X FULANO" (InsanAc - mesma pessoa) → assistido é qualquer um
 
-      const ehMPouAutoridade = (nome: string): boolean => {
-        const nomeUpper = nome.toUpperCase();
-        return nomeUpper.includes('MINISTÉRIO PÚBLICO') ||
-               nomeUpper.includes('MINISTERIO PUBLICO') ||
-               nomeUpper.includes('MINISTÉRIO PUBLICO') ||
-               nomeUpper.includes('MINISTERIO PÚBLICO') ||
-               /^\d+[ªº]?\s*DH\s/i.test(nome) ||
-               nomeUpper.includes('COORDENAÇÃO DE POLÍCIA') ||
-               nomeUpper.includes('COORDENACAO DE POLICIA') ||
-               nomeUpper.includes('DEFENSORIA PUB') ||
-               nomeUpper.includes('ESTADO DA BAHIA');
-      };
+      const ehMPouAutoridade = ehOrgaoOuAutoridade;
 
       // PRIORIDADE: O nome que aparece acima do tipo de documento no PJe
       // é o nome da pessoa que está sendo intimada (o assistido real).
@@ -513,18 +537,23 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
         nomeAssistido = nomeIntimadoAtual;
       } else if (nomeAssistidoDaLinhaX) {
         nomeAssistido = nomeAssistidoDaLinhaX;
-      } else if (nomeIntimadoAtual) {
-        // Último recurso: usar o nome da autoridade se não há outra opção
-        nomeAssistido = nomeIntimadoAtual;
       } else {
-        continue;
+        // Sem nome de pessoa real disponível (só órgãos/autoridades).
+        // Marcar como não identificado em vez de descartar — defensor revisa
+        // depois. Guardar o destinatário original para dar pista de origem.
+        nomeAssistido = ASSISTIDO_A_IDENTIFICAR;
+        intimacaoAtual.destinatarioOriginal = nomeIntimadoAtual || ladoEsquerdo || ladoDireito || '';
+        intimacaoAtual.assistidoNaoIdentificado = true;
       }
 
       // Remover "e outros (N)" do final se existir
       nomeAssistido = nomeAssistido.replace(/\s+e\s+outros\s*\(\d+\)\s*$/i, '').trim();
 
-      // Converter para Title Case
-      intimacaoAtual.assistido = toTitleCase(nomeAssistido);
+      // Converter para Title Case (exceto para o marker "⚠ A identificar",
+      // que é uma string sentinela e precisa preservar a grafia exata).
+      intimacaoAtual.assistido = nomeAssistido === ASSISTIDO_A_IDENTIFICAR
+        ? ASSISTIDO_A_IDENTIFICAR
+        : toTitleCase(nomeAssistido);
 
       // Salvar a intimação se tivermos dados mínimos (assistido + processo + data)
       if (intimacaoAtual.assistido && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
@@ -538,6 +567,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
           const camposNaoExtraidos: string[] = [];
           if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
           if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
+          if (intimacaoAtual.assistidoNaoIdentificado) camposNaoExtraidos.push('assistido');
 
           // Verificar se é MPU (Medida Protetiva de Urgência)
           const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
@@ -556,6 +586,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
             isMPU,
             ordemOriginal: contadorOrdem++,
+            assistidoNaoIdentificado: intimacaoAtual.assistidoNaoIdentificado || undefined,
+            destinatarioOriginal: intimacaoAtual.destinatarioOriginal || undefined,
           });
         }
 
@@ -572,10 +604,17 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     if (/^\/VARA\s/i.test(linha) || /^\/\d+[ªº]?\s*V/i.test(linha)) {
       intimacaoAtual.vara = linha.replace(/^\//, '').trim();
 
-      // Se temos dados suficientes mas não encontramos "X" (ex: intimação à Defensoria),
-      // usar o nomeIntimadoAtual como assistido e salvar
+      // Se temos dados suficientes mas não encontramos "X" (ex: intimação à
+      // Defensoria), preferir o nomeIntimadoAtual. Se for órgão, marca como
+      // "a identificar" em vez de descartar — o processo entra para revisão.
       if (!intimacaoAtual.assistido && nomeIntimadoAtual && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
-        intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
+        if (ehOrgaoOuAutoridade(nomeIntimadoAtual)) {
+          intimacaoAtual.assistido = ASSISTIDO_A_IDENTIFICAR;
+          intimacaoAtual.destinatarioOriginal = nomeIntimadoAtual;
+          intimacaoAtual.assistidoNaoIdentificado = true;
+        } else {
+          intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
+        }
 
         const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
         if (!processados.has(chaveUnica)) {
@@ -583,6 +622,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
           const camposNaoExtraidos: string[] = [];
           if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
           if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
+          if (intimacaoAtual.assistidoNaoIdentificado) camposNaoExtraidos.push('assistido');
           const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
           intimacoes.push({
             assistido: intimacaoAtual.assistido,
@@ -598,6 +638,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
             camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
             isMPU,
             ordemOriginal: contadorOrdem++,
+            assistidoNaoIdentificado: intimacaoAtual.assistidoNaoIdentificado || undefined,
+            destinatarioOriginal: intimacaoAtual.destinatarioOriginal || undefined,
           });
         }
         intimacaoAtual = {};
@@ -609,10 +651,16 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
     }
   }
 
-  // Se sobrou alguma intimação parcial com dados mínimos, tentar salvar
-  // Usar nomeIntimadoAtual como fallback se não tiver assistido
+  // Fim do loop: salvar intimação parcial restante. Se só restou um órgão,
+  // marca como "a identificar" em vez de descartar.
   if (!intimacaoAtual.assistido && nomeIntimadoAtual) {
-    intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
+    if (ehOrgaoOuAutoridade(nomeIntimadoAtual)) {
+      intimacaoAtual.assistido = ASSISTIDO_A_IDENTIFICAR;
+      intimacaoAtual.destinatarioOriginal = nomeIntimadoAtual;
+      intimacaoAtual.assistidoNaoIdentificado = true;
+    } else {
+      intimacaoAtual.assistido = toTitleCase(nomeIntimadoAtual);
+    }
   }
   if (intimacaoAtual.assistido && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
     const chaveUnica = `${intimacaoAtual.numeroProcesso}-${(intimacaoAtual.dataExpedicao || '').split(' ')[0]}`;
@@ -621,6 +669,7 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       const camposNaoExtraidos: string[] = [];
       if (!intimacaoAtual.prazo) camposNaoExtraidos.push('prazo');
       if (!intimacaoAtual.crime) camposNaoExtraidos.push('crime');
+      if (intimacaoAtual.assistidoNaoIdentificado) camposNaoExtraidos.push('assistido');
 
       const isMPU = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
 
@@ -638,6 +687,8 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
         camposNaoExtraidos: camposNaoExtraidos.length > 0 ? camposNaoExtraidos : undefined,
         isMPU,
         ordemOriginal: contadorOrdem++,
+        assistidoNaoIdentificado: intimacaoAtual.assistidoNaoIdentificado || undefined,
+        destinatarioOriginal: intimacaoAtual.destinatarioOriginal || undefined,
       });
     }
   }
@@ -727,6 +778,8 @@ function parsePJeIntimacoesLegado(texto: string): IntimacaoPJeSimples[] {
     'camaçari', 'candeias', 'salvador', 'lauro de freitas', 'ilhéus',
     'caixa de entrada', 'resultados encontrados', 'expedientes',
     'diário eletrônico', 'coordenação de polícia', 'estado da bahia',
+    'delegacia', 'deam', 'dt vila', 'polícia civil', 'policia civil',
+    'poder judiciário', 'secretaria',
     'homicídio', 'prisão preventiva', 'competência', 'tráfico',
     'liberdade provisória', 'você tomou ciência', 'o sistema registrou',
     'data limite prevista', 'peticionar', 'novo processo', 'consulta',

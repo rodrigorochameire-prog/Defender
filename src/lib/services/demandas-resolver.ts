@@ -39,7 +39,6 @@ export interface DemandaInput {
   prazo?: string | null;
   dataEntrada?: string | null;
   dataExpedicao?: string | null;
-  providencias?: string | null;
   reuPreso?: boolean | null;
   prioridade?: string | null;
   defensorId?: number | null;
@@ -55,7 +54,6 @@ export interface AtivaSnapshot {
   status: string | null;
   ato: string;
   pjeDocumentoId: string | null;
-  providencias: string | null;
   enrichmentData: Record<string, unknown> | null;
 }
 
@@ -169,7 +167,6 @@ export async function resolveDemanda(input: DemandaInput): Promise<ResolveResult
       status: demandas.status,
       ato: demandas.ato,
       pjeDocumentoId: demandas.pjeDocumentoId,
-      providencias: demandas.providencias,
       enrichmentData: demandas.enrichmentData,
     })
     .from(demandas)
@@ -200,7 +197,6 @@ export async function resolveDemanda(input: DemandaInput): Promise<ResolveResult
     if (input.prazo) updates.prazo = input.prazo;
     if (input.dataEntrada) updates.dataEntrada = input.dataEntrada;
     if (input.dataExpedicao) updates.dataExpedicao = input.dataExpedicao;
-    if (input.providencias?.trim()) updates.providencias = input.providencias.trim();
     if (typeof input.reuPreso === "boolean") updates.reuPreso = input.reuPreso;
     if (input.prioridade?.trim()) updates.prioridade = input.prioridade as never;
     if (input.pjeDocumentoId && !target.pjeDocumentoId) {
@@ -230,7 +226,6 @@ export async function resolveDemanda(input: DemandaInput): Promise<ResolveResult
       prazo: input.prazo ?? null,
       dataEntrada: input.dataEntrada ?? null,
       dataExpedicao: input.dataExpedicao ?? null,
-      providencias: input.providencias?.trim() || null,
       reuPreso: input.reuPreso ?? false,
       prioridade: (input.prioridade ?? "NORMAL") as never,
       defensorId: input.defensorId ?? null,

@@ -270,7 +270,12 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               )}
 
               {form.activeTab === "anotacoes" && (
-                  <TabAnotacoes registro={form.registro} updateRegistro={form.updateRegistro} />
+                  <TabAnotacoes
+                    registro={form.registro}
+                    updateRegistro={form.updateRegistro}
+                    audienciaId={form.audienciaId}
+                    assistidoId={form.assistidoId}
+                  />
               )}
 
               {form.activeTab === "resultado" && (

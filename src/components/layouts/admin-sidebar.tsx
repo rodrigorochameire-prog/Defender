@@ -60,6 +60,7 @@ interface AdminSidebarProps {
   children: ReactNode;
   userName: string;
   userEmail?: string;
+  headerExtra?: ReactNode;
 }
 
 // ==========================================
@@ -206,15 +207,15 @@ const iconMap: Record<string, React.ElementType> = {
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
 const DEFAULT_WIDTH = 260;
 
-function ConditionalHeader() {
+function ConditionalHeader({ extra }: { extra?: ReactNode }) {
   const { hasPageHeader } = usePageHeader();
 
   if (hasPageHeader) return null;
 
-  return <HeaderUtilityRow variant="standalone" />;
+  return <HeaderUtilityRow variant="standalone" extra={extra} />;
 }
 
-export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProps) {
+export function AdminSidebar({ children, userName, userEmail, headerExtra }: AdminSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_WIDTH);
   const [mounted, setMounted] = useState(false);
 
@@ -229,7 +230,7 @@ export function AdminSidebar({ children, userName, userEmail }: AdminSidebarProp
   return (
     <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": `${currentWidth}px` } as CSSProperties}>
       <EntitySheetProvider>
-        <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail}>
+        <AdminSidebarContent setSidebarWidth={setSidebarWidth} userName={userName} userEmail={userEmail} headerExtra={headerExtra}>
           {children}
         </AdminSidebarContent>
       </EntitySheetProvider>
@@ -1524,11 +1525,12 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
 // CONTEÚDO PRINCIPAL DA SIDEBAR - ESTILO PREMIUM
 // ==========================================
 
-function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }: {
+function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, headerExtra }: {
   children: ReactNode;
   setSidebarWidth: (width: number) => void;
   userName: string;
   userEmail?: string;
+  headerExtra?: ReactNode;
 }) {
   const pathname = usePathname();
   const { state, open, setOpen, openMobile, setOpenMobile } = useSidebar();
@@ -1575,6 +1577,13 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
     { enabled: !!primaryConfigId, refetchInterval: 30000 }
   );
 
+  // Triagem badge — demandas em status 5_TRIAGEM aguardando análise
+  const { data: triagemDemandas } = trpc.demandas.list.useQuery(
+    { status: "5_TRIAGEM", limit: 200 },
+    { staleTime: 30_000 },
+  );
+  const triagemCount = triagemDemandas?.length ?? 0;
+
   const mainNavWithBadge = useMemo(() => {
     return MAIN_NAV
       .filter(item => {
@@ -1586,9 +1595,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
         if (item.label === "WhatsApp" && whatsappStats?.unreadMessages) {
           return { ...item, badge: whatsappStats.unreadMessages };
         }
+        if (item.path === "/admin/demandas" && triagemCount > 0) {
+          return { ...item, badge: triagemCount };
+        }
         return item;
       });
-  }, [whatsappStats?.unreadMessages, features.drive, features.whatsapp]);
+  }, [whatsappStats?.unreadMessages, features.drive, features.whatsapp, triagemCount]);
 
   // Radar Criminal pending matches badge
   const { data: radarPendentesData } = trpc.radar.matchesPendentesCount.useQuery(undefined, {
@@ -1820,7 +1832,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail }:
       <SidebarInset className={cn("flex flex-col h-screen overflow-hidden", theme === "dark" ? "bg-neutral-950" : "bg-[#f5f5f5]")}>
         <ReadOnlyFieldset>
           <PageHeaderProvider>
-            <ConditionalHeader />
+            <ConditionalHeader extra={headerExtra} />
 
             {/* Scroll container — sticky funciona aqui */}
             <div className="flex-1 overflow-y-auto pb-16 md:pb-0">

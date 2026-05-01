@@ -381,10 +381,10 @@ export function RegistroRapidoAprimorado({
         await createAtendimento.mutateAsync({
           assistidoId: data.assistidoId,
           processoId: data.processoId ?? undefined,
-          dataAtendimento: new Date().toISOString(),
+          dataRegistro: new Date().toISOString(),
           tipo: tipoAtendimentoMap[data.tipo] || data.tipo,
           assunto: data.descricao.slice(0, 200),
-          resumo: data.descricao,
+          conteudo: data.descricao,
           status: "realizado",
         });
       }

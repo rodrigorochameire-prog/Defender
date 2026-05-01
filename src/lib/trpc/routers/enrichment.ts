@@ -15,7 +15,7 @@
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db } from "@/lib/db";
-import { documentos, atendimentos, demandas, driveFiles, processos, assistidos, scanIntimacoesJobs } from "@/lib/db/schema";
+import { documentos, registros as atendimentos, demandas, driveFiles, processos, assistidos, scanIntimacoesJobs } from "@/lib/db/schema";
 import { eq, and, or, isNull, notInArray, sql } from "drizzle-orm";
 import {
   enrichmentClient,
@@ -238,7 +238,7 @@ export const enrichmentRouter = router({
         .select({
           id: atendimentos.id,
           transcricao: atendimentos.transcricao,
-          resumo: atendimentos.resumo,
+          resumo: atendimentos.conteudo,
           assistidoId: atendimentos.assistidoId,
           processoId: atendimentos.processoId,
           casoId: atendimentos.casoId,
@@ -835,7 +835,6 @@ export const enrichmentRouter = router({
               origem: "enrichment",
               status: "5_TRIAGEM",
               prioridade: "NORMAL",
-              providencias: `Demanda derivada de enrichment do arquivo: ${file.name}`,
               defensorId: ctx.user.id,
               enrichmentData: {
                 origem: "enrichment_bridge",
