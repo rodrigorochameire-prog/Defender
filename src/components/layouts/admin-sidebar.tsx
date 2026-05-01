@@ -52,7 +52,7 @@ import { type AssignmentMenuItem } from "@/contexts/assignment-context";
 import { useProfissional } from "@/contexts/profissional-context";
 import { useTheme } from "@/contexts/theme-context";
 import { logoutAction } from "@/app/(dashboard)/actions";
-import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -390,7 +390,7 @@ function SidebarPopoverMenu({
   const HOVER_OPEN_DELAY = 120;
   const HOVER_CLOSE_DELAY = 150;
 
-  const cancelTimers = () => {
+  const cancelTimers = useCallback(() => {
     if (openTimerRef.current) {
       clearTimeout(openTimerRef.current);
       openTimerRef.current = null;
@@ -399,7 +399,7 @@ function SidebarPopoverMenu({
       clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
     }
-  };
+  }, []);
 
   const handleEnter = () => {
     if (isMobile) return;
@@ -425,13 +425,15 @@ function SidebarPopoverMenu({
   return (
     <SidebarMenuItem onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <CollapsedTooltip label={label} open={open}>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+          open={open}
+          onOpenChange={(next) => {
+            cancelTimers();
+            setOpen(next);
+          }}
+        >
           <PopoverTrigger asChild>
             <button
-              onClick={() => {
-                cancelTimers();
-                setOpen((o) => !o);
-              }}
               className={cn(
                 "h-10 w-10 p-0 mx-auto transition-all duration-200 rounded-xl flex items-center justify-center",
                 hasActiveItem
