@@ -41,6 +41,7 @@ import {
   Mic,
   Video,
   FileSignature,
+  Plus,
 } from "lucide-react";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
@@ -49,7 +50,7 @@ import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
-import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
+import { RegistroEditor } from "@/components/registros/registro-editor";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -405,6 +406,7 @@ export function DemandaQuickPreview({
   const [metadataOpen, setMetadataOpen] = useState(true);
   const [docsOpen, setDocsOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
@@ -954,14 +956,27 @@ export function DemandaQuickPreview({
                 <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold uppercase tracking-wide">Registros</span>
-                    <NovoRegistroButton
+                    {!novoRegistroOpen && (
+                      <button
+                        type="button"
+                        onClick={() => setNovoRegistroOpen(true)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer px-2 py-1 -mr-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Adicionar
+                      </button>
+                    )}
+                  </div>
+                  {novoRegistroOpen && (
+                    <RegistroEditor
                       assistidoId={demanda.assistidoId}
                       processoId={demanda.processoId ?? undefined}
                       demandaId={Number(demanda.id)}
                       tipoDefault="providencia"
-                      label="Adicionar"
+                      onSaved={() => setNovoRegistroOpen(false)}
+                      onCancel={() => setNovoRegistroOpen(false)}
                     />
-                  </div>
+                  )}
                   <RegistrosTimeline
                     assistidoId={demanda.assistidoId}
                     processoId={demanda.processoId ?? undefined}

@@ -575,12 +575,7 @@ function KanbanCard({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (onOpenEventsDrawer) {
-                        onOpenEventsDrawer(Number(demanda.id));
-                      } else {
-                        // Legacy fallback — open QuickPreview if drawer not wired
-                        onCardClick(demanda.id);
-                      }
+                      onCardClick(demanda.id);
                     }}
                     className="text-[10px] text-emerald-600 hover:underline mt-1"
                   >
