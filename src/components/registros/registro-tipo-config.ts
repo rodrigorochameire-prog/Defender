@@ -6,6 +6,7 @@ import {
   Send,
   BookOpen,
   Pen,
+  FileSignature,
   type LucideIcon,
 } from "lucide-react";
 
@@ -16,7 +17,8 @@ export type TipoRegistro =
   | "providencia"
   | "delegacao"
   | "pesquisa"
-  | "elaboracao";
+  | "elaboracao"
+  | "peticao";
 
 export interface TipoConfig {
   label: string;
@@ -83,6 +85,16 @@ export const REGISTRO_TIPOS: Record<TipoRegistro, TipoConfig> = {
     bg: "bg-violet-50 dark:bg-violet-950/30",
     text: "text-violet-700 dark:text-violet-400",
     Icon: Pen,
+  },
+  peticao: {
+    // Registra o que foi sustentado/protocolado em uma peça (distinto de
+    // Providência = decisão a tomar, e Elaboração = rascunho/escrita).
+    label: "Petição",
+    shortLabel: "Petição",
+    color: "#0ea5e9",
+    bg: "bg-sky-50 dark:bg-sky-950/30",
+    text: "text-sky-700 dark:text-sky-400",
+    Icon: FileSignature,
   },
 };
 

@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 // REGISTROS — router tipado
 // ==========================================
 //
-// Este router substitui o legado `atendimentos` para os 7 tipos canônicos
+// Este router substitui o legado `atendimentos` para os 8 tipos canônicos
 // do diário de bordo do defensor. Mantemos `atendimentosRouter` ainda
 // montado em paralelo até que a Task 3 do plano `registros-tipados`
 // finalize a migração dos consumidores.
@@ -21,6 +21,7 @@ const TIPO_REGISTRO = z.enum([
   "delegacao",
   "pesquisa",
   "elaboracao",
+  "peticao",
 ]);
 
 export const registrosRouter = router({

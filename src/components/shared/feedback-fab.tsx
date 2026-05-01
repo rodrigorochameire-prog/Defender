@@ -171,20 +171,22 @@ export function FeedbackFAB() {
     (pathname === "/admin/agenda" ? 0 : 1) +
     (pathname === "/admin/demandas" ? 0 : 1);
 
-  // Desktop: dock at bottom-6 (24px). Feedback = 24 + dockH + 16 gap
-  // Mobile: dock at bottom-[5rem] (80px). Feedback = 80 + dockH + 16 gap
+  // Desktop: dock at bottom-6 (24px). Feedback = 24 + dockH + 32 gap
+  // Mobile: dock at bottom-[5rem] (80px). Feedback = 80 + dockH + 32 gap
+  // (Gap aumentado de 16 → 32 pra criar separação visual clara entre o FAB
+  // de feedback e o dock de agenda/demandas — antes pareciam sobrepostos.)
   const btnBottomClass =
     dockItems === 2
-      ? "bottom-[11.125rem] md:bottom-[7.625rem]" // 178 / 122
+      ? "bottom-[12.125rem] md:bottom-[8.625rem]" // 194 / 138
       : dockItems === 1
-      ? "bottom-[8.75rem] md:bottom-[5.25rem]"    // 140 / 84
+      ? "bottom-[9.75rem] md:bottom-[6.25rem]"    // 156 / 100
       : "bottom-[5rem] md:bottom-6";              //  80 / 24
 
   const popoverBottomClass =
     dockItems === 2
-      ? "bottom-[14.25rem] md:bottom-[10.75rem]"  // ~228 / 172
+      ? "bottom-[15.25rem] md:bottom-[11.75rem]"  // ~244 / 188
       : dockItems === 1
-      ? "bottom-[11.875rem] md:bottom-[8.375rem]" // ~190 / 134
+      ? "bottom-[12.875rem] md:bottom-[9.375rem]" // ~206 / 150
       : "bottom-[8.125rem] md:bottom-[4.625rem]"; // ~130 / 74
 
   return (
