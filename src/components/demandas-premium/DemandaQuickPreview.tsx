@@ -876,15 +876,8 @@ export function DemandaQuickPreview({
               </button>
               {metadataOpen && (
                 <>
-                  {demanda.dataInclusao && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <Clock className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{new Date(demanda.dataInclusao).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-                    </div>
-                  )}
+                  {/* "Importado" removido daqui — o timestamp já aparece no header
+                      do card de registro/demanda. Era duplicação visual. */}
                   {demanda.estadoPrisional && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">

@@ -50,7 +50,9 @@ export function RegistroEditor({
 
   return (
     <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3 space-y-2.5">
-      {/* Tipo selector */}
+      {/* Tipo selector — apenas o chip ativo tem tint colorido. Os demais ficam
+          neutros (só ícone+texto coloridos), o que reduz drasticamente o ruído
+          visual mantendo a semântica de cor. */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {tipos.map((t) => {
           const cfg = REGISTRO_TIPOS[t];
@@ -64,10 +66,11 @@ export function RegistroEditor({
               className={cn(
                 "text-[11px] px-2 py-1 rounded-md font-medium transition-all flex items-center gap-1",
                 active
-                  ? "ring-2 ring-offset-1 dark:ring-offset-neutral-900 scale-[1.02]"
-                  : "opacity-60 hover:opacity-100",
-                cfg.bg,
-                cfg.text,
+                  ? cn(cfg.bg, cfg.text, "ring-1 ring-inset")
+                  : cn(
+                      "bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/40",
+                      cfg.text,
+                    ),
               )}
               style={
                 active
