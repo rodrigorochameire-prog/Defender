@@ -250,7 +250,7 @@ function EventoCompacto({
           />
 
           {/* Conteúdo do card */}
-          <div className="pl-[9px] pr-1.5 sm:pr-2 py-1 sm:py-1.5">
+          <div className="pl-[9px] pr-1.5 sm:pr-2 py-0.5 sm:py-1">
             {/* Linha 1: horário + tipo + dots */}
             <div className="flex items-center gap-1 sm:gap-1.5">
               {/* Status icons */}
@@ -459,8 +459,8 @@ export function CalendarMonthView({
                       ${isCurrentMonth && !isDayToday && "hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30"}
                     `}
                   >
-                    {/* Número do Dia */}
-                    <div className="flex items-start justify-between mb-2">
+                    {/* Número do Dia + badge de overflow clicável */}
+                    <div className="flex items-start justify-between mb-1 sm:mb-1.5">
                       <span
                         className={`
                           text-xs sm:text-sm w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center
@@ -476,41 +476,75 @@ export function CalendarMonthView({
                       >
                         {format(date, "d")}
                       </span>
-                      
-                      {/* Badge de contagem */}
+
+                      {/* Densidade responsiva: limite de cards visíveis muda por viewport
+                          - mobile (<sm):  2 cards
+                          - sm/md:         3 cards
+                          - lg+:           4 cards
+                         O badge mostra o overflow correspondente ao maior limite (4) e cobre
+                         os limites menores via classes responsivas distintas. */}
+                      {dayEvents.length > 2 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetDate(date);
+                          }}
+                          className="sm:hidden text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer"
+                          title="Ver todos os eventos do dia"
+                        >
+                          +{dayEvents.length - 2}
+                        </button>
+                      )}
                       {dayEvents.length > 3 && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetDate(date);
+                          }}
+                          className="hidden sm:inline-flex lg:hidden text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer"
+                          title="Ver todos os eventos do dia"
+                        >
                           +{dayEvents.length - 3}
-                        </span>
+                        </button>
+                      )}
+                      {dayEvents.length > 4 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSheetDate(date);
+                          }}
+                          className="hidden lg:inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer"
+                          title="Ver todos os eventos do dia"
+                        >
+                          +{dayEvents.length - 4}
+                        </button>
                       )}
                     </div>
 
-                    {/* Lista de Eventos */}
-                    <div className="space-y-1">
-                      {dayEvents.slice(0, 3).map((evento) => (
-                        <EventoCompacto
+                    {/* Lista de Eventos — densidade responsiva via classes Tailwind
+                        Renderiza até 4 e usa hidden/block para mostrar o número certo por viewport. */}
+                    <div className="space-y-0.5 sm:space-y-1">
+                      {dayEvents.slice(0, 4).map((evento, idx) => (
+                        <div
                           key={evento.id}
-                          evento={evento}
-                          onEventClick={onEventClick}
-                          onEditEvento={onEditEvento}
-                          onDeleteEvento={onDeleteEvento}
-                          onEventDoubleClick={onEventDoubleClick}
-                        />
+                          className={
+                            idx < 2
+                              ? ""
+                              : idx === 2
+                                ? "hidden sm:block"
+                                : "hidden lg:block"
+                          }
+                        >
+                          <EventoCompacto
+                            evento={evento}
+                            onEventClick={onEventClick}
+                            onEditEvento={onEditEvento}
+                            onDeleteEvento={onDeleteEvento}
+                            onEventDoubleClick={onEventDoubleClick}
+                          />
+                        </div>
                       ))}
                     </div>
-
-                    {/* Indicador de mais eventos */}
-                    {dayEvents.length > 3 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDayClick(date, e);
-                        }}
-                        className="mt-1 text-[10px] font-medium text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline transition-colors"
-                      >
-                        Ver todos
-                      </button>
-                    )}
 
                     {/* Quick-create ghost placeholder — only on current-month empty days */}
                     {isCurrentMonth && dayEvents.length === 0 && onCreateClick && (
