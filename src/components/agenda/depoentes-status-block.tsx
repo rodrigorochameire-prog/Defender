@@ -16,6 +16,10 @@ import {
   Mail,
   Ban,
   UserMinus,
+  Video,
+  MapPin,
+  Shield,
+  History,
 } from "lucide-react";
 import { getDepoenteStyle } from "./registro-audiencia/constants";
 import {
@@ -169,6 +173,95 @@ function getBucket(dep: DepoenteLike): BucketKey {
   return STATUS_TO_BUCKET[resolved] ?? "desconhecido";
 }
 
+const FORMA_OITIVA_META: Record<
+  NonNullable<Depoente["formaOitiva"]>,
+  { label: string; short: string; icon: typeof Video; class: string }
+> = {
+  presencial: {
+    label: "Presencial",
+    short: "Presencial",
+    icon: MapPin,
+    class:
+      "bg-neutral-100 text-neutral-700 border-neutral-200 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800",
+  },
+  videoconferencia: {
+    label: "Videoconferência",
+    short: "Vídeo",
+    icon: Video,
+    class:
+      "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-900",
+  },
+  precatoria: {
+    label: "Precatória",
+    short: "Precatória",
+    icon: Mail,
+    class:
+      "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900",
+  },
+  escuta_especial: {
+    label: "Escuta especial",
+    short: "Esc. esp.",
+    icon: Shield,
+    class:
+      "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900",
+  },
+  domiciliar: {
+    label: "Domiciliar",
+    short: "Domiciliar",
+    icon: MapPin,
+    class:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900",
+  },
+};
+
+function FormaOitivaBadge({ forma }: { forma: NonNullable<Depoente["formaOitiva"]> }) {
+  const meta = FORMA_OITIVA_META[forma];
+  const Icon = meta.icon;
+  return (
+    <span
+      title={meta.label}
+      className={cn(
+        "inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium border shrink-0",
+        meta.class,
+      )}
+    >
+      <Icon className="w-2.5 h-2.5" />
+      {meta.short}
+    </span>
+  );
+}
+
+function JaOuvidoBadge({ depoente }: { depoente: DepoenteLike }) {
+  const data = depoente.jaOuvidoData;
+  const peca = depoente.jaOuvidoPeca;
+  const id = depoente.jaOuvidoIdPje;
+  const fl = depoente.jaOuvidoFl;
+  const formatted = data
+    ? new Date(data + "T00:00:00").toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      })
+    : null;
+  const tooltip = [
+    formatted ? `Data: ${formatted}` : null,
+    peca ? `Peça: ${peca}` : null,
+    id ? `ID PJe: ${id}` : null,
+    fl ? `Fl.: ${fl}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <span
+      title={tooltip || "Já ouvido em juízo"}
+      className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium border shrink-0 bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900"
+    >
+      <History className="w-2.5 h-2.5" />
+      {formatted ?? "Já ouvido"}
+    </span>
+  );
+}
+
 function normalizeTipoForStyle(tipo: unknown): string {
   const t = String(tipo ?? "").toLowerCase();
   if (t === "vitima" || t === "vítima") return "vitima";
@@ -284,13 +377,19 @@ export function DepoentesStatusBlock(props: DepoentesStatusBlockProps) {
                     aria-hidden
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200 truncate">
                         {d.nome ?? d.name ?? "Sem nome"}
                       </span>
                       <span className="text-[9px] text-neutral-400 shrink-0">
                         {tipoStyle.label}
                       </span>
+                      {d.formaOitiva && <FormaOitivaBadge forma={d.formaOitiva} />}
+                      {(d.jaOuvidoData ||
+                        d.jaOuvidoPeca ||
+                        d.jaOuvidoIdPje ||
+                        d.jaOuvidoFl ||
+                        d.jaOuvidoResumo) && <JaOuvidoBadge depoente={d} />}
                     </div>
                   </div>
                   {mode === "interactive" ? (
