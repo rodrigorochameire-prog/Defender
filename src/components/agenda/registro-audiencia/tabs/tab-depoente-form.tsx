@@ -10,6 +10,7 @@ import {
   Target,
   Quote,
   Eye,
+  ClipboardList,
 } from "lucide-react";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
@@ -41,6 +42,134 @@ function OptionBtn({ active, onClick, children, activeClass }: { active: boolean
     >
       {children}
     </button>
+  );
+}
+
+// Painel de status / preparação do depoente — forma de oitiva,
+// comparecimento detalhado e oitiva anterior em juízo.
+function PreparacaoFields({
+  depoente,
+  onUpdate,
+  style,
+}: {
+  depoente: Depoente;
+  onUpdate: (d: Depoente) => void;
+  style: ReturnType<typeof getDepoenteStyle>;
+}) {
+  const activeClass = `${style.bg} ${style.text} border ${style.border}`;
+  const ouvidoEmJuizo =
+    depoente.jaOuvido === "juizo-anterior" ||
+    depoente.jaOuvido === "audiencia-anterior" ||
+    depoente.jaOuvido === "ambos";
+
+  return (
+    <div className="space-y-2 pl-2 border-l-2 border-neutral-200 dark:border-neutral-800">
+      {/* Forma de oitiva */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <Label className="text-[10px] text-neutral-600 dark:text-neutral-400">Forma de oitiva:</Label>
+        <div className="flex gap-1 flex-wrap">
+          {[
+            { value: "presencial", label: "Presencial" },
+            { value: "videoconferencia", label: "Videoconferência" },
+            { value: "precatoria", label: "Precatória" },
+            { value: "escuta_especial", label: "Escuta especial" },
+            { value: "domiciliar", label: "Domiciliar" },
+          ].map((opt) => (
+            <OptionBtn
+              key={opt.value}
+              active={depoente.formaOitiva === opt.value}
+              onClick={() => onUpdate({ ...depoente, formaOitiva: opt.value as any })}
+              activeClass={activeClass}
+            >
+              {opt.label}
+            </OptionBtn>
+          ))}
+        </div>
+      </div>
+
+      {/* Comparecimento (override do par presente + statusIntimacao) */}
+      <div className="flex gap-2 flex-wrap items-center">
+        <Label className="text-[10px] text-neutral-600 dark:text-neutral-400">Comparecimento:</Label>
+        <div className="flex gap-1 flex-wrap">
+          {[
+            { value: "compareceu", label: "Compareceu" },
+            { value: "nao_compareceu", label: "Não compareceu" },
+            { value: "nao_verificado", label: "Não verificado" },
+            { value: "dispensada", label: "Dispensado" },
+            { value: "ouvido_anteriormente", label: "Já ouvido antes" },
+          ].map((opt) => (
+            <OptionBtn
+              key={opt.value}
+              active={depoente.comparecimento === opt.value}
+              onClick={() => onUpdate({ ...depoente, comparecimento: opt.value as any })}
+              activeClass={activeClass}
+            >
+              {opt.label}
+            </OptionBtn>
+          ))}
+        </div>
+      </div>
+
+      {/* Oitiva anterior em juízo — campos estruturados (citáveis) */}
+      {ouvidoEmJuizo && (
+        <div className="rounded-lg bg-violet-50/40 dark:bg-violet-950/15 border border-violet-200/60 dark:border-violet-800/40 p-2 space-y-1.5">
+          <p className="text-[10px] uppercase tracking-wider font-semibold text-violet-700 dark:text-violet-400">
+            Oitiva anterior em juízo
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-neutral-500">Data</Label>
+              <input
+                type="date"
+                value={depoente.jaOuvidoData ?? ""}
+                onChange={(e) => onUpdate({ ...depoente, jaOuvidoData: e.target.value })}
+                className="w-full text-[11px] px-1.5 py-1 rounded border border-violet-200/80 dark:border-violet-900/50 bg-white/70 dark:bg-neutral-900/40 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-violet-400"
+              />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-neutral-500">Peça</Label>
+              <input
+                type="text"
+                value={depoente.jaOuvidoPeca ?? ""}
+                onChange={(e) => onUpdate({ ...depoente, jaOuvidoPeca: e.target.value })}
+                placeholder="Termo AIJ"
+                className="w-full text-[11px] px-1.5 py-1 rounded border border-violet-200/80 dark:border-violet-900/50 bg-white/70 dark:bg-neutral-900/40 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-violet-400"
+              />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-neutral-500">ID PJe</Label>
+              <input
+                type="text"
+                value={depoente.jaOuvidoIdPje ?? ""}
+                onChange={(e) => onUpdate({ ...depoente, jaOuvidoIdPje: e.target.value })}
+                placeholder="Num. 12345"
+                className="w-full text-[11px] px-1.5 py-1 rounded border border-violet-200/80 dark:border-violet-900/50 bg-white/70 dark:bg-neutral-900/40 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-violet-400"
+              />
+            </div>
+            <div className="space-y-0.5">
+              <Label className="text-[9px] text-neutral-500">Fl.</Label>
+              <input
+                type="text"
+                value={depoente.jaOuvidoFl ?? ""}
+                onChange={(e) => onUpdate({ ...depoente, jaOuvidoFl: e.target.value })}
+                placeholder="Pág. 42"
+                className="w-full text-[11px] px-1.5 py-1 rounded border border-violet-200/80 dark:border-violet-900/50 bg-white/70 dark:bg-neutral-900/40 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-violet-400"
+              />
+            </div>
+          </div>
+          <div className="space-y-0.5">
+            <Label className="text-[9px] text-neutral-500">Resumo do que disse</Label>
+            <Textarea
+              value={depoente.jaOuvidoResumo ?? ""}
+              onChange={(e) => onUpdate({ ...depoente, jaOuvidoResumo: e.target.value })}
+              placeholder="Resumo objetivo do depoimento anterior — base para confronto / reinquirição"
+              rows={2}
+              className="text-[11px] border-violet-200/80 dark:border-violet-900/50 bg-white/70 dark:bg-neutral-900/40"
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -435,6 +564,32 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
             )}
           </div>
         )}
+
+        {/* Status / Preparação — sempre visível, colapsável */}
+        <div className="space-y-1.5">
+          <button
+            type="button"
+            onClick={() => toggleSection(`preparacao-${depoente.id}`)}
+            className="w-full flex items-center justify-between p-2 rounded-lg bg-white dark:bg-neutral-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+              <ClipboardList className={cn("w-3.5 h-3.5", style.icon)} />
+              Status do depoente (preparação)
+              {(depoente.formaOitiva || depoente.comparecimento || depoente.jaOuvidoData || depoente.jaOuvidoResumo) && (
+                <span className={cn("w-1.5 h-1.5 rounded-full", style.dotColor)} />
+              )}
+            </span>
+            <ChevronDown
+              className={cn(
+                "w-4 h-4 text-neutral-500 transition-transform",
+                expandedSections[`preparacao-${depoente.id}`] && "rotate-180",
+              )}
+            />
+          </button>
+          {expandedSections[`preparacao-${depoente.id}`] && (
+            <PreparacaoFields depoente={depoente} onUpdate={onUpdate} style={style} />
+          )}
+        </div>
 
         {/* Type-specific fields */}
         {(depoente.tipo === "testemunha" || depoente.tipo === "informante") && (

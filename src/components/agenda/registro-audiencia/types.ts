@@ -22,7 +22,31 @@ export interface Depoente {
   teorCertidao?: string;
   dataCertidao?: string;
   motivoAusencia?: string;
+  /** Como o depoente será ouvido nesta audiência. */
+  formaOitiva?:
+    | "presencial"
+    | "videoconferencia"
+    | "precatoria"
+    | "escuta_especial"
+    | "domiciliar";
+  /** Status detalhado de comparecimento (override de `presente` + `statusIntimacao`). */
+  comparecimento?:
+    | "compareceu"
+    | "nao_compareceu"
+    | "nao_verificado"
+    | "dispensada"
+    | "ouvido_anteriormente";
   jaOuvido?: "delegacia" | "audiencia-anterior" | "juizo-anterior" | "ambos" | "nenhum";
+  /** Data da oitiva anterior em juízo (ISO yyyy-mm-dd). */
+  jaOuvidoData?: string;
+  /** Tipo de peça da oitiva anterior (Termo de Audiência, AIJ, Justificação...). */
+  jaOuvidoPeca?: string;
+  /** Identificador PJe do documento da oitiva anterior. */
+  jaOuvidoIdPje?: string;
+  /** Folha (fl.) do documento no PJe. */
+  jaOuvidoFl?: string;
+  /** Resumo do que disse na oitiva anterior — orienta a estratégia de inquirição. */
+  jaOuvidoResumo?: string;
   depoimentoDelegacia?: string;
   depoimentoAnterior?: string;
   pontosFortes?: string;
