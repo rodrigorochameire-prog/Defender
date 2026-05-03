@@ -9,6 +9,7 @@ import {
   vincularEventoRedesignado,
 } from "@/lib/data/historico-audiencias";
 import type { Depoente, RegistroAudienciaData } from "../types";
+import { detectarSubtipo, SUBTIPO_CONFIG, type SubtipoAudiencia } from "../subtipo-audiencia";
 
 export type StatusAudiencia = "concluida" | "redesignada" | "suspensa";
 export type TabKey = "briefing" | "depoentes" | "anotacoes" | "resultado" | "historico";
@@ -125,6 +126,15 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   // Juiz / Promotor inline header fields
   const [juiz, setJuiz] = useState(evento.juiz || "");
   const [promotor, setPromotor] = useState(evento.promotor || "");
+
+  // Subtipo detectado a partir do tipo do evento + classe processual
+  const subtipoAuto: SubtipoAudiencia = detectarSubtipo(
+    evento.tipo ?? evento.tipoAudiencia,
+    evento.classeProcessual ?? evento.processo?.classeProcessual,
+  );
+  const [subtipoOverride, setSubtipoOverride] = useState<SubtipoAudiencia | null>(null);
+  const subtipoAudiencia: SubtipoAudiencia = subtipoOverride ?? subtipoAuto;
+  const subtipoConfig = SUBTIPO_CONFIG[subtipoAudiencia];
 
   // Auto-save state
   const [isDirty, setIsDirty] = useState(false);
@@ -559,5 +569,11 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
     setRegistro,
     audienciaId,
     assistidoId: assistidoIdNum,
+
+    // Subtipo
+    subtipoAudiencia,
+    subtipoConfig,
+    subtipoAuto,
+    setSubtipoOverride,
   };
 }

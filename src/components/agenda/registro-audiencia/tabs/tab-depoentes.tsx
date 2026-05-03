@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,8 @@ interface TabDepoentesProps {
   expandedDepoenteDetails: Record<string, boolean>;
   toggleDepoenteDetails: (id: string) => void;
   evento: any;
+  /** Quando informado, filtra os tipos de depoente disponíveis (por subtipo de audiência). */
+  tiposPermitidos?: Array<Depoente["tipo"]>;
 }
 
 export function TabDepoentes({
@@ -48,12 +51,25 @@ export function TabDepoentes({
   expandedDepoenteDetails,
   toggleDepoenteDetails,
   evento,
+  tiposPermitidos,
 }: TabDepoentesProps) {
   const handleStatusChange = (id: string, novo: StatusIntimacao) => {
     const alvo = depoentes.find((d) => d.id === id);
     if (!alvo) return;
     handleUpdateDepoente({ ...alvo, statusIntimacao: novo });
   };
+
+  // Filtra os tipos disponíveis quando o subtipo de audiência define uma lista restrita
+  const tipoOpts = tiposPermitidos && tiposPermitidos.length > 0
+    ? tipoDepoenteOptions.filter((opt) => tiposPermitidos.includes(opt.value as Depoente["tipo"]))
+    : tipoDepoenteOptions;
+
+  // Se o tipo selecionado não está na lista permitida, troca para o primeiro permitido
+  useEffect(() => {
+    if (tipoOpts.length > 0 && !tipoOpts.some((opt) => opt.value === novoDepoenteTipo)) {
+      setNovoDepoenteTipo(tipoOpts[0].value as Depoente["tipo"]);
+    }
+  }, [tiposPermitidos, novoDepoenteTipo]);
 
   return (
     <>
@@ -106,7 +122,7 @@ export function TabDepoentes({
                   onChange={(e) => setNovoDepoenteTipo(e.target.value as Depoente["tipo"])}
                   className="w-full px-2.5 py-1.5 text-sm border border-neutral-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-950 font-medium h-8"
                 >
-                  {tipoDepoenteOptions.map((opt) => (
+                  {tipoOpts.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>

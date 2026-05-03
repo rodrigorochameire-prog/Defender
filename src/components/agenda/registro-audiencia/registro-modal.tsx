@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Users, Notebook, BookOpen,
-  Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed,
+  Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed, ChevronDown,
 } from "lucide-react";
 import { useRegistroForm } from "./hooks/use-registro-form";
 import { TabBriefing } from "./tabs/tab-briefing";
@@ -19,6 +19,7 @@ import { TabHistorico } from "./tabs/tab-historico";
 import type { RegistroAudienciaData } from "./types";
 import type { TabKey } from "./hooks/use-registro-form";
 import { getCompletudeBreakdown, type CompletudeState } from "./historico/count-completude";
+import { SUBTIPO_CONFIG, corBadge, type SubtipoAudiencia } from "./subtipo-audiencia";
 
 interface RegistroAudienciaModalProps {
   isOpen: boolean;
@@ -40,13 +41,21 @@ const COMPLETUDE_LABEL: Record<CompletudeState, string> = {
   empty: "vazio",
 };
 
-const tabConfig: { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" }[] = [
-  { key: "briefing", label: "Briefing", icon: Sparkles },
-  { key: "depoentes", label: "Depoentes", icon: Users, countKey: "depoentes" },
-  { key: "anotacoes", label: "Anotacoes", icon: Notebook },
-  { key: "resultado", label: "Resultado", icon: CheckCircle2 },
-  { key: "historico", label: "Historico", icon: BookOpen, countKey: "historico" },
-];
+type TabDef = { key: TabKey; label: string; icon: any; countKey?: "depoentes" | "historico" };
+
+function buildTabConfig(subtipo: SubtipoAudiencia): TabDef[] {
+  const cfg = SUBTIPO_CONFIG[subtipo];
+  const tabs: TabDef[] = [
+    { key: "briefing", label: "Briefing", icon: Sparkles },
+  ];
+  if (cfg.exibeAbaDepoentes) {
+    tabs.push({ key: "depoentes", label: cfg.labelAbaDepoentes, icon: Users, countKey: "depoentes" });
+  }
+  tabs.push({ key: "anotacoes", label: "Anotações", icon: Notebook });
+  tabs.push({ key: "resultado", label: "Resultado", icon: CheckCircle2 });
+  tabs.push({ key: "historico", label: "Histórico", icon: BookOpen, countKey: "historico" });
+  return tabs;
+}
 
 export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCriarNovoEvento }: RegistroAudienciaModalProps) {
   const form = useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento });
@@ -56,10 +65,14 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
     historico: form.registrosAnteriores.length,
   };
 
-  // Histórico sempre visível — inclui o registro atual salvo + anteriores
-  const visibleTabs = tabConfig;
+  // Tabs dinâmicas a partir do subtipo detectado/escolhido
+  const visibleTabs = buildTabConfig(form.subtipoAudiencia);
+  const tabConfig = visibleTabs;
+  const subtipoCores = corBadge(form.subtipoConfig.cor);
+  const SubtipoIcon = form.subtipoConfig.icon;
 
   const [completudePopoverOpen, setCompletudePopoverOpen] = useState(false);
+  const [subtipoSelectorOpen, setSubtipoSelectorOpen] = useState(false);
 
   const briefingData: { imputacao?: string | null; fatos?: string | null } | undefined =
     (form as any).briefingData ?? undefined;
@@ -156,6 +169,82 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           >
             <X className="w-5 h-5 text-foreground/80" />
           </button>
+        </div>
+
+        {/* Linha 2: banner do subtipo de audiência + seletor manual */}
+        <div className={`${subtipoCores.bgSubtle} border-b ${subtipoCores.border} px-4 py-2 flex items-start gap-3 flex-shrink-0`}>
+          <div className={`w-7 h-7 rounded-md ${subtipoCores.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+            <SubtipoIcon className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`text-xs font-semibold ${subtipoCores.text}`}>
+                {form.subtipoConfig.label}
+              </span>
+              <Popover open={subtipoSelectorOpen} onOpenChange={setSubtipoSelectorOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-white/40 dark:hover:bg-black/20 cursor-pointer transition-colors"
+                    title="Trocar tipo (caso a detecção automática esteja errada)"
+                  >
+                    trocar
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 p-1.5">
+                  <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wide">
+                    Mudar tipo de audiência
+                  </div>
+                  {Object.values(SUBTIPO_CONFIG).map((cfg) => {
+                    const Icon = cfg.icon;
+                    const cores = corBadge(cfg.cor);
+                    const isCurrent = cfg.key === form.subtipoAudiencia;
+                    return (
+                      <button
+                        key={cfg.key}
+                        type="button"
+                        onClick={() => {
+                          form.setSubtipoOverride(cfg.key);
+                          setSubtipoSelectorOpen(false);
+                        }}
+                        className={`w-full flex items-start gap-2 px-2 py-1.5 rounded hover:bg-neutral-100 dark:hover:bg-muted text-left cursor-pointer ${isCurrent ? "bg-neutral-100 dark:bg-muted" : ""}`}
+                      >
+                        <div className={`w-5 h-5 rounded-md ${cores.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                          <Icon className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-xs font-medium ${isCurrent ? cores.text : "text-foreground"}`}>{cfg.label}</div>
+                          <div className="text-[10px] text-muted-foreground line-clamp-2">{cfg.foco}</div>
+                        </div>
+                        {isCurrent && <CheckCircle2 className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${cores.text}`} />}
+                      </button>
+                    );
+                  })}
+                </PopoverContent>
+              </Popover>
+              {form.subtipoAuto !== form.subtipoAudiencia && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-300 text-amber-600 dark:border-amber-800 dark:text-amber-500">
+                  manual
+                </Badge>
+              )}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+              {form.subtipoConfig.foco}
+            </div>
+            {form.subtipoConfig.lembretes.length > 0 && (
+              <details className="mt-1">
+                <summary className={`text-[10px] cursor-pointer ${subtipoCores.text} hover:underline`}>
+                  ver {form.subtipoConfig.lembretes.length} lembrete{form.subtipoConfig.lembretes.length > 1 ? "s" : ""} desse rito
+                </summary>
+                <ul className="mt-1 space-y-0.5 text-[10px] text-muted-foreground list-disc pl-4">
+                  {form.subtipoConfig.lembretes.map((l, i) => (
+                    <li key={i}>{l}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
         </div>
 
         {/* Linha 3: faixa de contexto (atribuição + vara + Juiz/MP) */}
@@ -266,6 +355,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     expandedDepoenteDetails={form.expandedDepoenteDetails}
                     toggleDepoenteDetails={form.toggleDepoenteDetails}
                     evento={evento}
+                    tiposPermitidos={form.subtipoConfig.tiposDepoente}
                   />
               )}
 
