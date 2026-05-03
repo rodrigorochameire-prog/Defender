@@ -293,22 +293,29 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
   // ==========================================
   // Submit handler (async for DB persistence)
   // ==========================================
-  const handleSubmit = useCallback(async () => {
-    if (!registro.dataRealizacao) {
-      toast.error("Data de realizacao e obrigatoria");
-      return;
+  const handleSubmit = useCallback(async (opts?: { concluir?: boolean }) => {
+    const concluir = opts?.concluir ?? false;
+
+    // Validações só são obrigatórias quando o usuário marca a audiência como
+    // *concluída* explicitamente. "Salvar rascunho" persiste o que houver.
+    if (concluir) {
+      if (statusAudiencia === "concluida" && !registro.resultado) {
+        toast.error("Resultado da audiência é obrigatório para concluir");
+        return;
+      }
+      if (statusAudiencia === "redesignada" && !registro.motivoNaoRealizacao) {
+        toast.error("Motivo da redesignação é obrigatório para concluir");
+        return;
+      }
     }
-    if (statusAudiencia === "concluida" && !registro.resultado) {
-      toast.error("Resultado da audiencia e obrigatorio");
-      return;
-    }
-    if (statusAudiencia === "redesignada" && !registro.motivoNaoRealizacao) {
-      toast.error("Motivo da redesignacao e obrigatorio");
-      return;
-    }
+
+    // Default: data de realização = hoje (aceita rascunho antes ou durante a audiência)
+    const dataRealizacaoEfetiva = registro.dataRealizacao
+      || new Date().toISOString().split("T")[0];
 
     const registroComVinculo: RegistroAudienciaData = {
       ...registro,
+      dataRealizacao: dataRealizacaoEfetiva,
       historicoId: `HIST-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       processoId: evento.processo?.id || evento.processoId,
       casoId: evento.caso?.id || evento.casoId,
@@ -412,13 +419,27 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
             ? "As alteracoes foram salvas no historico"
             : "Voce pode continuar editando ou fechar o modal",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar registro:", error);
-      toast.error("Erro ao salvar registro", {
-        description: "Tente novamente",
-      });
+      const detalhe =
+        error?.message
+        || error?.shape?.message
+        || error?.data?.cause?.message
+        || "Erro desconhecido — verifique o console.";
+      toast.error("Erro ao salvar registro", { description: detalhe });
     }
-  }, [registro, statusAudiencia, registroSalvo, evento, onSave, onCriarNovoEvento, audienciaId, salvarMutation]);
+  }, [
+    registro,
+    statusAudiencia,
+    registroSalvo,
+    evento,
+    onSave,
+    onCriarNovoEvento,
+    audienciaId,
+    salvarMutation,
+    juiz,
+    promotor,
+  ]);
 
   const handleAddDepoente = useCallback(() => {
     if (!novoDepoenteNome.trim()) {

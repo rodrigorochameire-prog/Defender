@@ -377,11 +377,22 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
             </Button>
             <Button
               type="button"
-              onClick={form.handleSubmit}
-              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
+              variant="outline"
+              onClick={() => form.handleSubmit({ concluir: false })}
+              title="Salva o que houver (sem exigir resultado/motivo). Você pode continuar editando depois."
+              className="flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
             >
               <Save className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
-              {form.registroSalvo ? "Atualizar Registro" : "Salvar Registro"}
+              Salvar rascunho
+            </Button>
+            <Button
+              type="button"
+              onClick={() => form.handleSubmit({ concluir: true })}
+              title="Marca a audiência como concluída. Exige resultado (ou motivo, se redesignada)."
+              className="bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-neutral-900 flex-1 sm:flex-none text-xs md:text-sm h-8 md:h-9 cursor-pointer"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
+              {form.registroSalvo ? "Atualizar e concluir" : "Concluir audiência"}
             </Button>
           </div>
         </div>
