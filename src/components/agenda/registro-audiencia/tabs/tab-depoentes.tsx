@@ -9,6 +9,7 @@ import { Plus, Users, Trash2, UserCheck, UserX, Mail, ChevronDown } from "lucide
 import { tipoDepoenteOptions, getDepoenteStyle } from "../constants";
 import { TabDepoenteForm } from "./tab-depoente-form";
 import type { Depoente } from "../types";
+import type { SubtipoAudiencia } from "../subtipo-audiencia";
 import { DepoenteStatusBadges } from "../shared/depoente-status";
 import {
   DepoentesStatusBlock,
@@ -33,6 +34,8 @@ interface TabDepoentesProps {
   evento: any;
   /** Quando informado, filtra os tipos de depoente disponíveis (por subtipo de audiência). */
   tiposPermitidos?: Array<Depoente["tipo"]>;
+  /** Subtipo da audiência — usado para filtrar templates de perguntas. */
+  subtipoAudiencia?: SubtipoAudiencia;
 }
 
 export function TabDepoentes({
@@ -52,6 +55,7 @@ export function TabDepoentes({
   toggleDepoenteDetails,
   evento,
   tiposPermitidos,
+  subtipoAudiencia,
 }: TabDepoentesProps) {
   const handleStatusChange = (id: string, novo: StatusIntimacao) => {
     const alvo = depoentes.find((d) => d.id === id);
@@ -191,6 +195,7 @@ export function TabDepoentes({
               expandedDepoenteDetails={expandedDepoenteDetails}
               toggleDepoenteDetails={toggleDepoenteDetails}
               evento={evento}
+              subtipoAudiencia={subtipoAudiencia}
             />
           ) : (
             <div className="h-full flex items-center justify-center py-8">
@@ -332,6 +337,7 @@ export function TabDepoentes({
                     expandedDepoenteDetails={expandedDepoenteDetails}
                     toggleDepoenteDetails={toggleDepoenteDetails}
                     evento={evento}
+                    subtipoAudiencia={subtipoAudiencia}
                   />
                 </div>
               )}

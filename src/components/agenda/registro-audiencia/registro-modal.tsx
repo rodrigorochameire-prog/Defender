@@ -356,6 +356,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     toggleDepoenteDetails={form.toggleDepoenteDetails}
                     evento={evento}
                     tiposPermitidos={form.subtipoConfig.tiposDepoente}
+                    subtipoAudiencia={form.subtipoAudiencia}
                   />
               )}
 
