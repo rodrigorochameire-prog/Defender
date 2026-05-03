@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -11,11 +12,15 @@ import {
   Quote,
   Eye,
   ClipboardList,
+  ListPlus,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { getDepoenteStyle } from "../constants";
 import type { Depoente } from "../types";
+import type { SubtipoAudiencia } from "../subtipo-audiencia";
+import { getTemplatesPerguntas, type TemplatePerguntas } from "../templates-perguntas";
 
 interface TabDepoenteFormProps {
   depoente: Depoente;
@@ -25,6 +30,7 @@ interface TabDepoenteFormProps {
   expandedDepoenteDetails: Record<string, boolean>;
   toggleDepoenteDetails: (id: string) => void;
   evento: any;
+  subtipoAudiencia?: SubtipoAudiencia;
 }
 
 // Reusable option button
@@ -369,11 +375,65 @@ function DefendantTypeFields({ depoente, onUpdate, style }: { depoente: Depoente
   );
 }
 
+// Botão "Aplicar template" — popover com roteiros curados por subtipo+tipo do depoente.
+function TemplatesPicker({
+  templates,
+  onApply,
+}: {
+  templates: TemplatePerguntas[];
+  onApply: (template: TemplatePerguntas) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  if (templates.length === 0) return null;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          title="Aplicar template de perguntas para este depoente / subtipo"
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+        >
+          <ListPlus className="w-3 h-3" />
+          Templates
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-80 p-1.5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wide">
+          Aplicar roteiro
+        </div>
+        <div className="flex flex-col">
+          {templates.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                onApply(t);
+                setOpen(false);
+              }}
+              className="text-[11px] text-left px-2 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer text-neutral-800 dark:text-neutral-200"
+            >
+              <div className="font-semibold">{t.titulo}</div>
+              <div className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
+                {t.conteudo.split("\n").slice(1, 3).join(" ")}
+              </div>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // Collapsible textarea section with optional transcription buttons
-function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expanded, onToggle, placeholder, style, showTranscription, rows = 8 }: {
+function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expanded, onToggle, placeholder, style, showTranscription, templates, rows = 8 }: {
   title: string; icon: any; field: keyof Depoente; depoente: Depoente; onUpdate: (d: Depoente) => void;
   expanded: boolean; onToggle: () => void; placeholder: string; style: ReturnType<typeof getDepoenteStyle>;
-  showTranscription?: boolean; rows?: number;
+  showTranscription?: boolean; templates?: TemplatePerguntas[]; rows?: number;
 }) {
   const hasContent = !!depoente[field];
 
@@ -392,6 +452,12 @@ function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expa
           {hasContent && <div className={cn("w-1.5 h-1.5 rounded-full", style.dotColor)} />}
         </div>
         <div className="flex items-center gap-1">
+          {templates && templates.length > 0 && (
+            <TemplatesPicker
+              templates={templates}
+              onApply={(t) => appendToField(t.conteudo)}
+            />
+          )}
           {showTranscription && (
             <span className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
               <AudioRecorderButton compact onTranscriptReady={appendToField} />
@@ -426,8 +492,12 @@ function CollapsibleSection({ title, icon: Icon, field, depoente, onUpdate, expa
   );
 }
 
-export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSection, expandedDepoenteDetails, toggleDepoenteDetails, evento }: TabDepoenteFormProps) {
+export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSection, expandedDepoenteDetails, toggleDepoenteDetails, evento, subtipoAudiencia }: TabDepoenteFormProps) {
   const style = getDepoenteStyle(depoente.tipo);
+
+  const templatesEstrategia = subtipoAudiencia
+    ? getTemplatesPerguntas(subtipoAudiencia, depoente.tipo)
+    : [];
 
   const appendToDepoimento = (text: string) => {
     const current = depoente.depoimentoLiteral || "";
@@ -675,6 +745,7 @@ export function TabDepoenteForm({ depoente, onUpdate, expandedSections, toggleSe
           placeholder="Estratégia, linha de questionamento e perguntas..."
           style={style}
           showTranscription
+          templates={templatesEstrategia}
         />
 
         {/* SECONDARY: Análise - collapsible */}
