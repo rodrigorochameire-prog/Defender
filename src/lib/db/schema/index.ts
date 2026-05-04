@@ -19,6 +19,7 @@ export * from "./casos";
 export * from "./agenda";
 export * from "./juri";
 export * from "./vvd";
+export * from "./mpu";
 export * from "./documentos";
 export * from "./drive";
 export * from "./comunicacao";
