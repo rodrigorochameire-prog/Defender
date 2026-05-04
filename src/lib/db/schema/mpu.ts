@@ -24,6 +24,7 @@ export const mpuRelatos = pgTable(
     id: serial("id").primaryKey(),
     processoId: integer("processo_id")
       .notNull()
+      // CASCADE: relato é dado derivado — quando processo deletado, relato perde sentido
       .references(() => processos.id, { onDelete: "cascade" }),
 
     // Relato literal extraído da representação/BO
@@ -50,7 +51,7 @@ export const mpuRelatos = pgTable(
   ],
 );
 
-export type MpuRelato = typeof mpuRelatos.$inferSelect;
+export type MpuRelatoRow = typeof mpuRelatos.$inferSelect;
 export type InsertMpuRelato = typeof mpuRelatos.$inferInsert;
 
 export const mpuTaxonomia = pgTable(
