@@ -229,28 +229,63 @@ Erros: nenhum.
 
 ## Modos de execução
 
-### Modo 1 — `direct` (preferido)
+### Modo 1 — `cdp` (PREFERIDO — validado 2026-05-04)
 
-Roda fim-a-fim no Claude Code, com Playwright via `.venv` do enrichment-engine.
-Não precisa de browser aberto.
+Anexa a um Chromium **aberto pelo usuário** que já está logado no PJe e com a
+aba EXPEDIENTES > Vara desejada visível. Sem login programático, sem
+bot-detection, sem CAPTCHA. O script só lê e clica.
 
 ```bash
+# 1. Usuário inicia Chromium com debug (uma vez)
+/Applications/Chromium.app/Contents/MacOS/Chromium --remote-debugging-port=9222
+
+# 2. Usuário loga no PJe e navega: EXPEDIENTES → Apenas pendentes → CAMAÇARI N → Vara desejada
+
+# 3. Claude Code roda
 cd /Users/rodrigorochameire/Projetos/Defender/enrichment-engine
 source .venv/bin/activate
-python3 scripts/varredura_triagem.py --atribuicao VVD_CAMACARI --since 2026-05-03
+python3 ../.claude/skills/varredura-triagem/scripts/varredura_triagem.py \
+  --modo cdp --atribuicao VVD_CAMACARI --since 2026-05-03
 ```
 
-### Modo 2 — `assisted`
+**Por que CDP > direct:**
+- Comet (Perplexity) bloqueia `Browser.setDownloadBehavior` → não conecta.
+- Chromium puro com `--remote-debugging-port=9222` aceita Playwright/patchright.
+- Sessão do usuário tem cookies "quentes", reduz risco de SSO/2FA.
 
-Quando o PJe está com problema (CAPTCHA, manutenção, sigiloso), o Claude Code
-gera o JSON de "demandas a varrer" com URLs diretas e o usuário cola os textos
-de cada doc num input. O script classifica e grava.
+### Modo 2 — `direct`
+
+Inicia Chromium headless do `.venv` e faz login programático. Útil em CI/cron.
+Limitação: o usuário ainda precisa pré-navegar até a vara correta — o script
+ainda não faz isso automaticamente (TODO).
 
 ### Modo 3 — `manual-review`
 
-Não tenta scraping. Para cada demanda em triagem, cria um registro tipo
+Não tenta scraping. Para cada demanda em triagem, cria registro tipo
 `diligencia` com link direto pros autos no PJe e marca `revisao_pendente=true`.
-Usado quando há indisponibilidade ou quando o usuário quer revisar manualmente.
+Usar quando o PJe está fora do ar ou quando o usuário quer revisar olhando.
+
+---
+
+## Estratégia de leitura de documento (CRÍTICO)
+
+A iframe `frameHtml` no painel de autos carrega **um doc específico por vez** —
+geralmente o mais recente (que pode ser uma "Juntada de comprovante" ou outro
+documento administrativo, **não a intimação de fato**).
+
+**Algoritmo correto** (validado 2026-05-04):
+
+1. Ler o iframe default — pode ser informativo (~6KB) ou só header (~700B).
+2. Iterar a **timeline** lateral, identificar candidatos por título nessa ordem
+   de prioridade: `acordao` > `sentenca` > `decisao` > `despacho` > `manifesta` > `intima`.
+3. Clicar em **cada candidato relevante** (até 6) e ler o iframe de novo.
+4. Guardar o texto **maior** entre todos.
+5. Classificar pelo texto guardado.
+
+Sem isso, ~40% das demandas voltam "sem match" porque o iframe default não tem
+o conteúdo discriminante. Em rodada real (2026-05-04) sobre 8 demandas com
+`pje_documento_id`: 6 OK, 2 sem match (real "no match" depois de tentar todos
+os candidatos).
 
 ---
 
