@@ -84,6 +84,34 @@ def normalize(s: str) -> str:
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
 
 
+def _is_mpu(demanda: dict) -> bool:
+    """Espelho de src/lib/mpu.ts isMpu(). Detecta MPU por:
+    - processos.processosVvd.tipo_processo == 'MPU'
+    - processos.processosVvd.mpu_ativa is True
+    - processos.numero_autos começando com 'MPUMP'
+
+    Mapeamento de campo (Supabase snake_case → TS camelCase):
+        tipo_processo  → tipoProcesso
+        mpu_ativa      → mpuAtiva
+        numero_autos   → numeroAutos
+
+    Mantenha em sincronia com src/lib/mpu.ts. Se renomear campos no banco
+    ou na query TS, atualize os dois lados.
+    """
+    proc = demanda.get("processos") or {}
+    pvvd_list = proc.get("processosVvd") or []
+    # Supabase retorna como list quando 1:n; pegar o primeiro
+    pvvd = pvvd_list[0] if isinstance(pvvd_list, list) and pvvd_list else (pvvd_list or {})
+    if pvvd.get("tipo_processo") == "MPU":
+        return True
+    if pvvd.get("mpu_ativa") is True:
+        return True
+    numero = proc.get("numero_autos") or ""
+    if isinstance(numero, str) and numero.startswith("MPUMP"):
+        return True
+    return False
+
+
 # ───── Supabase REST ─────────────────────────────────────────────────────────
 
 class Supabase:
@@ -112,7 +140,7 @@ class Supabase:
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
             "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
-            "processos!inner(numero_autos,atribuicao,vara,classe_processual),"
+            "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
             "assistidos!inner(nome)",
             "status=in.(5_TRIAGEM,URGENTE)",
             f"defensor_id=eq.{DEFENSOR_ID}",
@@ -131,6 +159,9 @@ class Supabase:
 
     def insert_registro(self, registro: dict) -> None:
         self._req("POST", "/rest/v1/registros", registro, prefer="return=minimal")
+
+    def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
+        self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
 
 
 # ───── Classificador ────────────────────────────────────────────────────────
@@ -202,6 +233,60 @@ RULES_BASE = [
 ]
 
 
+# ───── Regras MPU (defensivas — assistido = requerido) ──────────────────────
+# Tupla: (pattern, ato, prioridade, prazo_dias, registro_tipo, fase, motivo, side_effects, extras)
+# Aplicadas SOMENTE quando is_mpu=True. Sob ótica defensiva do requerido.
+# Ver: references/heuristicas-mpu.md
+# Constantes em src/lib/mpu-constants.ts (FASE_PROCEDIMENTO, MOTIVO_INTIMACAO).
+RULES_MPU = [
+    # 1. Audiência de justificação
+    (r"design(o|ada).{0,40}audiencia.{0,20}(justifica|aij)",
+     "Defesa em audiência de justificação", "URGENTE", 5, "diligencia",
+     "audiencia_designada", "ciencia_audiencia",
+     ["agendar_audiencia"], {"tipo_audiencia": "JUSTIFICACAO"}),
+    # 2. MPU deferida (decisão liminar)
+    (r"(deferi|defiro).{0,40}medidas?\s+protetiva",
+     "Analisar viabilidade de agravo", "NORMAL", 15, "diligencia",
+     "decisao_liminar", "ciencia_decisao_mpu",
+     [], {}),
+    # 3. Prorrogação/renovação
+    (r"(prorrog|renov|manten|continui).{0,30}(medida|mpu|protetiva)",
+     "Manifestar contra prorrogação de MPU", "URGENTE", 5, "diligencia",
+     "manifestacao_pendente", "manifestar_renovacao",
+     [], {}),
+    # 4. Pedido de revogação (favorável ao requerido)
+    (r"(pedido|requeri|manifest).{0,30}revogac.{0,40}(medida|mpu|protetiva)",
+     "Acompanhar pedido de revogação", "BAIXA", None, "anotacao",
+     "manifestacao_pendente", "manifestar_revogacao",
+     [], {"nota": "Pedido favorável — acompanhar"}),
+    # 5. Descumprimento art. 24-A
+    (r"(notic|comunic|registro).{0,30}descumpriment",
+     "Defesa criminal — descumprimento art. 24-A", "URGENTE", 5, "diligencia",
+     "descumprimento_apurado", "manifestar_descumprimento",
+     [], {}),
+    # 6. Laudo psicossocial
+    (r"laudo.{0,20}psicossoci|estudo psicossoci",
+     "Manifestar sobre laudo psicossocial", "NORMAL", 10, "diligencia",
+     "manifestacao_pendente", "manifestar_laudo",
+     [], {}),
+    # 7. Modulação
+    (r"(modul|redu|alterac).{0,40}(raio|distancia|medida\s+protetiva)",
+     "Manifestar sobre modulação de MPU", "NORMAL", 10, "diligencia",
+     "manifestacao_pendente", "manifestar_modulacao",
+     [], {}),
+    # 8. Tornozeleira / monitoramento
+    (r"tornozeleira|monitoramento\s+eletronico",
+     "Contestar imposição de tornozeleira", "URGENTE", 5, "diligencia",
+     "manifestacao_pendente", "manifestar_modulacao",
+     [], {}),
+    # 9. Fallback genérico para MPU (TOMAR CIÊNCIA, intimação simples)
+    (r"tomar ciencia|intimacao",
+     "Ciência", "BAIXA", None, "ciencia",
+     "manifestacao_pendente", "intimacao_generica",
+     [], {}),
+]
+
+
 def _decide_by_titulo(titulo: str, text: str) -> dict | None:
     """Sinal PRIMÁRIO: tipo do documento na timeline do PJe (Acórdão/Sentença/
     Decisão/Despacho/Intimação). Mais confiável que keyword no texto, porque o
@@ -259,14 +344,69 @@ def _decide_by_titulo(titulo: str, text: str) -> dict | None:
     return None  # outros tipos: fallback texto
 
 
-def classify(text: str, titulo: str | None = None) -> dict | None:
-    """Classifica usando (a) título do doc na timeline + (b) regras textuais
-    como fallback. Título é mais confiável quando disponível."""
+def _decide_by_titulo_mpu(titulo: str, text: str) -> dict | None:
+    """Variante MPU: prioriza tipo de doc + lógica defensiva.
+    Ver references/heuristicas-mpu.md.
+    """
+    t = normalize(titulo)
+    n = normalize(text)
+    if "decis" in t or "sentenc" in t:
+        # Audiência justificação — antes de outras regras
+        if re.search(r"design(o|ada).{0,40}audiencia.{0,20}(justifica|aij)", n):
+            return {"ato": "Defesa em audiência de justificação", "prioridade": "URGENTE",
+                    "prazo_dias": 5, "registro_tipo": "diligencia",
+                    "fase": "audiencia_designada", "motivo": "ciencia_audiencia",
+                    "side_effects": ["agendar_audiencia"], "extras": {"tipo_audiencia": "JUSTIFICACAO"}}
+        # Tornozeleira — tem peso de urgência
+        if re.search(r"tornozeleira|monitoramento\s+eletronico", n):
+            return {"ato": "Contestar imposição de tornozeleira", "prioridade": "URGENTE",
+                    "prazo_dias": 5, "registro_tipo": "diligencia",
+                    "fase": "manifestacao_pendente", "motivo": "manifestar_modulacao",
+                    "side_effects": [], "extras": {}}
+        # Descumprimento
+        if re.search(r"(notic|comunic|registro).{0,30}descumpriment", n):
+            return {"ato": "Defesa criminal — descumprimento art. 24-A", "prioridade": "URGENTE",
+                    "prazo_dias": 5, "registro_tipo": "diligencia",
+                    "fase": "descumprimento_apurado", "motivo": "manifestar_descumprimento",
+                    "side_effects": [], "extras": {}}
+        # MPU deferida
+        if re.search(r"(deferi|defiro).{0,40}medidas?\s+protetiva", n):
+            return {"ato": "Analisar viabilidade de agravo", "prioridade": "NORMAL",
+                    "prazo_dias": 15, "registro_tipo": "diligencia",
+                    "fase": "decisao_liminar", "motivo": "ciencia_decisao_mpu",
+                    "side_effects": [], "extras": {}}
+    if "intimac" in t or "tomar ciencia" in n:
+        # Prorrogação — antes de fallback
+        if re.search(r"(prorrog|renov|manten).{0,30}(medida|mpu|protetiva)", n):
+            return {"ato": "Manifestar contra prorrogação de MPU", "prioridade": "URGENTE",
+                    "prazo_dias": 5, "registro_tipo": "diligencia",
+                    "fase": "manifestacao_pendente", "motivo": "manifestar_renovacao",
+                    "side_effects": [], "extras": {}}
+    return None  # fallback para RULES_MPU em classify()
+
+
+def classify(text: str, titulo: str | None = None, is_mpu: bool = False) -> dict | None:
+    """Classifica usando (a) título do doc + (b) regras textuais como fallback.
+
+    Quando is_mpu=True, RULES_MPU vem antes de RULES_BASE — ótica defensiva
+    do requerido. Ver references/heuristicas-mpu.md.
+    """
+    n = normalize(text)
+    if is_mpu:
+        if titulo:
+            r = _decide_by_titulo_mpu(titulo, text)
+            if r:
+                return r
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_MPU:
+            if re.search(pat, n):
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
+        # se MPU mas nada matcheou, cai no RULES_BASE como último recurso
     if titulo:
         r = _decide_by_titulo(titulo, text)
         if r:
             return r
-    n = normalize(text)
     for pat, ato, prio, prazo, tipo, fx, ex in RULES_BASE:
         if re.search(pat, n):
             return {
@@ -477,6 +617,22 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         fields["prazo"] = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
     sb.update_demanda(demanda["id"], fields)
 
+    # Atualiza processos_vvd quando a regra MPU traz fase/motivo (Plano 1 da reforma).
+    # Falha não interrompe — registro principal e demanda já foram salvos.
+    fase = rule.get("fase")
+    motivo = rule.get("motivo")
+    proc_id = demanda.get("processo_id")
+    if (fase or motivo) and proc_id:
+        pvvd_fields: dict = {}
+        if fase:
+            pvvd_fields["fase_procedimento"] = fase
+        if motivo:
+            pvvd_fields["motivo_ultima_intimacao"] = motivo
+        try:
+            sb.update_processo_vvd(proc_id, pvvd_fields)
+        except Exception as e:
+            log(f"  ⚠ falha ao atualizar processos_vvd (proc_id={proc_id}): {e}")
+
     sb.insert_registro({
         "assistido_id": demanda["assistido_id"],
         "processo_id": demanda["processo_id"],
@@ -548,7 +704,10 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                         if it.get("id") == content["best_id"]:
                             best_titulo = it.get("titulo")
                             break
-                rule = classify(content["text"], titulo=best_titulo)
+                is_mpu_demanda = _is_mpu(d)
+                if is_mpu_demanda:
+                    log(f"  [MPU] detectado — usando regras defensivas")
+                rule = classify(content["text"], titulo=best_titulo, is_mpu=is_mpu_demanda)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)

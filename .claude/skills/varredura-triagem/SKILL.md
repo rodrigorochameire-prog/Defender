@@ -303,6 +303,42 @@ Em rodada real (2026-05-04, 10 demandas VVD, ontem+hoje):
 - 1 caso (932) processado em 1ª passada — está em vara fora do painel atual
   (Salvador, não Camaçari).
 
+## Triagem MPU (defesa do requerido)
+
+Quando a demanda é uma **MPU** (`processosVvd.tipoProcesso='MPU'`,
+`mpu_ativa=true`, ou número começa com `MPUMP*`), a classificação muda
+de ótica: o assistido é o REQUERIDO (a pessoa que foi demandada a cumprir
+a medida). Os atos sugeridos são DEFENSIVOS:
+
+| Padrão no documento | Ato | Prioridade |
+|---|---|---|
+| Audiência de justificação designada | Defesa em audiência de justificação | URGENTE 5d |
+| MPU deferida (decisão liminar) | Analisar viabilidade de agravo | NORMAL 15d |
+| Pedido de prorrogação/renovação | Manifestar contra prorrogação | URGENTE 5d |
+| Pedido de revogação (pela requerente) | Acompanhar pedido | BAIXA |
+| Notícia de descumprimento (24-A) | Defesa criminal | URGENTE 5d |
+| Laudo psicossocial | Manifestar sobre laudo psicossocial | NORMAL 10d |
+| Modulação de raio/medida | Manifestar sobre modulação | NORMAL 10d |
+| Tornozeleira / monitoramento | Contestar imposição | URGENTE 5d |
+| Tomar ciência genérico | Ciência | BAIXA |
+
+Tabela completa com regex e exemplos: `references/heuristicas-mpu.md`.
+
+A skill detecta MPU automaticamente via `_is_mpu(demanda)` (espelho de
+`src/lib/mpu.ts`) e passa `is_mpu=True` para `classify()`. Cada match
+preenche, além de `ato`/`prioridade`/`prazo`, os campos
+`processos_vvd.fase_procedimento` e `processos_vvd.motivo_ultima_intimacao`
+adicionados no Plano 1 da reforma MPU.
+
+Constantes canônicas em `src/lib/mpu-constants.ts`:
+- `FASE_PROCEDIMENTO`: representacao_inicial, decisao_liminar,
+  audiencia_designada, audiencia_realizada, manifestacao_pendente,
+  recurso, descumprimento_apurado, expirada, revogada
+- `MOTIVO_INTIMACAO`: ciencia_decisao_mpu, ciencia_audiencia,
+  manifestar_renovacao, manifestar_modulacao, manifestar_revogacao,
+  manifestar_laudo, manifestar_descumprimento, ciencia_modulacao,
+  intimacao_generica
+
 ## Bug fix histórico (lição agregada)
 
 | Sintoma | Causa | Fix |
@@ -326,6 +362,36 @@ Em rodada real (2026-05-04, 10 demandas VVD, ontem+hoje):
 | Comet/Edge expõem CDP mas bloqueiam Playwright | Usar Chromium do `patchright` (já no .venv) |
 | Login direto via `requests` funciona, mas `nd=ID` retorna form vazio | Usar Playwright + `pesquisaProcessoDocumentoForm` |
 
+### Sigilo de polo passivo em processos VVD
+
+Processos MPU/VVD têm sigilo de polo passivo no PJe. A leitura padrão da
+timeline retorna apenas o nome da Defensoria, não o do requerido. Para
+extrair as partes (requerido, requerente):
+
+1. Localizar o popup **"Peticionar"** na página do processo
+2. Capturar o token `ca` da URL/hidden input
+3. Chamar `listProcessoCompleto.seam?ca=<token>` — retorna HTML com partes
+
+Detalhes em `reference_pje_polo_passivo_scraping.md` da memória do projeto.
+
+### Identificação do REQUERIDO entre as partes
+
+Heurística (após resolver o sigilo):
+1. Tipo de parte = `requerido` (se etiquetado pelo PJe)
+2. Vinculado à DPE-BA como representante
+3. Quando ambíguo, usar o primeiro match de CPF na lista de partes
+
+Se nenhum candidato → `assistido_id` = placeholder
+"⚠ A identificar — <cnj>" (padrão `project_assistido_placeholder`).
+
+### Regras MPU sobrepõem RULES_BASE
+
+`classify(is_mpu=True)` aplica `RULES_MPU` antes de `RULES_BASE`. Se
+nenhuma regra MPU casar, cai em RULES_BASE como fallback (o ato terá
+peso default e provavelmente não preencherá `fase`/`motivo`). Quando
+aparecer ato vindo de RULES_BASE numa demanda MPU, é sinal de que falta
+regra em `RULES_MPU` — adicionar via `references/heuristicas-mpu.md`.
+
 ---
 
 ## Skills relacionadas (consulta cruzada)
@@ -342,4 +408,8 @@ Em rodada real (2026-05-04, 10 demandas VVD, ontem+hoje):
 - **v2 (2026-05-04)**: formalizado como skill, integrado ao OMBUDS, atos
   ampliados (`Cumprir despacho`, `Manifestação sobre laudo/MPU`, `Analisar
   decisão/sentença/acórdão`, `Ciência sessão de julgamento`, `Memoriais`).
+- **v3 (2026-05-04)**: módulo MPU (defesa do requerido) — `classify(is_mpu=True)`,
+  `RULES_MPU` (10 regras), `_decide_by_titulo_mpu`, `_is_mpu(demanda)`, e
+  escrita automática de `processos_vvd.fase_procedimento` +
+  `processos_vvd.motivo_ultima_intimacao`. Detalhe: `references/heuristicas-mpu.md`.
   Modo `manual-review` adicionado pra rodadas sem PJe vivo.
