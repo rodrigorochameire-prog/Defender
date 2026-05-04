@@ -7,6 +7,7 @@ import {
   BookOpen,
   Pen,
   FileSignature,
+  Eye,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ export type TipoRegistro =
   | "atendimento"
   | "diligencia"
   | "anotacao"
+  | "ciencia"
   | "providencia"
   | "delegacao"
   | "pesquisa"
@@ -53,6 +55,16 @@ export const REGISTRO_TIPOS: Record<TipoRegistro, TipoConfig> = {
     bg: "bg-slate-50 dark:bg-slate-900/40",
     text: "text-slate-700 dark:text-slate-400",
     Icon: StickyNote,
+  },
+  ciencia: {
+    // Tomada de ciência de ato processual (intimação, decisão, acórdão).
+    // Distinto de Anotação (livre) e Providência (decisão a tomar).
+    label: "Ciência",
+    shortLabel: "Ciência",
+    color: "#0891b2",
+    bg: "bg-cyan-50 dark:bg-cyan-950/30",
+    text: "text-cyan-700 dark:text-cyan-400",
+    Icon: Eye,
   },
   providencia: {
     label: "Providência",

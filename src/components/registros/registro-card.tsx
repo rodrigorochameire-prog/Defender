@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Edit3, Trash2, Mic } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { RegistroTipoChip } from "./registro-tipo-chip";
 import { REGISTRO_TIPOS, type TipoRegistro } from "./registro-tipo-config";
 
@@ -23,21 +25,29 @@ interface Props {
   onDelete?: (id: number) => void;
 }
 
+const COLLAPSE_THRESHOLD = 320;
+
 export function RegistroCard({ registro, onEdit, onDelete }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const data =
     typeof registro.dataRegistro === "string"
       ? new Date(registro.dataRegistro)
       : registro.dataRegistro;
   const hasAudio = !!registro.audioUrl;
-  const tipoColor = REGISTRO_TIPOS[registro.tipo]?.color ?? "#a1a1aa";
+  const tipoCfg = REGISTRO_TIPOS[registro.tipo];
+
+  const conteudo = registro.conteudo ?? "";
+  const podeColapsar = conteudo.length > COLLAPSE_THRESHOLD;
 
   return (
     <div
-      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px] px-3.5 py-3 space-y-1.5 group"
-      style={{ borderLeftColor: tipoColor }}
+      className={cn(
+        "rounded-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/80 px-3.5 py-3 space-y-1.5 group transition-colors",
+        tipoCfg?.bg ?? "bg-white dark:bg-neutral-900",
+      )}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-wrap min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0 text-[11px] text-neutral-500 dark:text-neutral-500">
           <RegistroTipoChip tipo={registro.tipo} />
           {hasAudio && (
             <Mic
@@ -45,11 +55,9 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
               aria-label="Possui áudio"
             />
           )}
-          <span className="text-[11px] text-neutral-500 dark:text-neutral-500">
-            {format(data, "dd 'de' MMM, HH:mm", { locale: ptBR })}
-          </span>
+          <span>{format(data, "dd 'de' MMM, HH:mm", { locale: ptBR })}</span>
           {registro.autor?.name && (
-            <span className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate">
+            <span className="text-neutral-400 dark:text-neutral-500 truncate">
               · {registro.autor.name}
             </span>
           )}
@@ -86,10 +94,26 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
         </h4>
       )}
 
-      {registro.conteudo && (
-        <p className="text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
-          {registro.conteudo}
-        </p>
+      {conteudo && (
+        <div>
+          <p
+            className={cn(
+              "text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed",
+              podeColapsar && !expanded && "line-clamp-6",
+            )}
+          >
+            {conteudo}
+          </p>
+          {podeColapsar && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 cursor-pointer"
+            >
+              {expanded ? "Ver menos" : "Ver mais"}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

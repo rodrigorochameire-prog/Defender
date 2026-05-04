@@ -17,17 +17,8 @@ describe("RegistroTipoChip", () => {
     expect(screen.getByText("Atend.")).toBeInTheDocument();
   });
 
-  it("renders all 7 tipos without throwing", () => {
-    const tipos: TipoRegistro[] = [
-      "atendimento",
-      "diligencia",
-      "anotacao",
-      "providencia",
-      "delegacao",
-      "pesquisa",
-      "elaboracao",
-    ];
-    tipos.forEach((t) => {
+  it("renders every tipo without throwing", () => {
+    TIPO_KEYS.forEach((t) => {
       const { unmount } = render(<RegistroTipoChip tipo={t} />);
       expect(screen.getByText(REGISTRO_TIPOS[t].shortLabel)).toBeInTheDocument();
       unmount();
@@ -43,8 +34,21 @@ describe("RegistroTipoChip", () => {
 });
 
 describe("registro-tipo-config", () => {
-  it("exports exactly 7 tipos", () => {
-    expect(TIPO_KEYS).toHaveLength(7);
+  it("includes the 9 canonical tipos", () => {
+    expect(TIPO_KEYS).toEqual(
+      expect.arrayContaining([
+        "atendimento",
+        "diligencia",
+        "anotacao",
+        "ciencia",
+        "providencia",
+        "delegacao",
+        "pesquisa",
+        "elaboracao",
+        "peticao",
+      ]),
+    );
+    expect(TIPO_KEYS).toHaveLength(9);
   });
 
   it("each tipo has all required fields including a real hex color", () => {

@@ -17,6 +17,7 @@ const TIPO_REGISTRO = z.enum([
   "atendimento",
   "diligencia",
   "anotacao",
+  "ciencia",
   "providencia",
   "delegacao",
   "pesquisa",
