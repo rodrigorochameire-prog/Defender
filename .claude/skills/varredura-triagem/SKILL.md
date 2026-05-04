@@ -279,13 +279,39 @@ documento administrativo, **não a intimação de fato**).
 2. Iterar a **timeline** lateral, identificar candidatos por título nessa ordem
    de prioridade: `acordao` > `sentenca` > `decisao` > `despacho` > `manifesta` > `intima`.
 3. Clicar em **cada candidato relevante** (até 6) e ler o iframe de novo.
-4. Guardar o texto **maior** entre todos.
-5. Classificar pelo texto guardado.
+4. Guardar o texto **maior** entre todos + o **título** do doc clicado.
+5. Classificar usando o título como sinal primário, texto como fallback.
 
-Sem isso, ~40% das demandas voltam "sem match" porque o iframe default não tem
-o conteúdo discriminante. Em rodada real (2026-05-04) sobre 8 demandas com
-`pje_documento_id`: 6 OK, 2 sem match (real "no match" depois de tentar todos
-os candidatos).
+## Classificação — título da timeline como sinal PRIMÁRIO
+
+Aprendizado-chave (2026-05-04): o **título** do doc na timeline do PJe
+(Decisão, Sentença, Acórdão, Despacho, Intimação) é o sinal mais confiável
+de tipo. Texto livre causa falso-positivo (ex: 1ª instância citando precedente
+que contém "Acórdão XXX/TJ" → regra ingênua classificaria como acórdão).
+
+Algoritmo `classify(text, titulo)`:
+
+1. **Se `titulo` disponível** → mapeamento direto (`_decide_by_titulo`):
+   - `Acórdão` → "Ciência acórdão" (improvido) ou "Analisar acórdão" (URGENTE 15d)
+   - `Sentença` → "Ciência absolvição" / "Ciência condenação" / "Ciência da pronúncia" / "Ciência da impronúncia" / "Analisar sentença" (URGENTE 5d)
+   - `Decisão` → "Ciência designação de audiência" (se tem regex) / "Ciência de decisão" (MPU) / "Analisar decisão"
+   - `Despacho` → "Cumprir despacho" / "Ciência" (remessa MP) / fallback texto
+2. **Senão** → percorrer `RULES_BASE` em ordem de especificidade.
+
+Em rodada real (2026-05-04, 10 demandas VVD, ontem+hoje):
+- **10/10 classificadas**, 0 em revisão pendente, 0 erros.
+- 1 caso (932) processado em 1ª passada — está em vara fora do painel atual
+  (Salvador, não Camaçari).
+
+## Bug fix histórico (lição agregada)
+
+| Sintoma | Causa | Fix |
+|---|---|---|
+| Acórdão classificado como "Analisar sentença" | regra `\bsentenca\b` antes de `\bacordao\b`, e acórdão cita sentença da 1ª instância | Reordenar: acórdão antes; e usar `titulo` da timeline |
+| Decisão de 1ª instância classificada como "Analisar acórdão" | texto cita precedente do TJ contendo "acórdão" | Usar `titulo="Decisão"` como sinal primário |
+| Inquérito remetido ao MP cai em "no match" | regra inexistente | Adicionar regra `encaminha-?se.{0,30}(inquerito|i\.?p\.?).{0,30}(ministerio publico|mp\b)` → Ciência BAIXA |
+| iframe default tem só header (~700b) → "no match" | doc atual é "Juntada de comprovante", não a intimação de fato | Clicar candidatos da timeline e guardar texto maior |
+| Anexo Comet não funciona (`Browser.setDownloadBehavior` bloqueado) | Comet/Perplexity restringe CDP | Usar Chromium puro com `--remote-debugging-port=9222` |
 
 ---
 

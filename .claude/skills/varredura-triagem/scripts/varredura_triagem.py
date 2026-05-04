@@ -136,16 +136,26 @@ class Supabase:
 # ───── Classificador ────────────────────────────────────────────────────────
 
 # (pattern, ato, prioridade, prazo_dias, registro_tipo, side_effects, extras)
-# Ordem importa — primeira regra que casa vence.
+# Ordem CRÍTICA — primeira regra que casa vence. Princípios:
+#   1. Audiências (designar/redesignar) — palavra muito específica, ação clara
+#   2. Atos com prazo expresso (resposta, memoriais, alegações, manifestações)
+#   3. Despachos com keyword exata
+#   4. Acórdão ANTES de sentença (acórdãos contêm referências a sentenças
+#      da 1ª instância, então sentença genérica matcharia falso-positivo)
+#   5. Sentença com resultado claro (absolv/condeno) ANTES de sentença genérica
+#   6. Decisões — específicas antes de genéricas
+#   7. Despachos administrativos (juntada, remessa, arquivamento)
 RULES_BASE = [
+    # ─── 1. Audiências
     (r"sessao de julgamento.{0,30}(tribunal do juri|plenario)",
      "Ciência sessão de julgamento", "ALTA", None, "ciencia", ["agendar_audiencia"], {"tipo_audiencia": "JURI"}),
-    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao e julgamento)",
-     "Ciência designação de audiência", "NORMAL", None, "ciencia", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
     (r"(redesigno|redesignada|fica redesignada).{0,40}(audiencia|aij)",
      "Ciência redesignação de audiência", "NORMAL", None, "ciencia", ["reagendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
     (r"designada.{0,30}audiencia.{0,15}justificacao",
      "Ciência designação de audiência", "NORMAL", None, "ciencia", ["agendar_audiencia"], {"tipo_audiencia": "JUSTIFICACAO"}),
+    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao e julgamento)",
+     "Ciência designação de audiência", "NORMAL", None, "ciencia", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
+    # ─── 2. Atos com prazo expresso
     (r"(nomeada a defensoria|vistas? a dpe).{0,80}resposta a acusacao|apresente.{0,20}resposta a acusacao",
      "Resposta à Acusação", "URGENTE", 10, "diligencia", [], {}),
     (r"prazo (sucessivo )?de \d+ dias.{0,40}alegacoes finais",
@@ -156,22 +166,35 @@ RULES_BASE = [
      "Manifestação sobre laudo", "NORMAL", 5, "diligencia", [], {}),
     (r"manifeste-?se.{0,30}(revogacao|modulacao).{0,15}(mpu|medida protetiva)",
      "Manifestação sobre MPU", "NORMAL", 5, "diligencia", [], {}),
+    # ─── 3. Despachos
     (r"deixo de conhecer|formular em autos proprios",
      "Cumprir despacho", "URGENTE", None, "diligencia", [], {}),
+    # ─── 4. Acórdão — PRECISA vir antes de sentença genérica
+    #     Detecção robusta: contexto de 2ª instância (câmara/turma/tribunal)
+    (r"(acordao|acórdão).{0,500}(improvido|desprovido|nao provido)",
+     "Ciência acórdão", "NORMAL", None, "ciencia", [], {}),
+    (r"(camara criminal|turma criminal).{0,200}(acordao|acórdão|recurso em sentido estrito)",
+     "Analisar acórdão", "URGENTE", 15, "diligencia", [], {}),
+    (r"\bacordao\b",
+     "Analisar acórdão", "URGENTE", 15, "diligencia", [], {}),
+    # ─── 5. Sentença com resultado
     (r"(sentenca|julgo).{0,200}absolv",
      "Ciência absolvição", "NORMAL", None, "ciencia", [], {}),
     (r"(sentenca|julgo).{0,200}condeno",
      "Ciência condenação", "ALTA", None, "ciencia", [], {}),
-    (r"\bsentenca\b",
+    # ─── 6. Sentença / decisão genérica
+    #     Sentença DEVE estar em contexto de 1ª instância (vara, juiz)
+    (r"\bsentenca\b(?!\s+da\s+pron)",  # exclui "sentença da pronúncia" — outra regra cobre
      "Analisar sentença", "URGENTE", 5, "diligencia", [], {}),
-    (r"\bacordao\b.{0,500}(improvido|desprovido|nao provido)",
-     "Ciência acórdão", "NORMAL", None, "ciencia", [], {}),
-    (r"\bacordao\b",
-     "Analisar acórdão", "URGENTE", 15, "diligencia", [], {}),
     (r"decisao.{0,80}medida protetiv",
      "Ciência de decisão", "NORMAL", None, "ciencia", [], {}),
     (r"\bdecisao\b",
      "Analisar decisão", "NORMAL", None, "diligencia", [], {}),
+    # ─── 7. Despachos administrativos / remessa
+    (r"encaminha-?se.{0,30}(inquerito|i\.?p\.?).{0,30}(ministerio publico|mp\b)",
+     "Ciência", "BAIXA", None, "anotacao", [], {"nota": "Inquérito remetido ao MP — DPE aguarda denúncia"}),
+    (r"remessa.{0,30}(ministerio publico|mp\b)",
+     "Ciência", "BAIXA", None, "anotacao", [], {"nota": "Remessa ao MP"}),
     (r"juntada de.{0,30}(comprovante|envio)",
      "Ciência", "BAIXA", None, "anotacao", [], {}),
     (r"baixa definitiva|arquivado definitivamente",
@@ -179,7 +202,70 @@ RULES_BASE = [
 ]
 
 
-def classify(text: str) -> dict | None:
+def _decide_by_titulo(titulo: str, text: str) -> dict | None:
+    """Sinal PRIMÁRIO: tipo do documento na timeline do PJe (Acórdão/Sentença/
+    Decisão/Despacho/Intimação). Mais confiável que keyword no texto, porque o
+    PJe categoriza os docs no upload — evita falso-positivo (ex.: 1ª instância
+    citando precedente de acórdão).
+    """
+    t = normalize(titulo)
+    n = normalize(text)
+    if "acordao" in t or "acórdão" in t:
+        if re.search(r"(improvido|desprovido|nao provido|nego provimento)", n):
+            return {"ato": "Ciência acórdão", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        return {"ato": "Analisar acórdão", "prioridade": "URGENTE", "prazo_dias": 15,
+                "registro_tipo": "diligencia", "side_effects": [], "extras": {}}
+    if "sentenc" in t:
+        if re.search(r"absolv", n):
+            return {"ato": "Ciência absolvição", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        if re.search(r"condeno|condenacao", n):
+            return {"ato": "Ciência condenação", "prioridade": "ALTA", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        if re.search(r"impronunci|improvinci", n):
+            return {"ato": "Ciência da impronúncia", "prioridade": "ALTA", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        if re.search(r"\bpronunci(o|a)\b", n):
+            return {"ato": "Ciência da pronúncia", "prioridade": "ALTA", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        return {"ato": "Analisar sentença", "prioridade": "URGENTE", "prazo_dias": 5,
+                "registro_tipo": "diligencia", "side_effects": [], "extras": {}}
+    if "decis" in t:
+        # Designação de audiência tem prioridade (mesmo dentro de "Decisão")
+        if re.search(r"(designo|designada|fica designada).{0,40}(audiencia|aij)", n):
+            return {"ato": "Ciência designação de audiência", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": ["agendar_audiencia"], "extras": {"tipo_audiencia": "INSTRUCAO"}}
+        if re.search(r"(redesigno|redesignada).{0,40}(audiencia|aij)", n):
+            return {"ato": "Ciência redesignação de audiência", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": ["reagendar_audiencia"], "extras": {}}
+        if re.search(r"medida protetiv", n):
+            return {"ato": "Ciência de decisão", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+        return {"ato": "Analisar decisão", "prioridade": "NORMAL", "prazo_dias": None,
+                "registro_tipo": "diligencia", "side_effects": [], "extras": {}}
+    if "despac" in t:
+        if re.search(r"deixo de conhecer|formular em autos proprios", n):
+            return {"ato": "Cumprir despacho", "prioridade": "URGENTE", "prazo_dias": None,
+                    "registro_tipo": "diligencia", "side_effects": [], "extras": {}}
+        # Despachos administrativos comuns
+        if re.search(r"encaminha-?se.{0,30}(inquerito|i\.?p\.?).{0,30}(ministerio publico|mp\b)", n):
+            return {"ato": "Ciência", "prioridade": "BAIXA", "prazo_dias": None,
+                    "registro_tipo": "anotacao", "side_effects": [], "extras": {"nota": "Inquérito remetido ao MP"}}
+        if re.search(r"(designo|designada|fica designada).{0,40}(audiencia|aij)", n):
+            return {"ato": "Ciência designação de audiência", "prioridade": "NORMAL", "prazo_dias": None,
+                    "registro_tipo": "ciencia", "side_effects": ["agendar_audiencia"], "extras": {}}
+        return None  # despacho genérico — fallback texto
+    return None  # outros tipos: fallback texto
+
+
+def classify(text: str, titulo: str | None = None) -> dict | None:
+    """Classifica usando (a) título do doc na timeline + (b) regras textuais
+    como fallback. Título é mais confiável quando disponível."""
+    if titulo:
+        r = _decide_by_titulo(titulo, text)
+        if r:
+            return r
     n = normalize(text)
     for pat, ato, prio, prazo, tipo, fx, ex in RULES_BASE:
         if re.search(pat, n):
@@ -455,7 +541,14 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                     continue
 
                 content = await read_doc_content(ctx, autos_url)
-                rule = classify(content["text"])
+                # Buscar título do "best item" da timeline pra classify
+                best_titulo = None
+                if content.get("best_id"):
+                    for it in content.get("timeline", []):
+                        if it.get("id") == content["best_id"]:
+                            best_titulo = it.get("titulo")
+                            break
+                rule = classify(content["text"], titulo=best_titulo)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)
