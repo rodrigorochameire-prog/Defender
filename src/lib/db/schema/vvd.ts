@@ -162,6 +162,18 @@ export const processosVVD = pgTable("processos_vvd", {
   dataVencimentoMPU: date("data_vencimento_mpu"),
   distanciaMinima: integer("distancia_minima"),
 
+  // === Análise estruturada — fase + motivo da intimação ===
+  faseProcedimento: varchar("fase_procedimento", { length: 40 }),
+  // valores válidos: representacao_inicial, decisao_liminar, audiencia_designada,
+  // audiencia_realizada, manifestacao_pendente, recurso, descumprimento_apurado,
+  // expirada, revogada
+  motivoUltimaIntimacao: varchar("motivo_ultima_intimacao", { length: 40 }),
+  // valores válidos: ciencia_decisao_mpu, ciencia_audiencia, manifestar_renovacao,
+  // manifestar_modulacao, manifestar_revogacao, manifestar_laudo,
+  // manifestar_descumprimento, ciencia_modulacao, intimacao_generica
+  prazoMpuDias: integer("prazo_mpu_dias"),
+  juizDecisor: varchar("juiz_decisor", { length: 200 }),
+
   // Defensor responsável
   defensorId: integer("defensor_id").references(() => users.id),
 
@@ -220,6 +232,8 @@ export const processosVVD = pgTable("processos_vvd", {
   index("processos_vvd_tem_acao_familia_idx").on(table.temAcaoFamilia),
   index("processos_vvd_data_fato_idx").on(table.dataFato),
   index("processos_vvd_agressor_residencia_geo_idx").on(table.agressorResidenciaLat, table.agressorResidenciaLng),
+  index("processos_vvd_fase_procedimento_idx").on(table.faseProcedimento),
+  index("processos_vvd_motivo_ultima_intimacao_idx").on(table.motivoUltimaIntimacao),
 ]);
 
 export type ProcessoVVD = typeof processosVVD.$inferSelect;
