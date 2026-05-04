@@ -589,8 +589,17 @@ export function DemandaQuickPreview({
       >
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Demanda</SheetTitle>
+          <SheetHeader className="p-0 min-w-0 flex-1">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white truncate">
+              {demanda.assistido ? (
+                <span className="truncate">
+                  <span className="text-white/50 font-normal">Demanda · </span>
+                  {demanda.assistido}
+                </span>
+              ) : (
+                "Demanda"
+              )}
+            </SheetTitle>
           </SheetHeader>
           <div className="flex items-center gap-1">
             {onNavigate && (
@@ -705,6 +714,45 @@ export function DemandaQuickPreview({
                     </Link>
                   )}
                 </div>
+
+                {/* Status + Atribuição — pills inline editáveis (movidos do bloco
+                    "Classificação" pra evitar scroll. Ambos abrem dropdown ao clicar). */}
+                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                  <InlineDropdown
+                    value={demanda.status}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: statusColor }}
+                        />
+                        {statusConfig.label}
+                      </span>
+                    }
+                    options={statusOptions}
+                    onChange={(v) => onStatusChange(demanda.id, v)}
+                  />
+                  <InlineDropdown
+                    value={demanda.atribuicao}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
+                      >
+                        <AtribuicaoIcon
+                          className="w-3 h-3"
+                          style={{ color: atribuicaoColor }}
+                        />
+                        {demanda.atribuicao}
+                      </span>
+                    }
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -808,11 +856,9 @@ export function DemandaQuickPreview({
             {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive ===== */}
             {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
               <>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Recursos</span>
-                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-                </div>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+                  Recursos
+                </h3>
 
                 {/* Mídias strip — áudios e vídeos. Cada pill clica e abre o webView. */}
                 {midiasFlat.length > 0 && (
@@ -940,12 +986,10 @@ export function DemandaQuickPreview({
               </>
             )}
 
-            {/* Section divider: Ação */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ação</span>
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-            </div>
+            {/* Section label: Ação */}
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+              Ação
+            </h3>
 
             {/* Card 1: Registros (Task 6 — registros tipados) */}
             {/* Substitui o textarea legado de "Providências" pela timeline tipada.
@@ -993,55 +1037,14 @@ export function DemandaQuickPreview({
               </div>
             )}
 
-            {/* Section divider: Classificação */}
-            <div className="flex items-center gap-3 mt-1">
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-              <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Classificação</span>
-              <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-            </div>
+            {/* Section label: Detalhes (era "Classificação"; Status/Atribuição
+                migraram pro hero card, então sobra só Ato + Metadados aqui) */}
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+              Detalhes
+            </h3>
 
             {/* Detalhes — card v5 com border-l-4 */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Status row */}
-              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${statusColor}18` }}>
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Status</span>
-                <div className="flex-1 text-right">
-                  <InlineDropdown
-                    value={demanda.status}
-                    compact
-                    displayValue={
-                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                        {statusConfig.label}
-                      </span>
-                    }
-                    options={statusOptions}
-                    onChange={(v) => onStatusChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
-              {/* Atribuição row */}
-              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${atribuicaoColor}18` }}>
-                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
-                <div className="flex-1 text-right">
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                        {demanda.atribuicao}
-                      </span>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
               {/* Ato row */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
@@ -1111,11 +1114,9 @@ export function DemandaQuickPreview({
             {/* ===== OFÍCIO SUGERIDO ===== */}
             {oficioSugerido && (
               <>
-                <div className="flex items-center gap-3 mt-1">
-                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-                  <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Ofício</span>
-                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-                </div>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+                  Ofício
+                </h3>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
                   <div className="px-3.5 sm:px-4 py-3">
