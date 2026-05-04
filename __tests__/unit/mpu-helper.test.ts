@@ -12,14 +12,14 @@ describe("isMpu", () => {
     expect(isMpu(p)).toBe(true);
   });
 
-  it("retorna true quando numero começa com 'MPUMP'", () => {
-    expect(isMpu({ numero: "MPUMPCrim 8011120-58.2026.8.05.0039" })).toBe(true);
-    expect(isMpu({ numero: "MPUMP 0001234-00.2026.8.05.0039" })).toBe(true);
+  it("retorna true quando numeroAutos começa com 'MPUMP'", () => {
+    expect(isMpu({ numeroAutos: "MPUMPCrim 8011120-58.2026.8.05.0039" })).toBe(true);
+    expect(isMpu({ numeroAutos: "MPUMP 0001234-00.2026.8.05.0039" })).toBe(true);
   });
 
   it("retorna false para processo VVD sem MPU", () => {
     const p: MpuInput = {
-      numero: "0001234-56.2026.8.05.0039",
+      numeroAutos: "0001234-56.2026.8.05.0039",
       processoVvd: { tipoProcesso: "AP", mpuAtiva: false },
     };
     expect(isMpu(p)).toBe(false);
@@ -27,7 +27,7 @@ describe("isMpu", () => {
 
   it("retorna false para processo sem dados de MPU", () => {
     expect(isMpu({})).toBe(false);
-    expect(isMpu({ numero: "" })).toBe(false);
+    expect(isMpu({ numeroAutos: "" })).toBe(false);
   });
 
   it("é tolerante a campos null/undefined em processoVvd", () => {
@@ -36,16 +36,16 @@ describe("isMpu", () => {
   });
 
   it("não é falso-positivo com 'MPU' no meio do número", () => {
-    expect(isMpu({ numero: "0001234-MPU-2026" })).toBe(false);
+    expect(isMpu({ numeroAutos: "0001234-MPU-2026" })).toBe(false);
   });
 
   it("é case-sensitive no prefixo (MPUMP exige maiúsculo)", () => {
-    expect(isMpu({ numero: "mpump 0001234" })).toBe(false);
+    expect(isMpu({ numeroAutos: "mpump 0001234" })).toBe(false);
   });
 
-  it("prioriza mpuAtiva sobre numero quando ambos presentes", () => {
+  it("prioriza mpuAtiva sobre numeroAutos quando ambos presentes", () => {
     const p: MpuInput = {
-      numero: "0001234-56.2026.8.05.0039",
+      numeroAutos: "0001234-56.2026.8.05.0039",
       processoVvd: { mpuAtiva: true },
     };
     expect(isMpu(p)).toBe(true);
