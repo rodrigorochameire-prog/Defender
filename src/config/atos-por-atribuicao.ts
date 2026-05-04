@@ -294,6 +294,10 @@ export const ATO_PRIORITY: Record<string, number> = {
   "Memoriais": 6,
   "RESE": 7,
   "Contestação": 8,
+  "Defesa em audiência de justificação": 9,
+  "Defesa criminal — descumprimento art. 24-A": 9,
+  "Manifestar contra prorrogação de MPU": 9,
+  "Contestar imposição de tornozeleira": 9,
   // Recursos e razões
   "Razões de apelação": 10,
   "Contrarrazões de apelação": 11,
@@ -310,8 +314,11 @@ export const ATO_PRIORITY: Record<string, number> = {
   "Substituição da prisão por cautelar": 23,
   "Revogação de MPU": 24,
   "Modulação de MPU": 25,
+  "Manifestar sobre modulação de MPU": 27,
+  "Manifestar sobre laudo psicossocial": 27,
   "Revogação do monitoramento": 26,
   "Revogação de monitoramento": 26,
+  "Pleitear não-renovação de MPU": 28,
   // Execução penal
   "Requerimento de progressão": 30,
   "Designação de justificação": 31,
