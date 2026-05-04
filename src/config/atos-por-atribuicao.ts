@@ -418,7 +418,7 @@ export function atoValidoParaAtribuicao(ato: string, atribuicao: string): boolea
 // Estatísticas
 export const ESTATISTICAS_ATOS = {
   "Tribunal do Júri": 32,
-  "Violência Doméstica": 33,
+  "Violência Doméstica": 40,
   "Execução Penal": 22,
   "Substituição Criminal": 31,
   "Curadoria": 15,
