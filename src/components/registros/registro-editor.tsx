@@ -18,6 +18,9 @@ interface Props {
   audienciaId?: number;
   tipoDefault: TipoRegistro;
   tiposPermitidos?: TipoRegistro[];
+  // Tipos mostrados inline. Os demais ficam num popover "Mais ▾" (Task 3).
+  // Sem a prop, mostra todos os tipos permitidos inline (compat).
+  tiposPrimarios?: TipoRegistro[];
   onSaved?: () => void;
   onCancel?: () => void;
 }
@@ -29,6 +32,7 @@ export function RegistroEditor({
   audienciaId,
   tipoDefault,
   tiposPermitidos,
+  tiposPrimarios,
   onSaved,
   onCancel,
 }: Props) {
@@ -47,6 +51,9 @@ export function RegistroEditor({
   });
 
   const tipos = tiposPermitidos ?? TIPO_KEYS;
+  const inlineTipos = tiposPrimarios
+    ? tipos.filter((t) => tiposPrimarios.includes(t))
+    : tipos;
 
   const activeCfg = REGISTRO_TIPOS[tipo];
 
@@ -59,7 +66,7 @@ export function RegistroEditor({
           O ativo expande pra mostrar label completa com tint colorido.
           Os demais ficam icon-only neutros com tooltip — quase 0 ruído visual. */}
       <div className="flex items-center gap-0.5 px-2.5 pt-2.5 pb-1.5 flex-wrap">
-        {tipos.map((t) => {
+        {inlineTipos.map((t) => {
           const cfg = REGISTRO_TIPOS[t];
           const Icon = cfg.Icon;
           const active = tipo === t;
