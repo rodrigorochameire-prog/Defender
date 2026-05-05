@@ -166,6 +166,11 @@ export function InlineDropdown({
           {Object.entries(filteredGrouped).map(([group, opts], gi) => (
             <div key={group}>
               {gi > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
+              {group !== "default" && (
+                <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {group}
+                </div>
+              )}
               {opts.map((opt) => {
                 flatIdx++;
                 const currentFlatIdx = flatIdx;
