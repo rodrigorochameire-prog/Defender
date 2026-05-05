@@ -49,6 +49,7 @@ import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-tim
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
@@ -98,6 +99,12 @@ interface DemandaQuickPreviewProps {
   onProvidenciasChange?: (id: string, providencias: string) => void;
   onPrazoChange: (id: string, prazo: string) => void;
   onAtribuicaoChange: (id: string, atribuicao: string) => void;
+  /** Edita tipo de processo (badge AP/MPU/APF/...). Chamado direto no
+   *  processo (não na demanda) — passa processoId resolvido pela view. */
+  onTipoProcessoChange?: (id: string, tipo: string) => void;
+  /** Edita nome do assistido vinculado. Útil pra corrigir placeholders
+   *  ("⚠ A identificar...") e typos. Chamado direto no assistido. */
+  onAssistidoNomeChange?: (id: string, nome: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate?: (direction: "prev" | "next") => void;
@@ -415,6 +422,8 @@ export function DemandaQuickPreview({
   onAtoChange,
   onPrazoChange,
   onAtribuicaoChange,
+  onTipoProcessoChange,
+  onAssistidoNomeChange,
   onArchive,
   onDelete,
   onNavigate,
@@ -427,6 +436,10 @@ export function DemandaQuickPreview({
   const [docsOpen, setDocsOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
+  // Edição inline do nome do assistido. Abre quando o usuário clica na row;
+  // commit no Enter/blur, cancel no Esc.
+  const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
+  const [assistidoDraft, setAssistidoDraft] = useState("");
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
@@ -788,6 +801,7 @@ export function DemandaQuickPreview({
                     }
                     options={atoOptions}
                     onChange={(v) => onAtoChange(demanda.id, v)}
+                    layout="grid"
                   />
                   <InlineDropdown
                     value={demanda.status}
@@ -1032,6 +1046,62 @@ export function DemandaQuickPreview({
             {/* Detalhes — Ato saiu pra hero card. Aqui ficam os campos
                 temporais (prazo, datas) que não cabiam no header. */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+              {/* Assistido row — editável inline. Útil pra corrigir
+                  placeholders ("⚠ A identificar — <cnj>") gerados pelo
+                  importer quando o polo passivo veio em sigilo, e pra
+                  ajustar typos. Click → input → Enter/blur salva, Esc
+                  cancela. */}
+              {demanda.assistidoId && onAssistidoNomeChange && (
+                <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Assistido</span>
+                  <div className="flex-1 flex items-center justify-end min-w-0">
+                    {editingAssistidoNome ? (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={assistidoDraft}
+                        onChange={(e) => setAssistidoDraft(e.target.value)}
+                        onBlur={() => {
+                          const trimmed = assistidoDraft.trim();
+                          if (trimmed && trimmed !== demanda.assistido && demanda.assistidoId) {
+                            onAssistidoNomeChange(String(demanda.assistidoId), trimmed);
+                          }
+                          setEditingAssistidoNome(false);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          if (e.key === "Escape") {
+                            setAssistidoDraft(demanda.assistido || "");
+                            setEditingAssistidoNome(false);
+                          }
+                        }}
+                        className="text-xs text-right text-neutral-700 dark:text-neutral-200 bg-transparent border-b border-neutral-300 dark:border-neutral-700 focus:border-neutral-500 outline-none w-full px-1"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssistidoDraft(demanda.assistido || "");
+                          setEditingAssistidoNome(true);
+                        }}
+                        className={cn(
+                          "text-xs hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors text-right truncate cursor-pointer",
+                          (demanda.assistido || "").startsWith("⚠")
+                            ? "text-amber-600 dark:text-amber-400 italic"
+                            : "text-neutral-700 dark:text-neutral-300"
+                        )}
+                        title="Clique para editar"
+                      >
+                        {demanda.assistido || "—"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Atribuição row — editável via dropdown. Migrou do header
                   pra cá pra deixar a hero card mais limpa, mantendo a edição
                   acessível e a área visível em metadata. */}
@@ -1173,7 +1243,34 @@ export function DemandaQuickPreview({
                       <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
                     </div>
                   )}
-                  {processo?.tipo && (
+                  {/* Tipo do processo (AP/MPU/APF/...) — editável via
+                      dropdown. Útil pra corrigir importações que vieram com
+                      tipo errado (ex.: APF inserido como MPU pelo importer
+                      VVD legacy). Update vai direto no processo, não na
+                      demanda. */}
+                  {processo && onTipoProcessoChange && demanda.processoId && (
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                        <FileText className="w-3 h-3 text-neutral-400" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
+                      <div className="flex-1 flex items-center justify-end">
+                        <InlineDropdown
+                          value={processo.tipo || ""}
+                          compact
+                          displayValue={
+                            <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                              {processo.tipo || "—"}
+                            </span>
+                          }
+                          options={TIPO_PROCESSO_OPTIONS}
+                          onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {/* Fallback read-only se a view não passar o handler */}
+                  {processo?.tipo && !onTipoProcessoChange && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />

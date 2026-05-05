@@ -589,6 +589,9 @@ export const processosRouter = router({
           "SUBSTITUICAO", "CURADORIA", "FAMILIA", "CIVEL", "FAZENDA_PUBLICA"
         ]).optional(),
         classeProcessual: z.string().nullable().optional(),
+        // Tipo curto exibido no badge (AP/MPU/APF/...). Editável via sheet
+        // pra corrigir importações que vieram com tipo errado.
+        tipoProcesso: z.string().nullable().optional(),
         assunto: z.string().nullable().optional(),
         valorCausa: z.number().nullable().optional(),
         parteContraria: z.string().nullable().optional(),

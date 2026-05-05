@@ -19,6 +19,14 @@ interface InlineDropdownProps {
   activateOnDoubleClick?: boolean;
   /** Show a persistent edit icon (ChevronDown) that opens dropdown on single click */
   showEditIcon?: boolean;
+  /**
+   * Layout das opções:
+   * - "list" (default): coluna única, grupos empilhados.
+   * - "grid": cada grupo vira uma coluna paralela. Bom pra dropdowns
+   *   com muitas categorias (ex.: ato com Defesas/Liberdade/Diligências/...).
+   *   Width auto-adapta ao número de grupos.
+   */
+  layout?: "list" | "grid";
 }
 
 export function InlineDropdown({
@@ -29,6 +37,7 @@ export function InlineDropdown({
   compact = false,
   activateOnDoubleClick = false,
   showEditIcon = false,
+  layout = "list",
 }: InlineDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
@@ -160,11 +169,20 @@ export function InlineDropdown({
         }`} />
       </button>
 
-      {isOpen && (
-        <div className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 min-w-[180px] max-w-[calc(100vw-2rem)] max-h-64 overflow-y-auto py-1`}>
+      {isOpen && (() => {
+        const isGrid = layout === "grid";
+        // Em grid, cada grupo vira coluna. min-w cresce com número de grupos
+        // (180px por coluna), capped pelo viewport.
+        const groupCount = Object.keys(filteredGrouped).length;
+        const gridMinWidth = isGrid ? Math.max(180, Math.min(groupCount, 4) * 180) : 180;
+        return (
+        <div
+          className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 max-w-[calc(100vw-2rem)] max-h-72 overflow-y-auto py-1`}
+          style={{ minWidth: `${gridMinWidth}px` }}
+        >
           {/* Type-ahead indicator */}
           {filterQuery && (
-            <div className="px-3 py-1.5 text-[10px] text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 sticky top-0 bg-white dark:bg-neutral-900">
+            <div className="px-3 py-1.5 text-[10px] text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 sticky top-0 bg-white dark:bg-neutral-900 z-10">
               <Search className="w-3 h-3" />
               <span className="font-medium text-neutral-600 dark:text-neutral-300">{filterQuery}</span>
             </div>
@@ -174,42 +192,51 @@ export function InlineDropdown({
             <div className="px-3 py-2 text-[11px] text-neutral-400 italic">Nenhum resultado</div>
           )}
 
-          {Object.entries(filteredGrouped).map(([group, opts], gi) => (
-            <div key={group}>
-              {gi > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-              {group !== "default" && (
-                <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                  {group}
-                </div>
-              )}
-              {opts.map((opt) => {
-                flatIdx++;
-                const currentFlatIdx = flatIdx;
-                const isHighlighted = currentFlatIdx === highlightedIndex;
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                    className={`w-full px-3 py-1.5 text-left text-[12px] flex items-center gap-2 transition-colors ${
-                      isHighlighted
-                        ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
-                        : opt.value === value
-                          ? "bg-neutral-50 dark:bg-neutral-800/50 text-emerald-700 dark:text-emerald-300"
-                          : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
-                    }`}
-                  >
-                    {opt.color && (
-                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: opt.color }} />
-                    )}
-                    <span className="flex-1">{opt.label}</span>
-                    {opt.value === value && <Check className="w-3.5 h-3.5 text-emerald-500" />}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+          <div
+            className={isGrid ? "grid gap-x-1 px-1" : ""}
+            style={isGrid ? { gridTemplateColumns: `repeat(${Math.min(groupCount, 4)}, minmax(0, 1fr))` } : undefined}
+          >
+            {Object.entries(filteredGrouped).map(([group, opts], gi) => (
+              <div
+                key={group}
+                className={isGrid ? "border-r border-neutral-100 dark:border-neutral-800 last:border-r-0 pr-1" : ""}
+              >
+                {!isGrid && gi > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
+                {group !== "default" && (
+                  <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 sticky top-0 bg-white dark:bg-neutral-900">
+                    {group}
+                  </div>
+                )}
+                {opts.map((opt) => {
+                  flatIdx++;
+                  const currentFlatIdx = flatIdx;
+                  const isHighlighted = currentFlatIdx === highlightedIndex;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                      className={`w-full ${isGrid ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-[12px]"} text-left flex items-center gap-2 transition-colors rounded-sm ${
+                        isHighlighted
+                          ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                          : opt.value === value
+                            ? "bg-neutral-50 dark:bg-neutral-800/50 text-emerald-700 dark:text-emerald-300"
+                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+                      }`}
+                    >
+                      {opt.color && (
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: opt.color }} />
+                      )}
+                      <span className="flex-1 truncate" title={opt.label}>{opt.label}</span>
+                      {opt.value === value && <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

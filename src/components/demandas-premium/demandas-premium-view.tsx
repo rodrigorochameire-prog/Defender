@@ -1297,6 +1297,46 @@ export default function Demandas() {
     toast.success(`Atribuição alterada para "${newAtribuicao}"!`);
   };
 
+  // Update do tipo de processo. Atualiza local primeiro (otimista) e
+  // dispara mutation no processo subjacente (não na demanda). Útil pra
+  // corrigir importações com tipo errado.
+  const updateProcessoTipoMutation = trpc.processos.update.useMutation({
+    onError: () => toast.error("Falha ao atualizar tipo do processo"),
+  });
+  const handleTipoProcessoChange = (processoId: string, newTipo: string) => {
+    const pid = parseInt(processoId, 10);
+    if (isNaN(pid)) return;
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.processoId === pid
+          ? { ...d, processos: [{ ...(d.processos?.[0] ?? { numero: "" }), tipo: newTipo }] }
+          : d,
+      ),
+    );
+    updateProcessoTipoMutation.mutate({ id: pid, tipoProcesso: newTipo });
+    toast.success(`Tipo alterado para "${newTipo}"`);
+  };
+
+  // Update do nome do assistido. Reflete em todas as demandas vinculadas
+  // (filtramos por assistidoId). Mutation no router de assistidos.
+  const updateAssistidoNomeMutation = trpc.assistidos.update.useMutation({
+    onError: () => toast.error("Falha ao atualizar nome do assistido"),
+  });
+  const handleAssistidoNomeChange = (assistidoId: string, newNome: string) => {
+    const aid = parseInt(assistidoId, 10);
+    if (isNaN(aid)) return;
+    const trimmed = newNome.trim();
+    if (trimmed.length < 2) {
+      toast.error("Nome muito curto");
+      return;
+    }
+    setDemandas((prev) =>
+      prev.map((d) => (d.assistidoId === aid ? { ...d, assistido: trimmed } : d)),
+    );
+    updateAssistidoNomeMutation.mutate({ id: aid, nome: trimmed });
+    toast.success(`Assistido atualizado: ${trimmed}`);
+  };
+
   const handleSaveNewDemanda = (demandaData: DemandaFormData) => {
     // Persiste no banco via tRPC. A mutation resolve assistido/processo por
     // nome/número (find-or-create), converte status/atribuição e dispara o
@@ -3369,6 +3409,8 @@ export default function Demandas() {
         onAtoChange={handleAtoChange}
         onPrazoChange={handlePrazoChange}
         onAtribuicaoChange={handleAtribuicaoChange}
+        onTipoProcessoChange={handleTipoProcessoChange}
+        onAssistidoNomeChange={handleAssistidoNomeChange}
         onArchive={handleArchiveDemanda}
         onDelete={handleDeleteDemanda}
         onNavigate={handlePreviewNavigate}
