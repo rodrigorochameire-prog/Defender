@@ -4,10 +4,12 @@ import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Check, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function ConflitosPage() {
+  const router = useRouter();
   const utils = trpc.useUtils();
   const { data: conflicts, isLoading } = trpc.sync.conflictList.useQuery();
   const resolve = trpc.sync.resolveConflict.useMutation({
@@ -35,6 +37,15 @@ export default function ConflitosPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <button
+        type="button"
+        onClick={() => (window.history.length > 1 ? router.back() : router.push("/admin"))}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Voltar
+      </button>
+
       <div className="flex items-center gap-3">
         <AlertTriangle className="h-6 w-6 text-orange-500" />
         <h1 className="text-2xl font-bold">Conflitos de Sincronização</h1>

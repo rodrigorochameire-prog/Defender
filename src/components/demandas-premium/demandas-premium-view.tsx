@@ -606,6 +606,10 @@ export default function Demandas() {
   const [headerSlotEl, setHeaderSlotEl] = useState<HTMLElement | null>(null);
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
   const [selectedTipoAto, setSelectedTipoAto] = useState<string | null>(null);
+  // Filtro por tipo de processo (AP/MPU/IP/APF/EP/CAUTELAR/ANPP/OUTRO).
+  // Usado especialmente em VVD para triar AP × MPU sem precisar criar
+  // atribuição separada — o tipo já existe no banco como facet.
+  const [selectedTipoProcesso, setSelectedTipoProcesso] = useState<string | null>(null);
   const [selectedStatusGroup, setSelectedStatusGroup] = useState<StatusGroup | null>(null);
   const [selectedCharts, setSelectedCharts] = useState<string[]>(["atribuicoes", "status", "atos", "situacao-prisional"]);
   const [chartTypes, setChartTypes] = useState<Record<string, string>>({
@@ -1777,6 +1781,8 @@ export default function Demandas() {
         !selectedEstadoPrisional || demanda.estadoPrisional === selectedEstadoPrisional;
       const matchTipoAto =
         !selectedTipoAto || demanda.tipoAto === selectedTipoAto;
+      const matchTipoProcesso =
+        !selectedTipoProcesso || (demanda.processos?.[0]?.tipo === selectedTipoProcesso);
       const matchStatusGroup =
         !selectedStatusGroup ||
         selectedStatusGroup.includes(getStatusConfig(demanda.status).group);
@@ -1789,10 +1795,11 @@ export default function Demandas() {
         matchAtribuicao &&
         matchStatusGroup &&
         matchEstadoPrisional &&
-        matchTipoAto
+        matchTipoAto &&
+        matchTipoProcesso
       );
     });
-  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
+  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedTipoProcesso, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
 
   // Adapta linha snake_case (raw SQL de demandaEventos) ao shape camelCase EventoLine
   function toEventoLine(row: any): any {
@@ -2050,6 +2057,46 @@ export default function Demandas() {
     return null;
   }, [selectedAtribuicoes]);
 
+  // Contagem por tipo de processo dentro da atribuição/arquivado atual.
+  // Base: respeita atribuição + arquivado, ignora o próprio tipoProcesso —
+  // assim o chip ativo nunca some quando selecionado. Usado pra render
+  // chips de facet "AP (X) | MPU (X) | …" só quando há múltiplos tipos.
+  const tipoProcessoCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of demandas) {
+      const matchProfissional = isVisaoGeral || d.defensorId === defensorUserId;
+      const matchArchived = showArchived ? d.arquivado : !d.arquivado;
+      const matchAtribuicao =
+        selectedAtribuicoes.length === 0 || selectedAtribuicoes.includes(d.atribuicao);
+      if (!matchProfissional || !matchArchived || !matchAtribuicao) continue;
+      const t = d.processos?.[0]?.tipo;
+      if (t) counts[t] = (counts[t] || 0) + 1;
+    }
+    return counts;
+  }, [demandas, selectedAtribuicoes, showArchived, defensorUserId, isVisaoGeral]);
+
+  // Ordem canônica + cores (espelha TIPO_PROCESSO_COLORS do DemandaQuickPreview).
+  // Só os tipos com count > 0 são exibidos. Mostra a pílula apenas se houver
+  // mais de um tipo distinto no recorte atual — caso contrário polui sem ganho.
+  const tipoProcessoChips = useMemo(() => {
+    const ORDER = ["AP", "MPU", "IP", "APF", "EP", "CAUTELAR", "ANPP", "OUTRO"];
+    const COLORS: Record<string, string> = {
+      AP: "#dc2626", IP: "#f59e0b", APF: "#ea580c", CAUTELAR: "#7c3aed",
+      EP: "#2563eb", MPU: "#db2777", ANPP: "#0891b2", OUTRO: "#71717a",
+    };
+    const known = new Set(ORDER);
+    const present = Object.keys(tipoProcessoCounts);
+    const ordered = [
+      ...ORDER.filter(k => tipoProcessoCounts[k] > 0),
+      ...present.filter(k => !known.has(k) && tipoProcessoCounts[k] > 0),
+    ];
+    return ordered.map(tipo => ({
+      tipo,
+      count: tipoProcessoCounts[tipo],
+      color: COLORS[tipo] ?? "#71717a",
+    }));
+  }, [tipoProcessoCounts]);
+
   // Detecta o #header-slot da topbar global (HeaderUtilityRow) pra portar
   // o switcher de atribuições. O slot só existe depois que o CollapsiblePageHeader
   // monta — por isso usamos requestAnimationFrame pra aguardar 1 frame.
@@ -2064,11 +2111,13 @@ export default function Demandas() {
     setSelectedAtribuicoes(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
+    setSelectedTipoProcesso(null);
   };
 
   // Single-select: always replaces (for kanban/planilha)
   const handleSingleAtribuicaoSelect = useCallback((value: string) => {
     setSelectedAtribuicoes([value]);
+    setSelectedTipoProcesso(null);
   }, []);
 
   // Auto-select first atribuição in kanban/planilha if none selected
@@ -2328,7 +2377,7 @@ export default function Demandas() {
           Multi-select: cada chip é toggle, "Todas" limpa selecao.
           Aparece ao lado dos breadcrumbs, sempre visível. */}
       {headerSlotEl && createPortal(
-        <div className="flex items-center pl-3">
+        <div className="flex items-center gap-2 pl-3">
           <AtribuicaoPills
             variant="dark"
             options={atribuicaoOptions}
@@ -2338,6 +2387,45 @@ export default function Demandas() {
             iconOnly
             counts={atribuicaoCounts}
           />
+          {/* Facet de tipo de processo — aparece só quando há ≥2 tipos no
+              recorte atual (atribuição+arquivado). Permite triar AP × MPU
+              dentro de VVD sem precisar criar atribuição separada. */}
+          {tipoProcessoChips.length >= 2 && (
+            <>
+              <span className="h-4 w-px bg-white/[0.10]" aria-hidden />
+              <div className="flex items-center gap-1">
+                {tipoProcessoChips.map(({ tipo, count, color }) => {
+                  const active = selectedTipoProcesso === tipo;
+                  return (
+                    <button
+                      key={tipo}
+                      type="button"
+                      onClick={() => setSelectedTipoProcesso(active ? null : tipo)}
+                      title={`${tipo} — ${count} ${count === 1 ? "demanda" : "demandas"}`}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer",
+                        active
+                          ? "ring-1 ring-inset"
+                          : "ring-1 ring-inset ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]"
+                      )}
+                      style={
+                        active
+                          ? {
+                              backgroundColor: `${color}26`,
+                              color: "#fff",
+                              boxShadow: `inset 0 0 0 1px ${color}80`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <span style={{ color: active ? color : undefined }}>{tipo}</span>
+                      <span className="text-white/40 tabular-nums font-semibold">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>,
         headerSlotEl,
       )}

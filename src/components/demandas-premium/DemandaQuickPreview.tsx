@@ -697,7 +697,9 @@ export function DemandaQuickPreview({
             style={{ borderLeftColor: atribuicaoColor }}
           >
             <div className="flex items-start gap-3">
-              {/* Avatar — sozinho na esquerda */}
+              {/* Avatar — tile único, sem badges. A atribuição passou a viver
+                  como linha em "Detalhes" (junto de Prazo/Tipo/etc), mantendo
+                  o header limpo e a edição acessível. */}
               <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                 <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
@@ -719,16 +721,16 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Linha 2 — três pills editáveis: ATO + STATUS + ATRIBUIÇÃO.
-                    Atribuição é icon-only (ícone da área, cor da atribuição) e
-                    fica por último — discreta mas editável e visível. */}
+                {/* Linha 2 — duas pills editáveis: ATO + STATUS.
+                    Atribuição migrou para baixo do avatar (coluna esquerda),
+                    deixando esta linha mais limpa e sem risco de wrap. */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                   <InlineDropdown
                     value={demanda.ato}
                     compact
                     displayValue={
                       <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors hover:brightness-95"
+                        className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors hover:brightness-95"
                         style={{
                           backgroundColor: `${atribuicaoColor}14`,
                           color: atribuicaoColor,
@@ -736,8 +738,7 @@ export function DemandaQuickPreview({
                         }}
                         title={demanda.ato || "Selecionar ato"}
                       >
-                        <Scale className="w-3 h-3 shrink-0" />
-                        <span className="truncate max-w-[160px]">
+                        <span className="truncate max-w-[200px]">
                           {demanda.ato || <span className="opacity-60 italic">Definir ato</span>}
                         </span>
                       </span>
@@ -762,29 +763,15 @@ export function DemandaQuickPreview({
                     options={statusOptions}
                     onChange={(v) => onStatusChange(demanda.id, v)}
                   />
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <span
-                        className="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                        style={{ color: atribuicaoColor }}
-                        title={`Atribuição: ${demanda.atribuicao}`}
-                      >
-                        <AtribuicaoIcon className="w-3.5 h-3.5" />
-                      </span>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
                 </div>
 
-                {/* Linha 3 — processo (chip de cópia) com badge de tipo (AP/MPU/IP/etc).
-                    Atribuição migrou pro primeiro ícone da coluna direita. */}
+                {/* Linha 3 — processo (chip de cópia) discreto, sem destaque
+                    visual competindo com pills. Tipo (AP/MPU/IP/etc) como
+                    label cinza inline antes do número. */}
                 {processo && (
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+                  <div className="flex items-center mt-2 flex-wrap">
                     <button
-                      className="inline-flex items-center gap-1 px-1 py-0.5 rounded-md bg-neutral-100/70 dark:bg-neutral-800/50 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 group/proc cursor-pointer transition-colors"
+                      className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -793,18 +780,12 @@ export function DemandaQuickPreview({
                       title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
                     >
                       {processo.tipo && (
-                        <span
-                          className="text-[9px] font-bold px-1 py-0.5 rounded uppercase tracking-wide"
-                          style={{
-                            backgroundColor: `${TIPO_PROCESSO_COLORS[processo.tipo] ?? "#71717a"}1a`,
-                            color: TIPO_PROCESSO_COLORS[processo.tipo] ?? "#71717a",
-                          }}
-                        >
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                           {processo.tipo}
                         </span>
                       )}
-                      <span className="font-mono text-[10px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors px-1">{processo.numero}</span>
-                      <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors mr-1" />
+                      <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                      <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
                     </button>
                   </div>
                 )}
@@ -1004,6 +985,29 @@ export function DemandaQuickPreview({
             {/* Detalhes — Ato saiu pra hero card. Aqui ficam os campos
                 temporais (prazo, datas) que não cabiam no header. */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+              {/* Atribuição row — editável via dropdown. Migrou do header
+                  pra cá pra deixar a hero card mais limpa, mantendo a edição
+                  acessível e a área visível em metadata. */}
+              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
+                <div className="flex-1 flex items-center justify-end">
+                  <InlineDropdown
+                    value={demanda.atribuicao}
+                    compact
+                    displayValue={
+                      <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                        {demanda.atribuicao}
+                      </span>
+                    }
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+
               {/* Prazo row — editável + badge calculado */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">

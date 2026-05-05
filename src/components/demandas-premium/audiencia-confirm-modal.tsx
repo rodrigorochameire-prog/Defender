@@ -201,7 +201,7 @@ export function AudienciaConfirmModal({
                   <SelectTrigger className="w-full h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600">
                     <SelectValue placeholder="Selecione o tipo..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100000]">
                     {TIPOS_AUDIENCIA.map((t) => (
                       <SelectItem key={t} value={t} className="text-xs">
                         {t}
