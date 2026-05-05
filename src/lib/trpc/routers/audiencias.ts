@@ -9,7 +9,8 @@ import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "d
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/preparacao-audiencia";
-import { criarEventoAudiencia } from "@/lib/services/google-calendar";
+import { criarEventoAudiencia, updateCalendarEvent } from "@/lib/services/google-calendar";
+import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 
 // ==========================================
 // Shared analysis helper used by both
@@ -778,7 +779,6 @@ export const audienciasRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // TODO: replace with Partial<typeof audiencias.$inferInsert> once all optional fields are mapped
       const updateData: Partial<typeof audiencias.$inferInsert> = { ...data };
 
       if (data.dataAudiencia) {
@@ -790,6 +790,59 @@ export const audienciasRouter = router({
         .set(updateData)
         .where(eq(audiencias.id, id))
         .returning();
+
+      // Sincronizar Calendar — só se algo relevante mudou
+      const dataChanged = !!data.dataAudiencia;
+      const tipoChanged = !!data.tipo;
+      const localChanged = data.local !== undefined;
+
+      if (!dataChanged && !tipoChanged && !localChanged) {
+        return audiencia;
+      }
+
+      // Carregar contexto do processo (área + assistido + numeroAutos)
+      const [ctxRow] = await db
+        .select({
+          assistidoNome: assistidos.nome,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+        })
+        .from(processos)
+        .leftJoin(assistidos, eq(assistidos.id, processos.assistidoId))
+        .where(eq(processos.id, audiencia.processoId))
+        .limit(1);
+
+      const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+      if (audiencia.googleCalendarEventId) {
+        // Atualiza evento existente
+        await updateCalendarEvent(
+          audiencia.googleCalendarEventId,
+          {
+            startDate: audiencia.dataAudiencia,
+            endDate: new Date(audiencia.dataAudiencia.getTime() + 60 * 60 * 1000),
+            location: audiencia.local ?? undefined,
+            summary: `🏛 ${audiencia.tipo} — ${ctxRow?.assistidoNome ?? "Assistido"}`,
+          },
+          { calendarId },
+        );
+      } else {
+        // Segunda chance — cria agora se faltava
+        const evento = await criarEventoAudiencia({
+          assistidoNome: ctxRow?.assistidoNome ?? "Assistido",
+          tipoAudiencia: audiencia.tipo,
+          dataAudiencia: audiencia.dataAudiencia,
+          local: audiencia.local ?? undefined,
+          numeroAutos: ctxRow?.numeroAutos ?? undefined,
+          area: ctxRow?.area ?? null,
+        });
+        if (evento?.id) {
+          await db
+            .update(audiencias)
+            .set({ googleCalendarEventId: evento.id })
+            .where(eq(audiencias.id, audiencia.id));
+        }
+      }
 
       return audiencia;
     }),
