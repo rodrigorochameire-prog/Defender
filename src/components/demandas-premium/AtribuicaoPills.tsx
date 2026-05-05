@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X } from "lucide-react";
+import { X, LayoutGrid } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
@@ -49,6 +49,8 @@ interface AtribuicaoPillsProps {
   compact?: boolean;
   /** Visual variant — "light" for white/neutral backgrounds, "dark" for charcoal headers */
   variant?: "light" | "dark";
+  /** Icon-only mode: no labels, no "Todas" text — só ícones com tooltip. Pra topbars apertados. */
+  iconOnly?: boolean;
 }
 
 export function AtribuicaoPills({
@@ -62,6 +64,7 @@ export function AtribuicaoPills({
   singleSelect = false,
   compact = false,
   variant = "light",
+  iconOnly = false,
 }: AtribuicaoPillsProps) {
   const isDark = variant === "dark";
   const filtered = options.filter((o) => o.value !== "Todas" && o.value !== "all" && o.label !== "Todas");
@@ -93,8 +96,10 @@ export function AtribuicaoPills({
           return (
             <button
               onClick={() => onClear()}
+              title={allOption.label}
               className={cn(
-                "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer px-2.5 py-1",
+                "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
+                iconOnly ? "p-1" : "px-2.5 py-1",
                 isAllActive && "shadow-sm"
               )}
               style={
@@ -105,7 +110,7 @@ export function AtribuicaoPills({
                   : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
               }
             >
-              {allOption.label}
+              {iconOnly ? <LayoutGrid className="w-[15px] h-[15px]" /> : allOption.label}
             </button>
           );
         })()}
@@ -123,9 +128,7 @@ export function AtribuicaoPills({
               title={opt.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                isActive
-                  ? "px-2.5 py-1 shadow-sm text-white"
-                  : "px-2 py-1"
+                iconOnly ? "p-1" : isActive ? "px-2.5 py-1 shadow-sm text-white" : "px-2 py-1"
               )}
               style={
                 isActive
@@ -141,8 +144,8 @@ export function AtribuicaoPills({
                   style={{ color: isActive ? (isDark ? "white" : "#1a1a1a") : isDark ? "rgba(255,255,255,0.50)" : "#71717a" }}
                 />
               )}
-              {isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}
-              {!compact && count !== undefined && (
+              {!iconOnly && isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}
+              {!iconOnly && !compact && count !== undefined && (
                 <span
                   className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   style={
