@@ -48,12 +48,17 @@ export function RegistroEditor({
 
   const tipos = tiposPermitidos ?? TIPO_KEYS;
 
+  const activeCfg = REGISTRO_TIPOS[tipo];
+
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3 space-y-2.5">
-      {/* Tipo selector — apenas o chip ativo tem tint colorido. Os demais ficam
-          neutros (só ícone+texto coloridos), o que reduz drasticamente o ruído
-          visual mantendo a semântica de cor. */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+    <div
+      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden border-l-2 transition-colors"
+      style={{ borderLeftColor: `${activeCfg.color}66` }}
+    >
+      {/* Tipo selector — single row icon-only.
+          O ativo expande pra mostrar label completa com tint colorido.
+          Os demais ficam icon-only neutros com tooltip — quase 0 ruído visual. */}
+      <div className="flex items-center gap-0.5 px-2.5 pt-2.5 pb-1.5 flex-wrap">
         {tipos.map((t) => {
           const cfg = REGISTRO_TIPOS[t];
           const Icon = cfg.Icon;
@@ -63,77 +68,90 @@ export function RegistroEditor({
               key={t}
               type="button"
               onClick={() => setTipo(t)}
+              title={cfg.label}
+              aria-label={cfg.label}
+              aria-pressed={active}
               className={cn(
-                "text-[11px] px-2 py-1 rounded-md font-medium transition-all flex items-center gap-1",
+                "rounded-md transition-all duration-150 flex items-center gap-1 text-[11px] font-semibold",
                 active
-                  ? cn(cfg.bg, cfg.text, "ring-1 ring-inset")
-                  : cn(
-                      "bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/40",
-                      cfg.text,
-                    ),
+                  ? cn("px-2 py-1 ring-1 ring-inset", cfg.bg, cfg.text)
+                  : "w-7 h-7 justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800",
               )}
               style={
                 active
-                  ? ({ ["--tw-ring-color"]: cfg.color } as React.CSSProperties)
+                  ? ({ ["--tw-ring-color"]: `${cfg.color}66` } as React.CSSProperties)
                   : undefined
               }
             >
-              <Icon className="w-3 h-3" />
-              {cfg.shortLabel}
+              <Icon className="w-3.5 h-3.5" />
+              {active && <span>{cfg.label}</span>}
             </button>
           );
         })}
       </div>
 
-      <input
-        value={titulo}
-        onChange={(e) => setTitulo(e.target.value)}
-        placeholder="Título (opcional)"
-        className="w-full bg-transparent text-sm font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none border-b border-neutral-200 dark:border-neutral-800 pb-1.5 focus:border-neutral-400"
-        maxLength={120}
-      />
+      <div className="px-3.5 pb-3 space-y-1.5">
+        <input
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          placeholder="Título (opcional)"
+          className="w-full bg-transparent text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 placeholder:font-normal outline-none py-1"
+          maxLength={120}
+        />
 
-      <textarea
-        value={conteudo}
-        onChange={(e) => setConteudo(e.target.value)}
-        placeholder="O que aconteceu..."
-        rows={3}
-        className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none"
-      />
+        <textarea
+          value={conteudo}
+          onChange={(e) => setConteudo(e.target.value)}
+          placeholder="O que aconteceu..."
+          rows={3}
+          className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
+        />
 
-      <div className="flex items-center justify-end gap-2 pt-1">
-        {onCancel && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="h-7 text-[11px]"
-          >
-            Cancelar
-          </Button>
-        )}
-        <Button
-          size="sm"
-          disabled={!conteudo.trim() || create.isPending}
-          onClick={() =>
-            create.mutate({
-              tipo,
-              assistidoId,
-              processoId,
-              demandaId,
-              audienciaId,
-              titulo: titulo.trim() || undefined,
-              conteudo: conteudo.trim(),
-            })
-          }
-          className="h-7 text-[11px]"
-        >
-          {create.isPending ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            "Salvar"
-          )}
-        </Button>
+        {/* Footer com counter + actions */}
+        <div className="flex items-center justify-between pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60">
+          <span className={cn(
+            "text-[10px] tabular-nums transition-colors",
+            conteudo.length > 1000
+              ? "text-amber-500"
+              : "text-neutral-400 dark:text-neutral-500",
+          )}>
+            {conteudo.length > 0 ? `${conteudo.length} caracteres` : ""}
+          </span>
+          <div className="flex items-center gap-1">
+            {onCancel && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancel}
+                className="h-7 text-[11px] px-2.5 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+              >
+                Cancelar
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={!conteudo.trim() || create.isPending}
+              onClick={() =>
+                create.mutate({
+                  tipo,
+                  assistidoId,
+                  processoId,
+                  demandaId,
+                  audienciaId,
+                  titulo: titulo.trim() || undefined,
+                  conteudo: conteudo.trim(),
+                })
+              }
+              className="h-7 text-[11px] px-3 cursor-pointer"
+            >
+              {create.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
