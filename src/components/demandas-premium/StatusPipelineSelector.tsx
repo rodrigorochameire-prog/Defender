@@ -68,9 +68,19 @@ export function StatusPipelineSelector({
             )
           : top;
 
+      // Largura real do popup (após render) ou estimativa.
+      const POPUP_WIDTH = ref.current?.offsetWidth ?? 300;
+      const idealRight = window.innerWidth - rect.right;
+      // Se o popup escaparia pela borda esquerda, gruda na esquerda com padding.
+      const popupLeft = window.innerWidth - idealRight - POPUP_WIDTH;
+      const adjustedRight =
+        popupLeft < VIEWPORT_PADDING
+          ? Math.max(VIEWPORT_PADDING, window.innerWidth - VIEWPORT_PADDING - POPUP_WIDTH)
+          : idealRight;
+
       setPos({
         top: clampedTop,
-        right: window.innerWidth - rect.right,
+        right: adjustedRight,
       });
     };
 
