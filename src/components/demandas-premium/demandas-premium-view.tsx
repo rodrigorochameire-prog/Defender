@@ -2039,6 +2039,14 @@ export default function Demandas() {
     return counts;
   }, [demandas]);
 
+  // Cor accent do icon-square baseada na atribuição ativa (echo visual com switcher)
+  const headerAccentHex = useMemo(() => {
+    if (selectedAtribuicoes.length === 1) {
+      return ATRIBUICAO_BORDER_COLORS[selectedAtribuicoes[0]] ?? null;
+    }
+    return null;
+  }, [selectedAtribuicoes]);
+
   const handleAtribuicaoToggle = (value: string) => {
     setSelectedAtribuicoes(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
@@ -2349,17 +2357,59 @@ export default function Demandas() {
           </div>
         }
       >
-        {/* Row 1: Title + inline stats + actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <ListTodo className="w-4 h-4 text-white" />
+        {/* Row 1: Title + KPIs + actions */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 shrink-0"
+              style={
+                headerAccentHex
+                  ? {
+                      backgroundColor: `${headerAccentHex}26`,
+                      boxShadow: `inset 0 0 0 1px ${headerAccentHex}40`,
+                    }
+                  : { backgroundColor: "#525252" }
+              }
+            >
+              <ListTodo
+                className="w-4 h-4"
+                style={{ color: headerAccentHex ?? "#ffffff" }}
+              />
             </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {demandas.filter(d => !d.arquivado).length} demandas
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
+                Demandas
+              </h1>
+              <div className="flex items-center text-[10px] tabular-nums leading-tight mt-0.5">
+                <span className="text-white/55">
+                  <span className="text-white/85 font-semibold">
+                    {demandas.filter(d => !d.arquivado).length}
+                  </span>{" "}
+                  ativas
+                </span>
+                {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
+                  <>
+                    <span className="mx-2 h-2.5 w-px bg-white/15" />
+                    <span className="flex items-center gap-1 text-amber-300/90">
+                      <span className="w-1 h-1 rounded-full bg-amber-400" />
+                      <span className="font-semibold">
+                        {deadlineStats.hoje + deadlineStats.semana}
+                      </span>
+                      <span className="text-amber-300/70">urgentes</span>
+                    </span>
+                  </>
+                )}
+                {deadlineStats.vencidas > 0 && (
+                  <>
+                    <span className="mx-2 h-2.5 w-px bg-white/15" />
+                    <span className="flex items-center gap-1 text-rose-300/90">
+                      <span className="w-1 h-1 rounded-full bg-rose-400" />
+                      <span className="font-semibold">{deadlineStats.vencidas}</span>
+                      <span className="text-rose-300/70">atrasadas</span>
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -2461,6 +2511,7 @@ export default function Demandas() {
                 document.body
               )}
             </div>
+            <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
               className="h-8 px-3 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
