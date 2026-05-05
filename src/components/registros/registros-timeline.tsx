@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ListFilter } from "lucide-react";
+import { ListFilter, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -37,14 +37,25 @@ export function RegistrosTimeline({
   onEdit,
 }: Props) {
   const [filtroTipo, setFiltroTipo] = useState<TipoRegistro | null>(null);
+  const [busca, setBusca] = useState("");
 
-  const { data: registros = [], refetch } = trpc.registros.list.useQuery({
+  const { data: registrosRaw = [], refetch } = trpc.registros.list.useQuery({
     assistidoId,
     processoId,
     demandaId,
     audienciaId,
     tipo: filtroTipo ?? undefined,
   });
+
+  // Filtragem textual client-side (rápida — registros por demanda raramente >50).
+  // Faz match case-insensitive em título + conteúdo. Quando vazio, retorna tudo.
+  const registros = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return registrosRaw;
+    return registrosRaw.filter((r: any) =>
+      ((r.titulo || "") + " " + (r.conteudo || "")).toLowerCase().includes(q)
+    );
+  }, [registrosRaw, busca]);
 
   const deleteMut = trpc.registros.delete.useMutation({
     onSuccess: () => {
@@ -78,6 +89,35 @@ export function RegistrosTimeline({
 
   return (
     <div className="space-y-3">
+      {/* Busca textual — filtra por título/conteúdo. Atalho Cmd/Ctrl+K
+          foca este campo de qualquer lugar do sheet (data-registros-search). */}
+      <div className="relative">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400 pointer-events-none" />
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar nos registros…"
+          data-registros-search="true"
+          className={cn(
+            "w-full bg-neutral-50 dark:bg-neutral-800/40",
+            "border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700",
+            "rounded-md text-[12px] pl-7 pr-7 py-1.5 outline-none",
+            "placeholder:text-neutral-400 transition-colors",
+          )}
+        />
+        {busca && (
+          <button
+            type="button"
+            onClick={() => setBusca("")}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 cursor-pointer"
+            title="Limpar busca"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
       {/* Filtro em linha única — Todos + tipos com registros + dropdown "+" para os demais */}
       <div className="flex items-center gap-1 flex-wrap">
         <button
@@ -168,7 +208,9 @@ export function RegistrosTimeline({
       {/* Lista */}
       {registros.length === 0 ? (
         <p className="text-[12px] text-neutral-400 dark:text-neutral-500 px-1 py-3">
-          {emptyHint ?? "Nenhum registro ainda."}
+          {busca
+            ? `Nenhum registro com "${busca}".`
+            : (emptyHint ?? "Nenhum registro ainda.")}
         </p>
       ) : (
         <div className="space-y-2">

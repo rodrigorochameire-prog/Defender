@@ -6,6 +6,7 @@ import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-hea
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
 import { isAtoAudiencia } from "@/lib/audiencia-parser";
+import { usePermissions } from "@/hooks/use-permissions";
 import { RecursoConfirmModal, type RecursoConfirmData } from "@/components/demandas-premium/recurso-confirm-modal";
 import { isAtoRecurso, infoDoAtoRecurso, type TipoRecurso } from "@/lib/recurso-helpers";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
@@ -323,6 +324,28 @@ const atribuicaoOptions = [
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
 ];
 
+// Mapeia chaves da coluna `users.areasPrincipais` (jsonb) para os labels
+// usados em `atribuicaoOptions.value`. Cobre as duas convenções vivas no
+// codebase (curta tipo "VVD", e longa tipo "VIOLENCIA_DOMESTICA"). Quando
+// chega uma chave nova, cai no fallback (não filtra) e o usuário pode
+// ajustar — sem quebrar.
+const AREA_KEY_TO_ATRIBUICAO_LABEL: Record<string, string> = {
+  JURI: "Tribunal do Júri",
+  GRUPO_JURI: "Grupo Especial do Júri",
+  VVD: "Violência Doméstica",
+  EXECUCAO: "Execução Penal",
+  SUBSTITUICAO: "Substituição Criminal",
+  CURADORIA: "Curadoria Especial",
+  VIOLENCIA_DOMESTICA: "Violência Doméstica",
+  EXECUCAO_PENAL: "Execução Penal",
+};
+
+// Persistência do default de atribuição. Override do usuário (qualquer
+// mudança manual) salva em localStorage; flag de "Todas explícito" usa
+// sessionStorage (vale só pra aba atual).
+const LS_DEFAULT_ATRIBUICAO = "defender_default_atribuicao";
+const SS_EXPLICIT_ALL = "defender_atribuicao_explicit_all";
+
 const statusOptions = [
   // Triagem
   { value: "triagem", label: "Triagem", icon: ListTodo },
@@ -600,7 +623,29 @@ export default function Demandas() {
   ]);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
-  const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>([]);
+  // Default da atribuição, ordem de prioridade:
+  //   1. sessionStorage explicit_all → manter [] (modo "Todas")
+  //   2. localStorage override do usuário → reusa último estado salvo
+  //   3. (mais tarde, em useEffect) areasPrincipais do user → fallback
+  //   4. (mais tarde, em useEffect) primeira atribuição em kanban/planilha
+  const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    if (sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return [];
+    const saved = localStorage.getItem(LS_DEFAULT_ATRIBUICAO);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(v => typeof v === "string")) {
+          return parsed;
+        }
+      } catch { /* ignore corrupted */ }
+    }
+    return [];
+  });
+  // Marca quando o init via areasPrincipais já rodou — evita reaplicar
+  // quando o user re-renderiza (usePermissions emite múltiplas vezes).
+  const [didInitFromUserAreas, setDidInitFromUserAreas] = useState(false);
+  const { user: currentUser } = usePermissions();
   // Portal target: #header-slot é um placeholder na topbar global (HeaderUtilityRow).
   // Usamos pra montar o switcher de atribuições ali em vez de no bottomRow do header.
   const [headerSlotEl, setHeaderSlotEl] = useState<HTMLElement | null>(null);
@@ -2108,6 +2153,7 @@ export default function Demandas() {
   }, []);
 
   const handleAtribuicaoToggle = (value: string) => {
+    if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
     setSelectedAtribuicoes(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
@@ -2116,20 +2162,67 @@ export default function Demandas() {
 
   // Single-select: always replaces (for kanban/planilha)
   const handleSingleAtribuicaoSelect = useCallback((value: string) => {
+    if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
     setSelectedAtribuicoes([value]);
     setSelectedTipoProcesso(null);
   }, []);
 
-  // Auto-select first atribuição in kanban/planilha if none selected
+  // "Todas": modo explícito de mostrar todas as atribuições, mesmo em
+  // kanban/planilha. A flag em sessionStorage impede que o useEffect abaixo
+  // re-selecione a primeira automaticamente.
+  const handleClearAtribuicoes = useCallback(() => {
+    if (typeof window !== "undefined") sessionStorage.setItem(SS_EXPLICIT_ALL, "true");
+    setSelectedAtribuicoes([]);
+    setSelectedTipoProcesso(null);
+  }, []);
+
+  // Default a partir de areasPrincipais quando user chega — só aplica se
+  // não houver override em localStorage e usuário não escolheu "Todas".
   useEffect(() => {
+    if (didInitFromUserAreas) return;
+    if (!currentUser) return;
+    setDidInitFromUserAreas(true);
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
+    if (localStorage.getItem(LS_DEFAULT_ATRIBUICAO)) return;
+    if (selectedAtribuicoes.length > 0) return;
+    const areas = currentUser.areasPrincipais ?? [];
+    const validValues = new Set(atribuicaoOptions.map(o => o.value));
+    const labels = areas
+      .map(k => AREA_KEY_TO_ATRIBUICAO_LABEL[k] ?? k)
+      .filter(l => validValues.has(l));
+    if (labels.length > 0) {
+      setSelectedAtribuicoes(labels);
+    }
+  }, [currentUser, didInitFromUserAreas, selectedAtribuicoes.length]);
+
+  // Persistir override quando usuário muda manualmente. Sem isso, a próxima
+  // sessão volta a inicializar a partir de areasPrincipais ignorando o gosto
+  // recente do usuário (que pode ter alternado pra outra atribuição).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!didInitFromUserAreas) return;
+    if (selectedAtribuicoes.length > 0) {
+      localStorage.setItem(LS_DEFAULT_ATRIBUICAO, JSON.stringify(selectedAtribuicoes));
+    }
+  }, [selectedAtribuicoes, didInitFromUserAreas]);
+
+  // Auto-select first atribuição in kanban/planilha if none selected.
+  // Respeita: (a) flag explicit_all (usuário clicou em "Todas"), (b) init
+  // pendente do areasPrincipais (didInitFromUserAreas=false → segura).
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
+    if (!didInitFromUserAreas) return;
     if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length === 0) {
       const firstOpt = atribuicaoOptions.find(o => o.value !== "Todas");
       if (firstOpt) setSelectedAtribuicoes([firstOpt.value]);
     }
-  }, [activeTab, selectedAtribuicoes.length]);
+  }, [activeTab, selectedAtribuicoes.length, didInitFromUserAreas]);
 
-  // When switching TO kanban/planilha from multi-select, narrow to first selection
+  // When switching TO kanban/planilha from multi-select, narrow to first selection.
+  // Modo "Todas" (explicit_all) é exceção — preservar.
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
     if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length > 1) {
       setSelectedAtribuicoes([selectedAtribuicoes[0]]);
     }
@@ -2383,7 +2476,7 @@ export default function Demandas() {
             options={atribuicaoOptions}
             selectedValues={selectedAtribuicoes}
             onToggle={handleAtribuicaoToggle}
-            onClear={() => setSelectedAtribuicoes([])}
+            onClear={handleClearAtribuicoes}
             iconOnly
             counts={atribuicaoCounts}
           />
@@ -3024,6 +3117,7 @@ export default function Demandas() {
             selectedAtribuicoes={selectedAtribuicoes}
             handleAtribuicaoToggle={handleAtribuicaoToggle}
             setSelectedAtribuicoes={setSelectedAtribuicoes}
+            onClearAtribuicoes={handleClearAtribuicoes}
             atribuicaoCounts={atribuicaoCounts}
             onCardClick={(id) => setPreviewDemandaId(id)}
           />

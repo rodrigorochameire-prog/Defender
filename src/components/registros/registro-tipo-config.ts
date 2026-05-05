@@ -8,6 +8,9 @@ import {
   Pen,
   FileSignature,
   Eye,
+  Search,
+  Microscope,
+  ArrowRightLeft,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,7 +23,15 @@ export type TipoRegistro =
   | "delegacao"
   | "pesquisa"
   | "elaboracao"
-  | "peticao";
+  | "peticao"
+  // Busca de dados externos (Google, redes sociais, fontes públicas).
+  // Distinta de pesquisa (jurídica) e investigacao (hipóteses defensivas).
+  | "busca"
+  // Linhas de investigação defensiva, contraprova, hipóteses, contradições.
+  | "investigacao"
+  // Transferência definitiva do caso para outro defensor (distinta da
+  // delegação, que é só atribuir uma tarefa pontual).
+  | "transferencia";
 
 export interface TipoConfig {
   label: string;
@@ -107,6 +118,30 @@ export const REGISTRO_TIPOS: Record<TipoRegistro, TipoConfig> = {
     bg: "bg-sky-50 dark:bg-sky-950/30",
     text: "text-sky-700 dark:text-sky-400",
     Icon: FileSignature,
+  },
+  busca: {
+    label: "Busca",
+    shortLabel: "Busca",
+    color: "#0d9488",
+    bg: "bg-teal-50 dark:bg-teal-950/30",
+    text: "text-teal-700 dark:text-teal-400",
+    Icon: Search,
+  },
+  investigacao: {
+    label: "Investigação",
+    shortLabel: "Invest.",
+    color: "#dc2626",
+    bg: "bg-red-50 dark:bg-red-950/30",
+    text: "text-red-700 dark:text-red-400",
+    Icon: Microscope,
+  },
+  transferencia: {
+    label: "Transferência",
+    shortLabel: "Transf.",
+    color: "#9333ea",
+    bg: "bg-fuchsia-50 dark:bg-fuchsia-950/30",
+    text: "text-fuchsia-700 dark:text-fuchsia-400",
+    Icon: ArrowRightLeft,
   },
 };
 

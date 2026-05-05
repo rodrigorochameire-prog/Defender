@@ -33,14 +33,27 @@ interface AudienciaInlineFormProps {
 // CONSTANTES
 // ============================================================================
 
+// Cobertura criminal/VVD/Júri/EP do defensor. Mantenha sincronizada com
+// audiencia-confirm-modal.tsx:TIPOS_AUDIENCIA — divergência aqui significa
+// que o usuário verá tipos diferentes em fluxos diferentes.
 const TIPOS_AUDIENCIA = [
   "Instrução e Julgamento",
+  "Instrução",
+  "Julgamento",
+  "Una",
+  "Plenário do Júri",
+  // Lei 13.431/2017 — depoimento sem dano de criança/adolescente vítima ou
+  // testemunha (aplicável também em PPP de proteção de menor).
+  "Oitiva Especial",
+  // Art. 366 CPP — produção antecipada de prova
+  "Antecipação de Prova",
   "Conciliação",
   "Justificação",
   "Custódia",
-  "Admonitória",
-  "Júri",
-  "Outro",
+  // Art. 16 Lei Maria da Penha — renúncia da representação
+  "Preliminar (Maria da Penha)",
+  "Admoestação",
+  "Outra",
 ] as const;
 
 // ============================================================================

@@ -23,6 +23,9 @@ const TIPO_REGISTRO = z.enum([
   "pesquisa",
   "elaboracao",
   "peticao",
+  "busca",
+  "investigacao",
+  "transferencia",
 ]);
 
 export const registrosRouter = router({
