@@ -2059,7 +2059,7 @@ export const audienciasRouter = router({
       motivo: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      return withTransaction(async (tx) => {
+      const { atual, novaDataHora } = await withTransaction(async (tx) => {
         const [atual] = await tx.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
         if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
 
@@ -2090,7 +2090,33 @@ export const audienciasRouter = router({
           })
           .where(eq(audiencias.id, input.audienciaId));
 
-        return { ok: true };
+        return { atual, novaDataHora };
       });
+
+      // Sincronizar Calendar (best-effort, fora da transação)
+      if (atual.googleCalendarEventId) {
+        try {
+          const [ctxRow] = await db
+            .select({ area: processos.area })
+            .from(processos)
+            .where(eq(processos.id, atual.processoId))
+            .limit(1);
+
+          const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+          await updateCalendarEvent(
+            atual.googleCalendarEventId,
+            {
+              startDate: novaDataHora,
+              endDate: new Date(novaDataHora.getTime() + 60 * 60 * 1000),
+            },
+            { calendarId },
+          );
+        } catch (err) {
+          console.error("[audiencias.redesignar] calendar sync failed", err);
+        }
+      }
+
+      return { ok: true };
     }),
 });
