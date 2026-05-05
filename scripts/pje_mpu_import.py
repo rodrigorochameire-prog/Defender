@@ -58,52 +58,52 @@ def load_env() -> dict[str, str]:
 # ───── Stubs (preenchidos nas próximas tasks) ──────────────────────────────
 
 def parse_expedientes_list(html: str) -> list[dict]:
-    """Extrai expedientes do HTML do painel VVD.
+    """Extrai expedientes do HTML do painel VVD após expansão da vara.
 
-    Cada expediente: numero_cnj, processo_pje_id, data_expedicao,
-    tipo_documento, prazo. Linhas <tr class="rich-table-row">.
+    Espelha a abordagem do scraper Júri (`extract_expedientes_text`,
+    pje_intimacoes_scraper.py:184): cada expediente vem em uma linha cuja
+    âncora é `formExpedientes:tbExpedientes:<doc_id>:j_id498`. Os campos
+    são lidos de atributos `title=` (Autos Digitais, Tipo de documento,
+    Data de criação, Prazo) e do parâmetro `idProcesso=` que aponta para
+    o processo no listView.seam.
     """
     expedientes: list[dict] = []
+    doc_ids = list(dict.fromkeys(re.findall(r"formExpedientes:tbExpedientes:(\d+):", html)))
 
-    # Cada linha de expediente é um <tr class="rich-table-row">
-    for row in re.finditer(
-        r'<tr[^>]*class="[^"]*rich-table-row[^"]*"[^>]*>(.*?)</tr>',
-        html, re.DOTALL | re.IGNORECASE,
-    ):
-        block = row.group(1)
-
-        # processo_pje_id vem do onclick="openProcesso('1234567')"
-        pje_id_m = re.search(r"openProcesso\('(\d+)'\)", block)
-        # numero CNJ
-        cnj_m = re.search(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}", block)
-        # data de expedição
-        exp_m = re.search(
-            r"Expedi[çc][aã]o\s+eletr[oô]nica\s*\((\d{2}/\d{2}/\d{4}(?:\s+\d{2}:\d{2})?)\)",
-            block,
-        )
-        # prazo
-        prazo_m = re.search(r"Prazo:\s*(\d+\s*dias?)", block, re.IGNORECASE)
-        # tipo documento — primeiro <div> que NÃO é partes/vara/destinatário
-        tipo_m = None
-        for div in re.finditer(r"<div>([^<]+)</div>", block):
-            txt = div.group(1).strip()
-            if (txt
-                and " X " not in txt
-                and not txt.startswith("/")
-                and not ("Defensoria" in txt and "Pública" in txt)
-                and not re.match(r"\d{7}-", txt)):
-                tipo_m = txt
-                break
-
-        if not (pje_id_m and cnj_m):
+    for doc_id in doc_ids:
+        anchor = f"formExpedientes:tbExpedientes:{doc_id}:j_id498"
+        row_start = html.find(anchor)
+        if row_start < 0:
             continue
+        next_row = html.find('<tr class="rich-table-row', row_start + 100)
+        block = html[row_start: next_row if next_row > 0 else row_start + 8000]
+
+        idproc_m = re.search(r"idProcesso=(\d+)", block)
+        cnj_m = re.search(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}", block)
+        if not (idproc_m and cnj_m):
+            continue
+
+        tipo_m = re.search(r'title="Tipo de documento">([^<]+)', block)
+        tipo = tipo_m.group(1).strip() if tipo_m else ""
+        tipo = re.sub(r"\s*\(\d+\)\s*$", "", tipo)  # remove sufixo "(NNNN)"
+
+        data_m = re.search(r'title="Data de cria[çc][ãa]o do expediente">([^<]+)', block)
+        data_exp = data_m.group(1).strip() if data_m else ""
+
+        prazo_m = re.search(r'title="Prazo para manifesta[çc][ãa]o">[^<]*Prazo:\s*(\d+\s*dias?)', block, re.IGNORECASE)
+        prazo = prazo_m.group(1).strip() if prazo_m else ""
+
+        # token `ca` está na URL do window.open de cada linha
+        ca_m = re.search(r'listProcessoCompletoAdvogado\.seam\?id=\d+&(?:amp;)?ca=([a-f0-9]+)', block)
+        ca = ca_m.group(1) if ca_m else None
 
         expedientes.append({
             "numero_cnj": cnj_m.group(0),
-            "processo_pje_id": pje_id_m.group(1),
-            "data_expedicao": exp_m.group(1).strip() if exp_m else "",
-            "tipo_documento": tipo_m or "",
-            "prazo": prazo_m.group(1).strip() if prazo_m else "",
+            "processo_pje_id": idproc_m.group(1),
+            "data_expedicao": data_exp,
+            "tipo_documento": tipo,
+            "prazo": prazo,
+            "ca": ca,
         })
 
     return expedientes
@@ -116,12 +116,12 @@ def _find_vara_vvd_id(html: str) -> tuple[str | None, int]:
     o span com nome da vara e recua no HTML para achar o ID exato.
     """
     span_patterns = [
-        r"Vara de Viol[êe]ncia Dom[êe]stica",
-        r"Viol[êe]ncia Dom[êe]stica",
+        r"Vara de Viol[êeé]ncia Dom[êeé]stica",
+        r"Viol[êeé]ncia Dom[êeé]stica",
     ]
     for pat in span_patterns:
         m = re.search(
-            r'<span class="nomeTarefa[^"]*">[^<]*' + pat + r'[^<]*</span>',
+            r'<span class="nomeTarefa"[^>]*>[^<]*' + pat + r'[^<]*</span>',
             html, re.IGNORECASE,
         )
         if not m:
@@ -210,23 +210,66 @@ def _extract_ca_token(html: str) -> str | None:
     return None
 
 
-def _parse_partes_from_html(html: str) -> list[dict]:
-    """Extrai partes da seção 'partes' do HTML do processo.
+_POLO_TIPO_RE = re.compile(
+    r"\(\s*(REQUERIDO|REQUERENTE|FLAGRANTEADO|INDICIADO|ACUSADO|R[ÉE]U|V[ÍI]TIMA|"
+    r"TESTEMUNHA|REPRESENTANTE|AUTORIDADE|ADVOGADO)\s*\)",
+    re.IGNORECASE,
+)
 
-    Cada linha (`<tr>`) com tipo + nome + (CPF/OAB opcional).
-    Tipos reconhecidos: REQUERENTE, REQUERIDO, REPRESENTANTE, AUTOR, RÉU, etc.
+
+def _parse_partes_from_html(html: str) -> list[dict]:
+    """Extrai partes do HTML de listProcessoCompletoAdvogado.seam.
+
+    Estrutura PJe TJBA: cada parte aparece como
+    `<span>NOME [- CPF: NNN.NNN.NNN-NN] (TIPO)</span>` dentro de
+    `<div id="poloPassivo">` ou `<div id="poloAtivo">`. O TIPO em parênteses
+    é a chave principal; CPF é capturado quando presente.
+
+    Fallback (formato sintético dos testes): tabela com `id="partes"` onde
+    cada linha tem `<td>TIPO</td><td>NOME</td><td>CPF: ...</td>`.
     """
     partes: list[dict] = []
+
+    # 1. PJe real: poloAtivo / poloPassivo / outrosInteressados
+    for div_id in ("poloAtivo", "poloPassivo", "outrosInteressados"):
+        m = re.search(
+            rf'<div id="{div_id}"[^>]*>(.*?)</div>\s*(?:<div|\Z)',
+            html, re.DOTALL,
+        )
+        if not m:
+            continue
+        bloco = m.group(1)
+        for span in re.finditer(r'<span class="[^"]*">\s*([^<]+?)\s*</span>', bloco):
+            txt = htmlmod.unescape(span.group(1)).strip()
+            tipo_m = _POLO_TIPO_RE.search(txt)
+            if not tipo_m:
+                continue
+            tipo = tipo_m.group(1).lower()
+            nome_e_cpf = txt[: tipo_m.start()].strip(" -")
+            cpf_m = re.search(r"CPF:\s*([\d.\-]+)", nome_e_cpf)
+            oab_m = re.search(r"OAB\s+([A-Z]{2}\d+)", nome_e_cpf)
+            nome = re.sub(r"\s*-?\s*(CPF:|OAB\s+).*$", "", nome_e_cpf).strip()
+            parte: dict = {"tipo": tipo, "nome": nome}
+            if cpf_m:
+                parte["cpf"] = cpf_m.group(1)
+            if oab_m:
+                parte["oab"] = oab_m.group(1)
+            partes.append(parte)
+
+    if partes:
+        return partes
+
+    # 2. Fallback sintético (testes): tabela `id="partes"`
     TIPO_RE = re.compile(
         r"^\s*(REQUERENTE|REQUERIDO|REPRESENTANTE|AUTOR|R[ÉE]U|V[ÍI]TIMA|TESTEMUNHA)\s*$",
         re.IGNORECASE,
     )
-
-    # Procurar bloco de partes (id="partes" ou heurística mais ampla)
     bloco_m = re.search(r'<table[^>]*id="partes"[^>]*>(.*?)</table>', html, re.DOTALL)
     if not bloco_m:
-        # Fallback: procurar por qualquer tabela contendo REQUERIDO ou REQUERENTE
-        bloco_m = re.search(r"<table[^>]*>([^<]*?(?:REQUERIDO|REQUERENTE).*?)</table>", html, re.DOTALL | re.IGNORECASE)
+        bloco_m = re.search(
+            r"<table[^>]*>([^<]*?(?:REQUERIDO|REQUERENTE).*?)</table>",
+            html, re.DOTALL | re.IGNORECASE,
+        )
     if not bloco_m:
         return partes
 
@@ -234,17 +277,13 @@ def _parse_partes_from_html(html: str) -> list[dict]:
         cells = re.findall(r"<td[^>]*>([^<]*)</td>", row.group(1))
         if not cells or len(cells) < 2:
             continue
-
         tipo_cell = cells[0].strip()
         if not TIPO_RE.match(tipo_cell):
             continue
-
         nome = htmlmod.unescape(cells[1].strip())
         if not nome:
             continue
-
         parte = {"tipo": tipo_cell.lower(), "nome": nome}
-        # CPF / OAB no terceiro campo (se houver)
         if len(cells) >= 3:
             extra = cells[2].strip()
             cpf_m = re.search(r"CPF:\s*([\d.\-]+)", extra)
@@ -253,37 +292,42 @@ def _parse_partes_from_html(html: str) -> list[dict]:
                 parte["cpf"] = cpf_m.group(1)
             if oab_m:
                 parte["oab"] = oab_m.group(1).strip()
-
         partes.append(parte)
 
     return partes
 
 
-def resolve_polo_passivo(session: requests.Session, processo_pje_id: str) -> dict:
-    """1ª via privilegiada → fallback via token `ca`."""
-    # 1ª via: GET listView.seam?id=<id>
-    r = session.get(f"{LISTVIEW_URL}?id={processo_pje_id}", timeout=30, verify=False)
+def resolve_polo_passivo(session: requests.Session, expediente: dict) -> dict:
+    """Carrega `listProcessoCompletoAdvogado.seam?id=N&ca=H` e parseia partes.
+
+    O token `ca` já vem na linha do expediente (extraído por
+    `parse_expedientes_list`), então não há fallback nem popup intermediário.
+    """
+    ca = expediente.get("ca")
+    pje_id = expediente.get("processo_pje_id")
+    if not ca or not pje_id:
+        return {"partes": [], "via": "ca_not_in_panel"}
+
+    url = f"{PJE_BASE}/Processo/ConsultaProcesso/Detalhe/listProcessoCompletoAdvogado.seam?id={pje_id}&ca={ca}"
+    last_exc: Exception | None = None
+    for _ in range(3):  # 3 tentativas com timeout 60s
+        try:
+            r = session.get(url, headers={"Referer": PJE_PANEL}, timeout=60, verify=False)
+            break
+        except requests.exceptions.Timeout as exc:
+            last_exc = exc
+            time.sleep(1.0)
+    else:
+        return {"partes": [], "via": f"timeout: {last_exc}"}
+
     if r.status_code != 200:
-        return {"partes": [], "via": "listView_error"}
+        return {"partes": [], "via": "http_error"}
 
     partes = _parse_partes_from_html(r.text)
     if partes:
-        return {"partes": partes, "via": "listView"}
+        return {"partes": partes, "via": "listProcessoCompletoAdvogado"}
 
-    # 2ª via (fallback): extrair `ca` do popup → listProcessoCompleto.seam
-    ca = _extract_ca_token(r.text)
-    if not ca:
-        return {"partes": [], "via": "ca_not_found"}
-
-    r2 = session.get(f"{LISTPROCESSOCOMPLETO_URL}?ca={ca}", timeout=30, verify=False)
-    if r2.status_code != 200:
-        return {"partes": [], "via": "ca_http_error"}
-
-    partes2 = _parse_partes_from_html(r2.text)
-    if partes2:
-        return {"partes": partes2, "via": "ca_fallback"}
-
-    return {"partes": [], "via": "ca_empty"}
+    return {"partes": [], "via": "no_partes"}
 
 
 def _normalize(s: str) -> str:
@@ -299,14 +343,19 @@ def _is_dpe(parte: dict) -> bool:
     return "defensoria" in nome or tipo == "representante" or "dpe" in oab
 
 
+_TIPOS_PASSIVO_VVD = {
+    "requerido", "flagranteado", "indiciado", "acusado", "reu",
+}
+
+
 def identify_requerido(partes: list[dict]) -> str | None:
-    """Cascata: tipo > CPF > não-DPE > None (placeholder)."""
-    # Regra 1: tipo explícito "requerido"
-    requeridos = [p for p in partes if _normalize(p.get("tipo", "")) == "requerido"]
-    if len(requeridos) == 1:
-        return requeridos[0]["nome"]
-    if len(requeridos) > 1:
-        return " e ".join(p["nome"] for p in requeridos)
+    """Cascata: tipo passivo VVD > CPF > não-DPE > None (placeholder)."""
+    # Regra 1: tipo explícito do polo passivo em contexto VVD
+    passivos = [p for p in partes if _normalize(p.get("tipo", "")) in _TIPOS_PASSIVO_VVD]
+    if len(passivos) == 1:
+        return passivos[0]["nome"]
+    if len(passivos) > 1:
+        return " e ".join(p["nome"] for p in passivos)
 
     # Regra 2: primeira parte com CPF que NÃO é DPE
     for p in partes:
@@ -424,7 +473,7 @@ def main() -> None:
     for i, e in enumerate(expedientes, 1):
         log(f"[{i}/{len(expedientes)}] {e['numero_cnj']} (pjeId={e['processo_pje_id']})")
         try:
-            r = resolve_polo_passivo(session, e["processo_pje_id"])
+            r = resolve_polo_passivo(session, e)
             via_counts[r["via"]] = via_counts.get(r["via"], 0) + 1
             requerido = identify_requerido(r["partes"])
             if requerido is None:

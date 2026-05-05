@@ -16,16 +16,14 @@ from pje_mpu_import import (
 
 # ───── Fixture: HTML do painel VVD com 1 expediente MPU ─────
 FIXTURE_PAINEL_VVD = """
-<table id="formAbaExpediente:tabelaExpedientes">
-  <tr class="rich-table-row">
-    <td>
-      <a onclick="openProcesso('1234567')" href="#">MPUMPCrim 8001234-12.2026.8.05.0039</a>
-      <div>Maria Silva X João Pereira</div>
-      <div>/Vara de Violência Doméstica de Camaçari</div>
-      <div>Defensoria Pública</div>
-      <div>Designação de audiência</div>
-      <span>Expedição eletrônica (28/04/2026 10:23)</span>
-      <span>Prazo: 5 dias</span>
+<table>
+  <tr class="rich-table-row rich-table-firstrow">
+    <td class="rich-table-cell" id="formExpedientes:tbExpedientes:99999999:j_id498">
+      <a href="/pje/processo/listView.seam?idProcesso=1234567">abrir</a>
+      <span title="Tipo de documento">Designação de audiência (99999999)</span>
+      <span title="Autos Digitais">MPUMPCrim 8001234-12.2026.8.05.0039</span>
+      <span title="Data de criação do expediente">28/04/2026 10:23</span>
+      <span title="Prazo para manifestação">Prazo:5 dias</span>
     </td>
   </tr>
 </table>
@@ -44,36 +42,25 @@ def test_parse_expedientes_list():
     print("  ✓ test_parse_expedientes_list")
 
 
-# ───── Fixture: HTML do detalhe do processo COM partes visíveis (1ª via) ─────
+# ───── Fixture: HTML do detalhe do processo (formato listProcessoCompletoAdvogado real) ─────
 FIXTURE_DETALHE_COM_PARTES = """
-<div id="processo-detalhe">
-  <table id="partes">
-    <tr><td>Polo Ativo</td></tr>
-    <tr><td>REQUERENTE</td><td>Maria Silva</td><td>CPF: 111.222.333-44</td></tr>
-    <tr><td>Polo Passivo</td></tr>
-    <tr><td>REQUERIDO</td><td>João Pereira</td><td>CPF: 555.666.777-88</td></tr>
-    <tr><td>Outros</td></tr>
-    <tr><td>REPRESENTANTE</td><td>DEFENSORIA PÚBLICA DA BAHIA</td><td>OAB: DPE/BA</td></tr>
+<div id="poloAtivo">
+  <table>
+    <tr><td><a><span class="">Maria Silva - CPF: 111.222.333-44 (REQUERENTE)</span></a></td></tr>
   </table>
 </div>
-"""
-
-
-# ───── Fixture: HTML do detalhe SEM partes na 1ª via (mas com popup Peticionar) ─────
-FIXTURE_DETALHE_SEM_PARTES = """
-<div id="processo-detalhe">
-  <p>Sigilo total — partes não exibidas.</p>
-  <a id="botaoPeticionar" data-ca="abc123def456abc123def456abc123de" onclick="abrirPopupPeticionar()">Peticionar</a>
+<div id="poloPassivo">
+  <table>
+    <tr><td><a><span class="">João Pereira - CPF: 555.666.777-88 (REQUERIDO)</span></a>
+        <ul class="tree">
+          <li><span title="Defensoria" class="">Defensoria Pública do Estado da Bahia</span></li>
+        </ul>
+    </td></tr>
+  </table>
 </div>
-"""
-
-
-# ───── Fixture: HTML do listProcessoCompleto.seam (fallback) ─────
-FIXTURE_LISTPROCESSOCOMPLETO = """
-<div>
-  <table id="partes">
-    <tr><td>REQUERENTE</td><td>Ana Costa</td><td>CPF: 999.888.777-66</td></tr>
-    <tr><td>REQUERIDO</td><td>Pedro Souza</td><td>CPF: 222.333.444-55</td></tr>
+<div id="outrosInteressados">
+  <table>
+    <tr><td><a><span class="">DEFENSORIA PÚBLICA DA BAHIA (REPRESENTANTE)</span></a></td></tr>
   </table>
 </div>
 """
@@ -97,8 +84,9 @@ class _StubSession:
 
 
 def test_resolve_polo_passivo_via_listview():
-    session = _StubSession({"listView.seam": FIXTURE_DETALHE_COM_PARTES})
-    result = resolve_polo_passivo(session, "1234567")
+    session = _StubSession({"listProcessoCompletoAdvogado.seam": FIXTURE_DETALHE_COM_PARTES})
+    expediente = {"processo_pje_id": "1234567", "ca": "abc123" * 6 + "abcd"}
+    result = resolve_polo_passivo(session, expediente)
     partes = result["partes"]
     assert len(partes) == 3, f"esperado 3 partes, veio {len(partes)}"
 
@@ -110,24 +98,18 @@ def test_resolve_polo_passivo_via_listview():
     assert requerido and requerido["tipo"].lower() == "requerido"
     assert requerido["cpf"] == "555.666.777-88", f"cpf errado: {requerido}"
     assert dpe and dpe["tipo"].lower() == "representante"
-    assert "ca" not in [c.split("?")[0] for c in session.calls], "fallback `ca` não devia rodar"
+    assert result["via"] == "listProcessoCompletoAdvogado", f"via errada: {result.get('via')}"
     print("  ✓ test_resolve_polo_passivo_via_listview")
 
 
-def test_resolve_polo_passivo_fallback_ca():
-    session = _StubSession({
-        "listView.seam": FIXTURE_DETALHE_SEM_PARTES,
-        "listProcessoCompleto.seam": FIXTURE_LISTPROCESSOCOMPLETO,
-    })
-    result = resolve_polo_passivo(session, "9999999")
-    partes = result["partes"]
-    assert len(partes) == 2, f"esperado 2 partes do fallback, veio {len(partes)}"
-    assert result["via"] == "ca_fallback", f"via errada: {result.get('via')}"
-
-    requerido = next((p for p in partes if "Pedro" in p["nome"]), None)
-    assert requerido and requerido["tipo"] == "requerido"
-    assert requerido["cpf"] == "222.333.444-55"
-    print("  ✓ test_resolve_polo_passivo_fallback_ca")
+def test_resolve_polo_passivo_sem_ca():
+    """Expediente sem token `ca` no painel → via='ca_not_in_panel', sem HTTP."""
+    session = _StubSession({})
+    expediente = {"processo_pje_id": "9999999", "ca": None}
+    result = resolve_polo_passivo(session, expediente)
+    assert result["partes"] == [] and result["via"] == "ca_not_in_panel"
+    assert session.calls == [], "não deveria fazer HTTP sem `ca`"
+    print("  ✓ test_resolve_polo_passivo_sem_ca")
 
 
 def test_identify_requerido_caso_simples():
@@ -203,7 +185,7 @@ def test_format_for_endpoint_placeholder():
 TESTS = [
     test_parse_expedientes_list,
     test_resolve_polo_passivo_via_listview,
-    test_resolve_polo_passivo_fallback_ca,
+    test_resolve_polo_passivo_sem_ca,
     test_identify_requerido_caso_simples,
     test_identify_requerido_dois_requeridos,
     test_identify_requerido_sem_tipo_explicito,
