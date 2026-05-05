@@ -45,4 +45,31 @@ describe("RegistroEditor — tiposPrimarios", () => {
     expect(screen.getByRole("button", { name: "Diligência" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pesquisa" })).toBeInTheDocument();
   });
+
+  it("mostra botão Mais quando há tipos não-primários", () => {
+    render(
+      <RegistroEditor
+        assistidoId={1}
+        tipoDefault="ciencia"
+        tiposPrimarios={["ciencia", "providencia"]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: /^Mais$/ })).toBeInTheDocument();
+  });
+
+  it("não mostra Mais quando todos os tipos já são primários", () => {
+    render(
+      <RegistroEditor
+        assistidoId={1}
+        tipoDefault="ciencia"
+        // todos os 12
+        tiposPrimarios={[
+          "atendimento", "diligencia", "anotacao", "ciencia", "providencia",
+          "delegacao", "pesquisa", "elaboracao", "peticao",
+          "busca", "investigacao", "transferencia",
+        ]}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /^Mais$/ })).toBeNull();
+  });
 });

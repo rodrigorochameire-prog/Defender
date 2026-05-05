@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -52,8 +53,15 @@ export function RegistroEditor({
 
   const tipos = tiposPermitidos ?? TIPO_KEYS;
   const inlineTipos = tiposPrimarios
-    ? tipos.filter((t) => tiposPrimarios.includes(t))
+    ? Array.from(new Set([
+        ...tipos.filter((t) => tiposPrimarios.includes(t)),
+        ...(tipos.includes(tipo) && !tiposPrimarios.includes(tipo) ? [tipo] : []),
+      ]))
     : tipos;
+
+  const secondaryTipos = tiposPrimarios
+    ? tipos.filter((t) => !tiposPrimarios.includes(t) && t !== tipo)
+    : [];
 
   const activeCfg = REGISTRO_TIPOS[tipo];
 
@@ -95,6 +103,41 @@ export function RegistroEditor({
             </button>
           );
         })}
+        {secondaryTipos.length > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Mais"
+                title="Mais tipos"
+                className="rounded-md w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              sideOffset={4}
+              className="w-44 p-1"
+            >
+              {secondaryTipos.map((t) => {
+                const cfg = REGISTRO_TIPOS[t];
+                const Icon = cfg.Icon;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTipo(t)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  >
+                    <Icon className="w-3.5 h-3.5" style={{ color: cfg.color }} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
 
       <div className="px-3.5 pb-3 space-y-1.5">
