@@ -43,10 +43,14 @@ export function RegistroEditor({
 
   const conteudoRef = useRef(conteudo);
   const tituloRef = useRef(titulo);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
     conteudoRef.current = conteudo;
     tituloRef.current = titulo;
   });
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
@@ -131,12 +135,15 @@ export function RegistroEditor({
           const cfg = REGISTRO_TIPOS[t];
           const Icon = cfg.Icon;
           const active = tipo === t;
+          const lista = tiposPrimarios ?? tipos;
+          const idx = lista.indexOf(t);
+          const shortcut = idx >= 0 && idx < 7 ? ` (${idx + 1})` : "";
           return (
             <button
               key={t}
               type="button"
               onClick={() => setTipo(t)}
-              title={cfg.label}
+              title={`${cfg.label}${shortcut}`}
               aria-label={cfg.label}
               aria-pressed={active}
               className={cn(
@@ -203,6 +210,7 @@ export function RegistroEditor({
         />
 
         <textarea
+          ref={textareaRef}
           value={conteudo}
           onChange={(e) => setConteudo(e.target.value)}
           placeholder="O que aconteceu..."
@@ -245,7 +253,12 @@ export function RegistroEditor({
                   conteudo: conteudo.trim(),
                 })
               }
-              className="h-7 text-[11px] px-3 cursor-pointer"
+              style={
+                conteudo.trim() && !create.isPending
+                  ? { backgroundColor: activeCfg.color, color: "#111" }
+                  : undefined
+              }
+              className="h-7 text-[11px] px-3 cursor-pointer transition-all"
             >
               {create.isPending ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
