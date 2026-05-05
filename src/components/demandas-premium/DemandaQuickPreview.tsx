@@ -644,12 +644,50 @@ export function DemandaQuickPreview({
             className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
             style={{ borderLeftColor: atribuicaoColor }}
           >
-            <div className="flex items-start gap-3.5">
-              {/* Avatar */}
-              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-                  {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
-                </span>
+            <div className="flex items-start gap-3">
+              {/* Coluna esquerda: avatar + ícones de navegação verticais
+                  (Assistido / Drive / Processo). Empilhar em vez de horizontal
+                  poupa espaço da coluna direita pra pills e processo. */}
+              <div className="flex flex-col items-center gap-1.5 shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+                    {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                  </span>
+                </div>
+                {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
+                  <div className="flex flex-col items-center gap-0.5">
+                    {demanda.assistidoId && (
+                      <Link
+                        href={`/admin/assistidos/${demanda.assistidoId}`}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        title="Ver assistido"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
+                    {driveFolderUrl && (
+                      <a
+                        href={driveFolderUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        title="Abrir pasta no Drive (análises, mídias)"
+                      >
+                        <FolderOpen className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    {demanda.processoId && (
+                      <Link
+                        href={`/admin/processos/${demanda.processoId}`}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        title="Ver processo"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 {/* Linha 1: Nome + flags (preso/urgente) */}
@@ -712,7 +750,8 @@ export function DemandaQuickPreview({
                   />
                 </div>
 
-                {/* Linha 3 — processo + links externos + atribuição (contextual, editável discreta) */}
+                {/* Linha 3 — processo (chip de cópia) + atribuição (editável discreta).
+                    Os ícones de Assistido/Drive/Processo migraram pra coluna esquerda. */}
                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                   {processo && (
                     <button
@@ -728,39 +767,6 @@ export function DemandaQuickPreview({
                       <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
                     </button>
                   )}
-                  {demanda.assistidoId && (
-                    <Link
-                      href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
-                    >
-                      <User className="w-3 h-3" />
-                      Assistido
-                    </Link>
-                  )}
-                  {driveFolderUrl && (
-                    <a
-                      href={driveFolderUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                      title="Abrir pasta do assistido no Drive (análises, mídias)"
-                    >
-                      <FolderOpen className="w-3 h-3" />
-                      Drive
-                      <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                    </a>
-                  )}
-                  {demanda.processoId && (
-                    <Link
-                      href={`/admin/processos/${demanda.processoId}`}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
-                    >
-                      <FileText className="w-3 h-3" />
-                      Processo
-                    </Link>
-                  )}
-                  {/* Atribuição — editável, mas discreta (left border do card já carrega a cor) */}
                   <InlineDropdown
                     value={demanda.atribuicao}
                     compact
