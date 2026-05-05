@@ -12,8 +12,11 @@ const EXACT_MAP: Record<string, string> = {
   "Auto de Prisão em Flagrante": "APF",
   "Medidas Protetivas de Urgência": "MPU",
   "Medida Protetiva de Urgência": "MPU",
+  // Variantes que o DataJud retorna pra TJBA
+  "Medidas Protetivas de urgência (Lei Maria da Penha) Criminal": "MPU",
   "Medida Cautelar": "CAUTELAR",
   "Medida Cautelar Inominada": "CAUTELAR",
+  "Cautelar Inominada Criminal": "CAUTELAR",
   "Prisão Preventiva": "PPP",
   "Produção Antecipada de Provas": "PAP",
   "Liberdade Provisória": "LP",
