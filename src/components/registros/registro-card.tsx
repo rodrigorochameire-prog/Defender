@@ -49,8 +49,8 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
 
   return (
     <div
-      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-[3px] hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
-      style={{ borderLeftColor: tipoCfg?.color ?? "#a1a1aa" }}
+      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
+      style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}33` }}
     >
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
       <div className="flex items-center justify-between gap-2">
