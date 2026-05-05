@@ -9,7 +9,7 @@ import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "d
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/preparacao-audiencia";
-import { criarEventoAudiencia, updateCalendarEvent } from "@/lib/services/google-calendar";
+import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "@/lib/services/google-calendar";
 import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 
 // ==========================================
@@ -851,7 +851,34 @@ export const audienciasRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
+      const [atual] = await db
+        .select({
+          googleCalendarEventId: audiencias.googleCalendarEventId,
+          processoId: audiencias.processoId,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.id))
+        .limit(1);
+
       await db.delete(audiencias).where(eq(audiencias.id, input.id));
+
+      // Sincronizar Calendar (best-effort, fora da transação)
+      if (atual?.googleCalendarEventId) {
+        try {
+          const [ctxRow] = await db
+            .select({ area: processos.area })
+            .from(processos)
+            .where(eq(processos.id, atual.processoId))
+            .limit(1);
+
+          const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+          await deleteCalendarEvent(atual.googleCalendarEventId, { calendarId });
+        } catch (err) {
+          console.error("[audiencias.delete] calendar sync failed", err);
+        }
+      }
+
       return { success: true };
     }),
 
