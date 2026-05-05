@@ -1206,17 +1206,20 @@ export const demandasRouter = router({
           const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as typeof processos.area._.data;
           const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as typeof processos.atribuicao._.data;
 
-          // Map do tipo PJe (MPUMPCrim/APOrd/AuPrFl/etc) → enum interno
-          // (AP/MPU/APF/EP/CAUTELAR/ANPP/IP/OUTRO). Cobre só os casos
-          // explícitos e claros; o resto cai em AP (mesmo default do schema).
-          const mapPjeTipoToEnum = (raw?: string): "AP" | "MPU" | "APF" | "EP" | "CAUTELAR" | "ANPP" | "IP" | "OUTRO" | null => {
+          // Map do prefixo PJe (MPUMPCrim/APOrd/LibProv/etc) → tipo interno.
+          // LP cobre incidentes defensivos (Liberdade Provisória, Pedido de
+          // Revogação) — diferente de CAUTELAR, que é tipicamente medida
+          // restritiva da acusação. Cobre só casos explícitos; o resto cai
+          // no default (AP) do schema.
+          const mapPjeTipoToEnum = (raw?: string): string | null => {
             if (!raw) return null;
             const t = raw.trim();
             if (/^MPU/i.test(t) || /^MPCA$/i.test(t)) return "MPU";
             if (/^(AuPrFl|APFD)$/i.test(t)) return "APF";
             if (/^EP$/i.test(t)) return "EP";
+            if (/^LibProv$/i.test(t)) return "LP";
             if (/^(CauInomCrim|PePrPr)$/i.test(t)) return "CAUTELAR";
-            if (/^(APOrd|APSum|APri|PetCrim|Juri|InsanAc|LibProv|VD)$/i.test(t)) return "AP";
+            if (/^(APOrd|APSum|APri|PetCrim|Juri|InsanAc|VD)$/i.test(t)) return "AP";
             return null; // desconhecido: não força nada
           };
           const tipoProcessoEnum = mapPjeTipoToEnum(row.tipoProcesso);
