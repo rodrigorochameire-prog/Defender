@@ -111,16 +111,21 @@ interface DemandaQuickPreviewProps {
 // CONSTANTS
 // ============================================
 
-// Cores temáticas pra badge de tipo de processo (AP/MPU/IP/APF/EP/CAUTELAR/ANPP).
-// Hex puro — usado com alpha 1a (~10%) no bg e cor cheia no texto.
+// Cores temáticas pra badge de tipo de processo. Hex puro — usado com
+// alpha 1a (~10%) no bg e cor cheia no texto. Verde tons reservado pra
+// incidentes defensivos (LP, HC) — sinaliza ato da defesa, não acusação.
 const TIPO_PROCESSO_COLORS: Record<string, string> = {
   AP: "#dc2626",        // Ação Penal — vermelho (acusação formal)
   IP: "#f59e0b",        // Inquérito Policial — amber (investigação)
   APF: "#ea580c",       // Auto Prisão Flagrante — orange (urgência)
-  CAUTELAR: "#7c3aed",  // Cautelar — violet
+  CAUTELAR: "#7c3aed",  // Cautelar (acusação) — violet
   EP: "#2563eb",        // Execução Penal — blue
   MPU: "#db2777",       // Medida Protetiva de Urgência — rose
   ANPP: "#0891b2",      // Acordo Não Persecução Penal — cyan
+  LP: "#16a34a",        // Liberdade Provisória / Revogação (defesa) — green
+  PAP: "#0d9488",       // Produção Antecipada de Provas — teal
+  HC: "#9333ea",        // Habeas Corpus — purple
+  PPP: "#b91c1c",       // Prisão Preventiva — red dark
   OUTRO: "#71717a",     // Outro — gray neutro
 };
 
@@ -487,6 +492,44 @@ export function DemandaQuickPreview({
   useEffect(() => {
     setActiveStagePopover(null);
   }, [demanda?.id, open]);
+
+  // Atalhos de teclado quando o sheet está aberto:
+  //   n          → abrir editor de novo registro (se ainda não está aberto)
+  //   Cmd/Ctrl+K → focar campo de busca dentro do Registros
+  // Esc/↑/↓ continuam tratados pelos handlers existentes do Sheet.
+  // Ignoramos quando o foco está em input/textarea pra não atrapalhar digitação.
+  useEffect(() => {
+    if (!open || !demanda) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = target && (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      );
+
+      if (!inField && e.key === "n" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (demanda.assistidoId && !novoRegistroOpen) {
+          e.preventDefault();
+          setNovoRegistroOpen(true);
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[data-registros-search="true"]',
+        );
+        if (input) {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, demanda, novoRegistroOpen]);
 
   // Handle file uploads to the demanda's Drive folder
   const handleFileUpload = useCallback(
@@ -943,10 +986,14 @@ export function DemandaQuickPreview({
                       <button
                         type="button"
                         onClick={() => setNovoRegistroOpen(true)}
+                        title="Adicionar registro (atalho: n)"
                         className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer px-2 py-1 -mr-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Adicionar
+                        <kbd className="hidden sm:inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded text-[9px] font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300">
+                          n
+                        </kbd>
                       </button>
                     )}
                   </div>
