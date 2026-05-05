@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { ChevronDown, Check, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, Search } from "lucide-react";
 
 interface InlineDropdownOption {
   value: string;
@@ -22,11 +22,11 @@ interface InlineDropdownProps {
   /**
    * Layout das opções:
    * - "list" (default): coluna única, grupos empilhados.
-   * - "grid": cada grupo vira uma coluna paralela. Bom pra dropdowns
-   *   com muitas categorias (ex.: ato com Defesas/Liberdade/Diligências/...).
-   *   Width auto-adapta ao número de grupos.
+   * - "grid": cada grupo vira uma coluna paralela.
+   * - "accordion": mostra só os headers de grupo; clicar expande as opções
+   *   inline. Bom pra dropdowns com muitas categorias em containers estreitos.
    */
-  layout?: "list" | "grid";
+  layout?: "list" | "grid" | "accordion";
 }
 
 export function InlineDropdown({
@@ -43,6 +43,7 @@ export function InlineDropdown({
   const [filterQuery, setFilterQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [alignRight, setAlignRight] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const ref = useRef<HTMLDivElement>(null);
 
   // Detecta se o dropdown vai escapar pela borda direita do viewport e
@@ -80,6 +81,15 @@ export function InlineDropdown({
     }
   }, [isOpen]);
 
+  // Em modo accordion: ao abrir, expande só o grupo do valor selecionado
+  // (ou nenhum se não houver). Ao filtrar, expande todos os grupos com match.
+  useEffect(() => {
+    if (!isOpen || layout !== "accordion") return;
+    if (filterQuery) return;
+    const selected = options.find((o) => o.value === value);
+    setExpandedGroups(selected?.group ? new Set([selected.group]) : new Set());
+  }, [isOpen, layout, value, options, filterQuery]);
+
   const groupedOptions = useMemo(() => options.reduce((acc, opt) => {
     const group = opt.group || "default";
     if (!acc[group]) acc[group] = [];
@@ -87,12 +97,18 @@ export function InlineDropdown({
     return acc;
   }, {} as Record<string, InlineDropdownOption[]>), [options]);
 
-  // Filtered options (flat list for keyboard navigation)
+  // Filtered options (flat list for keyboard navigation). Em accordion sem
+  // filtro, considera só itens dos grupos expandidos pra alinhar com o que
+  // está visível.
   const filteredFlat = useMemo(() => {
-    if (!filterQuery) return options;
     const q = filterQuery.toLowerCase();
-    return options.filter(o => o.label.toLowerCase().includes(q));
-  }, [options, filterQuery]);
+    const matchesQuery = (o: InlineDropdownOption) =>
+      !q || o.label.toLowerCase().includes(q);
+    if (layout === "accordion" && !q) {
+      return options.filter((o) => o.group && expandedGroups.has(o.group));
+    }
+    return options.filter(matchesQuery);
+  }, [options, filterQuery, layout, expandedGroups]);
 
   // Filtered grouped options for rendering
   const filteredGrouped = useMemo(() => {
@@ -171,10 +187,19 @@ export function InlineDropdown({
 
       {isOpen && (() => {
         const isGrid = layout === "grid";
-        // Em grid, cada grupo vira coluna. min-w cresce com número de grupos
-        // (180px por coluna), capped pelo viewport.
+        const isAccordion = layout === "accordion";
         const groupCount = Object.keys(filteredGrouped).length;
-        const gridMinWidth = isGrid ? Math.max(180, Math.min(groupCount, 4) * 180) : 180;
+        const gridMinWidth = isGrid ? Math.max(180, Math.min(groupCount, 4) * 180) : 200;
+        const isGroupExpanded = (group: string) =>
+          isAccordion && filterQuery ? true : expandedGroups.has(group);
+        const toggleGroup = (group: string) => {
+          setExpandedGroups((prev) => {
+            const next = new Set(prev);
+            if (next.has(group)) next.delete(group);
+            else next.add(group);
+            return next;
+          });
+        };
         return (
         <div
           className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 max-w-[calc(100vw-2rem)] max-h-72 overflow-y-auto py-1`}
@@ -196,26 +221,49 @@ export function InlineDropdown({
             className={isGrid ? "grid gap-x-1 px-1" : ""}
             style={isGrid ? { gridTemplateColumns: `repeat(${Math.min(groupCount, 4)}, minmax(0, 1fr))` } : undefined}
           >
-            {Object.entries(filteredGrouped).map(([group, opts], gi) => (
+            {Object.entries(filteredGrouped).map(([group, opts], gi) => {
+              const expanded = isGroupExpanded(group);
+              const showOpts = isAccordion ? expanded : true;
+              const hasSelectedInGroup = opts.some((o) => o.value === value);
+              return (
               <div
                 key={group}
                 className={isGrid ? "border-r border-neutral-100 dark:border-neutral-800 last:border-r-0 pr-1" : ""}
               >
-                {!isGrid && gi > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
-                {group !== "default" && (
-                  <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 sticky top-0 bg-white dark:bg-neutral-900">
-                    {group}
-                  </div>
+                {!isGrid && !isAccordion && gi > 0 && <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />}
+                {isAccordion && group !== "default" ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    className={`w-full px-2.5 py-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors rounded-sm ${
+                      expanded
+                        ? "text-neutral-700 dark:text-neutral-200 bg-neutral-50 dark:bg-neutral-800/40"
+                        : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/40"
+                    }`}
+                  >
+                    <ChevronRight className={`w-3 h-3 transition-transform ${expanded ? "rotate-90" : ""}`} />
+                    <span className="flex-1 text-left">{group}</span>
+                    {hasSelectedInGroup && !expanded && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    )}
+                    <span className="text-[9px] font-normal text-neutral-400">{opts.length}</span>
+                  </button>
+                ) : (
+                  group !== "default" && (
+                    <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 sticky top-0 bg-white dark:bg-neutral-900">
+                      {group}
+                    </div>
+                  )
                 )}
-                {opts.map((opt) => {
-                  flatIdx++;
+                {showOpts && opts.map((opt) => {
+                  flatIdx += 1;
                   const currentFlatIdx = flatIdx;
                   const isHighlighted = currentFlatIdx === highlightedIndex;
                   return (
                     <button
                       key={opt.value}
                       onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                      className={`w-full ${isGrid ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-[12px]"} text-left flex items-center gap-2 transition-colors rounded-sm ${
+                      className={`w-full ${isGrid ? "px-2 py-1 text-[11px]" : isAccordion ? "px-3 pl-7 py-1.5 text-[12px]" : "px-3 py-1.5 text-[12px]"} text-left flex items-center gap-2 transition-colors rounded-sm ${
                         isHighlighted
                           ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
                           : opt.value === value
@@ -232,7 +280,8 @@ export function InlineDropdown({
                   );
                 })}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         );

@@ -801,7 +801,7 @@ export function DemandaQuickPreview({
                     }
                     options={atoOptions}
                     onChange={(v) => onAtoChange(demanda.id, v)}
-                    layout="grid"
+                    layout="accordion"
                   />
                   <InlineDropdown
                     value={demanda.status}
