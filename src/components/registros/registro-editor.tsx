@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,6 +40,13 @@ export function RegistroEditor({
   const [tipo, setTipo] = useState<TipoRegistro>(tipoDefault);
   const [titulo, setTitulo] = useState("");
   const [conteudo, setConteudo] = useState("");
+
+  const conteudoRef = useRef(conteudo);
+  const tituloRef = useRef(titulo);
+  useEffect(() => {
+    conteudoRef.current = conteudo;
+    tituloRef.current = titulo;
+  });
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
@@ -64,6 +71,52 @@ export function RegistroEditor({
     : [];
 
   const activeCfg = REGISTRO_TIPOS[tipo];
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inEditableField =
+        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
+
+      // ⌘↵ / Ctrl↵ → salva (funciona dentro do textarea também)
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        const conteudoNow = conteudoRef.current;
+        if (conteudoNow.trim() && !create.isPending) {
+          e.preventDefault();
+          create.mutate({
+            tipo,
+            assistidoId,
+            processoId,
+            demandaId,
+            audienciaId,
+            titulo: tituloRef.current.trim() || undefined,
+            conteudo: conteudoNow.trim(),
+          });
+        }
+        return;
+      }
+
+      // Esc → cancela (em qualquer lugar)
+      if (e.key === "Escape" && onCancel) {
+        e.preventDefault();
+        onCancel();
+        return;
+      }
+
+      // 1–7 → troca tipo primário (só fora de input/textarea)
+      if (!inEditableField && /^[1-7]$/.test(e.key)) {
+        const idx = Number(e.key) - 1;
+        const lista = tiposPrimarios ?? tipos;
+        const next = lista[idx];
+        if (next) {
+          e.preventDefault();
+          setTipo(next);
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [tipo, tiposPrimarios, tipos, create, assistidoId, processoId, demandaId, audienciaId, onCancel]);
 
   return (
     <div

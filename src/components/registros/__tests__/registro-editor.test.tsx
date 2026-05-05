@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { RegistroEditor } from "../registro-editor";
 
 // tRPC client é stub via mock — não precisamos de provider real para
@@ -71,5 +71,35 @@ describe("RegistroEditor — tiposPrimarios", () => {
       />,
     );
     expect(screen.queryByRole("button", { name: /^Mais$/ })).toBeNull();
+  });
+
+  it("atalho '1' troca para o primeiro tipo primário", () => {
+    render(
+      <RegistroEditor
+        assistidoId={1}
+        tipoDefault="providencia"
+        tiposPrimarios={["ciencia", "providencia", "anotacao"]}
+      />,
+    );
+    // Antes: providencia ativo
+    expect(screen.getByRole("button", { name: "Providência", pressed: true })).toBeInTheDocument();
+    // Dispara key '1' no document — fora de input/textarea
+    fireEvent.keyDown(document.body, { key: "1" });
+    expect(screen.getByRole("button", { name: "Ciência", pressed: true })).toBeInTheDocument();
+  });
+
+  it("atalho NÃO dispara quando foco está no textarea", () => {
+    render(
+      <RegistroEditor
+        assistidoId={1}
+        tipoDefault="ciencia"
+        tiposPrimarios={["ciencia", "providencia"]}
+      />,
+    );
+    const textarea = screen.getByPlaceholderText(/o que aconteceu/i);
+    textarea.focus();
+    fireEvent.keyDown(textarea, { key: "2" });
+    // Continua em ciencia (não trocou para providencia)
+    expect(screen.getByRole("button", { name: "Ciência", pressed: true })).toBeInTheDocument();
   });
 });
