@@ -152,10 +152,30 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    font-feature-settings: "rlig" 1, "calt" 1;
+    /* rlig+calt = ligaduras padrão. cv11+ss01+ss03 = formas
+       alternativas do Inter (l minúsculo simplificado, dotted zero,
+       grave-accent ajustado) que dão um ar mais limpo/Linear-style.
+       cpsp = letter-spacing capital padrão. */
+    font-feature-settings: "rlig" 1, "calt" 1, "cv11" 1, "ss01" 1, "ss03" 1, "cpsp" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
+  /* Numeros tabulares globais — alinha colunas em tabelas, contadores
+     e KPIs sem precisar repetir tabular-nums em cada classe. */
+  .tabular-nums,
+  [data-tabular],
+  table tbody td,
+  [class*="font-mono"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Headings com letter-spacing apertado estilo Linear/Vercel. */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.015em;
+  }
+  h1 { letter-spacing: -0.022em; }
 
   /* ===== MOBILE-FIRST: Fontes maiores em telas pequenas ===== */
   @media (max-width: 640px) {
