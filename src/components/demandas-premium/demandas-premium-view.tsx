@@ -834,8 +834,12 @@ export default function Demandas() {
 
   // Mutation para registrar audiência vinda do modal de confirmação
   const createAudienciaMutation = trpc.audiencias.create.useMutation({
-    onSuccess: () => {
-      toast.success("Audiência registrada!");
+    onSuccess: (result) => {
+      if (result?.calendarSyncOk) {
+        toast.success("Audiência registrada e agendada no Google Calendar");
+      } else {
+        toast.warning("Audiência registrada — mas falhou ao sincronizar com o Google Calendar");
+      }
       setAudienciaModal({ open: false, demandaId: null, sources: [] });
     },
     onError: (error) => {
