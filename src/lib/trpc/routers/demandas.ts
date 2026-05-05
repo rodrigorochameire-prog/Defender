@@ -1206,6 +1206,21 @@ export const demandasRouter = router({
           const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as typeof processos.area._.data;
           const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as typeof processos.atribuicao._.data;
 
+          // Map do tipo PJe (MPUMPCrim/APOrd/AuPrFl/etc) → enum interno
+          // (AP/MPU/APF/EP/CAUTELAR/ANPP/IP/OUTRO). Cobre só os casos
+          // explícitos e claros; o resto cai em AP (mesmo default do schema).
+          const mapPjeTipoToEnum = (raw?: string): "AP" | "MPU" | "APF" | "EP" | "CAUTELAR" | "ANPP" | "IP" | "OUTRO" | null => {
+            if (!raw) return null;
+            const t = raw.trim();
+            if (/^MPU/i.test(t) || /^MPCA$/i.test(t)) return "MPU";
+            if (/^(AuPrFl|APFD)$/i.test(t)) return "APF";
+            if (/^EP$/i.test(t)) return "EP";
+            if (/^(CauInomCrim|PePrPr)$/i.test(t)) return "CAUTELAR";
+            if (/^(APOrd|APSum|APri|PetCrim|Juri|InsanAc|LibProv|VD)$/i.test(t)) return "AP";
+            return null; // desconhecido: não força nada
+          };
+          const tipoProcessoEnum = mapPjeTipoToEnum(row.tipoProcesso);
+
           if (processoNumero) {
             processo = await db.query.processos.findFirst({
               where: and(
@@ -1214,13 +1229,23 @@ export const demandasRouter = router({
               ),
             });
 
-            // Atualizar atribuição/área do processo existente se necessário
-            if (processo && processo.atribuicao !== targetAtribuicao) {
-              const [updated] = await db.update(processos)
-                .set({ atribuicao: targetAtribuicao, area: targetArea, updatedAt: new Date() })
-                .where(eq(processos.id, processo.id))
-                .returning();
-              processo = updated;
+            // Atualizar atribuição/área do processo existente. tipoProcesso
+            // NUNCA é sobrescrito numa importação subsequente — o PJe envia
+            // tipo POR INTIMAÇÃO (ex: "MPUMPCrim" para uma intimação de medida
+            // protetiva dentro de uma Ação Penal), e o tipo do processo deve
+            // refletir a classe processual canônica, não a última intimação.
+            // Só populamos tipoProcesso se o processo ainda estiver no default
+            // do schema (AP) E o PJe enviou um tipo novo reconhecido —
+            // tratado como first-write, no INSERT abaixo.
+            if (processo) {
+              const needsAtribuicaoUpdate = processo.atribuicao !== targetAtribuicao;
+              if (needsAtribuicaoUpdate) {
+                const [updated] = await db.update(processos)
+                  .set({ atribuicao: targetAtribuicao, area: targetArea, updatedAt: new Date() })
+                  .where(eq(processos.id, processo.id))
+                  .returning();
+                processo = updated;
+              }
             }
           }
 
@@ -1230,6 +1255,7 @@ export const demandasRouter = router({
               numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
               area: targetArea,
               atribuicao: targetAtribuicao,
+              ...(tipoProcessoEnum ? { tipoProcesso: tipoProcessoEnum } : {}),
             }).returning();
             processo = newProcesso;
           }
