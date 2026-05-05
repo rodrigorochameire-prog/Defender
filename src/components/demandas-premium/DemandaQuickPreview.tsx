@@ -537,6 +537,15 @@ export function DemandaQuickPreview({
           e.preventDefault();
           input.focus();
           input.select();
+          return;
+        }
+        // Busca colapsada: clica na lupa pra expandir; o useEffect interno foca o input
+        const trigger = document.querySelector<HTMLButtonElement>(
+          'button[data-registros-search-trigger="true"]',
+        );
+        if (trigger) {
+          e.preventDefault();
+          trigger.click();
         }
       }
     };
@@ -982,32 +991,22 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
-            {/* Section label: Ação */}
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-              Ação
-            </h3>
-
             {/* Card 1: Registros (Task 6 — registros tipados) */}
-            {/* Substitui o textarea legado de "Providências" pela timeline tipada.
-                Quando demanda.assistidoId está disponível, mostra timeline + botão para
-                criar novo registro com tipoDefault="providencia". */}
             {demanda.assistidoId ? (
               <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
-                <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
+                <div className="px-4 py-3 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold uppercase tracking-wide">Registros</span>
+                    <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
                     {!novoRegistroOpen && (
                       <button
                         type="button"
                         onClick={() => setNovoRegistroOpen(true)}
-                        title="Adicionar registro (atalho: n)"
-                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer px-2 py-1 -mr-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        title="Adicionar registro (n)"
+                        aria-label="Adicionar registro"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Adicionar
-                        <kbd className="hidden sm:inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded text-[9px] font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300">
-                          n
-                        </kbd>
+                        <span className="hidden md:inline">Adicionar</span>
                       </button>
                     )}
                   </div>
@@ -1040,7 +1039,7 @@ export function DemandaQuickPreview({
               </div>
             ) : (
               <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-                <div className="px-3.5 sm:px-4 py-4 text-[11px] text-muted-foreground italic">
+                <div className="px-4 py-3 text-[11px] text-muted-foreground italic">
                   Vincule um assistido para registrar providências e atendimentos.
                 </div>
               </div>
@@ -1061,7 +1060,7 @@ export function DemandaQuickPreview({
                   ajustar typos. Click → input → Enter/blur salva, Esc
                   cancela. */}
               {demanda.assistidoId && onAssistidoNomeChange && (
-                <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
@@ -1114,7 +1113,7 @@ export function DemandaQuickPreview({
               {/* Atribuição row — editável via dropdown. Migrou do header
                   pra cá pra deixar a hero card mais limpa, mantendo a edição
                   acessível e a área visível em metadata. */}
-              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+              <div className="flex items-center px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
                 </div>
@@ -1135,7 +1134,7 @@ export function DemandaQuickPreview({
               </div>
 
               {/* Prazo row — editável + badge calculado */}
-              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+              <div className="flex items-center px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
@@ -1164,7 +1163,7 @@ export function DemandaQuickPreview({
               {/* Expedição da intimação — data em que foi expedida no PJe.
                   data_intimacao = expedicao + 10 dias (Lei 11.419/2006). */}
               {demanda.data && (
-                <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
@@ -1175,7 +1174,7 @@ export function DemandaQuickPreview({
 
               {/* Atualizado — quando foi a última modificação */}
               {demanda.updatedAt && (
-                <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
@@ -1200,7 +1199,7 @@ export function DemandaQuickPreview({
 
               {/* Providências preview — o que tem que ser feito (se houver) */}
               {demanda.providencias && (
-                <div className="flex items-start px-3.5 sm:px-4 py-2.5 gap-3">
+                <div className="flex items-start px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
@@ -1214,7 +1213,7 @@ export function DemandaQuickPreview({
               {/* Metadados — collapsible */}
               <button
                 onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-3 px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
               >
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                   {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -1224,7 +1223,7 @@ export function DemandaQuickPreview({
               {metadataOpen && (
                 <>
                   {demanda.dataInclusao && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                    <div className="flex items-center px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Calendar className="w-3 h-3 text-neutral-400" />
                       </div>
@@ -1244,7 +1243,7 @@ export function DemandaQuickPreview({
                     </div>
                   )}
                   {demanda.estadoPrisional && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                    <div className="flex items-center px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <Lock className="w-3 h-3 text-neutral-400" />
                       </div>
@@ -1258,7 +1257,7 @@ export function DemandaQuickPreview({
                       VVD legacy). Update vai direto no processo, não na
                       demanda. */}
                   {processo && onTipoProcessoChange && demanda.processoId && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                    <div className="flex items-center px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
@@ -1280,7 +1279,7 @@ export function DemandaQuickPreview({
                   )}
                   {/* Fallback read-only se a view não passar o handler */}
                   {processo?.tipo && !onTipoProcessoChange && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                    <div className="flex items-center px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <FileText className="w-3 h-3 text-neutral-400" />
                       </div>
@@ -1289,7 +1288,7 @@ export function DemandaQuickPreview({
                     </div>
                   )}
                   {demanda.importBatchId && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                    <div className="flex items-center px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                         <AlertCircle className="w-3 h-3 text-neutral-400" />
                       </div>
@@ -1309,7 +1308,7 @@ export function DemandaQuickPreview({
                 </h3>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
-                  <div className="px-3.5 sm:px-4 py-3">
+                  <div className="px-4 py-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                         <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -1478,7 +1477,7 @@ export function DemandaQuickPreview({
               {/* Collapsible header */}
               <button
                 onClick={() => setDocsOpen((v) => !v)}
-                className="w-full flex items-center gap-2 px-3.5 sm:px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
               >
                 <FolderOpen className="w-4 h-4 text-neutral-400 shrink-0" />
                 <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Documentos</span>
@@ -1563,7 +1562,7 @@ export function DemandaQuickPreview({
                       ) : (
                         <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
                           {driveFolder.files.map((f) => (
-                            <div key={f.id} className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
+                            <div key={f.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
                               <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                               <span className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate" title={f.name}>
                                 {f.name}
@@ -1590,7 +1589,7 @@ export function DemandaQuickPreview({
                       )}
 
                       {/* Upload area */}
-                      <div className="px-3.5 sm:px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
+                      <div className="px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
                         <input
                           ref={fileInputRef}
                           type="file"
