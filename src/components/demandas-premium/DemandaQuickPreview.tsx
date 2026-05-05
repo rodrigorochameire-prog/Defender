@@ -719,9 +719,9 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Linha 2 — pills editáveis primárias: ATO e STATUS.
-                    Pills compactas (px-2 py-0.5, text-[11px]) pra caberem na
-                    mesma linha mesmo com ato longo ("Ciência condenação"). */}
+                {/* Linha 2 — três pills editáveis: ATO + STATUS + ATRIBUIÇÃO.
+                    Atribuição é icon-only (ícone da área, cor da atribuição) e
+                    fica por último — discreta mas editável e visível. */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                   <InlineDropdown
                     value={demanda.ato}
@@ -762,6 +762,21 @@ export function DemandaQuickPreview({
                     options={statusOptions}
                     onChange={(v) => onStatusChange(demanda.id, v)}
                   />
+                  <InlineDropdown
+                    value={demanda.atribuicao}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        style={{ color: atribuicaoColor }}
+                        title={`Atribuição: ${demanda.atribuicao}`}
+                      >
+                        <AtribuicaoIcon className="w-3.5 h-3.5" />
+                      </span>
+                    }
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
+                  />
                 </div>
 
                 {/* Linha 3 — processo (chip de cópia) com badge de tipo (AP/MPU/IP/etc).
@@ -794,24 +809,11 @@ export function DemandaQuickPreview({
                   </div>
                 )}
               </div>
-              {/* Coluna direita: ícones verticais. Atribuição é o primeiro
-                  (editável via dropdown), seguida de Assistido/Drive/Processo. */}
+              {/* Coluna direita: ícones de navegação (Assistido/Drive/Processo).
+                  Atribuição voltou pra ser o 3º pill na linha 2 — não compete
+                  com as ações de navegação aqui e abre o dropdown sem cortar. */}
+              {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
               <div className="flex flex-col items-center gap-0.5 shrink-0 -mr-1">
-                <InlineDropdown
-                  value={demanda.atribuicao}
-                  compact
-                  displayValue={
-                    <span
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                      title={`Atribuição: ${demanda.atribuicao}`}
-                      style={{ color: atribuicaoColor }}
-                    >
-                      <AtribuicaoIcon className="w-3.5 h-3.5" />
-                    </span>
-                  }
-                  options={ATRIBUICAO_OPTIONS}
-                  onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                />
                 {demanda.assistidoId && (
                   <Link
                     href={`/admin/assistidos/${demanda.assistidoId}`}
@@ -843,6 +845,7 @@ export function DemandaQuickPreview({
                   </Link>
                 )}
               </div>
+              )}
             </div>
           </div>
 

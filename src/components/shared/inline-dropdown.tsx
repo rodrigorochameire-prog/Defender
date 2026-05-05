@@ -33,7 +33,18 @@ export function InlineDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [alignRight, setAlignRight] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Detecta se o dropdown vai escapar pela borda direita do viewport e
+  // alinha à direita do trigger nesse caso (evita corte em sheets estreitas).
+  useEffect(() => {
+    if (!isOpen || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const DROPDOWN_MIN_WIDTH = 200;
+    const VIEWPORT_PADDING = 16;
+    setAlignRight(rect.left + DROPDOWN_MIN_WIDTH > window.innerWidth - VIEWPORT_PADDING);
+  }, [isOpen]);
 
   // Click-outside: listen to both mousedown and touchstart for mobile
   useEffect(() => {
@@ -150,7 +161,7 @@ export function InlineDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 min-w-[180px] max-w-[calc(100vw-2rem)] max-h-64 overflow-y-auto py-1">
+        <div className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 min-w-[180px] max-w-[calc(100vw-2rem)] max-h-64 overflow-y-auto py-1`}>
           {/* Type-ahead indicator */}
           {filterQuery && (
             <div className="px-3 py-1.5 text-[10px] text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 sticky top-0 bg-white dark:bg-neutral-900">
