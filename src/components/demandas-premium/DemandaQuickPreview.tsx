@@ -667,32 +667,56 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Linha 2: Ato — subtitle direto abaixo do nome,
-                    com cor da atribuição como dot e ícone Scale.
-                    É o descritor principal da demanda, então fica em destaque. */}
-                {demanda.ato && (
-                  <div
-                    className="flex items-center gap-1.5 mt-1 truncate"
-                    title={demanda.ato}
-                  >
-                    <Scale
-                      className="w-3 h-3 shrink-0"
-                      style={{ color: atribuicaoColor }}
-                    />
-                    <span
-                      className="text-[12px] font-medium leading-tight truncate"
-                      style={{ color: atribuicaoColor }}
-                    >
-                      {demanda.ato}
-                    </span>
-                  </div>
-                )}
+                {/* Linha 2 — pills editáveis primárias: ATO e STATUS.
+                    Ato com cor da atribuição (descritor principal); Status com cor
+                    do grupo de status. Atribuição vai pra linha 3 como contexto. */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <InlineDropdown
+                    value={demanda.ato}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-semibold transition-colors hover:brightness-95"
+                        style={{
+                          backgroundColor: `${atribuicaoColor}14`,
+                          color: atribuicaoColor,
+                          boxShadow: `inset 0 0 0 1px ${atribuicaoColor}26`,
+                        }}
+                        title={demanda.ato || "Selecionar ato"}
+                      >
+                        <Scale className="w-3 h-3 shrink-0" />
+                        <span className="truncate max-w-[180px]">
+                          {demanda.ato || <span className="opacity-60 italic">Definir ato</span>}
+                        </span>
+                      </span>
+                    }
+                    options={atoOptions}
+                    onChange={(v) => onAtoChange(demanda.id, v)}
+                  />
+                  <InlineDropdown
+                    value={demanda.status}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-medium bg-neutral-100/80 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: statusColor }}
+                        />
+                        {statusConfig.label}
+                      </span>
+                    }
+                    options={statusOptions}
+                    onChange={(v) => onStatusChange(demanda.id, v)}
+                  />
+                </div>
 
-                {/* Linha 3: Processo + ações inline */}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {/* Linha 3 — processo + links externos + atribuição (contextual, editável discreta) */}
+                <div className="flex items-center gap-3 mt-2 flex-wrap">
                   {processo && (
                     <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/70 dark:bg-neutral-800/50 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 group/proc cursor-pointer transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -700,7 +724,7 @@ export function DemandaQuickPreview({
                       }}
                       title="Copiar número do processo"
                     >
-                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                      <span className="font-mono text-[10px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
                       <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
                     </button>
                   )}
@@ -736,35 +760,12 @@ export function DemandaQuickPreview({
                       Processo
                     </Link>
                   )}
-                </div>
-
-                {/* Status + Atribuição — pills inline editáveis (movidos do bloco
-                    "Classificação" pra evitar scroll. Ambos abrem dropdown ao clicar). */}
-                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                  <InlineDropdown
-                    value={demanda.status}
-                    compact
-                    displayValue={
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: statusColor }}
-                        />
-                        {statusConfig.label}
-                      </span>
-                    }
-                    options={statusOptions}
-                    onChange={(v) => onStatusChange(demanda.id, v)}
-                  />
+                  {/* Atribuição — editável, mas discreta (left border do card já carrega a cor) */}
                   <InlineDropdown
                     value={demanda.atribuicao}
                     compact
                     displayValue={
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
-                      >
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors cursor-pointer">
                         <AtribuicaoIcon
                           className="w-3 h-3"
                           style={{ color: atribuicaoColor }}
