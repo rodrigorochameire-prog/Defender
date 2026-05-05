@@ -111,6 +111,19 @@ interface DemandaQuickPreviewProps {
 // CONSTANTS
 // ============================================
 
+// Cores temáticas pra badge de tipo de processo (AP/MPU/IP/APF/EP/CAUTELAR/ANPP).
+// Hex puro — usado com alpha 1a (~10%) no bg e cor cheia no texto.
+const TIPO_PROCESSO_COLORS: Record<string, string> = {
+  AP: "#dc2626",        // Ação Penal — vermelho (acusação formal)
+  IP: "#f59e0b",        // Inquérito Policial — amber (investigação)
+  APF: "#ea580c",       // Auto Prisão Flagrante — orange (urgência)
+  CAUTELAR: "#7c3aed",  // Cautelar — violet
+  EP: "#2563eb",        // Execução Penal — blue
+  MPU: "#db2777",       // Medida Protetiva de Urgência — rose
+  ANPP: "#0891b2",      // Acordo Não Persecução Penal — cyan
+  OUTRO: "#71717a",     // Outro — gray neutro
+};
+
 const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
   "Tribunal do Júri": "#22c55e",
   "Grupo Especial do Júri": "#f97316",
@@ -751,21 +764,32 @@ export function DemandaQuickPreview({
                   />
                 </div>
 
-                {/* Linha 3 — processo (chip de cópia). Atribuição migrou pro
-                    primeiro ícone da coluna direita (vertical icon strip). */}
+                {/* Linha 3 — processo (chip de cópia) com badge de tipo (AP/MPU/IP/etc).
+                    Atribuição migrou pro primeiro ícone da coluna direita. */}
                 {processo && (
                   <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <button
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/70 dark:bg-neutral-800/50 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 group/proc cursor-pointer transition-colors"
+                      className="inline-flex items-center gap-1 px-1 py-0.5 rounded-md bg-neutral-100/70 dark:bg-neutral-800/50 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 group/proc cursor-pointer transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
                         copyToClipboard(processo.numero, "Processo copiado!");
                       }}
-                      title="Copiar número do processo"
+                      title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
                     >
-                      <span className="font-mono text-[10px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                      <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
+                      {processo.tipo && (
+                        <span
+                          className="text-[9px] font-bold px-1 py-0.5 rounded uppercase tracking-wide"
+                          style={{
+                            backgroundColor: `${TIPO_PROCESSO_COLORS[processo.tipo] ?? "#71717a"}1a`,
+                            color: TIPO_PROCESSO_COLORS[processo.tipo] ?? "#71717a",
+                          }}
+                        >
+                          {processo.tipo}
+                        </span>
+                      )}
+                      <span className="font-mono text-[10px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors px-1">{processo.numero}</span>
+                      <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors mr-1" />
                     </button>
                   </div>
                 )}

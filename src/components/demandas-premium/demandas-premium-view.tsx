@@ -888,7 +888,7 @@ export default function Demandas() {
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
       dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
       processos: d.processo?.numeroAutos
-        ? [{ tipo: "", numero: d.processo.numeroAutos }]
+        ? [{ tipo: d.processo.tipoProcesso || "", numero: d.processo.numeroAutos }]
         : [],
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
