@@ -217,6 +217,62 @@ _POLO_TIPO_RE = re.compile(
 )
 
 
+# Mapping classe processual (TJBA texto livre) → prefixo PJe esperado pelo
+# parser TS (`pje-parser.ts:regexTipoProcessoCrime`). O prefixo é o que o
+# `mapPjeTipoToEnum` no router de demandas converte para o tipo curto
+# armazenado no banco (MPU/APF/AP/CAUTELAR/...). Ordem importa: padrões
+# mais específicos primeiro.
+_CLASSE_TO_PJE_PREFIX = [
+    (re.compile(r"medida\s+protetiva\s+de\s+urg|maria\s+da\s+penha", re.I), "MPUMPCrim"),
+    (re.compile(r"auto\s+de\s+pris[aã]o\s+em\s+flagrante", re.I), "AuPrFl"),
+    (re.compile(r"pris[aã]o\s+preventiva", re.I), "PePrPr"),
+    (re.compile(r"liberdade\s+provis[oó]ria|revoga[çc][aã]o\s+(?:de\s+)?pris", re.I), "LibProv"),
+    (re.compile(r"cautelar\s+inominada", re.I), "CauInomCrim"),
+    (re.compile(r"a[çc][aã]o\s+penal.*j[uú]ri", re.I), "Juri"),
+    (re.compile(r"a[çc][aã]o\s+penal.*sumaríssim", re.I), "APSum"),
+    (re.compile(r"a[çc][aã]o\s+penal.*sum[aá]ri", re.I), "APSum"),
+    (re.compile(r"a[çc][aã]o\s+penal.*ordin[aá]rio", re.I), "APOrd"),
+    (re.compile(r"a[çc][aã]o\s+penal", re.I), "APOrd"),
+    (re.compile(r"inqu[eé]rito", re.I), "PetCrim"),
+    (re.compile(r"execu[çc][aã]o\s+(?:da\s+)?(?:pena|penal)", re.I), "EP"),
+    (re.compile(r"insanidade", re.I), "InsanAc"),
+]
+
+
+def _parse_classe_from_html(html: str) -> tuple[str | None, str | None]:
+    """Extrai (classe_processual, pje_prefix) do HTML do
+    `listProcessoCompletoAdvogado.seam`.
+
+    PJe TJBA expõe a classe em algum dos formatos:
+      - `<div id="classeJudicial"><span>...</span></div>`
+      - `<dt>Classe</dt><dd>NOME (CODIGO)</dd>`
+      - `Classe judicial:</span><span>...</span>`
+
+    Retorna `(None, None)` se não conseguir extrair — o caller decide o
+    fallback (`MPUMPCrim` para preservar comportamento legado).
+    """
+    classe = None
+    for pat in (
+        r'<(?:div|span)[^>]*id="classeJudicial"[^>]*>\s*<span[^>]*>([^<]+)</span>',
+        r'Classe[^<]*judicial[^<]*</[^>]+>\s*<[^>]+>([^<]+)<',
+        r'<dt[^>]*>\s*Classe\s*</dt>\s*<dd[^>]*>([^<]+)</dd>',
+        # Fallback: linha "Classe / Assunto" do header do processo
+        r"Classe\s*[-—:]\s*Assunto[^<]*</[^>]+>\s*<[^>]+>([^<]+)<",
+    ):
+        m = re.search(pat, html, re.IGNORECASE | re.DOTALL)
+        if m:
+            classe = htmlmod.unescape(m.group(1)).strip()
+            classe = re.sub(r"\s*\(\d+\)\s*$", "", classe)  # remove sufixo "(NNNN)"
+            break
+    if not classe:
+        return None, None
+
+    for pat, prefix in _CLASSE_TO_PJE_PREFIX:
+        if pat.search(classe):
+            return classe, prefix
+    return classe, None  # classe extraída mas não mapeada — frontend mostra raw
+
+
 def _parse_partes_from_html(html: str) -> list[dict]:
     """Extrai partes do HTML de listProcessoCompletoAdvogado.seam.
 
@@ -324,10 +380,21 @@ def resolve_polo_passivo(session: requests.Session, expediente: dict) -> dict:
         return {"partes": [], "via": "http_error"}
 
     partes = _parse_partes_from_html(r.text)
+    classe, pje_prefix = _parse_classe_from_html(r.text)
     if partes:
-        return {"partes": partes, "via": "listProcessoCompletoAdvogado"}
+        return {
+            "partes": partes,
+            "via": "listProcessoCompletoAdvogado",
+            "classe": classe,
+            "pje_prefix": pje_prefix,
+        }
 
-    return {"partes": [], "via": "no_partes"}
+    return {
+        "partes": [],
+        "via": "no_partes",
+        "classe": classe,
+        "pje_prefix": pje_prefix,
+    }
 
 
 def _normalize(s: str) -> str:
@@ -375,7 +442,7 @@ VARA_FIXA = "/Vara de Violência Doméstica de Camaçari"
 REQUERENTE_PLACEHOLDER = "REQUERENTE"  # nome anonimizado (sigilo)
 
 
-def format_for_endpoint(expediente: dict, requerido: str | None) -> str:
+def format_for_endpoint(expediente: dict, requerido: str | None, pje_prefix: str | None = None) -> str:
     """Bloco de texto no formato consumido por parsePJeIntimacoesCompleto.
 
     Exemplo de saída:
@@ -385,13 +452,18 @@ def format_for_endpoint(expediente: dict, requerido: str | None) -> str:
       /Vara de Violência Doméstica de Camaçari
       Expedição eletrônica (28/04/2026 10:23)
       Prazo: 5 dias
+
+    `pje_prefix` é o prefixo detectado da classe processual (ex.: "AuPrFl"
+    pra APF, "CauInomCrim" pra cautelar inominada). Quando ausente,
+    defaulta MPUMPCrim — comportamento legado, assume MPU. Esse fallback
+    é a causa de processos APF/Cautelar entrarem como MPU; o caller deve
+    extrair pje_prefix via _parse_classe_from_html sempre que possível.
     """
     cnj = expediente["numero_cnj"]
     nome_assistido = requerido or PLACEHOLDER_NOME.format(cnj=cnj)
 
-    # Linha 3: prefixo MPUMPCrim para o parser detectar tipoProcesso='MPUMPCrim'
-    # e classificar como Medida Protetiva (regex em pje-parser.ts:311)
-    linha_processo = f"MPUMPCrim {cnj}"
+    prefix = pje_prefix or "MPUMPCrim"
+    linha_processo = f"{prefix} {cnj}"
 
     linhas: list[str] = []
     if expediente.get("tipo_documento"):
@@ -476,12 +548,15 @@ def main() -> None:
             r = resolve_polo_passivo(session, e)
             via_counts[r["via"]] = via_counts.get(r["via"], 0) + 1
             requerido = identify_requerido(r["partes"])
+            classe = r.get("classe")
+            pje_prefix = r.get("pje_prefix")
+            tipo_log = pje_prefix or "MPUMPCrim(default)"
             if requerido is None:
                 placeholders += 1
-                log(f"  ⚠ placeholder (via={r['via']})")
+                log(f"  ⚠ placeholder (via={r['via']}, tipo={tipo_log})")
             else:
-                log(f"  REQUERIDO={requerido} (via={r['via']})")
-            bloco = format_for_endpoint(e, requerido)
+                log(f"  REQUERIDO={requerido} (via={r['via']}, tipo={tipo_log}, classe={classe or '?'})")
+            bloco = format_for_endpoint(e, requerido, pje_prefix=pje_prefix)
             blocos.append(bloco)
         except Exception as exc:
             falhas += 1
