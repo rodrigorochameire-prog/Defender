@@ -42,7 +42,9 @@ import {
   Video,
   FileSignature,
   Plus,
+  CheckSquare,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
@@ -645,49 +647,11 @@ export function DemandaQuickPreview({
             style={{ borderLeftColor: atribuicaoColor }}
           >
             <div className="flex items-start gap-3">
-              {/* Coluna esquerda: avatar + ícones de navegação verticais
-                  (Assistido / Drive / Processo). Empilhar em vez de horizontal
-                  poupa espaço da coluna direita pra pills e processo. */}
-              <div className="flex flex-col items-center gap-1.5 shrink-0">
-                <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-                    {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
-                  </span>
-                </div>
-                {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
-                  <div className="flex flex-col items-center gap-0.5">
-                    {demanda.assistidoId && (
-                      <Link
-                        href={`/admin/assistidos/${demanda.assistidoId}`}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                        title="Ver assistido"
-                      >
-                        <User className="w-3.5 h-3.5" />
-                      </Link>
-                    )}
-                    {driveFolderUrl && (
-                      <a
-                        href={driveFolderUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                        title="Abrir pasta no Drive (análises, mídias)"
-                      >
-                        <FolderOpen className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {demanda.processoId && (
-                      <Link
-                        href={`/admin/processos/${demanda.processoId}`}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                        title="Ver processo"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                      </Link>
-                    )}
-                  </div>
-                )}
+              {/* Avatar — sozinho na esquerda */}
+              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+                  {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 {/* Linha 1: Nome + flags (preso/urgente) */}
@@ -784,6 +748,43 @@ export function DemandaQuickPreview({
                   />
                 </div>
               </div>
+              {/* Coluna direita: ícones de navegação verticais (Assistido, Drive, Processo).
+                  Empilhar à direita libera horizontal pras pills e mantém ações
+                  acessíveis sem competir com o conteúdo principal. */}
+              {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
+                <div className="flex flex-col items-center gap-0.5 shrink-0 -mr-1">
+                  {demanda.assistidoId && (
+                    <Link
+                      href={`/admin/assistidos/${demanda.assistidoId}`}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Ver assistido"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  {driveFolderUrl && (
+                    <a
+                      href={driveFolderUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Abrir pasta no Drive (análises, mídias)"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                  {demanda.processoId && (
+                    <Link
+                      href={`/admin/processos/${demanda.processoId}`}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Ver processo"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1072,28 +1073,73 @@ export function DemandaQuickPreview({
               Detalhes
             </h3>
 
-            {/* Detalhes — card v5 com border-l-4 */}
+            {/* Detalhes — Ato saiu pra hero card. Aqui ficam os campos
+                temporais (prazo, datas) que não cabiam no header. */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Ato row */}
+              {/* Prazo row — editável + badge calculado */}
               <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
                 <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Ato</span>
-                <div className="flex-1 text-right">
-                  <InlineDropdown
-                    value={demanda.ato}
-                    compact
-                    displayValue={
-                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                        {demanda.ato || <span className="text-neutral-400 dark:text-neutral-500 italic">Selecionar</span>}
-                      </span>
-                    }
-                    options={atoOptions}
-                    onChange={(v) => onAtoChange(demanda.id, v)}
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prazo</span>
+                <div className="flex-1 flex items-center justify-end gap-2">
+                  {prazoBadge && prazoBadge.cor !== "none" && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums",
+                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+                      )}
+                    >
+                      {prazoBadge.texto}
+                    </span>
+                  )}
+                  <InlineDatePicker
+                    value={demanda.prazo}
+                    onChange={(v) => onPrazoChange(demanda.id, v)}
                   />
                 </div>
               </div>
+
+              {/* Atualizado — quando foi a última modificação */}
+              {demanda.updatedAt && (
+                <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atualizado</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                    {(() => {
+                      try {
+                        const d = new Date(demanda.updatedAt);
+                        const hoje = new Date();
+                        const diffDays = Math.floor((hoje.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays === 0) return `Hoje · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays === 1) return `Ontem · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays < 7) return `${diffDays} dias atrás`;
+                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+                      } catch {
+                        return "—";
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Providências preview — o que tem que ser feito (se houver) */}
+              {demanda.providencias && (
+                <div className="flex items-start px-3.5 sm:px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0 mt-0.5">Providências</span>
+                  <p className="flex-1 text-right text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed line-clamp-2" title={demanda.providencias}>
+                    {demanda.providencias}
+                  </p>
+                </div>
+              )}
 
               {/* Metadados — collapsible */}
               <button
@@ -1107,8 +1153,15 @@ export function DemandaQuickPreview({
               </button>
               {metadataOpen && (
                 <>
-                  {/* "Importado" removido daqui — o timestamp já aparece no header
-                      do card de registro/demanda. Era duplicação visual. */}
+                  {demanda.dataInclusao && (
+                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
+                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                        <Calendar className="w-3 h-3 text-neutral-400" />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
+                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">{demanda.dataInclusao}</span>
+                    </div>
+                  )}
                   {demanda.estadoPrisional && (
                     <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
                       <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">

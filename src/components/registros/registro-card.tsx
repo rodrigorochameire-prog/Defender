@@ -39,15 +39,22 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
   const conteudo = registro.conteudo ?? "";
   const podeColapsar = conteudo.length > COLLAPSE_THRESHOLD;
 
+  const autorIniciais = (registro.autor?.name || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
   return (
     <div
-      className={cn(
-        "rounded-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800/80 px-3.5 py-3 space-y-1.5 group transition-colors",
-        tipoCfg?.bg ?? "bg-white dark:bg-neutral-900",
-      )}
+      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-[3px] hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
+      style={{ borderLeftColor: tipoCfg?.color ?? "#a1a1aa" }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0 text-[11px] text-neutral-500 dark:text-neutral-500">
+      {/* Header: tipo+audio (esq) | data+ações (dir) */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <RegistroTipoChip tipo={registro.tipo} />
           {hasAudio && (
             <Mic
@@ -55,47 +62,46 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
               aria-label="Possui áudio"
             />
           )}
-          <span>{format(data, "dd 'de' MMM, HH:mm", { locale: ptBR })}</span>
-          {registro.autor?.name && (
-            <span className="text-neutral-400 dark:text-neutral-500 truncate">
-              · {registro.autor.name}
-            </span>
-          )}
         </div>
-        <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex gap-0.5 shrink-0">
-          {onEdit && (
-            <button
-              type="button"
-              onClick={() => onEdit(registro.id)}
-              className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-              title="Editar"
-              aria-label="Editar registro"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-neutral-400" />
-            </button>
-          )}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={() => onDelete(registro.id)}
-              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
-              title="Excluir"
-              aria-label="Excluir registro"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-red-500" />
-            </button>
-          )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <time className="text-[10.5px] text-neutral-500 dark:text-neutral-400 tabular-nums">
+            {format(data, "dd 'de' MMM · HH:mm", { locale: ptBR })}
+          </time>
+          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex gap-0.5">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(registro.id)}
+                className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                title="Editar"
+                aria-label="Editar registro"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(registro.id)}
+                className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                title="Excluir"
+                aria-label="Excluir registro"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-red-500" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {registro.titulo && (
-        <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+        <h4 className="mt-2 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
           {registro.titulo}
         </h4>
       )}
 
       {conteudo && (
-        <div>
+        <div className="mt-1.5">
           <p
             className={cn(
               "text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed",
@@ -113,6 +119,21 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
               {expanded ? "Ver menos" : "Ver mais"}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Footer: autor — discreto, com iniciais como avatar mini */}
+      {registro.autor?.name && (
+        <div className="mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center gap-1.5">
+          <span
+            className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-semibold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800"
+            aria-hidden
+          >
+            {autorIniciais || "?"}
+          </span>
+          <span className="text-[10.5px] text-neutral-500 dark:text-neutral-400 truncate">
+            {registro.autor.name}
+          </span>
         </div>
       )}
     </div>
