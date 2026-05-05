@@ -2121,7 +2121,7 @@ export function DriveDetailPanel() {
       <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
         <SheetContent
           side="right"
-          className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
+          className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
         >
           <SheetTitle className="sr-only">Detalhes do arquivo</SheetTitle>
           {/* Header skeleton */}
@@ -2153,7 +2153,7 @@ export function DriveDetailPanel() {
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) ctx.closeDetailPanel(); }}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
+        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800/80 p-0"
       >
         <SheetTitle className="sr-only">{file.name}</SheetTitle>
         <DetailPanelContent file={file as any} />

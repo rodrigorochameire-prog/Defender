@@ -669,7 +669,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
+        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (

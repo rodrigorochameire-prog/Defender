@@ -63,9 +63,11 @@ export function RegistroEditor({
   });
 
   const tipos = tiposPermitidos ?? TIPO_KEYS;
+  // Preserva a ordem do array tiposPrimarios (callsite controla a sequência);
+  // se o tipo ativo não está entre os primários, anexa no final.
   const inlineTipos = tiposPrimarios
     ? Array.from(new Set([
-        ...tipos.filter((t) => tiposPrimarios.includes(t)),
+        ...tiposPrimarios.filter((t) => tipos.includes(t)),
         ...(tipos.includes(tipo) && !tiposPrimarios.includes(tipo) ? [tipo] : []),
       ]))
     : tipos;
