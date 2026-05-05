@@ -601,6 +601,9 @@ export default function Demandas() {
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
   const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>([]);
+  // Portal target: #header-slot é um placeholder na topbar global (HeaderUtilityRow).
+  // Usamos pra montar o switcher de atribuições ali em vez de no bottomRow do header.
+  const [headerSlotEl, setHeaderSlotEl] = useState<HTMLElement | null>(null);
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
   const [selectedTipoAto, setSelectedTipoAto] = useState<string | null>(null);
   const [selectedStatusGroup, setSelectedStatusGroup] = useState<StatusGroup | null>(null);
@@ -2047,6 +2050,16 @@ export default function Demandas() {
     return null;
   }, [selectedAtribuicoes]);
 
+  // Detecta o #header-slot da topbar global (HeaderUtilityRow) pra portar
+  // o switcher de atribuições. O slot só existe depois que o CollapsiblePageHeader
+  // monta — por isso usamos requestAnimationFrame pra aguardar 1 frame.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setHeaderSlotEl(document.getElementById("header-slot"));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const handleAtribuicaoToggle = (value: string) => {
     setSelectedAtribuicoes(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
@@ -2176,6 +2189,24 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
+      {/* Switcher de atribuições portado pra topbar global (#header-slot).
+          Multi-select: cada chip é toggle, "Todas" limpa selecao.
+          Aparece ao lado dos breadcrumbs, sempre visível. */}
+      {headerSlotEl && createPortal(
+        <div className="flex items-center pl-3">
+          <AtribuicaoPills
+            variant="dark"
+            options={atribuicaoOptions}
+            selectedValues={selectedAtribuicoes}
+            onToggle={handleAtribuicaoToggle}
+            onClear={() => setSelectedAtribuicoes([])}
+            compact
+            counts={atribuicaoCounts}
+          />
+        </div>,
+        headerSlotEl,
+      )}
+
       {/* ====== CHARCOAL HEADER ====== */}
       <CollapsiblePageHeader
         title="Demandas"
@@ -2188,9 +2219,31 @@ export default function Demandas() {
           </>
         }
         collapsedPill={
-          selectedAtribuicoes.length === 1 && (
-            <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-              {selectedAtribuicoes[0]}
+          selectedAtribuicoes.length === 0 ? null : selectedAtribuicoes.length <= 3 ? (
+            <div className="flex items-center gap-1">
+              {selectedAtribuicoes.map((attr) => {
+                const hex = ATRIBUICAO_BORDER_COLORS[attr] ?? "#71717a";
+                const short = attr === "Tribunal do Júri" ? "Júri"
+                  : attr === "Grupo Especial do Júri" ? "Júri Esp"
+                  : attr === "Violência Doméstica" ? "VVD"
+                  : attr === "Execução Penal" ? "EP"
+                  : attr === "Substituição Criminal" ? "Subst"
+                  : attr === "Curadoria Especial" ? "Curad"
+                  : attr;
+                return (
+                  <span
+                    key={attr}
+                    className="text-[8px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: `${hex}33`, color: hex }}
+                  >
+                    {short}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
+              {selectedAtribuicoes.length} áreas
             </span>
           )
         }
@@ -2207,21 +2260,8 @@ export default function Demandas() {
         }
         bottomRow={
           <div className="flex items-center gap-2.5">
-            {/* ========= LEFT GROUP — pills + view mode + settings ========= */}
+            {/* ========= LEFT GROUP — view mode + settings (atribuições foram pra topbar) ========= */}
             <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-              <AtribuicaoPills
-                variant="dark"
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleSingleAtribuicaoSelect}
-                onClear={() => {}}
-                singleSelect
-                compact
-                counts={atribuicaoCounts}
-              />
-
-              <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
               <div className="flex items-center gap-1.5 shrink-0">
                 <ViewModeDropdown
                   options={DEMANDAS_VIEW_OPTIONS}
