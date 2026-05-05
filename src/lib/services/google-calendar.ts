@@ -361,35 +361,50 @@ export async function criarEventoPrazo(
 }
 
 /**
- * Cria um evento de audiência no calendário
+ * Cria um evento de audiência no Google Calendar.
+ * Pega calendar e cor de acordo com a área da demanda e tipo da audiência.
  */
-export async function criarEventoAudiencia(
-  assistidoNome: string,
-  tipoAudiencia: string,
-  dataAudiencia: Date,
-  local?: string,
-  numeroAutos?: string
-): Promise<CalendarEvent | null> {
-  let description = `Tipo: ${tipoAudiencia}`;
-  if (numeroAutos) {
-    description += `\nProcesso: ${numeroAutos}`;
-  }
+export async function criarEventoAudiencia(input: {
+  assistidoNome: string;
+  tipoAudiencia: string;
+  dataAudiencia: Date;
+  duracaoMinutos?: number;
+  local?: string;
+  numeroAutos?: string;
+  area?: string | null;
+}): Promise<CalendarEvent | null> {
+  const { resolveCalendarId, colorIdForAudiencia } = await import("./calendar-mapping");
 
-  const summary = `📅 Audiência ${tipoAudiencia} - ${assistidoNome}`;
+  const duracao = input.duracaoMinutos ?? 60;
+  const endDate = new Date(input.dataAudiencia.getTime() + duracao * 60 * 1000);
+  const calendarId = resolveCalendarId(input.area);
+  const colorId = colorIdForAudiencia(input.tipoAudiencia);
 
-  return createCalendarEvent({
-    summary,
-    description,
-    startDate: dataAudiencia,
-    isAllDay: false,
-    location: local,
-    colorId: CalendarColors.AZUL,
-    reminders: [
-      { method: "popup", minutes: 1440 }, // 1 dia antes
-      { method: "popup", minutes: 120 },  // 2 horas antes
-      { method: "popup", minutes: 30 },   // 30 minutos antes
-    ],
-  });
+  const tipo = input.tipoAudiencia.toLowerCase();
+  const emoji = /plen[áa]rio|j[úu]ri/.test(tipo) ? "⚖️" : "🏛";
+  const summary = `${emoji} ${input.tipoAudiencia} — ${input.assistidoNome}`;
+
+  let description = `Tipo: ${input.tipoAudiencia}`;
+  if (input.numeroAutos) description += `\nProcesso: ${input.numeroAutos}`;
+  if (input.area) description += `\nÁrea: ${input.area}`;
+
+  return createCalendarEvent(
+    {
+      summary,
+      description,
+      startDate: input.dataAudiencia,
+      endDate,
+      isAllDay: false,
+      location: input.local,
+      colorId,
+      reminders: [
+        { method: "popup", minutes: 1440 }, // 1 dia antes
+        { method: "popup", minutes: 120 },  // 2 horas antes
+        { method: "popup", minutes: 30 },   // 30 minutos antes
+      ],
+    },
+    { calendarId },
+  );
 }
 
 /**
