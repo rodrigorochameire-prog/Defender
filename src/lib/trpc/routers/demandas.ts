@@ -181,6 +181,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
           },
           assistido: {
             id: assistidos.id,
@@ -247,6 +248,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
             comarca: processos.comarca,
             vara: processos.vara,
             classeProcessual: processos.classeProcessual,
@@ -325,6 +327,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
           },
           assistido: {
             id: assistidos.id,
