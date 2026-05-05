@@ -2418,34 +2418,28 @@ export default function Demandas() {
               <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
                 Demandas
               </h1>
-              <div className="flex items-center text-[10px] tabular-nums leading-tight mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] tabular-nums leading-tight mt-0.5 whitespace-nowrap">
                 <span className="text-white/55">
                   <span className="text-white/85 font-semibold">
                     {demandas.filter(d => !d.arquivado).length}
-                  </span>{" "}
-                  ativas
+                  </span>
+                  {" "}ativas
                 </span>
                 {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
-                  <>
-                    <span className="mx-2 h-2.5 w-px bg-white/15" />
-                    <span className="flex items-center gap-1 text-amber-300/90">
-                      <span className="w-1 h-1 rounded-full bg-amber-400" />
-                      <span className="font-semibold">
-                        {deadlineStats.hoje + deadlineStats.semana}
-                      </span>
-                      <span className="text-amber-300/70">urgentes</span>
+                  <span className="flex items-center gap-1 text-amber-300/90">
+                    <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                    <span className="font-semibold">
+                      {deadlineStats.hoje + deadlineStats.semana}
                     </span>
-                  </>
+                    <span className="text-amber-300/70">urgentes</span>
+                  </span>
                 )}
                 {deadlineStats.vencidas > 0 && (
-                  <>
-                    <span className="mx-2 h-2.5 w-px bg-white/15" />
-                    <span className="flex items-center gap-1 text-rose-300/90">
-                      <span className="w-1 h-1 rounded-full bg-rose-400" />
-                      <span className="font-semibold">{deadlineStats.vencidas}</span>
-                      <span className="text-rose-300/70">atrasadas</span>
-                    </span>
-                  </>
+                  <span className="flex items-center gap-1 text-rose-300/90">
+                    <span className="w-1 h-1 rounded-full bg-rose-400 shrink-0" />
+                    <span className="font-semibold">{deadlineStats.vencidas}</span>
+                    <span className="text-rose-300/70">atrasadas</span>
+                  </span>
                 )}
               </div>
             </div>

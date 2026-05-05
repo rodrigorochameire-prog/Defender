@@ -152,7 +152,7 @@ export function StatusPipelineSelector({
             <button
               key={s.key}
               onClick={(e) => { e.stopPropagation(); setActiveStage(i); }}
-              className={`relative z-10 flex flex-col items-center cursor-pointer group/node transition-all ${
+              className={`relative z-10 flex flex-col items-center cursor-pointer group/node transition-all min-w-0 ${
                 i === 0 ? "" : "flex-1"
               }`}
               title={s.label}
@@ -178,7 +178,7 @@ export function StatusPipelineSelector({
               </div>
               {/* Label */}
               <span
-                className={`mt-1 text-[9px] font-medium whitespace-nowrap transition-colors ${
+                className={`mt-1 text-[9px] font-medium leading-tight max-w-full px-0.5 text-center truncate transition-colors ${
                   isCurrent || isViewing ? "font-bold" : "text-neutral-400 dark:text-neutral-500"
                 }`}
                 style={{ color: isCurrent || isViewing ? color : undefined }}
@@ -288,7 +288,7 @@ export function StatusPipelineSelector({
     return (
       <div
         ref={ref}
-        className="absolute top-full right-0 mt-2 w-[260px] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden"
+        className="absolute top-full right-0 mt-2 w-[300px] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden"
         style={{ animation: "fadeInDown 0.15s ease-out" }}
       >
         {stepperContent}
@@ -304,7 +304,7 @@ export function StatusPipelineSelector({
     return createPortal(
       <div
         ref={ref}
-        className="fixed w-[260px] max-w-[calc(100vw-2rem)] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
+        className="fixed w-[300px] max-w-[calc(100vw-2rem)] bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-xl shadow-xl z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
         style={{ top: pos.top, right: pos.right }}
       >
         {stepperContent}
