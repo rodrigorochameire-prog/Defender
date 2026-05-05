@@ -22,6 +22,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { parsePJeIntimacoesCompleto, intimacaoToDemanda } from "@/lib/pje-parser";
 import { importarDemandas, type ImportRow } from "@/lib/services/pje-import";
+import { db } from "@/lib/db";
+import { processos } from "@/lib/db/schema/core";
+import { processosVVD } from "@/lib/db/schema/vvd";
+import { and, eq, isNull, like } from "drizzle-orm";
 
 // ============================================================================
 // HELPERS
@@ -73,6 +77,44 @@ async function processarTexto(
   return importarDemandas(rows, defensorId, false);
 }
 
+/**
+ * Após o import VVD, garante que todo processo MPU (numero `MPUMP*`) tenha
+ * entrada em `processos_vvd` com `tipo_processo='MPU'` e `mpu_ativa=true`.
+ *
+ * Idempotente: só insere quando NÃO existe (LEFT JOIN + IS NULL); não
+ * sobrescreve dados manuais já preenchidos.
+ *
+ * Retorna `{ created: N }` com a quantidade de novas entradas inseridas.
+ */
+async function syncMpuProcessosVvd(): Promise<{ created: number }> {
+  const processosMpu = await db
+    .select({ id: processos.id, numero: processos.numeroAutos })
+    .from(processos)
+    .leftJoin(processosVVD, eq(processosVVD.processoId, processos.id))
+    .where(
+      and(
+        eq(processos.atribuicao, "VVD_CAMACARI"),
+        like(processos.numeroAutos, "MPUMP%"),
+        isNull(processosVVD.id),
+      ),
+    );
+
+  if (processosMpu.length === 0) {
+    return { created: 0 };
+  }
+
+  await db.insert(processosVVD).values(
+    processosMpu.map((p) => ({
+      processoId: p.id,
+      numeroAutos: p.numero,
+      tipoProcesso: "MPU",
+      mpuAtiva: true,
+    })),
+  );
+
+  return { created: processosMpu.length };
+}
+
 // ============================================================================
 // HANDLER
 // ============================================================================
@@ -86,7 +128,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 2. Parse do body
-  let body: { textoJuri?: string; textoExecucoes?: string; defensorId?: number };
+  let body: { textoJuri?: string; textoExecucoes?: string; textoVvd?: string; defensorId?: number };
   try {
     body = await req.json();
   } catch {
@@ -103,20 +145,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 4. Processar cada texto em paralelo
-  const [resultadoJuri, resultadoExecucoes] = await Promise.all([
+  const [resultadoJuri, resultadoExecucoes, resultadoVvd] = await Promise.all([
     body.textoJuri
       ? processarTexto(body.textoJuri, "Tribunal do Júri", defensorId)
       : Promise.resolve({ imported: 0, updated: 0, skipped: 0, errors: [] }),
     body.textoExecucoes
       ? processarTexto(body.textoExecucoes, "Execução Penal", defensorId)
       : Promise.resolve({ imported: 0, updated: 0, skipped: 0, errors: [] }),
+    body.textoVvd
+      ? processarTexto(body.textoVvd, "VVD_CAMACARI", defensorId)
+      : Promise.resolve({ imported: 0, updated: 0, skipped: 0, errors: [] }),
   ]);
 
-  const totalNovas = resultadoJuri.imported + resultadoExecucoes.imported;
+  const totalNovas = resultadoJuri.imported + resultadoExecucoes.imported + resultadoVvd.imported;
+
+  // Sync MPU em processos_vvd (apenas se VVD foi importado)
+  let mpuSync = { created: 0 };
+  if (body.textoVvd) {
+    mpuSync = await syncMpuProcessosVvd();
+    console.log(`[pje-import] MPU sync: +${mpuSync.created} entradas em processos_vvd`);
+  }
 
   console.log(
     `[pje-import] Júri: +${resultadoJuri.imported} skip=${resultadoJuri.skipped} | ` +
     `Exec: +${resultadoExecucoes.imported} skip=${resultadoExecucoes.skipped} | ` +
+    `VVD: +${resultadoVvd.imported} skip=${resultadoVvd.skipped} | ` +
     `Total novas: ${totalNovas}`,
   );
 
@@ -124,6 +177,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ok: true,
     juri: resultadoJuri,
     execucoes: resultadoExecucoes,
+    vvd: resultadoVvd,
+    mpuSync,
     totalNovas,
   });
 }

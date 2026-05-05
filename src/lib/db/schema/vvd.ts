@@ -129,14 +129,15 @@ export const processosVVD = pgTable("processos_vvd", {
   id: serial("id").primaryKey(),
 
   // Partes do processo (renomeados: autor→requerido, vitima→requerente)
+  // requeridoId é opcional para suportar processos_vvd criados via importação
+  // automática (sync MPU) antes da resolução da parte requerida.
   requeridoId: integer("requerido_id")
-    .notNull()
     .references(() => partesVVD.id, { onDelete: "cascade" }),
   requerenteId: integer("requerente_id")
     .references(() => partesVVD.id, { onDelete: "set null" }),
 
-  // Identificação do Processo
-  numeroAutos: text("numero_autos").notNull(),
+  // Identificação do Processo (numeroAutos opcional pelo mesmo motivo)
+  numeroAutos: text("numero_autos"),
   tipoProcesso: varchar("tipo_processo", { length: 20 }).notNull().default("MPU"),
 
   // Localização
