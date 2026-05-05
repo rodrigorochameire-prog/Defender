@@ -1016,7 +1016,16 @@ export function DemandaQuickPreview({
                       assistidoId={demanda.assistidoId}
                       processoId={demanda.processoId ?? undefined}
                       demandaId={Number(demanda.id)}
-                      tipoDefault="providencia"
+                      tipoDefault="ciencia"
+                      tiposPrimarios={[
+                        "ciencia",
+                        "providencia",
+                        "diligencia",
+                        "atendimento",
+                        "delegacao",
+                        "anotacao",
+                        "peticao",
+                      ]}
                       onSaved={() => setNovoRegistroOpen(false)}
                       onCancel={() => setNovoRegistroOpen(false)}
                     />
