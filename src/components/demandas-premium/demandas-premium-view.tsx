@@ -2187,6 +2187,141 @@ export default function Demandas() {
     return () => document.removeEventListener("keydown", handler);
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
+  // Conjunto de controles do utility (view mode, settings, busca) extraído do
+  // antigo bottomRow do header. Agora vive inline no children, junto das
+  // ações primárias — eliminando a "segunda barra" que ficava desbalanceada
+  // depois que as atribuições migraram pra topbar.
+  const utilityInlineContent = (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <ViewModeDropdown
+        options={DEMANDAS_VIEW_OPTIONS}
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as any)}
+        variant="dark"
+      />
+      <div className="relative">
+        <button
+          ref={filtersBtnRef}
+          onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+          className="relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+          title="Configurações"
+        >
+          <Settings className="w-[13px] h-[13px]" />
+          {(() => {
+            const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+            return count > 0 ? (
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              </span>
+            ) : null;
+          })()}
+        </button>
+        {isFiltersDropdownOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
+            <div className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
+              <button
+                onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span className="flex-1">Apenas presos</span>
+                {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Archive className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Ver arquivados</span>
+                {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setShowColumnFilters(!showColumnFilters)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Filtros por coluna</span>
+                {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
+              <button
+                onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Recentes / Status</span>
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
+              <button
+                onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-500" />
+                <span className="flex-1">Status</span>
+                {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-violet-500" />
+                <span className="flex-1">Atribuição</span>
+                {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
+              {([
+                { value: "compact" as const, label: "Planilha", icon: List },
+                { value: "table" as const, label: "Tabela", icon: Table2 },
+                { value: "cards" as const, label: "Cards", icon: LayoutList },
+                { value: "grid" as const, label: "Grid", icon: LayoutGrid },
+              ] as const).map(({ value, label, icon: ModeIcon }) => (
+                <button
+                  key={value}
+                  onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                >
+                  <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="flex-1">{label}</span>
+                  {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                </button>
+              ))}
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <button
+                onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Gráficos</span>
+              </button>
+              <button
+                onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Configurações</span>
+              </button>
+            </div>
+          </>,
+          document.body
+        )}
+      </div>
+      <div className="hidden lg:flex relative w-[180px] shrink-0">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar..."
+          className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
       {/* Switcher de atribuições portado pra topbar global (#header-slot).
@@ -2200,7 +2335,7 @@ export default function Demandas() {
             selectedValues={selectedAtribuicoes}
             onToggle={handleAtribuicaoToggle}
             onClear={() => setSelectedAtribuicoes([])}
-            compact
+            iconOnly
             counts={atribuicaoCounts}
           />
         </div>,
@@ -2258,144 +2393,7 @@ export default function Demandas() {
             />
           </div>
         }
-        bottomRow={
-          <div className="flex items-center gap-2.5">
-            {/* ========= LEFT GROUP — view mode + settings (atribuições foram pra topbar) ========= */}
-            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <ViewModeDropdown
-                  options={DEMANDAS_VIEW_OPTIONS}
-                  value={activeTab}
-                  onChange={(v) => setActiveTab(v as any)}
-                  variant="dark"
-                />
-
-                <div className="relative">
-                  <button
-                    ref={filtersBtnRef}
-                    onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                    className="relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-                    title="Configurações"
-                  >
-                    <Settings className="w-[13px] h-[13px]" />
-                    {(() => {
-                      const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
-                      return count > 0 ? (
-                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                        </span>
-                      ) : null;
-                    })()}
-                  </button>
-              {isFiltersDropdownOpen && createPortal(
-                <>
-                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
-                  <div className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
-                    <button
-                      onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="flex-1">Apenas presos</span>
-                      {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setShowArchived(!showArchived)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Archive className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Ver arquivados</span>
-                      {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setShowColumnFilters(!showColumnFilters)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Filtros por coluna</span>
-                      {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
-                    <button
-                      onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Recentes / Status</span>
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
-                    <button
-                      onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Layers className="w-3.5 h-3.5 text-blue-500" />
-                      <span className="flex-1">Status</span>
-                      {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Layers className="w-3.5 h-3.5 text-violet-500" />
-                      <span className="flex-1">Atribuição</span>
-                      {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
-                    {([
-                      { value: "compact" as const, label: "Planilha", icon: List },
-                      { value: "table" as const, label: "Tabela", icon: Table2 },
-                      { value: "cards" as const, label: "Cards", icon: LayoutList },
-                      { value: "grid" as const, label: "Grid", icon: LayoutGrid },
-                    ] as const).map(({ value, label, icon: ModeIcon }) => (
-                      <button
-                        key={value}
-                        onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
-                        <span className="flex-1">{label}</span>
-                        {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                    ))}
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <button
-                      onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Gráficos</span>
-                    </button>
-                    <button
-                      onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Configurações</span>
-                    </button>
-                  </div>
-                </>,
-                document.body
-              )}
-                </div>
-              </div>
-            </div>
-
-            {/* ========= RIGHT CLUSTER — busca (oculta em mobile) ========= */}
-            <div className="hidden md:flex relative w-[220px] shrink-0">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar nome, processo..."
-                className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
-              />
-            </div>
-          </div>
-        }
+        bottomRow={null}
       >
         {/* Row 1: Title + KPIs + actions */}
         <div className="flex items-center justify-between gap-3">
@@ -2453,6 +2451,8 @@ export default function Demandas() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {utilityInlineContent}
+            <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <div className="relative group/import">
               <button
                 ref={importBtnRef}
