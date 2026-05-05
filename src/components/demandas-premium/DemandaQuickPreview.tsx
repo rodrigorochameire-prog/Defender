@@ -592,12 +592,14 @@ export function DemandaQuickPreview({
           <SheetHeader className="p-0 min-w-0 flex-1">
             <SheetTitle className="text-[13px] font-semibold tracking-tight text-white truncate">
               {demanda.assistido ? (
-                <span className="truncate">
-                  <span className="text-white/50 font-normal">Demanda · </span>
-                  {demanda.assistido}
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-white/50 font-normal shrink-0">
+                    {demanda.ato || "Demanda"} ·
+                  </span>
+                  <span className="truncate">{demanda.assistido}</span>
                 </span>
               ) : (
-                "Demanda"
+                demanda.ato || "Demanda"
               )}
             </SheetTitle>
           </SheetHeader>
@@ -650,6 +652,16 @@ export function DemandaQuickPreview({
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
+                {/* Eyebrow: ato — dá contexto antes do nome */}
+                {demanda.ato && (
+                  <div
+                    className="text-[10px] font-semibold uppercase tracking-wider mb-0.5 truncate"
+                    style={{ color: atribuicaoColor }}
+                    title={demanda.ato}
+                  >
+                    {demanda.ato}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
@@ -792,11 +804,10 @@ export function DemandaQuickPreview({
                         setActiveStagePopover(i);
                       }
                     }}
-                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
+                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all min-w-0 ${
                       i === 0 ? "" : "flex-1"
                     }`}
                     title={`${stage.label} — clique para escolher substatus`}
-                    style={{ minWidth: i === 0 ? "auto" : undefined }}
                   >
                     {/* Node */}
                     <div
@@ -819,17 +830,17 @@ export function DemandaQuickPreview({
                         <div className="w-2 h-2 rounded-full bg-white" />
                       )}
                     </div>
-                    {/* Label — neutral for completed, colored only for current */}
+                    {/* Label — truncate com ellipsis e tooltip nativo no title acima */}
                     <span
-                      className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
+                      className={`mt-1.5 text-[10px] font-medium leading-tight max-w-full px-0.5 text-center truncate transition-colors ${
                         isActive || isPopoverOpen ? "font-bold" : "text-neutral-400 dark:text-neutral-500"
                       }`}
                       style={{
                         color: isActive || isPopoverOpen ? stageColor : undefined,
                       }}
                     >
-                      <span className="hidden sm:inline">{stage.label}</span>
-                      <span className="sm:hidden">{stage.short}</span>
+                      <span className="hidden md:inline">{stage.label}</span>
+                      <span className="md:hidden">{stage.short}</span>
                     </span>
                   </button>
                 );
