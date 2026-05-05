@@ -652,16 +652,7 @@ export function DemandaQuickPreview({
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                {/* Eyebrow: ato — dá contexto antes do nome */}
-                {demanda.ato && (
-                  <div
-                    className="text-[10px] font-semibold uppercase tracking-wider mb-0.5 truncate"
-                    style={{ color: atribuicaoColor }}
-                    title={demanda.ato}
-                  >
-                    {demanda.ato}
-                  </div>
-                )}
+                {/* Linha 1: Nome + flags (preso/urgente) */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
@@ -676,33 +667,52 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Processo — chip */}
-                {processo && (
-                  <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      copyToClipboard(processo.numero, "Processo copiado!");
-                    }}
-                    title="Copiar número do processo"
+                {/* Linha 2: Ato — subtitle direto abaixo do nome,
+                    com cor da atribuição como dot e ícone Scale.
+                    É o descritor principal da demanda, então fica em destaque. */}
+                {demanda.ato && (
+                  <div
+                    className="flex items-center gap-1.5 mt-1 truncate"
+                    title={demanda.ato}
                   >
-                    <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                    <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
-                  </button>
+                    <Scale
+                      className="w-3 h-3 shrink-0"
+                      style={{ color: atribuicaoColor }}
+                    />
+                    <span
+                      className="text-[12px] font-medium leading-tight truncate"
+                      style={{ color: atribuicaoColor }}
+                    >
+                      {demanda.ato}
+                    </span>
+                  </div>
                 )}
 
-                {/* Action links */}
-                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {/* Linha 3: Processo + ações inline */}
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {processo && (
+                    <button
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        copyToClipboard(processo.numero, "Processo copiado!");
+                      }}
+                      title="Copiar número do processo"
+                    >
+                      <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                      <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
+                    </button>
+                  )}
                   {demanda.assistidoId && (
                     <Link
                       href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
-                      Ver assistido →
+                      <User className="w-3 h-3" />
+                      Assistido
                     </Link>
                   )}
-                  {/* Drive do assistido — abre a pasta com PDFs de análise + mídias */}
                   {driveFolderUrl && (
                     <a
                       href={driveFolderUrl}
@@ -720,9 +730,10 @@ export function DemandaQuickPreview({
                   {demanda.processoId && (
                     <Link
                       href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
                     >
-                      Ver processo →
+                      <FileText className="w-3 h-3" />
+                      Processo
                     </Link>
                   )}
                 </div>
