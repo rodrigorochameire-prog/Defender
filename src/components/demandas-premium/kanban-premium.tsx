@@ -149,14 +149,25 @@ function getPrazoStripe(level: PrazoLevel, groupColor: string): { color: string;
 // FILTER PILLS — Hoje · Esta semana · Atrasados · Sem prazo · Réu preso
 // ==========================================
 
-export type PillKey = "hoje" | "semana" | "atrasados" | "sem_prazo" | "reu_preso";
+export type PillKey =
+  | "atrasados"
+  | "hoje"
+  | "semana"
+  | "sem_prazo"
+  | "expedidas_hoje"
+  | "expedidas_semana"
+  | "reu_preso";
 
-export const PILL_CONFIG: Array<{ key: PillKey; label: string }> = [
-  { key: "atrasados", label: "Atrasados" },
-  { key: "hoje", label: "Hoje" },
-  { key: "semana", label: "Esta semana" },
-  { key: "sem_prazo", label: "Sem prazo" },
-  { key: "reu_preso", label: "Réu preso" },
+export type PillGroup = "prazo" | "expedicao" | "outros";
+
+export const PILL_CONFIG: Array<{ key: PillKey; label: string; group: PillGroup }> = [
+  { key: "atrasados",        label: "Atrasados",          group: "prazo" },
+  { key: "hoje",             label: "Vence hoje",         group: "prazo" },
+  { key: "semana",           label: "Vence esta semana",  group: "prazo" },
+  { key: "sem_prazo",        label: "Sem prazo",          group: "prazo" },
+  { key: "expedidas_hoje",   label: "Expedidas hoje",     group: "expedicao" },
+  { key: "expedidas_semana", label: "Expedidas na semana",group: "expedicao" },
+  { key: "reu_preso",        label: "Réu preso",          group: "outros" },
 ];
 
 export const PILL_STORAGE_KEY = "kanban:filter-pills";
@@ -180,10 +191,27 @@ export function computePrazoDiff(prazo: string | null | undefined): number | nul
 /** Estrutura mínima necessária para aplicar um pill. */
 export type PillFilterInput = {
   prazo?: string | null;
+  /** YYYY-MM-DD (data de expedição/entrada) — usado pelos pills de expedição. */
+  dataExpedicaoRaw?: string | null;
   prioridade?: string | null;
   estadoPrisional?: string | null;
   reuPreso?: boolean;
 };
+
+/** Diff em dias entre uma data YYYY-MM-DD e hoje (negativo = passado). */
+function computeExpedicaoDiff(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  try {
+    const [y, m, d] = raw.split("-").map(Number);
+    if (!y || !m || !d) return null;
+    const exp = new Date(y, m - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((exp.getTime() - today.getTime()) / 86400000);
+  } catch {
+    return null;
+  }
+}
 
 export function matchesPill(d: PillFilterInput, pill: PillKey): boolean {
   if (pill === "sem_prazo") return !d.prazo;
@@ -193,6 +221,15 @@ export function matchesPill(d: PillFilterInput, pill: PillKey): boolean {
       d.estadoPrisional === "preso" ||
       d.reuPreso === true
     );
+  }
+  if (pill === "expedidas_hoje") {
+    const diff = computeExpedicaoDiff(d.dataExpedicaoRaw);
+    return diff === 0;
+  }
+  if (pill === "expedidas_semana") {
+    const diff = computeExpedicaoDiff(d.dataExpedicaoRaw);
+    // Janela: últimos 7 dias inclusivo (-7 ≤ diff ≤ 0)
+    return diff !== null && diff <= 0 && diff >= -7;
   }
   const prazoDiff = computePrazoDiff(d.prazo);
   switch (pill) {

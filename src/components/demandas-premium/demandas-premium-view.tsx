@@ -2805,6 +2805,37 @@ export default function Demandas() {
           <div className="flex items-center gap-2 shrink-0">
             {utilityInlineContent}
 
+            {/* Atalho visível — aparece automaticamente quando há atrasados ou
+                vencendo hoje E nenhum filtro está ativo. Clicar aplica o filtro. */}
+            {pillFilters.size === 0 && (pillCounts.atrasados > 0 || pillCounts.hoje > 0) && (
+              <div className="hidden md:flex items-center gap-1">
+                {pillCounts.atrasados > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => togglePill("atrasados")}
+                    title="Filtrar atrasados"
+                    className="h-7 pl-2 pr-2 rounded-md bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/30 hover:bg-rose-500/30 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer animate-in fade-in"
+                  >
+                    <AlertTriangle className="w-3 h-3" />
+                    <span className="tabular-nums">{pillCounts.atrasados}</span>
+                    <span>atrasada{pillCounts.atrasados !== 1 ? "s" : ""}</span>
+                  </button>
+                )}
+                {pillCounts.hoje > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => togglePill("hoje")}
+                    title="Filtrar vencendo hoje"
+                    className="h-7 pl-2 pr-2 rounded-md bg-amber-400/20 text-amber-100 ring-1 ring-amber-400/30 hover:bg-amber-400/30 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer"
+                  >
+                    <Clock className="w-3 h-3" />
+                    <span className="tabular-nums">{pillCounts.hoje}</span>
+                    <span>hoje</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Filtros rápidos — botão único + popover. Quando há filtros
                  ativos, mostra contador no botão. */}
             <div className="relative">
