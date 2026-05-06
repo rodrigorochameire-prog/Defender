@@ -120,7 +120,7 @@ export const demandaEventosRouter = router({
   lastByDemandaIds: protectedProcedure
     .input(
       z.object({
-        demandaIds: z.array(z.number().int().positive()).max(500),
+        demandaIds: z.array(z.number().int().positive()).max(5000),
       }),
     )
     .query(async ({ input }) => {
@@ -143,7 +143,7 @@ export const demandaEventosRouter = router({
   pendentesByDemandaIds: protectedProcedure
     .input(
       z.object({
-        demandaIds: z.array(z.number().int().positive()).max(500),
+        demandaIds: z.array(z.number().int().positive()).max(5000),
       }),
     )
     .query(async ({ input }) => {
