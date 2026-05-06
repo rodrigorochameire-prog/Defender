@@ -817,11 +817,15 @@ function SectionsList({
   items,
   renderCard,
   storageKey,
+  isDragging = false,
+  onDropToStatus,
 }: {
   sections: SectionDef[];
   items: KanbanDemanda[];
   renderCard: (d: KanbanDemanda) => React.ReactNode;
   storageKey: string;
+  isDragging?: boolean;
+  onDropToStatus?: (status: string, demandaId: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set();
@@ -833,6 +837,8 @@ function SectionsList({
     }
     return new Set();
   });
+
+  const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
   const toggle = useCallback(
     (label: string) => {
@@ -863,11 +869,41 @@ function SectionsList({
             .replace(/\s+/g, "_");
           return section.statuses.includes(key);
         });
-        if (sectionItems.length === 0) return null;
+        // While dragging, render every section as a drop target (even empty ones)
+        // so the user can move a card into a status that has no current items.
+        if (sectionItems.length === 0 && !isDragging) return null;
         const SectionIcon = section.icon;
         const isCollapsed = collapsed.has(section.label);
+        const isHovered = hoveredSection === section.label;
+        const dropEnabled = isDragging && onDropToStatus;
         return (
-          <div key={section.label}>
+          <div
+            key={section.label}
+            onDragOver={dropEnabled ? (e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (hoveredSection !== section.label) setHoveredSection(section.label);
+            } : undefined}
+            onDragLeave={dropEnabled ? (e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setHoveredSection((cur) => (cur === section.label ? null : cur));
+              }
+            } : undefined}
+            onDrop={dropEnabled ? (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const id = e.dataTransfer.getData("demandaId");
+              if (id && section.statuses.length > 0) {
+                onDropToStatus(section.statuses[0], id);
+              }
+              setHoveredSection(null);
+            } : undefined}
+            className={cn(
+              "transition-colors duration-150",
+              isHovered && dropEnabled && "bg-emerald-50/40 dark:bg-emerald-950/20 ring-1 ring-emerald-300/60 ring-inset rounded-lg p-1 -m-1",
+              dropEnabled && !isHovered && sectionItems.length === 0 && "bg-neutral-50/30 dark:bg-neutral-900/30 ring-1 ring-dashed ring-neutral-200 dark:ring-neutral-800 rounded-lg p-1 -m-1",
+            )}
+          >
             <button
               type="button"
               onClick={() => toggle(section.label)}
@@ -884,7 +920,7 @@ function SectionsList({
               <span className="text-[9px] font-mono text-neutral-300 ml-auto">{sectionItems.length}</span>
             </button>
             {!isCollapsed && (
-              <div className="space-y-2 mb-3">
+              <div className="space-y-2 mb-3 min-h-[8px]">
                 {sectionItems.map(renderCard)}
               </div>
             )}
@@ -974,6 +1010,12 @@ function EmAndamentoExpanded({
                   items={items}
                   renderCard={renderCard}
                   storageKey={`kanban:section-collapse:${sg}`}
+                  isDragging={!!draggedDemandaId}
+                  onDropToStatus={
+                    onStatusChange
+                      ? (status, demandaId) => onStatusChange(demandaId, status)
+                      : undefined
+                  }
                 />
               ) : (
                 // Render flat agrupado por categoria de ato (Diligências, Acompanhar, Saída)
