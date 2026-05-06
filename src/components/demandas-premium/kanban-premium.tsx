@@ -597,16 +597,20 @@ function KanbanCard({
               // Cmd+V no campo de busca.
               navigator.clipboard.writeText(processo).then(
                 () => toast.success("CNJ copiado", {
-                  description: "No PJe, vá em CONSULTA PROCESSOS e cole (Cmd+V).",
-                  duration: 5000,
+                  description: "Cole (Cmd+V) no campo de busca do PJe.",
+                  duration: 4000,
                 }),
                 () => toast.info("Abrindo PJe", {
                   description: `Buscar pelo CNJ: ${processo}`,
                   duration: 5000,
                 }),
               );
+              // Tenta abrir direto na aba Consulta Processos (com sessão
+              // ativa, PJe leva direto pra lá). Se não logado, PJe pode
+              // redirecionar pro login. Se ainda assim cair em "página
+              // não encontrada", vale voltar pra /pje/login.seam.
               window.open(
-                "https://pje.tjba.jus.br/pje/login.seam",
+                "https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam",
                 "_blank",
                 "noopener,noreferrer",
               );
