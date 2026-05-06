@@ -113,7 +113,7 @@ function PlaceholderCard({ placeholder, onRename, isSaving }: PlaceholderCardPro
           </div>
         </div>
         <Link
-          href={`https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?nomeDaParte=&numeroProcesso=${encodeURIComponent(numeroAutos)}`}
+          href={`https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(numeroAutos)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-zinc-600 hover:text-emerald-600"
