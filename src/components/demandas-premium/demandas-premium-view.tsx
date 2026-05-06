@@ -30,7 +30,13 @@ const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-mod
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import type { StatusPrisional } from "@/components/demandas-premium/status-prisional-config";
-import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
+import {
+  KanbanPremium,
+  PILL_CONFIG,
+  PILL_STORAGE_KEY,
+  matchesPill,
+  type PillKey,
+} from "@/components/demandas-premium/kanban-premium";
 import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
@@ -1971,6 +1977,29 @@ export default function Demandas() {
     }));
   }, [demandasFiltradas, lastEventosByDemanda, pendentesEventosByDemanda]);
 
+  // Pills do header (atrasados/hoje/...) — aplicados em cima do conjunto já
+  // filtrado por área, atribuição etc. Vazio = sem filtro de pill.
+  const demandasComPills = useMemo(() => {
+    if (pillFilters.size === 0) return demandasFiltradasComEventos;
+    return demandasFiltradasComEventos.filter((d: any) => {
+      for (const pill of pillFilters) if (!matchesPill(d, pill)) return false;
+      return true;
+    });
+  }, [demandasFiltradasComEventos, pillFilters]);
+
+  // Contagens por pill — aparece no popover pra dar leitura instantânea.
+  const pillCounts = useMemo(() => {
+    const counts: Record<PillKey, number> = {
+      atrasados: 0, hoje: 0, semana: 0, sem_prazo: 0, reu_preso: 0,
+    };
+    for (const d of demandasFiltradasComEventos) {
+      for (const { key } of PILL_CONFIG) {
+        if (matchesPill(d as any, key)) counts[key]++;
+      }
+    }
+    return counts;
+  }, [demandasFiltradasComEventos]);
+
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {
     setDemandas((prev) => {
@@ -2335,6 +2364,44 @@ export default function Demandas() {
   // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
   // o painel de novo registro abre junto. Resetado quando o sheet fecha.
   const [previewOpensWithRegistro, setPreviewOpensWithRegistro] = useState(false);
+
+  // Filtros rápidos (atrasados / hoje / esta semana / sem prazo / réu preso)
+  // — montados no header da página via popover. Persistido em localStorage.
+  const [pillFilters, setPillFilters] = useState<Set<PillKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(PILL_STORAGE_KEY);
+      if (raw) return new Set(JSON.parse(raw) as PillKey[]);
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+  const [isFiltrosOpen, setIsFiltrosOpen] = useState(false);
+  const filtrosBtnRef = useRef<HTMLButtonElement>(null);
+
+  const togglePill = useCallback((key: PillKey) => {
+    setPillFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const clearPills = useCallback(() => {
+    setPillFilters(new Set());
+    try {
+      localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify([]));
+    } catch {
+      // ignore
+    }
+  }, []);
   const [eventsDrawerDemandaId, setEventsDrawerDemandaId] = useState<number | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
   const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
@@ -2731,6 +2798,121 @@ export default function Demandas() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {utilityInlineContent}
+
+            {/* Filtros rápidos — botão único + popover. Quando há filtros
+                 ativos, mostra contador no botão. */}
+            <div className="relative">
+              <button
+                ref={filtrosBtnRef}
+                onClick={() => setIsFiltrosOpen((o) => !o)}
+                aria-pressed={pillFilters.size > 0}
+                title="Filtros rápidos"
+                className={cn(
+                  "h-8 px-3 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium",
+                  pillFilters.size > 0
+                    ? "bg-amber-400/20 text-amber-200 ring-amber-400/30 hover:bg-amber-400/25"
+                    : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
+                )}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Filtros</span>
+                {pillFilters.size > 0 && (
+                  <span className="text-[10px] tabular-nums font-semibold px-1 rounded bg-amber-300/20 text-amber-100">
+                    {pillFilters.size}
+                  </span>
+                )}
+              </button>
+              {isFiltrosOpen && createPortal(
+                <>
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltrosOpen(false)} />
+                  <div
+                    className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1"
+                    style={(() => {
+                      const r = filtrosBtnRef.current?.getBoundingClientRect();
+                      return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {};
+                    })()}
+                  >
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 flex items-center justify-between">
+                      <span>Filtrar por</span>
+                      {pillFilters.size > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { clearPills(); }}
+                          className="text-[10px] normal-case font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
+                        >
+                          Limpar
+                        </button>
+                      )}
+                    </div>
+                    {PILL_CONFIG.map(({ key, label }) => {
+                      const active = pillFilters.has(key);
+                      const count = pillCounts[key];
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => togglePill(key)}
+                          className={cn(
+                            "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
+                            active
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
+                                active
+                                  ? "bg-emerald-500 border-emerald-500 text-white"
+                                  : "border-neutral-300 dark:border-neutral-600",
+                              )}
+                            >
+                              {active && (
+                                <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="2 6 5 9 10 3" />
+                                </svg>
+                              )}
+                            </span>
+                            <span>{label}</span>
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[11px] tabular-nums",
+                              active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
+                              count === 0 && "opacity-40",
+                            )}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>,
+                document.body,
+              )}
+            </div>
+
+            {/* Chips de filtros ativos — clicar remove. Aparece só em telas largas. */}
+            {pillFilters.size > 0 && (
+              <div className="hidden lg:flex items-center gap-1">
+                {PILL_CONFIG.filter(({ key }) => pillFilters.has(key)).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => togglePill(key)}
+                    title="Remover filtro"
+                    className="h-7 pl-2 pr-1.5 rounded-md bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/20 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer"
+                  >
+                    <span>{label}</span>
+                    <span className="text-[9px] tabular-nums opacity-80">{pillCounts[key]}</span>
+                    <X className="w-3 h-3 opacity-70" />
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <div className="relative group/import">
               <button
@@ -3204,7 +3386,7 @@ export default function Demandas() {
           <div className="space-y-3">
             {/* Kanban Premium Board */}
             <KanbanPremium
-              demandas={demandasFiltradasComEventos}
+              demandas={demandasComPills}
               onCardClick={(id) => setPreviewDemandaId(id)}
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
