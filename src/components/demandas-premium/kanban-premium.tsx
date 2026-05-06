@@ -47,6 +47,7 @@ import { StatusPipelineSelector } from "./StatusPipelineSelector";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
 import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -589,12 +590,23 @@ function KanbanCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              // Consulta Processual logada (painel do defensor com
-              // sessão ativa). Abre na visão completa, com acesso aos
-              // casos sob representação. Param numeroProcesso tenta
-              // pré-preencher o campo de busca.
+              // PJe TJBA não aceita query string para pré-preencher o
+              // campo de busca na Consulta Processual logada. Workaround:
+              // copia o CNJ pra clipboard e abre o login (que redireciona
+              // pro painel se já estiver autenticado). Usuário cola com
+              // Cmd+V no campo de busca.
+              navigator.clipboard.writeText(processo).then(
+                () => toast.success("CNJ copiado", {
+                  description: "Cole (Cmd+V) no campo de busca do PJe.",
+                  duration: 4000,
+                }),
+                () => toast.info("Abrindo PJe", {
+                  description: `Buscar pelo CNJ: ${processo}`,
+                  duration: 5000,
+                }),
+              );
               window.open(
-                `https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo)}`,
+                "https://pje.tjba.jus.br/pje/login.seam",
                 "_blank",
                 "noopener,noreferrer",
               );

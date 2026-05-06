@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,14 +111,29 @@ function PlaceholderCard({ placeholder, onRename, isSaving }: PlaceholderCardPro
             </Badge>
           </div>
         </div>
-        <Link
-          href={`https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(numeroAutos)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-zinc-600 hover:text-emerald-600"
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(numeroAutos).then(
+              () => toast.success("CNJ copiado", {
+                description: "Cole (Cmd+V) no campo de busca do PJe.",
+                duration: 4000,
+              }),
+              () => toast.info("Abrindo PJe", {
+                description: `Buscar pelo CNJ: ${numeroAutos}`,
+                duration: 5000,
+              }),
+            );
+            window.open(
+              "https://pje.tjba.jus.br/pje/login.seam",
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }}
+          className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-zinc-600 hover:text-emerald-600 cursor-pointer"
         >
           Abrir no PJe <ExternalLink className="h-3 w-3" />
-        </Link>
+        </button>
       </div>
       <div className="mt-3 flex items-center gap-2">
         <Input

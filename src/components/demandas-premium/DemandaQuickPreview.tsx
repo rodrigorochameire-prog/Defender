@@ -1391,15 +1391,31 @@ export function DemandaQuickPreview({
                   </button>
                 )}
                 {processo?.numeroAutos && (
-                  <a
-                    href={`https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo.numeroAutos)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cnj = processo.numeroAutos!;
+                      navigator.clipboard.writeText(cnj).then(
+                        () => toast.success("CNJ copiado", {
+                          description: "Cole (Cmd+V) no campo de busca do PJe.",
+                          duration: 4000,
+                        }),
+                        () => toast.info("Abrindo PJe", {
+                          description: `Buscar pelo CNJ: ${cnj}`,
+                          duration: 5000,
+                        }),
+                      );
+                      window.open(
+                        "https://pje.tjba.jus.br/pje/login.seam",
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
                     className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:text-purple-700 dark:hover:text-purple-400 transition-colors cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Abrir no PJe
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
