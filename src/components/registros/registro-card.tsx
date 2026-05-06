@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Edit3, Trash2, Mic } from "lucide-react";
@@ -25,10 +25,10 @@ interface Props {
   onDelete?: (id: number) => void;
 }
 
-const COLLAPSE_THRESHOLD = 320;
-
 export function RegistroCard({ registro, onEdit, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const contentRef = useRef<HTMLParagraphElement>(null);
   const data =
     typeof registro.dataRegistro === "string"
       ? new Date(registro.dataRegistro)
@@ -37,7 +37,25 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
   const tipoCfg = REGISTRO_TIPOS[registro.tipo];
 
   const conteudo = registro.conteudo ?? "";
-  const podeColapsar = conteudo.length > COLLAPSE_THRESHOLD;
+
+  // Detecta overflow comparando scrollHeight (altura real) vs clientHeight
+  // (altura visível com line-clamp). Se scrollHeight > clientHeight, há
+  // texto cortado e a "Ver mais" deve aparecer. Reavaliamos quando o
+  // conteúdo muda ou quando o card é redimensionado.
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const check = () => {
+      // Só mede no estado colapsado — quando expandido não há clamp.
+      if (!expanded) {
+        setHasOverflow(el.scrollHeight > el.clientHeight + 1);
+      }
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [conteudo, expanded]);
 
   const autorIniciais = (registro.autor?.name || "")
     .split(" ")
@@ -103,14 +121,15 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
       {conteudo && (
         <div className="mt-1.5">
           <p
+            ref={contentRef}
             className={cn(
               "text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed",
-              podeColapsar && !expanded && "line-clamp-6",
+              !expanded && "line-clamp-3",
             )}
           >
             {conteudo}
           </p>
-          {podeColapsar && (
+          {(hasOverflow || expanded) && (
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
