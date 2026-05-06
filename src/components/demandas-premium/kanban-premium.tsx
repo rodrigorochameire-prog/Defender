@@ -589,11 +589,12 @@ function KanbanCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              // ConsultaPublica/listView.seam pré-preenche o CNJ no campo
-              // de busca. O usuário clica no resultado e PJe usa a sessão
-              // pra acesso completo (incluindo casos com representação).
+              // Consulta Processual logada (painel do defensor com
+              // sessão ativa). Abre na visão completa, com acesso aos
+              // casos sob representação. Param numeroProcesso tenta
+              // pré-preencher o campo de busca.
               window.open(
-                `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?nomeDaParte=&numeroProcesso=${encodeURIComponent(processo)}`,
+                `https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo)}`,
                 "_blank",
                 "noopener,noreferrer",
               );

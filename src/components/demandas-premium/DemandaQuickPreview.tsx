@@ -1392,7 +1392,7 @@ export function DemandaQuickPreview({
                 )}
                 {processo?.numeroAutos && (
                   <a
-                    href={`https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?nomeDaParte=&numeroProcesso=${encodeURIComponent(processo.numeroAutos)}`}
+                    href={`https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo.numeroAutos)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:text-purple-700 dark:hover:text-purple-400 transition-colors cursor-pointer"
