@@ -126,6 +126,58 @@ function getPrazoStripeColor(prazoDiff: number | null): string | null {
 // StatusChangePopover replaced by StatusPipelineSelector
 
 // ==========================================
+// FILTER PILLS — Hoje · Esta semana · Atrasados · Sem prazo · Réu preso
+// ==========================================
+
+type PillKey = "hoje" | "semana" | "atrasados" | "sem_prazo" | "reu_preso";
+
+const PILL_CONFIG: Array<{ key: PillKey; label: string }> = [
+  { key: "hoje", label: "Hoje" },
+  { key: "semana", label: "Esta semana" },
+  { key: "atrasados", label: "Atrasados" },
+  { key: "sem_prazo", label: "Sem prazo" },
+  { key: "reu_preso", label: "Réu preso" },
+];
+
+const PILL_STORAGE_KEY = "kanban:filter-pills";
+
+/** Calcula diff em dias entre prazo (DD/MM/YYYY) e hoje. Null se inválido/ausente. */
+function computePrazoDiff(prazo: string | null | undefined): number | null {
+  if (!prazo) return null;
+  try {
+    const parts = prazo.split("/").map(Number);
+    if (parts.length !== 3) return null;
+    const [dd, mm, yy] = parts;
+    if (!dd || !mm || yy === undefined) return null;
+    const year = yy < 100 ? 2000 + yy : yy;
+    const prazoDate = new Date(year, mm - 1, dd);
+    return Math.ceil((prazoDate.getTime() - Date.now()) / 86400000);
+  } catch {
+    return null;
+  }
+}
+
+function matchesPill(d: KanbanDemanda, pill: PillKey): boolean {
+  if (pill === "sem_prazo") return !d.prazo;
+  if (pill === "reu_preso") {
+    return (
+      d.prioridade === "REU_PRESO" ||
+      d.estadoPrisional === "preso" ||
+      d.reuPreso === true
+    );
+  }
+  const prazoDiff = computePrazoDiff(d.prazo);
+  switch (pill) {
+    case "hoje":
+      return prazoDiff === 0;
+    case "semana":
+      return prazoDiff !== null && prazoDiff >= 0 && prazoDiff <= 7;
+    case "atrasados":
+      return prazoDiff !== null && prazoDiff < 0;
+  }
+}
+
+// ==========================================
 // AGRUPAMENTO POR CATEGORIA DE ATO
 // ==========================================
 
@@ -1148,6 +1200,51 @@ export function KanbanPremium({
   const [draggedDemandaId, setDraggedDemandaId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
+  // Filter pills (hoje / semana / atrasados / sem_prazo / reu_preso) — AND combined
+  const [pillFilters, setPillFilters] = useState<Set<PillKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(PILL_STORAGE_KEY);
+      if (raw) return new Set(JSON.parse(raw) as PillKey[]);
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  const togglePill = useCallback((key: PillKey) => {
+    setPillFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const clearPills = useCallback(() => {
+    setPillFilters(new Set());
+    try {
+      localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify([]));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const filteredDemandas = useMemo(() => {
+    if (pillFilters.size === 0) return demandas;
+    return demandas.filter((d) => {
+      for (const pill of pillFilters) {
+        if (!matchesPill(d, pill)) return false;
+      }
+      return true;
+    });
+  }, [demandas, pillFilters]);
+
   // Mobile states
   const [mobileActiveColumn, setMobileActiveColumn] = useState<KanbanColumn>("em_andamento");
   const [mobileActiveSubGroup, setMobileActiveSubGroup] = useState<EmAndamentoSubGroup>("preparacao");
@@ -1171,7 +1268,7 @@ export function KanbanPremium({
       acompanhar: [],
     };
 
-    for (const d of demandas) {
+    for (const d of filteredDemandas) {
       const rawKey = (d.substatus || d.status || "triagem");
       const statusKey = rawKey.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
       const statusCfg = getStatusConfig(statusKey);
@@ -1218,7 +1315,7 @@ export function KanbanPremium({
       subGroupDemandas: subs,
       totalEmAndamento: cols.em_andamento.length,
     };
-  }, [demandas, showArchived]);
+  }, [filteredDemandas, showArchived]);
 
   // Count non-empty sub-groups for grid sizing
   const nonEmptySubGroupCount = useMemo(() => {
@@ -1305,8 +1402,57 @@ export function KanbanPremium({
     return mobileActiveColumn as StatusGroup;
   }, [mobileActiveColumn, mobileActiveSubGroup]);
 
+  const totalAfterFilter = filteredDemandas.length;
+  const hasActivePills = pillFilters.size > 0;
+
   return (
     <div className="space-y-2">
+      {/* ===================== FILTER PILLS ===================== */}
+      <div className="flex items-center gap-1.5 flex-wrap pb-1">
+        {PILL_CONFIG.map(({ key, label }) => {
+          const active = pillFilters.has(key);
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => togglePill(key)}
+              aria-pressed={active}
+              className={cn(
+                "text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors cursor-pointer",
+                active
+                  ? "text-emerald-700 bg-emerald-50 ring-1 ring-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 dark:ring-emerald-700"
+                  : "text-neutral-500 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+        {hasActivePills && (
+          <button
+            type="button"
+            onClick={clearPills}
+            className="ml-auto text-[11px] font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 underline-offset-2 hover:underline cursor-pointer"
+          >
+            Limpar
+          </button>
+        )}
+      </div>
+
+      {hasActivePills && totalAfterFilter === 0 && (
+        <div className="flex items-center justify-center gap-2 py-3 text-[11px] text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900/50 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-lg">
+          <span>Nenhuma demanda corresponde aos filtros</span>
+          <span className="text-neutral-300">·</span>
+          <button
+            type="button"
+            onClick={clearPills}
+            className="text-emerald-600 hover:underline cursor-pointer"
+          >
+            Limpar
+          </button>
+        </div>
+      )}
+
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">
         {/* Column tabs */}
