@@ -111,16 +111,30 @@ interface KanbanPremiumProps {
 }
 
 /**
- * Cor da faixa lateral de heatmap por proximidade de prazo. Sutil — só
- * aparece quando o prazo está nos próximos 7 dias ou já vencido. Distante
- * de 7+ dias = sem faixa pra evitar poluição visual.
+ * Nível de emphasis do prazo. Usado pra modular a faixa lateral e o badge
+ * do prazo dentro do card. A intensidade vem da própria cor do grupo
+ * (sem hue dissonante) — o que muda é largura/opacidade/font-weight.
  */
-function getPrazoStripeColor(prazoDiff: number | null): string | null {
+type PrazoLevel = "vencido" | "urgente" | "proximo" | null;
+
+function getPrazoLevel(prazoDiff: number | null): PrazoLevel {
   if (prazoDiff === null) return null;
-  if (prazoDiff < 0) return "rgba(244, 63, 94, 0.55)"; // rose-500/55
-  if (prazoDiff <= 3) return "rgba(245, 158, 11, 0.5)"; // amber-500/50
-  if (prazoDiff <= 7) return "rgba(234, 179, 8, 0.35)"; // yellow-500/35
+  if (prazoDiff < 0) return "vencido";
+  if (prazoDiff <= 3) return "urgente";
+  if (prazoDiff <= 7) return "proximo";
   return null;
+}
+
+/**
+ * Faixa lateral usando a cor do grupo do card. Distante de 7+ dias = sem
+ * faixa. Vencido/urgente/próximo modulam só largura e opacidade — sempre
+ * dentro do hue do grupo, sem cor distoante.
+ */
+function getPrazoStripe(level: PrazoLevel, groupColor: string): { color: string; width: number } | null {
+  if (level === null) return null;
+  if (level === "vencido") return { color: `${groupColor}ff`, width: 4 };
+  if (level === "urgente") return { color: `${groupColor}b3`, width: 3 };
+  return { color: `${groupColor}66`, width: 2 };
 }
 
 // StatusChangePopover replaced by StatusPipelineSelector
@@ -385,6 +399,7 @@ function KanbanCard({
       // ignore
     }
   }
+  const prazoLevel = getPrazoLevel(prazoDiff);
 
   const currentStatusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
 
@@ -417,14 +432,15 @@ function KanbanCard({
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
-      {/* Heatmap stripe — sutil, só aparece quando prazo nos próximos 7d ou vencido */}
+      {/* Heatmap stripe — usa a cor do grupo do card (sem hue dissonante).
+          Largura/opacidade modulam pela urgência. Some a 7+ dias. */}
       {(() => {
-        const stripe = getPrazoStripeColor(prazoDiff);
+        const stripe = getPrazoStripe(prazoLevel, groupColor);
         if (!stripe) return null;
         return (
           <div
-            className="absolute left-0 top-0 bottom-0 w-[3px] pointer-events-none"
-            style={{ background: stripe }}
+            className="absolute left-0 top-0 bottom-0 pointer-events-none"
+            style={{ background: stripe.color, width: stripe.width }}
             aria-hidden
           />
         );
@@ -542,24 +558,33 @@ function KanbanCard({
         <div className="flex items-center gap-1.5">
           {demanda.prazo && (
             <span
-              className={`text-[11px] font-mono tabular-nums ${
-                prazoDiff !== null && prazoDiff < 0
-                  ? "text-rose-500 font-bold"
-                  : prazoDiff !== null && prazoDiff <= 3
-                    ? "text-amber-500 font-semibold"
-                    : "text-neutral-400"
+              className={`text-[11px] font-mono tabular-nums flex items-center gap-0.5 ${
+                prazoLevel === "vencido"
+                  ? "font-bold px-1.5 py-0.5 rounded"
+                  : prazoLevel === "urgente"
+                    ? "font-semibold"
+                    : prazoLevel === "proximo"
+                      ? "font-medium"
+                      : "text-neutral-400"
               }`}
+              style={
+                prazoLevel === "vencido"
+                  ? { color: groupColor, backgroundColor: `${groupColor}1a` }
+                  : prazoLevel
+                    ? { color: groupColor }
+                    : undefined
+              }
             >
               {prazoDiff !== null && prazoDiff < 0 ? (
-                <span className="flex items-center gap-0.5">
+                <>
                   <Clock className="w-2.5 h-2.5" />
                   {Math.abs(prazoDiff)}d
-                </span>
+                </>
               ) : prazoDiff !== null && prazoDiff === 0 ? (
-                <span className="flex items-center gap-0.5">
+                <>
                   <Clock className="w-2.5 h-2.5" />
                   Hoje
-                </span>
+                </>
               ) : prazoDiff !== null && prazoDiff <= 7 ? (
                 <span>{prazoDiff}d</span>
               ) : (
