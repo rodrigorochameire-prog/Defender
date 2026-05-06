@@ -2548,9 +2548,9 @@ export default function Demandas() {
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
       {/* Switcher de atribuições portado pra topbar global (#header-slot).
           Multi-select: cada chip é toggle, "Todas" limpa selecao.
-          Aparece ao lado dos breadcrumbs, sempre visível. */}
+          overflow-x-auto previne colisão quando há muitos tipos de processo. */}
       {headerSlotEl && createPortal(
-        <div className="flex items-center gap-2 pl-3">
+        <div className="flex items-center gap-2 pl-3 overflow-x-auto scrollbar-none max-w-[min(50vw,640px)]">
           <AtribuicaoPills
             variant="dark"
             options={atribuicaoOptions}
@@ -2656,11 +2656,11 @@ export default function Demandas() {
         }
         bottomRow={null}
       >
-        {/* Row 1: Title + KPIs + actions */}
+        {/* Row 1 (merged-bar): Title + stats inline + actions */}
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-300 shrink-0"
+              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors duration-300 shrink-0"
               style={
                 headerAccentHex
                   ? {
@@ -2671,41 +2671,40 @@ export default function Demandas() {
               }
             >
               <ListTodo
-                className="w-4 h-4"
+                className="w-3.5 h-3.5"
                 style={{ color: headerAccentHex ?? "#ffffff" }}
               />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Demandas
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[10px] tabular-nums leading-tight mt-0.5 whitespace-nowrap">
-                <span className="text-white/55">
-                  <span className="text-white/85 font-semibold">
-                    {demandas.filter(d => !d.arquivado).length}
+            <h1 className="text-white text-[13px] font-semibold tracking-tight whitespace-nowrap">
+              Demandas
+            </h1>
+            <div className="flex items-center gap-2 text-[11px] tabular-nums whitespace-nowrap shrink-0">
+              <span className="text-white/85 font-semibold">
+                {demandas.filter(d => !d.arquivado).length}
+              </span>
+              {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
+                <span
+                  className="flex items-center gap-1 text-amber-300/90"
+                  title={`${deadlineStats.hoje + deadlineStats.semana} urgentes`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <span className="font-semibold">
+                    {deadlineStats.hoje + deadlineStats.semana}
                   </span>
-                  {" "}ativas
                 </span>
-                {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
-                  <span className="flex items-center gap-1 text-amber-300/90">
-                    <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
-                    <span className="font-semibold">
-                      {deadlineStats.hoje + deadlineStats.semana}
-                    </span>
-                    <span className="text-amber-300/70">urgentes</span>
-                  </span>
-                )}
-                {deadlineStats.vencidas > 0 && (
-                  <span className="flex items-center gap-1 text-rose-300/90">
-                    <span className="w-1 h-1 rounded-full bg-rose-400 shrink-0" />
-                    <span className="font-semibold">{deadlineStats.vencidas}</span>
-                    <span className="text-rose-300/70">atrasadas</span>
-                  </span>
-                )}
-              </div>
+              )}
+              {deadlineStats.vencidas > 0 && (
+                <span
+                  className="flex items-center gap-1 text-rose-300/90"
+                  title={`${deadlineStats.vencidas} atrasadas`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                  <span className="font-semibold">{deadlineStats.vencidas}</span>
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {utilityInlineContent}
             <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <div className="relative group/import">
