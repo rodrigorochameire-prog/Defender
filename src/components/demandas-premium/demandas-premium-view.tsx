@@ -2806,22 +2806,22 @@ export default function Demandas() {
               </span>
               {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
                 <span
-                  className="flex items-center gap-1 text-amber-300/90"
+                  className="flex items-center gap-1 text-white/55"
                   title={`${deadlineStats.hoje + deadlineStats.semana} urgentes`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  <span className="font-semibold">
+                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <span className="font-medium">
                     {deadlineStats.hoje + deadlineStats.semana}
                   </span>
                 </span>
               )}
               {deadlineStats.vencidas > 0 && (
                 <span
-                  className="flex items-center gap-1 text-rose-300/90"
+                  className="flex items-center gap-1 text-white/55"
                   title={`${deadlineStats.vencidas} atrasadas`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-                  <span className="font-semibold">{deadlineStats.vencidas}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <span className="font-medium">{deadlineStats.vencidas}</span>
                 </span>
               )}
             </div>
@@ -2838,7 +2838,7 @@ export default function Demandas() {
                     type="button"
                     onClick={() => togglePill("atrasados")}
                     title="Filtrar atrasados"
-                    className="h-7 pl-2 pr-2 rounded-md bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/30 hover:bg-rose-500/30 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer animate-in fade-in"
+                    className="h-7 pl-2 pr-2 rounded-md bg-white/[0.06] text-white/70 ring-1 ring-white/[0.08] hover:bg-white/[0.12] hover:text-white transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer animate-in fade-in"
                   >
                     <AlertTriangle className="w-3 h-3" />
                     <span className="tabular-nums">{pillCounts.atrasados}</span>
@@ -2850,7 +2850,7 @@ export default function Demandas() {
                     type="button"
                     onClick={() => togglePill("hoje")}
                     title="Filtrar vencendo hoje"
-                    className="h-7 pl-2 pr-2 rounded-md bg-amber-400/20 text-amber-100 ring-1 ring-amber-400/30 hover:bg-amber-400/30 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer"
+                    className="h-7 pl-2 pr-2 rounded-md bg-white/[0.06] text-white/70 ring-1 ring-white/[0.08] hover:bg-white/[0.12] hover:text-white transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer"
                   >
                     <Clock className="w-3 h-3" />
                     <span className="tabular-nums">{pillCounts.hoje}</span>
@@ -3090,11 +3090,11 @@ export default function Demandas() {
             <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="h-8 px-3 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="h-8 w-8 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center"
               title="Nova demanda"
+              aria-label="Nova demanda"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Nova</span>
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
