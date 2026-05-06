@@ -27,7 +27,6 @@ import {
   Briefcase,
   Clock,
   X,
-  AlertCircle,
   Mail,
   ArrowRight,
   Sparkles,
@@ -437,7 +436,6 @@ export function DemandaQuickPreview({
   currentIndex,
   totalCount,
 }: DemandaQuickPreviewProps) {
-  const [metadataOpen, setMetadataOpen] = useState(true);
   const [docsOpen, setDocsOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
@@ -1215,9 +1213,106 @@ export function DemandaQuickPreview({
               )}
             </div>
 
-            {/* Bloco B — Cronologia (Task 5 finaliza a ordem) */}
+            {/* Bloco B — Cronologia */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* preenche em Task 5 */}
+              {/* Expedição da intimação — data em que foi expedida no PJe.
+                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006). */}
+              {demanda.data && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Expedição</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">{demanda.data}</span>
+                </div>
+              )}
+
+              {/* Prazo row — editável + badge calculado */}
+              <div className="flex items-center px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prazo</span>
+                <div className="flex-1 flex items-center justify-end gap-2" data-prazo-trigger={demanda.id}>
+                  {prazoBadge && prazoBadge.cor !== "none" && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums",
+                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+                      )}
+                    >
+                      {prazoBadge.texto}
+                    </span>
+                  )}
+                  <InlineDatePicker
+                    value={demanda.prazo}
+                    onChange={(v) => onPrazoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+
+              {/* Importado — quando a demanda entrou no banco */}
+              {demanda.dataInclusao && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 text-neutral-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                    {(() => {
+                      try {
+                        const d = new Date(demanda.dataInclusao);
+                        if (isNaN(d.getTime())) return demanda.dataInclusao;
+                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+                          + " · " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                      } catch {
+                        return demanda.dataInclusao;
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Atualizado — quando foi a última modificação */}
+              {demanda.updatedAt && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atualizado</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                    {(() => {
+                      try {
+                        const d = new Date(demanda.updatedAt);
+                        const hoje = new Date();
+                        const diffDays = Math.floor((hoje.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays === 0) return `Hoje · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays === 1) return `Ontem · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays < 7) return `${diffDays} dias atrás`;
+                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+                      } catch {
+                        return "—";
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Providências preview — o que tem que ser feito (se houver) */}
+              {demanda.providencias && (
+                <div className="flex items-start px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0 mt-0.5">Providências</span>
+                  <p className="flex-1 text-right text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed line-clamp-2" title={demanda.providencias}>
+                    {demanda.providencias}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Bloco C — Ações rápidas (Task 6) */}
