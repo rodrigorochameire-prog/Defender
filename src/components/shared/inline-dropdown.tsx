@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight, Check, Search } from "lucide-react";
 
 interface InlineDropdownOption {
@@ -44,24 +45,39 @@ export function InlineDropdown({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [alignRight, setAlignRight] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Detecta se o dropdown vai escapar pela borda direita do viewport e
-  // alinha à direita do trigger nesse caso (evita corte em sheets estreitas).
-  useEffect(() => {
-    if (!isOpen || !ref.current) return;
+  // Calcula a posição absoluta do painel a partir do bounding rect do trigger.
+  // Usa useLayoutEffect pra medir DOM sincronamente após layout, evitando flicker.
+  // Se o painel for escapar pela borda direita do viewport, alinha à direita.
+  useLayoutEffect(() => {
+    if (!isOpen || !ref.current) {
+      setPosition(null);
+      return;
+    }
     const rect = ref.current.getBoundingClientRect();
     const DROPDOWN_MIN_WIDTH = 200;
     const VIEWPORT_PADDING = 16;
-    setAlignRight(rect.left + DROPDOWN_MIN_WIDTH > window.innerWidth - VIEWPORT_PADDING);
+    const wouldOverflow = rect.left + DROPDOWN_MIN_WIDTH > window.innerWidth - VIEWPORT_PADDING;
+    setAlignRight(wouldOverflow);
+    setPosition({
+      top: rect.bottom + 4,
+      left: wouldOverflow ? rect.right - DROPDOWN_MIN_WIDTH : rect.left,
+      width: Math.max(rect.width, DROPDOWN_MIN_WIDTH),
+    });
   }, [isOpen]);
 
-  // Click-outside: listen to both mousedown and touchstart for mobile
+  // Click-outside: listen to both mousedown and touchstart for mobile.
+  // Como o painel está em portal (document.body), também checa o portal element.
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (ref.current?.contains(target)) return;
+      const portalEl = document.querySelector("[data-inline-dropdown-portal='true']");
+      if (portalEl?.contains(target)) return;
+      setIsOpen(false);
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -185,7 +201,7 @@ export function InlineDropdown({
         }`} />
       </button>
 
-      {isOpen && (() => {
+      {isOpen && position && (() => {
         const isGrid = layout === "grid";
         const isAccordion = layout === "accordion";
         const groupCount = Object.keys(filteredGrouped).length;
@@ -200,10 +216,18 @@ export function InlineDropdown({
             return next;
           });
         };
-        return (
+        // alignRight é mantido via setAlignRight no useLayoutEffect — usado pra ajustar
+        // o left no `position`. Marca como referenciado pra evitar warning de unused.
+        void alignRight;
+        return createPortal(
         <div
-          className={`absolute ${alignRight ? "right-0" : "left-0"} top-full mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl z-50 max-w-[calc(100vw-2rem)] max-h-72 overflow-y-auto py-1`}
-          style={{ minWidth: `${gridMinWidth}px` }}
+          data-inline-dropdown-portal="true"
+          className="fixed z-[10000] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-w-[calc(100vw-2rem)] max-h-72 overflow-y-auto py-1"
+          style={{
+            top: position.top,
+            left: position.left,
+            minWidth: Math.max(position.width, gridMinWidth),
+          }}
         >
           {/* Type-ahead indicator */}
           {filterQuery && (
@@ -283,7 +307,8 @@ export function InlineDropdown({
               );
             })}
           </div>
-        </div>
+        </div>,
+        document.body,
         );
       })()}
     </div>
