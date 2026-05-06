@@ -1977,6 +1977,20 @@ export default function Demandas() {
     }));
   }, [demandasFiltradas, lastEventosByDemanda, pendentesEventosByDemanda]);
 
+  // Filtros rápidos (atrasados/hoje/...) — DECLARADO AQUI pra ficar antes
+  // dos useMemo abaixo que referenciam pillFilters. Mover pra baixo dispara
+  // TDZ em build de produção (Cannot access 'pillFilters' before init).
+  const [pillFilters, setPillFilters] = useState<Set<PillKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(PILL_STORAGE_KEY);
+      if (raw) return new Set(JSON.parse(raw) as PillKey[]);
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
   // Pills do header (atrasados/hoje/...) — aplicados em cima do conjunto já
   // filtrado por área, atribuição etc. Vazio = sem filtro de pill.
   const demandasComPills = useMemo(() => {
@@ -1990,7 +2004,9 @@ export default function Demandas() {
   // Contagens por pill — aparece no popover pra dar leitura instantânea.
   const pillCounts = useMemo(() => {
     const counts: Record<PillKey, number> = {
-      atrasados: 0, hoje: 0, semana: 0, sem_prazo: 0, reu_preso: 0,
+      atrasados: 0, hoje: 0, semana: 0, sem_prazo: 0,
+      expedidas_hoje: 0, expedidas_semana: 0,
+      reu_preso: 0,
     };
     for (const d of demandasFiltradasComEventos) {
       for (const { key } of PILL_CONFIG) {
@@ -2365,18 +2381,8 @@ export default function Demandas() {
   // o painel de novo registro abre junto. Resetado quando o sheet fecha.
   const [previewOpensWithRegistro, setPreviewOpensWithRegistro] = useState(false);
 
-  // Filtros rápidos (atrasados / hoje / esta semana / sem prazo / réu preso)
-  // — montados no header da página via popover. Persistido em localStorage.
-  const [pillFilters, setPillFilters] = useState<Set<PillKey>>(() => {
-    if (typeof window === "undefined") return new Set();
-    try {
-      const raw = localStorage.getItem(PILL_STORAGE_KEY);
-      if (raw) return new Set(JSON.parse(raw) as PillKey[]);
-    } catch {
-      // ignore
-    }
-    return new Set();
-  });
+  // pillFilters declarado em escopo superior (linha ~1980) pra evitar TDZ
+  // nos useMemo de demandasComPills/pillCounts que referenciam ele.
   const [isFiltrosOpen, setIsFiltrosOpen] = useState(false);
   const filtrosBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -2844,48 +2850,62 @@ export default function Demandas() {
                         </button>
                       )}
                     </div>
-                    {PILL_CONFIG.map(({ key, label }) => {
-                      const active = pillFilters.has(key);
-                      const count = pillCounts[key];
+                    {(["prazo", "expedicao", "outros"] as const).map((groupKey) => {
+                      const groupItems = PILL_CONFIG.filter((p) => p.group === groupKey);
+                      if (groupItems.length === 0) return null;
+                      const groupLabel =
+                        groupKey === "prazo" ? "Por prazo" :
+                        groupKey === "expedicao" ? "Por expedição" : "Outros";
                       return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => togglePill(key)}
-                          className={cn(
-                            "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
-                            active
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                              : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
-                                active
-                                  ? "bg-emerald-500 border-emerald-500 text-white"
-                                  : "border-neutral-300 dark:border-neutral-600",
-                              )}
-                            >
-                              {active && (
-                                <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="2 6 5 9 10 3" />
-                                </svg>
-                              )}
-                            </span>
-                            <span>{label}</span>
-                          </span>
-                          <span
-                            className={cn(
-                              "text-[11px] tabular-nums",
-                              active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
-                              count === 0 && "opacity-40",
-                            )}
-                          >
-                            {count}
-                          </span>
-                        </button>
+                        <div key={groupKey}>
+                          <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-300 dark:text-neutral-600">
+                            {groupLabel}
+                          </div>
+                          {groupItems.map(({ key, label }) => {
+                            const active = pillFilters.has(key);
+                            const count = pillCounts[key];
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => togglePill(key)}
+                                className={cn(
+                                  "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
+                                  active
+                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
+                                )}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
+                                      active
+                                        ? "bg-emerald-500 border-emerald-500 text-white"
+                                        : "border-neutral-300 dark:border-neutral-600",
+                                    )}
+                                  >
+                                    {active && (
+                                      <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="2 6 5 9 10 3" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                  <span>{label}</span>
+                                </span>
+                                <span
+                                  className={cn(
+                                    "text-[11px] tabular-nums",
+                                    active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
+                                    count === 0 && "opacity-40",
+                                  )}
+                                >
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       );
                     })}
                   </div>
