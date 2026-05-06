@@ -513,8 +513,7 @@ function KanbanCard({
             <EventLine evento={demanda.pendenteEvento} variant="pendente" />
           </div>
         )}
-        {/* Última atividade — só renderiza quando há evento */}
-        {demanda.lastEvento && (
+        {/* Última atividade — sempre presente; placeholder se não há eventos */}
         <div
           className={`mt-1.5 ${
             demanda.pendenteEvento
@@ -524,21 +523,29 @@ function KanbanCard({
         >
           <div className="flex items-center gap-1.5">
             <div className="flex-1 min-w-0">
-              <EventLine evento={demanda.lastEvento} />
+              {demanda.lastEvento ? (
+                <EventLine evento={demanda.lastEvento} />
+              ) : (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">
+                  <span className="opacity-50 mr-1">+</span>registrar atividade
+                </span>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded((v) => !v);
-              }}
-              aria-label={expanded ? "Colapsar" : "Expandir"}
-              className="shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition"
-            >
-              <ChevronDown
-                className={`size-3 transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
-              />
-            </button>
+            {demanda.lastEvento && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
+                aria-label={expanded ? "Colapsar" : "Expandir"}
+                className="shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition"
+              >
+                <ChevronDown
+                  className={`size-3 transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
+                />
+              </button>
+            )}
           </div>
           {expanded && (
             <div className="mt-2 pt-2 border-t border-neutral-200/40 dark:border-neutral-700/40 space-y-1">
@@ -581,7 +588,6 @@ function KanbanCard({
             </div>
           )}
         </div>
-        )}
       </div>
     </div>
   );
