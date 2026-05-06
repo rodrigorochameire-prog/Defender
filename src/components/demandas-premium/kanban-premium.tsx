@@ -28,6 +28,7 @@ import {
   Eye,
   CheckCircle2,
   CloudOff,
+  CalendarPlus,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -102,9 +103,24 @@ interface KanbanPremiumProps {
    */
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
+  /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
+  onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
+}
+
+/**
+ * Cor da faixa lateral de heatmap por proximidade de prazo. Sutil — só
+ * aparece quando o prazo está nos próximos 7 dias ou já vencido. Distante
+ * de 7+ dias = sem faixa pra evitar poluição visual.
+ */
+function getPrazoStripeColor(prazoDiff: number | null): string | null {
+  if (prazoDiff === null) return null;
+  if (prazoDiff < 0) return "rgba(244, 63, 94, 0.55)"; // rose-500/55
+  if (prazoDiff <= 3) return "rgba(245, 158, 11, 0.5)"; // amber-500/50
+  if (prazoDiff <= 7) return "rgba(234, 179, 8, 0.35)"; // yellow-500/35
+  return null;
 }
 
 // StatusChangePopover replaced by StatusPipelineSelector
@@ -247,6 +263,7 @@ function KanbanCard({
   onCardClick,
   onOpenEventsDrawer,
   onStatusChange,
+  onAgendarAudiencia,
   copyToClipboard,
   isDragging: isBeingDragged,
   onDragStart,
@@ -258,6 +275,7 @@ function KanbanCard({
   onCardClick: (id: string | number) => void;
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
+  onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
   onDragStart?: (id: string) => void;
@@ -336,13 +354,52 @@ function KanbanCard({
         transition-all duration-200
         overflow-hidden
         ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
-        ${prazoDiff !== null && prazoDiff < 0 ? "ring-1 ring-rose-300/40 dark:ring-rose-500/20" : ""}
-        ${prazoDiff !== null && prazoDiff >= 0 && prazoDiff <= 3 ? "ring-1 ring-amber-300/30 dark:ring-amber-500/15" : ""}
       `}
       style={{ borderColor: `${groupColor}60` }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
     >
+      {/* Heatmap stripe — sutil, só aparece quando prazo nos próximos 7d ou vencido */}
+      {(() => {
+        const stripe = getPrazoStripeColor(prazoDiff);
+        if (!stripe) return null;
+        return (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[3px] pointer-events-none"
+            style={{ background: stripe }}
+            aria-hidden
+          />
+        );
+      })()}
+
+      {/* Hover action — Agendar audiência */}
+      {onAgendarAudiencia && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAgendarAudiencia(String(demanda.id));
+          }}
+          aria-label="Agendar audiência"
+          title="Agendar audiência"
+          className="
+            absolute top-1.5 right-1.5 z-10
+            opacity-0 group-hover/kcard:opacity-100
+            transition-opacity duration-150
+            w-6 h-6 rounded-md flex items-center justify-center
+            bg-white/95 dark:bg-neutral-800/95
+            border border-neutral-200 dark:border-neutral-700
+            text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400
+            hover:border-emerald-400/60 dark:hover:border-emerald-500/40
+            hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40
+            shadow-sm
+            cursor-pointer
+          "
+        >
+          <CalendarPlus className="w-3 h-3" />
+        </button>
+      )}
+
       <div className="px-3 py-2.5">
         {/* Row 1: Nome + Flags */}
         <div className="flex items-start gap-1.5 mb-0.5">
@@ -789,6 +846,7 @@ function EmAndamentoExpanded({
   onCardClick,
   onOpenEventsDrawer,
   onStatusChange,
+  onAgendarAudiencia,
   copyToClipboard,
   draggedDemandaId,
   onDragStart,
@@ -798,6 +856,7 @@ function EmAndamentoExpanded({
   onCardClick: (id: string | number) => void;
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
+  onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   onDragStart?: (id: string) => void;
@@ -834,6 +893,7 @@ function EmAndamentoExpanded({
             onCardClick={onCardClick}
             onOpenEventsDrawer={onOpenEventsDrawer}
             onStatusChange={onStatusChange}
+            onAgendarAudiencia={onAgendarAudiencia}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
             onDragStart={onDragStart}
@@ -1017,6 +1077,7 @@ function MobileCardList({
   onCardClick,
   onOpenEventsDrawer,
   onStatusChange,
+  onAgendarAudiencia,
   copyToClipboard,
   draggedDemandaId,
   onDragStart,
@@ -1027,6 +1088,7 @@ function MobileCardList({
   onCardClick: (id: string | number) => void;
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
+  onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   onDragStart?: (id: string) => void;
@@ -1050,6 +1112,7 @@ function MobileCardList({
           onCardClick={onCardClick}
           onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
+          onAgendarAudiencia={onAgendarAudiencia}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
           onDragStart={onDragStart}
@@ -1074,6 +1137,7 @@ export function KanbanPremium({
   onCardClick,
   onOpenEventsDrawer,
   onStatusChange,
+  onAgendarAudiencia,
   copyToClipboard,
   selectedAtribuicoes = [],
   showArchived = false,
@@ -1270,6 +1334,7 @@ export function KanbanPremium({
           onCardClick={onCardClick}
           onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
+          onAgendarAudiencia={onAgendarAudiencia}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
           onDragStart={setDraggedDemandaId}
@@ -1356,6 +1421,7 @@ export function KanbanPremium({
                       onCardClick={onCardClick}
                       onOpenEventsDrawer={onOpenEventsDrawer}
                       onStatusChange={onStatusChange}
+                      onAgendarAudiencia={onAgendarAudiencia}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
                       onDragStart={setDraggedDemandaId}
@@ -1378,6 +1444,7 @@ export function KanbanPremium({
                               onCardClick={onCardClick}
                               onOpenEventsDrawer={onOpenEventsDrawer}
                               onStatusChange={onStatusChange}
+                              onAgendarAudiencia={onAgendarAudiencia}
                               copyToClipboard={copyToClipboard}
                               isDragging={draggedDemandaId === String(d.id)}
                               onDragStart={setDraggedDemandaId}
@@ -1443,6 +1510,7 @@ export function KanbanPremium({
                         onCardClick={onCardClick}
                         onOpenEventsDrawer={onOpenEventsDrawer}
                         onStatusChange={onStatusChange}
+                        onAgendarAudiencia={onAgendarAudiencia}
                         copyToClipboard={copyToClipboard}
                         isDragging={draggedDemandaId === String(d.id)}
                         onDragStart={setDraggedDemandaId}

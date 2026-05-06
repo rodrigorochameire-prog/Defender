@@ -3184,6 +3184,7 @@ export default function Demandas() {
               onCardClick={(id) => setPreviewDemandaId(id)}
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
+              onAgendarAudiencia={handleAgendarAudiencia}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
