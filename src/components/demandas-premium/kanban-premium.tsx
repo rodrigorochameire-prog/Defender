@@ -694,6 +694,99 @@ function SubGroupHeader({
 }
 
 // ==========================================
+// SECTIONS LIST — header colapsável por seção
+// ==========================================
+
+type SectionDef = {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  statuses: string[];
+};
+
+function SectionsList({
+  sections,
+  items,
+  renderCard,
+  storageKey,
+}: {
+  sections: SectionDef[];
+  items: KanbanDemanda[];
+  renderCard: (d: KanbanDemanda) => React.ReactNode;
+  storageKey: string;
+}) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  const toggle = useCallback(
+    (label: string) => {
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        if (next.has(label)) next.delete(label);
+        else next.add(label);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [storageKey],
+  );
+
+  return (
+    <>
+      {sections.map((section) => {
+        const sectionItems = items.filter((d) => {
+          const key = (d.substatus || d.status || "")
+            .replace(/^\d+\s*-\s*/, "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[̀-ͯ]/g, "")
+            .replace(/\s+/g, "_");
+          return section.statuses.includes(key);
+        });
+        if (sectionItems.length === 0) return null;
+        const SectionIcon = section.icon;
+        const isCollapsed = collapsed.has(section.label);
+        return (
+          <div key={section.label}>
+            <button
+              type="button"
+              onClick={() => toggle(section.label)}
+              className="w-full flex items-center gap-1.5 px-2 py-1 mb-1.5 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 rounded transition-colors group/seccol"
+            >
+              <ChevronDown
+                className={cn(
+                  "w-2.5 h-2.5 shrink-0 text-neutral-300 transition-transform duration-200 group-hover/seccol:text-neutral-500",
+                  isCollapsed && "-rotate-90",
+                )}
+              />
+              <SectionIcon className="w-3 h-3 text-neutral-400" />
+              <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">{section.label}</span>
+              <span className="text-[9px] font-mono text-neutral-300 ml-auto">{sectionItems.length}</span>
+            </button>
+            {!isCollapsed && (
+              <div className="space-y-2 mb-3">
+                {sectionItems.map(renderCard)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+// ==========================================
 // EM ANDAMENTO EXPANDED — only non-empty
 // ==========================================
 
@@ -761,27 +854,12 @@ function EmAndamentoExpanded({
             </div>
             <div className="space-y-2.5 flex-1">
               {sections ? (
-                // Render with visual sections
-                sections.map((section) => {
-                  const sectionItems = items.filter((d) => {
-                    const key = (d.substatus || d.status || "").replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
-                    return section.statuses.includes(key);
-                  });
-                  if (sectionItems.length === 0) return null;
-                  const SectionIcon = section.icon;
-                  return (
-                    <div key={section.label}>
-                      <div className="flex items-center gap-1.5 px-2 py-1 mb-1.5">
-                        <SectionIcon className="w-3 h-3 text-neutral-400" />
-                        <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">{section.label}</span>
-                        <span className="text-[9px] font-mono text-neutral-300 ml-auto">{sectionItems.length}</span>
-                      </div>
-                      <div className="space-y-2 mb-3">
-                        {sectionItems.map(renderCard)}
-                      </div>
-                    </div>
-                  );
-                })
+                <SectionsList
+                  sections={sections}
+                  items={items}
+                  renderCard={renderCard}
+                  storageKey={`kanban:section-collapse:${sg}`}
+                />
               ) : (
                 // Render flat agrupado por categoria de ato (Diligências, Acompanhar, Saída)
                 <GroupedByAtoList
