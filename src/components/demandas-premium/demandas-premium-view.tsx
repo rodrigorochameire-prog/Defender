@@ -29,6 +29,7 @@ const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/dupl
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
+import type { StatusPrisional } from "@/components/demandas-premium/status-prisional-config";
 import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
 import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
@@ -831,6 +832,25 @@ export default function Demandas() {
       toast.error("Erro ao criar demanda: " + error.message);
     },
   });
+
+  // Mutation para atualizar status prisional do assistido (chamada via Bloco A
+  // do quick-preview). Atualização vai direto na tabela assistidos.
+  const updateAssistidoMutation = trpc.assistidos.update.useMutation({
+    onSuccess: () => {
+      utils.demandas.list.invalidate();
+      toast.success("Status prisional atualizado");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar status prisional: " + error.message);
+    },
+  });
+
+  const handleStatusPrisionalChange = (assistidoId: number, status: string) => {
+    updateAssistidoMutation.mutate({
+      id: assistidoId,
+      statusPrisional: status as StatusPrisional,
+    });
+  };
 
   // Mutation para registrar audiência vinda do modal de confirmação
   const createAudienciaMutation = trpc.audiencias.create.useMutation({
@@ -3415,6 +3435,7 @@ export default function Demandas() {
         onAtribuicaoChange={handleAtribuicaoChange}
         onTipoProcessoChange={handleTipoProcessoChange}
         onAssistidoNomeChange={handleAssistidoNomeChange}
+        onStatusPrisionalChange={handleStatusPrisionalChange}
         onArchive={handleArchiveDemanda}
         onDelete={handleDeleteDemanda}
         onNavigate={handlePreviewNavigate}

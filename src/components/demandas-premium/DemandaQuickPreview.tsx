@@ -51,6 +51,7 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
+import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
@@ -106,6 +107,8 @@ interface DemandaQuickPreviewProps {
   /** Edita nome do assistido vinculado. Útil pra corrigir placeholders
    *  ("⚠ A identificar...") e typos. Chamado direto no assistido. */
   onAssistidoNomeChange?: (id: string, nome: string) => void;
+  /** Atualiza o status prisional do assistido vinculado à demanda */
+  onStatusPrisionalChange?: (assistidoId: number, status: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate?: (direction: "prev" | "next") => void;
@@ -425,6 +428,7 @@ export function DemandaQuickPreview({
   onAtribuicaoChange,
   onTipoProcessoChange,
   onAssistidoNomeChange,
+  onStatusPrisionalChange,
   onArchive,
   onDelete,
   onNavigate,
@@ -1169,16 +1173,31 @@ export function DemandaQuickPreview({
                 </div>
               )}
 
-              {/* Status prisional — Task 4 substitui por InlineDropdown */}
-              {demanda.estadoPrisional && (
+              {/* Status prisional — editável via InlineDropdown.
+                  Atualiza assistidos.statusPrisional via mutation. */}
+              {demanda.assistidoId && onStatusPrisionalChange && (
                 <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">
-                    {demanda.estadoPrisional}
-                  </span>
+                  <div className="flex-1 flex items-center justify-end">
+                    <InlineDropdown
+                      value={demanda.estadoPrisional?.toUpperCase() || "SOLTO"}
+                      compact
+                      displayValue={
+                        <span className={cn(
+                          "text-xs font-medium px-1.5 py-0.5 rounded transition-colors",
+                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.bg,
+                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.color,
+                        )}>
+                          {STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.label || "Solto"}
+                        </span>
+                      }
+                      options={STATUS_PRISIONAL_OPTIONS}
+                      onChange={(v) => onStatusPrisionalChange(demanda.assistidoId!, v)}
+                    />
+                  </div>
                 </div>
               )}
 
