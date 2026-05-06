@@ -29,6 +29,8 @@ import {
   CheckCircle2,
   CloudOff,
   CalendarPlus,
+  StickyNote,
+  ExternalLink,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -105,6 +107,10 @@ interface KanbanPremiumProps {
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
+  /** Atalho hover no card → abre o preview já no modo "novo registro" */
+  onOpenRegistro?: (demandaId: string) => void;
+  /** Atalho hover no card → toggle prioridade URGENTE */
+  onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
@@ -330,6 +336,8 @@ function KanbanCard({
   onOpenEventsDrawer,
   onStatusChange,
   onAgendarAudiencia,
+  onOpenRegistro,
+  onToggleUrgent,
   copyToClipboard,
   isDragging: isBeingDragged,
   isFocused = false,
@@ -343,6 +351,8 @@ function KanbanCard({
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   onAgendarAudiencia?: (demandaId: string) => void;
+  onOpenRegistro?: (demandaId: string) => void;
+  onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
   isFocused?: boolean;
@@ -446,33 +456,116 @@ function KanbanCard({
         );
       })()}
 
-      {/* Hover action — Agendar audiência */}
-      {onAgendarAudiencia && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAgendarAudiencia(String(demanda.id));
-          }}
-          aria-label="Agendar audiência"
-          title="Agendar audiência"
-          className="
-            absolute top-1.5 right-1.5 z-10
-            opacity-0 group-hover/kcard:opacity-100
-            transition-opacity duration-150
-            w-6 h-6 rounded-md flex items-center justify-center
-            bg-white/95 dark:bg-neutral-800/95
-            border border-neutral-200 dark:border-neutral-700
-            text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400
-            hover:border-emerald-400/60 dark:hover:border-emerald-500/40
-            hover:bg-emerald-50/80 dark:hover:bg-emerald-950/40
-            shadow-sm
-            cursor-pointer
-          "
-        >
-          <CalendarPlus className="w-3 h-3" />
-        </button>
-      )}
+      {/* Hover actions — toolbar discreta com cor do grupo */}
+      <div
+        className="
+          absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5
+          opacity-0 group-hover/kcard:opacity-100
+          transition-opacity duration-150
+        "
+      >
+        {onAgendarAudiencia && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAgendarAudiencia(String(demanda.id));
+            }}
+            aria-label="Agendar audiência"
+            title="Agendar audiência"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+              e.currentTarget.style.color = groupColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
+            <CalendarPlus className="w-3 h-3" />
+          </button>
+        )}
+        {onOpenRegistro && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenRegistro(String(demanda.id));
+            }}
+            aria-label="Adicionar registro"
+            title="Adicionar registro"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+              e.currentTarget.style.color = groupColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
+            <StickyNote className="w-3 h-3" />
+          </button>
+        )}
+        {onToggleUrgent && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleUrgent(String(demanda.id), isUrgente);
+            }}
+            aria-label={isUrgente ? "Remover urgência" : "Marcar urgente"}
+            title={isUrgente ? "Remover urgência" : "Marcar urgente"}
+            className={cn(
+              "w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-colors",
+              isUrgente
+                ? "text-rose-500 dark:text-rose-400"
+                : "text-neutral-400 dark:text-neutral-500",
+            )}
+            onMouseEnter={(e) => {
+              if (!isUrgente) {
+                e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+                e.currentTarget.style.color = groupColor;
+              } else {
+                e.currentTarget.style.backgroundColor = "rgba(244,63,94,0.12)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              if (!isUrgente) e.currentTarget.style.color = "";
+            }}
+          >
+            <Flame className="w-3 h-3" />
+          </button>
+        )}
+        {processo && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(
+                `https://pje.tjba.jus.br/pje/ConsultaPublica/DetalheProcessoConsultaPublica/listView.seam?ca=${encodeURIComponent(processo)}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+            }}
+            aria-label="Abrir no PJe"
+            title="Abrir no PJe"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+              e.currentTarget.style.color = groupColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        )}
+      </div>
 
       <div className="px-3 py-2.5">
         {/* Row 1: Nome + Flags */}
@@ -966,6 +1059,8 @@ function EmAndamentoExpanded({
   onOpenEventsDrawer,
   onStatusChange,
   onAgendarAudiencia,
+  onOpenRegistro,
+  onToggleUrgent,
   copyToClipboard,
   draggedDemandaId,
   focusedCardId,
@@ -977,6 +1072,8 @@ function EmAndamentoExpanded({
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   onAgendarAudiencia?: (demandaId: string) => void;
+  onOpenRegistro?: (demandaId: string) => void;
+  onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;
@@ -1015,6 +1112,8 @@ function EmAndamentoExpanded({
             onOpenEventsDrawer={onOpenEventsDrawer}
             onStatusChange={onStatusChange}
             onAgendarAudiencia={onAgendarAudiencia}
+            onOpenRegistro={onOpenRegistro}
+            onToggleUrgent={onToggleUrgent}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
             isFocused={focusedCardId === String(d.id)}
@@ -1206,6 +1305,8 @@ function MobileCardList({
   onOpenEventsDrawer,
   onStatusChange,
   onAgendarAudiencia,
+  onOpenRegistro,
+  onToggleUrgent,
   copyToClipboard,
   draggedDemandaId,
   focusedCardId,
@@ -1218,6 +1319,8 @@ function MobileCardList({
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   onAgendarAudiencia?: (demandaId: string) => void;
+  onOpenRegistro?: (demandaId: string) => void;
+  onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;
@@ -1243,6 +1346,8 @@ function MobileCardList({
           onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           onAgendarAudiencia={onAgendarAudiencia}
+          onOpenRegistro={onOpenRegistro}
+          onToggleUrgent={onToggleUrgent}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
           isFocused={focusedCardId === String(d.id)}
@@ -1269,6 +1374,8 @@ export function KanbanPremium({
   onOpenEventsDrawer,
   onStatusChange,
   onAgendarAudiencia,
+  onOpenRegistro,
+  onToggleUrgent,
   copyToClipboard,
   selectedAtribuicoes = [],
   showArchived = false,
@@ -1695,6 +1802,8 @@ export function KanbanPremium({
           onOpenEventsDrawer={onOpenEventsDrawer}
           onStatusChange={onStatusChange}
           onAgendarAudiencia={onAgendarAudiencia}
+          onOpenRegistro={onOpenRegistro}
+          onToggleUrgent={onToggleUrgent}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
           focusedCardId={focusedCardId}
@@ -1783,6 +1892,8 @@ export function KanbanPremium({
                       onOpenEventsDrawer={onOpenEventsDrawer}
                       onStatusChange={onStatusChange}
                       onAgendarAudiencia={onAgendarAudiencia}
+                      onOpenRegistro={onOpenRegistro}
+                      onToggleUrgent={onToggleUrgent}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
                       focusedCardId={focusedCardId}
@@ -1807,6 +1918,8 @@ export function KanbanPremium({
                               onOpenEventsDrawer={onOpenEventsDrawer}
                               onStatusChange={onStatusChange}
                               onAgendarAudiencia={onAgendarAudiencia}
+                              onOpenRegistro={onOpenRegistro}
+                              onToggleUrgent={onToggleUrgent}
                               copyToClipboard={copyToClipboard}
                               isDragging={draggedDemandaId === String(d.id)}
                               isFocused={focusedCardId === String(d.id)}
@@ -1874,6 +1987,8 @@ export function KanbanPremium({
                         onOpenEventsDrawer={onOpenEventsDrawer}
                         onStatusChange={onStatusChange}
                         onAgendarAudiencia={onAgendarAudiencia}
+                        onOpenRegistro={onOpenRegistro}
+                        onToggleUrgent={onToggleUrgent}
                         copyToClipboard={copyToClipboard}
                         isDragging={draggedDemandaId === String(d.id)}
                         isFocused={focusedCardId === String(d.id)}

@@ -868,6 +868,28 @@ export default function Demandas() {
     });
   };
 
+  // Atalho do card: abre o preview já com o painel de novo registro expandido.
+  const handleOpenRegistro = (demandaId: string) => {
+    setPreviewOpensWithRegistro(true);
+    setPreviewDemandaId(demandaId);
+  };
+
+  // Atalho do card: alterna a prioridade entre URGENTE e NORMAL sem abrir o preview.
+  // (réu preso é flag separada — não mexemos aqui pra não atropelar.)
+  const handleToggleUrgent = (demandaId: string, currentlyUrgent: boolean) => {
+    const numericId = parseInt(demandaId, 10);
+    if (isNaN(numericId)) return;
+    const next = currentlyUrgent ? "NORMAL" : "URGENTE";
+    trpcUpdateDemanda.mutate(
+      { id: numericId, prioridade: next },
+      {
+        onSuccess: () => {
+          toast.success(currentlyUrgent ? "Urgência removida" : "Marcado como urgente");
+        },
+      },
+    );
+  };
+
   // Mutation para registrar audiência vinda do modal de confirmação
   const createAudienciaMutation = trpc.audiencias.create.useMutation({
     onSuccess: (result) => {
@@ -2310,6 +2332,9 @@ export default function Demandas() {
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+  // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
+  // o painel de novo registro abre junto. Resetado quando o sheet fecha.
+  const [previewOpensWithRegistro, setPreviewOpensWithRegistro] = useState(false);
   const [eventsDrawerDemandaId, setEventsDrawerDemandaId] = useState<number | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
   const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
@@ -3184,6 +3209,8 @@ export default function Demandas() {
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
               onAgendarAudiencia={handleAgendarAudiencia}
+              onOpenRegistro={handleOpenRegistro}
+              onToggleUrgent={handleToggleUrgent}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
@@ -3444,7 +3471,13 @@ export default function Demandas() {
       <DemandaQuickPreview
         demanda={previewDemanda}
         open={!!previewDemandaId}
-        onOpenChange={(open) => { if (!open) setPreviewDemandaId(null); }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewDemandaId(null);
+            setPreviewOpensWithRegistro(false);
+          }
+        }}
+        initialNovoRegistro={previewOpensWithRegistro}
         onStatusChange={handleStatusChange}
         onAtoChange={handleAtoChange}
         onPrazoChange={handlePrazoChange}

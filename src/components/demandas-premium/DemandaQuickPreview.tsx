@@ -111,6 +111,8 @@ interface DemandaQuickPreviewProps {
   onStatusPrisionalChange?: (assistidoId: number, status: string) => void;
   /** Abre o AudienciaConfirmModal pré-populado com a demanda */
   onAgendarAudiencia?: (demandaId: string) => void;
+  /** Quando true, abre o painel de novo registro logo na primeira renderização */
+  initialNovoRegistro?: boolean;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate?: (direction: "prev" | "next") => void;
@@ -432,6 +434,7 @@ export function DemandaQuickPreview({
   onAssistidoNomeChange,
   onStatusPrisionalChange,
   onAgendarAudiencia,
+  initialNovoRegistro,
   onArchive,
   onDelete,
   onNavigate,
@@ -442,7 +445,13 @@ export function DemandaQuickPreview({
 }: DemandaQuickPreviewProps) {
   const [docsOpen, setDocsOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
-  const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
+  const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
+
+  // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
+  // expande o painel de registro automaticamente.
+  useEffect(() => {
+    if (open && initialNovoRegistro) setNovoRegistroOpen(true);
+  }, [open, initialNovoRegistro]);
   // Edição inline do nome do assistido. Abre quando o usuário clica na row;
   // commit no Enter/blur, cancel no Esc.
   const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
