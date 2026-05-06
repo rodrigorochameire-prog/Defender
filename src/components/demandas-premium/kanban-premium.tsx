@@ -552,11 +552,11 @@ function KanbanCard({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              // Painel do defensor com sessão — contorna o bloqueio
-              // de sigilo do caminho ConsultaPublica. Match com link
-              // em DemandaQuickPreview.
+              // ConsultaPublica/listView.seam pré-preenche o CNJ no campo
+              // de busca. O usuário clica no resultado e PJe usa a sessão
+              // pra acesso completo (incluindo casos com representação).
               window.open(
-                `https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo)}`,
+                `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?nomeDaParte=&numeroProcesso=${encodeURIComponent(processo)}`,
                 "_blank",
                 "noopener,noreferrer",
               );
