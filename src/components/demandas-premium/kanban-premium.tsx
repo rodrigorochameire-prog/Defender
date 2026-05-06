@@ -318,6 +318,7 @@ function KanbanCard({
   onAgendarAudiencia,
   copyToClipboard,
   isDragging: isBeingDragged,
+  isFocused = false,
   onDragStart,
   onDragEnd,
   showAtribBadge = false,
@@ -330,6 +331,7 @@ function KanbanCard({
   onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
+  isFocused?: boolean;
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
   showAtribBadge?: boolean;
@@ -389,6 +391,7 @@ function KanbanCard({
   return (
     <div
       draggable
+      data-card-id={String(demanda.id)}
       onClick={() => !isBeingDragged && onCardClick(demanda.id)}
       onDragStart={(e) => {
         e.dataTransfer.setData("demandaId", String(demanda.id));
@@ -396,7 +399,8 @@ function KanbanCard({
         onDragStart?.(String(demanda.id));
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`
+      className={cn(
+        `
         relative group/kcard cursor-grab active:cursor-grabbing
         rounded-xl bg-white dark:bg-neutral-900
         border-[1.5px]
@@ -405,8 +409,10 @@ function KanbanCard({
         hover:-translate-y-0.5
         transition-all duration-200
         overflow-hidden
-        ${isBeingDragged ? "opacity-50 scale-[0.98] shadow-lg" : ""}
-      `}
+        `,
+        isBeingDragged && "opacity-50 scale-[0.98] shadow-lg",
+        isFocused && "ring-2 ring-emerald-400 ring-offset-1 dark:ring-offset-neutral-950",
+      )}
       style={{ borderColor: `${groupColor}60` }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
@@ -901,6 +907,7 @@ function EmAndamentoExpanded({
   onAgendarAudiencia,
   copyToClipboard,
   draggedDemandaId,
+  focusedCardId,
   onDragStart,
   onDragEnd,
 }: {
@@ -911,6 +918,7 @@ function EmAndamentoExpanded({
   onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
+  focusedCardId?: string | null;
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
 }) {
@@ -948,6 +956,7 @@ function EmAndamentoExpanded({
             onAgendarAudiencia={onAgendarAudiencia}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
+            isFocused={focusedCardId === String(d.id)}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           />
@@ -1132,6 +1141,7 @@ function MobileCardList({
   onAgendarAudiencia,
   copyToClipboard,
   draggedDemandaId,
+  focusedCardId,
   onDragStart,
   onDragEnd,
 }: {
@@ -1143,6 +1153,7 @@ function MobileCardList({
   onAgendarAudiencia?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
+  focusedCardId?: string | null;
   onDragStart?: (id: string) => void;
   onDragEnd?: () => void;
 }) {
@@ -1167,6 +1178,7 @@ function MobileCardList({
           onAgendarAudiencia={onAgendarAudiencia}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
+          isFocused={focusedCardId === String(d.id)}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
         />
@@ -1244,6 +1256,9 @@ export function KanbanPremium({
       return true;
     });
   }, [demandas, pillFilters]);
+
+  // Keyboard navigation — focused card id (j/k/↑/↓ navigate, Enter opens, a=audiência, r=resolvido, Esc clears)
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
 
   // Mobile states
   const [mobileActiveColumn, setMobileActiveColumn] = useState<KanbanColumn>("em_andamento");
@@ -1402,6 +1417,138 @@ export function KanbanPremium({
     return mobileActiveColumn as StatusGroup;
   }, [mobileActiveColumn, mobileActiveSubGroup]);
 
+  // Visible card ids in display order — used by j/k keyboard navigation.
+  // Mirrors render order: column (visibleColumns) → for em_andamento expanded: subgroup → section → cards
+  // For non-section subgroups and other columns: flat order (already sorted by atos/expedicao).
+  const visibleCardIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const col of visibleColumns) {
+      if (col === "em_andamento") {
+        if (emAndamentoExpanded) {
+          const subOrder: EmAndamentoSubGroup[] = ["preparacao", "diligencias", "acompanhar", "saida"];
+          for (const sg of subOrder) {
+            const items = subGroupDemandas[sg] || [];
+            if (items.length === 0) continue;
+            const sections = SUB_GROUP_SECTIONS[sg];
+            if (sections) {
+              for (const section of sections) {
+                for (const d of items) {
+                  const key = (d.substatus || d.status || "")
+                    .replace(/^\d+\s*-\s*/, "")
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[̀-ͯ]/g, "")
+                    .replace(/\s+/g, "_");
+                  if (section.statuses.includes(key)) ids.push(String(d.id));
+                }
+              }
+            } else {
+              for (const d of items.slice(0, 30)) ids.push(String(d.id));
+            }
+          }
+        } else {
+          for (const d of (columnDemandas.em_andamento || []).slice(0, 30)) ids.push(String(d.id));
+        }
+      } else {
+        for (const d of (columnDemandas[col] || []).slice(0, 30)) ids.push(String(d.id));
+      }
+    }
+    return ids;
+  }, [visibleColumns, emAndamentoExpanded, subGroupDemandas, columnDemandas]);
+
+  // Reset focus if focused card disappears from view (filter change, etc.)
+  useEffect(() => {
+    if (focusedCardId && !visibleCardIds.includes(focusedCardId)) {
+      setFocusedCardId(null);
+    }
+  }, [focusedCardId, visibleCardIds]);
+
+  // Global keydown listener for keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Bail when typing in inputs/textarea/contenteditable
+      const target = document.activeElement as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+      // Bail when modifier keys held (allow only bare keys)
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (visibleCardIds.length === 0) return;
+
+      const moveFocus = (delta: number) => {
+        e.preventDefault();
+        setFocusedCardId((prev) => {
+          let nextIdx: number;
+          if (!prev) {
+            nextIdx = delta > 0 ? 0 : visibleCardIds.length - 1;
+          } else {
+            const curIdx = visibleCardIds.indexOf(prev);
+            if (curIdx === -1) {
+              nextIdx = 0;
+            } else {
+              nextIdx = curIdx + delta;
+              if (nextIdx < 0) nextIdx = 0;
+              if (nextIdx >= visibleCardIds.length) nextIdx = visibleCardIds.length - 1;
+            }
+          }
+          const nextId = visibleCardIds[nextIdx];
+          // Scroll into view after state commit
+          requestAnimationFrame(() => {
+            const el = document.querySelector(`[data-card-id="${nextId}"]`);
+            (el as HTMLElement | null)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          });
+          return nextId;
+        });
+      };
+
+      switch (e.key) {
+        case "j":
+        case "ArrowDown":
+          moveFocus(1);
+          break;
+        case "k":
+        case "ArrowUp":
+          moveFocus(-1);
+          break;
+        case "Enter":
+          if (focusedCardId) {
+            e.preventDefault();
+            onCardClick(focusedCardId);
+          }
+          break;
+        case "a":
+          if (focusedCardId && onAgendarAudiencia) {
+            e.preventDefault();
+            onAgendarAudiencia(focusedCardId);
+          }
+          break;
+        case "r":
+          if (focusedCardId && onStatusChange) {
+            e.preventDefault();
+            onStatusChange(focusedCardId, "resolvido");
+          }
+          break;
+        case "Escape":
+          if (focusedCardId) {
+            e.preventDefault();
+            setFocusedCardId(null);
+          }
+          break;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
+
   const totalAfterFilter = filteredDemandas.length;
   const hasActivePills = pillFilters.size > 0;
 
@@ -1483,6 +1630,7 @@ export function KanbanPremium({
           onAgendarAudiencia={onAgendarAudiencia}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
+          focusedCardId={focusedCardId}
           onDragStart={setDraggedDemandaId}
           onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
         />
@@ -1570,6 +1718,7 @@ export function KanbanPremium({
                       onAgendarAudiencia={onAgendarAudiencia}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
+                      focusedCardId={focusedCardId}
                       onDragStart={setDraggedDemandaId}
                       onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                     />
@@ -1593,6 +1742,7 @@ export function KanbanPremium({
                               onAgendarAudiencia={onAgendarAudiencia}
                               copyToClipboard={copyToClipboard}
                               isDragging={draggedDemandaId === String(d.id)}
+                              isFocused={focusedCardId === String(d.id)}
                               onDragStart={setDraggedDemandaId}
                               onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                             />
@@ -1659,6 +1809,7 @@ export function KanbanPremium({
                         onAgendarAudiencia={onAgendarAudiencia}
                         copyToClipboard={copyToClipboard}
                         isDragging={draggedDemandaId === String(d.id)}
+                        isFocused={focusedCardId === String(d.id)}
                         onDragStart={setDraggedDemandaId}
                         onDragEnd={() => { setDraggedDemandaId(null); setDragOverColumn(null); }}
                       />
