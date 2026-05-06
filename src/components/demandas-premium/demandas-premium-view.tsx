@@ -659,9 +659,28 @@ export default function Demandas() {
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
   const [selectedTipoAto, setSelectedTipoAto] = useState<string | null>(null);
   // Filtro por tipo de processo (AP/MPU/IP/APF/EP/CAUTELAR/ANPP/OUTRO).
-  // Usado especialmente em VVD para triar AP × MPU sem precisar criar
-  // atribuição separada — o tipo já existe no banco como facet.
+  // Mantido por compatibilidade — usado por filtros de outras telas. O
+  // header só expõe o switch MPU agora.
   const [selectedTipoProcesso, setSelectedTipoProcesso] = useState<string | null>(null);
+  // Switch MPU 3-estados: tudo / só MPU / sem MPU. Substitui as 7 chips
+  // que invadiam o topbar — útil principalmente em VVD pra alternar
+  // rapidamente entre AP × MPU sem mudar de atribuição.
+  type MpuFilter = "all" | "only_mpu" | "without_mpu";
+  const [mpuFilter, setMpuFilter] = useState<MpuFilter>(() => {
+    if (typeof window === "undefined") return "all";
+    try {
+      const v = localStorage.getItem("demandas:mpu-filter");
+      if (v === "only_mpu" || v === "without_mpu" || v === "all") return v;
+    } catch { /* ignore */ }
+    return "all";
+  });
+  const cycleMpuFilter = useCallback(() => {
+    setMpuFilter((prev) => {
+      const next: MpuFilter = prev === "all" ? "only_mpu" : prev === "only_mpu" ? "without_mpu" : "all";
+      try { localStorage.setItem("demandas:mpu-filter", next); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
   const [selectedStatusGroup, setSelectedStatusGroup] = useState<StatusGroup | null>(null);
   const [selectedCharts, setSelectedCharts] = useState<string[]>(["atribuicoes", "status", "atos", "situacao-prisional"]);
   const [chartTypes, setChartTypes] = useState<Record<string, string>>({
@@ -1936,6 +1955,11 @@ export default function Demandas() {
         !selectedTipoAto || demanda.tipoAto === selectedTipoAto;
       const matchTipoProcesso =
         !selectedTipoProcesso || (demanda.processos?.[0]?.tipo === selectedTipoProcesso);
+      const tipoProc = demanda.processos?.[0]?.tipo;
+      const matchMpu =
+        mpuFilter === "all" ? true :
+        mpuFilter === "only_mpu" ? tipoProc === "MPU" :
+        /* without_mpu */ tipoProc !== "MPU";
       const matchStatusGroup =
         !selectedStatusGroup ||
         selectedStatusGroup.includes(getStatusConfig(demanda.status).group);
@@ -1949,10 +1973,11 @@ export default function Demandas() {
         matchStatusGroup &&
         matchEstadoPrisional &&
         matchTipoAto &&
-        matchTipoProcesso
+        matchTipoProcesso &&
+        matchMpu
       );
     });
-  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedTipoProcesso, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
+  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedTipoProcesso, selectedStatusGroup, mpuFilter, showArchived, defensorUserId, isVisaoGeral]);
 
   // Adapta linha snake_case (raw SQL de demandaEventos) ao shape camelCase EventoLine
   function toEventoLine(row: any): any {
@@ -2658,43 +2683,42 @@ export default function Demandas() {
             iconOnly
             counts={atribuicaoCounts}
           />
-          {/* Facet de tipo de processo — aparece só quando há ≥2 tipos no
-              recorte atual (atribuição+arquivado). Permite triar AP × MPU
-              dentro de VVD sem precisar criar atribuição separada. */}
-          {tipoProcessoChips.length >= 2 && (
+          {/* Switch MPU 3-estados: tudo / só MPU / sem MPU. Aparece apenas
+              quando há demanda MPU no recorte atual — caso contrário polui
+              sem ganho. Substitui as 7 chips antigas que invadiam o topbar. */}
+          {(tipoProcessoCounts["MPU"] ?? 0) > 0 && (
             <>
               <span className="h-4 w-px bg-white/[0.10]" aria-hidden />
-              <div className="flex items-center gap-1">
-                {tipoProcessoChips.map(({ tipo, count, color }) => {
-                  const active = selectedTipoProcesso === tipo;
-                  return (
-                    <button
-                      key={tipo}
-                      type="button"
-                      onClick={() => setSelectedTipoProcesso(active ? null : tipo)}
-                      title={`${tipo} — ${count} ${count === 1 ? "demanda" : "demandas"}`}
-                      className={cn(
-                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer",
-                        active
-                          ? "ring-1 ring-inset"
-                          : "ring-1 ring-inset ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]"
-                      )}
-                      style={
-                        active
-                          ? {
-                              backgroundColor: `${color}26`,
-                              color: "#fff",
-                              boxShadow: `inset 0 0 0 1px ${color}80`,
-                            }
-                          : undefined
-                      }
-                    >
-                      <span style={{ color: active ? color : undefined }}>{tipo}</span>
-                      <span className="text-white/40 tabular-nums font-semibold">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {(() => {
+                const mpuCount = tipoProcessoCounts["MPU"] ?? 0;
+                const isOnly = mpuFilter === "only_mpu";
+                const isWithout = mpuFilter === "without_mpu";
+                const tooltip =
+                  mpuFilter === "all"
+                    ? `MPU: mostrando tudo (${mpuCount} MPU). Clique pra ver só MPU.`
+                    : isOnly
+                      ? `MPU: só MPU. Clique pra excluir MPU.`
+                      : `MPU: sem MPU. Clique pra voltar a mostrar tudo.`;
+                return (
+                  <button
+                    type="button"
+                    onClick={cycleMpuFilter}
+                    title={tooltip}
+                    aria-label={tooltip}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer ring-1 ring-inset",
+                      isOnly && "bg-rose-500/20 text-rose-200 ring-rose-400/40",
+                      isWithout && "bg-white/[0.06] text-white/70 ring-white/[0.10] line-through decoration-rose-300/70 decoration-[1.5px]",
+                      !isOnly && !isWithout && "ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]",
+                    )}
+                  >
+                    <span>MPU</span>
+                    <span className={cn("tabular-nums font-semibold", isOnly ? "text-rose-100" : "text-white/40")}>
+                      {mpuCount}
+                    </span>
+                  </button>
+                );
+              })()}
             </>
           )}
         </div>,
@@ -2843,18 +2867,18 @@ export default function Demandas() {
                 ref={filtrosBtnRef}
                 onClick={() => setIsFiltrosOpen((o) => !o)}
                 aria-pressed={pillFilters.size > 0}
-                title="Filtros rápidos"
+                title={pillFilters.size > 0 ? `Filtros (${pillFilters.size})` : "Filtros rápidos"}
+                aria-label="Filtros rápidos"
                 className={cn(
-                  "h-8 px-3 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium",
+                  "h-8 w-8 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
                   pillFilters.size > 0
                     ? "bg-amber-400/20 text-amber-200 ring-amber-400/30 hover:bg-amber-400/25"
                     : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
                 )}
               >
                 <Filter className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Filtros</span>
                 {pillFilters.size > 0 && (
-                  <span className="text-[10px] tabular-nums font-semibold px-1 rounded bg-amber-300/20 text-amber-100">
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-amber-400 text-neutral-900 flex items-center justify-center">
                     {pillFilters.size}
                   </span>
                 )}
@@ -2969,11 +2993,11 @@ export default function Demandas() {
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Importar"
+                aria-label="Importar"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Importar</span>
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -3017,11 +3041,11 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Exportar"
+                aria-label="Exportar"
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Exportar</span>
               </button>
               {isExportDropdownOpen && createPortal(
                 <>
