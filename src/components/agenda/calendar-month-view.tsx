@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -200,11 +201,52 @@ function EventoCompacto({
   // Mini-card de 1 linha: horário (bold colorido) + tipo (sutil) + nome (truncado).
   // Caber 3+ cards em min-h-[112px] mesmo em mês de 6 semanas.
   const mainText = assistidoNome || abreviarTitulo(evento.titulo);
+
+  // Hover preview — cartão flutuante com info completa quando o usuário pousa.
+  // Resolve labels truncadas sem custo de espaço na grade.
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const hoverTimerRef = useRef<number | null>(null);
+  const [hoverPos, setHoverPos] = useState<{ top: number; left: number; placeBelow: boolean } | null>(null);
+
+  const showHoverCard = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const cardW = 280;
+    const cardH = 130;
+    const placeBelow = r.top < cardH + 16;
+    const top = placeBelow ? r.bottom + 6 : r.top - 6;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - cardW - 8));
+    setHoverPos({ top, left, placeBelow });
+  };
+
+  const onMouseEnter = () => {
+    if (hoverTimerRef.current !== null) window.clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = window.setTimeout(showHoverCard, 220);
+  };
+  const onMouseLeave = () => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoverPos(null);
+  };
+  useEffect(() => () => {
+    if (hoverTimerRef.current !== null) window.clearTimeout(hoverTimerRef.current);
+  }, []);
+
+  const tituloCompleto = evento.titulo || "";
+  const numeroProcesso = evento.numeroProcesso || evento.processo?.numero || null;
+  const atribuicaoLabel = evento.atribuicao || evento.atribuicaoKey || null;
+
   return (
+    <>
         <button
+          ref={btnRef}
           onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
-          title={`${evento.horarioInicio}${tipoAbrev ? ` · ${tipoAbrev}` : ""} — ${mainText}`}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          aria-label={`${evento.horarioInicio}${tipoAbrev ? ` ${tipoAbrev}` : ""} — ${mainText}`}
           className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
             eventoCancelado ? "opacity-40" : ""
           }`}
@@ -260,6 +302,94 @@ function EventoCompacto({
             </span>
           </div>
         </button>
+
+        {hoverPos && typeof document !== "undefined" && createPortal(
+          <div
+            role="tooltip"
+            className="fixed z-[1000] w-[280px] rounded-xl bg-white dark:bg-neutral-900 shadow-2xl shadow-black/20 ring-1 ring-black/[0.06] dark:ring-white/[0.08] border border-neutral-200/80 dark:border-neutral-800/80 p-3 animate-in fade-in zoom-in-95 duration-100"
+            style={{
+              top: hoverPos.top,
+              left: hoverPos.left,
+              transform: hoverPos.placeBelow ? undefined : "translateY(-100%)",
+              pointerEvents: "none",
+            }}
+          >
+            <div className="flex items-start gap-2 mb-1.5">
+              <div
+                className="w-1 self-stretch rounded-full shrink-0"
+                style={{ backgroundColor: displayColor }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span
+                    className="text-[12px] font-bold tabular-nums"
+                    style={{ color: displayColor }}
+                  >
+                    {evento.horarioInicio}
+                  </span>
+                  {tipoAbrev && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                      {tipoAbrev}
+                    </span>
+                  )}
+                  {atribuicaoLabel && (
+                    <span
+                      className="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: `${displayColor}1a`,
+                        color: displayColor,
+                      }}
+                    >
+                      {String(atribuicaoLabel).slice(0, 18)}
+                    </span>
+                  )}
+                </div>
+                {assistidoNome && (
+                  <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight break-words">
+                    {assistidoNome}
+                  </p>
+                )}
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-0.5 break-words">
+                  {tituloCompleto}
+                </p>
+                {numeroProcesso && (
+                  <p className="text-[10px] tabular-nums text-neutral-400 dark:text-neutral-500 mt-1">
+                    {numeroProcesso}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-1.5 mt-1.5 border-t border-neutral-100 dark:border-neutral-800/80 text-[10px] text-neutral-400 dark:text-neutral-500">
+              {temAdvogado && !eventoCancelado && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  Advogado
+                </span>
+              )}
+              {evento.prioridade === "urgente" && !eventoCancelado && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Urgente
+                </span>
+              )}
+              {hasRegistro && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Registro feito
+                </span>
+              )}
+              {eventoCancelado && (
+                <span className="flex items-center gap-1 text-rose-500/80">
+                  <XCircle className="w-3 h-3" />
+                  {evento.status}
+                </span>
+              )}
+              <span className="ml-auto opacity-70">Clique pra detalhes</span>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
