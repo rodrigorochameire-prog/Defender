@@ -43,6 +43,7 @@ import {
   Plus,
   CheckSquare,
   Building2,
+  CalendarPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
@@ -108,6 +109,8 @@ interface DemandaQuickPreviewProps {
   onAssistidoNomeChange?: (id: string, nome: string) => void;
   /** Atualiza o status prisional do assistido vinculado à demanda */
   onStatusPrisionalChange?: (assistidoId: number, status: string) => void;
+  /** Abre o AudienciaConfirmModal pré-populado com a demanda */
+  onAgendarAudiencia?: (demandaId: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate?: (direction: "prev" | "next") => void;
@@ -428,6 +431,7 @@ export function DemandaQuickPreview({
   onTipoProcessoChange,
   onAssistidoNomeChange,
   onStatusPrisionalChange,
+  onAgendarAudiencia,
   onArchive,
   onDelete,
   onNavigate,
@@ -1315,9 +1319,49 @@ export function DemandaQuickPreview({
               )}
             </div>
 
-            {/* Bloco C — Ações rápidas (Task 6) */}
+            {/* Bloco C — Ações rápidas */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-              {/* preenche em Task 6 */}
+              <div className="flex divide-x divide-neutral-200/40 dark:divide-neutral-800/40">
+                {onAgendarAudiencia && (
+                  <button
+                    type="button"
+                    onClick={() => onAgendarAudiencia(demanda.id)}
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    Agendar audiência
+                  </button>
+                )}
+                {onPrazoChange && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Foca no InlineDatePicker do Prazo via querySelector
+                      const wrapper = document.querySelector<HTMLElement>(
+                        `[data-prazo-trigger='${demanda.id}']`
+                      );
+                      const btn = wrapper?.querySelector<HTMLButtonElement>("button[data-edit-trigger]")
+                        ?? wrapper?.querySelector<HTMLButtonElement>("button");
+                      btn?.click();
+                    }}
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4" />
+                    Adicionar prazo
+                  </button>
+                )}
+                {processo?.numeroAutos && (
+                  <a
+                    href={`https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/listView.seam?numeroProcesso=${encodeURIComponent(processo.numeroAutos)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:text-purple-700 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Abrir no PJe
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* ===== OFÍCIO SUGERIDO ===== */}

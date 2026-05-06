@@ -852,6 +852,22 @@ export default function Demandas() {
     });
   };
 
+  // Disparado pelo botão "Agendar audiência" do Bloco C — abre o
+  // AudienciaConfirmModal pré-populado com providências/ato como sources.
+  const handleAgendarAudiencia = (demandaId: string) => {
+    const numericId = parseInt(demandaId, 10);
+    if (isNaN(numericId)) return;
+    const demanda = demandas.find((d) => d.id === demandaId);
+    if (!demanda) return;
+    setAudienciaModal({
+      open: true,
+      demandaId: numericId,
+      assistidoNome: demanda.assistido,
+      numeroAutos: demanda.processos?.[0]?.numero,
+      sources: [demanda.providencias ?? null, demanda.ato ?? null].filter(Boolean) as string[],
+    });
+  };
+
   // Mutation para registrar audiência vinda do modal de confirmação
   const createAudienciaMutation = trpc.audiencias.create.useMutation({
     onSuccess: (result) => {
@@ -3436,6 +3452,7 @@ export default function Demandas() {
         onTipoProcessoChange={handleTipoProcessoChange}
         onAssistidoNomeChange={handleAssistidoNomeChange}
         onStatusPrisionalChange={handleStatusPrisionalChange}
+        onAgendarAudiencia={handleAgendarAudiencia}
         onArchive={handleArchiveDemanda}
         onDelete={handleDeleteDemanda}
         onNavigate={handlePreviewNavigate}
