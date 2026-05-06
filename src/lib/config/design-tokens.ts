@@ -88,9 +88,10 @@ export const CARD_STYLE = {
 
 export const HEADER_STYLE = {
   /** Page Header — card
-   *  Light: HSL 240 2% 26% (#414144) — escuro sobre fundo claro
-   *  Dark:  HSL 240 2% 14% (#232325) — mais escuro, com borda sutil para separar do bg */
-  container: "rounded-xl bg-[#414144] dark:bg-[#232325] dark:border dark:border-white/[0.06]",
+   *  Light: HSL 240 2% 28% (#464649) — alinhado com o utility row (mesmo cinza)
+   *  Dark:  HSL 240 2% 12% (#1e1e20) — alinhado com o utility row (cinzas harmonizados)
+   *  Border sutil mantém aresta crisp sem hue shift. */
+  container: "rounded-xl bg-[#464649] dark:bg-[#1e1e20] dark:border dark:border-white/[0.06]",
   text: "text-white font-sans text-lg font-semibold tracking-tight",
   label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
   value: "text-white font-mono tracking-wide",

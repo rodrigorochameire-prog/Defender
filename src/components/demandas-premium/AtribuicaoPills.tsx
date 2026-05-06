@@ -99,7 +99,7 @@ export function AtribuicaoPills({
               title={allOption.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                iconOnly ? "p-1" : "px-2.5 py-1",
+                iconOnly ? "p-1.5" : "px-2.5 py-1",
                 isAllActive && "shadow-sm"
               )}
               style={
@@ -110,7 +110,7 @@ export function AtribuicaoPills({
                   : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
               }
             >
-              {iconOnly ? <LayoutGrid className="w-[15px] h-[15px]" /> : allOption.label}
+              {iconOnly ? <LayoutGrid className="w-[17px] h-[17px]" /> : allOption.label}
             </button>
           );
         })()}
@@ -128,7 +128,7 @@ export function AtribuicaoPills({
               title={opt.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                iconOnly ? "p-1" : isActive ? "px-2.5 py-1 shadow-sm text-white" : "px-2 py-1"
+                iconOnly ? "p-1.5" : isActive ? "px-2.5 py-1 shadow-sm text-white" : "px-2 py-1"
               )}
               style={
                 isActive
@@ -140,7 +140,7 @@ export function AtribuicaoPills({
             >
               {Icon && (
                 <Icon
-                  className="w-[15px] h-[15px] flex-shrink-0"
+                  className="w-[17px] h-[17px] flex-shrink-0"
                   style={{ color: isActive ? (isDark ? "white" : "#1a1a1a") : isDark ? "rgba(255,255,255,0.50)" : "#71717a" }}
                 />
               )}

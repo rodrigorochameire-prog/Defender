@@ -186,7 +186,7 @@ export function CollapsiblePageHeader({
           {/* Page Header — card com accent emerald no topo */}
           <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
             {/* Row 1 — título/ações */}
-            <div className="px-4 sm:px-5 pb-3 pt-3.5">
+            <div className="px-4 sm:px-5 pb-4 pt-4">
               {children}
             </div>
 
