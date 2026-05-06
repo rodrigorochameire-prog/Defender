@@ -1220,14 +1220,34 @@ export function DemandaQuickPreview({
             {/* Bloco B — Cronologia */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
               {/* Expedição da intimação — data em que foi expedida no PJe.
-                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006). */}
+                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006).
+                  Mostra formato relativo ("há 3 dias") com tooltip da data exata. */}
               {demanda.data && (
                 <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                     <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Expedição</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">{demanda.data}</span>
+                  <span
+                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
+                    title={demanda.data}
+                  >
+                    {(() => {
+                      try {
+                        const [d, m, y] = demanda.data.split("/").map(Number);
+                        const date = new Date(y, m - 1, d);
+                        if (isNaN(date.getTime())) return demanda.data;
+                        const diff = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diff === 0) return "Hoje";
+                        if (diff === 1) return "Ontem";
+                        if (diff < 30) return `há ${diff} dias`;
+                        if (diff < 365) return `há ${Math.floor(diff / 30)} mes${Math.floor(diff / 30) > 1 ? "es" : ""}`;
+                        return `há ${Math.floor(diff / 365)} ano${Math.floor(diff / 365) > 1 ? "s" : ""}`;
+                      } catch {
+                        return demanda.data;
+                      }
+                    })()}
+                  </span>
                 </div>
               )}
 
@@ -1265,7 +1285,18 @@ export function DemandaQuickPreview({
                     <Calendar className="w-3 h-3 text-neutral-400" />
                   </div>
                   <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                  <span
+                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
+                    title={(() => {
+                      try {
+                        const d = new Date(demanda.dataInclusao);
+                        if (isNaN(d.getTime())) return demanda.dataInclusao;
+                        return d.toLocaleString("pt-BR");
+                      } catch {
+                        return demanda.dataInclusao;
+                      }
+                    })()}
+                  >
                     {(() => {
                       try {
                         const d = new Date(demanda.dataInclusao);
