@@ -568,9 +568,9 @@ function KanbanCard({
       </div>
 
       <div className="px-3 py-2.5">
-        {/* Row 1: Nome + Flags */}
-        <div className="flex items-start gap-1.5 mb-0.5">
-          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2">
+        {/* Row 1: Nome + Flags — pr-24 reserva espaço pra toolbar absoluta de ações */}
+        <div className="flex items-start gap-1.5 mb-0.5 pr-24">
+          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2 min-w-0 break-words">
             {demanda.assistido}
           </p>
           {isPreso && (
