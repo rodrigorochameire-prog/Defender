@@ -43,6 +43,7 @@ import {
   FileSignature,
   Plus,
   CheckSquare,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
@@ -1045,14 +1046,12 @@ export function DemandaQuickPreview({
               </div>
             )}
 
-            {/* Section label: Detalhes (era "Classificação"; Status/Atribuição
-                migraram pro hero card, então sobra só Ato + Metadados aqui) */}
+            {/* ===== DETALHES — 3 BLOCOS ===== */}
             <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
               Detalhes
             </h3>
 
-            {/* Detalhes — Ato saiu pra hero card. Aqui ficam os campos
-                temporais (prazo, datas) que não cabiam no header. */}
+            {/* Bloco A — Identificação */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
               {/* Assistido row — editável inline. Útil pra corrigir
                   placeholders ("⚠ A identificar — <cnj>") gerados pelo
@@ -1133,171 +1132,78 @@ export function DemandaQuickPreview({
                 </div>
               </div>
 
-              {/* Prazo row — editável + badge calculado */}
-              <div className="flex items-center px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prazo</span>
-                <div className="flex-1 flex items-center justify-end gap-2">
-                  {prazoBadge && prazoBadge.cor !== "none" && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums",
-                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
-                      )}
-                    >
-                      {prazoBadge.texto}
-                    </span>
-                  )}
-                  <InlineDatePicker
-                    value={demanda.prazo}
-                    onChange={(v) => onPrazoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
-
-              {/* Expedição da intimação — data em que foi expedida no PJe.
-                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006). */}
-              {demanda.data && (
+              {/* Tipo do processo (AP/MPU/APF/...) — editável via
+                  dropdown. Útil pra corrigir importações que vieram com
+                  tipo errado (ex.: APF inserido como MPU pelo importer
+                  VVD legacy). Update vai direto no processo, não na
+                  demanda. */}
+              {processo && onTipoProcessoChange && demanda.processoId && (
                 <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                    <FileText className="w-3 h-3 text-neutral-400" />
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Expedição</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">{demanda.data}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
+                  <div className="flex-1 flex items-center justify-end">
+                    <InlineDropdown
+                      value={processo.tipo || ""}
+                      compact
+                      displayValue={
+                        <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                          {processo.tipo || "—"}
+                        </span>
+                      }
+                      options={TIPO_PROCESSO_OPTIONS}
+                      onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
+                    />
+                  </div>
+                </div>
+              )}
+              {/* Fallback read-only se a view não passar o handler */}
+              {processo?.tipo && !onTipoProcessoChange && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <FileText className="w-3 h-3 text-neutral-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
                 </div>
               )}
 
-              {/* Atualizado — quando foi a última modificação */}
-              {demanda.updatedAt && (
+              {/* Status prisional — Task 4 substitui por InlineDropdown */}
+              {demanda.estadoPrisional && (
                 <div className="flex items-center px-4 py-2.5 gap-3">
                   <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                    <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atualizado</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                    {(() => {
-                      try {
-                        const d = new Date(demanda.updatedAt);
-                        const hoje = new Date();
-                        const diffDays = Math.floor((hoje.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-                        if (diffDays === 0) return `Hoje · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-                        if (diffDays === 1) return `Ontem · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-                        if (diffDays < 7) return `${diffDays} dias atrás`;
-                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-                      } catch {
-                        return "—";
-                      }
-                    })()}
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+                    {demanda.estadoPrisional}
                   </span>
                 </div>
               )}
 
-              {/* Providências preview — o que tem que ser feito (se houver) */}
-              {demanda.providencias && (
-                <div className="flex items-start px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+              {/* Vara/órgão julgador — novo */}
+              {processo?.vara && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Building2 className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0 mt-0.5">Providências</span>
-                  <p className="flex-1 text-right text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed line-clamp-2" title={demanda.providencias}>
-                    {demanda.providencias}
-                  </p>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Vara</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">
+                    {processo.vara}
+                  </span>
                 </div>
               )}
+            </div>
 
-              {/* Metadados — collapsible */}
-              <button
-                onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-3 px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
-              >
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                </div>
-                <span className="font-medium">Metadados</span>
-              </button>
-              {metadataOpen && (
-                <>
-                  {demanda.dataInclusao && (
-                    <div className="flex items-center px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <Calendar className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                        {(() => {
-                          try {
-                            const d = new Date(demanda.dataInclusao);
-                            if (isNaN(d.getTime())) return demanda.dataInclusao;
-                            return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-                              + " · " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                          } catch {
-                            return demanda.dataInclusao;
-                          }
-                        })()}
-                      </span>
-                    </div>
-                  )}
-                  {demanda.estadoPrisional && (
-                    <div className="flex items-center px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <Lock className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
-                    </div>
-                  )}
-                  {/* Tipo do processo (AP/MPU/APF/...) — editável via
-                      dropdown. Útil pra corrigir importações que vieram com
-                      tipo errado (ex.: APF inserido como MPU pelo importer
-                      VVD legacy). Update vai direto no processo, não na
-                      demanda. */}
-                  {processo && onTipoProcessoChange && demanda.processoId && (
-                    <div className="flex items-center px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <FileText className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                      <div className="flex-1 flex items-center justify-end">
-                        <InlineDropdown
-                          value={processo.tipo || ""}
-                          compact
-                          displayValue={
-                            <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-                              {processo.tipo || "—"}
-                            </span>
-                          }
-                          options={TIPO_PROCESSO_OPTIONS}
-                          onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {/* Fallback read-only se a view não passar o handler */}
-                  {processo?.tipo && !onTipoProcessoChange && (
-                    <div className="flex items-center px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <FileText className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
-                    </div>
-                  )}
-                  {demanda.importBatchId && (
-                    <div className="flex items-center px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Batch</span>
-                      <span className="flex-1 text-right text-xs font-mono text-neutral-500 dark:text-neutral-400">{demanda.importBatchId.slice(0, 8)}</span>
-                    </div>
-                  )}
-                </>
-              )}
+            {/* Bloco B — Cronologia (Task 5 finaliza a ordem) */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+              {/* preenche em Task 5 */}
+            </div>
+
+            {/* Bloco C — Ações rápidas (Task 6) */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+              {/* preenche em Task 6 */}
             </div>
 
             {/* ===== OFÍCIO SUGERIDO ===== */}
