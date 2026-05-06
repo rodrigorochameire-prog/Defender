@@ -597,8 +597,8 @@ function KanbanCard({
               // Cmd+V no campo de busca.
               navigator.clipboard.writeText(processo).then(
                 () => toast.success("CNJ copiado", {
-                  description: "Cole (Cmd+V) no campo de busca do PJe.",
-                  duration: 4000,
+                  description: "No PJe, vá em CONSULTA PROCESSOS e cole (Cmd+V).",
+                  duration: 5000,
                 }),
                 () => toast.info("Abrindo PJe", {
                   description: `Buscar pelo CNJ: ${processo}`,
