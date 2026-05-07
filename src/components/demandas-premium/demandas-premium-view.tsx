@@ -2854,34 +2854,60 @@ export default function Demandas() {
             {utilityInlineContent}
 
             {/* Atalho visível — aparece automaticamente quando há atrasados ou
-                vencendo hoje E nenhum filtro está ativo. Clicar aplica o filtro. */}
+                vencendo hoje E nenhum filtro está ativo. Clicar aplica o filtro.
+                Compacto: ícone + número. Tooltip explica. */}
             {pillFilters.size === 0 && (pillCounts.atrasados > 0 || pillCounts.hoje > 0) && (
               <div className="hidden md:flex items-center gap-1">
                 {pillCounts.atrasados > 0 && (
                   <button
                     type="button"
                     onClick={() => togglePill("atrasados")}
-                    title="Filtrar atrasados"
-                    className="h-7 pl-2 pr-2 rounded-md bg-white/[0.06] text-white/70 ring-1 ring-white/[0.08] hover:bg-white/[0.12] hover:text-white transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer animate-in fade-in"
+                    title={`${pillCounts.atrasados} atrasada${pillCounts.atrasados !== 1 ? "s" : ""} — clique pra filtrar`}
+                    aria-label={`${pillCounts.atrasados} atrasadas`}
+                    className="h-7 px-1.5 rounded-md bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/25 hover:bg-rose-500/25 hover:text-rose-100 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer animate-in fade-in"
                   >
                     <AlertTriangle className="w-3 h-3" />
                     <span className="tabular-nums">{pillCounts.atrasados}</span>
-                    <span>atrasada{pillCounts.atrasados !== 1 ? "s" : ""}</span>
                   </button>
                 )}
                 {pillCounts.hoje > 0 && (
                   <button
                     type="button"
                     onClick={() => togglePill("hoje")}
-                    title="Filtrar vencendo hoje"
-                    className="h-7 pl-2 pr-2 rounded-md bg-white/[0.06] text-white/70 ring-1 ring-white/[0.08] hover:bg-white/[0.12] hover:text-white transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer"
+                    title={`${pillCounts.hoje} vencendo hoje — clique pra filtrar`}
+                    aria-label={`${pillCounts.hoje} vencendo hoje`}
+                    className="h-7 px-1.5 rounded-md bg-amber-400/15 text-amber-100 ring-1 ring-amber-400/25 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer"
                   >
                     <Clock className="w-3 h-3" />
                     <span className="tabular-nums">{pillCounts.hoje}</span>
-                    <span>hoje</span>
                   </button>
                 )}
               </div>
+            )}
+
+            {/* Selecionar — aparece só na aba kanban. Ícone-only com badge
+                quando há seleção ativa. Clicar liga/desliga modo. */}
+            {activeTab === "kanban" && (
+              <button
+                type="button"
+                onClick={() => isSelectMode ? handleExitSelectMode() : setIsSelectMode(true)}
+                aria-pressed={isSelectMode}
+                title={isSelectMode ? `Sair do modo seleção (${selectedIds.size})` : "Selecionar demandas"}
+                aria-label={isSelectMode ? "Sair do modo seleção" : "Selecionar demandas"}
+                className={cn(
+                  "h-8 w-8 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
+                  isSelectMode
+                    ? "bg-emerald-500/20 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/30"
+                    : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
+                )}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                {isSelectMode && selectedIds.size > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-emerald-400 text-neutral-900 flex items-center justify-center">
+                    {selectedIds.size}
+                  </span>
+                )}
+              </button>
             )}
 
             {/* Filtros rápidos — botão único + popover. Quando há filtros
@@ -3483,58 +3509,39 @@ export default function Demandas() {
         ) : activeTab === "kanban" ? (
           /* ========== TAB KANBAN PREMIUM ========== */
           <div className="space-y-3">
-            {/* Toolbar: Selecionar toggle + ações em batch */}
-            <div className="flex items-center justify-end gap-2 -mt-1">
-              {!isSelectMode ? (
-                <button
-                  type="button"
-                  onClick={() => setIsSelectMode(true)}
-                  title="Selecionar demandas"
-                  className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  Selecionar
-                </button>
-              ) : (
-                <div className="flex items-center gap-1.5 h-7">
-                  <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 px-1">
-                    {selectedIds.size === 0
-                      ? "Clique nos cards pra selecionar"
-                      : `${selectedIds.size} selecionada${selectedIds.size !== 1 ? "s" : ""}`}
-                  </span>
-                  {selectedIds.size > 0 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleBatchCopyEmail}
-                        title="Copiar para colar no corpo do email"
-                        className="h-7 px-2.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        Copiar pra email
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleBatchDelegate}
-                        title="Delegar selecionadas"
-                        className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
-                      >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        Delegar
-                      </button>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleExitSelectMode}
-                    title="Sair do modo seleção"
-                    className="h-7 w-7 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors cursor-pointer flex items-center justify-center"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Toolbar — só aparece quando em modo seleção. Botão de
+                entrada/saída do modo está no header. */}
+            {isSelectMode && (
+              <div className="flex items-center justify-end gap-1.5 -mt-1">
+                <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 px-1">
+                  {selectedIds.size === 0
+                    ? "Clique nos cards pra selecionar"
+                    : `${selectedIds.size} selecionada${selectedIds.size !== 1 ? "s" : ""}`}
+                </span>
+                {selectedIds.size > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBatchCopyEmail}
+                      title="Copiar para colar no corpo do email"
+                      className="h-7 px-2.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Copiar pra email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBatchDelegate}
+                      title="Delegar selecionadas"
+                      className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Delegar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Kanban Premium Board */}
             <KanbanPremium
