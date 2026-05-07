@@ -112,6 +112,11 @@ interface KanbanPremiumProps {
   onOpenRegistro?: (demandaId: string) => void;
   /** Atalho hover no card → toggle prioridade URGENTE */
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
+  /** Modo seleção em batch — quando ON, cards mostram checkbox e clicar
+   *  alterna a seleção em vez de abrir o preview. */
+  isSelectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
@@ -384,6 +389,9 @@ function KanbanCard({
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
+  isSelectMode = false,
+  isSelected = false,
+  onToggleSelect,
   copyToClipboard,
   isDragging: isBeingDragged,
   isFocused = false,
@@ -399,6 +407,9 @@ function KanbanCard({
   onAgendarAudiencia?: (demandaId: string) => void;
   onOpenRegistro?: (demandaId: string) => void;
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
+  isSelectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
   isFocused?: boolean;
@@ -461,10 +472,18 @@ function KanbanCard({
 
   return (
     <div
-      draggable
+      draggable={!isSelectMode}
       data-card-id={String(demanda.id)}
-      onClick={() => !isBeingDragged && onCardClick(demanda.id)}
+      onClick={() => {
+        if (isBeingDragged) return;
+        if (isSelectMode) {
+          onToggleSelect?.(String(demanda.id));
+        } else {
+          onCardClick(demanda.id);
+        }
+      }}
       onDragStart={(e) => {
+        if (isSelectMode) { e.preventDefault(); return; }
         e.dataTransfer.setData("demandaId", String(demanda.id));
         e.dataTransfer.effectAllowed = "move";
         onDragStart?.(String(demanda.id));
@@ -472,22 +491,51 @@ function KanbanCard({
       onDragEnd={() => onDragEnd?.()}
       className={cn(
         `
-        relative group/kcard cursor-grab active:cursor-grabbing
+        relative group/kcard
         rounded-xl bg-white dark:bg-neutral-900
         border-[1.5px]
         shadow-sm shadow-black/[0.04]
         hover:shadow-md hover:shadow-black/[0.08] dark:hover:shadow-black/20
-        hover:-translate-y-0.5
         transition-all duration-200
         overflow-hidden
         `,
+        isSelectMode ? "cursor-pointer" : "cursor-grab active:cursor-grabbing hover:-translate-y-0.5",
         isBeingDragged && "opacity-50 scale-[0.98] shadow-lg",
         isFocused && "ring-2 ring-emerald-400 ring-offset-1 dark:ring-offset-neutral-950",
+        isSelectMode && isSelected && "ring-2 ring-emerald-500 ring-offset-1 dark:ring-offset-neutral-950",
       )}
-      style={{ borderColor: `${groupColor}60` }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${groupColor}aa`; e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${groupColor}60`; e.currentTarget.style.boxShadow = ''; }}
+      style={{ borderColor: isSelectMode && isSelected ? "#10b981" : `${groupColor}60` }}
+      onMouseEnter={(e) => {
+        if (isSelectMode && isSelected) return;
+        e.currentTarget.style.borderColor = `${groupColor}aa`;
+        e.currentTarget.style.boxShadow = `0 2px 12px ${groupColor}18, 0 0 0 1px ${groupColor}12`;
+      }}
+      onMouseLeave={(e) => {
+        if (isSelectMode && isSelected) {
+          e.currentTarget.style.borderColor = "#10b981";
+        } else {
+          e.currentTarget.style.borderColor = `${groupColor}60`;
+        }
+        e.currentTarget.style.boxShadow = "";
+      }}
     >
+      {/* Checkbox de seleção — visível só em modo seleção */}
+      {isSelectMode && (
+        <div
+          className={cn(
+            "absolute top-1.5 left-1.5 z-10 w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-colors pointer-events-none",
+            isSelected
+              ? "bg-emerald-500 border-emerald-500 text-white"
+              : "bg-white/95 dark:bg-neutral-800/95 border-neutral-300 dark:border-neutral-600",
+          )}
+        >
+          {isSelected && (
+            <svg viewBox="0 0 12 12" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="2 6 5 9 10 3" />
+            </svg>
+          )}
+        </div>
+      )}
       {/* Heatmap stripe — usa a cor do grupo do card (sem hue dissonante).
           Largura/opacidade modulam pela urgência. Some a 7+ dias. */}
       {(() => {
@@ -632,7 +680,7 @@ function KanbanCard({
         )}
       </div>
 
-      <div className="px-3 py-2.5">
+      <div className={cn("px-3 py-2.5", isSelectMode && "pl-7")}>
         {/* Row 1: Nome + Flags — pr-24 reserva espaço pra toolbar absoluta de ações */}
         <div className="flex items-start gap-1.5 mb-0.5 pr-24">
           <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2 min-w-0 break-words">
@@ -1126,6 +1174,9 @@ function EmAndamentoExpanded({
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
+  isSelectMode,
+  selectedIds,
+  onToggleSelect,
   copyToClipboard,
   draggedDemandaId,
   focusedCardId,
@@ -1139,6 +1190,9 @@ function EmAndamentoExpanded({
   onAgendarAudiencia?: (demandaId: string) => void;
   onOpenRegistro?: (demandaId: string) => void;
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
+  isSelectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;
@@ -1179,6 +1233,9 @@ function EmAndamentoExpanded({
             onAgendarAudiencia={onAgendarAudiencia}
             onOpenRegistro={onOpenRegistro}
             onToggleUrgent={onToggleUrgent}
+            isSelectMode={isSelectMode}
+            isSelected={!!selectedIds?.has(String(d.id))}
+            onToggleSelect={onToggleSelect}
             copyToClipboard={copyToClipboard}
             isDragging={draggedDemandaId === String(d.id)}
             isFocused={focusedCardId === String(d.id)}
@@ -1372,6 +1429,9 @@ function MobileCardList({
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
+  isSelectMode,
+  selectedIds,
+  onToggleSelect,
   copyToClipboard,
   draggedDemandaId,
   focusedCardId,
@@ -1386,6 +1446,9 @@ function MobileCardList({
   onAgendarAudiencia?: (demandaId: string) => void;
   onOpenRegistro?: (demandaId: string) => void;
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
+  isSelectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (demandaId: string) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;
@@ -1413,6 +1476,9 @@ function MobileCardList({
           onAgendarAudiencia={onAgendarAudiencia}
           onOpenRegistro={onOpenRegistro}
           onToggleUrgent={onToggleUrgent}
+          isSelectMode={isSelectMode}
+          isSelected={!!selectedIds?.has(String(d.id))}
+          onToggleSelect={onToggleSelect}
           copyToClipboard={copyToClipboard}
           isDragging={draggedDemandaId === String(d.id)}
           isFocused={focusedCardId === String(d.id)}
@@ -1441,6 +1507,9 @@ export function KanbanPremium({
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
+  isSelectMode,
+  selectedIds,
+  onToggleSelect,
   copyToClipboard,
   selectedAtribuicoes = [],
   showArchived = false,
@@ -1779,6 +1848,9 @@ export function KanbanPremium({
           onAgendarAudiencia={onAgendarAudiencia}
           onOpenRegistro={onOpenRegistro}
           onToggleUrgent={onToggleUrgent}
+          isSelectMode={isSelectMode}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
           copyToClipboard={copyToClipboard}
           draggedDemandaId={draggedDemandaId}
           focusedCardId={focusedCardId}
@@ -1869,6 +1941,9 @@ export function KanbanPremium({
                       onAgendarAudiencia={onAgendarAudiencia}
                       onOpenRegistro={onOpenRegistro}
                       onToggleUrgent={onToggleUrgent}
+                      isSelectMode={isSelectMode}
+                      selectedIds={selectedIds}
+                      onToggleSelect={onToggleSelect}
                       copyToClipboard={copyToClipboard}
                       draggedDemandaId={draggedDemandaId}
                       focusedCardId={focusedCardId}
@@ -1895,6 +1970,9 @@ export function KanbanPremium({
                               onAgendarAudiencia={onAgendarAudiencia}
                               onOpenRegistro={onOpenRegistro}
                               onToggleUrgent={onToggleUrgent}
+                              isSelectMode={isSelectMode}
+                              isSelected={!!selectedIds?.has(String(d.id))}
+                              onToggleSelect={onToggleSelect}
                               copyToClipboard={copyToClipboard}
                               isDragging={draggedDemandaId === String(d.id)}
                               isFocused={focusedCardId === String(d.id)}
@@ -1964,6 +2042,9 @@ export function KanbanPremium({
                         onAgendarAudiencia={onAgendarAudiencia}
                         onOpenRegistro={onOpenRegistro}
                         onToggleUrgent={onToggleUrgent}
+                        isSelectMode={isSelectMode}
+                        isSelected={!!selectedIds?.has(String(d.id))}
+                        onToggleSelect={onToggleSelect}
                         copyToClipboard={copyToClipboard}
                         isDragging={draggedDemandaId === String(d.id)}
                         isFocused={focusedCardId === String(d.id)}

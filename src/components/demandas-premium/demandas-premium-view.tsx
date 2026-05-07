@@ -1648,6 +1648,30 @@ export default function Demandas() {
     });
   };
 
+  // Copia as demandas selecionadas em formato pronto pra colar em corpo
+  // de email (delegação). Cada demanda em bloco com nome do assistido,
+  // ato e número dos autos.
+  const handleBatchCopyEmail = () => {
+    if (selectedIds.size === 0) return;
+    const list = demandas.filter(d => selectedIds.has(d.id));
+    if (list.length === 0) return;
+    const lines: string[] = [];
+    lines.push(`Demandas para delegação (${list.length}):`);
+    lines.push("");
+    list.forEach((d, i) => {
+      const ato = d.ato || "Demanda";
+      const autos = d.processos?.[0]?.numero || "—";
+      lines.push(`${i + 1}) ${d.assistido} — ${ato}`);
+      lines.push(`   Autos: ${autos}`);
+      if (d.prazo) lines.push(`   Prazo: ${d.prazo}`);
+      lines.push("");
+    });
+    const text = lines.join("\n").trimEnd();
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`${list.length} demanda${list.length !== 1 ? "s" : ""} copiada${list.length !== 1 ? "s" : ""} pro email`);
+    });
+  };
+
   const handleExitSelectMode = () => {
     setIsSelectMode(false);
     setSelectedIds(new Set());
@@ -3459,6 +3483,59 @@ export default function Demandas() {
         ) : activeTab === "kanban" ? (
           /* ========== TAB KANBAN PREMIUM ========== */
           <div className="space-y-3">
+            {/* Toolbar: Selecionar toggle + ações em batch */}
+            <div className="flex items-center justify-end gap-2 -mt-1">
+              {!isSelectMode ? (
+                <button
+                  type="button"
+                  onClick={() => setIsSelectMode(true)}
+                  title="Selecionar demandas"
+                  className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  Selecionar
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 h-7">
+                  <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 px-1">
+                    {selectedIds.size === 0
+                      ? "Clique nos cards pra selecionar"
+                      : `${selectedIds.size} selecionada${selectedIds.size !== 1 ? "s" : ""}`}
+                  </span>
+                  {selectedIds.size > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleBatchCopyEmail}
+                        title="Copiar para colar no corpo do email"
+                        className="h-7 px-2.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        Copiar pra email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleBatchDelegate}
+                        title="Delegar selecionadas"
+                        className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        Delegar
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleExitSelectMode}
+                    title="Sair do modo seleção"
+                    className="h-7 w-7 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors cursor-pointer flex items-center justify-center"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Kanban Premium Board */}
             <KanbanPremium
               demandas={demandasComPills}
@@ -3468,6 +3545,9 @@ export default function Demandas() {
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}
+              isSelectMode={isSelectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={(id) => handleToggleSelect(id)}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
