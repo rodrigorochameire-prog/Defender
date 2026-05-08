@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
-import { demandas, processos, assistidos, users } from "@/lib/db/schema";
+import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
 import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -587,6 +587,28 @@ export const demandasRouter = router({
         })
         .returning();
 
+      // Cria o registro inicial (anotação) com o texto do form, se houver.
+      // Substitui o antigo campo `providencias` que foi migrado pra timeline.
+      const obsTexto = (input.providencias ?? "").trim();
+      if (obsTexto.length > 0) {
+        try {
+          await db.insert(registros).values({
+            assistidoId: assistido.id,
+            processoId,
+            demandaId: nova.id,
+            tipo: "anotacao",
+            titulo: "Observação inicial",
+            conteudo: obsTexto,
+            dataRegistro: new Date(),
+            status: "realizado",
+            interlocutor: "defensor",
+            autorId: ctx.user.id,
+          });
+        } catch (err) {
+          console.error("Falha ao criar registro inicial da demanda", nova.id, err);
+        }
+      }
+
       logAudit({
         userId: ctx.user.id,
         userName: ctx.user.name,
@@ -646,9 +668,10 @@ export const demandasRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
-      // Demanda é criada vinculada ao defensor responsável
-      // providencias é ignorada — coluna foi migrada para tabela "registros"
-      const { providencias: _ignored, ...inputSemProvidencias } = input;
+      // Demanda é criada vinculada ao defensor responsável.
+      // O texto livre `providencias` (do form) vira o primeiro registro
+      // tipo "anotacao" da demanda — coluna foi migrada para tabela "registros".
+      const { providencias: providenciasTexto, ...inputSemProvidencias } = input;
       const [novaDemanda] = await db
         .insert(demandas)
         .values({
@@ -658,6 +681,29 @@ export const demandasRouter = router({
           defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
         })
         .returning();
+
+      // Cria registro inicial (anotação) com o texto livre de observações
+      // se o usuário preencheu o campo no form.
+      if (providenciasTexto && providenciasTexto.trim().length > 0) {
+        try {
+          await db.insert(registros).values({
+            assistidoId: input.assistidoId,
+            processoId: input.processoId,
+            demandaId: novaDemanda.id,
+            tipo: "anotacao",
+            titulo: "Observação inicial",
+            conteudo: providenciasTexto.trim(),
+            dataRegistro: new Date(),
+            status: "realizado",
+            interlocutor: "defensor",
+            autorId: ctx.user.id,
+          });
+        } catch (err) {
+          // Falha em criar o registro inicial não deve impedir a criação
+          // da demanda — apenas loga. O usuário pode adicionar manualmente.
+          console.error("Falha ao criar registro inicial da demanda", novaDemanda.id, err);
+        }
+      }
 
       // Audit log
       logAudit({
