@@ -28,6 +28,10 @@ const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
+const NovoEncaminhamentoModal = dynamic(
+  () => import("@/components/cowork/encaminhamentos/NovoEncaminhamentoModal").then(m => ({ default: m.NovoEncaminhamentoModal })),
+  { ssr: false }
+);
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
 import type { StatusPrisional } from "@/components/demandas-premium/status-prisional-config";
 import {
@@ -766,6 +770,17 @@ export default function Demandas() {
     destinatarioNome: string;
   } | null>(null);
 
+  // Estado para o modal de transferência (parceiro defensor)
+  const [transferenciaModalOpen, setTransferenciaModalOpen] = useState(false);
+  const [transferenciaDemanda, setTransferenciaDemanda] = useState<{
+    demandaId: number | null;
+    processoId: number | null;
+    assistidoId: number | null;
+    display: string;
+    destinatarioId: number;
+    destinatarioNome: string;
+  } | null>(null);
+
   // Estado para o modal de delegação em lote
   const [batchDelegacaoOpen, setBatchDelegacaoOpen] = useState(false);
 
@@ -1117,30 +1132,81 @@ export default function Demandas() {
     "arquivado": "ARQUIVADO",
   };
 
-  // Status que disparam o modal de delegação
-  const DELEGATION_STATUSES = ["amanda", "emilly", "taissa"];
+  // Lista dinâmica de membros da equipe (servidores/estagiários) e parceiros defensores.
+  // Usada para detectar drops do Kanban em colunas de pessoas e abrir o modal correto
+  // SEM chamar updateDemandaMutation (que rejeitaria o nome como status inválido no enum).
+  const { data: membrosEquipeQuery } = trpc.delegacao.membrosEquipe.useQuery();
+  const { data: parceirosQuery } = trpc.parceiros.listar.useQuery();
+
+  const equipeByKey = useMemo(() => {
+    const map = new Map<string, { id: number; name: string; role: string }>();
+    (membrosEquipeQuery ?? []).forEach((m) => {
+      const key = m.name.split(" ")[0].toLowerCase();
+      map.set(key, { id: m.id, name: m.name, role: m.role });
+    });
+    return map;
+  }, [membrosEquipeQuery]);
+
+  const parceirosByKey = useMemo(() => {
+    const map = new Map<string, { id: number; name: string }>();
+    (parceirosQuery ?? []).forEach((p) => {
+      const key = p.name.split(" ")[0].toLowerCase();
+      map.set(key, { id: p.id, name: p.name });
+    });
+    return map;
+  }, [parceirosQuery]);
 
   const handleStatusChange = (demandaId: string, newStatus: string) => {
-    // Atualizar localmente para feedback imediato
+    const key = newStatus.toLowerCase();
+    const numericId = parseInt(demandaId, 10);
+    const demanda = demandas.find((d) => d.id === demandaId);
+
+    // 1) Drop em membro da equipe → delegação. Abre modal, sem mutation no banco.
+    const membro = equipeByKey.get(key);
+    if (membro && demanda) {
+      setDelegacaoDemanda({
+        demandaId: isNaN(numericId) ? null : numericId,
+        demandaAto: demanda.ato || "",
+        assistidoId: demanda.assistidoId || null,
+        assistidoNome: demanda.assistido || "",
+        processoId: demanda.processoId || null,
+        processoNumero: demanda.processos?.[0]?.numero || "",
+        destinatarioNome: membro.name,
+      });
+      setDelegacaoModalOpen(true);
+      return;
+    }
+
+    // 2) Drop em colega defensor → transferência. Abre modal de encaminhamento, sem mutation.
+    const parceiro = parceirosByKey.get(key);
+    if (parceiro && demanda) {
+      setTransferenciaDemanda({
+        demandaId: isNaN(numericId) ? null : numericId,
+        processoId: demanda.processoId || null,
+        assistidoId: demanda.assistidoId || null,
+        display: `${demanda.assistido ?? ""} · ${demanda.ato ?? "Demanda"}`.trim(),
+        destinatarioId: parceiro.id,
+        destinatarioNome: parceiro.name,
+      });
+      setTransferenciaModalOpen(true);
+      return;
+    }
+
+    // 3) Status real → atualizar localmente e no banco (comportamento original).
     setDemandas((prev) =>
       prev.map((d) => (d.id === demandaId ? { ...d, status: newStatus, substatus: newStatus } : d))
     );
-
-    // Atualizar no banco (id precisa ser número)
-    const numericId = parseInt(demandaId, 10);
     if (!isNaN(numericId)) {
       const dbStatus = UI_STATUS_TO_DB[newStatus] || newStatus.toUpperCase().replace(/ /g, "_");
       updateDemandaMutation.mutate({
         id: numericId,
         status: dbStatus as any,
-        substatus: newStatus, // Salvar o status granular
+        substatus: newStatus,
       });
     }
 
-    // Gatilho: status → Protocolado em ato de recurso (HC/Apelação/RSE/Agravo)
-    // abre modal para registrar o recurso em 2º grau.
+    // Gatilho recurso (mantém comportamento existente).
     if (newStatus.toLowerCase() === "protocolado" && !isNaN(numericId)) {
-      const demanda = demandas.find((d) => d.id === demandaId);
       const info = infoDoAtoRecurso(demanda?.ato);
       if (info) {
         setRecursoModal({
@@ -1152,30 +1218,6 @@ export default function Demandas() {
           rotulo: info.rotulo,
           exigeNumero: info.exigeNumero,
         });
-      }
-    }
-
-    // Se o status é de delegação, abrir o modal para adicionar instruções
-    if (DELEGATION_STATUSES.includes(newStatus.toLowerCase())) {
-      const demanda = demandas.find((d) => d.id === demandaId);
-      if (demanda) {
-        // Mapear o nome do status para o nome do destinatário
-        const destinatarioMap: Record<string, string> = {
-          amanda: "Amanda",
-          emilly: "Emilly",
-          taissa: "Taíssa",
-        };
-
-        setDelegacaoDemanda({
-          demandaId: parseInt(demandaId, 10) || null,
-          demandaAto: demanda.ato || "",
-          assistidoId: demanda.assistidoId || null,
-          assistidoNome: demanda.assistido || "",
-          processoId: demanda.processoId || null,
-          processoNumero: demanda.processos?.[0]?.numero || "",
-          destinatarioNome: destinatarioMap[newStatus.toLowerCase()] || newStatus,
-        });
-        setDelegacaoModalOpen(true);
       }
     }
   };
@@ -3810,6 +3852,25 @@ export default function Demandas() {
           utils.demandas.list.invalidate();
         }}
       />
+
+      {/* Modal de Transferência — aparece ao arrastar card sobre coluna de parceiro defensor */}
+      {transferenciaDemanda && (
+        <NovoEncaminhamentoModal
+          open={transferenciaModalOpen}
+          onOpenChange={(o) => {
+            setTransferenciaModalOpen(o);
+            if (!o) setTransferenciaDemanda(null);
+          }}
+          initialTipo="transferir"
+          contexto={{
+            demandaId: transferenciaDemanda.demandaId ?? undefined,
+            processoId: transferenciaDemanda.processoId ?? undefined,
+            assistidoId: transferenciaDemanda.assistidoId ?? undefined,
+            display: transferenciaDemanda.display,
+          }}
+          initialDestinatarioId={transferenciaDemanda.destinatarioId}
+        />
+      )}
 
       {/* Quick-preview Sheet lateral */}
       <DemandaQuickPreview
