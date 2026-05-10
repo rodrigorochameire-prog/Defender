@@ -3600,6 +3600,8 @@ export default function Demandas() {
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
+              membrosEquipe={membrosEquipeQuery ?? []}
+              parceirosDefensores={parceirosQuery ?? []}
             />
           </div>
         ) : activeTab === "prazos" ? (

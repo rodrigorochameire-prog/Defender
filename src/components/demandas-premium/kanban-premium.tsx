@@ -31,6 +31,7 @@ import {
   CalendarPlus,
   StickyNote,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -120,6 +121,8 @@ interface KanbanPremiumProps {
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
+  membrosEquipe?: Array<{ id: number; name: string; role: string }>;
+  parceirosDefensores?: Array<{ id: number; name: string }>;
 }
 
 /**
@@ -1496,6 +1499,86 @@ function MobileCardList({
 }
 
 // ==========================================
+// PESSOA COLUMN — drop target for delegação / transferência
+// ==========================================
+
+function PessoaColumn({
+  kind,
+  personKey,
+  name,
+  role,
+  items,
+  draggedDemandaId,
+  dragOverColumn,
+  setDragOverColumn,
+  onDropToStatus,
+  renderCard,
+}: {
+  kind: "equipe" | "parceiro";
+  personKey: string;
+  name: string;
+  role: string;
+  items: any[];
+  draggedDemandaId: string | null;
+  dragOverColumn: string | null;
+  setDragOverColumn: (v: string | null) => void;
+  onDropToStatus?: (demandaId: string, newStatus: string) => void;
+  renderCard: (d: any) => React.ReactNode;
+}) {
+  const colId = `pessoa-${kind}-${personKey}`;
+  const isDropTarget = dragOverColumn === colId && draggedDemandaId !== null;
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0] ?? "")
+    .join("")
+    .toUpperCase();
+  const ringAccent = kind === "equipe" ? "ring-emerald-400" : "ring-slate-500";
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-neutral-900/30 transition-all",
+        isDropTarget && `ring-2 ring-dashed ${ringAccent} ring-offset-1`,
+      )}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDragOverColumn(colId);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData("demandaId");
+        if (id && onDropToStatus) onDropToStatus(id, personKey);
+        setDragOverColumn(null);
+      }}
+    >
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+        <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate">{name}</p>
+          <p className="text-[9px] text-zinc-400 uppercase tracking-wider">
+            {kind === "equipe" ? `Delegar · ${role}` : "Transferir · defensor"}
+          </p>
+        </div>
+        <span className="text-[10px] font-mono text-zinc-400">{items.length}</span>
+      </div>
+      <div className="p-2 space-y-2 min-h-[80px]">
+        {items.slice(0, 8).map((d) => renderCard(d))}
+        {items.length === 0 && (
+          <p className="text-[10px] text-center text-zinc-300 dark:text-zinc-700 py-2">solte aqui</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
 // MAIN KANBAN PREMIUM
 // ==========================================
 
@@ -1513,6 +1596,8 @@ export function KanbanPremium({
   copyToClipboard,
   selectedAtribuicoes = [],
   showArchived = false,
+  membrosEquipe = [],
+  parceirosDefensores = [],
 }: KanbanPremiumProps) {
   const [emAndamentoExpanded, setEmAndamentoExpanded] = useState(true);
 
@@ -2068,6 +2153,63 @@ export function KanbanPremium({
             );
           })}
         </div>
+
+        {/* Pessoas section — delegate / transfer drop targets */}
+        {(membrosEquipe.length > 0 || parceirosDefensores.length > 0) && (
+          <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-3.5 h-3.5 text-zinc-500" />
+              <h3 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                Pessoas
+              </h3>
+              <span className="text-[10px] text-zinc-400">arraste para delegar ou transferir</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {membrosEquipe.map((m) => {
+                const key = m.name.split(" ")[0].toLowerCase();
+                const items = (demandas ?? []).filter((d: any) => {
+                  const sub = (d.substatus ?? "").toLowerCase();
+                  const dp = (d.delegadoPara ?? "").toLowerCase();
+                  return sub === key || dp.includes(key);
+                });
+                return (
+                  <PessoaColumn
+                    key={`equipe-${m.id}`}
+                    kind="equipe"
+                    personKey={key}
+                    name={m.name}
+                    role={m.role}
+                    items={items}
+                    draggedDemandaId={draggedDemandaId}
+                    dragOverColumn={dragOverColumn}
+                    setDragOverColumn={setDragOverColumn}
+                    onDropToStatus={onStatusChange}
+                    renderCard={() => null}
+                  />
+                );
+              })}
+              {parceirosDefensores.map((p) => {
+                const key = p.name.split(" ")[0].toLowerCase();
+                const items = (demandas ?? []).filter((d: any) => (d.substatus ?? "").toLowerCase() === key);
+                return (
+                  <PessoaColumn
+                    key={`parceiro-${p.id}`}
+                    kind="parceiro"
+                    personKey={key}
+                    name={p.name}
+                    role="defensor"
+                    items={items}
+                    draggedDemandaId={draggedDemandaId}
+                    dragOverColumn={dragOverColumn}
+                    setDragOverColumn={setDragOverColumn}
+                    onDropToStatus={onStatusChange}
+                    renderCard={() => null}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Archived count (desktop) */}
         {!showArchived && columnDemandas.arquivado.length > 0 && (
