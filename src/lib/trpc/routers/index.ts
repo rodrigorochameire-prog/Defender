@@ -83,6 +83,7 @@ import { instanciaSuperiorRouter } from "./instancia-superior";
 import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
 import { encaminhamentosRouter } from "./encaminhamentos";
+import { parceirosRouter } from "./parceiros";
 import { pessoasRouter } from "./pessoas";
 import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
@@ -395,6 +396,11 @@ export const appRouter = router({
   // COWORK - ENCAMINHAMENTOS (TRANSFERÊNCIAS, ACOMPANHAMENTOS)
   // ==========================================
   encaminhamentos: encaminhamentosRouter,
+
+  // ==========================================
+  // PARCEIROS — DEFENSORES PARCEIROS DO USUÁRIO
+  // ==========================================
+  parceiros: parceirosRouter,
 
   // ==========================================
   // PESSOAS (FASE I-A — CADASTRO UNIFICADO)
