@@ -786,6 +786,17 @@ export default function Demandas() {
 
   const [colegaModalTipo, setColegaModalTipo] = useState<"transferir" | "acompanhar" | "encaminhar" | null>(null);
 
+  // Estado para o seletor de pessoa (abre ao dropar em coluna "Delegação")
+  const [pessoaSelectorOpen, setPessoaSelectorOpen] = useState(false);
+  const [pessoaSelectorDemanda, setPessoaSelectorDemanda] = useState<{
+    demandaId: number | null;
+    demandaAto: string;
+    assistidoId: number | null;
+    assistidoNome: string;
+    processoId: number | null;
+    processoNumero: string;
+  } | null>(null);
+
   // Estado para o modal de delegação em lote
   const [batchDelegacaoOpen, setBatchDelegacaoOpen] = useState(false);
 
@@ -1165,6 +1176,20 @@ export default function Demandas() {
     const key = newStatus.toLowerCase();
     const numericId = parseInt(demandaId, 10);
     const demanda = demandas.find((d) => d.id === demandaId);
+
+    // 0) Drop em coluna "Delegação" (sub-grupo Acompanhar) → abre seletor de pessoa.
+    if (key === "delegar" && demanda) {
+      setPessoaSelectorDemanda({
+        demandaId: isNaN(numericId) ? null : numericId,
+        demandaAto: demanda.ato || "",
+        assistidoId: demanda.assistidoId || null,
+        assistidoNome: demanda.assistido || "",
+        processoId: demanda.processoId || null,
+        processoNumero: demanda.processos?.[0]?.numero || "",
+      });
+      setPessoaSelectorOpen(true);
+      return;
+    }
 
     // 1) Drop em membro da equipe → delegação. Abre modal, sem mutation no banco.
     const membro = equipeByKey.get(key);
@@ -3605,8 +3630,6 @@ export default function Demandas() {
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
-              membrosEquipe={membrosEquipeQuery ?? []}
-              parceirosDefensores={parceirosQuery ?? []}
             />
           </div>
         ) : activeTab === "prazos" ? (
@@ -3829,6 +3852,112 @@ export default function Demandas() {
         onClose={() => setIsDuplicatesModalOpen(false)}
         onResolved={() => utils.demandas.list.invalidate()}
       />
+
+      {/* Seletor de pessoa — abre ao dropar card na coluna "Delegação" */}
+      {pessoaSelectorOpen && pessoaSelectorDemanda && (
+        <Dialog open onOpenChange={(o) => {
+          if (!o) {
+            setPessoaSelectorOpen(false);
+            setPessoaSelectorDemanda(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="text-base">Para quem?</DialogTitle>
+              <DialogDescription className="text-xs">
+                Escolha um membro da equipe para delegar ou um colega defensor para transferir/compartilhar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto">
+              {(membrosEquipeQuery?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
+                    Equipe — delegar
+                  </p>
+                  {(membrosEquipeQuery ?? []).map((m) => {
+                    const initials = m.name.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase();
+                    const roleLabel = m.role === "estagiario" ? "Estagiário(a)" : m.role === "servidor" ? "Servidor(a)" : m.role;
+                    return (
+                      <button
+                        key={`equipe-${m.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (!pessoaSelectorDemanda) return;
+                          setDelegacaoDemanda({
+                            ...pessoaSelectorDemanda,
+                            destinatarioNome: m.name,
+                          });
+                          setDelegacaoModalOpen(true);
+                          setPessoaSelectorOpen(false);
+                          setPessoaSelectorDemanda(null);
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{m.name}</p>
+                          <p className="text-[10px] text-zinc-500">{roleLabel}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(parceirosQuery?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
+                    Colegas defensores — transferir / compartilhar
+                  </p>
+                  {(parceirosQuery ?? []).map((p) => {
+                    const initials = p.name.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase();
+                    return (
+                      <button
+                        key={`parceiro-${p.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (!pessoaSelectorDemanda) return;
+                          setColegaDropContext({
+                            demandaId: pessoaSelectorDemanda.demandaId,
+                            processoId: pessoaSelectorDemanda.processoId,
+                            assistidoId: pessoaSelectorDemanda.assistidoId,
+                            display: `${pessoaSelectorDemanda.assistidoNome} · ${pessoaSelectorDemanda.demandaAto || "Demanda"}`.trim(),
+                            destinatarioId: p.id,
+                            destinatarioNome: p.name,
+                          });
+                          setColegaModalTipo(null);
+                          setPessoaSelectorOpen(false);
+                          setPessoaSelectorDemanda(null);
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/30 text-left transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+                        <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{p.name}</p>
+                          <p className="text-[10px] text-zinc-500">Defensor</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(membrosEquipeQuery?.length ?? 0) === 0 && (parceirosQuery?.length ?? 0) === 0 && (
+                <p className="text-center text-xs text-zinc-500 py-6">
+                  Nenhuma pessoa cadastrada para delegar ou transferir.
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Modal de Delegação - Aparece ao selecionar status de delegação (amanda, emilly, taissa) */}
       <DelegacaoModal

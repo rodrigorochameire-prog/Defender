@@ -21,6 +21,7 @@ import {
   Mail,
   Archive,
   Clock,
+  UserPlus,
 } from "lucide-react";
 
 // ==========================================
@@ -140,6 +141,7 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   ],
   acompanhar: [
     { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
+    { label: "Delegação", icon: UserPlus, statuses: ["delegar"] },
   ],
 };
 
@@ -251,8 +253,9 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   // === SAÍDA (1) ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
 
-  // === ACOMPANHAR (1) — monitorar ===
+  // === ACOMPANHAR (2) — monitorar + delegar ===
   monitorar:  { label: "Monitorar",  group: "acompanhar", icon: Eye },
+  delegar:    { label: "Delegar",    group: "acompanhar", icon: UserPlus },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -407,8 +410,9 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    // Acompanhar — Monitorar
+    // Acompanhar — Monitorar + Delegar
     { value: "monitorar", label: "Monitorar", group: "acompanhar" },
+    { value: "delegar", label: "Delegar", group: "acompanhar" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },

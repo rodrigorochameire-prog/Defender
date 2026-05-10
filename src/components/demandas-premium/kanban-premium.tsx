@@ -31,7 +31,6 @@ import {
   CalendarPlus,
   StickyNote,
   ExternalLink,
-  Users,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -121,8 +120,6 @@ interface KanbanPremiumProps {
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
-  membrosEquipe?: Array<{ id: number; name: string; role: string }>;
-  parceirosDefensores?: Array<{ id: number; name: string }>;
 }
 
 /**
@@ -1498,76 +1495,7 @@ function MobileCardList({
   );
 }
 
-// ==========================================
-// PESSOA PILL — compact drop target for Pessoas strip above grid
-// ==========================================
-
-function PessoaPill({
-  kind,
-  personKey,
-  name,
-  role,
-  draggedDemandaId,
-  dragOverColumn,
-  setDragOverColumn,
-  onDropToStatus,
-}: {
-  kind: "equipe" | "parceiro";
-  personKey: string;
-  name: string;
-  role: string;
-  draggedDemandaId: string | null;
-  dragOverColumn: string | null;
-  setDragOverColumn: (v: string | null) => void;
-  onDropToStatus?: (demandaId: string, newStatus: string) => void;
-}) {
-  const colId = `pessoa-${kind}-${personKey}`;
-  const isDropTarget = dragOverColumn === colId && draggedDemandaId !== null;
-  const initials = name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0] ?? "")
-    .join("")
-    .toUpperCase();
-  const dragActive = draggedDemandaId !== null;
-  const ringAccent = kind === "equipe" ? "ring-emerald-400" : "ring-slate-500";
-  const dotColor = kind === "equipe" ? "bg-emerald-500" : "bg-slate-500";
-
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 px-2.5 py-1.5 rounded-lg border bg-white dark:bg-neutral-900 transition-all",
-        isDropTarget
-          ? `ring-2 ring-dashed ${ringAccent} ring-offset-1 border-transparent`
-          : "border-zinc-200 dark:border-zinc-700",
-        dragActive && !isDropTarget && "border-dashed",
-      )}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        setDragOverColumn(colId);
-      }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverColumn(null);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("demandaId");
-        if (id && onDropToStatus) onDropToStatus(id, personKey);
-        setDragOverColumn(null);
-      }}
-      title={`${name} — ${kind === "equipe" ? `Delegar (${role})` : "Transferir / Compartilhar / Ciência"}`}
-    >
-      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColor)} />
-      <div className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">
-        {initials}
-      </div>
-      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-200 whitespace-nowrap">
-        {name.split(" ")[0]}
-      </span>
-    </div>
-  );
-}
+// PessoaPill removed — delegação agora usa coluna "Delegação" em Acompanhar + PessoaSelectorModal
 
 // ==========================================
 // PESSOA COLUMN — drop target for delegação / transferência
@@ -1667,8 +1595,6 @@ export function KanbanPremium({
   copyToClipboard,
   selectedAtribuicoes = [],
   showArchived = false,
-  membrosEquipe = [],
-  parceirosDefensores = [],
 }: KanbanPremiumProps) {
   const [emAndamentoExpanded, setEmAndamentoExpanded] = useState(true);
 
@@ -2027,52 +1953,6 @@ export function KanbanPremium({
 
       {/* ===================== DESKTOP LAYOUT ===================== */}
       <div className="hidden sm:block overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700">
-        {/* Pessoas strip — drop targets for delegação (equipe) and transferência (colegas) */}
-        {(membrosEquipe.length > 0 || parceirosDefensores.length > 0) && (
-          <div className="mb-3 px-1 py-2 rounded-xl bg-zinc-50/60 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800/60">
-            <div className="flex items-center gap-2 px-2 mb-1.5">
-              <Users className="w-3 h-3 text-zinc-500" />
-              <span className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
-                Pessoas
-              </span>
-              <span className="text-[9px] text-zinc-400">arraste cards aqui pra delegar ou transferir</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5 px-1">
-              {membrosEquipe.map((m) => {
-                const key = m.name.split(" ")[0].toLowerCase();
-                return (
-                  <PessoaPill
-                    key={`equipe-${m.id}`}
-                    kind="equipe"
-                    personKey={key}
-                    name={m.name}
-                    role={m.role}
-                    draggedDemandaId={draggedDemandaId}
-                    dragOverColumn={dragOverColumn}
-                    setDragOverColumn={setDragOverColumn}
-                    onDropToStatus={onStatusChange}
-                  />
-                );
-              })}
-              {parceirosDefensores.map((p) => {
-                const key = p.name.split(" ")[0].toLowerCase();
-                return (
-                  <PessoaPill
-                    key={`parceiro-${p.id}`}
-                    kind="parceiro"
-                    personKey={key}
-                    name={p.name}
-                    role="defensor"
-                    draggedDemandaId={draggedDemandaId}
-                    dragOverColumn={dragOverColumn}
-                    setDragOverColumn={setDragOverColumn}
-                    onDropToStatus={onStatusChange}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
         {/* Kanban Grid */}
         <div
           className="grid gap-3 transition-all duration-500 ease-out pb-2"
