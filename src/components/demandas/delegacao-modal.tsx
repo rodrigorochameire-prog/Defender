@@ -122,6 +122,8 @@ export function DelegacaoModal({
   const [whatsAppMsg, setWhatsAppMsg] = useState("");
   const [editandoWhatsApp, setEditandoWhatsApp] = useState(false);
 
+  const utils = trpc.useUtils();
+
   // Query para buscar membros da equipe
   const { data: membrosEquipe, isLoading: loadingMembros } = trpc.delegacao.membrosEquipe.useQuery(
     undefined,
@@ -133,9 +135,13 @@ export function DelegacaoModal({
     onSuccess: () => {
       const nomeDest = membrosEquipe?.find(m => m.id === parseInt(destinatarioId))?.name;
       toast.success("Tarefa delegada com sucesso!", {
-        description: `A delegação foi enviada para ${nomeDest}.`,
+        description: `A delegação foi enviada para ${nomeDest}. Demanda movida para Monitorar.`,
         icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
       });
+
+      // Invalidar lista de demandas pra refletir mudança de status para Monitorar
+      utils.demandas.invalidate();
+      utils.delegacao.invalidate();
 
       // Limpar e fechar
       resetForm();
