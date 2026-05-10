@@ -294,8 +294,8 @@ export function DelegacaoModal({
       <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/20">
-              <UserPlus className="w-4.5 h-4.5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+              <UserPlus className="w-4.5 h-4.5 text-zinc-700 dark:text-zinc-300" />
             </div>
             <div>
               <span className="text-lg">Delegar Tarefa</span>
@@ -306,33 +306,27 @@ export function DelegacaoModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 py-3">
           {/* Contexto da delegação */}
           {(assistidoNome || processoNumero || demandaAto) && (
-            <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 space-y-2">
-              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Contexto</p>
+            <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Contexto</p>
               {assistidoNome && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-neutral-700 dark:text-neutral-300 font-medium">{assistidoNome}</span>
+                <div className="flex items-baseline gap-2 text-sm">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider w-16 shrink-0">Assistido</span>
+                  <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">{assistidoNome}</span>
                 </div>
               )}
               {processoNumero && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-6 h-6 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                    <Briefcase className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <span className="text-neutral-700 dark:text-neutral-300 font-mono text-xs">{processoNumero}</span>
+                <div className="flex items-baseline gap-2 text-sm">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider w-16 shrink-0">Processo</span>
+                  <span className="text-zinc-700 dark:text-zinc-300 font-mono text-xs">{processoNumero}</span>
                 </div>
               )}
               {demandaAto && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="text-neutral-700 dark:text-neutral-300">{demandaAto}</span>
+                <div className="flex items-baseline gap-2 text-sm">
+                  <span className="text-[10px] text-zinc-500 uppercase tracking-wider w-16 shrink-0">Ato</span>
+                  <span className="text-zinc-700 dark:text-zinc-300">{demandaAto}</span>
                 </div>
               )}
             </div>
@@ -341,7 +335,7 @@ export function DelegacaoModal({
           {/* Seletor de destinatário */}
           <div className="space-y-2">
             <Label htmlFor="destinatario" className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-              Delegar para <span className="text-rose-500">*</span>
+              Delegar para <span className="text-emerald-600">*</span>
             </Label>
             {loadingMembros ? (
               <div className="h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse flex items-center justify-center">
@@ -382,7 +376,7 @@ export function DelegacaoModal({
           {/* Templates de instrução */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-              Instruções <span className="text-rose-500">*</span>
+              Instruções <span className="text-emerald-600">*</span>
             </Label>
             <div className="flex flex-wrap gap-1.5">
               {INSTRUCAO_TEMPLATES.map((tpl) => {
@@ -412,7 +406,7 @@ export function DelegacaoModal({
               placeholder="Descreva detalhadamente o que precisa ser feito..."
               value={instrucoes}
               onChange={(e) => setInstrucoes(e.target.value)}
-              className="min-h-[100px] resize-none rounded-xl"
+              className="min-h-[80px] resize-none rounded-xl"
             />
             <p className="text-[10px] text-neutral-400">
               Clique num template acima ou escreva instruções personalizadas.
@@ -562,7 +556,7 @@ export function DelegacaoModal({
           <Button
             onClick={handleSubmit}
             disabled={criarDelegacao.isPending || !destinatarioId || !instrucoes.trim()}
-            className="rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 transition-all"
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
           >
             {criarDelegacao.isPending ? (
               <>
