@@ -58,6 +58,7 @@ import { useColumnWidths } from "@/hooks/use-column-widths";
 import { useRealtimeDemandaEventos } from "@/hooks/use-realtime-demanda-eventos";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -139,6 +140,7 @@ import {
   Loader2,
   BarChart3,
   List,
+  ArrowLeftRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -770,9 +772,10 @@ export default function Demandas() {
     destinatarioNome: string;
   } | null>(null);
 
-  // Estado para o modal de transferência (parceiro defensor)
-  const [transferenciaModalOpen, setTransferenciaModalOpen] = useState(false);
-  const [transferenciaDemanda, setTransferenciaDemanda] = useState<{
+  // Quando o user solta um card numa coluna de parceiro defensor, primeiro abrimos
+  // um mini-menu com 3 opções (transferir | compartilhar | dar ciência). A seleção
+  // determina o initialTipo do NovoEncaminhamentoModal.
+  const [colegaDropContext, setColegaDropContext] = useState<{
     demandaId: number | null;
     processoId: number | null;
     assistidoId: number | null;
@@ -780,6 +783,8 @@ export default function Demandas() {
     destinatarioId: number;
     destinatarioNome: string;
   } | null>(null);
+
+  const [colegaModalTipo, setColegaModalTipo] = useState<"transferir" | "acompanhar" | "encaminhar" | null>(null);
 
   // Estado para o modal de delegação em lote
   const [batchDelegacaoOpen, setBatchDelegacaoOpen] = useState(false);
@@ -1177,10 +1182,10 @@ export default function Demandas() {
       return;
     }
 
-    // 2) Drop em colega defensor → transferência. Abre modal de encaminhamento, sem mutation.
+    // 2) Drop em colega defensor → abre mini-menu com 3 opções antes de abrir o modal.
     const parceiro = parceirosByKey.get(key);
     if (parceiro && demanda) {
-      setTransferenciaDemanda({
+      setColegaDropContext({
         demandaId: isNaN(numericId) ? null : numericId,
         processoId: demanda.processoId || null,
         assistidoId: demanda.assistidoId || null,
@@ -1188,7 +1193,7 @@ export default function Demandas() {
         destinatarioId: parceiro.id,
         destinatarioNome: parceiro.name,
       });
-      setTransferenciaModalOpen(true);
+      setColegaModalTipo(null);
       return;
     }
 
@@ -3855,22 +3860,79 @@ export default function Demandas() {
         }}
       />
 
-      {/* Modal de Transferência — aparece ao arrastar card sobre coluna de parceiro defensor */}
-      {transferenciaDemanda && (
+      {/* Mini-menu de escolha após drop em colega defensor */}
+      {colegaDropContext && colegaModalTipo === null && (
+        <Dialog open onOpenChange={(o) => { if (!o) setColegaDropContext(null); }}>
+          <DialogContent className="sm:max-w-[380px]">
+            <DialogHeader>
+              <DialogTitle className="text-base">Para {colegaDropContext.destinatarioNome}</DialogTitle>
+              <DialogDescription className="text-xs">
+                O que você quer fazer com este caso?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("transferir")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <ArrowLeftRight className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Transferir caso</p>
+                  <p className="text-[11px] text-zinc-500">Passa o caso definitivamente. Aguarda aceite.</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("acompanhar")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <Eye className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Compartilhar</p>
+                  <p className="text-[11px] text-zinc-500">Colega passa a acompanhar o caso. Sem mudar dono.</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("encaminhar")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <Send className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Dar ciência</p>
+                  <p className="text-[11px] text-zinc-500">Envia uma notificação. Caso continua com você.</p>
+                </div>
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal de encaminhamento aberto após escolha no mini-menu */}
+      {colegaDropContext && colegaModalTipo !== null && (
         <NovoEncaminhamentoModal
-          open={transferenciaModalOpen}
+          open
           onOpenChange={(o) => {
-            setTransferenciaModalOpen(o);
-            if (!o) setTransferenciaDemanda(null);
+            if (!o) {
+              setColegaDropContext(null);
+              setColegaModalTipo(null);
+            }
           }}
-          initialTipo="transferir"
+          initialTipo={colegaModalTipo}
           contexto={{
-            demandaId: transferenciaDemanda.demandaId ?? undefined,
-            processoId: transferenciaDemanda.processoId ?? undefined,
-            assistidoId: transferenciaDemanda.assistidoId ?? undefined,
-            display: transferenciaDemanda.display,
+            demandaId: colegaDropContext.demandaId ?? undefined,
+            processoId: colegaDropContext.processoId ?? undefined,
+            assistidoId: colegaDropContext.assistidoId ?? undefined,
+            display: colegaDropContext.display,
           }}
-          initialDestinatarioId={transferenciaDemanda.destinatarioId}
+          initialDestinatarioId={colegaDropContext.destinatarioId}
         />
       )}
 
