@@ -31,6 +31,7 @@ import {
   CalendarPlus,
   StickyNote,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import {
   KANBAN_COLUMNS,
@@ -818,14 +819,9 @@ function KanbanCard({
                 // @ts-ignore
                 "--tw-ring-color": "rgba(139, 92, 246, 0.4)",
               } as React.CSSProperties}
-              title={onStatusChange ? "Alterar status" : undefined}
+              title={onStatusChange ? `Delegada a ${demanda.delegadoPara}` : undefined}
             >
-              <div
-                className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold shrink-0"
-                style={{ backgroundColor: "rgba(139, 92, 246, 0.22)" }}
-              >
-                {demanda.delegadoPara.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase()}
-              </div>
+              <UserPlus className="w-3 h-3 shrink-0" />
               Delegada a {demanda.delegadoPara.split(" ")[0]}
               {onStatusChange && (
                 <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
