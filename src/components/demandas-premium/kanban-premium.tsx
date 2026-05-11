@@ -800,38 +800,62 @@ function KanbanCard({
             </span>
           )}
 
-          {/* Status badge — clickable for status change */}
-          <button
-            ref={badgeRef}
-            onClick={handleBadgeClick}
-            className={`
-              ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
-              border transition-all duration-150
-              ${onStatusChange
-                ? "hover:ring-1 cursor-pointer"
-                : "cursor-default"
-              }
-            `}
-            style={{
-              backgroundColor: `${groupColor}14`,
-              borderColor: `${groupColor}40`,
-              color: groupColor,
-              filter: "saturate(1.1)",
-              // @ts-ignore -- ring color via inline
-              "--tw-ring-color": `${groupColor}60`,
-            } as React.CSSProperties}
-            title={onStatusChange ? "Alterar status" : undefined}
-          >
-            {(() => {
-              const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
-              const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
-              return <StatusIcon className="w-3 h-3 shrink-0" />;
-            })()}
-            {statusDisplay}
-            {onStatusChange && (
-              <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
-            )}
-          </button>
+          {/* Status badge — quando delegada, mostra "Delegada a X" em vez do status */}
+          {demanda.delegadoPara ? (
+            <button
+              ref={badgeRef}
+              onClick={handleBadgeClick}
+              className={`
+                ml-auto flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
+                border transition-all duration-150
+                bg-violet-50 dark:bg-violet-950/30
+                border-violet-200 dark:border-violet-800/60
+                text-violet-700 dark:text-violet-300
+                ${onStatusChange ? "hover:ring-1 hover:ring-violet-300 cursor-pointer" : "cursor-default"}
+              `}
+              title={onStatusChange ? "Alterar status" : undefined}
+            >
+              <div className="w-3.5 h-3.5 rounded-full bg-violet-100 dark:bg-violet-900/60 flex items-center justify-center text-[8px] font-bold shrink-0">
+                {demanda.delegadoPara.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase()}
+              </div>
+              Delegada a {demanda.delegadoPara.split(" ")[0]}
+              {onStatusChange && (
+                <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
+              )}
+            </button>
+          ) : (
+            <button
+              ref={badgeRef}
+              onClick={handleBadgeClick}
+              className={`
+                ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
+                border transition-all duration-150
+                ${onStatusChange
+                  ? "hover:ring-1 cursor-pointer"
+                  : "cursor-default"
+                }
+              `}
+              style={{
+                backgroundColor: `${groupColor}14`,
+                borderColor: `${groupColor}40`,
+                color: groupColor,
+                filter: "saturate(1.1)",
+                // @ts-ignore -- ring color via inline
+                "--tw-ring-color": `${groupColor}60`,
+              } as React.CSSProperties}
+              title={onStatusChange ? "Alterar status" : undefined}
+            >
+              {(() => {
+                const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
+                const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
+                return <StatusIcon className="w-3 h-3 shrink-0" />;
+              })()}
+              {statusDisplay}
+              {onStatusChange && (
+                <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
+              )}
+            </button>
+          )}
 
           {/* Pipeline Selector */}
           {showStatusPopover && (
@@ -845,22 +869,12 @@ function KanbanCard({
           )}
         </div>
 
-        {/* Delegation badge — quem está executando a tarefa */}
-        {demanda.delegadoPara && (
-          <div className="flex items-center gap-1.5 mt-1.5 pl-8">
-            <div className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40">
-              <div className="w-3.5 h-3.5 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-[8px] font-bold text-violet-700 dark:text-violet-300">
-                {demanda.delegadoPara.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase()}
-              </div>
-              <span className="text-[10px] font-medium text-violet-700 dark:text-violet-300">
-                Delegada a {demanda.delegadoPara.split(" ")[0]}
-              </span>
-              {demanda.statusDelegacao && demanda.statusDelegacao !== "pendente" && (
-                <span className="text-[9px] text-violet-500 dark:text-violet-400 pl-1 border-l border-violet-200 dark:border-violet-800/60">
-                  {demanda.statusDelegacao.replace(/_/g, " ")}
-                </span>
-              )}
-            </div>
+        {/* Status secundário da delegação (aceita / em_andamento / aguardando_revisao) */}
+        {demanda.delegadoPara && demanda.statusDelegacao && demanda.statusDelegacao !== "pendente" && (
+          <div className="flex items-center gap-1 mt-1 pl-8">
+            <span className="text-[9px] text-violet-500 dark:text-violet-400 font-medium">
+              · {demanda.statusDelegacao.replace(/_/g, " ")}
+            </span>
           </div>
         )}
 
