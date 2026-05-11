@@ -1072,6 +1072,11 @@ export default function Demandas() {
       syncedAt: d.syncedAt ? new Date(d.syncedAt).toISOString() : null,
       // Defensor responsável (para filtro por profissional R/J/G)
       defensorId: d.defensorId ?? null,
+      // Delegação — quem está executando a tarefa (servidor/estagiário)
+      delegadoPara: d.delegadoPara ?? null,
+      delegadoParaId: d.delegadoParaId ?? null,
+      statusDelegacao: d.statusDelegacao ?? null,
+      dataDelegacao: d.dataDelegacao ? new Date(d.dataDelegacao).toISOString() : null,
       // Rastreamento de importação
       importBatchId: d.importBatchId || null,
       ordemOriginal: d.ordemOriginal ?? null,
