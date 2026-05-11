@@ -85,6 +85,7 @@ interface KanbanDemanda {
   atribuicao?: string | null;
   processos?: Array<{ numero?: string }>;
   delegadoPara?: string | null;
+  statusDelegacao?: string | null;
   reuPreso?: boolean;
   providenciaResumo?: string | null;
   lastEvento?: EventoLine | null;
@@ -844,12 +845,22 @@ function KanbanCard({
           )}
         </div>
 
-        {/* Delegation info */}
+        {/* Delegation badge — quem está executando a tarefa */}
         {demanda.delegadoPara && (
-          <div className="flex items-center gap-1 mt-1.5 pl-8">
-            <span className="text-[9px] text-violet-500 dark:text-violet-400 font-medium truncate">
-              → {demanda.delegadoPara}
-            </span>
+          <div className="flex items-center gap-1.5 mt-1.5 pl-8">
+            <div className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/30 border border-violet-200/60 dark:border-violet-800/40">
+              <div className="w-3.5 h-3.5 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center text-[8px] font-bold text-violet-700 dark:text-violet-300">
+                {demanda.delegadoPara.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase()}
+              </div>
+              <span className="text-[10px] font-medium text-violet-700 dark:text-violet-300">
+                Delegada a {demanda.delegadoPara.split(" ")[0]}
+              </span>
+              {demanda.statusDelegacao && demanda.statusDelegacao !== "pendente" && (
+                <span className="text-[9px] text-violet-500 dark:text-violet-400 pl-1 border-l border-violet-200 dark:border-violet-800/60">
+                  {demanda.statusDelegacao.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
           </div>
         )}
 

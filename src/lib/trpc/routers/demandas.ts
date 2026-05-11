@@ -170,6 +170,10 @@ export const demandasRouter = router({
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           defensorId: demandas.defensorId,
+          delegadoParaId: demandas.delegadoParaId,
+          delegadoPara: users.name,
+          dataDelegacao: demandas.dataDelegacao,
+          statusDelegacao: demandas.statusDelegacao,
           ordemManual: demandas.ordemManual,
           importBatchId: demandas.importBatchId,
           ordemOriginal: demandas.ordemOriginal,
@@ -193,6 +197,7 @@ export const demandasRouter = router({
         .from(demandas)
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .leftJoin(users, eq(demandas.delegadoParaId, users.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.createdAt} DESC, ${demandas.prazo} ASC NULLS LAST`)
         .$dynamic();
