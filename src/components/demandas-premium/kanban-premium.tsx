@@ -812,12 +812,13 @@ function KanbanCard({
                 ${onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default"}
               `}
               style={{
-                backgroundColor: "rgba(139, 92, 246, 0.08)",
-                borderColor: "rgba(139, 92, 246, 0.25)",
-                color: "rgb(124, 58, 237)",
+                // Mesma palette do grupo Acompanhar (#9B84B8) — pills idênticas
+                backgroundColor: "#9B84B814",
+                borderColor: "#9B84B840",
+                color: "#9B84B8",
                 filter: "saturate(1.1)",
                 // @ts-ignore
-                "--tw-ring-color": "rgba(139, 92, 246, 0.4)",
+                "--tw-ring-color": "#9B84B860",
               } as React.CSSProperties}
               title={onStatusChange ? `Delegada a ${demanda.delegadoPara}` : undefined}
             >
