@@ -806,7 +806,7 @@ function KanbanCard({
               ref={badgeRef}
               onClick={handleBadgeClick}
               className={`
-                ml-auto flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md font-medium whitespace-nowrap
+                ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
                 border transition-all duration-150
                 ${onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default"}
               `}
@@ -814,14 +814,15 @@ function KanbanCard({
                 backgroundColor: "rgba(139, 92, 246, 0.08)",
                 borderColor: "rgba(139, 92, 246, 0.25)",
                 color: "rgb(124, 58, 237)",
+                filter: "saturate(1.1)",
                 // @ts-ignore
                 "--tw-ring-color": "rgba(139, 92, 246, 0.4)",
               } as React.CSSProperties}
               title={onStatusChange ? "Alterar status" : undefined}
             >
               <div
-                className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold shrink-0"
-                style={{ backgroundColor: "rgba(139, 92, 246, 0.18)" }}
+                className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold shrink-0"
+                style={{ backgroundColor: "rgba(139, 92, 246, 0.22)" }}
               >
                 {demanda.delegadoPara.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase()}
               </div>
