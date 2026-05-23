@@ -146,22 +146,39 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
     return "Criminal Geral";
   };
 
-  const extrairAssistido = (partesTexto: string): string => {
-    // Formato: "Autor X Réu"
-    // O assistido da defensoria é o réu (segunda parte após o X)
-    const partes = partesTexto.split(/\s+X\s+/);
-    
-    if (partes.length >= 2) {
-      // Pegar a segunda parte (réu) e limpar
-      let assistido = partes[1].trim();
-      
-      // Remover texto extra como "registrado(a) civilmente como"
-      assistido = assistido.replace(/registrado\(a\) civilmente como.*/i, "").trim();
-      
-      return assistido;
-    }
+  // Fallback para o formato tabular da página de Pauta do PJe (sem marker "(REU)")
+  // Estrutura: "POLO_ATIVO\nX\nPOLO_PASSIVO<TAB ou 2+ espaços>CLASSE_JUDICIAL..."
+  // Usado quando o regex principal (que exige "(REU)/(REQUERIDO)/..." em parênteses) não casa.
+  const extrairAssistidosTabular = (textoBloco: string): AssistidoInfo[] => {
+    const matchX = textoBloco.match(/(?:^|\n|\s)X\s*\n([^\n]+)/);
+    if (!matchX) return [];
 
-    return "";
+    const linhaPassivo = matchX[1];
+
+    // Pegar o nome até o primeiro TAB ou 2+ espaços (início da próxima coluna)
+    const sepIdx = linhaPassivo.search(/\t|\s{2,}/);
+    let nome = (sepIdx > 0 ? linhaPassivo.substring(0, sepIdx) : linhaPassivo).trim();
+
+    // Limpar "registrado(a) civilmente como ..." (mantém só o nome civil principal)
+    nome = nome.replace(/\s+registrado\(a\)\s+civilmente\s+como.*$/i, "").trim();
+    // Limpar "e outros (N)"
+    nome = nome.replace(/\s+e\s+outros\s*\(\d+\)/i, "").trim();
+    // Normalizar espaços
+    nome = nome.replace(/\s+/g, " ").trim();
+
+    const naoEPessoa =
+      nome.includes("Ministério") ||
+      nome.includes("VARA") ||
+      nome.includes("DEAM") ||
+      nome.includes("Polícia") ||
+      nome.includes("DT ") ||
+      nome.includes("DELEGACIA") ||
+      /segredo\s+de\s+justi[çc]a/i.test(nome) ||
+      /^\d{2}ª?\s*D[T]/i.test(nome);
+
+    if (!nome || nome.length <= 2 || naoEPessoa) return [];
+
+    return [{ nome: toTitleCase(nome), cpf: "" }];
   };
 
   // ============================================
@@ -441,9 +458,14 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
           }
         }
 
+        // Fallback: formato tabular da página PJe (sem marker "(REU)" em parênteses)
+        if (partesAssistidas.length === 0) {
+          partesAssistidas.push(...extrairAssistidosTabular(textoBloco));
+        }
+
         // Remover duplicatas por CPF ou nome
         const assistidosUnicos = partesAssistidas.filter((assistido, index, self) =>
-          index === self.findIndex((a) => 
+          index === self.findIndex((a) =>
             (a.cpf && a.cpf === assistido.cpf) || a.nome === assistido.nome
           )
         );
@@ -464,57 +486,61 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
           : mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
         // Extrair tipo de audiência do texto - ordem importa (mais específico primeiro)
+        // Linearizar antes de aplicar regex: o PDF da Pauta quebra palavras na coluna
+        // estreita (ex: "JUSTIFICAÇ\nÃO", "JULGAMENT\nO"). Reduzir whitespace evita
+        // falhas de match e usamos \s* dentro das palavras suscetíveis a quebra.
+        const textoBlocoLinear = textoBloco.replace(/\s+/g, " ");
         let tipoAudienciaTexto = "";
-        
+
         // Sessão de Julgamento do Júri
-        if (textoBloco.match(/Sessão\s+de\s+Julgamento/i) || 
-            textoBloco.match(/Plenário/i) ||
-            textoBloco.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
+        if (textoBlocoLinear.match(/Sessão\s+de\s+Julgamento/i) ||
+            textoBlocoLinear.match(/Plenário/i) ||
+            textoBlocoLinear.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
           tipoAudienciaTexto = "Sessão de Julgamento do Tribunal do Júri";
-        } 
+        }
         // ANPP - Acordo de Não Persecução Penal
-        else if (textoBloco.match(/ANPP/i) || 
-                 textoBloco.match(/N[AÃ]O[\s-]*PERSECU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/ACORDO.*PENAL/i)) {
+        else if (textoBlocoLinear.match(/ANPP/i) ||
+                 textoBlocoLinear.match(/N[AÃ]O[\s-]*PERSECU[CÇ]\s*[AÃ]\s*O/i) ||
+                 textoBlocoLinear.match(/ACORDO.*PENAL/i)) {
           tipoAudienciaTexto = "ANPP";
         }
         // PAP - Produção Antecipada de Provas
-        else if (textoBloco.match(/PRODU[CÇ][AÃ]O\s+ANTECIPADA/i) || 
-                 textoBloco.match(/PAP/i) ||
-                 textoBloco.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
-                 textoBloco.match(/Coleta.*Provas/i)) {
+        else if (textoBlocoLinear.match(/PRODU[CÇ]\s*[AÃ]\s*O\s+ANTECIPADA/i) ||
+                 textoBlocoLinear.match(/PAP/i) ||
+                 textoBlocoLinear.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
+                 textoBlocoLinear.match(/Coleta.*Provas/i)) {
           tipoAudienciaTexto = "PAP";
         }
         // Admonitória (Execução Penal)
-        else if (textoBloco.match(/ADMONIT[OÓ]RIA/i)) {
+        else if (textoBlocoLinear.match(/ADMONIT[OÓ]RIA/i)) {
           tipoAudienciaTexto = "Admonitória";
         }
         // Oitiva Especial (antes de justificação para não confundir)
-        else if (textoBloco.match(/OITIVA\s*ESPECIAL/i) || 
-                 textoBloco.match(/DEPOIMENTO\s+ESPECIAL/i)) {
+        else if (textoBlocoLinear.match(/OITIVA\s+ESPECIAL/i) ||
+                 textoBlocoLinear.match(/DEPOIMENTO\s+ESPECIAL/i)) {
           tipoAudienciaTexto = "Oitiva especial";
         }
         // Retratação
-        else if (textoBloco.match(/RETRATA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoLinear.match(/RETRATA[CÇ]\s*[AÃ]\s*O/i)) {
           tipoAudienciaTexto = "Retratação";
         }
         // Justificação
-        else if (textoBloco.match(/JUSTIFICA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoLinear.match(/JUSTIFICA[CÇ]\s*[AÃ]\s*O/i)) {
           tipoAudienciaTexto = "Justificação";
         }
         // Custódia
-        else if (textoBloco.match(/CUST[OÓ]DIA/i)) {
+        else if (textoBlocoLinear.match(/CUST[OÓ]DIA/i)) {
           tipoAudienciaTexto = "Custódia";
         }
         // AIJ - Instrução e Julgamento (detectar múltiplos padrões)
-        else if (textoBloco.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ][AÃ]O/i) || 
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O\s+E?\s*JULGAMENTO/i) ||
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/AIJ/i)) {
+        else if (textoBlocoLinear.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ]\s*[AÃ]\s*O/i) ||
+                 textoBlocoLinear.match(/INSTRU[CÇ]\s*[AÃ]\s*O\s+E?\s*JULGAMENT\s*O/i) ||
+                 textoBlocoLinear.match(/INSTRU[CÇ]\s*[AÃ]\s*O/i) ||
+                 textoBlocoLinear.match(/\bAIJ\b/i)) {
           tipoAudienciaTexto = "Instrução e Julgamento";
         }
         // Conciliação
-        else if (textoBloco.match(/CONCILIA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoLinear.match(/CONCILIA[CÇ]\s*[AÃ]\s*O/i)) {
           tipoAudienciaTexto = "Conciliação";
         }
         // Fallback - texto genérico para deixar o mapeador decidir baseado na atribuição
@@ -670,7 +696,12 @@ Status: ${situacao}`;
                 });
               }
             }
-            
+
+            // Fallback: formato tabular da página PJe (sem marker "(REU)")
+            if (partesAssistitasAlt.length === 0) {
+              partesAssistitasAlt.push(...extrairAssistidosTabular(textoContexto));
+            }
+
             // Remover duplicatas
             const assistidosUnicosAlt = partesAssistitasAlt.filter((assistido, index, self) =>
               index === self.findIndex((a) => 
@@ -692,20 +723,25 @@ Status: ${situacao}`;
               ? forcedAtribuicao
               : mapearAtribuicao(orgao, "", textoContexto);
             
-            // Determinar tipo de audiência
+            // Determinar tipo de audiência (lineariza para tolerar quebras de palavra do PDF)
+            const textoContextoLinear = textoContexto.replace(/\s+/g, " ");
             let tipoAudTexto = "Audiência";
-            if (textoContexto.match(/Sessão\s+de\s+Julgamento.*Tribunal\s+do\s+Juri|Sessão\s+do\s+Tribunal\s+do\s+Júri/i)) {
+            if (textoContextoLinear.match(/Sessão\s+de\s+Julgamento.*Tribunal\s+do\s+J[uú]ri|Sessão\s+do\s+Tribunal\s+do\s+Júri/i)) {
               tipoAudTexto = "Sessão de Julgamento do Tribunal do Júri";
-            } else if (textoContexto.match(/AUDIÊNCIA\s+DE\s+INSTRUÇÃO\s+E\s+JULGAMENTO/i) || textoContexto.match(/INSTRUÇÃO\s+E\s+JULGAMENTO/i)) {
+            } else if (textoContextoLinear.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ]\s*[AÃ]\s*O\s+E\s+JULGAMENT\s*O/i) ||
+                       textoContextoLinear.match(/INSTRU[CÇ]\s*[AÃ]\s*O\s+E\s+JULGAMENT\s*O/i) ||
+                       textoContextoLinear.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ]\s*[AÃ]\s*O/i)) {
               tipoAudTexto = "Audiência de Instrução e Julgamento";
-            } else if (textoContexto.match(/JUSTIFICAÇÃO/i) || textoContexto.match(/JUSTIFICAÇ/i)) {
+            } else if (textoContextoLinear.match(/JUSTIFICA[CÇ]\s*[AÃ]\s*O/i)) {
               tipoAudTexto = "Justificação";
-            } else if (textoContexto.match(/CUSTÓDIA/i) || textoContexto.match(/CUSTODIA/i)) {
+            } else if (textoContextoLinear.match(/CUST[OÓ]DIA/i)) {
               tipoAudTexto = "Custódia";
-            } else if (textoContexto.match(/RETRATAÇÃO/i) || textoContexto.match(/RETRATACAO/i)) {
+            } else if (textoContextoLinear.match(/RETRATA[CÇ]\s*[AÃ]\s*O/i)) {
               tipoAudTexto = "Retratação";
-            } else if (textoContexto.match(/OITIVA\s+ESPECIAL/i) || textoContexto.match(/DEPOIMENTO\s+ESPECIAL/i)) {
+            } else if (textoContextoLinear.match(/OITIVA\s+ESPECIAL/i) || textoContextoLinear.match(/DEPOIMENTO\s+ESPECIAL/i)) {
               tipoAudTexto = "Oitiva especial";
+            } else if (textoContextoLinear.match(/ADMONIT[OÓ]RIA/i)) {
+              tipoAudTexto = "Admonitória";
             }
             
             const tipoAudMapeado = mapearTipoAudiencia(tipoAudTexto, atribuicaoAlt);
