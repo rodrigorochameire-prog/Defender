@@ -5,7 +5,8 @@
 // em Node puro (vitest).
 
 import { format } from "date-fns";
-import { normalizeAreaToFilter, getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { mapAtribuicaoToKey } from "./atribuicao-key";
 import type { AgendaItem } from "./agenda-item";
 
 export interface RegistroAgendado {
@@ -25,38 +26,6 @@ export interface RegistroAgendado {
   } | null;
 }
 
-/**
- * Deriva a chave de atribuição a partir dos campos `atribuicao` e `area`
- * do processo. Usa a mesma lógica do helper local em agenda/page.tsx:
- * - Primeiro tenta normalizar pelo valor exato via AREA_TO_FILTER_MAP
- * - Depois faz fallback por substring
- * - Se nenhum casar, retorna "SUBSTITUICAO"
- *
- * Retorna "NEUTRO" quando não há processo vinculado (sentinela para
- * getAtribuicaoColors, que faz fallback para `all`).
- */
-function derivarAtribuicaoKey(
-  atribuicao: string | null | undefined,
-  area: string | null | undefined,
-): string {
-  const exactMatch = normalizeAreaToFilter(atribuicao) || normalizeAreaToFilter(area);
-  if (exactMatch && exactMatch !== "all") return exactMatch;
-
-  if (!atribuicao && !area) return "SUBSTITUICAO";
-
-  const atrib = (atribuicao || area || "").toUpperCase();
-
-  if (atrib.includes("VVD") || atrib.includes("VIOLENCIA") || atrib.includes("DOMESTICA"))
-    return "VVD";
-  if (atrib.includes("JURI") || atrib.includes("JÚRI")) return "JURI";
-  if (atrib.includes("EXECU")) return "EXECUCAO";
-  if (atrib.includes("CIVEL") || atrib.includes("FAMILIA") || atrib.includes("FAZENDA"))
-    return "SUBSTITUICAO_CIVEL";
-  if (atrib.includes("SUBSTITU") || atrib.includes("CRIMINAL")) return "SUBSTITUICAO";
-
-  return "SUBSTITUICAO";
-}
-
 /** Chave sentinela usada quando não há processo vinculado ao registro. */
 const ATRIBUICAO_NEUTRO = "NEUTRO";
 
@@ -65,7 +34,7 @@ export function registroAgendadoToAgendaItem(r: RegistroAgendado): AgendaItem {
   const dataFormatada = format(d, "yyyy-MM-dd");
 
   const atribuicaoKey = r.processo
-    ? derivarAtribuicaoKey(r.processo.atribuicao, r.processo.area)
+    ? mapAtribuicaoToKey(r.processo.atribuicao, r.processo.area)
     : ATRIBUICAO_NEUTRO;
 
   // getAtribuicaoColors aceita qualquer string; para NEUTRO retorna a config "all"

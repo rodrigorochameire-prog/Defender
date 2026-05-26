@@ -97,6 +97,8 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { AgendaItem } from "@/lib/agenda/agenda-item";
+import { mapAtribuicaoToKey } from "@/lib/agenda/atribuicao-key";
+import { registroAgendadoToAgendaItem } from "@/lib/agenda/registro-to-agenda-item";
 
 // ==========================================
 // TIPOS
@@ -125,13 +127,7 @@ interface EventoFormData {
   documentos: string[];
 }
 
-import { 
-  ATRIBUICAO_COLORS, 
-  getAtribuicaoColors, 
-  ATRIBUICAO_OPTIONS as ATRIBUICAO_FILTER_OPTIONS,
-  normalizeAreaToFilter,
-  areaMatchesFilter
-} from "@/lib/config/atribuicoes";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -608,8 +604,14 @@ export default function AgendaPage() {
     end: fimAno.toISOString(),
   });
 
+  const { data: registrosAgendados, isLoading: isLoadingRegistros } =
+    trpc.registros.listAgendados.useQuery({
+      start: inicioAno.toISOString(),
+      end: fimAno.toISOString(),
+    });
+
   // Loading combinado
-  const isLoading = isLoadingAudiencias || isLoadingCalendar;
+  const isLoading = isLoadingAudiencias || isLoadingCalendar || isLoadingRegistros;
 
   // Utils para invalidar queries após mutações
   const utils = trpc.useUtils();
@@ -681,26 +683,6 @@ export default function AgendaPage() {
       }));
     }
   }, [escalasFromDB]);
-
-  // Mapear atribuição do banco para key do filtro (usa função centralizada)
-  const mapAtribuicaoToKey = (atribuicao: string | null | undefined, area: string | null | undefined): string => {
-    // Primeiro tentar pelo valor exato
-    const exactMatch = normalizeAreaToFilter(atribuicao) || normalizeAreaToFilter(area);
-    if (exactMatch && exactMatch !== "all") return exactMatch;
-    
-    // Fallback para busca por padrão
-    if (!atribuicao && !area) return "SUBSTITUICAO";
-    
-    const atrib = (atribuicao || area || "").toUpperCase();
-    
-    if (atrib.includes("VVD") || atrib.includes("VIOLENCIA") || atrib.includes("DOMESTICA")) return "VVD";
-    if (atrib.includes("JURI") || atrib.includes("JÚRI")) return "JURI";
-    if (atrib.includes("EXECU")) return "EXECUCAO";
-    if (atrib.includes("CIVEL") || atrib.includes("FAMILIA") || atrib.includes("FAZENDA")) return "SUBSTITUICAO_CIVEL";
-    if (atrib.includes("SUBSTITU") || atrib.includes("CRIMINAL")) return "SUBSTITUICAO";
-    
-    return "SUBSTITUICAO";
-  };
 
   // Helper: resolve o responsável pela escala de revezamento (atribuição + mês do evento)
   // Fallback: defensorId/createdById se não houver escala configurada
@@ -826,9 +808,16 @@ export default function AgendaPage() {
       });
     }
 
-    // 3. Ordenar por data
+    // 3. Processar atendimentos agendados (tabela registros)
+    if (registrosAgendados) {
+      registrosAgendados.forEach((r) => {
+        items.push(registroAgendadoToAgendaItem(r));
+      });
+    }
+
+    // 4. Ordenar por data
     return items.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-  }, [audienciasData, calendarData, escalaConfig]);
+  }, [audienciasData, calendarData, registrosAgendados, escalaConfig]);
 
   // Navegar automaticamente para o mês do primeiro evento se não houver eventos no mês atual
   useEffect(() => {
