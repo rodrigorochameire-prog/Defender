@@ -50,6 +50,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { Users } from "lucide-react";
 import { extrairTipo } from "@/components/agenda/extrair-tipo";
 
 interface CalendarWeekViewProps {
@@ -123,6 +125,7 @@ function EventoSemana({
   const eventoCancelado = isEventoCancelado(evento.status);
   const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
   const hasRegistro = !!evento.registro;
+  const visual = agendaItemVisual(evento);
 
   // Advogado constituído (detecta prefixo "ADV" no título)
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
@@ -139,10 +142,18 @@ function EventoSemana({
           className={`w-full text-left rounded-md transition-all duration-200 hover:shadow-md overflow-hidden group ${
             eventoCancelado ? "opacity-60" : ""
           }`}
-          style={{
-            backgroundColor: `${displayColor}20`,
-            borderLeft: `3px solid ${displayColor}`,
-          }}
+          style={
+            visual.dashed
+              ? {
+                  backgroundColor: `${displayColor}10`,
+                  borderLeft: `3px dashed ${displayColor}`,
+                  boxShadow: `0 0 0 1px ${displayColor}25`,
+                }
+              : {
+                  backgroundColor: `${displayColor}20`,
+                  borderLeft: `3px solid ${displayColor}`,
+                }
+          }
         >
           <div className="px-2 py-1">
             <div className="flex items-center gap-1">
@@ -163,6 +174,9 @@ function EventoSemana({
               </span>
 
               {/* Indicadores */}
+              {visual.dashed && !eventoCancelado && (
+                <Users className="w-2.5 h-2.5 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+              )}
               {temAdvogado && !eventoCancelado && (
                 <Scale className="w-2.5 h-2.5 text-rose-500 shrink-0" />
               )}

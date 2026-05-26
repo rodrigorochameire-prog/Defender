@@ -129,6 +129,7 @@ interface EventoFormData {
 }
 
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -303,17 +304,29 @@ function EventoDetalhado({
 }) {
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
-  
+  const visual = agendaItemVisual(evento);
+
   return (
-    <div 
+    <div
       onClick={() => onClick(evento)}
-      className="group relative flex items-stretch gap-3 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all cursor-pointer hover:shadow-md"
+      className={`group relative flex items-stretch gap-3 p-4 rounded-xl border hover:border-neutral-200 dark:hover:border-neutral-700 transition-all cursor-pointer hover:shadow-md ${
+        visual.dashed
+          ? "bg-white/60 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-700 border-dashed"
+          : "bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800"
+      }`}
     >
-      {/* Barra lateral colorida */}
-      <div 
-        className="w-1 rounded-full flex-shrink-0"
-        style={{ backgroundColor: solidColor }}
-      />
+      {/* Barra lateral colorida — sólida (audiência) ou tracejada (atendimento) */}
+      {visual.dashed ? (
+        <div
+          className="w-1 rounded-full flex-shrink-0 border-l-2 border-dashed"
+          style={{ borderColor: solidColor, backgroundColor: "transparent" }}
+        />
+      ) : (
+        <div
+          className="w-1 rounded-full flex-shrink-0"
+          style={{ backgroundColor: solidColor }}
+        />
+      )}
       
       {/* Horário */}
       <div className="flex flex-col items-center justify-center w-14 flex-shrink-0">
@@ -326,14 +339,21 @@ function EventoDetalhado({
       {/* Conteúdo principal */}
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
-            {evento.titulo}
-          </h4>
-          <Badge 
+          <div className="flex items-center gap-1.5 min-w-0">
+            {visual.icon === "Users" ? (
+              <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />
+            ) : (
+              <Gavel className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />
+            )}
+            <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
+              {evento.titulo}
+            </h4>
+          </div>
+          <Badge
             className="flex-shrink-0 text-[10px] px-1.5 py-0.5 border-0"
-            style={{ 
-              backgroundColor: `${solidColor}20`, 
-              color: solidColor 
+            style={{
+              backgroundColor: `${solidColor}20`,
+              color: solidColor,
             }}
           >
             {atribuicaoConfig.shortLabel}

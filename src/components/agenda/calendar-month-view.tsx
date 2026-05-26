@@ -63,6 +63,7 @@ interface CalendarMonthViewProps {
 }
 
 import { getAtribuicaoColors, ATRIBUICAO_COLORS } from "@/lib/config/atribuicoes";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // Ícones por tipo/atribuição (labels)
 const atribuicaoIcons: Record<string, any> = {
@@ -184,6 +185,7 @@ function EventoCompacto({
   const hasRegistro = !!evento.registro;
   const eventoCancelado = isEventoCancelado(evento.status);
   const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
+  const visual = agendaItemVisual(evento);
 
   // Ícone da atribuição
   const AtribIcon = atribuicaoKeyIcons[evento.atribuicaoKey] || Folder;
@@ -203,13 +205,23 @@ function EventoCompacto({
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
           className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
             eventoCancelado ? "opacity-40" : ""
-          }`}
+          } ${visual.dashed ? "ring-1" : ""}`}
+          style={visual.dashed ? { ringColor: displayColor + "60", outlineColor: displayColor + "60", boxShadow: `0 0 0 1px ${displayColor}40` } : undefined}
         >
-          {/* Left attribution bar */}
-          <div
-            className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-50"
-            style={{ backgroundColor: displayColor }}
-          />
+          {/* Left attribution bar — sólida (audiência) ou tracejada (atendimento) */}
+          {visual.dashed ? (
+            <div
+              className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-70"
+              style={{
+                background: `repeating-linear-gradient(to bottom, ${displayColor} 0px, ${displayColor} 3px, transparent 3px, transparent 6px)`,
+              }}
+            />
+          ) : (
+            <div
+              className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-50"
+              style={{ backgroundColor: displayColor }}
+            />
+          )}
 
           {/* Conteúdo do card — compacto (sem padding extra em sm para caber 2 cards
               inteiros em min-h-[120px] sem corte) */}
@@ -240,8 +252,11 @@ function EventoCompacto({
 
               <span className="flex-1" />
 
-              {/* Dot indicators */}
+              {/* Dot indicators + atendimento icon */}
               <span className="hidden sm:flex items-center gap-0.5">
+                {visual.dashed && !eventoCancelado && (
+                  <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+                )}
                 {temAdvogado && !eventoCancelado && (
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80 shrink-0" title="Advogado constituído" />
                 )}
