@@ -43,6 +43,7 @@ import {
   Trash2,
   ExternalLink,
   User,
+  Users,
   Copy,
   Plus,
   Scale,
@@ -51,7 +52,6 @@ import {
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
-import { Users } from "lucide-react";
 import { extrairTipo } from "@/components/agenda/extrair-tipo";
 
 interface CalendarWeekViewProps {

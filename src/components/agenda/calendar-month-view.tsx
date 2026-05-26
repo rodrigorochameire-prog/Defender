@@ -205,8 +205,8 @@ function EventoCompacto({
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
           className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
             eventoCancelado ? "opacity-40" : ""
-          } ${visual.dashed ? "ring-1" : ""}`}
-          style={visual.dashed ? { ringColor: displayColor + "60", outlineColor: displayColor + "60", boxShadow: `0 0 0 1px ${displayColor}40` } : undefined}
+          }`}
+          style={visual.dashed ? { boxShadow: `0 0 0 1px ${displayColor}40` } : undefined}
         >
           {/* Left attribution bar — sólida (audiência) ou tracejada (atendimento) */}
           {visual.dashed ? (

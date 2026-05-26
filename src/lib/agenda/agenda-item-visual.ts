@@ -1,12 +1,15 @@
 export type AgendaItemVisual = {
-  natureza: "audiencia" | "atendimento";
+  natureza: "audiencia" | "atendimento" | "other";
   dashed: boolean;
-  icon: "Gavel" | "Users";
+  icon: "Users" | "Gavel" | null;
 };
 
-export function agendaItemVisual(item: { fonte?: string }): AgendaItemVisual {
+export function agendaItemVisual(item: { fonte?: string; tipo?: string }): AgendaItemVisual {
   if (item.fonte === "registros") {
     return { natureza: "atendimento", dashed: true, icon: "Users" };
   }
-  return { natureza: "audiencia", dashed: false, icon: "Gavel" };
+  if (item.tipo === "audiencia") {
+    return { natureza: "audiencia", dashed: false, icon: "Gavel" };
+  }
+  return { natureza: "other", dashed: false, icon: null };
 }

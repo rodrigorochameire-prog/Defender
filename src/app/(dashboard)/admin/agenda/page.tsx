@@ -315,18 +315,13 @@ function EventoDetalhado({
           : "bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800"
       }`}
     >
-      {/* Barra lateral colorida — sólida (audiência) ou tracejada (atendimento) */}
-      {visual.dashed ? (
-        <div
-          className="w-1 rounded-full flex-shrink-0 border-l-2 border-dashed"
-          style={{ borderColor: solidColor, backgroundColor: "transparent" }}
-        />
-      ) : (
-        <div
-          className="w-1 rounded-full flex-shrink-0"
-          style={{ backgroundColor: solidColor }}
-        />
-      )}
+      {/* Barra lateral colorida — sólida (audiência/other) ou tracejada (atendimento) */}
+      <div
+        className="w-1 rounded-full flex-shrink-0"
+        style={visual.dashed
+          ? { backgroundImage: `repeating-linear-gradient(to bottom, ${solidColor} 0 3px, transparent 3px 6px)` }
+          : { backgroundColor: solidColor }}
+      />
       
       {/* Horário */}
       <div className="flex flex-col items-center justify-center w-14 flex-shrink-0">
@@ -340,11 +335,8 @@ function EventoDetalhado({
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            {visual.icon === "Users" ? (
-              <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />
-            ) : (
-              <Gavel className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />
-            )}
+            {visual.icon === "Users" && <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
+            {visual.icon === "Gavel" && <Gavel className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
             <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
               {evento.titulo}
             </h4>
