@@ -1435,6 +1435,17 @@ export const audienciasRouter = router({
             if ((!processoCache.vara || processoCache.vara === "Não informado") && evento.orgaoJulgador) {
               updates.vara = evento.orgaoJulgador;
             }
+            // Corrige atribuição/área a partir da pauta (fonte autoritativa da vara).
+            // Sem isto, um processo pré-existente classificado errado (ex.: criado
+            // antes como VVD) mantinha a classificação antiga ao receber uma audiência
+            // de outra atribuição — ex.: Sessão do Júri aparecia com selo "Violência
+            // Doméstica". Pula o fallback genérico (SUBSTITUICAO) para não sobrescrever
+            // uma classificação boa com um palpite de baixa confiança.
+            const atribImport = mapAtribuicao(evento.atribuicao);
+            if (atribImport !== "SUBSTITUICAO") {
+              updates.atribuicao = atribImport as typeof processos.atribuicao._.data;
+              updates.area = mapArea(evento.atribuicao) as typeof processos.area._.data;
+            }
             if (Object.keys(updates).length > 0) {
               await tx.update(processos).set(updates).where(eq(processos.id, processoCache.id));
               // Update cache
