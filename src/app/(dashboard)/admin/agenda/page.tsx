@@ -96,43 +96,11 @@ import {
   format,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { AgendaItem } from "@/lib/agenda/agenda-item";
 
 // ==========================================
 // TIPOS
 // ==========================================
-
-interface AgendaItem {
-  /** Id composto para React keys e lookup (ex: "audiencia-179", "calendar-42"). */
-  id: string;
-  /** Id numérico cru da fonte (audiencias.id OU calendar_events.id). Use com `fonte`. */
-  rawId: number;
-  titulo: string;
-  tipo: string;
-  data: string;
-  horarioInicio: string;
-  horarioFim: string;
-  local: string;
-  assistido: string;
-  assistidoId?: number | null;
-  processo: string;
-  processoId?: number | null;
-  atribuicao: string;
-  atribuicaoKey?: string;
-  status: string;
-  descricao: string;
-  prioridade: string;
-  recorrencia: string;
-  lembretes: string[];
-  tags: string[];
-  participantes: string[];
-  vinculoDemanda?: string;
-  observacoes: string;
-  documentos: string[];
-  dataInclusao: string;
-  responsavel?: string;
-  registro?: RegistroAudienciaData;
-  fonte?: "audiencias" | "calendar"; // Indica de qual tabela veio
-}
 
 interface EventoFormData {
   id?: string;
