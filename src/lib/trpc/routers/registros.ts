@@ -25,6 +25,18 @@ const TIPO_REGISTRO = z.enum([
   "peticao",
 ]);
 
+// ─── Schema exportado para testes unitários (Task 3) ───────────────────────
+export const agendarAtendimentoInput = z.object({
+  assistidoId: z.number().int().positive(),
+  dataRegistro: z.union([z.string(), z.date()]),
+  titulo: z.string().max(120).optional(),
+  assunto: z.string().optional(),
+  local: z.string().optional(),
+  processoId: z.number().int().positive().optional(),
+  casoId: z.number().int().positive().optional(),
+  demandaId: z.number().int().positive().optional(),
+});
+
 export const registrosRouter = router({
   // ────────────────────────────────────────────────────────────────────
   // list — filtros por contexto (assistido, processo, demanda, audiência)
@@ -163,6 +175,34 @@ export const registrosRouter = router({
       });
 
       return created;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // agendar — insere atendimento futuro com status "agendado"
+  // ────────────────────────────────────────────────────────────────────
+  agendar: protectedProcedure
+    .input(agendarAtendimentoInput)
+    .mutation(async ({ input, ctx }) => {
+      const [registro] = await db
+        .insert(registros)
+        .values({
+          assistidoId: input.assistidoId,
+          processoId: input.processoId ?? null,
+          casoId: input.casoId ?? null,
+          demandaId: input.demandaId ?? null,
+          tipo: "atendimento",
+          status: "agendado",
+          titulo: input.titulo ?? null,
+          assunto: input.assunto ?? null,
+          local: input.local ?? null,
+          dataRegistro: new Date(input.dataRegistro as string | Date),
+          autorId: ctx.user.id,
+        })
+        .returning();
+      if (!registro) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Falha ao agendar atendimento" });
+      }
+      return registro;
     }),
 
   // ────────────────────────────────────────────────────────────────────
