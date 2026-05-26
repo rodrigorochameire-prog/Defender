@@ -27,7 +27,6 @@ import {
   Briefcase,
   Clock,
   X,
-  AlertCircle,
   Mail,
   ArrowRight,
   Sparkles,
@@ -42,11 +41,17 @@ import {
   Video,
   FileSignature,
   Plus,
+  CheckSquare,
+  Building2,
+  CalendarPlus,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
+import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
@@ -96,6 +101,18 @@ interface DemandaQuickPreviewProps {
   onProvidenciasChange?: (id: string, providencias: string) => void;
   onPrazoChange: (id: string, prazo: string) => void;
   onAtribuicaoChange: (id: string, atribuicao: string) => void;
+  /** Edita tipo de processo (badge AP/MPU/APF/...). Chamado direto no
+   *  processo (não na demanda) — passa processoId resolvido pela view. */
+  onTipoProcessoChange?: (id: string, tipo: string) => void;
+  /** Edita nome do assistido vinculado. Útil pra corrigir placeholders
+   *  ("⚠ A identificar...") e typos. Chamado direto no assistido. */
+  onAssistidoNomeChange?: (id: string, nome: string) => void;
+  /** Atualiza o status prisional do assistido vinculado à demanda */
+  onStatusPrisionalChange?: (assistidoId: number, status: string) => void;
+  /** Abre o AudienciaConfirmModal pré-populado com a demanda */
+  onAgendarAudiencia?: (demandaId: string) => void;
+  /** Quando true, abre o painel de novo registro logo na primeira renderização */
+  initialNovoRegistro?: boolean;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
   onNavigate?: (direction: "prev" | "next") => void;
@@ -108,6 +125,24 @@ interface DemandaQuickPreviewProps {
 // ============================================
 // CONSTANTS
 // ============================================
+
+// Cores temáticas pra badge de tipo de processo. Hex puro — usado com
+// alpha 1a (~10%) no bg e cor cheia no texto. Verde tons reservado pra
+// incidentes defensivos (LP, HC) — sinaliza ato da defesa, não acusação.
+const TIPO_PROCESSO_COLORS: Record<string, string> = {
+  AP: "#dc2626",        // Ação Penal — vermelho (acusação formal)
+  IP: "#f59e0b",        // Inquérito Policial — amber (investigação)
+  APF: "#ea580c",       // Auto Prisão Flagrante — orange (urgência)
+  CAUTELAR: "#7c3aed",  // Cautelar (acusação) — violet
+  EP: "#2563eb",        // Execução Penal — blue
+  MPU: "#db2777",       // Medida Protetiva de Urgência — rose
+  ANPP: "#0891b2",      // Acordo Não Persecução Penal — cyan
+  LP: "#16a34a",        // Liberdade Provisória / Revogação (defesa) — green
+  PAP: "#0d9488",       // Produção Antecipada de Provas — teal
+  HC: "#9333ea",        // Habeas Corpus — purple
+  PPP: "#b91c1c",       // Prisão Preventiva — red dark
+  OUTRO: "#71717a",     // Outro — gray neutro
+};
 
 const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
   "Tribunal do Júri": "#22c55e",
@@ -395,6 +430,11 @@ export function DemandaQuickPreview({
   onAtoChange,
   onPrazoChange,
   onAtribuicaoChange,
+  onTipoProcessoChange,
+  onAssistidoNomeChange,
+  onStatusPrisionalChange,
+  onAgendarAudiencia,
+  initialNovoRegistro,
   onArchive,
   onDelete,
   onNavigate,
@@ -403,10 +443,19 @@ export function DemandaQuickPreview({
   currentIndex,
   totalCount,
 }: DemandaQuickPreviewProps) {
-  const [metadataOpen, setMetadataOpen] = useState(true);
   const [docsOpen, setDocsOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
-  const [novoRegistroOpen, setNovoRegistroOpen] = useState(false);
+  const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
+
+  // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
+  // expande o painel de registro automaticamente.
+  useEffect(() => {
+    if (open && initialNovoRegistro) setNovoRegistroOpen(true);
+  }, [open, initialNovoRegistro]);
+  // Edição inline do nome do assistido. Abre quando o usuário clica na row;
+  // commit no Enter/blur, cancel no Esc.
+  const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
+  const [assistidoDraft, setAssistidoDraft] = useState("");
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
@@ -472,6 +521,53 @@ export function DemandaQuickPreview({
   useEffect(() => {
     setActiveStagePopover(null);
   }, [demanda?.id, open]);
+
+  // Atalhos de teclado quando o sheet está aberto:
+  //   n          → abrir editor de novo registro (se ainda não está aberto)
+  //   Cmd/Ctrl+K → focar campo de busca dentro do Registros
+  // Esc/↑/↓ continuam tratados pelos handlers existentes do Sheet.
+  // Ignoramos quando o foco está em input/textarea pra não atrapalhar digitação.
+  useEffect(() => {
+    if (!open || !demanda) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inField = target && (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      );
+
+      if (!inField && e.key === "n" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (demanda.assistidoId && !novoRegistroOpen) {
+          e.preventDefault();
+          setNovoRegistroOpen(true);
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        const input = document.querySelector<HTMLInputElement>(
+          'input[data-registros-search="true"]',
+        );
+        if (input) {
+          e.preventDefault();
+          input.focus();
+          input.select();
+          return;
+        }
+        // Busca colapsada: clica na lupa pra expandir; o useEffect interno foca o input
+        const trigger = document.querySelector<HTMLButtonElement>(
+          'button[data-registros-search-trigger="true"]',
+        );
+        if (trigger) {
+          e.preventDefault();
+          trigger.click();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, demanda, novoRegistroOpen]);
 
   // Handle file uploads to the demanda's Drive folder
   const handleFileUpload = useCallback(
@@ -549,9 +645,46 @@ export function DemandaQuickPreview({
     group: v.group,
   }));
 
-  const atoOptions = getAtosPorAtribuicao(demanda.atribuicao)
-    .filter((a) => a.value !== "Todos")
-    .map((a) => ({ value: a.value, label: a.label }));
+  // Categoriza o ato pra agrupar no dropdown — ordem da categoria reflete
+  // ordem na UI: Defesas (manifestação processual) → Recursos → Liberdade →
+  // Ciências (ato passivo, só toma conhecimento) → Diligências (resto).
+  const ATO_CATEGORY_ORDER = ["Defesas", "Recursos", "Liberdade", "Ciências", "Diligências"];
+  const categorizarAto = (ato: string): string => {
+    const a = ato.toLowerCase();
+    if (
+      a.startsWith("ciência") || a.startsWith("ciencia") ||
+      a.startsWith("analisar ") || a === "cumprir despacho"
+    ) return "Ciências";
+    if (
+      a.includes("apelação") || a.includes("apelacao") || a.includes("rese") ||
+      a.includes("embargos") || a.includes("habeas") ||
+      a.startsWith("razões") || a.startsWith("razoes") ||
+      a.startsWith("contrarrazões") || a.startsWith("contrarrazoes")
+    ) return "Recursos";
+    if (
+      a.includes("revogação") || a.includes("revogacao") ||
+      a.includes("relaxamento") || a.includes("restituição") || a.includes("restituicao") ||
+      a.includes("monitoramento") || a.includes("liberdade")
+    ) return "Liberdade";
+    if (
+      a === "resposta à acusação" || a === "resposta a acusacao" ||
+      a === "alegações finais" || a === "alegacoes finais" ||
+      a === "memoriais" || a.startsWith("manifestação") || a.startsWith("manifestacao")
+    ) return "Defesas";
+    return "Diligências";
+  };
+  const atoOptions = (() => {
+    const all = getAtosPorAtribuicao(demanda.atribuicao)
+      .filter((a) => a.value !== "Todos")
+      .map((a) => ({ value: a.value, label: a.label, group: categorizarAto(a.value) }));
+    // Ordena por categoria conforme ATO_CATEGORY_ORDER
+    return all.sort((x, y) => {
+      const xi = ATO_CATEGORY_ORDER.indexOf(x.group);
+      const yi = ATO_CATEGORY_ORDER.indexOf(y.group);
+      if (xi !== yi) return xi - yi;
+      return x.label.localeCompare(y.label, "pt-BR");
+    });
+  })();
 
   const processo = demanda.processos?.[0];
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
@@ -561,7 +694,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[480px] md:w-[560px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
+        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -592,12 +725,14 @@ export function DemandaQuickPreview({
           <SheetHeader className="p-0 min-w-0 flex-1">
             <SheetTitle className="text-[13px] font-semibold tracking-tight text-white truncate">
               {demanda.assistido ? (
-                <span className="truncate">
-                  <span className="text-white/50 font-normal">Demanda · </span>
-                  {demanda.assistido}
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-white/50 font-normal shrink-0">
+                    {demanda.ato || "Demanda"} ·
+                  </span>
+                  <span className="truncate">{demanda.assistido}</span>
                 </span>
               ) : (
-                "Demanda"
+                demanda.ato || "Demanda"
               )}
             </SheetTitle>
           </SheetHeader>
@@ -642,14 +777,17 @@ export function DemandaQuickPreview({
             className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
             style={{ borderLeftColor: atribuicaoColor }}
           >
-            <div className="flex items-start gap-3.5">
-              {/* Avatar */}
+            <div className="flex items-start gap-3">
+              {/* Avatar — tile único, sem badges. A atribuição passou a viver
+                  como linha em "Detalhes" (junto de Prazo/Tipo/etc), mantendo
+                  o header limpo e a edição acessível. */}
               <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
                 <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
+                {/* Linha 1: Nome + flags (preso/urgente) */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
@@ -664,66 +802,38 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Processo — chip */}
-                {processo && (
-                  <button
-                    className="inline-flex items-center gap-1.5 mt-1.5 px-2 py-0.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 group/proc cursor-pointer transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      copyToClipboard(processo.numero, "Processo copiado!");
-                    }}
-                    title="Copiar número do processo"
-                  >
-                    <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400 group-hover/proc:text-neutral-800 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                    <Copy className="w-2.5 h-2.5 text-neutral-500 group-hover/proc:text-neutral-700 transition-colors" />
-                  </button>
-                )}
-
-                {/* Action links */}
-                <div className="flex items-center gap-3 mt-2 flex-wrap">
-                  {demanda.assistidoId && (
-                    <Link
-                      href={`/admin/assistidos/${demanda.assistidoId}`}
-                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
-                    >
-                      Ver assistido →
-                    </Link>
-                  )}
-                  {/* Drive do assistido — abre a pasta com PDFs de análise + mídias */}
-                  {driveFolderUrl && (
-                    <a
-                      href={driveFolderUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                      title="Abrir pasta do assistido no Drive (análises, mídias)"
-                    >
-                      <FolderOpen className="w-3 h-3" />
-                      Drive
-                      <ExternalLink className="w-2.5 h-2.5 opacity-60" />
-                    </a>
-                  )}
-                  {demanda.processoId && (
-                    <Link
-                      href={`/admin/processos/${demanda.processoId}`}
-                      className="text-[10px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors"
-                    >
-                      Ver processo →
-                    </Link>
-                  )}
-                </div>
-
-                {/* Status + Atribuição — pills inline editáveis (movidos do bloco
-                    "Classificação" pra evitar scroll. Ambos abrem dropdown ao clicar). */}
-                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                {/* Linha 2 — duas pills editáveis: ATO + STATUS.
+                    Atribuição migrou para baixo do avatar (coluna esquerda),
+                    deixando esta linha mais limpa e sem risco de wrap. */}
+                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                  <InlineDropdown
+                    value={demanda.ato}
+                    compact
+                    displayValue={
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors hover:brightness-95"
+                        style={{
+                          backgroundColor: `${atribuicaoColor}14`,
+                          color: atribuicaoColor,
+                          boxShadow: `inset 0 0 0 1px ${atribuicaoColor}26`,
+                        }}
+                        title={demanda.ato || "Selecionar ato"}
+                      >
+                        <span className="truncate max-w-[200px]">
+                          {demanda.ato || <span className="opacity-60 italic">Definir ato</span>}
+                        </span>
+                      </span>
+                    }
+                    options={atoOptions}
+                    onChange={(v) => onAtoChange(demanda.id, v)}
+                    layout="accordion"
+                  />
                   <InlineDropdown
                     value={demanda.status}
                     compact
                     displayValue={
                       <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100/80 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full"
@@ -735,25 +845,70 @@ export function DemandaQuickPreview({
                     options={statusOptions}
                     onChange={(v) => onStatusChange(demanda.id, v)}
                   />
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-neutral-100/80 dark:bg-neutral-800/60 text-[11px] font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
-                      >
-                        <AtribuicaoIcon
-                          className="w-3 h-3"
-                          style={{ color: atribuicaoColor }}
-                        />
-                        {demanda.atribuicao}
-                      </span>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
                 </div>
+
+                {/* Linha 3 — processo (chip de cópia) discreto, sem destaque
+                    visual competindo com pills. Tipo (AP/MPU/IP/etc) como
+                    label cinza inline antes do número. */}
+                {processo && (
+                  <div className="flex items-center mt-2 flex-wrap">
+                    <button
+                      className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        copyToClipboard(processo.numero, "Processo copiado!");
+                      }}
+                      title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
+                    >
+                      {processo.tipo && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                          {processo.tipo}
+                        </span>
+                      )}
+                      <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                      <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
+                    </button>
+                  </div>
+                )}
               </div>
+              {/* Coluna direita: ícones de navegação (Assistido/Drive/Processo).
+                  Atribuição voltou pra ser o 3º pill na linha 2 — não compete
+                  com as ações de navegação aqui e abre o dropdown sem cortar. */}
+              {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
+              <div className="flex flex-col items-center gap-0.5 shrink-0 -mr-1">
+                {demanda.assistidoId && (
+                  <Link
+                    href={`/admin/assistidos/${demanda.assistidoId}`}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    title="Ver assistido"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+                  {driveFolderUrl && (
+                    <a
+                      href={driveFolderUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      title="Abrir pasta no Drive (análises, mídias)"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                {demanda.processoId && (
+                  <Link
+                    href={`/admin/processos/${demanda.processoId}`}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    title="Ver processo"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
+              )}
             </div>
           </div>
 
@@ -792,11 +947,10 @@ export function DemandaQuickPreview({
                         setActiveStagePopover(i);
                       }
                     }}
-                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all ${
+                    className={`relative z-10 flex flex-col items-center cursor-pointer group/stage transition-all min-w-0 ${
                       i === 0 ? "" : "flex-1"
                     }`}
                     title={`${stage.label} — clique para escolher substatus`}
-                    style={{ minWidth: i === 0 ? "auto" : undefined }}
                   >
                     {/* Node */}
                     <div
@@ -819,17 +973,17 @@ export function DemandaQuickPreview({
                         <div className="w-2 h-2 rounded-full bg-white" />
                       )}
                     </div>
-                    {/* Label — neutral for completed, colored only for current */}
+                    {/* Label — truncate com ellipsis e tooltip nativo no title acima */}
                     <span
-                      className={`mt-1.5 text-[10px] font-medium whitespace-nowrap transition-colors ${
+                      className={`mt-1.5 text-[10px] font-medium leading-tight max-w-full px-0.5 text-center truncate transition-colors ${
                         isActive || isPopoverOpen ? "font-bold" : "text-neutral-400 dark:text-neutral-500"
                       }`}
                       style={{
                         color: isActive || isPopoverOpen ? stageColor : undefined,
                       }}
                     >
-                      <span className="hidden sm:inline">{stage.label}</span>
-                      <span className="sm:hidden">{stage.short}</span>
+                      <span className="hidden md:inline">{stage.label}</span>
+                      <span className="md:hidden">{stage.short}</span>
                     </span>
                   </button>
                 );
@@ -853,161 +1007,22 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
-            {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive ===== */}
-            {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
-              <>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-                  Recursos
-                </h3>
-
-                {/* Mídias strip — áudios e vídeos. Cada pill clica e abre o webView. */}
-                {midiasFlat.length > 0 && (
-                  <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
-                        Mídias
-                        <span className="ml-1.5 text-neutral-400 font-normal normal-case">
-                          {midiasFlat.length}
-                        </span>
-                      </span>
-                      {driveFolderUrl && (
-                        <a
-                          href={driveFolderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          Drive →
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-thin pb-1">
-                      {midiasFlat.slice(0, 6).map((m: any) => {
-                        const isAudio = (m.mimeType || "").startsWith("audio/");
-                        const Icon = isAudio ? Mic : Video;
-                        return (
-                          <a
-                            key={m.id}
-                            href={m.webViewLink || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 max-w-[180px] group/m transition-colors"
-                            title={m.name}
-                          >
-                            <Icon className={`w-3 h-3 shrink-0 ${isAudio ? "text-amber-600 dark:text-amber-400" : "text-purple-600 dark:text-purple-400"}`} />
-                            <span className="text-[10px] text-neutral-700 dark:text-neutral-300 truncate">{m.name}</span>
-                            {m.hasAnalysis && (
-                              <span className="shrink-0 w-1 h-1 rounded-full bg-emerald-500" title="Analisado" />
-                            )}
-                          </a>
-                        );
-                      })}
-                      {midiasFlat.length > 6 && driveFolderUrl && (
-                        <a
-                          href={driveFolderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="shrink-0 flex items-center px-2 py-1 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-[10px] text-neutral-500 transition-colors"
-                        >
-                          +{midiasFlat.length - 6}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* PDFs strip — todos os PDFs da pasta. Os de análise costumam ter
-                    "Análise" / "Relatório" no nome — destacamos esses com cor sutil. */}
-                {pdfFiles.length > 0 && (
-                  <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
-                        PDFs
-                        <span className="ml-1.5 text-neutral-400 font-normal normal-case">
-                          {pdfFiles.length}
-                        </span>
-                      </span>
-                      {driveFolderUrl && (
-                        <a
-                          href={driveFolderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
-                        >
-                          Drive →
-                        </a>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      {pdfFiles.slice(0, 5).map((f: any) => {
-                        const nameLower = (f.name || "").toLowerCase();
-                        const isAnalise =
-                          nameLower.includes("análise") ||
-                          nameLower.includes("analise") ||
-                          nameLower.includes("relatório") ||
-                          nameLower.includes("relatorio");
-                        const Icon = isAnalise ? FileSignature : FileText;
-                        return (
-                          <a
-                            key={f.id}
-                            href={f.webViewLink || "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group/pdf"
-                            title={f.name}
-                          >
-                            <Icon className={`w-3.5 h-3.5 shrink-0 ${isAnalise ? "text-sky-600 dark:text-sky-400" : "text-neutral-400"}`} />
-                            <span className={`text-[11px] truncate flex-1 min-w-0 ${isAnalise ? "text-neutral-800 dark:text-neutral-200 font-medium" : "text-neutral-600 dark:text-neutral-400"}`}>
-                              {f.name}
-                            </span>
-                            <ExternalLink className="w-2.5 h-2.5 shrink-0 text-neutral-400 opacity-0 group-hover/pdf:opacity-100 transition-opacity" />
-                          </a>
-                        );
-                      })}
-                      {pdfFiles.length > 5 && driveFolderUrl && (
-                        <a
-                          href={driveFolderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="block text-center text-[10px] text-neutral-500 hover:text-emerald-600 py-1 transition-colors"
-                        >
-                          +{pdfFiles.length - 5} no Drive →
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Section label: Ação */}
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-              Ação
-            </h3>
-
             {/* Card 1: Registros (Task 6 — registros tipados) */}
-            {/* Substitui o textarea legado de "Providências" pela timeline tipada.
-                Quando demanda.assistidoId está disponível, mostra timeline + botão para
-                criar novo registro com tipoDefault="providencia". */}
             {demanda.assistidoId ? (
               <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
-                <div className="px-3.5 sm:px-4 pt-2.5 pb-3 space-y-3">
+                <div className="px-4 py-3 space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold uppercase tracking-wide">Registros</span>
+                    <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
                     {!novoRegistroOpen && (
                       <button
                         type="button"
                         onClick={() => setNovoRegistroOpen(true)}
-                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer px-2 py-1 -mr-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        title="Adicionar registro (n)"
+                        aria-label="Adicionar registro"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Adicionar
+                        <span className="hidden md:inline">Adicionar</span>
                       </button>
                     )}
                   </div>
@@ -1016,7 +1031,16 @@ export function DemandaQuickPreview({
                       assistidoId={demanda.assistidoId}
                       processoId={demanda.processoId ?? undefined}
                       demandaId={Number(demanda.id)}
-                      tipoDefault="providencia"
+                      tipoDefault="ciencia"
+                      tiposPrimarios={[
+                        "ciencia",
+                        "providencia",
+                        "diligencia",
+                        "atendimento",
+                        "delegacao",
+                        "anotacao",
+                        "peticao",
+                      ]}
                       onSaved={() => setNovoRegistroOpen(false)}
                       onCancel={() => setNovoRegistroOpen(false)}
                     />
@@ -1031,84 +1055,369 @@ export function DemandaQuickPreview({
               </div>
             ) : (
               <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-                <div className="px-3.5 sm:px-4 py-4 text-[11px] text-muted-foreground italic">
+                <div className="px-4 py-3 text-[11px] text-muted-foreground italic">
                   Vincule um assistido para registrar providências e atendimentos.
                 </div>
               </div>
             )}
 
-            {/* Section label: Detalhes (era "Classificação"; Status/Atribuição
-                migraram pro hero card, então sobra só Ato + Metadados aqui) */}
+            {/* ===== DETALHES — 3 BLOCOS ===== */}
             <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
               Detalhes
             </h3>
 
-            {/* Detalhes — card v5 com border-l-4 */}
+            {/* Bloco A — Identificação */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Ato row */}
-              <div className="flex items-center px-3.5 sm:px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <Scale className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+              {/* Assistido row — editável inline. Útil pra corrigir
+                  placeholders ("⚠ A identificar — <cnj>") gerados pelo
+                  importer quando o polo passivo veio em sigilo, e pra
+                  ajustar typos. Click → input → Enter/blur salva, Esc
+                  cancela. */}
+              {demanda.assistidoId && onAssistidoNomeChange && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Assistido</span>
+                  <div className="flex-1 flex items-center justify-end min-w-0">
+                    {editingAssistidoNome ? (
+                      <input
+                        autoFocus
+                        type="text"
+                        value={assistidoDraft}
+                        onChange={(e) => setAssistidoDraft(e.target.value)}
+                        onBlur={() => {
+                          const trimmed = assistidoDraft.trim();
+                          if (trimmed && trimmed !== demanda.assistido && demanda.assistidoId) {
+                            onAssistidoNomeChange(String(demanda.assistidoId), trimmed);
+                          }
+                          setEditingAssistidoNome(false);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          if (e.key === "Escape") {
+                            setAssistidoDraft(demanda.assistido || "");
+                            setEditingAssistidoNome(false);
+                          }
+                        }}
+                        className="text-xs text-right text-neutral-700 dark:text-neutral-200 bg-transparent border-b border-neutral-300 dark:border-neutral-700 focus:border-neutral-500 outline-none w-full px-1"
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssistidoDraft(demanda.assistido || "");
+                          setEditingAssistidoNome(true);
+                        }}
+                        className={cn(
+                          "text-xs hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors text-right truncate cursor-pointer",
+                          (demanda.assistido || "").startsWith("⚠")
+                            ? "text-amber-600 dark:text-amber-400 italic"
+                            : "text-neutral-700 dark:text-neutral-300"
+                        )}
+                        title="Clique para editar"
+                      >
+                        {demanda.assistido || "—"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Ato</span>
-                <div className="flex-1 text-right">
+              )}
+
+              {/* Atribuição row — editável via dropdown. Migrou do header
+                  pra cá pra deixar a hero card mais limpa, mantendo a edição
+                  acessível e a área visível em metadata. */}
+              <div className="flex items-center px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
+                <div className="flex-1 flex items-center justify-end">
                   <InlineDropdown
-                    value={demanda.ato}
+                    value={demanda.atribuicao}
                     compact
                     displayValue={
-                      <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                        {demanda.ato || <span className="text-neutral-400 dark:text-neutral-500 italic">Selecionar</span>}
+                      <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                        {demanda.atribuicao}
                       </span>
                     }
-                    options={atoOptions}
-                    onChange={(v) => onAtoChange(demanda.id, v)}
+                    options={ATRIBUICAO_OPTIONS}
+                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
                   />
                 </div>
               </div>
 
-              {/* Metadados — collapsible */}
-              <button
-                onClick={() => setMetadataOpen(!metadataOpen)}
-                className="w-full flex items-center gap-3 px-3.5 sm:px-4 py-2 text-[10px] text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100/50 dark:hover:bg-neutral-700/20 transition-colors cursor-pointer"
-              >
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  {metadataOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              {/* Tipo do processo (AP/MPU/APF/...) — editável via
+                  dropdown. Útil pra corrigir importações que vieram com
+                  tipo errado (ex.: APF inserido como MPU pelo importer
+                  VVD legacy). Update vai direto no processo, não na
+                  demanda. */}
+              {processo && onTipoProcessoChange && demanda.processoId && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <FileText className="w-3 h-3 text-neutral-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
+                  <div className="flex-1 flex items-center justify-end">
+                    <InlineDropdown
+                      value={processo.tipo || ""}
+                      compact
+                      displayValue={
+                        <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                          {processo.tipo || "—"}
+                        </span>
+                      }
+                      options={TIPO_PROCESSO_OPTIONS}
+                      onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
+                    />
+                  </div>
                 </div>
-                <span className="font-medium">Metadados</span>
-              </button>
-              {metadataOpen && (
-                <>
-                  {/* "Importado" removido daqui — o timestamp já aparece no header
-                      do card de registro/demanda. Era duplicação visual. */}
-                  {demanda.estadoPrisional && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <Lock className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 capitalize">{demanda.estadoPrisional}</span>
-                    </div>
-                  )}
-                  {processo?.tipo && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <FileText className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                      <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
-                    </div>
-                  )}
-                  {demanda.importBatchId && (
-                    <div className="flex items-center px-3.5 sm:px-4 py-2 gap-3">
-                      <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                        <AlertCircle className="w-3 h-3 text-neutral-400" />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Batch</span>
-                      <span className="flex-1 text-right text-xs font-mono text-neutral-500 dark:text-neutral-400">{demanda.importBatchId.slice(0, 8)}</span>
-                    </div>
-                  )}
-                </>
               )}
+              {/* Fallback read-only se a view não passar o handler */}
+              {processo?.tipo && !onTipoProcessoChange && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <FileText className="w-3 h-3 text-neutral-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
+                </div>
+              )}
+
+              {/* Status prisional — editável via InlineDropdown.
+                  Atualiza assistidos.statusPrisional via mutation. */}
+              {demanda.assistidoId && onStatusPrisionalChange && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
+                  <div className="flex-1 flex items-center justify-end">
+                    <InlineDropdown
+                      value={demanda.estadoPrisional?.toUpperCase() || "SOLTO"}
+                      compact
+                      displayValue={
+                        <span className={cn(
+                          "text-xs font-medium px-1.5 py-0.5 rounded transition-colors",
+                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.bg,
+                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.color,
+                        )}>
+                          {STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.label || "Solto"}
+                        </span>
+                      }
+                      options={STATUS_PRISIONAL_OPTIONS}
+                      onChange={(v) => onStatusPrisionalChange(demanda.assistidoId!, v)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Vara/órgão julgador — novo */}
+              {processo?.vara && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Building2 className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Vara</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">
+                    {processo.vara}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Bloco B — Cronologia */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+              {/* Expedição da intimação — data em que foi expedida no PJe.
+                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006).
+                  Mostra formato relativo ("há 3 dias") com tooltip da data exata. */}
+              {demanda.data && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Expedição</span>
+                  <span
+                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
+                    title={demanda.data}
+                  >
+                    {(() => {
+                      try {
+                        const [d, m, y] = demanda.data.split("/").map(Number);
+                        const date = new Date(y, m - 1, d);
+                        if (isNaN(date.getTime())) return demanda.data;
+                        const diff = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diff === 0) return "Hoje";
+                        if (diff === 1) return "Ontem";
+                        if (diff < 30) return `há ${diff} dias`;
+                        if (diff < 365) return `há ${Math.floor(diff / 30)} mes${Math.floor(diff / 30) > 1 ? "es" : ""}`;
+                        return `há ${Math.floor(diff / 365)} ano${Math.floor(diff / 365) > 1 ? "s" : ""}`;
+                      } catch {
+                        return demanda.data;
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Prazo row — editável + badge calculado */}
+              <div className="flex items-center px-4 py-2.5 gap-3">
+                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prazo</span>
+                <div className="flex-1 flex items-center justify-end gap-2" data-prazo-trigger={demanda.id}>
+                  {prazoBadge && prazoBadge.cor !== "none" && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums",
+                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+                      )}
+                    >
+                      {prazoBadge.texto}
+                    </span>
+                  )}
+                  <InlineDatePicker
+                    value={demanda.prazo}
+                    onChange={(v) => onPrazoChange(demanda.id, v)}
+                  />
+                </div>
+              </div>
+
+              {/* Importado — quando a demanda entrou no banco */}
+              {demanda.dataInclusao && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <Calendar className="w-3 h-3 text-neutral-400" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
+                  <span
+                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
+                    title={(() => {
+                      try {
+                        const d = new Date(demanda.dataInclusao);
+                        if (isNaN(d.getTime())) return demanda.dataInclusao;
+                        return d.toLocaleString("pt-BR");
+                      } catch {
+                        return demanda.dataInclusao;
+                      }
+                    })()}
+                  >
+                    {(() => {
+                      try {
+                        const d = new Date(demanda.dataInclusao);
+                        if (isNaN(d.getTime())) return demanda.dataInclusao;
+                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+                          + " · " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                      } catch {
+                        return demanda.dataInclusao;
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Atualizado — quando foi a última modificação */}
+              {demanda.updatedAt && (
+                <div className="flex items-center px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                    <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atualizado</span>
+                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                    {(() => {
+                      try {
+                        const d = new Date(demanda.updatedAt);
+                        const hoje = new Date();
+                        const diffDays = Math.floor((hoje.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays === 0) return `Hoje · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays === 1) return `Ontem · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+                        if (diffDays < 7) return `${diffDays} dias atrás`;
+                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+                      } catch {
+                        return "—";
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+
+              {/* Providências preview — o que tem que ser feito (se houver) */}
+              {demanda.providencias && (
+                <div className="flex items-start px-4 py-2.5 gap-3">
+                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0 mt-0.5">Providências</span>
+                  <p className="flex-1 text-right text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed line-clamp-2" title={demanda.providencias}>
+                    {demanda.providencias}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Bloco C — Ações rápidas */}
+            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
+              <div className="flex divide-x divide-neutral-200/40 dark:divide-neutral-800/40">
+                {onAgendarAudiencia && (
+                  <button
+                    type="button"
+                    onClick={() => onAgendarAudiencia(demanda.id)}
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                  >
+                    <CalendarPlus className="w-4 h-4" />
+                    Agendar audiência
+                  </button>
+                )}
+                {onPrazoChange && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Foca no InlineDatePicker do Prazo via querySelector
+                      const wrapper = document.querySelector<HTMLElement>(
+                        `[data-prazo-trigger='${demanda.id}']`
+                      );
+                      const btn = wrapper?.querySelector<HTMLButtonElement>("button[data-edit-trigger]")
+                        ?? wrapper?.querySelector<HTMLButtonElement>("button");
+                      btn?.click();
+                    }}
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:text-blue-700 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4" />
+                    Adicionar prazo
+                  </button>
+                )}
+                {processo?.numeroAutos && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cnj = processo.numeroAutos!;
+                      navigator.clipboard.writeText(cnj).then(
+                        () => toast.success("CNJ copiado", {
+                          description: "Cole (Cmd+V) no campo de busca do PJe.",
+                          duration: 4000,
+                        }),
+                        () => toast.info("Abrindo PJe", {
+                          description: `Buscar pelo CNJ: ${cnj}`,
+                          duration: 5000,
+                        }),
+                      );
+                      window.open(
+                        "https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam",
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                    className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[11px] font-medium text-neutral-600 dark:text-neutral-300 hover:bg-purple-50 dark:hover:bg-purple-950/20 hover:text-purple-700 dark:hover:text-purple-400 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Abrir no PJe
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* ===== OFÍCIO SUGERIDO ===== */}
@@ -1119,7 +1428,7 @@ export function DemandaQuickPreview({
                 </h3>
 
                 <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
-                  <div className="px-3.5 sm:px-4 py-3">
+                  <div className="px-4 py-3">
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                         <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
@@ -1147,12 +1456,148 @@ export function DemandaQuickPreview({
               </>
             )}
 
+            {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive (compact) ===== */}
+            {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
+              <>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+                  Recursos
+                </h3>
+
+                <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5 space-y-2">
+                  {/* Mídias strip — áudios e vídeos */}
+                  {midiasFlat.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                          Mídias
+                          <span className="ml-1.5 text-neutral-400 font-normal normal-case">{midiasFlat.length}</span>
+                        </span>
+                        {driveFolderUrl && (
+                          <a
+                            href={driveFolderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          >
+                            Drive →
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {midiasFlat.slice(0, 8).map((m: any) => {
+                          const isAudio = (m.mimeType || "").startsWith("audio/");
+                          const Icon = isAudio ? Mic : Video;
+                          return (
+                            <a
+                              key={m.id}
+                              href={m.webViewLink || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 max-w-[160px] transition-colors"
+                              title={m.name || (isAudio ? "Áudio" : "Vídeo")}
+                            >
+                              <Icon className={`w-3 h-3 shrink-0 ${isAudio ? "text-amber-600 dark:text-amber-400" : "text-purple-600 dark:text-purple-400"}`} />
+                              <span className="text-[10px] text-neutral-700 dark:text-neutral-300 truncate">
+                                {m.name || (isAudio ? "Áudio" : "Vídeo")}
+                              </span>
+                              {m.hasAnalysis && (
+                                <span className="shrink-0 w-1 h-1 rounded-full bg-emerald-500" title="Analisado" />
+                              )}
+                            </a>
+                          );
+                        })}
+                        {midiasFlat.length > 8 && driveFolderUrl && (
+                          <a
+                            href={driveFolderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 text-[10px] text-neutral-500 transition-colors"
+                          >
+                            +{midiasFlat.length - 8}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PDFs strip — wrap chips compactos com fallback se sem nome */}
+                  {pdfFiles.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                          PDFs
+                          <span className="ml-1.5 text-neutral-400 font-normal normal-case">{pdfFiles.length}</span>
+                        </span>
+                        {driveFolderUrl && (
+                          <a
+                            href={driveFolderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          >
+                            Drive →
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {pdfFiles.slice(0, 8).map((f: any, idx: number) => {
+                          const nameLower = (f.name || "").toLowerCase();
+                          const isAnalise =
+                            nameLower.includes("análise") ||
+                            nameLower.includes("analise") ||
+                            nameLower.includes("relatório") ||
+                            nameLower.includes("relatorio");
+                          const Icon = isAnalise ? FileSignature : FileText;
+                          const displayName = f.name || `PDF ${idx + 1}`;
+                          return (
+                            <a
+                              key={f.id}
+                              href={f.webViewLink || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md max-w-[160px] transition-colors ${
+                                isAnalise
+                                  ? "bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/30"
+                                  : "bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                              }`}
+                              title={displayName}
+                            >
+                              <Icon className={`w-3 h-3 shrink-0 ${isAnalise ? "text-sky-600 dark:text-sky-400" : "text-neutral-400"}`} />
+                              <span className={`text-[10px] truncate ${isAnalise ? "text-sky-700 dark:text-sky-300 font-medium" : "text-neutral-700 dark:text-neutral-300"}`}>
+                                {displayName}
+                              </span>
+                            </a>
+                          );
+                        })}
+                        {pdfFiles.length > 8 && driveFolderUrl && (
+                          <a
+                            href={driveFolderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 text-[10px] text-neutral-500 transition-colors"
+                          >
+                            +{pdfFiles.length - 8}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* ===== DOCUMENTOS (Drive) ===== */}
             <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
               {/* Collapsible header */}
               <button
                 onClick={() => setDocsOpen((v) => !v)}
-                className="w-full flex items-center gap-2 px-3.5 sm:px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
               >
                 <FolderOpen className="w-4 h-4 text-neutral-400 shrink-0" />
                 <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Documentos</span>
@@ -1237,7 +1682,7 @@ export function DemandaQuickPreview({
                       ) : (
                         <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
                           {driveFolder.files.map((f) => (
-                            <div key={f.id} className="flex items-center gap-2 px-3.5 sm:px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
+                            <div key={f.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
                               <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                               <span className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate" title={f.name}>
                                 {f.name}
@@ -1264,7 +1709,7 @@ export function DemandaQuickPreview({
                       )}
 
                       {/* Upload area */}
-                      <div className="px-3.5 sm:px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
+                      <div className="px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
                         <input
                           ref={fileInputRef}
                           type="file"

@@ -194,7 +194,10 @@ export const delegacaoRouter = router({
         });
       }
 
-      // Se há uma demanda associada, atualizar seus campos de delegação
+      // Se há uma demanda associada, atualizar seus campos de delegação.
+      // Ao delegar, a demanda passa para o sub-status "delegar" dentro do grupo
+      // Acompanhar — o defensor sai da execução ativa e a pipeline indica que
+      // está delegada (em vez de Monitorar).
       if (input.demandaId) {
         await db.update(demandas)
           .set({
@@ -202,6 +205,8 @@ export const delegacaoRouter = router({
             dataDelegacao: new Date(),
             motivoDelegacao: input.instrucoes,
             statusDelegacao: "pendente",
+            status: "4_MONITORAR",
+            substatus: "delegar",
             prazoSugerido: input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null,
             updatedAt: new Date(),
           })
@@ -442,13 +447,16 @@ export const delegacaoRouter = router({
       const prazo = input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null;
 
       const delegacoes = await withTransaction(async (tx) => {
-        // Single UPDATE for all demandas (1 query instead of N)
+        // Single UPDATE for all demandas (1 query instead of N).
+        // Ao delegar em lote, todas vão para o sub-status "delegar" do Acompanhar.
         await tx.update(demandas)
           .set({
             delegadoParaId: input.destinatarioId,
             dataDelegacao: new Date(),
             motivoDelegacao: input.instrucoes,
             statusDelegacao: "pendente",
+            status: "4_MONITORAR",
+            substatus: "delegar",
             prazoSugerido: prazo,
             updatedAt: new Date(),
           })

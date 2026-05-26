@@ -9,6 +9,8 @@ import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "d
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/preparacao-audiencia";
+import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "@/lib/services/google-calendar";
+import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 
 // ==========================================
 // Shared analysis helper used by both
@@ -726,7 +728,36 @@ export const audienciasRouter = router({
         })
         .returning();
 
-      return audiencia;
+      // Carregar contexto para Calendar (assistido + processo + área do processo)
+      const [ctxRow] = await db
+        .select({
+          assistidoNome: assistidos.nome,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+        })
+        .from(processos)
+        .leftJoin(assistidos, eq(assistidos.id, processos.assistidoId))
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      const evento = await criarEventoAudiencia({
+        assistidoNome: ctxRow?.assistidoNome ?? "Assistido",
+        tipoAudiencia: input.tipo,
+        dataAudiencia: new Date(input.dataAudiencia),
+        local: input.local ?? undefined,
+        numeroAutos: ctxRow?.numeroAutos ?? undefined,
+        area: ctxRow?.area ?? null,
+      });
+
+      if (evento?.id) {
+        await db
+          .update(audiencias)
+          .set({ googleCalendarEventId: evento.id })
+          .where(eq(audiencias.id, audiencia.id));
+        return { ...audiencia, googleCalendarEventId: evento.id, calendarSyncOk: true as const };
+      }
+
+      return { ...audiencia, calendarSyncOk: false as const };
     }),
 
   // Atualizar audiência
@@ -748,7 +779,6 @@ export const audienciasRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // TODO: replace with Partial<typeof audiencias.$inferInsert> once all optional fields are mapped
       const updateData: Partial<typeof audiencias.$inferInsert> = { ...data };
 
       if (data.dataAudiencia) {
@@ -761,6 +791,59 @@ export const audienciasRouter = router({
         .where(eq(audiencias.id, id))
         .returning();
 
+      // Sincronizar Calendar — só se algo relevante mudou
+      const dataChanged = !!data.dataAudiencia;
+      const tipoChanged = !!data.tipo;
+      const localChanged = data.local !== undefined;
+
+      if (!dataChanged && !tipoChanged && !localChanged) {
+        return audiencia;
+      }
+
+      // Carregar contexto do processo (área + assistido + numeroAutos)
+      const [ctxRow] = await db
+        .select({
+          assistidoNome: assistidos.nome,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+        })
+        .from(processos)
+        .leftJoin(assistidos, eq(assistidos.id, processos.assistidoId))
+        .where(eq(processos.id, audiencia.processoId))
+        .limit(1);
+
+      const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+      if (audiencia.googleCalendarEventId) {
+        // Atualiza evento existente
+        await updateCalendarEvent(
+          audiencia.googleCalendarEventId,
+          {
+            startDate: audiencia.dataAudiencia,
+            endDate: new Date(audiencia.dataAudiencia.getTime() + 60 * 60 * 1000),
+            location: audiencia.local ?? undefined,
+            summary: `🏛 ${audiencia.tipo} — ${ctxRow?.assistidoNome ?? "Assistido"}`,
+          },
+          { calendarId },
+        );
+      } else {
+        // Segunda chance — cria agora se faltava
+        const evento = await criarEventoAudiencia({
+          assistidoNome: ctxRow?.assistidoNome ?? "Assistido",
+          tipoAudiencia: audiencia.tipo,
+          dataAudiencia: audiencia.dataAudiencia,
+          local: audiencia.local ?? undefined,
+          numeroAutos: ctxRow?.numeroAutos ?? undefined,
+          area: ctxRow?.area ?? null,
+        });
+        if (evento?.id) {
+          await db
+            .update(audiencias)
+            .set({ googleCalendarEventId: evento.id })
+            .where(eq(audiencias.id, audiencia.id));
+        }
+      }
+
       return audiencia;
     }),
 
@@ -768,7 +851,34 @@ export const audienciasRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
+      const [atual] = await db
+        .select({
+          googleCalendarEventId: audiencias.googleCalendarEventId,
+          processoId: audiencias.processoId,
+        })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.id))
+        .limit(1);
+
       await db.delete(audiencias).where(eq(audiencias.id, input.id));
+
+      // Sincronizar Calendar (best-effort, fora da transação)
+      if (atual?.googleCalendarEventId) {
+        try {
+          const [ctxRow] = await db
+            .select({ area: processos.area })
+            .from(processos)
+            .where(eq(processos.id, atual.processoId))
+            .limit(1);
+
+          const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+          await deleteCalendarEvent(atual.googleCalendarEventId, { calendarId });
+        } catch (err) {
+          console.error("[audiencias.delete] calendar sync failed", err);
+        }
+      }
+
       return { success: true };
     }),
 
@@ -1324,6 +1434,17 @@ export const audienciasRouter = router({
             }
             if ((!processoCache.vara || processoCache.vara === "Não informado") && evento.orgaoJulgador) {
               updates.vara = evento.orgaoJulgador;
+            }
+            // Corrige atribuição/área a partir da pauta (fonte autoritativa da vara).
+            // Sem isto, um processo pré-existente classificado errado (ex.: criado
+            // antes como VVD) mantinha a classificação antiga ao receber uma audiência
+            // de outra atribuição — ex.: Sessão do Júri aparecia com selo "Violência
+            // Doméstica". Pula o fallback genérico (SUBSTITUICAO) para não sobrescrever
+            // uma classificação boa com um palpite de baixa confiança.
+            const atribImport = mapAtribuicao(evento.atribuicao);
+            if (atribImport !== "SUBSTITUICAO") {
+              updates.atribuicao = atribImport as typeof processos.atribuicao._.data;
+              updates.area = mapArea(evento.atribuicao) as typeof processos.area._.data;
             }
             if (Object.keys(updates).length > 0) {
               await tx.update(processos).set(updates).where(eq(processos.id, processoCache.id));
@@ -1976,7 +2097,7 @@ export const audienciasRouter = router({
       motivo: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      return withTransaction(async (tx) => {
+      const { atual, novaDataHora } = await withTransaction(async (tx) => {
         const [atual] = await tx.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
         if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
 
@@ -2007,7 +2128,33 @@ export const audienciasRouter = router({
           })
           .where(eq(audiencias.id, input.audienciaId));
 
-        return { ok: true };
+        return { atual, novaDataHora };
       });
+
+      // Sincronizar Calendar (best-effort, fora da transação)
+      if (atual.googleCalendarEventId) {
+        try {
+          const [ctxRow] = await db
+            .select({ area: processos.area })
+            .from(processos)
+            .where(eq(processos.id, atual.processoId))
+            .limit(1);
+
+          const calendarId = resolveCalendarId(ctxRow?.area ?? null);
+
+          await updateCalendarEvent(
+            atual.googleCalendarEventId,
+            {
+              startDate: novaDataHora,
+              endDate: new Date(novaDataHora.getTime() + 60 * 60 * 1000),
+            },
+            { calendarId },
+          );
+        } catch (err) {
+          console.error("[audiencias.redesignar] calendar sync failed", err);
+        }
+      }
+
+      return { ok: true };
     }),
 });

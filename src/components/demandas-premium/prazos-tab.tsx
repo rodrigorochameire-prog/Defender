@@ -25,6 +25,8 @@ interface PrazosTabProps {
   selectedAtribuicoes: string[];
   handleAtribuicaoToggle: (value: string) => void;
   setSelectedAtribuicoes: (val: string[]) => void;
+  /** Marca modo "Todas" explícito (sessionStorage) e zera o array. */
+  onClearAtribuicoes?: () => void;
   atribuicaoCounts: Record<string, number>;
   onCardClick: (id: string | number) => void;
 }
@@ -454,6 +456,7 @@ export function PrazosTab({
   selectedAtribuicoes,
   handleAtribuicaoToggle,
   setSelectedAtribuicoes,
+  onClearAtribuicoes,
   atribuicaoCounts,
   onCardClick,
 }: PrazosTabProps) {
@@ -468,7 +471,7 @@ export function PrazosTab({
             options={atribuicaoOptions}
             selectedValues={selectedAtribuicoes}
             onToggle={handleAtribuicaoToggle}
-            onClear={() => setSelectedAtribuicoes([])}
+            onClear={onClearAtribuicoes ?? (() => setSelectedAtribuicoes([]))}
             counts={atribuicaoCounts}
           />
         </div>

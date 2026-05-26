@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ListFilter } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ListFilter, Search, X } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -37,14 +37,32 @@ export function RegistrosTimeline({
   onEdit,
 }: Props) {
   const [filtroTipo, setFiltroTipo] = useState<TipoRegistro | null>(null);
+  const [busca, setBusca] = useState("");
+  // Busca colapsada por padrão; ⌘K (handler externo) ou clique na lupa expandem.
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: registros = [], refetch } = trpc.registros.list.useQuery({
+  useEffect(() => {
+    if (searchExpanded) searchInputRef.current?.focus();
+  }, [searchExpanded]);
+
+  const { data: registrosRaw = [], refetch } = trpc.registros.list.useQuery({
     assistidoId,
     processoId,
     demandaId,
     audienciaId,
     tipo: filtroTipo ?? undefined,
   });
+
+  // Filtragem textual client-side (rápida — registros por demanda raramente >50).
+  // Faz match case-insensitive em título + conteúdo. Quando vazio, retorna tudo.
+  const registros = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return registrosRaw;
+    return registrosRaw.filter((r: any) =>
+      ((r.titulo || "") + " " + (r.conteudo || "")).toLowerCase().includes(q)
+    );
+  }, [registrosRaw, busca]);
 
   const deleteMut = trpc.registros.delete.useMutation({
     onSuccess: () => {
@@ -78,7 +96,47 @@ export function RegistrosTimeline({
 
   return (
     <div className="space-y-3">
-      {/* Filtro em linha única — Todos + tipos com registros + dropdown "+" para os demais */}
+      {/* Busca textual expansível — colapsada por padrão. Atalho Cmd/Ctrl+K
+          (handler externo) clica no trigger pra expandir e focar o input. */}
+      {searchExpanded && (
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-neutral-400 pointer-events-none" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            onBlur={() => { if (!busca) setSearchExpanded(false); }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setBusca("");
+                setSearchExpanded(false);
+              }
+            }}
+            placeholder="Buscar nos registros…"
+            data-registros-search="true"
+            className={cn(
+              "w-full bg-neutral-50 dark:bg-neutral-800/40",
+              "border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700",
+              "rounded-md text-[12px] pl-7 pr-7 py-1.5 outline-none",
+              "placeholder:text-neutral-400 transition-colors",
+            )}
+          />
+          {busca && (
+            <button
+              type="button"
+              onClick={() => { setBusca(""); setSearchExpanded(false); }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 cursor-pointer"
+              title="Limpar busca (Esc)"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Filtro em linha única — Todos + tipos com registros + dropdown "+" para os demais.
+          A lupa colapsada vive aqui à direita, evitando linha extra para search. */}
       <div className="flex items-center gap-1 flex-wrap">
         <button
           type="button"
@@ -163,12 +221,29 @@ export function RegistrosTimeline({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+        {/* Lupa de busca — colapsada por padrão, fica no final da row de filtros.
+            data-registros-search-trigger é usado pelo handler ⌘K externo para
+            expandir a busca quando o input ainda não existe. */}
+        {!searchExpanded && (
+          <button
+            type="button"
+            onClick={() => setSearchExpanded(true)}
+            data-registros-search-trigger="true"
+            className="ml-auto text-[11px] p-1 rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+            title="Buscar (⌘K)"
+            aria-label="Buscar nos registros"
+          >
+            <Search className="w-3 h-3" />
+          </button>
+        )}
       </div>
 
       {/* Lista */}
       {registros.length === 0 ? (
         <p className="text-[12px] text-neutral-400 dark:text-neutral-500 px-1 py-3">
-          {emptyHint ?? "Nenhum registro ainda."}
+          {busca
+            ? `Nenhum registro com "${busca}".`
+            : (emptyHint ?? "Nenhum registro ainda.")}
         </p>
       ) : (
         <div className="space-y-2">

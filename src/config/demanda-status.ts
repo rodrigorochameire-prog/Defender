@@ -141,7 +141,7 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   ],
   acompanhar: [
     { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
-    { label: "Delegação", icon: UserPlus, statuses: ["emilly", "amanda", "taissa"] },
+    { label: "Delegação", icon: UserPlus, statuses: ["delegar"] },
   ],
 };
 
@@ -253,11 +253,9 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   // === SAÍDA (1) ===
   protocolar: { label: "Protocolar", group: "saida", icon: Send },
 
-  // === ACOMPANHAR (4) — monitorar + delegações ===
+  // === ACOMPANHAR (2) — monitorar + delegar ===
   monitorar:  { label: "Monitorar",  group: "acompanhar", icon: Eye },
-  emilly:     { label: "Emilly",     group: "acompanhar", icon: UserPlus },
-  amanda:     { label: "Amanda",     group: "acompanhar", icon: UserPlus },
-  taissa:     { label: "Taissa",     group: "acompanhar", icon: UserPlus },
+  delegar:    { label: "Delegar",    group: "acompanhar", icon: UserPlus },
 
   // === CONCLUÍDA (5) ===
   protocolado:        { label: "Protocolado",        group: "concluida", icon: CheckCircle2 },
@@ -412,11 +410,9 @@ export const STATUS_OPTIONS_BY_COLUMN: Record<KanbanColumn, Array<{ value: strin
     { value: "oficiar", label: "Oficiar", group: "diligencias" },
     // Saída — Protocolar
     { value: "protocolar", label: "Protocolar", group: "saida" },
-    // Acompanhar — Monitorar + Delegações
+    // Acompanhar — Monitorar + Delegar
     { value: "monitorar", label: "Monitorar", group: "acompanhar" },
-    { value: "emilly", label: "Emilly", group: "acompanhar" },
-    { value: "amanda", label: "Amanda", group: "acompanhar" },
-    { value: "taissa", label: "Taissa", group: "acompanhar" },
+    { value: "delegar", label: "Delegar", group: "acompanhar" },
   ],
   concluida: [
     { value: "protocolado", label: "Protocolado", group: "concluida" },

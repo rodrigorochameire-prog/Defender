@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
-import { demandas, processos, assistidos, users } from "@/lib/db/schema";
+import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
 import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -170,6 +170,10 @@ export const demandasRouter = router({
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           defensorId: demandas.defensorId,
+          delegadoParaId: demandas.delegadoParaId,
+          delegadoPara: users.name,
+          dataDelegacao: demandas.dataDelegacao,
+          statusDelegacao: demandas.statusDelegacao,
           ordemManual: demandas.ordemManual,
           importBatchId: demandas.importBatchId,
           ordemOriginal: demandas.ordemOriginal,
@@ -181,6 +185,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
           },
           assistido: {
             id: assistidos.id,
@@ -192,6 +197,7 @@ export const demandasRouter = router({
         .from(demandas)
         .leftJoin(processos, eq(demandas.processoId, processos.id))
         .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .leftJoin(users, eq(demandas.delegadoParaId, users.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(sql`${demandas.ordemManual} ASC NULLS LAST, ${demandas.createdAt} DESC, ${demandas.prazo} ASC NULLS LAST`)
         .$dynamic();
@@ -247,6 +253,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
             comarca: processos.comarca,
             vara: processos.vara,
             classeProcessual: processos.classeProcessual,
@@ -325,6 +332,7 @@ export const demandasRouter = router({
             numeroAutos: processos.numeroAutos,
             area: processos.area,
             atribuicao: processos.atribuicao,
+            tipoProcesso: processos.tipoProcesso,
           },
           assistido: {
             id: assistidos.id,
@@ -584,6 +592,28 @@ export const demandasRouter = router({
         })
         .returning();
 
+      // Cria o registro inicial (anotação) com o texto do form, se houver.
+      // Substitui o antigo campo `providencias` que foi migrado pra timeline.
+      const obsTexto = (input.providencias ?? "").trim();
+      if (obsTexto.length > 0) {
+        try {
+          await db.insert(registros).values({
+            assistidoId: assistido.id,
+            processoId,
+            demandaId: nova.id,
+            tipo: "anotacao",
+            titulo: "Observação inicial",
+            conteudo: obsTexto,
+            dataRegistro: new Date(),
+            status: "realizado",
+            interlocutor: "defensor",
+            autorId: ctx.user.id,
+          });
+        } catch (err) {
+          console.error("Falha ao criar registro inicial da demanda", nova.id, err);
+        }
+      }
+
       logAudit({
         userId: ctx.user.id,
         userName: ctx.user.name,
@@ -643,9 +673,10 @@ export const demandasRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       }
 
-      // Demanda é criada vinculada ao defensor responsável
-      // providencias é ignorada — coluna foi migrada para tabela "registros"
-      const { providencias: _ignored, ...inputSemProvidencias } = input;
+      // Demanda é criada vinculada ao defensor responsável.
+      // O texto livre `providencias` (do form) vira o primeiro registro
+      // tipo "anotacao" da demanda — coluna foi migrada para tabela "registros".
+      const { providencias: providenciasTexto, ...inputSemProvidencias } = input;
       const [novaDemanda] = await db
         .insert(demandas)
         .values({
@@ -655,6 +686,29 @@ export const demandasRouter = router({
           defensorId: defensorId || ctx.user.id, // Defensor responsável pela demanda
         })
         .returning();
+
+      // Cria registro inicial (anotação) com o texto livre de observações
+      // se o usuário preencheu o campo no form.
+      if (providenciasTexto && providenciasTexto.trim().length > 0) {
+        try {
+          await db.insert(registros).values({
+            assistidoId: input.assistidoId,
+            processoId: input.processoId,
+            demandaId: novaDemanda.id,
+            tipo: "anotacao",
+            titulo: "Observação inicial",
+            conteudo: providenciasTexto.trim(),
+            dataRegistro: new Date(),
+            status: "realizado",
+            interlocutor: "defensor",
+            autorId: ctx.user.id,
+          });
+        } catch (err) {
+          // Falha em criar o registro inicial não deve impedir a criação
+          // da demanda — apenas loga. O usuário pode adicionar manualmente.
+          console.error("Falha ao criar registro inicial da demanda", novaDemanda.id, err);
+        }
+      }
 
       // Audit log
       logAudit({
@@ -1203,6 +1257,24 @@ export const demandasRouter = router({
           const targetArea = (ATRIBUICAO_TO_AREA[inputAtribuicao] || "JURI") as typeof processos.area._.data;
           const targetAtribuicao = (ATRIBUICAO_TO_ENUM[inputAtribuicao] || inputAtribuicao || "JURI_CAMACARI") as typeof processos.atribuicao._.data;
 
+          // Map do prefixo PJe (MPUMPCrim/APOrd/LibProv/etc) → tipo interno.
+          // LP cobre incidentes defensivos (Liberdade Provisória, Pedido de
+          // Revogação) — diferente de CAUTELAR, que é tipicamente medida
+          // restritiva da acusação. Cobre só casos explícitos; o resto cai
+          // no default (AP) do schema.
+          const mapPjeTipoToEnum = (raw?: string): string | null => {
+            if (!raw) return null;
+            const t = raw.trim();
+            if (/^MPU/i.test(t) || /^MPCA$/i.test(t)) return "MPU";
+            if (/^(AuPrFl|APFD)$/i.test(t)) return "APF";
+            if (/^EP$/i.test(t)) return "EP";
+            if (/^LibProv$/i.test(t)) return "LP";
+            if (/^(CauInomCrim|PePrPr)$/i.test(t)) return "CAUTELAR";
+            if (/^(APOrd|APSum|APri|PetCrim|Juri|InsanAc|VD)$/i.test(t)) return "AP";
+            return null; // desconhecido: não força nada
+          };
+          const tipoProcessoEnum = mapPjeTipoToEnum(row.tipoProcesso);
+
           if (processoNumero) {
             processo = await db.query.processos.findFirst({
               where: and(
@@ -1211,13 +1283,23 @@ export const demandasRouter = router({
               ),
             });
 
-            // Atualizar atribuição/área do processo existente se necessário
-            if (processo && processo.atribuicao !== targetAtribuicao) {
-              const [updated] = await db.update(processos)
-                .set({ atribuicao: targetAtribuicao, area: targetArea, updatedAt: new Date() })
-                .where(eq(processos.id, processo.id))
-                .returning();
-              processo = updated;
+            // Atualizar atribuição/área do processo existente. tipoProcesso
+            // NUNCA é sobrescrito numa importação subsequente — o PJe envia
+            // tipo POR INTIMAÇÃO (ex: "MPUMPCrim" para uma intimação de medida
+            // protetiva dentro de uma Ação Penal), e o tipo do processo deve
+            // refletir a classe processual canônica, não a última intimação.
+            // Só populamos tipoProcesso se o processo ainda estiver no default
+            // do schema (AP) E o PJe enviou um tipo novo reconhecido —
+            // tratado como first-write, no INSERT abaixo.
+            if (processo) {
+              const needsAtribuicaoUpdate = processo.atribuicao !== targetAtribuicao;
+              if (needsAtribuicaoUpdate) {
+                const [updated] = await db.update(processos)
+                  .set({ atribuicao: targetAtribuicao, area: targetArea, updatedAt: new Date() })
+                  .where(eq(processos.id, processo.id))
+                  .returning();
+                processo = updated;
+              }
             }
           }
 
@@ -1227,6 +1309,7 @@ export const demandasRouter = router({
               numeroAutos: processoNumero || `SN-${Date.now()}-${results.imported}`,
               area: targetArea,
               atribuicao: targetAtribuicao,
+              ...(tipoProcessoEnum ? { tipoProcesso: tipoProcessoEnum } : {}),
             }).returning();
             processo = newProcesso;
           }

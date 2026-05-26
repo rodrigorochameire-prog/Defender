@@ -607,8 +607,13 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
       // Se temos dados suficientes mas não encontramos "X" (ex: intimação à
       // Defensoria), preferir o nomeIntimadoAtual. Se for órgão, marca como
       // "a identificar" em vez de descartar — o processo entra para revisão.
+      // Caso especial MPU: nomeIntimadoAtual pode ser a vítima/requerente
+      // (não-órgão mas também não-assistido). Forçar placeholder pra evitar
+      // linkar demanda na vítima — o defensor define o requerido depois via
+      // /admin/assistidos/pendentes ou scraping do polo passivo.
       if (!intimacaoAtual.assistido && nomeIntimadoAtual && intimacaoAtual.numeroProcesso && intimacaoAtual.dataExpedicao) {
-        if (ehOrgaoOuAutoridade(nomeIntimadoAtual)) {
+        const isMPUFallback = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
+        if (ehOrgaoOuAutoridade(nomeIntimadoAtual) || isMPUFallback) {
           intimacaoAtual.assistido = ASSISTIDO_A_IDENTIFICAR;
           intimacaoAtual.destinatarioOriginal = nomeIntimadoAtual;
           intimacaoAtual.assistidoNaoIdentificado = true;
@@ -652,9 +657,11 @@ export function parsePJeIntimacoesCompleto(texto: string): ResultadoParser {
   }
 
   // Fim do loop: salvar intimação parcial restante. Se só restou um órgão,
-  // marca como "a identificar" em vez de descartar.
+  // marca como "a identificar" em vez de descartar. Mesma regra MPU acima:
+  // sem partes resolvida, não confiar no nomeIntimadoAtual (pode ser vítima).
   if (!intimacaoAtual.assistido && nomeIntimadoAtual) {
-    if (ehOrgaoOuAutoridade(nomeIntimadoAtual)) {
+    const isMPUFallback = intimacaoAtual.tipoProcesso?.toUpperCase() === 'MPUMPCRIM';
+    if (ehOrgaoOuAutoridade(nomeIntimadoAtual) || isMPUFallback) {
       intimacaoAtual.assistido = ASSISTIDO_A_IDENTIFICAR;
       intimacaoAtual.destinatarioOriginal = nomeIntimadoAtual;
       intimacaoAtual.assistidoNaoIdentificado = true;

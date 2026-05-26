@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +19,9 @@ interface Props {
   audienciaId?: number;
   tipoDefault: TipoRegistro;
   tiposPermitidos?: TipoRegistro[];
+  // Tipos mostrados inline. Os demais ficam num popover "Mais ▾" (Task 3).
+  // Sem a prop, mostra todos os tipos permitidos inline (compat).
+  tiposPrimarios?: TipoRegistro[];
   onSaved?: () => void;
   onCancel?: () => void;
 }
@@ -29,12 +33,24 @@ export function RegistroEditor({
   audienciaId,
   tipoDefault,
   tiposPermitidos,
+  tiposPrimarios,
   onSaved,
   onCancel,
 }: Props) {
   const [tipo, setTipo] = useState<TipoRegistro>(tipoDefault);
   const [titulo, setTitulo] = useState("");
   const [conteudo, setConteudo] = useState("");
+
+  const conteudoRef = useRef(conteudo);
+  const tituloRef = useRef(titulo);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    conteudoRef.current = conteudo;
+    tituloRef.current = titulo;
+  });
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
@@ -47,93 +63,213 @@ export function RegistroEditor({
   });
 
   const tipos = tiposPermitidos ?? TIPO_KEYS;
+  // Preserva a ordem do array tiposPrimarios (callsite controla a sequência);
+  // se o tipo ativo não está entre os primários, anexa no final.
+  const inlineTipos = tiposPrimarios
+    ? Array.from(new Set([
+        ...tiposPrimarios.filter((t) => tipos.includes(t)),
+        ...(tipos.includes(tipo) && !tiposPrimarios.includes(tipo) ? [tipo] : []),
+      ]))
+    : tipos;
+
+  const secondaryTipos = tiposPrimarios
+    ? tipos.filter((t) => !tiposPrimarios.includes(t) && t !== tipo)
+    : [];
+
+  const activeCfg = REGISTRO_TIPOS[tipo];
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const inEditableField =
+        target?.tagName === "INPUT" || target?.tagName === "TEXTAREA";
+
+      // ⌘↵ / Ctrl↵ → salva (funciona dentro do textarea também)
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        const conteudoNow = conteudoRef.current;
+        if (conteudoNow.trim() && !create.isPending) {
+          e.preventDefault();
+          create.mutate({
+            tipo,
+            assistidoId,
+            processoId,
+            demandaId,
+            audienciaId,
+            titulo: tituloRef.current.trim() || undefined,
+            conteudo: conteudoNow.trim(),
+          });
+        }
+        return;
+      }
+
+      // Esc → cancela (em qualquer lugar)
+      if (e.key === "Escape" && onCancel) {
+        e.preventDefault();
+        onCancel();
+        return;
+      }
+
+      // 1–7 → troca tipo primário (só fora de input/textarea)
+      if (!inEditableField && /^[1-7]$/.test(e.key)) {
+        const idx = Number(e.key) - 1;
+        const lista = tiposPrimarios ?? tipos;
+        const next = lista[idx];
+        if (next) {
+          e.preventDefault();
+          setTipo(next);
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [tipo, tiposPrimarios, tipos, create, assistidoId, processoId, demandaId, audienciaId, onCancel]);
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3 space-y-2.5">
-      {/* Tipo selector — apenas o chip ativo tem tint colorido. Os demais ficam
-          neutros (só ícone+texto coloridos), o que reduz drasticamente o ruído
-          visual mantendo a semântica de cor. */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {tipos.map((t) => {
+    <div
+      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden border-l-2 transition-colors"
+      style={{ borderLeftColor: `${activeCfg.color}66` }}
+    >
+      {/* Tipo selector — single row icon-only.
+          O ativo expande pra mostrar label completa com tint colorido.
+          Os demais ficam icon-only neutros com tooltip — quase 0 ruído visual. */}
+      <div className="flex items-center gap-0.5 px-2.5 pt-2.5 pb-1.5 flex-wrap">
+        {inlineTipos.map((t) => {
           const cfg = REGISTRO_TIPOS[t];
           const Icon = cfg.Icon;
           const active = tipo === t;
+          const lista = tiposPrimarios ?? tipos;
+          const idx = lista.indexOf(t);
+          const shortcut = idx >= 0 && idx < 7 ? ` (${idx + 1})` : "";
           return (
             <button
               key={t}
               type="button"
               onClick={() => setTipo(t)}
+              title={`${cfg.label}${shortcut}`}
+              aria-label={cfg.label}
+              aria-pressed={active}
               className={cn(
-                "text-[11px] px-2 py-1 rounded-md font-medium transition-all flex items-center gap-1",
+                "rounded-md transition-all duration-150 flex items-center gap-1 text-[11px] font-semibold",
                 active
-                  ? cn(cfg.bg, cfg.text, "ring-1 ring-inset")
-                  : cn(
-                      "bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/40",
-                      cfg.text,
-                    ),
+                  ? cn("px-2 py-1 ring-1 ring-inset", cfg.bg, cfg.text)
+                  : "w-7 h-7 justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800",
               )}
               style={
                 active
-                  ? ({ ["--tw-ring-color"]: cfg.color } as React.CSSProperties)
+                  ? ({ ["--tw-ring-color"]: `${cfg.color}66` } as React.CSSProperties)
                   : undefined
               }
             >
-              <Icon className="w-3 h-3" />
-              {cfg.shortLabel}
+              <Icon className="w-3.5 h-3.5" />
+              {active && <span>{cfg.label}</span>}
             </button>
           );
         })}
+        {secondaryTipos.length > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label="Mais"
+                title="Mais tipos"
+                className="rounded-md w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              sideOffset={4}
+              className="w-44 p-1"
+            >
+              {secondaryTipos.map((t) => {
+                const cfg = REGISTRO_TIPOS[t];
+                const Icon = cfg.Icon;
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTipo(t)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-[12px] text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  >
+                    <Icon className="w-3.5 h-3.5" style={{ color: cfg.color }} />
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
 
-      <input
-        value={titulo}
-        onChange={(e) => setTitulo(e.target.value)}
-        placeholder="Título (opcional)"
-        className="w-full bg-transparent text-sm font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 outline-none border-b border-neutral-200 dark:border-neutral-800 pb-1.5 focus:border-neutral-400"
-        maxLength={120}
-      />
+      <div className="px-3.5 pb-3 space-y-1.5">
+        <input
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          placeholder="Título (opcional)"
+          className="w-full bg-transparent text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 placeholder:font-normal outline-none py-1"
+          maxLength={120}
+        />
 
-      <textarea
-        value={conteudo}
-        onChange={(e) => setConteudo(e.target.value)}
-        placeholder="O que aconteceu..."
-        rows={3}
-        className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none"
-      />
+        <textarea
+          ref={textareaRef}
+          value={conteudo}
+          onChange={(e) => setConteudo(e.target.value)}
+          placeholder="O que aconteceu..."
+          rows={3}
+          className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
+        />
 
-      <div className="flex items-center justify-end gap-2 pt-1">
-        {onCancel && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="h-7 text-[11px]"
-          >
-            Cancelar
-          </Button>
-        )}
-        <Button
-          size="sm"
-          disabled={!conteudo.trim() || create.isPending}
-          onClick={() =>
-            create.mutate({
-              tipo,
-              assistidoId,
-              processoId,
-              demandaId,
-              audienciaId,
-              titulo: titulo.trim() || undefined,
-              conteudo: conteudo.trim(),
-            })
-          }
-          className="h-7 text-[11px]"
-        >
-          {create.isPending ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            "Salvar"
-          )}
-        </Button>
+        {/* Footer com counter + actions */}
+        <div className="flex items-center justify-between pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60">
+          <span className={cn(
+            "text-[10px] tabular-nums transition-colors",
+            conteudo.length > 1000
+              ? "text-amber-500"
+              : "text-neutral-400 dark:text-neutral-500",
+          )}>
+            {conteudo.length > 0 ? `${conteudo.length} caracteres` : ""}
+          </span>
+          <div className="flex items-center gap-1">
+            {onCancel && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancel}
+                className="h-7 text-[11px] px-2.5 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+              >
+                Cancelar
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={!conteudo.trim() || create.isPending}
+              onClick={() =>
+                create.mutate({
+                  tipo,
+                  assistidoId,
+                  processoId,
+                  demandaId,
+                  audienciaId,
+                  titulo: titulo.trim() || undefined,
+                  conteudo: conteudo.trim(),
+                })
+              }
+              style={
+                conteudo.trim() && !create.isPending
+                  ? { backgroundColor: activeCfg.color, color: "#111" }
+                  : undefined
+              }
+              className="h-7 text-[11px] px-3 cursor-pointer transition-all"
+            >
+              {create.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

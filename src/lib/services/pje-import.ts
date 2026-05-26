@@ -197,6 +197,19 @@ export async function importarDemandas(
             isNull(assistidos.deletedAt),
           ),
         });
+
+        // Auditoria: quando linkamos a um assistido pré-existente por nome
+        // exato vindo do PJe, logamos um evento. Foi assim que a fusão
+        // Robert/Rogério passou despercebida — uma planilha tinha typo,
+        // o ilike bateu, e processos subsequentes herdaram o vínculo errado.
+        // Ter o log permite reconciliação retroativa por CNJ.
+        if (assistido && row.processoNumero) {
+          console.log(
+            `[pje-import] assistido reaproveitado por nome: ` +
+            `id=${assistido.id} nome="${assistido.nome}" ` +
+            `processo=${row.processoNumero} ato="${row.ato || "-"}"`,
+          );
+        }
       }
 
       // Backfill: preencher atribuicaoPrimaria se estiver vazio

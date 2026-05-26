@@ -560,16 +560,17 @@ export function DemandaCreateModal({
                 </div>
               </div>
 
-              {/* Providências */}
+              {/* Observação inicial — vai pro primeiro registro da timeline */}
               <div className="space-y-1.5">
                 <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  Providências / Observações
+                  Observação inicial
+                  <span className="text-[9px] font-normal text-neutral-400 dark:text-neutral-500 ml-1">(vira o primeiro registro)</span>
                 </Label>
                 <textarea
                   value={formData.providencias}
                   onChange={(e) => setFormData({ ...formData, providencias: e.target.value })}
-                  placeholder="Descreva as providências necessárias, observações importantes ou anotações sobre a demanda..."
+                  placeholder="Anotação livre — providências necessárias, contexto, observações..."
                   rows={3}
                   className="w-full px-3 py-2 bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 rounded-lg text-xs resize-none transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 placeholder:text-neutral-400"
                 />

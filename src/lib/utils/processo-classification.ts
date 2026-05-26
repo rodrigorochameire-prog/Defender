@@ -12,10 +12,19 @@ const EXACT_MAP: Record<string, string> = {
   "Auto de Prisão em Flagrante": "APF",
   "Medidas Protetivas de Urgência": "MPU",
   "Medida Protetiva de Urgência": "MPU",
+  // Variantes que o DataJud retorna pra TJBA
+  "Medidas Protetivas de urgência (Lei Maria da Penha) Criminal": "MPU",
   "Medida Cautelar": "CAUTELAR",
   "Medida Cautelar Inominada": "CAUTELAR",
+  "Cautelar Inominada Criminal": "CAUTELAR",
   "Prisão Preventiva": "PPP",
   "Produção Antecipada de Provas": "PAP",
+  "Liberdade Provisória": "LP",
+  "Pedido de Liberdade Provisória": "LP",
+  "Pedido de Revogação de Prisão Preventiva": "LP",
+  "Revogação de Prisão Preventiva": "LP",
+  "Pedido de Revogação de Medida Protetiva": "LP",
+  "Revogação de Medida Protetiva": "LP",
   "Execução Penal": "EP",
   "Execução da Pena": "EP",
   "Execução de ANPP": "EANPP",
@@ -26,7 +35,15 @@ const EXACT_MAP: Record<string, string> = {
   "Agravo em Execução Penal": "AGRAVO",
 };
 
+// LP (Liberdade Provisória / Pedido de Revogação) deve vir ANTES das regras
+// de cautelar e prisão preventiva — são incidentes instaurados pela DEFESA
+// e merecem classe própria pra triagem (não confundir com cautelar inominada
+// da acusação ou produção antecipada).
 const PARTIAL_MAP: [RegExp, string][] = [
+  [/liberdade\s+provis/i, "LP"],
+  [/revoga[çc][aã]o.*pris/i, "LP"],
+  [/revoga[çc][aã]o.*(medida\s+)?protet/i, "LP"],
+  [/pedido.*revoga/i, "LP"],
   [/med.*protet/i, "MPU"],
   [/inqu[eé]rito/i, "IP"],
   [/flagrante/i, "APF"],
@@ -72,6 +89,7 @@ export const TIPO_PROCESSO_LABEL: Record<string, string> = {
   HC: "Habeas Corpus",
   CAUTELAR: "Cautelar",
   PAP: "Prod. Antecipada Provas",
+  LP: "Liberdade Provisória",
   RESE: "Recurso Sent. Estrito",
   APELACAO: "Apelação",
   AGRAVO: "Agravo",

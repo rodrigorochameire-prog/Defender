@@ -20,15 +20,25 @@ import {
 } from "@/components/ui/select";
 import { parseAudienciaFromText } from "@/lib/audiencia-parser";
 
+// Tipos de audiência cobrindo a rotina criminal/VVD/Júri/EP do defensor.
+// Mantemos "Outra" como fallback final pra casos não previstos.
 const TIPOS_AUDIENCIA = [
   "Instrução e Julgamento",
   "Instrução",
   "Julgamento",
+  "Una",
+  "Plenário do Júri",
+  // Lei 13.431/2017 — depoimento sem dano de criança/adolescente vítima
+  // ou testemunha. Comum em processos de medida cautelar e ações VVD.
+  "Oitiva Especial",
+  // Art. 366 CPP / produção antecipada de prova
+  "Antecipação de Prova",
   "Conciliação",
   "Justificação",
   "Custódia",
+  // Art. 16 Lei Maria da Penha — renúncia da representação
+  "Preliminar (Maria da Penha)",
   "Admoestação",
-  "Una",
   "Outra",
 ];
 
@@ -201,7 +211,7 @@ export function AudienciaConfirmModal({
                   <SelectTrigger className="w-full h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600">
                     <SelectValue placeholder="Selecione o tipo..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[100000]">
                     {TIPOS_AUDIENCIA.map((t) => (
                       <SelectItem key={t} value={t} className="text-xs">
                         {t}

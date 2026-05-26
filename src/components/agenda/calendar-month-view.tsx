@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -199,10 +200,55 @@ function EventoCompacto({
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;
 
+  // Mini-card de 1 linha: horário (bold colorido) + tipo (sutil) + nome (truncado).
+  // Caber 3+ cards em min-h-[112px] mesmo em mês de 6 semanas.
+  const mainText = assistidoNome || abreviarTitulo(evento.titulo);
+
+  // Hover preview — cartão flutuante com info completa quando o usuário pousa.
+  // Resolve labels truncadas sem custo de espaço na grade.
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const hoverTimerRef = useRef<number | null>(null);
+  const [hoverPos, setHoverPos] = useState<{ top: number; left: number; placeBelow: boolean } | null>(null);
+
+  const showHoverCard = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const cardW = 280;
+    const cardH = 130;
+    const placeBelow = r.top < cardH + 16;
+    const top = placeBelow ? r.bottom + 6 : r.top - 6;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - cardW - 8));
+    setHoverPos({ top, left, placeBelow });
+  };
+
+  const onMouseEnter = () => {
+    if (hoverTimerRef.current !== null) window.clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = window.setTimeout(showHoverCard, 220);
+  };
+  const onMouseLeave = () => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoverPos(null);
+  };
+  useEffect(() => () => {
+    if (hoverTimerRef.current !== null) window.clearTimeout(hoverTimerRef.current);
+  }, []);
+
+  const tituloCompleto = evento.titulo || "";
+  const numeroProcesso = evento.numeroProcesso || evento.processo?.numero || null;
+  const atribuicaoLabel = evento.atribuicao || evento.atribuicaoKey || null;
+
   return (
+    <>
         <button
+          ref={btnRef}
           onClick={(e) => { e.stopPropagation(); onEventDoubleClick?.(evento); }}
           onDoubleClick={(e) => { e.stopPropagation(); onEventClick(evento); }}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          aria-label={`${evento.horarioInicio}${tipoAbrev ? ` ${tipoAbrev}` : ""} — ${mainText}`}
           className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
             eventoCancelado ? "opacity-40" : ""
           }`}
@@ -211,77 +257,154 @@ function EventoCompacto({
           {/* Left attribution bar — sólida (audiência) ou tracejada (atendimento) */}
           {visual.dashed ? (
             <div
-              className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-70"
+              className="absolute left-0 top-[2px] bottom-[2px] w-[2px] rounded-r-sm opacity-70"
               style={{
                 background: `repeating-linear-gradient(to bottom, ${displayColor} 0px, ${displayColor} 3px, transparent 3px, transparent 6px)`,
               }}
             />
           ) : (
             <div
-              className="absolute left-0 top-[3px] bottom-[3px] w-[2px] rounded-r-sm opacity-50"
+              className="absolute left-0 top-[2px] bottom-[2px] w-[2px] rounded-r-sm opacity-60"
               style={{ backgroundColor: displayColor }}
             />
           )}
 
-          {/* Conteúdo do card — compacto (sem padding extra em sm para caber 2 cards
-              inteiros em min-h-[120px] sem corte) */}
-          <div className="pl-[9px] pr-1.5 sm:pr-2 py-0.5">
-            {/* Linha 1: horário + tipo + dots */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Status icons */}
-              {(evento.status === "cancelado" || evento.status === "cancelada") && (
-                <XCircle className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
-              )}
-              {(evento.status === "remarcado" || evento.status === "redesignado" || evento.status === "reagendada") && (
-                <CalendarX2 className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
-              )}
+          <div className="pl-[9px] pr-1.5 py-0.5 flex items-center gap-1 sm:gap-1.5 min-w-0">
+            {/* Status icons (cancelado / remarcado) */}
+            {(evento.status === "cancelado" || evento.status === "cancelada") && (
+              <XCircle className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
+            )}
+            {(evento.status === "remarcado" || evento.status === "redesignado" || evento.status === "reagendada") && (
+              <CalendarX2 className="w-2.5 h-2.5 text-neutral-400 shrink-0" />
+            )}
 
-              <span
-                className={`text-[9px] sm:text-[10px] font-bold tabular-nums shrink-0 ${eventoCancelado ? "line-through" : ""}`}
-                style={{ color: displayColor }}
-              >
-                {evento.horarioInicio}
+            {/* Hora */}
+            <span
+              className={`text-[10px] font-bold tabular-nums shrink-0 ${eventoCancelado ? "line-through" : ""}`}
+              style={{ color: displayColor }}
+            >
+              {evento.horarioInicio}
+            </span>
+
+            {/* Tipo — visível em md+; em sm o espaço é apertado e cede pro nome */}
+            {tipoAbrev && !eventoCancelado && (
+              <span className="hidden md:inline text-[9px] font-medium text-neutral-400 dark:text-neutral-500 shrink-0">
+                {tipoAbrev}
               </span>
+            )}
 
-              {/* Tipo — sempre visível, com truncate no caso de cell muito estreito */}
-              {tipoAbrev && !eventoCancelado && (
-                <span className="text-[9px] font-medium text-neutral-400 dark:text-neutral-500 shrink-0 truncate">
-                  {tipoAbrev}
-                </span>
-              )}
-
-              <span className="flex-1" />
-
-              {/* Dot indicators + atendimento icon */}
-              <span className="hidden sm:flex items-center gap-0.5">
-                {visual.dashed && !eventoCancelado && (
-                  <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
-                )}
-                {temAdvogado && !eventoCancelado && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80 shrink-0" title="Advogado constituído" />
-                )}
-                {!eventoCancelado && evento.prioridade === "urgente" && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80 shrink-0" title="Urgente" />
-                )}
-                {hasRegistro && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80 shrink-0" title="Registro feito" />
-                )}
+            {/* Nome (ou título abreviado) — toma o espaço restante e trunca */}
+            {!eventoCancelado && (
+              <span className="hidden sm:inline text-[10px] text-neutral-700 dark:text-neutral-300 truncate flex-1 min-w-0">
+                {mainText}
               </span>
-            </div>
+            )}
 
-            {/* Linha 2: nome completo do assistido — truncate via CSS, leading
-                e margem mínimos para caber 2 cards completos em 120px de célula. */}
-            {assistidoNome && !eventoCancelado ? (
-              <p className="hidden sm:block text-[10px] font-medium text-neutral-600 dark:text-neutral-300 truncate leading-none">
-                {assistidoNome}
-              </p>
-            ) : !eventoCancelado ? (
-              <p className="hidden sm:block text-[10px] text-neutral-400 dark:text-neutral-500 truncate leading-none">
-                {abreviarTitulo(evento.titulo)}
-              </p>
-            ) : null}
+            {/* Dots de status (atendimento / advogado / urgente / com registro) */}
+            <span className="hidden sm:flex items-center gap-0.5 shrink-0">
+              {visual.dashed && !eventoCancelado && (
+                <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+              )}
+              {temAdvogado && !eventoCancelado && (
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80" title="Advogado constituído" />
+              )}
+              {!eventoCancelado && evento.prioridade === "urgente" && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400/80" title="Urgente" />
+              )}
+              {hasRegistro && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" title="Registro feito" />
+              )}
+            </span>
           </div>
         </button>
+
+        {hoverPos && typeof document !== "undefined" && createPortal(
+          <div
+            role="tooltip"
+            className="fixed z-[1000] w-[280px] rounded-xl bg-white dark:bg-neutral-900 shadow-2xl shadow-black/20 ring-1 ring-black/[0.06] dark:ring-white/[0.08] border border-neutral-200/80 dark:border-neutral-800/80 p-3 animate-in fade-in zoom-in-95 duration-100"
+            style={{
+              top: hoverPos.top,
+              left: hoverPos.left,
+              transform: hoverPos.placeBelow ? undefined : "translateY(-100%)",
+              pointerEvents: "none",
+            }}
+          >
+            <div className="flex items-start gap-2 mb-1.5">
+              <div
+                className="w-1 self-stretch rounded-full shrink-0"
+                style={{ backgroundColor: displayColor }}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span
+                    className="text-[12px] font-bold tabular-nums"
+                    style={{ color: displayColor }}
+                  >
+                    {evento.horarioInicio}
+                  </span>
+                  {tipoAbrev && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                      {tipoAbrev}
+                    </span>
+                  )}
+                  {atribuicaoLabel && (
+                    <span
+                      className="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: `${displayColor}1a`,
+                        color: displayColor,
+                      }}
+                    >
+                      {String(atribuicaoLabel).slice(0, 18)}
+                    </span>
+                  )}
+                </div>
+                {assistidoNome && (
+                  <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-tight break-words">
+                    {assistidoNome}
+                  </p>
+                )}
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-snug mt-0.5 break-words">
+                  {tituloCompleto}
+                </p>
+                {numeroProcesso && (
+                  <p className="text-[10px] tabular-nums text-neutral-400 dark:text-neutral-500 mt-1">
+                    {numeroProcesso}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-1.5 mt-1.5 border-t border-neutral-100 dark:border-neutral-800/80 text-[10px] text-neutral-400 dark:text-neutral-500">
+              {temAdvogado && !eventoCancelado && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  Advogado
+                </span>
+              )}
+              {evento.prioridade === "urgente" && !eventoCancelado && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  Urgente
+                </span>
+              )}
+              {hasRegistro && (
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  Registro feito
+                </span>
+              )}
+              {eventoCancelado && (
+                <span className="flex items-center gap-1 text-rose-500/80">
+                  <XCircle className="w-3 h-3" />
+                  {evento.status}
+                </span>
+              )}
+              <span className="ml-auto opacity-70">Clique pra detalhes</span>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
@@ -440,7 +563,7 @@ export function CalendarMonthView({
                           ? "bg-neutral-50/40 dark:bg-neutral-900/30"
                           : "bg-white dark:bg-neutral-900"
                       }
-                      ${isPastDay && isCurrentMonth ? "opacity-50" : ""}
+                      ${isPastDay && isCurrentMonth ? "opacity-70" : ""}
                       ${isCurrentMonth && !isDayToday && "hover:bg-neutral-50/60 dark:hover:bg-neutral-800/30"}
                     `}
                   >
@@ -463,8 +586,7 @@ export function CalendarMonthView({
                       </span>
 
                       {/* Dots de atribuição: 1 ponto por atribuição única no dia,
-                          colorido pelo ATRIBUICAO_COLORS. Máximo 4. Sutis: 3px
-                          com 50% opacidade, sem title (não polui hover). */}
+                          colorido pelo ATRIBUICAO_COLORS. Máximo 4. */}
                       {hasEvents && (() => {
                         const seen = new Set<string>();
                         const keys: string[] = [];
@@ -473,13 +595,13 @@ export function CalendarMonthView({
                           if (!seen.has(k)) { seen.add(k); keys.push(k); }
                         }
                         return (
-                          <div className="flex items-center gap-[2px] min-w-0 flex-1 opacity-50">
+                          <div className="flex items-center gap-[3px] min-w-0 flex-1 opacity-80">
                             {keys.slice(0, 4).map((k) => {
                               const c = getAtribuicaoColors(k);
                               return (
                                 <span
                                   key={k}
-                                  className="w-[3px] h-[3px] rounded-full shrink-0"
+                                  className="w-1 h-1 rounded-full shrink-0"
                                   style={{ backgroundColor: (c as any).color || "#a1a1aa" }}
                                 />
                               );
@@ -488,28 +610,15 @@ export function CalendarMonthView({
                         );
                       })()}
 
-                      {/* Badge "+N" — responsivo: mobile +N a partir de 3 eventos,
-                          sm/md a partir de 3, lg+ a partir de 4. Único ponto de
-                          entrada para a sheet completa do dia. */}
-                      {dayEvents.length > 2 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSheetDate(date);
-                          }}
-                          className="lg:hidden ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer shrink-0"
-                          title="Ver todos os eventos do dia"
-                        >
-                          +{dayEvents.length - 2}
-                        </button>
-                      )}
+                      {/* Badge "+N" — único ponto de entrada para a sheet completa
+                          do dia. Aparece a partir de 4 eventos (mostramos 3 inline). */}
                       {dayEvents.length > 3 && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSheetDate(date);
                           }}
-                          className="hidden lg:inline-flex ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer shrink-0"
+                          className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors cursor-pointer shrink-0"
                           title="Ver todos os eventos do dia"
                         >
                           +{dayEvents.length - 3}
@@ -517,22 +626,18 @@ export function CalendarMonthView({
                       )}
                     </div>
 
-                    {/* Lista de Eventos — sempre 2 cards inteiros visíveis;
-                        no lg+ mostra 3 (cabe no min-h-[164px]). */}
-                    <div className="space-y-0.5 sm:space-y-1 flex-1 min-h-0 overflow-hidden">
-                      {dayEvents.slice(0, 3).map((evento, idx) => (
-                        <div
+                    {/* Lista de Eventos — até 3 cards de 1 linha visíveis em todos
+                        os breakpoints (cabe folgado em 112px, mesmo em mês de 6 semanas). */}
+                    <div className="space-y-0.5 flex-1 min-h-0 overflow-hidden">
+                      {dayEvents.slice(0, 3).map((evento) => (
+                        <EventoCompacto
                           key={evento.id}
-                          className={idx < 2 ? "" : "hidden lg:block"}
-                        >
-                          <EventoCompacto
-                            evento={evento}
-                            onEventClick={onEventClick}
-                            onEditEvento={onEditEvento}
-                            onDeleteEvento={onDeleteEvento}
-                            onEventDoubleClick={onEventDoubleClick}
-                          />
-                        </div>
+                          evento={evento}
+                          onEventClick={onEventClick}
+                          onEditEvento={onEditEvento}
+                          onDeleteEvento={onDeleteEvento}
+                          onEventDoubleClick={onEventDoubleClick}
+                        />
                       ))}
                     </div>
 

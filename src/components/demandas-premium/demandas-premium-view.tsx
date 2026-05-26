@@ -6,6 +6,7 @@ import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-hea
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
 import { isAtoAudiencia } from "@/lib/audiencia-parser";
+import { usePermissions } from "@/hooks/use-permissions";
 import { RecursoConfirmModal, type RecursoConfirmData } from "@/components/demandas-premium/recurso-confirm-modal";
 import { isAtoRecurso, infoDoAtoRecurso, type TipoRecurso } from "@/lib/recurso-helpers";
 import { ConfigModal } from "@/components/demandas-premium/config-modal";
@@ -27,8 +28,19 @@ const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
+const NovoEncaminhamentoModal = dynamic(
+  () => import("@/components/cowork/encaminhamentos/NovoEncaminhamentoModal").then(m => ({ default: m.NovoEncaminhamentoModal })),
+  { ssr: false }
+);
 import { DemandaQuickPreview } from "@/components/demandas-premium/DemandaQuickPreview";
-import { KanbanPremium } from "@/components/demandas-premium/kanban-premium";
+import type { StatusPrisional } from "@/components/demandas-premium/status-prisional-config";
+import {
+  KanbanPremium,
+  PILL_CONFIG,
+  PILL_STORAGE_KEY,
+  matchesPill,
+  type PillKey,
+} from "@/components/demandas-premium/kanban-premium";
 import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
@@ -46,6 +58,7 @@ import { useColumnWidths } from "@/hooks/use-column-widths";
 import { useRealtimeDemandaEventos } from "@/hooks/use-realtime-demanda-eventos";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -127,6 +140,7 @@ import {
   Loader2,
   BarChart3,
   List,
+  ArrowLeftRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -322,6 +336,28 @@ const atribuicaoOptions = [
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
 ];
+
+// Mapeia chaves da coluna `users.areasPrincipais` (jsonb) para os labels
+// usados em `atribuicaoOptions.value`. Cobre as duas convenções vivas no
+// codebase (curta tipo "VVD", e longa tipo "VIOLENCIA_DOMESTICA"). Quando
+// chega uma chave nova, cai no fallback (não filtra) e o usuário pode
+// ajustar — sem quebrar.
+const AREA_KEY_TO_ATRIBUICAO_LABEL: Record<string, string> = {
+  JURI: "Tribunal do Júri",
+  GRUPO_JURI: "Grupo Especial do Júri",
+  VVD: "Violência Doméstica",
+  EXECUCAO: "Execução Penal",
+  SUBSTITUICAO: "Substituição Criminal",
+  CURADORIA: "Curadoria Especial",
+  VIOLENCIA_DOMESTICA: "Violência Doméstica",
+  EXECUCAO_PENAL: "Execução Penal",
+};
+
+// Persistência do default de atribuição. Override do usuário (qualquer
+// mudança manual) salva em localStorage; flag de "Todas explícito" usa
+// sessionStorage (vale só pra aba atual).
+const LS_DEFAULT_ATRIBUICAO = "defender_default_atribuicao";
+const SS_EXPLICIT_ALL = "defender_atribuicao_explicit_all";
 
 const statusOptions = [
   // Triagem
@@ -600,9 +636,57 @@ export default function Demandas() {
   ]);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [selectedPrazoFilter, setSelectedPrazoFilter] = useState<string | null>(null);
-  const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>([]);
+  // Default da atribuição, ordem de prioridade:
+  //   1. sessionStorage explicit_all → manter [] (modo "Todas")
+  //   2. localStorage override do usuário → reusa último estado salvo
+  //   3. (mais tarde, em useEffect) areasPrincipais do user → fallback
+  //   4. (mais tarde, em useEffect) primeira atribuição em kanban/planilha
+  const [selectedAtribuicoes, setSelectedAtribuicoes] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    if (sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return [];
+    const saved = localStorage.getItem(LS_DEFAULT_ATRIBUICAO);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.every(v => typeof v === "string")) {
+          return parsed;
+        }
+      } catch { /* ignore corrupted */ }
+    }
+    return [];
+  });
+  // Marca quando o init via areasPrincipais já rodou — evita reaplicar
+  // quando o user re-renderiza (usePermissions emite múltiplas vezes).
+  const [didInitFromUserAreas, setDidInitFromUserAreas] = useState(false);
+  const { user: currentUser } = usePermissions();
+  // Portal target: #header-slot é um placeholder na topbar global (HeaderUtilityRow).
+  // Usamos pra montar o switcher de atribuições ali em vez de no bottomRow do header.
+  const [headerSlotEl, setHeaderSlotEl] = useState<HTMLElement | null>(null);
   const [selectedEstadoPrisional, setSelectedEstadoPrisional] = useState<string | null>(null);
   const [selectedTipoAto, setSelectedTipoAto] = useState<string | null>(null);
+  // Filtro por tipo de processo (AP/MPU/IP/APF/EP/CAUTELAR/ANPP/OUTRO).
+  // Mantido por compatibilidade — usado por filtros de outras telas. O
+  // header só expõe o switch MPU agora.
+  const [selectedTipoProcesso, setSelectedTipoProcesso] = useState<string | null>(null);
+  // Switch MPU 3-estados: tudo / só MPU / sem MPU. Substitui as 7 chips
+  // que invadiam o topbar — útil principalmente em VVD pra alternar
+  // rapidamente entre AP × MPU sem mudar de atribuição.
+  type MpuFilter = "all" | "only_mpu" | "without_mpu";
+  const [mpuFilter, setMpuFilter] = useState<MpuFilter>(() => {
+    if (typeof window === "undefined") return "all";
+    try {
+      const v = localStorage.getItem("demandas:mpu-filter");
+      if (v === "only_mpu" || v === "without_mpu" || v === "all") return v;
+    } catch { /* ignore */ }
+    return "all";
+  });
+  const cycleMpuFilter = useCallback(() => {
+    setMpuFilter((prev) => {
+      const next: MpuFilter = prev === "all" ? "only_mpu" : prev === "only_mpu" ? "without_mpu" : "all";
+      try { localStorage.setItem("demandas:mpu-filter", next); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
   const [selectedStatusGroup, setSelectedStatusGroup] = useState<StatusGroup | null>(null);
   const [selectedCharts, setSelectedCharts] = useState<string[]>(["atribuicoes", "status", "atos", "situacao-prisional"]);
   const [chartTypes, setChartTypes] = useState<Record<string, string>>({
@@ -686,6 +770,31 @@ export default function Demandas() {
     processoId: number | null;
     processoNumero: string;
     destinatarioNome: string;
+  } | null>(null);
+
+  // Quando o user solta um card numa coluna de parceiro defensor, primeiro abrimos
+  // um mini-menu com 3 opções (transferir | compartilhar | dar ciência). A seleção
+  // determina o initialTipo do NovoEncaminhamentoModal.
+  const [colegaDropContext, setColegaDropContext] = useState<{
+    demandaId: number | null;
+    processoId: number | null;
+    assistidoId: number | null;
+    display: string;
+    destinatarioId: number;
+    destinatarioNome: string;
+  } | null>(null);
+
+  const [colegaModalTipo, setColegaModalTipo] = useState<"transferir" | "acompanhar" | "encaminhar" | null>(null);
+
+  // Estado para o seletor de pessoa (abre ao dropar em coluna "Delegação")
+  const [pessoaSelectorOpen, setPessoaSelectorOpen] = useState(false);
+  const [pessoaSelectorDemanda, setPessoaSelectorDemanda] = useState<{
+    demandaId: number | null;
+    demandaAto: string;
+    assistidoId: number | null;
+    assistidoNome: string;
+    processoId: number | null;
+    processoNumero: string;
   } | null>(null);
 
   // Estado para o modal de delegação em lote
@@ -780,10 +889,71 @@ export default function Demandas() {
     },
   });
 
+  // Mutation para atualizar status prisional do assistido (chamada via Bloco A
+  // do quick-preview). Atualização vai direto na tabela assistidos.
+  const updateAssistidoMutation = trpc.assistidos.update.useMutation({
+    onSuccess: () => {
+      utils.demandas.list.invalidate();
+      toast.success("Status prisional atualizado");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar status prisional: " + error.message);
+    },
+  });
+
+  const handleStatusPrisionalChange = (assistidoId: number, status: string) => {
+    updateAssistidoMutation.mutate({
+      id: assistidoId,
+      statusPrisional: status as StatusPrisional,
+    });
+  };
+
+  // Disparado pelo botão "Agendar audiência" do Bloco C — abre o
+  // AudienciaConfirmModal pré-populado com providências/ato como sources.
+  const handleAgendarAudiencia = (demandaId: string) => {
+    const numericId = parseInt(demandaId, 10);
+    if (isNaN(numericId)) return;
+    const demanda = demandas.find((d) => d.id === demandaId);
+    if (!demanda) return;
+    setAudienciaModal({
+      open: true,
+      demandaId: numericId,
+      assistidoNome: demanda.assistido,
+      numeroAutos: demanda.processos?.[0]?.numero,
+      sources: [demanda.providencias ?? null, demanda.ato ?? null].filter(Boolean) as string[],
+    });
+  };
+
+  // Atalho do card: abre o preview já com o painel de novo registro expandido.
+  const handleOpenRegistro = (demandaId: string) => {
+    setPreviewOpensWithRegistro(true);
+    setPreviewDemandaId(demandaId);
+  };
+
+  // Atalho do card: alterna a prioridade entre URGENTE e NORMAL sem abrir o preview.
+  // (réu preso é flag separada — não mexemos aqui pra não atropelar.)
+  const handleToggleUrgent = (demandaId: string, currentlyUrgent: boolean) => {
+    const numericId = parseInt(demandaId, 10);
+    if (isNaN(numericId)) return;
+    const next = currentlyUrgent ? "NORMAL" : "URGENTE";
+    trpcUpdateDemanda.mutate(
+      { id: numericId, prioridade: next },
+      {
+        onSuccess: () => {
+          toast.success(currentlyUrgent ? "Urgência removida" : "Marcado como urgente");
+        },
+      },
+    );
+  };
+
   // Mutation para registrar audiência vinda do modal de confirmação
   const createAudienciaMutation = trpc.audiencias.create.useMutation({
-    onSuccess: () => {
-      toast.success("Audiência registrada!");
+    onSuccess: (result) => {
+      if (result?.calendarSyncOk) {
+        toast.success("Audiência registrada e agendada no Google Calendar");
+      } else {
+        toast.warning("Audiência registrada — mas falhou ao sincronizar com o Google Calendar");
+      }
       setAudienciaModal({ open: false, demandaId: null, sources: [] });
     },
     onError: (error) => {
@@ -885,7 +1055,7 @@ export default function Demandas() {
       // dataInclusao: timestamp ISO para ordenação por recentes (usado na importação do PJe)
       dataInclusao: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
       processos: d.processo?.numeroAutos
-        ? [{ tipo: "", numero: d.processo.numeroAutos }]
+        ? [{ tipo: d.processo.tipoProcesso || "", numero: d.processo.numeroAutos }]
         : [],
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
@@ -902,6 +1072,11 @@ export default function Demandas() {
       syncedAt: d.syncedAt ? new Date(d.syncedAt).toISOString() : null,
       // Defensor responsável (para filtro por profissional R/J/G)
       defensorId: d.defensorId ?? null,
+      // Delegação — quem está executando a tarefa (servidor/estagiário)
+      delegadoPara: d.delegadoPara ?? null,
+      delegadoParaId: d.delegadoParaId ?? null,
+      statusDelegacao: d.statusDelegacao ?? null,
+      dataDelegacao: d.dataDelegacao ? new Date(d.dataDelegacao).toISOString() : null,
       // Rastreamento de importação
       importBatchId: d.importBatchId || null,
       ordemOriginal: d.ordemOriginal ?? null,
@@ -978,30 +1153,95 @@ export default function Demandas() {
     "arquivado": "ARQUIVADO",
   };
 
-  // Status que disparam o modal de delegação
-  const DELEGATION_STATUSES = ["amanda", "emilly", "taissa"];
+  // Lista dinâmica de membros da equipe (servidores/estagiários) e parceiros defensores.
+  // Usada para detectar drops do Kanban em colunas de pessoas e abrir o modal correto
+  // SEM chamar updateDemandaMutation (que rejeitaria o nome como status inválido no enum).
+  const { data: membrosEquipeQuery } = trpc.delegacao.membrosEquipe.useQuery();
+  const { data: parceirosQuery } = trpc.parceiros.listar.useQuery();
+
+  const equipeByKey = useMemo(() => {
+    const map = new Map<string, { id: number; name: string; role: string }>();
+    (membrosEquipeQuery ?? []).forEach((m) => {
+      const key = m.name.split(" ")[0].toLowerCase();
+      map.set(key, { id: m.id, name: m.name, role: m.role });
+    });
+    return map;
+  }, [membrosEquipeQuery]);
+
+  const parceirosByKey = useMemo(() => {
+    const map = new Map<string, { id: number; name: string }>();
+    (parceirosQuery ?? []).forEach((p) => {
+      const key = p.name.split(" ")[0].toLowerCase();
+      map.set(key, { id: p.id, name: p.name });
+    });
+    return map;
+  }, [parceirosQuery]);
 
   const handleStatusChange = (demandaId: string, newStatus: string) => {
-    // Atualizar localmente para feedback imediato
+    const key = newStatus.toLowerCase();
+    const numericId = parseInt(demandaId, 10);
+    const demanda = demandas.find((d) => d.id === demandaId);
+
+    // 0) Drop em coluna "Delegação" (sub-grupo Acompanhar) → abre seletor de pessoa.
+    if (key === "delegar" && demanda) {
+      setPessoaSelectorDemanda({
+        demandaId: isNaN(numericId) ? null : numericId,
+        demandaAto: demanda.ato || "",
+        assistidoId: demanda.assistidoId || null,
+        assistidoNome: demanda.assistido || "",
+        processoId: demanda.processoId || null,
+        processoNumero: demanda.processos?.[0]?.numero || "",
+      });
+      setPessoaSelectorOpen(true);
+      return;
+    }
+
+    // 1) Drop em membro da equipe → delegação. Abre modal, sem mutation no banco.
+    const membro = equipeByKey.get(key);
+    if (membro && demanda) {
+      setDelegacaoDemanda({
+        demandaId: isNaN(numericId) ? null : numericId,
+        demandaAto: demanda.ato || "",
+        assistidoId: demanda.assistidoId || null,
+        assistidoNome: demanda.assistido || "",
+        processoId: demanda.processoId || null,
+        processoNumero: demanda.processos?.[0]?.numero || "",
+        destinatarioNome: membro.name,
+      });
+      setDelegacaoModalOpen(true);
+      return;
+    }
+
+    // 2) Drop em colega defensor → abre mini-menu com 3 opções antes de abrir o modal.
+    const parceiro = parceirosByKey.get(key);
+    if (parceiro && demanda) {
+      setColegaDropContext({
+        demandaId: isNaN(numericId) ? null : numericId,
+        processoId: demanda.processoId || null,
+        assistidoId: demanda.assistidoId || null,
+        display: `${demanda.assistido ?? ""} · ${demanda.ato ?? "Demanda"}`.trim(),
+        destinatarioId: parceiro.id,
+        destinatarioNome: parceiro.name,
+      });
+      setColegaModalTipo(null);
+      return;
+    }
+
+    // 3) Status real → atualizar localmente e no banco (comportamento original).
     setDemandas((prev) =>
       prev.map((d) => (d.id === demandaId ? { ...d, status: newStatus, substatus: newStatus } : d))
     );
-
-    // Atualizar no banco (id precisa ser número)
-    const numericId = parseInt(demandaId, 10);
     if (!isNaN(numericId)) {
       const dbStatus = UI_STATUS_TO_DB[newStatus] || newStatus.toUpperCase().replace(/ /g, "_");
       updateDemandaMutation.mutate({
         id: numericId,
         status: dbStatus as any,
-        substatus: newStatus, // Salvar o status granular
+        substatus: newStatus,
       });
     }
 
-    // Gatilho: status → Protocolado em ato de recurso (HC/Apelação/RSE/Agravo)
-    // abre modal para registrar o recurso em 2º grau.
+    // Gatilho recurso (mantém comportamento existente).
     if (newStatus.toLowerCase() === "protocolado" && !isNaN(numericId)) {
-      const demanda = demandas.find((d) => d.id === demandaId);
       const info = infoDoAtoRecurso(demanda?.ato);
       if (info) {
         setRecursoModal({
@@ -1013,30 +1253,6 @@ export default function Demandas() {
           rotulo: info.rotulo,
           exigeNumero: info.exigeNumero,
         });
-      }
-    }
-
-    // Se o status é de delegação, abrir o modal para adicionar instruções
-    if (DELEGATION_STATUSES.includes(newStatus.toLowerCase())) {
-      const demanda = demandas.find((d) => d.id === demandaId);
-      if (demanda) {
-        // Mapear o nome do status para o nome do destinatário
-        const destinatarioMap: Record<string, string> = {
-          amanda: "Amanda",
-          emilly: "Emilly",
-          taissa: "Taíssa",
-        };
-
-        setDelegacaoDemanda({
-          demandaId: parseInt(demandaId, 10) || null,
-          demandaAto: demanda.ato || "",
-          assistidoId: demanda.assistidoId || null,
-          assistidoNome: demanda.assistido || "",
-          processoId: demanda.processoId || null,
-          processoNumero: demanda.processos?.[0]?.numero || "",
-          destinatarioNome: destinatarioMap[newStatus.toLowerCase()] || newStatus,
-        });
-        setDelegacaoModalOpen(true);
       }
     }
   };
@@ -1243,6 +1459,46 @@ export default function Demandas() {
     }
 
     toast.success(`Atribuição alterada para "${newAtribuicao}"!`);
+  };
+
+  // Update do tipo de processo. Atualiza local primeiro (otimista) e
+  // dispara mutation no processo subjacente (não na demanda). Útil pra
+  // corrigir importações com tipo errado.
+  const updateProcessoTipoMutation = trpc.processos.update.useMutation({
+    onError: () => toast.error("Falha ao atualizar tipo do processo"),
+  });
+  const handleTipoProcessoChange = (processoId: string, newTipo: string) => {
+    const pid = parseInt(processoId, 10);
+    if (isNaN(pid)) return;
+    setDemandas((prev) =>
+      prev.map((d) =>
+        d.processoId === pid
+          ? { ...d, processos: [{ ...(d.processos?.[0] ?? { numero: "" }), tipo: newTipo }] }
+          : d,
+      ),
+    );
+    updateProcessoTipoMutation.mutate({ id: pid, tipoProcesso: newTipo });
+    toast.success(`Tipo alterado para "${newTipo}"`);
+  };
+
+  // Update do nome do assistido. Reflete em todas as demandas vinculadas
+  // (filtramos por assistidoId). Mutation no router de assistidos.
+  const updateAssistidoNomeMutation = trpc.assistidos.update.useMutation({
+    onError: () => toast.error("Falha ao atualizar nome do assistido"),
+  });
+  const handleAssistidoNomeChange = (assistidoId: string, newNome: string) => {
+    const aid = parseInt(assistidoId, 10);
+    if (isNaN(aid)) return;
+    const trimmed = newNome.trim();
+    if (trimmed.length < 2) {
+      toast.error("Nome muito curto");
+      return;
+    }
+    setDemandas((prev) =>
+      prev.map((d) => (d.assistidoId === aid ? { ...d, assistido: trimmed } : d)),
+    );
+    updateAssistidoNomeMutation.mutate({ id: aid, nome: trimmed });
+    toast.success(`Assistido atualizado: ${trimmed}`);
   };
 
   const handleSaveNewDemanda = (demandaData: DemandaFormData) => {
@@ -1466,6 +1722,30 @@ export default function Demandas() {
       .join("\n");
     navigator.clipboard.writeText(`${header}\n${rows}`).then(() => {
       toast.success(`${selectedIds.size} linhas copiadas!`);
+    });
+  };
+
+  // Copia as demandas selecionadas em formato pronto pra colar em corpo
+  // de email (delegação). Cada demanda em bloco com nome do assistido,
+  // ato e número dos autos.
+  const handleBatchCopyEmail = () => {
+    if (selectedIds.size === 0) return;
+    const list = demandas.filter(d => selectedIds.has(d.id));
+    if (list.length === 0) return;
+    const lines: string[] = [];
+    lines.push(`Demandas para delegação (${list.length}):`);
+    lines.push("");
+    list.forEach((d, i) => {
+      const ato = d.ato || "Demanda";
+      const autos = d.processos?.[0]?.numero || "—";
+      lines.push(`${i + 1}) ${d.assistido} — ${ato}`);
+      lines.push(`   Autos: ${autos}`);
+      if (d.prazo) lines.push(`   Prazo: ${d.prazo}`);
+      lines.push("");
+    });
+    const text = lines.join("\n").trimEnd();
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(`${list.length} demanda${list.length !== 1 ? "s" : ""} copiada${list.length !== 1 ? "s" : ""} pro email`);
     });
   };
 
@@ -1774,6 +2054,13 @@ export default function Demandas() {
         !selectedEstadoPrisional || demanda.estadoPrisional === selectedEstadoPrisional;
       const matchTipoAto =
         !selectedTipoAto || demanda.tipoAto === selectedTipoAto;
+      const matchTipoProcesso =
+        !selectedTipoProcesso || (demanda.processos?.[0]?.tipo === selectedTipoProcesso);
+      const tipoProc = demanda.processos?.[0]?.tipo;
+      const matchMpu =
+        mpuFilter === "all" ? true :
+        mpuFilter === "only_mpu" ? tipoProc === "MPU" :
+        /* without_mpu */ tipoProc !== "MPU";
       const matchStatusGroup =
         !selectedStatusGroup ||
         selectedStatusGroup.includes(getStatusConfig(demanda.status).group);
@@ -1786,10 +2073,12 @@ export default function Demandas() {
         matchAtribuicao &&
         matchStatusGroup &&
         matchEstadoPrisional &&
-        matchTipoAto
+        matchTipoAto &&
+        matchTipoProcesso &&
+        matchMpu
       );
     });
-  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedStatusGroup, showArchived, defensorUserId, isVisaoGeral]);
+  }, [demandas, searchTerm, selectedPrazoFilter, selectedAtribuicoes, selectedEstadoPrisional, selectedTipoAto, selectedTipoProcesso, selectedStatusGroup, mpuFilter, showArchived, defensorUserId, isVisaoGeral]);
 
   // Adapta linha snake_case (raw SQL de demandaEventos) ao shape camelCase EventoLine
   function toEventoLine(row: any): any {
@@ -1813,6 +2102,45 @@ export default function Demandas() {
       pendenteEvento: toEventoLine((pendentesEventosByDemanda as any)[Number(d.id)]),
     }));
   }, [demandasFiltradas, lastEventosByDemanda, pendentesEventosByDemanda]);
+
+  // Filtros rápidos (atrasados/hoje/...) — DECLARADO AQUI pra ficar antes
+  // dos useMemo abaixo que referenciam pillFilters. Mover pra baixo dispara
+  // TDZ em build de produção (Cannot access 'pillFilters' before init).
+  const [pillFilters, setPillFilters] = useState<Set<PillKey>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem(PILL_STORAGE_KEY);
+      if (raw) return new Set(JSON.parse(raw) as PillKey[]);
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  // Pills do header (atrasados/hoje/...) — aplicados em cima do conjunto já
+  // filtrado por área, atribuição etc. Vazio = sem filtro de pill.
+  const demandasComPills = useMemo(() => {
+    if (pillFilters.size === 0) return demandasFiltradasComEventos;
+    return demandasFiltradasComEventos.filter((d: any) => {
+      for (const pill of pillFilters) if (!matchesPill(d, pill)) return false;
+      return true;
+    });
+  }, [demandasFiltradasComEventos, pillFilters]);
+
+  // Contagens por pill — aparece no popover pra dar leitura instantânea.
+  const pillCounts = useMemo(() => {
+    const counts: Record<PillKey, number> = {
+      atrasados: 0, hoje: 0, semana: 0, sem_prazo: 0,
+      expedidas_hoje: 0, expedidas_semana: 0,
+      reu_preso: 0,
+    };
+    for (const d of demandasFiltradasComEventos) {
+      for (const { key } of PILL_CONFIG) {
+        if (matchesPill(d as any, key)) counts[key]++;
+      }
+    }
+    return counts;
+  }, [demandasFiltradasComEventos]);
 
   // Handler para click no header de coluna (multi-column sort)
   const handleReorder = useCallback((activeId: string, overId: string) => {
@@ -2039,27 +2367,135 @@ export default function Demandas() {
     return counts;
   }, [demandas]);
 
+  // Cor accent do icon-square baseada na atribuição ativa (echo visual com switcher)
+  const headerAccentHex = useMemo(() => {
+    if (selectedAtribuicoes.length === 1) {
+      return ATRIBUICAO_BORDER_COLORS[selectedAtribuicoes[0]] ?? null;
+    }
+    return null;
+  }, [selectedAtribuicoes]);
+
+  // Contagem por tipo de processo dentro da atribuição/arquivado atual.
+  // Base: respeita atribuição + arquivado, ignora o próprio tipoProcesso —
+  // assim o chip ativo nunca some quando selecionado. Usado pra render
+  // chips de facet "AP (X) | MPU (X) | …" só quando há múltiplos tipos.
+  const tipoProcessoCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of demandas) {
+      const matchProfissional = isVisaoGeral || d.defensorId === defensorUserId;
+      const matchArchived = showArchived ? d.arquivado : !d.arquivado;
+      const matchAtribuicao =
+        selectedAtribuicoes.length === 0 || selectedAtribuicoes.includes(d.atribuicao);
+      if (!matchProfissional || !matchArchived || !matchAtribuicao) continue;
+      const t = d.processos?.[0]?.tipo;
+      if (t) counts[t] = (counts[t] || 0) + 1;
+    }
+    return counts;
+  }, [demandas, selectedAtribuicoes, showArchived, defensorUserId, isVisaoGeral]);
+
+  // Ordem canônica + cores (espelha TIPO_PROCESSO_COLORS do DemandaQuickPreview).
+  // Só os tipos com count > 0 são exibidos. Mostra a pílula apenas se houver
+  // mais de um tipo distinto no recorte atual — caso contrário polui sem ganho.
+  const tipoProcessoChips = useMemo(() => {
+    const ORDER = ["AP", "MPU", "IP", "APF", "EP", "CAUTELAR", "ANPP", "OUTRO"];
+    const COLORS: Record<string, string> = {
+      AP: "#dc2626", IP: "#f59e0b", APF: "#ea580c", CAUTELAR: "#7c3aed",
+      EP: "#2563eb", MPU: "#db2777", ANPP: "#0891b2", OUTRO: "#71717a",
+    };
+    const known = new Set(ORDER);
+    const present = Object.keys(tipoProcessoCounts);
+    const ordered = [
+      ...ORDER.filter(k => tipoProcessoCounts[k] > 0),
+      ...present.filter(k => !known.has(k) && tipoProcessoCounts[k] > 0),
+    ];
+    return ordered.map(tipo => ({
+      tipo,
+      count: tipoProcessoCounts[tipo],
+      color: COLORS[tipo] ?? "#71717a",
+    }));
+  }, [tipoProcessoCounts]);
+
+  // Detecta o #header-slot da topbar global (HeaderUtilityRow) pra portar
+  // o switcher de atribuições. O slot só existe depois que o CollapsiblePageHeader
+  // monta — por isso usamos requestAnimationFrame pra aguardar 1 frame.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setHeaderSlotEl(document.getElementById("header-slot"));
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   const handleAtribuicaoToggle = (value: string) => {
+    if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
     setSelectedAtribuicoes(prev =>
       prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
     );
+    setSelectedTipoProcesso(null);
   };
 
   // Single-select: always replaces (for kanban/planilha)
   const handleSingleAtribuicaoSelect = useCallback((value: string) => {
+    if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
     setSelectedAtribuicoes([value]);
+    setSelectedTipoProcesso(null);
   }, []);
 
-  // Auto-select first atribuição in kanban/planilha if none selected
+  // "Todas": modo explícito de mostrar todas as atribuições, mesmo em
+  // kanban/planilha. A flag em sessionStorage impede que o useEffect abaixo
+  // re-selecione a primeira automaticamente.
+  const handleClearAtribuicoes = useCallback(() => {
+    if (typeof window !== "undefined") sessionStorage.setItem(SS_EXPLICIT_ALL, "true");
+    setSelectedAtribuicoes([]);
+    setSelectedTipoProcesso(null);
+  }, []);
+
+  // Default a partir de areasPrincipais quando user chega — só aplica se
+  // não houver override em localStorage e usuário não escolheu "Todas".
   useEffect(() => {
+    if (didInitFromUserAreas) return;
+    if (!currentUser) return;
+    setDidInitFromUserAreas(true);
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
+    if (localStorage.getItem(LS_DEFAULT_ATRIBUICAO)) return;
+    if (selectedAtribuicoes.length > 0) return;
+    const areas = currentUser.areasPrincipais ?? [];
+    const validValues = new Set(atribuicaoOptions.map(o => o.value));
+    const labels = areas
+      .map(k => AREA_KEY_TO_ATRIBUICAO_LABEL[k] ?? k)
+      .filter(l => validValues.has(l));
+    if (labels.length > 0) {
+      setSelectedAtribuicoes(labels);
+    }
+  }, [currentUser, didInitFromUserAreas, selectedAtribuicoes.length]);
+
+  // Persistir override quando usuário muda manualmente. Sem isso, a próxima
+  // sessão volta a inicializar a partir de areasPrincipais ignorando o gosto
+  // recente do usuário (que pode ter alternado pra outra atribuição).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!didInitFromUserAreas) return;
+    if (selectedAtribuicoes.length > 0) {
+      localStorage.setItem(LS_DEFAULT_ATRIBUICAO, JSON.stringify(selectedAtribuicoes));
+    }
+  }, [selectedAtribuicoes, didInitFromUserAreas]);
+
+  // Auto-select first atribuição in kanban/planilha if none selected.
+  // Respeita: (a) flag explicit_all (usuário clicou em "Todas"), (b) init
+  // pendente do areasPrincipais (didInitFromUserAreas=false → segura).
+  useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
+    if (!didInitFromUserAreas) return;
     if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length === 0) {
       const firstOpt = atribuicaoOptions.find(o => o.value !== "Todas");
       if (firstOpt) setSelectedAtribuicoes([firstOpt.value]);
     }
-  }, [activeTab, selectedAtribuicoes.length]);
+  }, [activeTab, selectedAtribuicoes.length, didInitFromUserAreas]);
 
-  // When switching TO kanban/planilha from multi-select, narrow to first selection
+  // When switching TO kanban/planilha from multi-select, narrow to first selection.
+  // Modo "Todas" (explicit_all) é exceção — preservar.
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(SS_EXPLICIT_ALL) === "true") return;
     if ((activeTab === "kanban" || activeTab === "planilha") && selectedAtribuicoes.length > 1) {
       setSelectedAtribuicoes([selectedAtribuicoes[0]]);
     }
@@ -2067,6 +2503,37 @@ export default function Demandas() {
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+  // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
+  // o painel de novo registro abre junto. Resetado quando o sheet fecha.
+  const [previewOpensWithRegistro, setPreviewOpensWithRegistro] = useState(false);
+
+  // pillFilters declarado em escopo superior (linha ~1980) pra evitar TDZ
+  // nos useMemo de demandasComPills/pillCounts que referenciam ele.
+  const [isFiltrosOpen, setIsFiltrosOpen] = useState(false);
+  const filtrosBtnRef = useRef<HTMLButtonElement>(null);
+
+  const togglePill = useCallback((key: PillKey) => {
+    setPillFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const clearPills = useCallback(() => {
+    setPillFilters(new Set());
+    try {
+      localStorage.setItem(PILL_STORAGE_KEY, JSON.stringify([]));
+    } catch {
+      // ignore
+    }
+  }, []);
   const [eventsDrawerDemandaId, setEventsDrawerDemandaId] = useState<number | null>(null);
   const previewDemanda = previewDemandaId ? demandasOrdenadas.find(d => d.id === previewDemandaId) || null : null;
   const previewIndex = previewDemandaId ? demandasOrdenadas.findIndex(d => d.id === previewDemandaId) : -1;
@@ -2166,8 +2633,199 @@ export default function Demandas() {
     return () => document.removeEventListener("keydown", handler);
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
+  // Conjunto de controles do utility (view mode, settings, busca) extraído do
+  // antigo bottomRow do header. Agora vive inline no children, junto das
+  // ações primárias — eliminando a "segunda barra" que ficava desbalanceada
+  // depois que as atribuições migraram pra topbar.
+  const utilityInlineContent = (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <ViewModeDropdown
+        options={DEMANDAS_VIEW_OPTIONS}
+        value={activeTab}
+        onChange={(v) => setActiveTab(v as any)}
+        variant="dark"
+      />
+      <div className="relative">
+        <button
+          ref={filtersBtnRef}
+          onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+          className="relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+          title="Configurações"
+        >
+          <Settings className="w-[13px] h-[13px]" />
+          {(() => {
+            const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
+            return count > 0 ? (
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              </span>
+            ) : null;
+          })()}
+        </button>
+        {isFiltersDropdownOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
+            <div className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
+              <button
+                onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span className="flex-1">Apenas presos</span>
+                {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Archive className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Ver arquivados</span>
+                {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setShowColumnFilters(!showColumnFilters)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Filtros por coluna</span>
+                {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
+              <button
+                onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Recentes / Status</span>
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
+              <button
+                onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-500" />
+                <span className="flex-1">Status</span>
+                {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <button
+                onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5 text-violet-500" />
+                <span className="flex-1">Atribuição</span>
+                {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
+              {([
+                { value: "compact" as const, label: "Planilha", icon: List },
+                { value: "table" as const, label: "Tabela", icon: Table2 },
+                { value: "cards" as const, label: "Cards", icon: LayoutList },
+                { value: "grid" as const, label: "Grid", icon: LayoutGrid },
+              ] as const).map(({ value, label, icon: ModeIcon }) => (
+                <button
+                  key={value}
+                  onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                >
+                  <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="flex-1">{label}</span>
+                  {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                </button>
+              ))}
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+              <button
+                onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Gráficos</span>
+              </button>
+              <button
+                onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">Configurações</span>
+              </button>
+            </div>
+          </>,
+          document.body
+        )}
+      </div>
+      <div className="hidden lg:flex relative w-[180px] shrink-0">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar..."
+          className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
+      {/* Switcher de atribuições portado pra topbar global (#header-slot).
+          Multi-select: cada chip é toggle, "Todas" limpa selecao.
+          overflow-x-auto previne colisão quando há muitos tipos de processo. */}
+      {headerSlotEl && createPortal(
+        <div className="flex items-center gap-2 pl-3 overflow-x-auto scrollbar-none max-w-[min(50vw,640px)]">
+          <AtribuicaoPills
+            variant="dark"
+            options={atribuicaoOptions}
+            selectedValues={selectedAtribuicoes}
+            onToggle={handleAtribuicaoToggle}
+            onClear={handleClearAtribuicoes}
+            iconOnly
+            counts={atribuicaoCounts}
+          />
+          {/* Switch MPU 3-estados: tudo / só MPU / sem MPU. Aparece apenas
+              quando há demanda MPU no recorte atual — caso contrário polui
+              sem ganho. Substitui as 7 chips antigas que invadiam o topbar. */}
+          {(tipoProcessoCounts["MPU"] ?? 0) > 0 && (
+            <>
+              <span className="h-4 w-px bg-white/[0.10]" aria-hidden />
+              {(() => {
+                const mpuCount = tipoProcessoCounts["MPU"] ?? 0;
+                const isOnly = mpuFilter === "only_mpu";
+                const isWithout = mpuFilter === "without_mpu";
+                const tooltip =
+                  mpuFilter === "all"
+                    ? `MPU: mostrando tudo (${mpuCount} MPU). Clique pra ver só MPU.`
+                    : isOnly
+                      ? `MPU: só MPU. Clique pra excluir MPU.`
+                      : `MPU: sem MPU. Clique pra voltar a mostrar tudo.`;
+                return (
+                  <button
+                    type="button"
+                    onClick={cycleMpuFilter}
+                    title={tooltip}
+                    aria-label={tooltip}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer ring-1 ring-inset",
+                      isOnly && "bg-rose-500/20 text-rose-200 ring-rose-400/40",
+                      isWithout && "bg-white/[0.06] text-white/70 ring-white/[0.10] line-through decoration-rose-300/70 decoration-[1.5px]",
+                      !isOnly && !isWithout && "ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]",
+                    )}
+                  >
+                    <span>MPU</span>
+                    <span className={cn("tabular-nums font-semibold", isOnly ? "text-rose-100" : "text-white/40")}>
+                      {mpuCount}
+                    </span>
+                  </button>
+                );
+              })()}
+            </>
+          )}
+        </div>,
+        headerSlotEl,
+      )}
+
       {/* ====== CHARCOAL HEADER ====== */}
       <CollapsiblePageHeader
         title="Demandas"
@@ -2180,9 +2838,31 @@ export default function Demandas() {
           </>
         }
         collapsedPill={
-          selectedAtribuicoes.length === 1 && (
-            <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">
-              {selectedAtribuicoes[0]}
+          selectedAtribuicoes.length === 0 ? null : selectedAtribuicoes.length <= 3 ? (
+            <div className="flex items-center gap-1">
+              {selectedAtribuicoes.map((attr) => {
+                const hex = ATRIBUICAO_BORDER_COLORS[attr] ?? "#71717a";
+                const short = attr === "Tribunal do Júri" ? "Júri"
+                  : attr === "Grupo Especial do Júri" ? "Júri Esp"
+                  : attr === "Violência Doméstica" ? "VVD"
+                  : attr === "Execução Penal" ? "EP"
+                  : attr === "Substituição Criminal" ? "Subst"
+                  : attr === "Curadoria Especial" ? "Curad"
+                  : attr;
+                return (
+                  <span
+                    key={attr}
+                    className="text-[8px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: `${hex}33`, color: hex }}
+                  >
+                    {short}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
+              {selectedAtribuicoes.length} áreas
             </span>
           )
         }
@@ -2197,181 +2877,254 @@ export default function Demandas() {
             />
           </div>
         }
-        bottomRow={
-          <div className="flex items-center gap-2.5">
-            {/* ========= LEFT GROUP — pills + view mode + settings ========= */}
-            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-              <AtribuicaoPills
-                variant="dark"
-                options={atribuicaoOptions}
-                selectedValues={selectedAtribuicoes}
-                onToggle={handleSingleAtribuicaoSelect}
-                onClear={() => {}}
-                singleSelect
-                compact
-                counts={atribuicaoCounts}
+        bottomRow={null}
+      >
+        {/* Row 1 (merged-bar): Title + stats inline + actions */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className="w-6 h-6 rounded-md flex items-center justify-center transition-colors duration-300 shrink-0"
+              style={
+                headerAccentHex
+                  ? {
+                      backgroundColor: `${headerAccentHex}26`,
+                      boxShadow: `inset 0 0 0 1px ${headerAccentHex}40`,
+                    }
+                  : { backgroundColor: "#525252" }
+              }
+            >
+              <ListTodo
+                className="w-3.5 h-3.5"
+                style={{ color: headerAccentHex ?? "#ffffff" }}
               />
+            </div>
+            <h1 className="text-white text-[13px] font-semibold tracking-tight whitespace-nowrap">
+              Demandas
+            </h1>
+            <div className="flex items-center gap-2 text-[11px] tabular-nums whitespace-nowrap shrink-0">
+              <span className="text-white/85 font-semibold">
+                {demandas.filter(d => !d.arquivado).length}
+              </span>
+              {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
+                <span
+                  className="flex items-center gap-1 text-white/55"
+                  title={`${deadlineStats.hoje + deadlineStats.semana} urgentes`}
+                >
+                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <span className="font-medium">
+                    {deadlineStats.hoje + deadlineStats.semana}
+                  </span>
+                </span>
+              )}
+              {deadlineStats.vencidas > 0 && (
+                <span
+                  className="flex items-center gap-1 text-white/55"
+                  title={`${deadlineStats.vencidas} atrasadas`}
+                >
+                  <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                  <span className="font-medium">{deadlineStats.vencidas}</span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {utilityInlineContent}
 
-              <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                <ViewModeDropdown
-                  options={DEMANDAS_VIEW_OPTIONS}
-                  value={activeTab}
-                  onChange={(v) => setActiveTab(v as any)}
-                  variant="dark"
-                />
-
-                <div className="relative">
+            {/* Atalho visível — aparece automaticamente quando há atrasados ou
+                vencendo hoje E nenhum filtro está ativo. Clicar aplica o filtro.
+                Compacto: ícone + número. Tooltip explica. */}
+            {pillFilters.size === 0 && (pillCounts.atrasados > 0 || pillCounts.hoje > 0) && (
+              <div className="hidden md:flex items-center gap-1">
+                {pillCounts.atrasados > 0 && (
                   <button
-                    ref={filtersBtnRef}
-                    onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-                    className="relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-                    title="Configurações"
+                    type="button"
+                    onClick={() => togglePill("atrasados")}
+                    title={`${pillCounts.atrasados} atrasada${pillCounts.atrasados !== 1 ? "s" : ""} — clique pra filtrar`}
+                    aria-label={`${pillCounts.atrasados} atrasadas`}
+                    className="h-7 px-1.5 rounded-md bg-rose-500/15 text-rose-200 ring-1 ring-rose-400/25 hover:bg-rose-500/25 hover:text-rose-100 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer animate-in fade-in"
                   >
-                    <Settings className="w-[13px] h-[13px]" />
-                    {(() => {
-                      const count = [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
-                      return count > 0 ? (
-                        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                        </span>
-                      ) : null;
-                    })()}
+                    <AlertTriangle className="w-3 h-3" />
+                    <span className="tabular-nums">{pillCounts.atrasados}</span>
                   </button>
-              {isFiltersDropdownOpen && createPortal(
+                )}
+                {pillCounts.hoje > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => togglePill("hoje")}
+                    title={`${pillCounts.hoje} vencendo hoje — clique pra filtrar`}
+                    aria-label={`${pillCounts.hoje} vencendo hoje`}
+                    className="h-7 px-1.5 rounded-md bg-amber-400/15 text-amber-100 ring-1 ring-amber-400/25 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-semibold cursor-pointer"
+                  >
+                    <Clock className="w-3 h-3" />
+                    <span className="tabular-nums">{pillCounts.hoje}</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Selecionar — aparece só na aba kanban. Ícone-only com badge
+                quando há seleção ativa. Clicar liga/desliga modo. */}
+            {activeTab === "kanban" && (
+              <button
+                type="button"
+                onClick={() => isSelectMode ? handleExitSelectMode() : setIsSelectMode(true)}
+                aria-pressed={isSelectMode}
+                title={isSelectMode ? `Sair do modo seleção (${selectedIds.size})` : "Selecionar demandas"}
+                aria-label={isSelectMode ? "Sair do modo seleção" : "Selecionar demandas"}
+                className={cn(
+                  "h-8 w-8 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
+                  isSelectMode
+                    ? "bg-emerald-500/20 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/30"
+                    : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
+                )}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                {isSelectMode && selectedIds.size > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-emerald-400 text-neutral-900 flex items-center justify-center">
+                    {selectedIds.size}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {/* Filtros rápidos — botão único + popover. Quando há filtros
+                 ativos, mostra contador no botão. */}
+            <div className="relative">
+              <button
+                ref={filtrosBtnRef}
+                onClick={() => setIsFiltrosOpen((o) => !o)}
+                aria-pressed={pillFilters.size > 0}
+                title={pillFilters.size > 0 ? `Filtros (${pillFilters.size})` : "Filtros rápidos"}
+                aria-label="Filtros rápidos"
+                className={cn(
+                  "h-8 w-8 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
+                  pillFilters.size > 0
+                    ? "bg-amber-400/20 text-amber-200 ring-amber-400/30 hover:bg-amber-400/25"
+                    : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
+                )}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                {pillFilters.size > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-amber-400 text-neutral-900 flex items-center justify-center">
+                    {pillFilters.size}
+                  </span>
+                )}
+              </button>
+              {isFiltrosOpen && createPortal(
                 <>
-                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
-                  <div className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
-                    <button
-                      onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="flex-1">Apenas presos</span>
-                      {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setShowArchived(!showArchived)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Archive className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Ver arquivados</span>
-                      {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setShowColumnFilters(!showColumnFilters)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Filtros por coluna</span>
-                      {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
-                    <button
-                      onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Recentes / Status</span>
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
-                    <button
-                      onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Layers className="w-3.5 h-3.5 text-blue-500" />
-                      <span className="flex-1">Status</span>
-                      {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <button
-                      onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Layers className="w-3.5 h-3.5 text-violet-500" />
-                      <span className="flex-1">Atribuição</span>
-                      {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
-                    {([
-                      { value: "compact" as const, label: "Planilha", icon: List },
-                      { value: "table" as const, label: "Tabela", icon: Table2 },
-                      { value: "cards" as const, label: "Cards", icon: LayoutList },
-                      { value: "grid" as const, label: "Grid", icon: LayoutGrid },
-                    ] as const).map(({ value, label, icon: ModeIcon }) => (
-                      <button
-                        key={value}
-                        onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
-                        <span className="flex-1">{label}</span>
-                        {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                    ))}
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <button
-                      onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Gráficos</span>
-                    </button>
-                    <button
-                      onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      <Settings className="w-3.5 h-3.5 text-neutral-500" />
-                      <span className="flex-1">Configurações</span>
-                    </button>
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltrosOpen(false)} />
+                  <div
+                    className="fixed z-[9999] w-56 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1"
+                    style={(() => {
+                      const r = filtrosBtnRef.current?.getBoundingClientRect();
+                      return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {};
+                    })()}
+                  >
+                    <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 flex items-center justify-between">
+                      <span>Filtrar por</span>
+                      {pillFilters.size > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { clearPills(); }}
+                          className="text-[10px] normal-case font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
+                        >
+                          Limpar
+                        </button>
+                      )}
+                    </div>
+                    {(["prazo", "expedicao", "outros"] as const).map((groupKey) => {
+                      const groupItems = PILL_CONFIG.filter((p) => p.group === groupKey);
+                      if (groupItems.length === 0) return null;
+                      const groupLabel =
+                        groupKey === "prazo" ? "Por prazo" :
+                        groupKey === "expedicao" ? "Por expedição" : "Outros";
+                      return (
+                        <div key={groupKey}>
+                          <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-300 dark:text-neutral-600">
+                            {groupLabel}
+                          </div>
+                          {groupItems.map(({ key, label }) => {
+                            const active = pillFilters.has(key);
+                            const count = pillCounts[key];
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => togglePill(key)}
+                                className={cn(
+                                  "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
+                                  active
+                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                    : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
+                                )}
+                              >
+                                <span className="flex items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
+                                      active
+                                        ? "bg-emerald-500 border-emerald-500 text-white"
+                                        : "border-neutral-300 dark:border-neutral-600",
+                                    )}
+                                  >
+                                    {active && (
+                                      <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="2 6 5 9 10 3" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                  <span>{label}</span>
+                                </span>
+                                <span
+                                  className={cn(
+                                    "text-[11px] tabular-nums",
+                                    active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
+                                    count === 0 && "opacity-40",
+                                  )}
+                                >
+                                  {count}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
                   </div>
                 </>,
-                document.body
+                document.body,
               )}
-                </div>
-              </div>
             </div>
 
-            {/* ========= RIGHT CLUSTER — busca (oculta em mobile) ========= */}
-            <div className="hidden md:flex relative w-[220px] shrink-0">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar nome, processo..."
-                className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
-              />
-            </div>
-          </div>
-        }
-      >
-        {/* Row 1: Title + inline stats + actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <ListTodo className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Demandas</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {demandas.filter(d => !d.arquivado).length} demandas
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+            {/* Chips de filtros ativos — clicar remove. Aparece só em telas largas. */}
+            {pillFilters.size > 0 && (
+              <div className="hidden lg:flex items-center gap-1">
+                {PILL_CONFIG.filter(({ key }) => pillFilters.has(key)).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => togglePill(key)}
+                    title="Remover filtro"
+                    className="h-7 pl-2 pr-1.5 rounded-md bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/20 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer"
+                  >
+                    <span>{label}</span>
+                    <span className="text-[9px] tabular-nums opacity-80">{pillCounts[key]}</span>
+                    <X className="w-3 h-3 opacity-70" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <div className="relative group/import">
               <button
                 ref={importBtnRef}
                 onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Importar"
+                aria-label="Importar"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Importar</span>
               </button>
               {isImportDropdownOpen && createPortal(
                 <>
@@ -2415,11 +3168,11 @@ export default function Demandas() {
               <button
                 ref={exportBtnRef}
                 onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
-                className="h-8 px-3 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-medium"
+                className="h-8 w-8 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
                 title="Exportar"
+                aria-label="Exportar"
               >
                 <Upload className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Exportar</span>
               </button>
               {isExportDropdownOpen && createPortal(
                 <>
@@ -2461,13 +3214,14 @@ export default function Demandas() {
                 document.body
               )}
             </div>
+            <div className="h-5 w-px bg-white/[0.08] mx-1 shrink-0" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="h-8 px-3 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="h-8 w-8 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center"
               title="Nova demanda"
+              aria-label="Nova demanda"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Nova</span>
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -2832,12 +3586,52 @@ export default function Demandas() {
         ) : activeTab === "kanban" ? (
           /* ========== TAB KANBAN PREMIUM ========== */
           <div className="space-y-3">
+            {/* Toolbar — só aparece quando em modo seleção. Botão de
+                entrada/saída do modo está no header. */}
+            {isSelectMode && (
+              <div className="flex items-center justify-end gap-1.5 -mt-1">
+                <span className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 px-1">
+                  {selectedIds.size === 0
+                    ? "Clique nos cards pra selecionar"
+                    : `${selectedIds.size} selecionada${selectedIds.size !== 1 ? "s" : ""}`}
+                </span>
+                {selectedIds.size > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBatchCopyEmail}
+                      title="Copiar para colar no corpo do email"
+                      className="h-7 px-2.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-colors cursor-pointer text-[11px] font-semibold flex items-center gap-1.5"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Copiar pra email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleBatchDelegate}
+                      title="Delegar selecionadas"
+                      className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Delegar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Kanban Premium Board */}
             <KanbanPremium
-              demandas={demandasFiltradasComEventos}
+              demandas={demandasComPills}
               onCardClick={(id) => setPreviewDemandaId(id)}
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
+              onAgendarAudiencia={handleAgendarAudiencia}
+              onOpenRegistro={handleOpenRegistro}
+              onToggleUrgent={handleToggleUrgent}
+              isSelectMode={isSelectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={(id) => handleToggleSelect(id)}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
@@ -2851,6 +3645,7 @@ export default function Demandas() {
             selectedAtribuicoes={selectedAtribuicoes}
             handleAtribuicaoToggle={handleAtribuicaoToggle}
             setSelectedAtribuicoes={setSelectedAtribuicoes}
+            onClearAtribuicoes={handleClearAtribuicoes}
             atribuicaoCounts={atribuicaoCounts}
             onCardClick={(id) => setPreviewDemandaId(id)}
           />
@@ -3063,6 +3858,112 @@ export default function Demandas() {
         onResolved={() => utils.demandas.list.invalidate()}
       />
 
+      {/* Seletor de pessoa — abre ao dropar card na coluna "Delegação" */}
+      {pessoaSelectorOpen && pessoaSelectorDemanda && (
+        <Dialog open onOpenChange={(o) => {
+          if (!o) {
+            setPessoaSelectorOpen(false);
+            setPessoaSelectorDemanda(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle className="text-base">Para quem?</DialogTitle>
+              <DialogDescription className="text-xs">
+                Escolha um membro da equipe para delegar ou um colega defensor para transferir/compartilhar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto">
+              {(membrosEquipeQuery?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
+                    Equipe — delegar
+                  </p>
+                  {(membrosEquipeQuery ?? []).map((m) => {
+                    const initials = m.name.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase();
+                    const roleLabel = m.role === "estagiario" ? "Estagiário(a)" : m.role === "servidor" ? "Servidor(a)" : m.role;
+                    return (
+                      <button
+                        key={`equipe-${m.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (!pessoaSelectorDemanda) return;
+                          setDelegacaoDemanda({
+                            ...pessoaSelectorDemanda,
+                            destinatarioNome: m.name,
+                          });
+                          setDelegacaoModalOpen(true);
+                          setPessoaSelectorOpen(false);
+                          setPessoaSelectorDemanda(null);
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{m.name}</p>
+                          <p className="text-[10px] text-zinc-500">{roleLabel}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(parceirosQuery?.length ?? 0) > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
+                    Colegas defensores — transferir / compartilhar
+                  </p>
+                  {(parceirosQuery ?? []).map((p) => {
+                    const initials = p.name.split(" ").slice(0, 2).map((n) => n[0] ?? "").join("").toUpperCase();
+                    return (
+                      <button
+                        key={`parceiro-${p.id}`}
+                        type="button"
+                        onClick={() => {
+                          if (!pessoaSelectorDemanda) return;
+                          setColegaDropContext({
+                            demandaId: pessoaSelectorDemanda.demandaId,
+                            processoId: pessoaSelectorDemanda.processoId,
+                            assistidoId: pessoaSelectorDemanda.assistidoId,
+                            display: `${pessoaSelectorDemanda.assistidoNome} · ${pessoaSelectorDemanda.demandaAto || "Demanda"}`.trim(),
+                            destinatarioId: p.id,
+                            destinatarioNome: p.name,
+                          });
+                          setColegaModalTipo(null);
+                          setPessoaSelectorOpen(false);
+                          setPessoaSelectorDemanda(null);
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/30 text-left transition-colors"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500 shrink-0" />
+                        <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-semibold text-zinc-600 dark:text-zinc-300 shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{p.name}</p>
+                          <p className="text-[10px] text-zinc-500">Defensor</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(membrosEquipeQuery?.length ?? 0) === 0 && (parceirosQuery?.length ?? 0) === 0 && (
+                <p className="text-center text-xs text-zinc-500 py-6">
+                  Nenhuma pessoa cadastrada para delegar ou transferir.
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Modal de Delegação - Aparece ao selecionar status de delegação (amanda, emilly, taissa) */}
       <DelegacaoModal
         open={delegacaoModalOpen}
@@ -3093,15 +3994,101 @@ export default function Demandas() {
         }}
       />
 
+      {/* Mini-menu de escolha após drop em colega defensor */}
+      {colegaDropContext && colegaModalTipo === null && (
+        <Dialog open onOpenChange={(o) => { if (!o) setColegaDropContext(null); }}>
+          <DialogContent className="sm:max-w-[380px]">
+            <DialogHeader>
+              <DialogTitle className="text-base">Para {colegaDropContext.destinatarioNome}</DialogTitle>
+              <DialogDescription className="text-xs">
+                O que você quer fazer com este caso?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("transferir")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <ArrowLeftRight className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Transferir caso</p>
+                  <p className="text-[11px] text-zinc-500">Passa o caso definitivamente. Aguarda aceite.</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("acompanhar")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <Eye className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Compartilhar</p>
+                  <p className="text-[11px] text-zinc-500">Colega passa a acompanhar o caso. Sem mudar dono.</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setColegaModalTipo("encaminhar")}
+                className="w-full flex items-start gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-left transition-colors"
+              >
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                  <Send className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Dar ciência</p>
+                  <p className="text-[11px] text-zinc-500">Envia uma notificação. Caso continua com você.</p>
+                </div>
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal de encaminhamento aberto após escolha no mini-menu */}
+      {colegaDropContext && colegaModalTipo !== null && (
+        <NovoEncaminhamentoModal
+          open
+          onOpenChange={(o) => {
+            if (!o) {
+              setColegaDropContext(null);
+              setColegaModalTipo(null);
+            }
+          }}
+          initialTipo={colegaModalTipo}
+          contexto={{
+            demandaId: colegaDropContext.demandaId ?? undefined,
+            processoId: colegaDropContext.processoId ?? undefined,
+            assistidoId: colegaDropContext.assistidoId ?? undefined,
+            display: colegaDropContext.display,
+          }}
+          initialDestinatarioId={colegaDropContext.destinatarioId}
+        />
+      )}
+
       {/* Quick-preview Sheet lateral */}
       <DemandaQuickPreview
         demanda={previewDemanda}
         open={!!previewDemandaId}
-        onOpenChange={(open) => { if (!open) setPreviewDemandaId(null); }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreviewDemandaId(null);
+            setPreviewOpensWithRegistro(false);
+          }
+        }}
+        initialNovoRegistro={previewOpensWithRegistro}
         onStatusChange={handleStatusChange}
         onAtoChange={handleAtoChange}
         onPrazoChange={handlePrazoChange}
         onAtribuicaoChange={handleAtribuicaoChange}
+        onTipoProcessoChange={handleTipoProcessoChange}
+        onAssistidoNomeChange={handleAssistidoNomeChange}
+        onStatusPrisionalChange={handleStatusPrisionalChange}
+        onAgendarAudiencia={handleAgendarAudiencia}
         onArchive={handleArchiveDemanda}
         onDelete={handleDeleteDemanda}
         onNavigate={handlePreviewNavigate}

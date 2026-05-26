@@ -59,11 +59,6 @@ export function MobileBottomNav() {
               <span className="text-[10px] font-medium leading-tight">
                 {item.label}
               </span>
-
-              {/* Static unread badge on Demandas */}
-              {item.path === "/admin/demandas" && !isActive && (
-                <span className="absolute top-2 right-1/2 translate-x-3 w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              )}
             </Link>
           );
         })}

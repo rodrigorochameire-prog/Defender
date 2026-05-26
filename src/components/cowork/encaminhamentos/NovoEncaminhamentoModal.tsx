@@ -58,11 +58,13 @@ export function NovoEncaminhamentoModal({
   onOpenChange,
   contexto,
   initialTipo = "anotar",
+  initialDestinatarioId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   contexto?: ContextoPreSelecionado;
   initialTipo?: EncaminhamentoTipo;
+  initialDestinatarioId?: number;
 }) {
   const [tipo, setTipo] = useState<EncaminhamentoTipo>(initialTipo);
   const [destinatarios, setDestinatarios] = useState<Colega[]>([]);
@@ -70,6 +72,12 @@ export function NovoEncaminhamentoModal({
   const [titulo, setTitulo] = useState("");
   const [notif, setNotif] = useState<NotificacaoState>(NOTIF_DEFAULTS[initialTipo]);
 
+  const { data: parceirosData } = trpc.parceiros.listar.useQuery(undefined, {
+    enabled: open && !!initialDestinatarioId,
+    staleTime: 60_000,
+  });
+
+  // Reset all state when the modal opens, and pre-fill destinatário if provided.
   useEffect(() => {
     if (open) {
       setTipo(initialTipo);
@@ -79,6 +87,19 @@ export function NovoEncaminhamentoModal({
       setDestinatarios([]);
     }
   }, [open, initialTipo]);
+
+  // Prefill destinatário from parceiros query once data is available.
+  useEffect(() => {
+    if (!open || !initialDestinatarioId || !parceirosData) return;
+    const p = parceirosData.find((x) => x.id === initialDestinatarioId);
+    if (p) {
+      setDestinatarios((prev) => {
+        // Only set if still empty (user hasn't manually added anyone yet).
+        if (prev.length > 0) return prev;
+        return [{ id: p.id, name: p.name }];
+      });
+    }
+  }, [open, initialDestinatarioId, parceirosData]);
 
   const utils = trpc.useUtils();
   const criar = trpc.encaminhamentos.criar.useMutation({

@@ -107,23 +107,33 @@ const themeScript = `
 // previous SW script indefinitely and keep serving stale cached API
 // responses, making list pages look permanently empty. The guard variable
 // prevents an infinite reload loop.
+// Em dev (Serwist desabilitado no next.config.js), qualquer SW remanescente
+// de build antigo só serve bundles cached e impede hot reload. Cleanup
+// agressivo: desregistra TODOS os SWs e limpa todos os caches; recarrega 1x
+// se algo foi removido. Em prod o setup volta ao normal pelo build do Serwist.
 const swUpdateScript = `
   (function() {
     if (!('serviceWorker' in navigator)) return;
     try {
-      navigator.serviceWorker.getRegistration().then(function(reg) {
-        if (!reg) return;
-        reg.update().catch(function() {});
-        if (reg.waiting) {
-          try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
-        }
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        if (!regs || regs.length === 0) return;
+        Promise.all(regs.map(function(reg) {
+          return reg.unregister().catch(function() { return false; });
+        })).then(function(results) {
+          var hadAny = results.some(function(r) { return r === true; });
+          var clearCaches = (typeof caches !== 'undefined' && caches.keys)
+            ? caches.keys().then(function(keys) {
+                return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+              }).catch(function() {})
+            : Promise.resolve();
+          clearCaches.then(function() {
+            if (hadAny && !sessionStorage.getItem('__sw_cleanup_done')) {
+              sessionStorage.setItem('__sw_cleanup_done', '1');
+              window.location.reload();
+            }
+          });
+        });
       }).catch(function() {});
-      var reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', function() {
-        if (reloaded) return;
-        reloaded = true;
-        window.location.reload();
-      });
     } catch (e) {}
   })();
 `;

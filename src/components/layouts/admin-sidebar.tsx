@@ -69,7 +69,7 @@ interface AdminSidebarProps {
 
 // 1. Menu principal - itens do dia a dia (sem Delegações)
 const MAIN_NAV: AssignmentMenuItem[] = [
-  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard" },
+  { label: "Dashboard", path: "/admin", icon: "LayoutDashboard", exactMatch: true },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },

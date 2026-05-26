@@ -25,6 +25,9 @@ const TIPO_REGISTRO = z.enum([
   "pesquisa",
   "elaboracao",
   "peticao",
+  "busca",
+  "investigacao",
+  "transferencia",
 ]);
 
 // ─── Schema exportado para testes unitários (Task 5) ───────────────────────

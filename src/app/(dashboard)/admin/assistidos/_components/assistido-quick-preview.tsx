@@ -248,7 +248,7 @@ export function AssistidoQuickPreview({
     <Sheet open={!!assistido} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[480px] md:w-[560px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl"
+        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] p-0 flex flex-col gap-0 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl"
         style={{ borderLeft: `3px solid ${primaryColor}` }}
       >
         {/* ─── Sticky Header ─── */}

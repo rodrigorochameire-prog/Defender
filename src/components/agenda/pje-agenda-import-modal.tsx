@@ -328,11 +328,14 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
   const mapearSituacao = (situacaoTexto: string): string => {
     const situacao = situacaoTexto.toLowerCase();
 
-    if (situacao.includes("designada")) return "confirmado";
+    // A ordem importa: "redesignada" CONTÉM "designada" e "não-realizada" CONTÉM
+    // "realizada". Os termos mais específicos precisam ser testados primeiro, senão
+    // toda redesignada cairia em "confirmado".
     if (situacao.includes("cancelada")) return "cancelado";
+    if (situacao.includes("não-realizada") || situacao.includes("nao-realizada")) return "cancelado";
     if (situacao.includes("redesignada")) return "remarcado";
     if (situacao.includes("realizada")) return "concluido";
-    if (situacao.includes("não-realizada") || situacao.includes("nao-realizada")) return "cancelado";
+    if (situacao.includes("designada")) return "confirmado";
 
     return "confirmado";
   };
@@ -406,20 +409,27 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
         // Primeiro, encontrar a posição do X que separa as partes
         const separadorX = textoBloco.indexOf(" X\n") !== -1 ? textoBloco.indexOf(" X\n") : textoBloco.indexOf("\nX\n");
         const textoAposX = separadorX !== -1 ? textoBloco.substring(separadorX) : textoBloco;
-        
+        // Normaliza quebras de linha do PJe e rejunta CPF partido entre linhas (ex.: "915-\n09")
+        const textoAposXNorm = textoAposX.replace(/\s+/g, " ").replace(/(\d)\s*-\s*(\d)/g, "$1-$2");
+
         // Padrão expandido: captura NOME - CPF: XXX (TIPO) incluindo AUTORIDADE
         // Captura grupos: 1=nome, 2=cpf (opcional), 3=tipo
-        const regexAssistido = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/gi;
+        // Flag SEM "i": a primeira letra precisa ser maiúscula (nomes e marcadores
+        // como (REU) sempre são), evitando que conectores em minúsculo — "e",
+        // "civilmente", "como" — ancorem a captura e contaminem o nome.
+        const regexAssistido = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/g;
         let assistidoMatch;
-        while ((assistidoMatch = regexAssistido.exec(textoAposX)) !== null) {
+        while ((assistidoMatch = regexAssistido.exec(textoAposXNorm)) !== null) {
           let nome = assistidoMatch[1].trim();
           const cpf = assistidoMatch[2] ? assistidoMatch[2].trim() : "";
           const tipoParte = assistidoMatch[3].toUpperCase();
-          
+
           // Limpar "registrado(a) civilmente como"
           nome = nome.replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "").trim();
           // Remover prefixos como "X "
           nome = nome.replace(/^X\s+/i, "").trim();
+          // Remover conjunção "e/E" que liga réus (ex.: "e ANDERSON FARIAS DIAS")
+          nome = nome.replace(/^e\s+/i, "").trim();
           // Remover quebras de linha e espaços extras
           nome = nome.replace(/\s+/g, " ").trim();
           
@@ -642,14 +652,19 @@ Status: ${situacao}`;
             // Encontrar posição do X separador
             const separadorXAlt = textoContexto.indexOf(" X\n") !== -1 ? textoContexto.indexOf(" X\n") : textoContexto.indexOf("\nX\n");
             const textoAposXAlt = separadorXAlt !== -1 ? textoContexto.substring(separadorXAlt) : textoContexto;
-            
-            // Regex que captura nome, CPF e tipo
-            const regexAssistidoAlt = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/gi;
+            // Normaliza quebras de linha do PJe e rejunta CPF partido entre linhas (ex.: "915-\n09")
+            const textoAposXAltNorm = textoAposXAlt.replace(/\s+/g, " ").replace(/(\d)\s*-\s*(\d)/g, "$1-$2");
+
+            // Regex que captura nome, CPF e tipo. Flag SEM "i": a primeira letra precisa
+            // ser maiúscula, evitando que conectores minúsculos ("e", "civilmente", "como")
+            // ancorem a captura e contaminem o nome do réu.
+            const regexAssistidoAlt = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/g;
             let assistidoMatchAlt;
-            while ((assistidoMatchAlt = regexAssistidoAlt.exec(textoAposXAlt)) !== null) {
+            while ((assistidoMatchAlt = regexAssistidoAlt.exec(textoAposXAltNorm)) !== null) {
               let nome = assistidoMatchAlt[1].trim()
                 .replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "")
                 .replace(/^X\s+/i, "")
+                .replace(/^e\s+/i, "")
                 .replace(/\s+/g, " ")
                 .trim();
               const cpf = assistidoMatchAlt[2] ? assistidoMatchAlt[2].trim() : "";
@@ -711,10 +726,17 @@ Status: ${situacao}`;
             const tipoAudMapeado = mapearTipoAudiencia(tipoAudTexto, atribuicaoAlt);
             
             // Situação
+            // Situação: buscar na LINHA inteira do evento (desta data até a próxima),
+            // não na janela de 500 caracteres — em linhas longas (vários réus) a coluna
+            // "Situação" fica além da janela e a situação caía no default "designada".
+            const fimLinha = datas[i + 1]?.index ?? conteudo.length;
+            const textoLinha = conteudo.substring(dataMatch.index!, fimLinha);
             let sit = "designada";
-            if (textoContexto.match(/\bcancelada\b/i)) sit = "cancelada";
-            else if (textoContexto.match(/\bredesignada\b/i)) sit = "redesignada";
-            
+            if (/\bcancelada\b/i.test(textoLinha)) sit = "cancelada";
+            else if (/\bredesignada\b/i.test(textoLinha)) sit = "redesignada";
+            else if (/\bn[ãa]o[\s-]?realizada\b/i.test(textoLinha)) sit = "não-realizada";
+            else if (/\brealizada\b/i.test(textoLinha)) sit = "realizada";
+
             // Extrair classe processual e converter para Title Case
             const classeMatchAlt = textoContexto.match(/AÇÃO\s+PENAL|MEDIDAS\s+PROTETIVAS\s+DE\s+URGÊNCIA|MEDIDAS\s+PROTETIVAS|EXECUÇÃO\s+PENAL|INQUÉRITO\s+POLICIAL|AUTO\s+DE\s+PRISÃO/i);
             const classeAlt = classeMatchAlt ? toTitleCase(classeMatchAlt[0].trim()) : "Ação Penal";
@@ -1084,7 +1106,7 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">
                             <Calendar className="w-3.5 h-3.5" />
-                            <span>{new Date(evento.data).toLocaleDateString("pt-BR")} às {evento.horarioInicio}</span>
+                            <span>{evento.data.split("-").reverse().join("/")} às {evento.horarioInicio}</span>
                           </div>
 
                           <div className="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-400">

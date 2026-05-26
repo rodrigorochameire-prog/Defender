@@ -61,6 +61,9 @@ import {
   ArrowRight,
   Pin,
   Brain,
+  Mic,
+  Hourglass,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -113,14 +116,30 @@ interface AudienciasHubProps {
 // CONSTANTES
 // ==========================================
 
+// ATENÇÃO: convenção legacy. As chaves desta tabela (INSTRUCAO, CUSTODIA, ...)
+// vêm do enum `tipo_audiencia` (legacy) e do que era salvo por componentes
+// antigos. O `audiencia-confirm-modal.tsx` (fluxo atual) salva strings com
+// labels tipo "Oitiva Especial" — então um audiencia.tipo desses não casa em
+// `keyof typeof TIPOS_AUDIENCIA` aqui e cai em `OUTRA`. Refatoração futura:
+// alinhar lookup por label, não por key. Por enquanto, mantemos as duas
+// convenções coexistindo — cada chave nova abaixo serve para registros
+// criados/migrados nesta convenção UPPERCASE_UNDERLINE.
 const TIPOS_AUDIENCIA: Record<string, { label: string; icon: LucideIcon; color: string; dotColor: string }> = {
-  INSTRUCAO: { label: "Instrução", icon: Scale, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", dotColor: "bg-blue-500" },
+  INSTRUCAO_E_JULGAMENTO: { label: "Instrução e Julgamento", icon: Scale, color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", dotColor: "bg-blue-500" },
+  INSTRUCAO: { label: "Instrução", icon: Scale, color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400", dotColor: "bg-sky-500" },
+  JULGAMENTO: { label: "Julgamento", icon: Gavel, color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400", dotColor: "bg-indigo-500" },
+  // Lei 13.431/2017 — depoimento sem dano de criança/adolescente em VVD/PPP/Cautelar
+  OITIVA_ESPECIAL: { label: "Oitiva Especial", icon: Mic, color: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400", dotColor: "bg-fuchsia-500" },
+  // Art. 366 CPP — produção antecipada de prova
+  ANTECIPACAO_PROVA: { label: "Antecipação de Prova", icon: Hourglass, color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400", dotColor: "bg-purple-500" },
   CUSTODIA: { label: "Custódia", icon: Lock, color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", dotColor: "bg-red-500" },
   CONCILIACAO: { label: "Conciliação", icon: Handshake, color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400", dotColor: "bg-green-500" },
   JUSTIFICACAO: { label: "Justificação", icon: ClipboardList, color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", dotColor: "bg-amber-500" },
-  ADMONICAO: { label: "Admonição", icon: Gavel, color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", dotColor: "bg-violet-500" },
+  // Art. 16 Lei Maria da Penha — renúncia da representação
+  PRELIMINAR_MARIA_DA_PENHA: { label: "Preliminar (Maria da Penha)", icon: Shield, color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400", dotColor: "bg-orange-500" },
+  ADMOESTACAO: { label: "Admoestação", icon: Gavel, color: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400", dotColor: "bg-violet-500" },
   UNA: { label: "Una", icon: ScrollText, color: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400", dotColor: "bg-slate-500" },
-  PLENARIO_JURI: { label: "Plenário", icon: Theater, color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
+  PLENARIO_JURI: { label: "Plenário do Júri", icon: Theater, color: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400", dotColor: "bg-rose-500" },
   CONTINUACAO: { label: "Continuação", icon: ArrowRight, color: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400", dotColor: "bg-cyan-500" },
   OUTRA: { label: "Outra", icon: Pin, color: "bg-neutral-100 text-neutral-700 dark:bg-neutral-900/30 dark:text-neutral-400", dotColor: "bg-neutral-500" },
 };

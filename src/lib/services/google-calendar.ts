@@ -112,7 +112,8 @@ async function getAccessToken(): Promise<string | null> {
  * Cria um evento no Google Calendar
  */
 export async function createCalendarEvent(
-  params: CreateEventParams
+  params: CreateEventParams,
+  options?: { calendarId?: string }
 ): Promise<CalendarEvent | null> {
   const config = getConfig();
   if (!config) {
@@ -125,7 +126,8 @@ export async function createCalendarEvent(
 
   try {
     const timeZone = "America/Bahia";
-    
+    const calId = options?.calendarId || config.calendarId;
+
     // Configurar início e fim
     let start: { dateTime?: string; date?: string; timeZone?: string };
     let end: { dateTime?: string; date?: string; timeZone?: string };
@@ -164,7 +166,7 @@ export async function createCalendarEvent(
     };
 
     const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`,
       {
         method: "POST",
         headers: {
@@ -202,7 +204,8 @@ export async function createCalendarEvent(
  */
 export async function updateCalendarEvent(
   eventId: string,
-  params: Partial<CreateEventParams>
+  params: Partial<CreateEventParams>,
+  options?: { calendarId?: string }
 ): Promise<CalendarEvent | null> {
   const config = getConfig();
   if (!config) return null;
@@ -212,7 +215,8 @@ export async function updateCalendarEvent(
 
   try {
     const timeZone = "America/Bahia";
-    
+    const calId = options?.calendarId || config.calendarId;
+
     const updateData: Record<string, unknown> = {};
 
     if (params.summary) updateData.summary = params.summary;
@@ -236,7 +240,7 @@ export async function updateCalendarEvent(
     }
 
     const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events/${eventId}`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${eventId}`,
       {
         method: "PATCH",
         headers: {
@@ -272,7 +276,10 @@ export async function updateCalendarEvent(
 /**
  * Exclui um evento do Google Calendar
  */
-export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
+export async function deleteCalendarEvent(
+  eventId: string,
+  options?: { calendarId?: string }
+): Promise<boolean> {
   const config = getConfig();
   if (!config) return false;
 
@@ -280,8 +287,10 @@ export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
   if (!accessToken) return false;
 
   try {
+    const calId = options?.calendarId || config.calendarId;
+
     const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(config.calendarId)}/events/${eventId}`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${eventId}`,
       {
         method: "DELETE",
         headers: {
@@ -352,35 +361,50 @@ export async function criarEventoPrazo(
 }
 
 /**
- * Cria um evento de audiência no calendário
+ * Cria um evento de audiência no Google Calendar.
+ * Pega calendar e cor de acordo com a área da demanda e tipo da audiência.
  */
-export async function criarEventoAudiencia(
-  assistidoNome: string,
-  tipoAudiencia: string,
-  dataAudiencia: Date,
-  local?: string,
-  numeroAutos?: string
-): Promise<CalendarEvent | null> {
-  let description = `Tipo: ${tipoAudiencia}`;
-  if (numeroAutos) {
-    description += `\nProcesso: ${numeroAutos}`;
-  }
+export async function criarEventoAudiencia(input: {
+  assistidoNome: string;
+  tipoAudiencia: string;
+  dataAudiencia: Date;
+  duracaoMinutos?: number;
+  local?: string;
+  numeroAutos?: string;
+  area?: string | null;
+}): Promise<CalendarEvent | null> {
+  const { resolveCalendarId, colorIdForAudiencia } = await import("./calendar-mapping");
 
-  const summary = `📅 Audiência ${tipoAudiencia} - ${assistidoNome}`;
+  const duracao = input.duracaoMinutos ?? 60;
+  const endDate = new Date(input.dataAudiencia.getTime() + duracao * 60 * 1000);
+  const calendarId = resolveCalendarId(input.area);
+  const colorId = colorIdForAudiencia(input.tipoAudiencia);
 
-  return createCalendarEvent({
-    summary,
-    description,
-    startDate: dataAudiencia,
-    isAllDay: false,
-    location: local,
-    colorId: CalendarColors.AZUL,
-    reminders: [
-      { method: "popup", minutes: 1440 }, // 1 dia antes
-      { method: "popup", minutes: 120 },  // 2 horas antes
-      { method: "popup", minutes: 30 },   // 30 minutos antes
-    ],
-  });
+  const tipo = input.tipoAudiencia.toLowerCase();
+  const emoji = /plen[áa]rio|j[úu]ri/.test(tipo) ? "⚖️" : "🏛";
+  const summary = `${emoji} ${input.tipoAudiencia} — ${input.assistidoNome}`;
+
+  let description = `Tipo: ${input.tipoAudiencia}`;
+  if (input.numeroAutos) description += `\nProcesso: ${input.numeroAutos}`;
+  if (input.area) description += `\nÁrea: ${input.area}`;
+
+  return createCalendarEvent(
+    {
+      summary,
+      description,
+      startDate: input.dataAudiencia,
+      endDate,
+      isAllDay: false,
+      location: input.local,
+      colorId,
+      reminders: [
+        { method: "popup", minutes: 1440 }, // 1 dia antes
+        { method: "popup", minutes: 120 },  // 2 horas antes
+        { method: "popup", minutes: 30 },   // 30 minutos antes
+      ],
+    },
+    { calendarId },
+  );
 }
 
 /**
