@@ -293,6 +293,8 @@ function EventoDetalhado({
   onClick,
   onExportCowork,
   isExportingCowork,
+  onRealizarAtendimento,
+  isRealizando,
 }: {
   evento: AgendaItem;
   onEdit: (evento: any) => void;
@@ -301,6 +303,8 @@ function EventoDetalhado({
   onClick: (evento: AgendaItem) => void;
   onExportCowork?: (evento: AgendaItem) => void;
   isExportingCowork?: boolean;
+  onRealizarAtendimento?: (evento: AgendaItem) => void;
+  isRealizando?: boolean;
 }) {
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
@@ -399,9 +403,19 @@ function EventoDetalhado({
             onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}
             disabled={isExportingCowork}
             title="Exportar briefing para Cowork"
-            className="text-neutral-400 hover:text-violet-600 transition-colors disabled:opacity-40"
+            className="text-neutral-400 hover:text-violet-600 transition-colors disabled:opacity-40 cursor-pointer"
           >
             {isExportingCowork ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
+          </button>
+        )}
+        {onRealizarAtendimento && evento.fonte === "registros" && evento.status === "agendado" && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onRealizarAtendimento(evento); }}
+            disabled={isRealizando}
+            title="Marcar como realizado"
+            className="text-neutral-400 hover:text-emerald-600 transition-colors disabled:opacity-40 cursor-pointer"
+          >
+            {isRealizando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
@@ -873,6 +887,31 @@ export default function AgendaPage() {
       toast.error("Erro ao agendar atendimento", { description: error.message });
     },
   });
+
+  // Mutation para marcar atendimento agendado como realizado
+  const realizarAtendimento = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento marcado como realizado");
+      utils.registros.listAgendados.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar atendimento", { description: error.message });
+    },
+  });
+
+  // Track which registro is being marked as realizado
+  const [realizandoId, setRealizandoId] = useState<string | null>(null);
+
+  const handleRealizarAtendimento = (evento: AgendaItem) => {
+    if (evento.fonte !== "registros") return;
+    setRealizandoId(evento.id);
+    realizarAtendimento.mutate(
+      { id: evento.rawId, status: "realizado" },
+      {
+        onSettled: () => setRealizandoId(null),
+      }
+    );
+  };
 
   // Mapeamentos form → schema do calendar router
   const TIPO_TO_EVENT_TYPE: Record<string, string> = {
@@ -1757,6 +1796,8 @@ export default function AgendaPage() {
                     });
                   }}
                   isExportingCowork={exportingAgendaId === evento.id}
+                  onRealizarAtendimento={handleRealizarAtendimento}
+                  isRealizando={realizandoId === evento.id}
                 />
               ))
             )}
