@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, registros, demandas, users } from "@/lib/db";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { db, withTransaction, registros, demandas, users, processos, assistidos } from "@/lib/db";
+import { and, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getDefensoresVisiveis } from "../defensor-scope";
+import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 
 // ==========================================
 // REGISTROS — router tipado
@@ -248,5 +250,50 @@ export const registrosRouter = router({
     .mutation(async ({ input }) => {
       await db.delete(registros).where(eq(registros.id, input.id));
       return { ok: true } as const;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // listAgendados — lista atendimentos agendados em intervalo de datas,
+  //                 escopado por defensor (autor + parceiros de comarca)
+  // ────────────────────────────────────────────────────────────────────
+  listAgendados: protectedProcedure
+    .input(z.object({ start: z.string(), end: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const conditions = [
+        eq(registros.tipo, "atendimento"),
+        eq(registros.status, "agendado"),
+        gte(registros.dataRegistro, new Date(input.start)),
+        lte(registros.dataRegistro, new Date(input.end)),
+      ];
+      const visiveis = getDefensoresVisiveis(ctx.user);
+      if (visiveis !== "all") {
+        const ids = new Set<number>(visiveis);
+        for (const uid of visiveis) {
+          const parceiros = await getParceirosIds(uid);
+          parceiros.forEach((p) => ids.add(p));
+        }
+        conditions.push(inArray(registros.autorId, Array.from(ids)));
+      }
+      const rows = await db
+        .select({
+          registro: registros,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            atribuicao: processos.atribuicao,
+            area: processos.area,
+          },
+          assistido: { id: assistidos.id, nome: assistidos.nome },
+        })
+        .from(registros)
+        .leftJoin(processos, eq(registros.processoId, processos.id))
+        .leftJoin(assistidos, eq(registros.assistidoId, assistidos.id))
+        .where(and(...conditions))
+        .orderBy(desc(registros.dataRegistro));
+      return rows.map((r) => ({
+        ...r.registro,
+        processo: r.processo?.id ? r.processo : null,
+        assistido: r.assistido?.id ? r.assistido : null,
+      }));
     }),
 });
