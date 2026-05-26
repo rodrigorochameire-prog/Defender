@@ -27,6 +27,15 @@ const TIPO_REGISTRO = z.enum([
   "peticao",
 ]);
 
+// ─── Schema exportado para testes unitários (Task 5) ───────────────────────
+export const updateRegistroInput = z.object({
+  id: z.number().int().positive(),
+  titulo: z.string().max(120).optional(),
+  conteudo: z.string().optional(),
+  tipo: TIPO_REGISTRO.optional(),
+  status: z.enum(["agendado", "realizado", "cancelado"]).optional(),
+});
+
 // ─── Schema exportado para testes unitários (Task 3) ───────────────────────
 export const agendarAtendimentoInput = z.object({
   assistidoId: z.number().int().positive(),
@@ -211,20 +220,14 @@ export const registrosRouter = router({
   // update — atualiza apenas campos fornecidos
   // ────────────────────────────────────────────────────────────────────
   update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number().int().positive(),
-        titulo: z.string().max(120).optional(),
-        conteudo: z.string().optional(),
-        tipo: TIPO_REGISTRO.optional(),
-      })
-    )
+    .input(updateRegistroInput)
     .mutation(async ({ input }) => {
       const { id, ...rest } = input;
       const data: Record<string, unknown> = { updatedAt: new Date() };
       if (rest.titulo !== undefined) data.titulo = rest.titulo;
       if (rest.conteudo !== undefined) data.conteudo = rest.conteudo;
       if (rest.tipo !== undefined) data.tipo = rest.tipo;
+      if (rest.status !== undefined) data.status = rest.status;
 
       const [updated] = await db
         .update(registros)
