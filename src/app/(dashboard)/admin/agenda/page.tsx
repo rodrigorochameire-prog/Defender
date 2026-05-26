@@ -45,6 +45,7 @@ import { BuscaRegistrosModal } from "@/components/agenda/busca-registros-modal";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { buildAgendarPayload } from "@/lib/agenda/build-agendar-payload";
 import { cn } from "@/lib/utils";
 import {
   Calendar as CalendarIcon,
@@ -850,6 +851,17 @@ export default function AgendaPage() {
     },
   });
 
+  // Mutation para agendar atendimento real (status 'agendado')
+  const agendarAtendimento = trpc.registros.agendar.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento agendado!");
+      utils.registros.listAgendados.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao agendar atendimento", { description: error.message });
+    },
+  });
+
   // Mapeamentos form → schema do calendar router
   const TIPO_TO_EVENT_TYPE: Record<string, string> = {
     audiencia: "audiencia",
@@ -912,6 +924,26 @@ export default function AgendaPage() {
     }
 
     const recurrenceType = RECORRENCIA_MAP[eventoData.recorrencia];
+
+    if (eventoData.tipo === "atendimento") {
+      if (!assistidoId) {
+        toast.error("Selecione o assistido para agendar um atendimento");
+        return;
+      }
+      await agendarAtendimento.mutateAsync(
+        buildAgendarPayload(
+          {
+            titulo: eventoData.titulo,
+            data: eventoData.data,
+            horarioInicio: eventoData.horarioInicio,
+            local: eventoData.local || "",
+            descricao: eventoData.descricao || "",
+          },
+          { assistidoId, processoId }
+        )
+      );
+      return;
+    }
 
     await createCalendarEvent.mutateAsync({
       title: eventoData.titulo,
