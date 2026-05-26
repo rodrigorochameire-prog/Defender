@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, registros, demandas, users, processos, assistidos } from "@/lib/db";
-import { and, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "../defensor-scope";
 import { getParceirosIds } from "@/lib/trpc/comarca-scope";
@@ -257,7 +257,7 @@ export const registrosRouter = router({
   //                 escopado por defensor (autor + parceiros de comarca)
   // ────────────────────────────────────────────────────────────────────
   listAgendados: protectedProcedure
-    .input(z.object({ start: z.string(), end: z.string() }))
+    .input(z.object({ start: z.string().datetime(), end: z.string().datetime() }))
     .query(async ({ input, ctx }) => {
       const conditions = [
         eq(registros.tipo, "atendimento"),
@@ -267,12 +267,19 @@ export const registrosRouter = router({
       ];
       const visiveis = getDefensoresVisiveis(ctx.user);
       if (visiveis !== "all") {
-        const ids = new Set<number>(visiveis);
-        for (const uid of visiveis) {
-          const parceiros = await getParceirosIds(uid);
-          parceiros.forEach((p) => ids.add(p));
+        if (visiveis.length === 1) {
+          const userId = visiveis[0];
+          const parceiros = await getParceirosIds(userId);
+          if (parceiros.length > 0) {
+            conditions.push(inArray(registros.autorId, [userId, ...parceiros]));
+          } else {
+            conditions.push(eq(registros.autorId, userId));
+          }
+        } else if (visiveis.length > 1) {
+          conditions.push(inArray(registros.autorId, visiveis));
+        } else {
+          conditions.push(eq(registros.autorId, ctx.user.id));
         }
-        conditions.push(inArray(registros.autorId, Array.from(ids)));
       }
       const rows = await db
         .select({
@@ -289,7 +296,7 @@ export const registrosRouter = router({
         .leftJoin(processos, eq(registros.processoId, processos.id))
         .leftJoin(assistidos, eq(registros.assistidoId, assistidos.id))
         .where(and(...conditions))
-        .orderBy(desc(registros.dataRegistro));
+        .orderBy(asc(registros.dataRegistro));
       return rows.map((r) => ({
         ...r.registro,
         processo: r.processo?.id ? r.processo : null,
