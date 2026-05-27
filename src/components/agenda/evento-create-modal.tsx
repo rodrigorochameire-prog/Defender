@@ -171,11 +171,17 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
   // Assistido combobox state
   const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
   const [assistidoQuery, setAssistidoQuery] = useState("");
+  const [debouncedAssistidoQuery, setDebouncedAssistidoQuery] = useState("");
 
-  // Fetch assistidos matching the search query
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAssistidoQuery(assistidoQuery), 300);
+    return () => clearTimeout(t);
+  }, [assistidoQuery]);
+
+  // Fetch assistidos only after user typed ≥2 chars and debounce settled
   const { data: assistidosBusca } = trpc.assistidos.list.useQuery(
-    { search: assistidoQuery },
-    { enabled: assistidoSearchOpen || assistidoQuery.length > 0 }
+    { search: debouncedAssistidoQuery || undefined },
+    { enabled: assistidoSearchOpen && debouncedAssistidoQuery.length >= 2 }
   );
 
   const [newTag, setNewTag] = useState("");
@@ -206,6 +212,8 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
         data: defaultData?.data || "",
         horarioInicio: defaultData?.horarioInicio || "",
       });
+      setAssistidoQuery("");
+      setAssistidoSearchOpen(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editData, defaultData, prefill, isOpen]);
@@ -412,7 +420,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[350px] p-0" align="start">
-                    <Command>
+                    <Command shouldFilter={false}>
                       <CommandInput
                         placeholder="Digite o nome ou CPF..."
                         value={assistidoQuery}
@@ -420,6 +428,13 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                         className="h-9"
                       />
                       <CommandList>
+                        {debouncedAssistidoQuery.length < 2 ? (
+                          <div className="py-4 text-center">
+                            <Search className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                            <p className="text-sm text-neutral-500">Digite ao menos 2 letras para buscar</p>
+                          </div>
+                        ) : (
+                          <>
                         <CommandEmpty>
                           <div className="py-4 text-center">
                             <User className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
@@ -466,6 +481,8 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                               <span className="text-sm">Limpar seleção</span>
                             </CommandItem>
                           </CommandGroup>
+                        )}
+                          </>
                         )}
                       </CommandList>
                     </Command>
