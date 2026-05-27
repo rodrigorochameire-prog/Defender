@@ -958,16 +958,21 @@ export default function AgendaPage() {
       return;
     }
 
-    // Tenta resolver processoId/assistidoId pelo número do processo digitado
+    // Explicit assistido selection from combobox wins over processo lookup
     let processoId: number | undefined;
-    let assistidoId: number | undefined;
+    let assistidoId: number | undefined = eventoData.assistidoId ?? undefined;
+
+    // Tenta resolver processoId/assistidoId pelo número do processo digitado
     if (eventoData.processo?.trim()) {
       try {
         const matches = await utils.processos.list.fetch({ search: eventoData.processo.trim() });
         const match = matches?.find((p) => p.numeroAutos === eventoData.processo.trim()) || matches?.[0];
         if (match) {
           processoId = match.id;
-          assistidoId = match.assistido?.id ?? undefined;
+          // Only set assistidoId from processo if not already explicitly chosen
+          if (!assistidoId) {
+            assistidoId = match.assistido?.id ?? undefined;
+          }
         }
       } catch {
         // segue sem vínculo se a busca falhar
