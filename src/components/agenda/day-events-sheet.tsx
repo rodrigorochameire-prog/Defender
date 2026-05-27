@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Maximize2,
   User,
+  Users,
   Scale,
   MoreVertical,
 } from "lucide-react";
@@ -50,6 +51,7 @@ import {
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
 import { extrairTipo } from "./extrair-tipo";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 interface DayEventsSheetProps {
   isOpen: boolean;
@@ -258,6 +260,7 @@ export function DayEventsSheet({
                 const solidColor = cancelado
                   ? "#a1a1aa"
                   : (colors as any).color || "#71717a";
+                const visual = agendaItemVisual(evento);
                 const tipo = extrairTipo(evento.titulo);
                 const assistidoNome = evento.assistido || "";
                 const processo = evento.processo || "";
@@ -280,8 +283,15 @@ export function DayEventsSheet({
                       aria-label="Ver detalhes"
                     >
                       <div
-                        className="w-2 h-2 rounded-full shrink-0 mt-1.5"
-                        style={{ backgroundColor: solidColor }}
+                        className={cn(
+                          "w-2 h-2 rounded-full shrink-0 mt-1.5",
+                          visual.dashed ? "border-2" : "",
+                        )}
+                        style={
+                          visual.dashed
+                            ? { borderColor: solidColor, backgroundColor: "transparent" }
+                            : { backgroundColor: solidColor }
+                        }
                       />
 
                       <div className="flex-1 min-w-0">
@@ -308,6 +318,13 @@ export function DayEventsSheet({
                           >
                             {tipo}
                           </span>
+                          {visual.dashed && !cancelado && (
+                            <Users
+                              className="w-3 h-3 shrink-0 opacity-70"
+                              style={{ color: solidColor }}
+                              title="Atendimento"
+                            />
+                          )}
                           {cancelado && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
                               {evento.status}
