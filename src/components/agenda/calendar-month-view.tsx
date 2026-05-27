@@ -64,6 +64,7 @@ interface CalendarMonthViewProps {
 }
 
 import { getAtribuicaoColors, ATRIBUICAO_COLORS } from "@/lib/config/atribuicoes";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // Ícones por tipo/atribuição (labels)
 const atribuicaoIcons: Record<string, any> = {
@@ -185,6 +186,7 @@ function EventoCompacto({
   const hasRegistro = !!evento.registro;
   const eventoCancelado = isEventoCancelado(evento.status);
   const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
+  const visual = agendaItemVisual(evento);
 
   // Ícone da atribuição
   const AtribIcon = atribuicaoKeyIcons[evento.atribuicaoKey] || Folder;
@@ -250,12 +252,22 @@ function EventoCompacto({
           className={`group w-full text-left rounded transition-all duration-150 overflow-hidden cursor-pointer relative bg-neutral-50/60 hover:bg-neutral-100/80 ${
             eventoCancelado ? "opacity-40" : ""
           }`}
+          style={visual.dashed ? { boxShadow: `0 0 0 1px ${displayColor}40` } : undefined}
         >
-          {/* Left attribution bar */}
-          <div
-            className="absolute left-0 top-[2px] bottom-[2px] w-[2px] rounded-r-sm opacity-60"
-            style={{ backgroundColor: displayColor }}
-          />
+          {/* Left attribution bar — sólida (audiência) ou tracejada (atendimento) */}
+          {visual.dashed ? (
+            <div
+              className="absolute left-0 top-[2px] bottom-[2px] w-[2px] rounded-r-sm opacity-70"
+              style={{
+                background: `repeating-linear-gradient(to bottom, ${displayColor} 0px, ${displayColor} 3px, transparent 3px, transparent 6px)`,
+              }}
+            />
+          ) : (
+            <div
+              className="absolute left-0 top-[2px] bottom-[2px] w-[2px] rounded-r-sm opacity-60"
+              style={{ backgroundColor: displayColor }}
+            />
+          )}
 
           <div className="pl-[9px] pr-1.5 py-0.5 flex items-center gap-1 sm:gap-1.5 min-w-0">
             {/* Status icons (cancelado / remarcado) */}
@@ -288,8 +300,11 @@ function EventoCompacto({
               </span>
             )}
 
-            {/* Dots de status (advogado / urgente / com registro) */}
+            {/* Dots de status (atendimento / advogado / urgente / com registro) */}
             <span className="hidden sm:flex items-center gap-0.5 shrink-0">
+              {visual.dashed && !eventoCancelado && (
+                <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+              )}
               {temAdvogado && !eventoCancelado && (
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80" title="Advogado constituído" />
               )}

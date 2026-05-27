@@ -1,8 +1,10 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, registros, demandas, users } from "@/lib/db";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { db, withTransaction, registros, demandas, users, processos, assistidos } from "@/lib/db";
+import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getDefensoresVisiveis } from "../defensor-scope";
+import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 
 // ==========================================
 // REGISTROS — router tipado
@@ -27,6 +29,27 @@ const TIPO_REGISTRO = z.enum([
   "investigacao",
   "transferencia",
 ]);
+
+// ─── Schema exportado para testes unitários (Task 5) ───────────────────────
+export const updateRegistroInput = z.object({
+  id: z.number().int().positive(),
+  titulo: z.string().max(120).optional(),
+  conteudo: z.string().optional(),
+  tipo: TIPO_REGISTRO.optional(),
+  status: z.enum(["agendado", "realizado", "cancelado"]).optional(),
+});
+
+// ─── Schema exportado para testes unitários (Task 3) ───────────────────────
+export const agendarAtendimentoInput = z.object({
+  assistidoId: z.number().int().positive(),
+  dataRegistro: z.union([z.string(), z.date()]),
+  titulo: z.string().max(120).optional(),
+  assunto: z.string().optional(),
+  local: z.string().optional(),
+  processoId: z.number().int().positive().optional(),
+  casoId: z.number().int().positive().optional(),
+  demandaId: z.number().int().positive().optional(),
+});
 
 export const registrosRouter = router({
   // ────────────────────────────────────────────────────────────────────
@@ -169,23 +192,45 @@ export const registrosRouter = router({
     }),
 
   // ────────────────────────────────────────────────────────────────────
+  // agendar — insere atendimento futuro com status "agendado"
+  // ────────────────────────────────────────────────────────────────────
+  agendar: protectedProcedure
+    .input(agendarAtendimentoInput)
+    .mutation(async ({ input, ctx }) => {
+      const [registro] = await db
+        .insert(registros)
+        .values({
+          assistidoId: input.assistidoId,
+          processoId: input.processoId ?? null,
+          casoId: input.casoId ?? null,
+          demandaId: input.demandaId ?? null,
+          tipo: "atendimento",
+          status: "agendado",
+          titulo: input.titulo ?? null,
+          assunto: input.assunto ?? null,
+          local: input.local ?? null,
+          dataRegistro: new Date(input.dataRegistro as string | Date),
+          autorId: ctx.user.id,
+        })
+        .returning();
+      if (!registro) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Falha ao agendar atendimento" });
+      }
+      return registro;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
   // update — atualiza apenas campos fornecidos
   // ────────────────────────────────────────────────────────────────────
   update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number().int().positive(),
-        titulo: z.string().max(120).optional(),
-        conteudo: z.string().optional(),
-        tipo: TIPO_REGISTRO.optional(),
-      })
-    )
+    .input(updateRegistroInput)
     .mutation(async ({ input }) => {
       const { id, ...rest } = input;
       const data: Record<string, unknown> = { updatedAt: new Date() };
       if (rest.titulo !== undefined) data.titulo = rest.titulo;
       if (rest.conteudo !== undefined) data.conteudo = rest.conteudo;
       if (rest.tipo !== undefined) data.tipo = rest.tipo;
+      if (rest.status !== undefined) data.status = rest.status;
 
       const [updated] = await db
         .update(registros)
@@ -211,5 +256,57 @@ export const registrosRouter = router({
     .mutation(async ({ input }) => {
       await db.delete(registros).where(eq(registros.id, input.id));
       return { ok: true } as const;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // listAgendados — lista atendimentos agendados em intervalo de datas,
+  //                 escopado por defensor (autor + parceiros de comarca)
+  // ────────────────────────────────────────────────────────────────────
+  listAgendados: protectedProcedure
+    .input(z.object({ start: z.string().datetime(), end: z.string().datetime() }))
+    .query(async ({ input, ctx }) => {
+      const conditions = [
+        eq(registros.tipo, "atendimento"),
+        eq(registros.status, "agendado"),
+        gte(registros.dataRegistro, new Date(input.start)),
+        lte(registros.dataRegistro, new Date(input.end)),
+      ];
+      const visiveis = getDefensoresVisiveis(ctx.user);
+      if (visiveis !== "all") {
+        if (visiveis.length === 1) {
+          const userId = visiveis[0];
+          const parceiros = await getParceirosIds(userId);
+          if (parceiros.length > 0) {
+            conditions.push(inArray(registros.autorId, [userId, ...parceiros]));
+          } else {
+            conditions.push(eq(registros.autorId, userId));
+          }
+        } else if (visiveis.length > 1) {
+          conditions.push(inArray(registros.autorId, visiveis));
+        } else {
+          conditions.push(eq(registros.autorId, ctx.user.id));
+        }
+      }
+      const rows = await db
+        .select({
+          registro: registros,
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            atribuicao: processos.atribuicao,
+            area: processos.area,
+          },
+          assistido: { id: assistidos.id, nome: assistidos.nome },
+        })
+        .from(registros)
+        .leftJoin(processos, eq(registros.processoId, processos.id))
+        .leftJoin(assistidos, eq(registros.assistidoId, assistidos.id))
+        .where(and(...conditions))
+        .orderBy(asc(registros.dataRegistro));
+      return rows.map((r) => ({
+        ...r.registro,
+        processo: r.processo?.id ? r.processo : null,
+        assistido: r.assistido?.id ? r.assistido : null,
+      }));
     }),
 });

@@ -45,6 +45,7 @@ import { BuscaRegistrosModal } from "@/components/agenda/busca-registros-modal";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { buildAgendarPayload } from "@/lib/agenda/build-agendar-payload";
 import { cn } from "@/lib/utils";
 import {
   Calendar as CalendarIcon,
@@ -96,43 +97,13 @@ import {
   format,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { AgendaItem } from "@/lib/agenda/agenda-item";
+import { mapAtribuicaoToKey } from "@/lib/agenda/atribuicao-key";
+import { registroAgendadoToAgendaItem } from "@/lib/agenda/registro-to-agenda-item";
 
 // ==========================================
 // TIPOS
 // ==========================================
-
-interface AgendaItem {
-  /** Id composto para React keys e lookup (ex: "audiencia-179", "calendar-42"). */
-  id: string;
-  /** Id numérico cru da fonte (audiencias.id OU calendar_events.id). Use com `fonte`. */
-  rawId: number;
-  titulo: string;
-  tipo: string;
-  data: string;
-  horarioInicio: string;
-  horarioFim: string;
-  local: string;
-  assistido: string;
-  assistidoId?: number | null;
-  processo: string;
-  processoId?: number | null;
-  atribuicao: string;
-  atribuicaoKey?: string;
-  status: string;
-  descricao: string;
-  prioridade: string;
-  recorrencia: string;
-  lembretes: string[];
-  tags: string[];
-  participantes: string[];
-  vinculoDemanda?: string;
-  observacoes: string;
-  documentos: string[];
-  dataInclusao: string;
-  responsavel?: string;
-  registro?: RegistroAudienciaData;
-  fonte?: "audiencias" | "calendar"; // Indica de qual tabela veio
-}
 
 interface EventoFormData {
   id?: string;
@@ -157,13 +128,8 @@ interface EventoFormData {
   documentos: string[];
 }
 
-import { 
-  ATRIBUICAO_COLORS, 
-  getAtribuicaoColors, 
-  ATRIBUICAO_OPTIONS as ATRIBUICAO_FILTER_OPTIONS,
-  normalizeAreaToFilter,
-  areaMatchesFilter
-} from "@/lib/config/atribuicoes";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -327,6 +293,8 @@ function EventoDetalhado({
   onClick,
   onExportCowork,
   isExportingCowork,
+  onRealizarAtendimento,
+  isRealizando,
 }: {
   evento: AgendaItem;
   onEdit: (evento: any) => void;
@@ -335,19 +303,28 @@ function EventoDetalhado({
   onClick: (evento: AgendaItem) => void;
   onExportCowork?: (evento: AgendaItem) => void;
   isExportingCowork?: boolean;
+  onRealizarAtendimento?: (evento: AgendaItem) => void;
+  isRealizando?: boolean;
 }) {
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
-  
+  const visual = agendaItemVisual(evento);
+
   return (
-    <div 
+    <div
       onClick={() => onClick(evento)}
-      className="group relative flex items-stretch gap-3 p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 transition-all cursor-pointer hover:shadow-md"
+      className={`group relative flex items-stretch gap-3 p-4 rounded-xl border hover:border-neutral-200 dark:hover:border-neutral-700 transition-all cursor-pointer hover:shadow-md ${
+        visual.dashed
+          ? "bg-white/60 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-700 border-dashed"
+          : "bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800"
+      }`}
     >
-      {/* Barra lateral colorida */}
-      <div 
+      {/* Barra lateral colorida — sólida (audiência/other) ou tracejada (atendimento) */}
+      <div
         className="w-1 rounded-full flex-shrink-0"
-        style={{ backgroundColor: solidColor }}
+        style={visual.dashed
+          ? { backgroundImage: `repeating-linear-gradient(to bottom, ${solidColor} 0 3px, transparent 3px 6px)` }
+          : { backgroundColor: solidColor }}
       />
       
       {/* Horário */}
@@ -361,14 +338,18 @@ function EventoDetalhado({
       {/* Conteúdo principal */}
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
-            {evento.titulo}
-          </h4>
-          <Badge 
+          <div className="flex items-center gap-1.5 min-w-0">
+            {visual.icon === "Users" && <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
+            {visual.icon === "Gavel" && <Gavel className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
+            <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
+              {evento.titulo}
+            </h4>
+          </div>
+          <Badge
             className="flex-shrink-0 text-[10px] px-1.5 py-0.5 border-0"
-            style={{ 
-              backgroundColor: `${solidColor}20`, 
-              color: solidColor 
+            style={{
+              backgroundColor: `${solidColor}20`,
+              color: solidColor,
             }}
           >
             {atribuicaoConfig.shortLabel}
@@ -422,9 +403,19 @@ function EventoDetalhado({
             onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}
             disabled={isExportingCowork}
             title="Exportar briefing para Cowork"
-            className="text-neutral-400 hover:text-violet-600 transition-colors disabled:opacity-40"
+            className="text-neutral-400 hover:text-violet-600 transition-colors disabled:opacity-40 cursor-pointer"
           >
             {isExportingCowork ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5" />}
+          </button>
+        )}
+        {onRealizarAtendimento && evento.fonte === "registros" && evento.status === "agendado" && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onRealizarAtendimento(evento); }}
+            disabled={isRealizando}
+            title="Marcar como realizado"
+            className="text-neutral-400 hover:text-emerald-600 transition-colors disabled:opacity-40 cursor-pointer"
+          >
+            {isRealizando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
@@ -640,8 +631,14 @@ export default function AgendaPage() {
     end: fimAno.toISOString(),
   });
 
+  const { data: registrosAgendados, isLoading: isLoadingRegistros } =
+    trpc.registros.listAgendados.useQuery({
+      start: inicioAno.toISOString(),
+      end: fimAno.toISOString(),
+    });
+
   // Loading combinado
-  const isLoading = isLoadingAudiencias || isLoadingCalendar;
+  const isLoading = isLoadingAudiencias || isLoadingCalendar || isLoadingRegistros;
 
   // Utils para invalidar queries após mutações
   const utils = trpc.useUtils();
@@ -713,26 +710,6 @@ export default function AgendaPage() {
       }));
     }
   }, [escalasFromDB]);
-
-  // Mapear atribuição do banco para key do filtro (usa função centralizada)
-  const mapAtribuicaoToKey = (atribuicao: string | null | undefined, area: string | null | undefined): string => {
-    // Primeiro tentar pelo valor exato
-    const exactMatch = normalizeAreaToFilter(atribuicao) || normalizeAreaToFilter(area);
-    if (exactMatch && exactMatch !== "all") return exactMatch;
-    
-    // Fallback para busca por padrão
-    if (!atribuicao && !area) return "SUBSTITUICAO";
-    
-    const atrib = (atribuicao || area || "").toUpperCase();
-    
-    if (atrib.includes("VVD") || atrib.includes("VIOLENCIA") || atrib.includes("DOMESTICA")) return "VVD";
-    if (atrib.includes("JURI") || atrib.includes("JÚRI")) return "JURI";
-    if (atrib.includes("EXECU")) return "EXECUCAO";
-    if (atrib.includes("CIVEL") || atrib.includes("FAMILIA") || atrib.includes("FAZENDA")) return "SUBSTITUICAO_CIVEL";
-    if (atrib.includes("SUBSTITU") || atrib.includes("CRIMINAL")) return "SUBSTITUICAO";
-    
-    return "SUBSTITUICAO";
-  };
 
   // Helper: resolve o responsável pela escala de revezamento (atribuição + mês do evento)
   // Fallback: defensorId/createdById se não houver escala configurada
@@ -858,9 +835,16 @@ export default function AgendaPage() {
       });
     }
 
-    // 3. Ordenar por data
+    // 3. Processar atendimentos agendados (tabela registros)
+    if (registrosAgendados) {
+      registrosAgendados.forEach((r) => {
+        items.push(registroAgendadoToAgendaItem(r));
+      });
+    }
+
+    // 4. Ordenar por data
     return items.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-  }, [audienciasData, calendarData, escalaConfig]);
+  }, [audienciasData, calendarData, registrosAgendados, escalaConfig]);
 
   // Navegar automaticamente para o mês do primeiro evento se não houver eventos no mês atual
   useEffect(() => {
@@ -892,6 +876,42 @@ export default function AgendaPage() {
       toast.error("Erro ao criar evento", { description: error.message });
     },
   });
+
+  // Mutation para agendar atendimento real (status 'agendado')
+  const agendarAtendimento = trpc.registros.agendar.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento agendado!");
+      utils.registros.listAgendados.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao agendar atendimento", { description: error.message });
+    },
+  });
+
+  // Mutation para marcar atendimento agendado como realizado
+  const realizarAtendimento = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento marcado como realizado");
+      utils.registros.listAgendados.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar atendimento", { description: error.message });
+    },
+  });
+
+  // Track which registro is being marked as realizado
+  const [realizandoId, setRealizandoId] = useState<string | null>(null);
+
+  const handleRealizarAtendimento = (evento: AgendaItem) => {
+    if (evento.fonte !== "registros") return;
+    setRealizandoId(evento.id);
+    realizarAtendimento.mutate(
+      { id: evento.rawId, status: "realizado" },
+      {
+        onSettled: () => setRealizandoId(null),
+      }
+    );
+  };
 
   // Mapeamentos form → schema do calendar router
   const TIPO_TO_EVENT_TYPE: Record<string, string> = {
@@ -938,16 +958,21 @@ export default function AgendaPage() {
       return;
     }
 
-    // Tenta resolver processoId/assistidoId pelo número do processo digitado
+    // Explicit assistido selection from combobox wins over processo lookup
     let processoId: number | undefined;
-    let assistidoId: number | undefined;
+    let assistidoId: number | undefined = eventoData.assistidoId ?? undefined;
+
+    // Tenta resolver processoId/assistidoId pelo número do processo digitado
     if (eventoData.processo?.trim()) {
       try {
         const matches = await utils.processos.list.fetch({ search: eventoData.processo.trim() });
         const match = matches?.find((p) => p.numeroAutos === eventoData.processo.trim()) || matches?.[0];
         if (match) {
           processoId = match.id;
-          assistidoId = match.assistido?.id ?? undefined;
+          // Only set assistidoId from processo if not already explicitly chosen
+          if (!assistidoId) {
+            assistidoId = match.assistido?.id ?? undefined;
+          }
         }
       } catch {
         // segue sem vínculo se a busca falhar
@@ -955,6 +980,26 @@ export default function AgendaPage() {
     }
 
     const recurrenceType = RECORRENCIA_MAP[eventoData.recorrencia];
+
+    if (eventoData.tipo === "atendimento") {
+      if (!assistidoId) {
+        toast.error("Selecione o assistido para agendar um atendimento");
+        return;
+      }
+      await agendarAtendimento.mutateAsync(
+        buildAgendarPayload(
+          {
+            titulo: eventoData.titulo,
+            data: eventoData.data,
+            horarioInicio: eventoData.horarioInicio,
+            local: eventoData.local || "",
+            descricao: eventoData.descricao || "",
+          },
+          { assistidoId, processoId }
+        )
+      );
+      return;
+    }
 
     await createCalendarEvent.mutateAsync({
       title: eventoData.titulo,
@@ -1756,6 +1801,8 @@ export default function AgendaPage() {
                     });
                   }}
                   isExportingCowork={exportingAgendaId === evento.id}
+                  onRealizarAtendimento={handleRealizarAtendimento}
+                  isRealizando={realizandoId === evento.id}
                 />
               ))
             )}

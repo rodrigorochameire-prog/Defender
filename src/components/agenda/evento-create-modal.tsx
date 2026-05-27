@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CustomSelect } from "@/components/CustomSelect";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
+import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -27,6 +33,10 @@ import {
   RefreshCw,
   Shield,
   Scale,
+  Search,
+  ChevronsUpDown,
+  Check,
+  User,
 } from "lucide-react";
 
 export interface EventoFormData {
@@ -38,6 +48,7 @@ export interface EventoFormData {
   horarioFim: string;
   local: string;
   assistido: string;
+  assistidoId?: number | null;
   processo: string;
   atribuicao: string;
   status: string;
@@ -141,6 +152,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
     horarioFim: "",
     local: "",
     assistido: "",
+    assistidoId: null,
     processo: "",
     atribuicao: "Geral",
     status: "confirmado",
@@ -156,6 +168,22 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
   const [formData, setFormData] = useState<EventoFormData>(emptyForm);
 
+  // Assistido combobox state
+  const [assistidoSearchOpen, setAssistidoSearchOpen] = useState(false);
+  const [assistidoQuery, setAssistidoQuery] = useState("");
+  const [debouncedAssistidoQuery, setDebouncedAssistidoQuery] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedAssistidoQuery(assistidoQuery), 300);
+    return () => clearTimeout(t);
+  }, [assistidoQuery]);
+
+  // Fetch assistidos only after user typed ≥2 chars and debounce settled
+  const { data: assistidosBusca } = trpc.assistidos.list.useQuery(
+    { search: debouncedAssistidoQuery || undefined },
+    { enabled: assistidoSearchOpen && debouncedAssistidoQuery.length >= 2 }
+  );
+
   const [newTag, setNewTag] = useState("");
   const [newParticipante, setNewParticipante] = useState("");
 
@@ -170,6 +198,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
         tipo: prefill.tipo ?? emptyForm.tipo,
         local: prefill.local ?? emptyForm.local,
         assistido: prefill.assistido ?? emptyForm.assistido,
+        assistidoId: prefill.assistidoId ?? null,
         processo: prefill.processo ?? emptyForm.processo,
         atribuicao: prefill.atribuicao ?? emptyForm.atribuicao,
         // data, horarioInicio, horarioFim ficam vazios — usuário escolhe ativamente
@@ -183,6 +212,8 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
         data: defaultData?.data || "",
         horarioInicio: defaultData?.horarioInicio || "",
       });
+      setAssistidoQuery("");
+      setAssistidoSearchOpen(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editData, defaultData, prefill, isOpen]);
@@ -366,12 +397,97 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
               <div>
                 <Label>Assistido</Label>
-                <Input
-                  value={formData.assistido}
-                  onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
-                  placeholder="Nome do assistido"
-                  className="bg-white dark:bg-neutral-900"
-                />
+                <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full h-10 justify-between bg-white dark:bg-neutral-900 border-input font-normal hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+                    >
+                      {formData.assistidoId ? (
+                        <span className="flex items-center gap-2 truncate">
+                          <User className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          <span className="truncate text-sm">{formData.assistido}</span>
+                        </span>
+                      ) : (
+                        <span className="text-neutral-500 flex items-center gap-2 text-sm">
+                          <Search className="w-3.5 h-3.5" />
+                          Selecionar assistido
+                        </span>
+                      )}
+                      <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[350px] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Digite o nome ou CPF..."
+                        value={assistidoQuery}
+                        onValueChange={setAssistidoQuery}
+                        className="h-9"
+                      />
+                      <CommandList>
+                        {debouncedAssistidoQuery.length < 2 ? (
+                          <div className="py-4 text-center">
+                            <Search className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                            <p className="text-sm text-neutral-500">Digite ao menos 2 letras para buscar</p>
+                          </div>
+                        ) : (
+                          <>
+                        <CommandEmpty>
+                          <div className="py-4 text-center">
+                            <User className="w-8 h-8 mx-auto mb-2 text-neutral-400" />
+                            <p className="text-sm text-neutral-500">Nenhum assistido encontrado</p>
+                          </div>
+                        </CommandEmpty>
+                        <CommandGroup heading="Assistidos">
+                          {(assistidosBusca ?? []).map((a) => (
+                            <CommandItem
+                              key={a.id}
+                              value={a.nome ?? ""}
+                              onSelect={() => {
+                                setFormData({ ...formData, assistido: a.nome ?? "", assistidoId: a.id });
+                                setAssistidoSearchOpen(false);
+                                setAssistidoQuery("");
+                              }}
+                              className="flex items-center gap-2 py-2 cursor-pointer"
+                            >
+                              <AssistidoAvatar
+                                nome={a.nome ?? ""}
+                                photoUrl={a.photoUrl ?? undefined}
+                                size="sm"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{a.nome}</p>
+                              </div>
+                              {formData.assistidoId === a.id && (
+                                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                        {formData.assistidoId && (
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                setFormData({ ...formData, assistido: "", assistidoId: null });
+                                setAssistidoSearchOpen(false);
+                                setAssistidoQuery("");
+                              }}
+                              className="flex items-center gap-2 py-2 cursor-pointer text-neutral-500 hover:text-red-500"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span className="text-sm">Limpar seleção</span>
+                            </CommandItem>
+                          </CommandGroup>
+                        )}
+                          </>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="md:col-span-2">
