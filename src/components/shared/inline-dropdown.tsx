@@ -45,7 +45,7 @@ export function InlineDropdown({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [alignRight, setAlignRight] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [position, setPosition] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   // Calcula a posição absoluta do painel a partir do bounding rect do trigger.
@@ -59,12 +59,24 @@ export function InlineDropdown({
     const rect = ref.current.getBoundingClientRect();
     const DROPDOWN_MIN_WIDTH = 200;
     const VIEWPORT_PADDING = 16;
+    const DESIRED_MAX_HEIGHT = 288; // equivalente ao antigo max-h-72
     const wouldOverflow = rect.left + DROPDOWN_MIN_WIDTH > window.innerWidth - VIEWPORT_PADDING;
     setAlignRight(wouldOverflow);
+
+    // Flip vertical: abre pra baixo se couber inteiro; senão escolhe o lado com
+    // mais espaço e limita a altura ao espaço disponível (scroll interno cuida do
+    // resto). Evita que o painel "bata no fundo do sheet" e corte opções.
+    const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_PADDING;
+    const spaceAbove = rect.top - VIEWPORT_PADDING;
+    const openDown = spaceBelow >= DESIRED_MAX_HEIGHT || spaceBelow >= spaceAbove;
+    const maxHeight = Math.min(DESIRED_MAX_HEIGHT, Math.max(openDown ? spaceBelow : spaceAbove, 0));
     setPosition({
-      top: rect.bottom + 4,
+      ...(openDown
+        ? { top: rect.bottom + 4 }
+        : { bottom: window.innerHeight - rect.top + 4 }),
       left: wouldOverflow ? rect.right - DROPDOWN_MIN_WIDTH : rect.left,
       width: Math.max(rect.width, DROPDOWN_MIN_WIDTH),
+      maxHeight,
     });
   }, [isOpen]);
 
@@ -222,11 +234,13 @@ export function InlineDropdown({
         return createPortal(
         <div
           data-inline-dropdown-portal="true"
-          className="fixed z-[10000] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-w-[calc(100vw-2rem)] max-h-72 overflow-y-auto py-1"
+          className="fixed z-[10000] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-w-[calc(100vw-2rem)] overflow-y-auto py-1"
           style={{
             top: position.top,
+            bottom: position.bottom,
             left: position.left,
             minWidth: Math.max(position.width, gridMinWidth),
+            maxHeight: position.maxHeight,
           }}
         >
           {/* Type-ahead indicator */}
