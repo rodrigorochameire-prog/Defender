@@ -1420,7 +1420,7 @@ export function DemandaCompactView({
                         {/* Select checkbox */}
                         {isSelectMode && (
                           <button
-                            onClick={() => onToggleSelect?.(demanda.id)}
+                            onClick={(e) => { e.stopPropagation(); onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }); }}
                             className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                               !selectedIds?.has(demanda.id) ? "border-neutral-300 dark:border-neutral-600" : ""
                             }`}

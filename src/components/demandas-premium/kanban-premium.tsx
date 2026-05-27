@@ -118,7 +118,7 @@ interface KanbanPremiumProps {
    *  alterna a seleção em vez de abrir o preview. */
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
-  onToggleSelect?: (demandaId: string) => void;
+  onToggleSelect?: (demandaId: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   copyToClipboard: (text: string) => void;
   selectedAtribuicoes?: string[];
   showArchived?: boolean;
@@ -411,7 +411,7 @@ function KanbanCard({
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (demandaId: string) => void;
+  onToggleSelect?: (demandaId: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   copyToClipboard: (text: string) => void;
   isDragging?: boolean;
   isFocused?: boolean;
@@ -476,10 +476,10 @@ function KanbanCard({
     <div
       draggable={!isSelectMode}
       data-card-id={String(demanda.id)}
-      onClick={() => {
+      onClick={(e) => {
         if (isBeingDragged) return;
         if (isSelectMode) {
-          onToggleSelect?.(String(demanda.id));
+          onToggleSelect?.(String(demanda.id), { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey });
         } else {
           onCardClick(demanda.id);
         }
@@ -493,7 +493,7 @@ function KanbanCard({
       onDragEnd={() => onDragEnd?.()}
       className={cn(
         `
-        relative group/kcard
+        relative group/kcard select-none
         rounded-xl bg-white dark:bg-neutral-900
         border-[1.5px]
         shadow-sm shadow-black/[0.04]
@@ -1222,7 +1222,7 @@ function EmAndamentoExpanded({
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
-  onToggleSelect?: (demandaId: string) => void;
+  onToggleSelect?: (demandaId: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;
@@ -1478,7 +1478,7 @@ function MobileCardList({
   onToggleUrgent?: (demandaId: string, currentlyUrgent: boolean) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
-  onToggleSelect?: (demandaId: string) => void;
+  onToggleSelect?: (demandaId: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
   copyToClipboard: (text: string) => void;
   draggedDemandaId?: string | null;
   focusedCardId?: string | null;

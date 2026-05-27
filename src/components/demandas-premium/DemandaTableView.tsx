@@ -198,7 +198,7 @@ function Row({
         {/* Checkbox de seleção */}
         {isSelectMode && (
           <button
-            onClick={() => onToggleSelect?.(demanda.id)}
+            onClick={(e) => onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey })}
             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-2.5 ${
               isSelected ? "border-emerald-500 bg-emerald-500" : "border-neutral-300 dark:border-neutral-600 hover:border-neutral-400"
             }`}

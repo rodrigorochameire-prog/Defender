@@ -85,7 +85,7 @@ interface DemandaCardProps {
   onDelegate?: (demanda: Demanda) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
 }
 
 const ATRIBUICAO_OPTIONS = [
@@ -307,7 +307,7 @@ export function DemandaCard({
       {/* Checkbox de seleção */}
       {isSelectMode && (
         <button
-          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(demanda.id); }}
+          onClick={(e) => { e.stopPropagation(); onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey }); }}
           className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-5 h-5 rounded border transition-all duration-200"
           style={{
             borderColor: isSelected ? borderColor : undefined,
