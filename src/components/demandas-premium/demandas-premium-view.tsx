@@ -41,6 +41,7 @@ import {
   matchesPill,
   type PillKey,
 } from "@/components/demandas-premium/kanban-premium";
+import { orderedCardIds, shiftRangeIds } from "@/components/demandas-premium/selection-range";
 import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events-drawer";
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
@@ -432,7 +433,7 @@ interface DemandaGridCardProps {
   copyToClipboard: (text: string, message?: string) => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
+  onToggleSelect?: (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => void;
 }
 
 function DemandaGridCard({
@@ -537,7 +538,7 @@ function DemandaGridCard({
       {isSelectMode && (
         <div className="absolute top-2 left-2 z-10">
           <button
-            onClick={() => onToggleSelect?.(demanda.id)}
+            onClick={(e) => onToggleSelect?.(demanda.id, { shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey })}
             className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
               isSelected
                 ? "bg-emerald-500 border-emerald-500 text-white"
@@ -749,7 +750,7 @@ export default function Demandas() {
   const [isAdminConfigModalOpen, setIsAdminConfigModalOpen] = useState(false);
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const lastSelectedIndex = useRef<number | null>(null);
+  const lastSelectedId = useRef<string | null>(null);
   const { widths: columnWidths, setColumnWidth: handleColumnResize } = useColumnWidths();
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [groupBy, setGroupBy] = useState<"status" | "atribuicao" | null>(() => {
@@ -1590,34 +1591,40 @@ export default function Demandas() {
   };
 
   const handleToggleSelect = (id: string, event?: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => {
-    const currentIndex = demandasOrdenadas.findIndex(d => d.id === id);
-
-    if (event?.shiftKey && lastSelectedIndex.current !== null) {
-      // Range selection: select all between lastSelectedIndex and currentIndex
-      const start = Math.min(lastSelectedIndex.current, currentIndex);
-      const end = Math.max(lastSelectedIndex.current, currentIndex);
-      setSelectedIds(prev => {
-        const next = new Set(prev);
-        for (let i = start; i <= end; i++) {
-          next.add(demandasOrdenadas[i].id);
-        }
-        return next;
-      });
-      // Update lastSelectedIndex so subsequent shift+clicks extend from here
-      lastSelectedIndex.current = currentIndex;
-    } else {
-      // Individual toggle
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        return next;
-      });
-      lastSelectedIndex.current = currentIndex;
+    if (event?.shiftKey && lastSelectedId.current !== null && lastSelectedId.current !== id) {
+      // Range over the on-screen order (see selection-range.ts). The Kanban's nested
+      // column layout means the flat demandasOrdenadas index would skip cards that sit
+      // visually between the two clicks.
+      const range = shiftRangeIds(
+        orderedCardIds(demandasOrdenadas.map((d) => d.id)),
+        lastSelectedId.current,
+        id,
+      );
+      if (range.length > 0) {
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          for (const rid of range) next.add(rid);
+          return next;
+        });
+        // Anchor moves to the clicked card so subsequent shift+clicks extend from here.
+        lastSelectedId.current = id;
+        if (!isSelectMode) setIsSelectMode(true);
+        return;
+      }
+      // If either card isn't in the rendered order, fall through to individual toggle.
     }
+
+    // Individual toggle
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+    lastSelectedId.current = id;
 
     // Auto-enable select mode on first selection
     if (!isSelectMode) setIsSelectMode(true);
@@ -1752,7 +1759,7 @@ export default function Demandas() {
   const handleExitSelectMode = () => {
     setIsSelectMode(false);
     setSelectedIds(new Set());
-    lastSelectedIndex.current = null;
+    lastSelectedId.current = null;
   };
 
   const handleReorderSheets = async () => {
@@ -3631,7 +3638,7 @@ export default function Demandas() {
               onToggleUrgent={handleToggleUrgent}
               isSelectMode={isSelectMode}
               selectedIds={selectedIds}
-              onToggleSelect={(id) => handleToggleSelect(id)}
+              onToggleSelect={(id, event) => handleToggleSelect(id, event)}
               copyToClipboard={copyToClipboard}
               selectedAtribuicoes={selectedAtribuicoes}
               showArchived={showArchived}
