@@ -11,7 +11,7 @@ import { inngest } from "./client";
 import { sendWhatsAppMessage } from "./whatsapp-helper";
 import { syncFolderWithDatabase, getSyncFolders, smartSync, renewExpiringChannels, checkSyncHealth } from "@/lib/services/google-drive";
 import { readSheet, getSheetName, COL, ATRIBUICAO_TO_SHEET, statusParaLabel } from "@/lib/services/google-sheets";
-import { registerConflict, logSyncAction } from "@/lib/services/sync-engine";
+import { registerConflict, logSyncAction, getLastSyncedFieldValue } from "@/lib/services/sync-engine";
 
 // ============================================
 // WHATSAPP FUNCTIONS
@@ -2068,7 +2068,7 @@ export const syncSheetPollingFn = inngest.createFunction(
 
             const demanda = await db.query.demandas.findFirst({
               where: eq(demandas.id, demandaId),
-              columns: { id: true, status: true, substatus: true, updatedAt: true, syncedAt: true },
+              columns: { id: true, status: true, substatus: true, updatedAt: true },
             });
             if (!demanda) continue;
 
@@ -2080,8 +2080,13 @@ export const syncSheetPollingFn = inngest.createFunction(
             const bancoStatusLabel = statusParaLabel(demanda.status, demanda.substatus);
 
             if (planilhaStatus !== bancoStatusLabel) {
-              const syncedAt = demanda.syncedAt ?? new Date(0);
-              const bancoMudou = demanda.updatedAt > syncedAt;
+              // O banco só "mudou" se o status divergiu do último ponto de sync.
+              // NÃO usar demanda.updatedAt: é timestamp da linha inteira e é
+              // bumpado por edições não-relacionadas (enrichment, providências,
+              // reimport), o que marcava falsos conflitos. Planilha é a fonte de
+              // verdade para status — na ausência de mudança real no banco, ela vence.
+              const lastSynced = await getLastSyncedFieldValue(demandaId, "status");
+              const bancoMudou = lastSynced != null && bancoStatusLabel !== lastSynced;
 
               if (bancoMudou) {
                 // Conflito — ambos mudaram
