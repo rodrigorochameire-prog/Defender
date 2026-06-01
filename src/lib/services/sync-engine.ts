@@ -44,6 +44,13 @@ const BIDIRECTIONAL_FIELDS = new Set([
   "delegadoPara",
   "prazo",
   "reuPreso",
+  // `ato` nasce do PJe (tipo de intimação, ex.: "Ciência"), mas o defensor
+  // precisa poder definir na planilha o ato processual real a praticar. Como
+  // bidirecional, edições na coluna Ato gravam no banco (webhook já tem o
+  // case "ato") e a reimportação preserva o valor manual (pje-import só
+  // preenche ato vazio). Sem isso, toda edição era descartada e o reorder
+  // repintava a célula com o valor do banco.
+  "ato",
 ]);
 
 /**
@@ -52,7 +59,6 @@ const BIDIRECTIONAL_FIELDS = new Set([
 const BANCO_TO_SHEET_FIELDS = new Set([
   "assistidoNome",
   "numeroAutos",
-  "ato",
   "dataEntrada",
 ]);
 
