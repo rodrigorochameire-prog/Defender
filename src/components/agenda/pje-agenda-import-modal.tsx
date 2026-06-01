@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { NAME_ACCENTS } from "@/lib/utils/title-case";
+import { detectarTipoAudiencia, detectarSituacao } from "./detectar-tipo-audiencia";
 import {
   Upload,
   AlertTriangle,
@@ -82,11 +84,13 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
   // Função para converter texto em Title Case (exceto conectivos)
   const toTitleCase = (texto: string): string => {
     if (!texto) return "";
-    
+
     return texto
       .toLowerCase()
       .split(" ")
       .map((palavra, index) => {
+        // Acentuar nomes próprios conhecidos (dicionário compartilhado, independe de conectivo)
+        if (NAME_ACCENTS[palavra]) return NAME_ACCENTS[palavra];
         // Primeira palavra sempre em maiúsculo, conectivos em minúsculo
         if (index === 0 || !conectivos.includes(palavra)) {
           return palavra.charAt(0).toUpperCase() + palavra.slice(1);
@@ -473,64 +477,9 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
           ? forcedAtribuicao
           : mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
-        // Extrair tipo de audiência do texto - ordem importa (mais específico primeiro)
-        let tipoAudienciaTexto = "";
-        
-        // Sessão de Julgamento do Júri
-        if (textoBloco.match(/Sessão\s+de\s+Julgamento/i) || 
-            textoBloco.match(/Plenário/i) ||
-            textoBloco.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
-          tipoAudienciaTexto = "Sessão de Julgamento do Tribunal do Júri";
-        } 
-        // ANPP - Acordo de Não Persecução Penal
-        else if (textoBloco.match(/ANPP/i) || 
-                 textoBloco.match(/N[AÃ]O[\s-]*PERSECU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/ACORDO.*PENAL/i)) {
-          tipoAudienciaTexto = "ANPP";
-        }
-        // PAP - Produção Antecipada de Provas
-        else if (textoBloco.match(/PRODU[CÇ][AÃ]O\s+ANTECIPADA/i) || 
-                 textoBloco.match(/PAP/i) ||
-                 textoBloco.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
-                 textoBloco.match(/Coleta.*Provas/i)) {
-          tipoAudienciaTexto = "PAP";
-        }
-        // Admonitória (Execução Penal)
-        else if (textoBloco.match(/ADMONIT[OÓ]RIA/i)) {
-          tipoAudienciaTexto = "Admonitória";
-        }
-        // Oitiva Especial (antes de justificação para não confundir)
-        else if (textoBloco.match(/OITIVA\s*ESPECIAL/i) || 
-                 textoBloco.match(/DEPOIMENTO\s+ESPECIAL/i)) {
-          tipoAudienciaTexto = "Oitiva especial";
-        }
-        // Retratação
-        else if (textoBloco.match(/RETRATA[CÇ][AÃ]O/i)) {
-          tipoAudienciaTexto = "Retratação";
-        }
-        // Justificação
-        else if (textoBloco.match(/JUSTIFICA[CÇ][AÃ]O/i)) {
-          tipoAudienciaTexto = "Justificação";
-        }
-        // Custódia
-        else if (textoBloco.match(/CUST[OÓ]DIA/i)) {
-          tipoAudienciaTexto = "Custódia";
-        }
-        // AIJ - Instrução e Julgamento (detectar múltiplos padrões)
-        else if (textoBloco.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ][AÃ]O/i) || 
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O\s+E?\s*JULGAMENTO/i) ||
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/AIJ/i)) {
-          tipoAudienciaTexto = "Instrução e Julgamento";
-        }
-        // Conciliação
-        else if (textoBloco.match(/CONCILIA[CÇ][AÃ]O/i)) {
-          tipoAudienciaTexto = "Conciliação";
-        }
-        // Fallback - texto genérico para deixar o mapeador decidir baseado na atribuição
-        else {
-          tipoAudienciaTexto = "";
-        }
+        // Extrair tipo de audiência — lógica pura e testável em detectar-tipo-audiencia.ts,
+        // robusta contra a quebra de palavra mid-word da coluna "Tipo" do PJe.
+        const tipoAudienciaTexto = detectarTipoAudiencia(textoBloco);
         
         // Mapear tipo de audiência para sigla e descrição
         const tipoAudienciaMapeado = mapearTipoAudiencia(tipoAudienciaTexto, atribuicao);
@@ -541,12 +490,8 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
         // Órgão julgador em Title Case
         const orgaoJulgadorFormatado = toTitleCase(orgaoJulgador);
 
-        // Extrair situação
-        let situacao = "designada";
-        if (textoBloco.match(/cancelada/i)) situacao = "cancelada";
-        else if (textoBloco.match(/redesignada/i)) situacao = "redesignada";
-        else if (textoBloco.match(/realizada/i)) situacao = "realizada";
-        else if (textoBloco.match(/designada/i)) situacao = "designada";
+        // Extrair situação (lógica pura e testável; robusta contra quebra mid-word)
+        const situacao = detectarSituacao(textoBloco);
 
         // Criar título no formato: Tipo de audiência - Nome do assistido - número do processo
         const processoCurto = processo.substring(0, 20) + "...";

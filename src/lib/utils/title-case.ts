@@ -18,6 +18,22 @@ const KNOWN_ACRONYMS = new Set<string>([
   "VVD",
 ]);
 
+/**
+ * Nomes próprios que o PJe emite em MAIÚSCULAS e sem diacríticos. Title Case
+ * sozinho não recupera o acento, então mapeamos as grafias inequívocas como
+ * nome próprio. Chave em minúsculo (lookup após normalizar o token).
+ * Omitimos casos ambíguos (ex.: "sa") para não gerar falso positivo.
+ */
+export const NAME_ACCENTS: Record<string, string> = {
+  joao: "João", jose: "José", andre: "André", antonio: "Antônio", antonia: "Antônia",
+  vinicius: "Vinícius", fabio: "Fábio", fabia: "Fábia", flavio: "Flávio", flavia: "Flávia",
+  tarcisio: "Tarcísio", otavio: "Otávio", romulo: "Rômulo", inacio: "Inácio",
+  conceicao: "Conceição", assuncao: "Assunção", paixao: "Paixão", encarnacao: "Encarnação",
+  guimaraes: "Guimarães", magalhaes: "Magalhães", araujo: "Araújo", damiao: "Damião",
+  brandao: "Brandão", leao: "Leão", falcao: "Falcão", galvao: "Galvão", simao: "Simão",
+  franca: "França", gonzalez: "González", junior: "Júnior", junio: "Júnio",
+};
+
 const CONNECTORS = new Set<string>([
   "de",
   "da",
@@ -89,6 +105,12 @@ export function toTitleCase(input: string): string {
       // Connectors take priority: checked before acronym heuristic
       if (firstWordSeen && CONNECTORS.has(lowerCore)) {
         return lower;
+      }
+
+      // Nomes próprios sem acento (João, Conceição, Guimarães, ...)
+      if (NAME_ACCENTS[lowerCore]) {
+        firstWordSeen = true;
+        return token.replace(/[A-Za-zÀ-ÿ]+/, NAME_ACCENTS[lowerCore]);
       }
 
       const normalized = token.replace(/[^A-Za-zÀ-ÿ]/g, "").toUpperCase();
