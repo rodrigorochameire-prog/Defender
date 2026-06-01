@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { NAME_ACCENTS } from "@/lib/utils/title-case";
 import {
   Upload,
   AlertTriangle,
@@ -82,11 +83,13 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
   // Função para converter texto em Title Case (exceto conectivos)
   const toTitleCase = (texto: string): string => {
     if (!texto) return "";
-    
+
     return texto
       .toLowerCase()
       .split(" ")
       .map((palavra, index) => {
+        // Acentuar nomes próprios conhecidos (dicionário compartilhado, independe de conectivo)
+        if (NAME_ACCENTS[palavra]) return NAME_ACCENTS[palavra];
         // Primeira palavra sempre em maiúsculo, conectivos em minúsculo
         if (index === 0 || !conectivos.includes(palavra)) {
           return palavra.charAt(0).toUpperCase() + palavra.slice(1);
@@ -474,62 +477,75 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
           : mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
         // Extrair tipo de audiência do texto - ordem importa (mais específico primeiro)
+        // O PJe quebra palavras no meio da célula "Tipo" (ex.: "JUSTIFICAÇ\nÃO"),
+        // o que partia o token entre Ç e Ã e fazia o regex /JUSTIFICA[CÇ][AÃ]O/ falhar.
+        // Normalizar espaços/quebras antes de casar evita perder o tipo por wrap de coluna.
+        const textoBlocoNorm = textoBloco.replace(/\s+/g, " ");
         let tipoAudienciaTexto = "";
-        
+
         // Sessão de Julgamento do Júri
-        if (textoBloco.match(/Sessão\s+de\s+Julgamento/i) || 
-            textoBloco.match(/Plenário/i) ||
-            textoBloco.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
+        if (textoBlocoNorm.match(/Sessão\s+de\s+Julgamento/i) ||
+            textoBlocoNorm.match(/Plenário/i) ||
+            textoBlocoNorm.match(/TRIBUNAL\s+DO\s+J[UÚ]RI.*JULGAMENTO/i)) {
           tipoAudienciaTexto = "Sessão de Julgamento do Tribunal do Júri";
-        } 
+        }
         // ANPP - Acordo de Não Persecução Penal
-        else if (textoBloco.match(/ANPP/i) || 
-                 textoBloco.match(/N[AÃ]O[\s-]*PERSECU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/ACORDO.*PENAL/i)) {
+        else if (textoBlocoNorm.match(/ANPP/i) ||
+                 textoBlocoNorm.match(/N[AÃ]O[\s-]*PERSECU[CÇ][AÃ]O/i) ||
+                 textoBlocoNorm.match(/ACORDO.*PENAL/i)) {
           tipoAudienciaTexto = "ANPP";
         }
         // PAP - Produção Antecipada de Provas
-        else if (textoBloco.match(/PRODU[CÇ][AÃ]O\s+ANTECIPADA/i) || 
-                 textoBloco.match(/PAP/i) ||
-                 textoBloco.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
-                 textoBloco.match(/Coleta.*Provas/i)) {
+        else if (textoBlocoNorm.match(/PRODU[CÇ][AÃ]O\s+ANTECIPADA/i) ||
+                 textoBlocoNorm.match(/PAP/i) ||
+                 textoBlocoNorm.match(/ANTECIPADA\s+DE\s+PROVAS/i) ||
+                 textoBlocoNorm.match(/Coleta.*Provas/i)) {
           tipoAudienciaTexto = "PAP";
         }
         // Admonitória (Execução Penal)
-        else if (textoBloco.match(/ADMONIT[OÓ]RIA/i)) {
+        else if (textoBlocoNorm.match(/ADMONIT[OÓ]RIA/i)) {
           tipoAudienciaTexto = "Admonitória";
         }
         // Oitiva Especial (antes de justificação para não confundir)
-        else if (textoBloco.match(/OITIVA\s*ESPECIAL/i) || 
-                 textoBloco.match(/DEPOIMENTO\s+ESPECIAL/i)) {
+        else if (textoBlocoNorm.match(/OITIVA\s*ESPECIAL/i) ||
+                 textoBlocoNorm.match(/DEPOIMENTO\s+ESPECIAL/i)) {
           tipoAudienciaTexto = "Oitiva especial";
         }
         // Retratação
-        else if (textoBloco.match(/RETRATA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoNorm.match(/RETRATA[CÇ][AÃ]O/i)) {
           tipoAudienciaTexto = "Retratação";
         }
         // Justificação
-        else if (textoBloco.match(/JUSTIFICA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoNorm.match(/JUSTIFICA[CÇ][AÃ]O/i)) {
           tipoAudienciaTexto = "Justificação";
         }
         // Custódia
-        else if (textoBloco.match(/CUST[OÓ]DIA/i)) {
+        else if (textoBlocoNorm.match(/CUST[OÓ]DIA/i)) {
           tipoAudienciaTexto = "Custódia";
         }
         // AIJ - Instrução e Julgamento (detectar múltiplos padrões)
-        else if (textoBloco.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ][AÃ]O/i) || 
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O\s+E?\s*JULGAMENTO/i) ||
-                 textoBloco.match(/INSTRU[CÇ][AÃ]O/i) ||
-                 textoBloco.match(/AIJ/i)) {
+        else if (textoBlocoNorm.match(/AUDI[EÊ]NCIA\s+DE\s+INSTRU[CÇ][AÃ]O/i) ||
+                 textoBlocoNorm.match(/INSTRU[CÇ][AÃ]O\s+E?\s*JULGAMENTO/i) ||
+                 textoBlocoNorm.match(/INSTRU[CÇ][AÃ]O/i) ||
+                 textoBlocoNorm.match(/AIJ/i)) {
           tipoAudienciaTexto = "Instrução e Julgamento";
         }
         // Conciliação
-        else if (textoBloco.match(/CONCILIA[CÇ][AÃ]O/i)) {
+        else if (textoBlocoNorm.match(/CONCILIA[CÇ][AÃ]O/i)) {
           tipoAudienciaTexto = "Conciliação";
         }
-        // Fallback - texto genérico para deixar o mapeador decidir baseado na atribuição
+        // Fallback robusto: inferir pelo CÓDIGO da classe processual, imune a quebra de
+        // linha (ex.: "(1268)", "(280)"). Só age quando o texto do tipo não resolveu.
         else {
-          tipoAudienciaTexto = "";
+          const codigoClasse = textoBlocoNorm.match(/\((\d{2,5})\)/)?.[1] ?? "";
+          const tipoPorClasse: Record<string, string> = {
+            "1268": "Justificação",        // Medidas Protetivas de Urgência (MPU)
+            "280": "Justificação",         // Auto de Prisão em Flagrante
+            "11955": "Oitiva especial",    // Cautelar Inominada Criminal
+            "283": "Instrução e Julgamento",   // Ação Penal - Procedimento Ordinário
+            "10943": "Instrução e Julgamento", // Ação Penal - Procedimento Sumário
+          };
+          tipoAudienciaTexto = tipoPorClasse[codigoClasse] ?? "";
         }
         
         // Mapear tipo de audiência para sigla e descrição
