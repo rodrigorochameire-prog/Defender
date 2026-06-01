@@ -700,6 +700,7 @@ export function DemandaQuickPreview({
           if (
             target?.closest?.('[data-radix-popper-content-wrapper]') ||
             target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[data-inline-dropdown-portal]') ||
             target?.closest?.('[role="listbox"]') ||
             target?.closest?.('[role="option"]') ||
             target?.closest?.('[cmdk-root]')
@@ -712,6 +713,7 @@ export function DemandaQuickPreview({
           if (
             target?.closest?.('[data-radix-popper-content-wrapper]') ||
             target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[data-inline-dropdown-portal]') ||
             target?.closest?.('[role="listbox"]') ||
             target?.closest?.('[role="option"]') ||
             target?.closest?.('[cmdk-root]')
