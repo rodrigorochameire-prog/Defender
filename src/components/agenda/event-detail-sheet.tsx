@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Loader2, Trash2, X,
+  AlertTriangle, Check, Copy, Loader2, Scale, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -372,6 +372,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                             <button
                               key={opt}
                               type="button"
+                              aria-pressed={tipoPatrocinio === opt}
                               disabled={setPatrocinio.isPending}
                               onClick={() =>
                                 setPatrocinio.mutate({
@@ -410,8 +411,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                           />
                         )}
                         {tipoPatrocinio === "PARTICULAR" && advogadoParticular && (
-                          <span className="text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
-                            ⚖ Particular — {advogadoParticular}
+                          <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
+                            <Scale className="w-3 h-3" />
+                            Particular — {advogadoParticular}
                           </span>
                         )}
                       </div>
