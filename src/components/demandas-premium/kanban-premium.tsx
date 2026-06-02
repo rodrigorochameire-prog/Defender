@@ -50,7 +50,7 @@ import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-l
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
-import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
+import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 
 // Context para edição do ato direto no card do kanban. Evita threadar
 // onAtoChange por todos os níveis (colunas, listas, agrupamentos) — o
@@ -441,9 +441,7 @@ function KanbanCard({
 
   // Edição de ato direto no card (via context, evita threadar props)
   const { onAtoChange } = React.useContext(KanbanAtoContext);
-  const atoOptions = onAtoChange
-    ? getAtosPorAtribuicao(demanda.atribuicao || "").filter((a) => a.value !== "Todos")
-    : [];
+  const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
 
   // Status popover state
   const [showStatusPopover, setShowStatusPopover] = useState(false);
@@ -739,13 +737,17 @@ function KanbanCard({
               <InlineDropdown
                 value={demanda.ato}
                 displayValue={
-                  <span className="text-[10px] text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate max-w-[150px] inline-block align-bottom">
+                  <span
+                    className="text-[10px] font-medium truncate max-w-[150px] inline-block align-bottom transition-opacity hover:opacity-75"
+                    style={{ color: groupColor }}
+                  >
                     {demanda.ato || <span className="opacity-60 italic">Definir ato</span>}
                   </span>
                 }
                 options={atoOptions}
                 onChange={(v) => onAtoChange(String(demanda.id), v)}
                 compact
+                layout="accordion"
               />
             </span>
           ) : (
