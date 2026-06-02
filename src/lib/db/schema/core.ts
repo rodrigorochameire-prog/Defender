@@ -185,6 +185,8 @@ export const processos = pgTable("processos", {
   valorCausa: integer("valor_causa"),
   parteContraria: text("parte_contraria"),
   advogadoContrario: text("advogado_contrario"),
+  tipoPatrocinio: varchar("tipo_patrocinio", { length: 20 }).notNull().default("DEFENSORIA"), // DEFENSORIA | PARTICULAR
+  advogadoParticular: text("advogado_particular"),
   fase: varchar("fase", { length: 50 }),
   situacao: varchar("situacao", { length: 50 }).default("ativo"),
   isJuri: boolean("is_juri").default(false),
