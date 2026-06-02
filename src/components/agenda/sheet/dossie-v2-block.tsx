@@ -16,7 +16,7 @@ function Lista({ titulo, itens }: { titulo: string; itens?: string[] }) {
       <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">{titulo}</h4>
       <ul className="space-y-1 list-disc pl-4">
         {itens.map((t, i) => (
-          <li key={i} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{t}</li>
+          <li key={`${i}-${t}`} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{t}</li>
         ))}
       </ul>
     </div>
@@ -55,7 +55,7 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
         <div className="space-y-1.5">
           <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Resumo</h4>
           {dossie.resumo.map((p, i) => (
-            <p key={i} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{p}</p>
+            <p key={`${i}-${p.slice(0, 24)}`} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{p}</p>
           ))}
         </div>
       )}
@@ -64,9 +64,9 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
         <div className="space-y-2">
           <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Teses</h4>
           {dossie.teses.map((t, i) => (
-            <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 p-2.5 space-y-1">
+            <div key={t.nome ?? i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 p-2.5 space-y-1">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1">{t.nome}</p>
+                {t.nome && (<p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1">{t.nome}</p>)}
                 {t.nivel && (
                   <span
                     className={cn(
