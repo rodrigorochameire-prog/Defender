@@ -8,6 +8,13 @@ import { TRPCError } from "@trpc/server";
 import { getComarcaId, getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 import { classifyTipoProcesso, isReferenceTipo } from "@/lib/utils/processo-classification";
+import { normalizePatrocinio, TIPOS_PATROCINIO } from "@/lib/processos/patrocinio";
+
+export const setPatrocinioInput = z.object({
+  processoId: z.number(),
+  tipoPatrocinio: z.enum(TIPOS_PATROCINIO),
+  advogadoParticular: z.string().nullable().optional(),
+});
 
 export const processosRouter = router({
   // Listar todos os processos
@@ -629,7 +636,25 @@ export const processosRouter = router({
             : eq(processos.id, id)
         )
         .returning();
-      
+
+      return atualizado;
+    }),
+
+  setPatrocinio: protectedProcedure
+    .input(setPatrocinioInput)
+    .mutation(async ({ input }) => {
+      const { tipoPatrocinio, advogadoParticular } = normalizePatrocinio(
+        input.tipoPatrocinio,
+        input.advogadoParticular,
+      );
+      const [atualizado] = await db
+        .update(processos)
+        .set({ tipoPatrocinio, advogadoParticular, updatedAt: new Date() })
+        .where(eq(processos.id, input.processoId))
+        .returning();
+      if (!atualizado) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
       return atualizado;
     }),
 
