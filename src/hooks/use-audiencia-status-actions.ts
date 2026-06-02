@@ -51,5 +51,13 @@ export function useAudienciaStatusActions(audienciaId: number | null) {
     onError: (e) => toast.error(e.message),
   });
 
-  return { concluir, redesignar, marcarOuvido, redesignarDep, addNote };
+  const removeNote = trpc.audiencias.removeQuickNote.useMutation({
+    onSuccess: () => {
+      toast.success("Anotação removida");
+      invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return { concluir, redesignar, marcarOuvido, redesignarDep, addNote, removeNote };
 }
