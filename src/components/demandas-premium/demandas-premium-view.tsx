@@ -3653,6 +3653,7 @@ export default function Demandas() {
               onCardClick={(id) => setPreviewDemandaId(id)}
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
+              onAtoChange={handleAtoChange}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}
