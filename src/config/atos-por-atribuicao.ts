@@ -399,6 +399,58 @@ export function getAtosPorAtribuicao(atribuicao: string): Array<{ value: string;
   ];
 }
 
+// ==========================================
+// CATEGORIZAÇÃO DE ATOS (dropdown sistematizado)
+// ==========================================
+// Agrupa atos por natureza para o dropdown em accordion. Ordem reflete a UI:
+// Defesas (manifestação processual) → Recursos → Liberdade → Ciências (ato
+// passivo) → Diligências (resto). Fonte única usada pelo sheet lateral e pelos
+// cards (kanban etc.).
+export const ATO_CATEGORY_ORDER = ["Defesas", "Recursos", "Liberdade", "Ciências", "Diligências"];
+
+export function categorizarAto(ato: string): string {
+  const a = (ato || "").toLowerCase();
+  if (
+    a.startsWith("ciência") || a.startsWith("ciencia") ||
+    a.startsWith("analisar ") || a === "cumprir despacho"
+  ) return "Ciências";
+  if (
+    a.includes("apelação") || a.includes("apelacao") || a.includes("rese") ||
+    a.includes("embargos") || a.includes("habeas") ||
+    a.startsWith("razões") || a.startsWith("razoes") ||
+    a.startsWith("contrarrazões") || a.startsWith("contrarrazoes")
+  ) return "Recursos";
+  if (
+    a.includes("revogação") || a.includes("revogacao") ||
+    a.includes("relaxamento") || a.includes("restituição") || a.includes("restituicao") ||
+    a.includes("monitoramento") || a.includes("liberdade")
+  ) return "Liberdade";
+  if (
+    a === "resposta à acusação" || a === "resposta a acusacao" ||
+    a === "alegações finais" || a === "alegacoes finais" ||
+    a === "memoriais" || a.startsWith("manifestação") || a.startsWith("manifestacao")
+  ) return "Defesas";
+  return "Diligências";
+}
+
+/**
+ * Atos da atribuição, categorizados e ordenados por categoria → label.
+ * Pronto para `<InlineDropdown layout="accordion">`. Exclui "Todos".
+ */
+export function getAtoOptionsAgrupados(
+  atribuicao: string,
+): Array<{ value: string; label: string; group: string }> {
+  return getAtosPorAtribuicao(atribuicao)
+    .filter((a) => a.value !== "Todos")
+    .map((a) => ({ value: a.value, label: a.label, group: categorizarAto(a.value) }))
+    .sort((x, y) => {
+      const xi = ATO_CATEGORY_ORDER.indexOf(x.group);
+      const yi = ATO_CATEGORY_ORDER.indexOf(y.group);
+      if (xi !== yi) return xi - yi;
+      return x.label.localeCompare(y.label, "pt-BR");
+    });
+}
+
 // Função para obter todos os atos únicos (para quando não há atribuição selecionada)
 export function getTodosAtosUnicos(): Array<{ value: string; label: string }> {
   const atosSet = new Set<string>();
