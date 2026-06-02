@@ -17,6 +17,8 @@ import { SheetActionFooter } from "./sheet/sheet-action-footer";
 import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
 import { DocumentosBlock } from "./sheet/documentos-block";
 import { MidiaBlock } from "./sheet/midia-block";
+import { DossieV2Block } from "./sheet/dossie-v2-block";
+import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
@@ -148,6 +150,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const vara = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
 
   const ad = ctx?.analysisData;
+  const dossieV2 = hasDossieV2(ad) ? (ad as any).dossie : null;
   const anotacoesRapidas = ordenarNotasDesc((ctx as any)?.audiencia?.anotacoesRapidas);
   const autoresAnotacoes: Record<number, string> = (ctx as any)?.autoresAnotacoes ?? {};
   const caso = ctx?.caso;
@@ -437,6 +440,12 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </CollapsibleSection>
             )}
 
+            {!isLoading && dossieV2 && (
+              <CollapsibleSection id="dossie" label="Dossiê" defaultOpen>
+                <DossieV2Block dossie={dossieV2} />
+              </CollapsibleSection>
+            )}
+
             {!isLoading && (
               <CollapsibleSection
                 id="anotacoes-rapidas"
@@ -489,6 +498,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
             {!isLoading && (
               <>
+                {!dossieV2 && (<>
                 {!imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0 && (
                   <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
                     <div className="space-y-2">
@@ -563,6 +573,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     )}
                   </CollapsibleSection>
                 )}
+                </>)}
 
                 <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
                   {depoentes.length > 0 ? (
@@ -621,6 +632,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   ) : <EmptyHint text="Nenhum depoente cadastrado." />}
                 </CollapsibleSection>
 
+                {!dossieV2 && (<>
                 {contradicoes.length > 0 && (
                   <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
                     {analyzedAt && (
@@ -812,6 +824,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     </div>
                   </CollapsibleSection>
                 )}
+                </>)}
 
                 <CollapsibleSection id="documentos" label="Documentos" defaultOpen>
                   <DocumentosBlock
