@@ -104,6 +104,14 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
   const actions = useAudienciaStatusActions(audienciaIdNum);
 
+  const utils = trpc.useUtils();
+  const setPatrocinio = trpc.processos.setPatrocinio.useMutation({
+    onSuccess: () => {
+      if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const midiasQuery = trpc.drive.midiasByAssistido.useQuery(
     { assistidoId: (ctx?.assistido as any)?.id ?? 0 },
     { enabled: !!(ctx?.assistido as any)?.id && open, retry: false }
@@ -148,6 +156,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
   const analysisStatus = (ctx?.processo as any)?.analysisStatus ?? null;
   const analyzedAt = (ctx?.processo as any)?.analyzedAt ?? null;
+  const tipoPatrocinio: "DEFENSORIA" | "PARTICULAR" =
+    ((ctx?.processo as any)?.tipoPatrocinio as "DEFENSORIA" | "PARTICULAR") ?? "DEFENSORIA";
+  const advogadoParticular: string | null =
+    (ctx?.processo as any)?.advogadoParticular ?? null;
 
   const imputacao = extractString(ad, "imputacao", "crimes_imputados") ?? extractString(caso, "foco") ?? null;
   const fatos = caso?.narrativaDenuncia ?? extractString(ad, "resumo_executivo", "narrativa_denuncia") ?? null;
@@ -206,6 +218,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   }, [pessoaIdsDoProcesso, getSignal]);
 
   const [pessoaSheetId, setPessoaSheetId] = useState<number | null>(null);
+  const [advogadoDraft, setAdvogadoDraft] = useState("");
 
   const getNome = (pessoaId: number) => {
     const t = depoentes.find((d: any) => {
@@ -219,6 +232,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     const firstPending = depoentes.findIndex((d: any) => d.status !== "OUVIDA");
     setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
   }, [audienciaIdNum, depoentes.length]);
+
+  useEffect(() => {
+    setAdvogadoDraft(advogadoParticular ?? "");
+  }, [advogadoParticular, processoId]);
 
   const resumoExecutivo = extractString(ad, "resumo_executivo");
   const contradicoes = extractArray(ad, "contradicoes", "vulnerabilidades_acusacao");
@@ -346,6 +363,58 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         {vara}
                         {evento.atribuicao && ` · ${evento.atribuicao}`}
                       </p>
+                    )}
+                    {processoId && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="text-[10px] uppercase tracking-wide text-neutral-400">Patrocínio</span>
+                        <div className="inline-flex rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                          {(["DEFENSORIA", "PARTICULAR"] as const).map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              disabled={setPatrocinio.isPending}
+                              onClick={() =>
+                                setPatrocinio.mutate({
+                                  processoId,
+                                  tipoPatrocinio: opt,
+                                  advogadoParticular: opt === "PARTICULAR" ? advogadoDraft : null,
+                                })
+                              }
+                              className={cn(
+                                "px-2.5 py-1 text-xs cursor-pointer transition-colors",
+                                tipoPatrocinio === opt
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-transparent text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+                              )}
+                            >
+                              {opt === "DEFENSORIA" ? "Defensoria" : "Particular"}
+                            </button>
+                          ))}
+                        </div>
+                        {tipoPatrocinio === "PARTICULAR" && (
+                          <Input
+                            value={advogadoDraft}
+                            onChange={(e) => setAdvogadoDraft(e.target.value)}
+                            onBlur={() => {
+                              const atual = advogadoParticular ?? "";
+                              if (advogadoDraft.trim() !== atual.trim()) {
+                                setPatrocinio.mutate({
+                                  processoId,
+                                  tipoPatrocinio: "PARTICULAR",
+                                  advogadoParticular: advogadoDraft,
+                                });
+                              }
+                            }}
+                            placeholder="Nome do advogado"
+                            className="h-7 text-xs rounded-lg w-48"
+                          />
+                        )}
+                        {tipoPatrocinio === "PARTICULAR" && advogadoParticular && (
+                          <span className="text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
+                            ⚖ Particular — {advogadoParticular}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
