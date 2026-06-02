@@ -35,3 +35,18 @@ describe("ordenarNotasDesc", () => {
     expect(ordenarNotasDesc(null)).toEqual([]);
   });
 });
+
+import { removeQuickNoteInput } from "@/lib/trpc/routers/audiencias";
+
+describe("removeQuickNoteInput", () => {
+  it("aceita audienciaId + timestamp", () => {
+    const r = removeQuickNoteInput.safeParse({
+      audienciaId: 1, timestamp: "2026-06-01T10:00:00.000Z",
+    });
+    expect(r.success).toBe(true);
+  });
+  it("rejeita sem timestamp", () => {
+    const r = removeQuickNoteInput.safeParse({ audienciaId: 1 });
+    expect(r.success).toBe(false);
+  });
+});

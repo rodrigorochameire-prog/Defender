@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, audiencias, audienciasHistorico, processos, assistidos, sessoesJuri, testemunhas } from "@/lib/db";
 import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
-import { analysisJobs } from "@/lib/db/schema/core";
+import { analysisJobs, users } from "@/lib/db/schema/core";
 import { registros as atendimentos } from "@/lib/db/schema/agenda";
 import { diligencias, anotacoes } from "@/lib/db/schema/investigacao";
 import { eq, and, gte, lte, desc, asc, isNull, or, sql, ilike, inArray } from "drizzle-orm";
@@ -11,6 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/preparacao-audiencia";
 import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "@/lib/services/google-calendar";
 import { resolveCalendarId } from "@/lib/services/calendar-mapping";
+import { removeNotaByTimestamp } from "@/lib/agenda/anotacoes-rapidas";
 
 // ==========================================
 // Shared analysis helper used by both
@@ -389,6 +390,11 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
   return { audiencia, processo, assistidoNome, resumoCaso, depoentes };
 }
 
+export const removeQuickNoteInput = z.object({
+  audienciaId: z.number(),
+  timestamp: z.string().min(1),
+});
+
 export const audienciasRouter = router({
   // Listar audiências
   // NOTA: Sem limite por padrão para garantir que todos os eventos apareçam no calendário
@@ -629,6 +635,21 @@ export const audienciasRouter = router({
         } catch { /* ignore */ }
       }
 
+      // Autores das anotações rápidas (id -> nome) para exibição no painel
+      const autorIds = Array.from(
+        new Set((aud.anotacoesRapidas ?? []).map((n) => n.autorId)),
+      );
+      let autoresAnotacoes: Record<number, string> = {};
+      if (autorIds.length > 0) {
+        const autoresRows = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(inArray(users.id, autorIds));
+        autoresAnotacoes = Object.fromEntries(
+          autoresRows.map((u) => [u.id, u.name]),
+        );
+      }
+
       return {
         audiencia: aud,
         processo: proc,
@@ -639,6 +660,7 @@ export const audienciasRouter = router({
         anotacoes: anotacoesResult,
         testemunhas: testemunhasResult,
         analysisData,
+        autoresAnotacoes,
       };
     }),
 
@@ -1996,6 +2018,25 @@ export const audienciasRouter = router({
         .set({ anotacoesRapidas: notasAtualizadas, updatedAt: new Date() })
         .where(eq(audiencias.id, input.audienciaId));
       return { nota: novaNota };
+    }),
+
+  removeQuickNote: protectedProcedure
+    .input(removeQuickNoteInput)
+    .mutation(async ({ input }) => {
+      const [audiencia] = await db
+        .select({ anotacoesRapidas: audiencias.anotacoesRapidas })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId));
+      if (!audiencia) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+      }
+      const antes = audiencia.anotacoesRapidas ?? [];
+      const depois = removeNotaByTimestamp(antes, input.timestamp);
+      await db
+        .update(audiencias)
+        .set({ anotacoesRapidas: depois, updatedAt: new Date() })
+        .where(eq(audiencias.id, input.audienciaId));
+      return { removed: depois.length < antes.length };
     }),
 
   marcarDepoenteOuvido: protectedProcedure
