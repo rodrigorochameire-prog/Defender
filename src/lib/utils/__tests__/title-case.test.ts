@@ -52,4 +52,17 @@ describe("toTitleCase", () => {
       "Audiência, Instrução e Julgamento"
     );
   });
+
+  it("acentua nomes próprios que o PJe emite sem diacrítico (regressão pauta 02/06)", () => {
+    expect(toTitleCase("JOAO LIMA DE CARVALHO")).toBe("João Lima de Carvalho");
+    expect(toTitleCase("CARLOS ALBERTO CONCEICAO DE SANTANA")).toBe(
+      "Carlos Alberto Conceição de Santana"
+    );
+    expect(toTitleCase("ANTONIO JESUS DOS SANTOS")).toBe("Antônio Jesus dos Santos");
+    expect(toTitleCase("VALMAR GUIMARAES DOS SANTOS")).toBe("Valmar Guimarães dos Santos");
+    expect(toTitleCase("GUILHERME VINICIUS LIMA DOS ANJOS")).toBe(
+      "Guilherme Vinícius Lima dos Anjos"
+    );
+    expect(toTitleCase("NELSON FRANCA DOS SANTOS")).toBe("Nelson França dos Santos");
+  });
 });

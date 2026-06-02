@@ -48,7 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
-import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
+import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
@@ -645,46 +645,9 @@ export function DemandaQuickPreview({
     group: v.group,
   }));
 
-  // Categoriza o ato pra agrupar no dropdown — ordem da categoria reflete
-  // ordem na UI: Defesas (manifestação processual) → Recursos → Liberdade →
-  // Ciências (ato passivo, só toma conhecimento) → Diligências (resto).
-  const ATO_CATEGORY_ORDER = ["Defesas", "Recursos", "Liberdade", "Ciências", "Diligências"];
-  const categorizarAto = (ato: string): string => {
-    const a = ato.toLowerCase();
-    if (
-      a.startsWith("ciência") || a.startsWith("ciencia") ||
-      a.startsWith("analisar ") || a === "cumprir despacho"
-    ) return "Ciências";
-    if (
-      a.includes("apelação") || a.includes("apelacao") || a.includes("rese") ||
-      a.includes("embargos") || a.includes("habeas") ||
-      a.startsWith("razões") || a.startsWith("razoes") ||
-      a.startsWith("contrarrazões") || a.startsWith("contrarrazoes")
-    ) return "Recursos";
-    if (
-      a.includes("revogação") || a.includes("revogacao") ||
-      a.includes("relaxamento") || a.includes("restituição") || a.includes("restituicao") ||
-      a.includes("monitoramento") || a.includes("liberdade")
-    ) return "Liberdade";
-    if (
-      a === "resposta à acusação" || a === "resposta a acusacao" ||
-      a === "alegações finais" || a === "alegacoes finais" ||
-      a === "memoriais" || a.startsWith("manifestação") || a.startsWith("manifestacao")
-    ) return "Defesas";
-    return "Diligências";
-  };
-  const atoOptions = (() => {
-    const all = getAtosPorAtribuicao(demanda.atribuicao)
-      .filter((a) => a.value !== "Todos")
-      .map((a) => ({ value: a.value, label: a.label, group: categorizarAto(a.value) }));
-    // Ordena por categoria conforme ATO_CATEGORY_ORDER
-    return all.sort((x, y) => {
-      const xi = ATO_CATEGORY_ORDER.indexOf(x.group);
-      const yi = ATO_CATEGORY_ORDER.indexOf(y.group);
-      if (xi !== yi) return xi - yi;
-      return x.label.localeCompare(y.label, "pt-BR");
-    });
-  })();
+  // Atos categorizados/ordenados — fonte única em atos-por-atribuicao.ts,
+  // compartilhada com os cards do kanban.
+  const atoOptions = getAtoOptionsAgrupados(demanda.atribuicao);
 
   const processo = demanda.processos?.[0];
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
@@ -700,6 +663,7 @@ export function DemandaQuickPreview({
           if (
             target?.closest?.('[data-radix-popper-content-wrapper]') ||
             target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[data-inline-dropdown-portal]') ||
             target?.closest?.('[role="listbox"]') ||
             target?.closest?.('[role="option"]') ||
             target?.closest?.('[cmdk-root]')
@@ -712,6 +676,7 @@ export function DemandaQuickPreview({
           if (
             target?.closest?.('[data-radix-popper-content-wrapper]') ||
             target?.closest?.('[data-radix-select-content]') ||
+            target?.closest?.('[data-inline-dropdown-portal]') ||
             target?.closest?.('[role="listbox"]') ||
             target?.closest?.('[role="option"]') ||
             target?.closest?.('[cmdk-root]')

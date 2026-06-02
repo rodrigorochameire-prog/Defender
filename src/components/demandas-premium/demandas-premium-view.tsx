@@ -46,6 +46,7 @@ import { DemandaEventsDrawer } from "@/components/demanda-eventos/demanda-events
 import { PrazosTab } from "@/components/demandas-premium/prazos-tab";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, UI_STATUS_TO_DB, STATUS_OPTIONS_BY_COLUMN, type StatusGroup } from "@/config/demanda-status";
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
+import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
 import { createPortal } from "react-dom";
@@ -427,6 +428,8 @@ interface DemandaGridCardProps {
   borderColor: string;
   atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }>>;
   onStatusChange: (id: string, status: string) => void;
+  onAtoChange?: (id: string, ato: string) => void;
+  atoOptions?: Array<{ value: string; label: string }>;
   onEdit: (demanda: any) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
@@ -442,6 +445,8 @@ function DemandaGridCard({
   borderColor,
   atribuicaoIcons,
   onStatusChange,
+  onAtoChange,
+  atoOptions,
   onEdit,
   onArchive,
   onDelete,
@@ -565,7 +570,19 @@ function DemandaGridCard({
                 {demanda.assistido}
               </p>
             </div>
-            <AtoWithIcon ato={demanda.ato} />
+            {onAtoChange && atoOptions && atoOptions.length > 0 ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineDropdown
+                  value={demanda.ato}
+                  displayValue={<AtoWithIcon ato={demanda.ato || "Definir ato"} />}
+                  options={atoOptions.filter((a) => a.value !== "Todos")}
+                  onChange={(v) => onAtoChange(demanda.id, v)}
+                  compact
+                />
+              </div>
+            ) : (
+              <AtoWithIcon ato={demanda.ato} />
+            )}
           </div>
           <button
             onClick={() => setShowQuickActions(true)}
@@ -3417,6 +3434,7 @@ export default function Demandas() {
                       {visibleDemandas.map((demanda) => {
                         const statusConfig = getStatusConfig(demanda.status);
                         const borderColor = STATUS_GROUPS[statusConfig.group].color;
+                        const atoOptionsForDemanda = getAtosPorAtribuicao(demanda.atribuicao);
 
                         return (
                           <DemandaGridCard
@@ -3426,6 +3444,8 @@ export default function Demandas() {
                             borderColor={borderColor}
                             atribuicaoIcons={atribuicaoIcons}
                             onStatusChange={handleStatusChange}
+                            onAtoChange={handleAtoChange}
+                            atoOptions={atoOptionsForDemanda}
                             onEdit={handleEditDemanda}
                             onArchive={handleArchiveDemanda}
                             onDelete={handleDeleteDemanda}
@@ -3633,6 +3653,7 @@ export default function Demandas() {
               onCardClick={(id) => setPreviewDemandaId(id)}
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
+              onAtoChange={handleAtoChange}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}

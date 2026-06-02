@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, syncLog } from "@/lib/db/schema";
-import { eq, isNull, and } from "drizzle-orm";
+import { eq, isNull, and, desc } from "drizzle-orm";
 
 // ==========================================
 // TYPES
@@ -44,6 +44,13 @@ const BIDIRECTIONAL_FIELDS = new Set([
   "delegadoPara",
   "prazo",
   "reuPreso",
+  // `ato` nasce do PJe (tipo de intimação, ex.: "Ciência"), mas o defensor
+  // precisa poder definir na planilha o ato processual real a praticar. Como
+  // bidirecional, edições na coluna Ato gravam no banco (webhook já tem o
+  // case "ato") e a reimportação preserva o valor manual (pje-import só
+  // preenche ato vazio). Sem isso, toda edição era descartada e o reorder
+  // repintava a célula com o valor do banco.
+  "ato",
 ]);
 
 /**
@@ -52,7 +59,6 @@ const BIDIRECTIONAL_FIELDS = new Set([
 const BANCO_TO_SHEET_FIELDS = new Set([
   "assistidoNome",
   "numeroAutos",
-  "ato",
   "dataEntrada",
 ]);
 
@@ -115,7 +121,13 @@ export function detectChange(state: SyncFieldState): ChangeType {
 // ==========================================
 
 /**
- * Insert a conflict record into sync_log and return the new row id.
+ * Register a conflict in sync_log and return the row id.
+ *
+ * Dedup: if an unresolved conflict already exists for this (demandaId, campo),
+ * we UPDATE it in place instead of inserting a new row. Without this, a poller
+ * running every 5min re-inserts the same conflict on every pass for as long as
+ * the mismatch persists — that produced ~1.440 duplicate rows/day and inflated
+ * the pending count into the tens of thousands for a handful of demandas.
  */
 export async function registerConflict(
   demandaId: number,
@@ -125,6 +137,27 @@ export async function registerConflict(
   bancoUpdatedAt: Date,
   planilhaUpdatedAt: Date,
 ): Promise<number> {
+  const [existing] = await db
+    .select({ id: syncLog.id })
+    .from(syncLog)
+    .where(
+      and(
+        eq(syncLog.demandaId, demandaId),
+        eq(syncLog.campo, campo),
+        eq(syncLog.conflito, true),
+        isNull(syncLog.resolvidoEm),
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(syncLog)
+      .set({ valorBanco, valorPlanilha, bancoUpdatedAt, planilhaUpdatedAt })
+      .where(eq(syncLog.id, existing.id));
+    return existing.id;
+  }
+
   const [row] = await db
     .insert(syncLog)
     .values({
@@ -140,6 +173,42 @@ export async function registerConflict(
     .returning({ id: syncLog.id });
 
   return row.id;
+}
+
+/**
+ * Returns the status/label both sides agreed on at the last successful sync for
+ * a given (demandaId, campo), or null if there is no prior sync record.
+ *
+ * Used by the poller to tell a *real* banco change apart from a row whose
+ * `updatedAt` was merely bumped by an unrelated edit (enrichment, providências,
+ * reimport). Only a value that diverged from this point counts as "banco changed".
+ */
+export async function getLastSyncedFieldValue(
+  demandaId: number,
+  campo: string,
+): Promise<string | null> {
+  const [row] = await db
+    .select({
+      origem: syncLog.origem,
+      valorBanco: syncLog.valorBanco,
+      valorPlanilha: syncLog.valorPlanilha,
+      resolvidoValor: syncLog.resolvidoValor,
+    })
+    .from(syncLog)
+    .where(
+      and(
+        eq(syncLog.demandaId, demandaId),
+        eq(syncLog.campo, campo),
+        eq(syncLog.conflito, false),
+      ),
+    )
+    .orderBy(desc(syncLog.createdAt))
+    .limit(1);
+
+  if (!row) return null;
+  if (row.resolvidoValor != null) return row.resolvidoValor;
+  if (row.origem === "BANCO") return row.valorBanco;
+  return row.valorPlanilha; // PLANILHA / MOVE / resolved → both ended on this value
 }
 
 // ==========================================

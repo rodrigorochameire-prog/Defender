@@ -49,6 +49,15 @@ import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
+import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
+
+// Context para edição do ato direto no card do kanban. Evita threadar
+// onAtoChange por todos os níveis (colunas, listas, agrupamentos) — o
+// KanbanCard consome direto. O Provider fica no KanbanPremium.
+const KanbanAtoContext = React.createContext<{
+  onAtoChange?: (demandaId: string, ato: string) => void;
+}>({});
 
 // ==========================================
 // STATUS ICON MAPPING (fallback when statusCfg.icon unavailable)
@@ -108,6 +117,8 @@ interface KanbanPremiumProps {
    */
   onOpenEventsDrawer?: (demandaId: number) => void;
   onStatusChange?: (demandaId: string, newStatus: string) => void;
+  /** Altera o ato direto no card (dropdown), igual ao status. */
+  onAtoChange?: (demandaId: string, ato: string) => void;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
   /** Atalho hover no card → abre o preview já no modo "novo registro" */
@@ -428,6 +439,10 @@ function KanbanCard({
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
+  // Edição de ato direto no card (via context, evita threadar props)
+  const { onAtoChange } = React.useContext(KanbanAtoContext);
+  const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
+
   // Status popover state
   const [showStatusPopover, setShowStatusPopover] = useState(false);
   const badgeRef = useRef<HTMLButtonElement>(null);
@@ -713,9 +728,33 @@ function KanbanCard({
 
         {/* Row 2: Ato + Data (inline, data só quebra se não couber) */}
         <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
-          <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
-            {demanda.ato}
-          </span>
+          {onAtoChange && atoOptions.length > 0 ? (
+            <span
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <InlineDropdown
+                value={demanda.ato}
+                displayValue={
+                  <span
+                    className="text-[10px] font-medium truncate max-w-[150px] inline-block align-bottom transition-opacity hover:opacity-75"
+                    style={{ color: groupColor }}
+                  >
+                    {demanda.ato || <span className="opacity-60 italic">Definir ato</span>}
+                  </span>
+                }
+                options={atoOptions}
+                onChange={(v) => onAtoChange(String(demanda.id), v)}
+                compact
+                layout="accordion"
+              />
+            </span>
+          ) : (
+            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+              {demanda.ato}
+            </span>
+          )}
           {(() => {
             // Indicador de não-sincronização: updatedAt mais novo que
             // syncedAt por mais de 5min = algo ficou fora do ciclo.
@@ -1616,6 +1655,7 @@ export function KanbanPremium({
   onCardClick,
   onOpenEventsDrawer,
   onStatusChange,
+  onAtoChange,
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
@@ -1929,6 +1969,7 @@ export function KanbanPremium({
   }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
 
   return (
+    <KanbanAtoContext.Provider value={{ onAtoChange }}>
     <div className="space-y-2">
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">
@@ -2192,5 +2233,6 @@ export function KanbanPremium({
         )}
       </div>
     </div>
+    </KanbanAtoContext.Provider>
   );
 }

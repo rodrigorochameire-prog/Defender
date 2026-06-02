@@ -234,6 +234,14 @@ export function InlineDropdown({
         return createPortal(
         <div
           data-inline-dropdown-portal="true"
+          // pointerEvents:auto reabilita interação mesmo quando um Radix Dialog/Sheet
+          // modal seta `pointer-events:none` no body (o portal é montado em
+          // document.body, fora do conteúdo do modal, e herdaria o none).
+          // stopPropagation no pointerdown impede que o DismissableLayer do Radix
+          // trate o clique numa opção como "clique fora" e feche o modal antes do
+          // onChange disparar. Sem isso, no sheet lateral o dropdown abria mas não
+          // selecionava.
+          onPointerDown={(e) => e.stopPropagation()}
           className="fixed z-[10000] bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-w-[calc(100vw-2rem)] overflow-y-auto py-1"
           style={{
             top: position.top,
@@ -241,6 +249,7 @@ export function InlineDropdown({
             left: position.left,
             minWidth: Math.max(position.width, gridMinWidth),
             maxHeight: position.maxHeight,
+            pointerEvents: "auto",
           }}
         >
           {/* Type-ahead indicator */}
