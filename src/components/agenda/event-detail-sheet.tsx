@@ -3,10 +3,10 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Loader2, X,
+  AlertTriangle, Check, Copy, Loader2, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -22,6 +22,8 @@ import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions"
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
 import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
 import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
 import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
@@ -138,6 +140,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const vara = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
 
   const ad = ctx?.analysisData;
+  const anotacoesRapidas = ordenarNotasDesc((ctx as any)?.audiencia?.anotacoesRapidas);
+  const autoresAnotacoes: Record<number, string> = (ctx as any)?.autoresAnotacoes ?? {};
   const caso = ctx?.caso;
   const assistidoId = (ctx?.assistido as any)?.id ?? evento?.assistidoId ?? null;
   const processoId = (ctx?.processo as any)?.id ?? evento?.processoId ?? null;
@@ -359,6 +363,56 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             {!isLoading && resumoExecutivo && (
               <CollapsibleSection id="resumo" label="Resumo Executivo" defaultOpen>
                 <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{resumoExecutivo}</p>
+              </CollapsibleSection>
+            )}
+
+            {!isLoading && (
+              <CollapsibleSection
+                id="anotacoes-rapidas"
+                label="Anotações rápidas"
+                count={anotacoesRapidas.length}
+                defaultOpen
+              >
+                {anotacoesRapidas.length === 0 ? (
+                  <EmptyHint text="Nenhuma anotação ainda" />
+                ) : (
+                  <ul className="space-y-2">
+                    {anotacoesRapidas.map((n) => (
+                      <li
+                        key={n.timestamp}
+                        className="group flex items-start gap-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-neutral-800 dark:text-neutral-100 whitespace-pre-wrap break-words">
+                            {n.texto}
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-neutral-400">
+                            {autoresAnotacoes[n.autorId] ?? "—"} ·{" "}
+                            {formatDistanceToNow(new Date(n.timestamp), {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Apagar anotação"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 cursor-pointer p-1"
+                          disabled={actions.removeNote.isPending || !audienciaIdNum}
+                          onClick={() =>
+                            audienciaIdNum &&
+                            actions.removeNote.mutate({
+                              audienciaId: audienciaIdNum,
+                              timestamp: n.timestamp,
+                            })
+                          }
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </CollapsibleSection>
             )}
 
