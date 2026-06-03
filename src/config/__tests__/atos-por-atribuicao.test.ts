@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAtoOptionsPreview, ATOS_POR_ATRIBUICAO } from "../atos-por-atribuicao";
+import { getAtoOptionsPreview, ATOS_POR_ATRIBUICAO, ATOS_FREQUENTES_POR_ATRIBUICAO } from "../atos-por-atribuicao";
 
 describe("getAtoOptionsPreview", () => {
   it("frequentes vêm primeiro e são todos válidos para a atribuição", () => {
@@ -25,5 +25,18 @@ describe("getAtoOptionsPreview", () => {
     const opts = getAtoOptionsPreview("Atribuição Inexistente");
     expect(opts.length).toBeGreaterThan(0);
     expect(opts.some((o) => o.group === "Frequentes")).toBe(false);
+  });
+});
+
+describe("ATOS_FREQUENTES_POR_ATRIBUICAO", () => {
+  it("toda lista curada só contém atos que existem na atribuição (≥5 por atribuição)", () => {
+    for (const [atribuicao, frequentes] of Object.entries(ATOS_FREQUENTES_POR_ATRIBUICAO)) {
+      const lista = ATOS_POR_ATRIBUICAO[atribuicao];
+      if (!lista) continue;
+      const validos = new Set(lista);
+      const invalidos = frequentes.filter((a) => !validos.has(a));
+      expect(invalidos, `${atribuicao}: nomes inválidos`).toEqual([]);
+      expect(frequentes.length, `${atribuicao}: poucos frequentes`).toBeGreaterThanOrEqual(5);
+    }
   });
 });
