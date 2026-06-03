@@ -2,7 +2,8 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { InlineDropdown } from "../inline-dropdown";
+import { useRef } from "react";
+import { InlineDropdown, type InlineDropdownHandle } from "../inline-dropdown";
 
 afterEach(() => cleanup());
 
@@ -121,5 +122,30 @@ describe("InlineDropdown — Barra de busca visível", () => {
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
     expect(screen.getByText("Beta")).toBeInTheDocument();
     expect(screen.queryByText("Digite para filtrar…")).not.toBeInTheDocument();
+  });
+});
+
+describe("InlineDropdown — handle imperativo", () => {
+  it("open() abre o dropdown programaticamente", () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    function Harness() {
+      const handle = useRef<InlineDropdownHandle>(null);
+      return (
+        <>
+          <button onClick={() => handle.current?.open()}>abrir</button>
+          <InlineDropdown
+            ref={handle}
+            value="A"
+            displayValue={<span>Trigger</span>}
+            options={[{ value: "A", label: "Alpha" }, { value: "B", label: "Beta" }]}
+            onChange={vi.fn()}
+          />
+        </>
+      );
+    }
+    render(<Harness />);
+    expect(screen.queryByText("Beta")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("abrir"));
+    expect(screen.getByText("Beta")).toBeInTheDocument();
   });
 });

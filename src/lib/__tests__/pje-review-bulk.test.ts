@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { aplicarLote } from "../pje-review-bulk";
+import { aplicarLote, proximaLinhaPendente } from "../pje-review-bulk";
 import type { PjeReviewRow } from "@/components/demandas-premium/pje-review-table";
 
 function makeRow(overrides: Partial<PjeReviewRow> = {}): PjeReviewRow {
@@ -66,5 +66,27 @@ describe("aplicarLote", () => {
     expect(out[0].estadoPrisional).toBe("preso");
     expect(out[0].status).toBe("triagem");
     expect(out[0].ato).toBe("");
+  });
+});
+
+describe("proximaLinhaPendente", () => {
+  const rows = [
+    makeRow({ ordemOriginal: 0, ato: "Ciência" }),
+    makeRow({ ordemOriginal: 1 }),                    // pendente
+    makeRow({ ordemOriginal: 2, excluded: true }),    // pula
+    makeRow({ ordemOriginal: 3 }),                    // pendente
+  ];
+  const ordemVisivel = [0, 1, 2, 3];
+
+  it("retorna a próxima sem ato após o índice atual", () => {
+    expect(proximaLinhaPendente(rows, ordemVisivel, 0)).toBe(1);
+  });
+
+  it("pula excluídas e classificadas", () => {
+    expect(proximaLinhaPendente(rows, ordemVisivel, 1)).toBe(3);
+  });
+
+  it("retorna null quando não há mais pendentes", () => {
+    expect(proximaLinhaPendente(rows, ordemVisivel, 3)).toBeNull();
   });
 });

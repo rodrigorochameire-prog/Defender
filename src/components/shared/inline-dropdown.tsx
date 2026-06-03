@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, ChevronRight, Check, Search } from "lucide-react";
 
@@ -30,16 +30,24 @@ interface InlineDropdownProps {
   layout?: "list" | "grid" | "accordion";
 }
 
-export function InlineDropdown({
-  value,
-  displayValue,
-  options,
-  onChange,
-  compact = false,
-  activateOnDoubleClick = false,
-  showEditIcon = false,
-  layout = "list",
-}: InlineDropdownProps) {
+export interface InlineDropdownHandle {
+  open: () => void;
+}
+
+export const InlineDropdown = forwardRef<InlineDropdownHandle, InlineDropdownProps>(
+  function InlineDropdown(
+    {
+      value,
+      displayValue,
+      options,
+      onChange,
+      compact = false,
+      activateOnDoubleClick = false,
+      showEditIcon = false,
+      layout = "list",
+    },
+    fwdRef,
+  ) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -147,6 +155,16 @@ export function InlineDropdown({
     const selected = options.find((o) => o.value === value);
     setExpandedGroups(selected?.group ? new Set([selected.group]) : new Set());
   }, [isOpen, layout, value, options, filterQuery]);
+
+  // Abertura programática (fluxo de teclado do preview de importação):
+  // garante o trigger visível ANTES de medir a posição do painel (scroll
+  // instantâneo, não smooth — o useLayoutEffect mede o rect na abertura).
+  useImperativeHandle(fwdRef, () => ({
+    open: () => {
+      ref.current?.scrollIntoView({ block: "center" });
+      setIsOpen(true);
+    },
+  }), []);
 
   const groupedOptions = useMemo(() => options.reduce((acc, opt) => {
     const group = opt.group || "default";
@@ -376,4 +394,5 @@ export function InlineDropdown({
       })()}
     </div>
   );
-}
+},
+);

@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3, ScanSearch, Loader2, Lock } from "lucide-react";
-import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { InlineDropdown, type InlineDropdownHandle } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtoOptionsPreview, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
 import { converterISOParaBR } from "@/lib/prazo-calculator";
 import { calcularPrazoParaAto } from "@/lib/pje-review-row";
-import { aplicarLote } from "@/lib/pje-review-bulk";
+import { aplicarLote, proximaLinhaPendente } from "@/lib/pje-review-bulk";
 import { AudienciaInlineForm } from "./audiencia-inline-form";
 import {
   Tooltip,
@@ -131,6 +131,9 @@ export function PjeReviewTable({
   // Vazia = lote aplica a todas as incluídas (comportamento legado).
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
+  // Refs dos dropdowns de ato, por índice original — para o avanço por teclado
+  const atoRefs = useRef(new Map<number, InlineDropdownHandle>());
+
   // Opções de ato baseadas na atribuição — grupo "Frequentes" primeiro,
   // depois categorias (Defesas/Recursos/Liberdade/Ciências/Diligências).
   const atoOptions = useMemo(() => {
@@ -178,8 +181,7 @@ export function PjeReviewTable({
 
     // Se o prazo não foi editado manualmente, recalcular
     if (!row.prazoManual) {
-      const novoPrazo = calcularPrazoParaAto(row.dataExpedicao, novoAto);
-      updates.prazo = novoPrazo;
+      updates.prazo = calcularPrazoParaAto(row.dataExpedicao, novoAto);
     }
 
     // Quando o ato é de audiência e criarEventoAgenda ainda não foi definido, default true
@@ -187,7 +189,19 @@ export function PjeReviewTable({
       updates.criarEventoAgenda = true;
     }
 
-    updateRow(index, updates);
+    const newRows = [...rows];
+    newRows[index] = { ...newRows[index], ...updates };
+    onRowsChange(newRows);
+
+    // Fluxo de classificação: linha estava pendente → avança para a próxima
+    // sem ato e abre o dropdown dela. Reedição (já tinha ato) não avança.
+    if (!row.ato && novoAto) {
+      const ordem = filteredRows.map((f) => f.originalIndex);
+      const next = proximaLinhaPendente(newRows, ordem, index);
+      if (next !== null) {
+        setTimeout(() => atoRefs.current.get(next)?.open(), 0);
+      }
+    }
   };
 
   const handlePrazoChange = (index: number, isoDate: string) => {
@@ -516,6 +530,10 @@ export function PjeReviewTable({
               scanningIndex={scanningIndex}
               isSelected={selected.has(row.ordemOriginal)}
               onToggleSelect={toggleSelected}
+              atoDropdownRef={(h) => {
+                if (h) atoRefs.current.set(originalIndex, h);
+                else atoRefs.current.delete(originalIndex);
+              }}
             />
           ))}
 
@@ -552,6 +570,7 @@ interface PjeReviewRowProps {
   scanningIndex?: number;
   isSelected: boolean;
   onToggleSelect: (ordemOriginal: number) => void;
+  atoDropdownRef?: (handle: InlineDropdownHandle | null) => void;
 }
 
 function PjeReviewRowComponent({
@@ -572,6 +591,7 @@ function PjeReviewRowComponent({
   scanningIndex,
   isSelected,
   onToggleSelect,
+  atoDropdownRef,
 }: PjeReviewRowProps) {
   const [expandedProv, setExpandedProv] = useState(false);
   const [provDraft, setProvDraft] = useState(row.providencias ?? "");
@@ -728,6 +748,7 @@ function PjeReviewRowComponent({
             </TooltipContent>
           </Tooltip>
           <InlineDropdown
+            ref={atoDropdownRef}
             value={row.ato}
             compact
             showEditIcon

@@ -44,3 +44,21 @@ export function aplicarLote(
     return next;
   });
 }
+
+/**
+ * Próxima linha pendente (sem ato, não excluída) na ordem visível, após o
+ * índice (original) atual. null quando não há mais pendentes à frente.
+ */
+export function proximaLinhaPendente(
+  rows: PjeReviewRow[],
+  ordemVisivel: number[],
+  aposIndex: number,
+): number | null {
+  const pos = ordemVisivel.indexOf(aposIndex);
+  for (let i = pos + 1; i < ordemVisivel.length; i++) {
+    const idx = ordemVisivel[i];
+    const row = rows[idx];
+    if (row && !row.excluded && !row.ato) return idx;
+  }
+  return null;
+}
