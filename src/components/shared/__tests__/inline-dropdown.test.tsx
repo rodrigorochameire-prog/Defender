@@ -99,3 +99,27 @@ describe("InlineDropdown — Portal rendering", () => {
     expect(onChange).toHaveBeenCalledWith("B");
   });
 });
+
+describe("InlineDropdown — Barra de busca visível", () => {
+  it("mostra placeholder ao abrir e filtra ao digitar", () => {
+    render(
+      <InlineDropdown
+        value="A"
+        displayValue={<span>Trigger</span>}
+        options={[
+          { value: "A", label: "Alpha" },
+          { value: "B", label: "Beta" },
+        ]}
+        onChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Trigger"));
+
+    expect(screen.getByText("Digite para filtrar…")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "b" });
+    expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(screen.queryByText("Digite para filtrar…")).not.toBeInTheDocument();
+  });
+});

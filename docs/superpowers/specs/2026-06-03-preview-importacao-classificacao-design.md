@@ -50,8 +50,9 @@ No `pje-import-modal.tsx`, na montagem das `PjeReviewRow` (hoje ~linhas 425–48
 
 ### 4. Dropdown de ato melhor
 
-- **Campo de busca visível** no topo do painel (input real, autofocus), substituindo o
-  type-ahead invisível — o mecanismo de filtro existente é mantido.
+- **Barra de busca visível** no topo do painel — presentacional (mostra o
+  type-ahead existente + placeholder "Digite para filtrar…"). Um `<input>` real
+  brigaria com o focus-trap do Radix Dialog (portal fora do conteúdo do dialog).
 - **Grupo "Frequentes" primeiro:** lista curada de ~8 atos por atribuição em
   `atos-por-atribuicao.ts` (`ATOS_FREQUENTES_POR_ATRIBUICAO`), renderizada como primeiro
   grupo das opções no preview. Itens duplicam (aparecem em Frequentes e no grupo

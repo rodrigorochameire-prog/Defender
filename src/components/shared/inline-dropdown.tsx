@@ -283,13 +283,19 @@ export function InlineDropdown({
             pointerEvents: "auto",
           }}
         >
-          {/* Type-ahead indicator */}
-          {filterQuery && (
-            <div className="px-3 py-1.5 text-[10px] text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 sticky top-0 bg-white dark:bg-neutral-900 z-10">
-              <Search className="w-3 h-3" />
+          {/* Barra de filtro — sempre visível para tornar o type-ahead
+              descobrível. Não é um <input> real: o focus-trap do Radix Dialog
+              puxaria o foco de volta para o conteúdo do dialog (o portal está
+              fora dele). A digitação é capturada no listener global de teclado
+              e refletida aqui. */}
+          <div className="px-3 py-1.5 text-[10px] text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 sticky top-0 bg-white dark:bg-neutral-900 z-10">
+            <Search className="w-3 h-3" />
+            {filterQuery ? (
               <span className="font-medium text-neutral-600 dark:text-neutral-300">{filterQuery}</span>
-            </div>
-          )}
+            ) : (
+              <span className="italic">Digite para filtrar…</span>
+            )}
+          </div>
 
           {Object.keys(filteredGrouped).length === 0 && filterQuery && (
             <div className="px-3 py-2 text-[11px] text-neutral-400 italic">Nenhum resultado</div>
