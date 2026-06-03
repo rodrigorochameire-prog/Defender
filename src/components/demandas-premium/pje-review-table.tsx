@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3, ScanSearch, Loader2 } from "lucide-react";
+import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3, ScanSearch, Loader2, Lock } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtoOptionsPreview, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
 import { converterISOParaBR } from "@/lib/prazo-calculator";
 import { calcularPrazoParaAto } from "@/lib/pje-review-row";
+import { aplicarLote } from "@/lib/pje-review-bulk";
 import { AudienciaInlineForm } from "./audiencia-inline-form";
 import {
   Tooltip,
@@ -126,6 +127,10 @@ export function PjeReviewTable({
   const [bulkAto, setBulkAto] = useState("");
   const [bulkStatus, setBulkStatus] = useState("");
 
+  // Seleção para ações em lote (por ordemOriginal — estável entre filtros).
+  // Vazia = lote aplica a todas as incluídas (comportamento legado).
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
   // Opções de ato baseadas na atribuição — grupo "Frequentes" primeiro,
   // depois categorias (Defesas/Recursos/Liberdade/Ciências/Diligências).
   const atoOptions = useMemo(() => {
@@ -216,27 +221,41 @@ export function PjeReviewTable({
     onRowsChange(rows.map((r) => ({ ...r, excluded: allIncluded })));
   };
 
-  // Bulk actions — aplicar a todas as rows incluídas (não excluídas)
+  // Bulk actions — às selecionadas; sem seleção, a todas as incluídas
   const handleBulkAto = (ato: string) => {
     setBulkAto(ato);
-    const newRows = rows.map((row) => {
-      if (row.excluded) return row;
-      const updates: Partial<PjeReviewRow> = { ato };
-      if (!row.prazoManual) {
-        updates.prazo = calcularPrazoParaAto(row.dataExpedicao, ato);
-      }
-      return { ...row, ...updates };
-    });
-    onRowsChange(newRows);
+    onRowsChange(aplicarLote(rows, selected, { ato }));
   };
 
   const handleBulkStatus = (status: string) => {
     setBulkStatus(status);
-    const newRows = rows.map((row) => {
-      if (row.excluded) return row;
-      return { ...row, status };
+    onRowsChange(aplicarLote(rows, selected, { status }));
+  };
+
+  const handleBulkEstadoPrisional = (estadoPrisional: string) => {
+    onRowsChange(aplicarLote(rows, selected, { estadoPrisional }));
+  };
+
+  const handleBulkPrazo = (prazoIso: string) => {
+    onRowsChange(aplicarLote(rows, selected, { prazoIso }));
+  };
+
+  const toggleSelected = (ordemOriginal: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(ordemOriginal)) next.delete(ordemOriginal);
+      else next.add(ordemOriginal);
+      return next;
     });
-    onRowsChange(newRows);
+  };
+
+  const toggleSelectAllVisible = () => {
+    const visiveis = filteredRows
+      .filter(({ row }) => !row.excluded)
+      .map(({ row }) => row.ordemOriginal);
+    setSelected((prev) =>
+      visiveis.every((o) => prev.has(o)) && visiveis.length > 0 ? new Set() : new Set(visiveis)
+    );
   };
 
   // Marcar todas "Ciência" como excluídas (ação rápida)
@@ -342,7 +361,7 @@ export function PjeReviewTable({
 
           <span className="h-3.5 w-px bg-neutral-300 dark:bg-neutral-600 mx-0.5" />
 
-          {/* Bulk: Ato p/ todos */}
+          {/* Bulk: Ato p/ todos / selecionadas */}
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
@@ -359,9 +378,11 @@ export function PjeReviewTable({
                 />
               </span>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Ato p/ todos</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">
+              {selected.size > 0 ? `Ato p/ ${selected.size} selecionada${selected.size > 1 ? "s" : ""}` : "Ato p/ todos"}
+            </TooltipContent>
           </Tooltip>
-          {/* Bulk: Status p/ todos */}
+          {/* Bulk: Status p/ todos / selecionadas */}
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
@@ -378,8 +399,56 @@ export function PjeReviewTable({
                 />
               </span>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Status p/ todos</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">
+              {selected.size > 0 ? `Status p/ ${selected.size} selecionada${selected.size > 1 ? "s" : ""}` : "Status p/ todos"}
+            </TooltipContent>
           </Tooltip>
+          {/* Bulk: Estado Prisional */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <InlineDropdown
+                  value=""
+                  compact
+                  displayValue={
+                    <span className="flex items-center justify-center w-7 h-7 rounded-md bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors cursor-pointer">
+                      <Lock className="w-3.5 h-3.5" />
+                    </span>
+                  }
+                  options={estadoPrisionalOptions}
+                  onChange={handleBulkEstadoPrisional}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {selected.size > 0 ? `Estado prisional p/ ${selected.size} selecionada${selected.size > 1 ? "s" : ""}` : "Estado prisional p/ todos"}
+            </TooltipContent>
+          </Tooltip>
+          {/* Bulk: Prazo */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <InlineDatePicker
+                  value=""
+                  onChange={handleBulkPrazo}
+                  placeholder=""
+                  showEditIcon={false}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {selected.size > 0 ? `Prazo p/ ${selected.size} selecionada${selected.size > 1 ? "s" : ""}` : "Prazo p/ todos"}
+            </TooltipContent>
+          </Tooltip>
+          {/* Selection indicator chip */}
+          {selected.size > 0 && (
+            <button
+              onClick={() => setSelected(new Set())}
+              className="px-2 py-1 rounded-md text-[10px] font-medium bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors"
+            >
+              {selected.size} selecionada{selected.size > 1 ? "s" : ""} ✕
+            </button>
+          )}
           {/* Quick: excluir ciências */}
           {cienciaCount > 0 && (
             <Tooltip>
@@ -402,6 +471,19 @@ export function PjeReviewTable({
         <div className="flex flex-col gap-1.5">
           {/* Header - select all */}
           <div className="flex items-center gap-3 px-4 py-1.5">
+            {/* Select-all checkbox (violet) — p/ ações em lote */}
+            <button
+              onClick={toggleSelectAllVisible}
+              className={`w-3.5 h-3.5 rounded-sm flex-shrink-0 border flex items-center justify-center transition-colors ${
+                selected.size > 0
+                  ? "border-violet-500 bg-violet-500 text-white"
+                  : "border-neutral-300 dark:border-neutral-600 hover:border-violet-400"
+              }`}
+              title="Selecionar visíveis p/ ações em lote"
+            >
+              {selected.size > 0 && <Check className="h-2.5 w-2.5" />}
+            </button>
+            {/* Include/exclude all (green) */}
             <button
               onClick={handleToggleAll}
               className="text-muted-foreground hover:text-foreground transition-colors"
@@ -432,6 +514,8 @@ export function PjeReviewTable({
               showTipoProcesso={showTipoProcesso}
               onScanRow={onScanRow}
               scanningIndex={scanningIndex}
+              isSelected={selected.has(row.ordemOriginal)}
+              onToggleSelect={toggleSelected}
             />
           ))}
 
@@ -466,6 +550,8 @@ interface PjeReviewRowProps {
   showTipoProcesso?: boolean;
   onScanRow?: (index: number) => void;
   scanningIndex?: number;
+  isSelected: boolean;
+  onToggleSelect: (ordemOriginal: number) => void;
 }
 
 function PjeReviewRowComponent({
@@ -484,6 +570,8 @@ function PjeReviewRowComponent({
   showTipoProcesso = false,
   onScanRow,
   scanningIndex,
+  isSelected,
+  onToggleSelect,
 }: PjeReviewRowProps) {
   const [expandedProv, setExpandedProv] = useState(false);
   const [provDraft, setProvDraft] = useState(row.providencias ?? "");
@@ -527,7 +615,20 @@ function PjeReviewRowComponent({
       <div
         className={`flex items-center gap-3 px-4 py-3 border border-l-2 rounded-lg transition-all duration-150 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-600 ${borderColor} ${cardBg}`}
       >
-        {/* Checkbox */}
+        {/* Seleção p/ lote (violeta) — separado do incluir/excluir (verde) */}
+        <button
+          onClick={() => onToggleSelect(row.ordemOriginal)}
+          className={`w-3.5 h-3.5 rounded-sm flex-shrink-0 border flex items-center justify-center transition-colors ${
+            isSelected
+              ? "border-violet-500 bg-violet-500 text-white"
+              : "border-neutral-300 dark:border-neutral-600 hover:border-violet-400"
+          }`}
+          title="Selecionar p/ ações em lote"
+        >
+          {isSelected && <Check className="h-2.5 w-2.5" />}
+        </button>
+
+        {/* Checkbox incluir/excluir (verde) */}
         <button
           onClick={() => onToggleExclude(index)}
           className={`w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-colors ${
