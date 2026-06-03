@@ -47,6 +47,7 @@ export function InlineDropdown({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [position, setPosition] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
 
   // Calcula a posição absoluta do painel a partir do bounding rect do trigger.
   // Usa useLayoutEffect pra medir DOM sincronamente após layout, evitando flicker.
@@ -100,6 +101,35 @@ export function InlineDropdown({
       };
     }
   }, [isOpen]);
+
+  // O scroll-lock do Radix Dialog (react-remove-scroll) cancela wheel/touch em
+  // elementos fora do conteúdo do dialog — e este portal mora em document.body.
+  // preventDefault + scroll programático funciona nos dois mundos: dentro do
+  // modal (o lock já cancelou o scroll nativo) e fora (nós cancelamos, evitando
+  // scroll duplicado). Listener nativo non-passive porque o onWheel do React é
+  // registrado como passive e não permite preventDefault.
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = portalRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // deltaMode 1 = linhas (Firefox); converte para px aproximado
+      const delta = e.deltaMode === 1 ? e.deltaY * 24 : e.deltaY;
+      el.scrollTop += delta;
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [isOpen, position]);
+
+  // Mantém o item destacado visível durante navegação ↑↓ / type-ahead.
+  useEffect(() => {
+    if (!isOpen || highlightedIndex < 0) return;
+    portalRef.current
+      ?.querySelector('[data-highlighted="true"]')
+      ?.scrollIntoView({ block: "nearest" });
+  }, [isOpen, highlightedIndex]);
 
   // Reset filter + highlight when closing
   useEffect(() => {
@@ -233,6 +263,7 @@ export function InlineDropdown({
         void alignRight;
         return createPortal(
         <div
+          ref={portalRef}
           data-inline-dropdown-portal="true"
           // pointerEvents:auto reabilita interação mesmo quando um Radix Dialog/Sheet
           // modal seta `pointer-events:none` no body (o portal é montado em
@@ -309,6 +340,7 @@ export function InlineDropdown({
                   return (
                     <button
                       key={opt.value}
+                      data-highlighted={isHighlighted ? "true" : undefined}
                       onClick={() => { onChange(opt.value); setIsOpen(false); }}
                       className={`w-full ${isGrid ? "px-2 py-1 text-[11px]" : isAccordion ? "px-3 pl-7 py-1.5 text-[12px]" : "px-3 py-1.5 text-[12px]"} text-left flex items-center gap-2 transition-colors rounded-sm ${
                         isHighlighted

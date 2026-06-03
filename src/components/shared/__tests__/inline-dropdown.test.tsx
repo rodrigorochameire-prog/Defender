@@ -6,6 +6,50 @@ import { InlineDropdown } from "../inline-dropdown";
 
 afterEach(() => cleanup());
 
+describe("InlineDropdown — Scroll dentro de modal (scroll-lock do Radix)", () => {
+  const manyOptions = Array.from({ length: 40 }, (_, i) => ({
+    value: `v${i}`,
+    label: `Opção ${i}`,
+  }));
+
+  it("consome o wheel no portal (preventDefault) para scrollar programaticamente", () => {
+    render(
+      <InlineDropdown
+        value="v0"
+        displayValue={<span>Trigger</span>}
+        options={manyOptions}
+        onChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Trigger"));
+
+    const portal = document.querySelector(
+      '[data-inline-dropdown-portal="true"]',
+    ) as HTMLElement;
+    expect(portal).not.toBeNull();
+
+    // fireEvent retorna false quando preventDefault foi chamado pelo handler
+    expect(fireEvent.wheel(portal, { deltaY: 40, cancelable: true })).toBe(false);
+  });
+
+  it("acompanha o item destacado com scrollIntoView na navegação por teclado", () => {
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    render(
+      <InlineDropdown
+        value="v0"
+        displayValue={<span>Trigger</span>}
+        options={manyOptions}
+        onChange={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Trigger"));
+    fireEvent.keyDown(document, { key: "ArrowDown" });
+
+    expect(spy).toHaveBeenCalled();
+  });
+});
+
 describe("InlineDropdown — Portal rendering", () => {
   it("renderiza opções no document.body (fora do parent overflow-hidden)", () => {
     const onChange = vi.fn();
