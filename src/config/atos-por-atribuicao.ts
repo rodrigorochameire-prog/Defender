@@ -488,3 +488,89 @@ export const ESTATISTICAS_ATOS = {
 export const getTotalAtosUnicos = (): number => {
   return getTodosAtosUnicos().length - 1; // -1 para excluir "Todos"
 };
+
+// ==========================================
+// FREQUENTES (preview de importação)
+// ==========================================
+// Atos mais usados no dia a dia de cada atribuição — aparecem primeiro no
+// dropdown do preview de importação (grupo "Frequentes"). Lista curada; nomes
+// que não existirem em ATOS_POR_ATRIBUICAO são filtrados silenciosamente.
+// Os itens também seguem aparecendo no seu grupo temático.
+export const ATOS_FREQUENTES_POR_ATRIBUICAO: Record<string, string[]> = {
+  "Tribunal do Júri": [
+    "Resposta à Acusação",
+    "Diligências do 422",
+    "Alegações finais",
+    "Memoriais",
+    "Ciência designação de audiência",
+    "Ciência de decisão",
+    "Manifestação",
+    "Ciência",
+  ],
+  "Violência Doméstica": [
+    "Resposta à Acusação",
+    "Modulação de MPU",
+    "Manifestação sobre MPU",
+    "Revogação de MPU",
+    "Alegações finais",
+    "Ciência designação de audiência",
+    "Manifestação",
+    "Ciência",
+  ],
+  "Execução Penal": [
+    "Requerimento de progressão",
+    "Manifestação contra reconversão",
+    "Agravo em Execução",
+    "Designação de justificação",
+    "Designação admonitória",
+    "Transferência de unidade",
+    "Indulto",
+    "Ciência",
+  ],
+  "Substituição Criminal": [
+    "Resposta à Acusação",
+    "Alegações finais",
+    "Memoriais",
+    "Apelação",
+    "Revogação",
+    "Relaxamento",
+    "Manifestação",
+    "Ciência",
+  ],
+  "Curadoria": [
+    "Manifestação",
+    "Contestação",
+    "Cumprir despacho",
+    "Petição intermediária",
+    "Ciência",
+  ],
+  "Criminal Geral": [
+    "Resposta à Acusação",
+    "Alegações finais",
+    "Memoriais",
+    "Apelação",
+    "Relaxamento da prisão",
+    "Revogação da prisão",
+    "Manifestação",
+    "Ciência",
+  ],
+};
+
+/**
+ * Opções de ato para o preview de importação: grupo "Frequentes" primeiro,
+ * depois todos os atos da atribuição agrupados por categoria. Atribuição sem
+ * configuração cai no fallback de todos os atos (sem grupos).
+ */
+export function getAtoOptionsPreview(
+  atribuicao: string,
+): Array<{ value: string; label: string; group?: string }> {
+  const agrupados = getAtoOptionsAgrupados(atribuicao);
+  if (agrupados.length === 0) {
+    return getTodosAtosUnicos().filter((a) => a.value !== "Todos");
+  }
+  const validos = new Set(agrupados.map((a) => a.value));
+  const frequentes = (ATOS_FREQUENTES_POR_ATRIBUICAO[atribuicao] || [])
+    .filter((ato) => validos.has(ato))
+    .map((ato) => ({ value: ato, label: ato, group: "Frequentes" }));
+  return [...frequentes, ...agrupados];
+}

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { Check, AlertTriangle, Filter, Eye, EyeOff, FileText, AlertCircle, UserPlus, SquarePen, BarChart3, ScanSearch, Loader2 } from "lucide-react";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
-import { getAtosPorAtribuicao, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
+import { getAtoOptionsPreview, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
 import { calcularPrazoPorAto, converterISOParaBR } from "@/lib/prazo-calculator";
 import { AudienciaInlineForm } from "./audiencia-inline-form";
@@ -155,21 +155,11 @@ export function PjeReviewTable({
   const [bulkAto, setBulkAto] = useState("");
   const [bulkStatus, setBulkStatus] = useState("");
 
-  // Opções de ato baseadas na atribuição
-  // Se a atribuição não tem atos configurados, fallback para todos os atos únicos
+  // Opções de ato baseadas na atribuição — grupo "Frequentes" primeiro,
+  // depois categorias (Defesas/Recursos/Liberdade/Ciências/Diligências).
   const atoOptions = useMemo(() => {
-    let atos: Array<{ value: string; label: string }>;
-    if (atribuicao) {
-      const atosAtrib = getAtosPorAtribuicao(atribuicao).filter((a) => a.value !== "Todos");
-      // Fallback: se a atribuição não tem atos configurados, usa todos
-      atos = atosAtrib.length > 0 ? atosAtrib : getTodosAtosUnicos().filter((a) => a.value !== "Todos");
-    } else {
-      atos = getTodosAtosUnicos().filter((a) => a.value !== "Todos");
-    }
-    return atos.map((a) => ({
-      value: a.value,
-      label: a.label,
-    }));
+    if (atribuicao) return getAtoOptionsPreview(atribuicao);
+    return getTodosAtosUnicos().filter((a) => a.value !== "Todos");
   }, [atribuicao]);
 
   // Opções de status
@@ -492,7 +482,7 @@ export function PjeReviewTable({
 interface PjeReviewRowProps {
   row: PjeReviewRow;
   index: number;
-  atoOptions: Array<{ value: string; label: string }>;
+  atoOptions: Array<{ value: string; label: string; group?: string }>;
   statusOptions: Array<{ value: string; label: string; group?: string; color?: string }>;
   estadoPrisionalOptions: Array<{ value: string; label: string }>;
   onAtoChange: (index: number, value: string) => void;
