@@ -345,7 +345,9 @@ export function InlineDropdown({
                   const isHighlighted = currentFlatIdx === highlightedIndex;
                   return (
                     <button
-                      key={opt.value}
+                      // Escopado por grupo: o mesmo value pode aparecer em
+                      // "Frequentes" E no grupo temático (preview de importação)
+                      key={`${group}:${opt.value}`}
                       data-highlighted={isHighlighted ? "true" : undefined}
                       onClick={() => { onChange(opt.value); setIsOpen(false); }}
                       className={`w-full ${isGrid ? "px-2 py-1 text-[11px]" : isAccordion ? "px-3 pl-7 py-1.5 text-[12px]" : "px-3 py-1.5 text-[12px]"} text-left flex items-center gap-2 transition-colors rounded-sm ${
