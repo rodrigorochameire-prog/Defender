@@ -6,7 +6,8 @@ import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { getAtoOptionsPreview, getTodosAtosUnicos } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, STATUS_GROUPS } from "@/config/demanda-status";
-import { calcularPrazoPorAto, converterISOParaBR } from "@/lib/prazo-calculator";
+import { converterISOParaBR } from "@/lib/prazo-calculator";
+import { calcularPrazoParaAto } from "@/lib/pje-review-row";
 import { AudienciaInlineForm } from "./audiencia-inline-form";
 import {
   Tooltip,
@@ -99,36 +100,6 @@ function getMatchDot(match: AssistidoMatch) {
       return { color: "bg-amber-500", label: "Similar" };
     case "new":
       return { color: "bg-red-500", label: "Novo" };
-  }
-}
-
-function calcularPrazoParaAto(dataExpedicao: string, ato: string): string {
-  if (!dataExpedicao || !ato) return "";
-
-  try {
-    // Converter data de expedição para Date
-    // Formatos possíveis: "DD/MM/YYYY", "DD/MM/YYYY HH:mm", "YYYY-MM-DD"
-    let date: Date;
-    if (dataExpedicao.includes("-")) {
-      // ISO format
-      date = new Date(dataExpedicao + "T12:00:00");
-    } else {
-      const parts = dataExpedicao.split(/[\s/]/);
-      const dia = parseInt(parts[0]);
-      const mes = parseInt(parts[1]) - 1;
-      const ano = parseInt(parts[2]);
-      const fullYear = ano < 100 ? 2000 + ano : ano;
-      date = new Date(fullYear, mes, dia);
-    }
-
-    if (isNaN(date.getTime())) return "";
-
-    const resultado = calcularPrazoPorAto(date, ato);
-    if (!resultado) return "";
-
-    return resultado;
-  } catch {
-    return "";
   }
 }
 

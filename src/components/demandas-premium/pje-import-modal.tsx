@@ -21,10 +21,10 @@ import {
   type ResultadoVerificacaoDuplicatas,
   type ResultadoParserVVD,
 } from "@/lib/pje-parser";
-import { suggestAtoWithText } from "@/lib/ato-suggestion";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
+import { montarReviewRow } from "@/lib/pje-review-row";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 
 interface PJeImportModalProps {
@@ -424,65 +424,9 @@ export function PJeImportModal({
 
       // PJe Import v2: Construir review rows com ato sugerido e prazo auto
       const atribuicaoFinal = resultadoParser.atribuicaoDetectada || atribuicao;
-      const rows: PjeReviewRow[] = verificacao.novas.map((intimacao, index) => {
-        const suggestion = suggestAtoWithText(
-          intimacao.tipoDocumento,
-          intimacao.tipoProcesso,
-          atribuicaoFinal,
-          texto
-        );
-
-        // Calcular prazo automático baseado no ato sugerido
-        let prazoCalculado = "";
-        if (suggestion.ato && intimacao.dataExpedicao) {
-          try {
-            const parts = intimacao.dataExpedicao.split(/[\s/]/);
-            const dia = parseInt(parts[0]);
-            const mes = parseInt(parts[1]) - 1;
-            const ano = parseInt(parts[2]);
-            const fullYear = ano < 100 ? 2000 + ano : ano;
-            const dataExp = new Date(fullYear, mes, dia);
-            if (!isNaN(dataExp.getTime())) {
-              const resultado = calcularPrazoPorAto(dataExp, suggestion.ato);
-              if (resultado) {
-                prazoCalculado = resultado;
-              }
-            }
-          } catch {
-            // Prazo não calculado
-          }
-        }
-
-        // Ato sempre vazio por padrão — preenchimento via scan automático ou manual.
-        // A detecção de audiência no texto colado é imprecisa (texto contém TODAS as
-        // intimações misturadas, não o conteúdo individual de cada uma).
-        const atoFinal = "";
-        const prazoFinal = "";
-
-        return {
-          assistidoNome: intimacao.assistido,
-          numeroProcesso: intimacao.numeroProcesso,
-          dataExpedicao: intimacao.dataExpedicao,
-          tipoDocumento: intimacao.tipoDocumento,
-          tipoProcesso: intimacao.tipoProcesso,
-          crime: intimacao.crime,
-          ordemOriginal: intimacao.ordemOriginal ?? index,
-          ato: atoFinal,
-          atoConfidence: suggestion.confidence,
-          status: "triagem",  // Triagem — aguardando scan ou classificação manual
-          prazo: prazoFinal,
-          estadoPrisional: "Solto",
-          excluded: false,
-          prazoManual: false,
-          providencias: "",
-          assistidoMatch: { type: "new" }, // Será atualizado pelo matchQuery
-          // Audiência: não preencher automaticamente (scan resolverá)
-          audienciaData: undefined,
-          audienciaHora: undefined,
-          audienciaTipo: undefined,
-          criarEventoAgenda: undefined,
-        };
-      });
+      const rows: PjeReviewRow[] = verificacao.novas.map((intimacao, index) =>
+        montarReviewRow(intimacao, atribuicaoFinal, index)
+      );
 
       setReviewRows(rows);
       setEtapa("revisar");
