@@ -893,7 +893,7 @@ function ViewModeToggle({ dark = false }: { dark?: boolean } = {}) {
 
 // ─── Main TopBar ────────────────────────────────────────────────────
 
-export type DriveTopBarVariant = "standalone" | "row1" | "row2";
+export type DriveTopBarVariant = "standalone" | "row1" | "row2" | "row1-actions";
 
 export function DriveTopBar({
   fileCount,
@@ -1033,6 +1033,56 @@ export function DriveTopBar({
               dark
             />
           </div>
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  if (variant === "row1-actions") {
+    // Apenas o cluster de ações (Processar/Upload/Nova Pasta/Overflow).
+    // Renderizado no bottomRow junto com row2 quando o título migra pra utility bar.
+    return (
+      <TooltipProvider delayDuration={300}>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {enrichmentPending > 0 && (
+            <button
+              onClick={() => retryEnrichment.mutate({})}
+              disabled={retryEnrichment.isPending}
+              title={`Processar ${enrichmentPending} arquivos pendentes`}
+              className="h-7 px-2.5 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-medium shrink-0 disabled:opacity-50"
+            >
+              {retryEnrichment.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden md:inline">Processar</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-white/[0.15] text-[9px] font-semibold tabular-nums">{enrichmentPending}</span>
+            </button>
+          )}
+
+          <FileUploadButton folderId={targetFolderId} dark />
+
+          <button
+            onClick={handleCreateFolder}
+            disabled={!targetFolderId || createFolder.isPending}
+            title="Nova pasta"
+            className="h-7 px-2.5 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+          >
+            {createFolder.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Plus className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">Nova Pasta</span>
+          </button>
+
+          <OverflowMenu
+            onSyncAll={handleSyncAll}
+            isSyncing={syncAll.isPending}
+            activeCount={activeCount}
+            dark
+          />
         </div>
       </TooltipProvider>
     );

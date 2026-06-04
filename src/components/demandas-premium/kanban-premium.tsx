@@ -33,6 +33,7 @@ import {
   ExternalLink,
   UserPlus,
 } from "lucide-react";
+import Link from "next/link";
 import {
   KANBAN_COLUMNS,
   SUB_GROUPS,
@@ -40,6 +41,7 @@ import {
   STATUS_GROUPS,
   GROUP_TO_COLUMN,
   getStatusConfig,
+  getDemandaGroup,
   type KanbanColumn,
   type EmAndamentoSubGroup,
   type StatusGroup,
@@ -1703,10 +1705,9 @@ export function KanbanPremium({
     };
 
     for (const d of filteredDemandas) {
-      const rawKey = (d.substatus || d.status || "triagem");
-      const statusKey = rawKey.replace(/^\d+\s*-\s*/, "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
-      const statusCfg = getStatusConfig(statusKey);
-      const group: StatusGroup = statusCfg.group;
+      // Grupo efetivo \u2014 considera substatus, status e delega\u00e7\u00e3o
+      // (demanda delegada cai em "acompanhar", exceto conclu\u00edda/arquivada).
+      const group: StatusGroup = getDemandaGroup(d);
       const column = GROUP_TO_COLUMN[group];
 
       if (column === "arquivado" && !showArchived) continue;
@@ -2018,6 +2019,9 @@ export function KanbanPremium({
             <span>
               {columnDemandas.arquivado.length} arquivada{columnDemandas.arquivado.length !== 1 ? "s" : ""}
             </span>
+            <Link href="/admin/demandas/arquivo" className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors">
+              Ver arquivo →
+            </Link>
           </div>
         )}
       </div>
@@ -2229,6 +2233,9 @@ export function KanbanPremium({
             <span>
               {columnDemandas.arquivado.length} demanda{columnDemandas.arquivado.length !== 1 ? "s" : ""} arquivada{columnDemandas.arquivado.length !== 1 ? "s" : ""}
             </span>
+            <Link href="/admin/demandas/arquivo" className="underline underline-offset-2 hover:text-neutral-600 dark:hover:text-neutral-400 transition-colors">
+              Ver arquivo →
+            </Link>
           </div>
         )}
       </div>

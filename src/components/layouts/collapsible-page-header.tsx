@@ -19,8 +19,8 @@ interface CollapsiblePageHeaderProps {
   title: string;
   /** Lucide icon component */
   icon?: React.ElementType;
-  /** Row 1 content: stats, action buttons, etc. */
-  children: ReactNode;
+  /** Row 1 content: stats, action buttons, etc. Opcional — quando ausente, a linha não é renderizada. */
+  children?: ReactNode;
   /** Row 2 content: pills, search, tools — optional */
   bottomRow?: ReactNode;
   /** Active pill/badge to show in collapsed mode */
@@ -37,6 +37,12 @@ interface CollapsiblePageHeaderProps {
    * (ex.: agenda). `bottomRow` é ignorado nesse modo.
    */
   mergeUtilityRow?: boolean;
+  /**
+   * Quando true, remove o gap visual e as margens entre a utility row e o page
+   * header — ambos compartilham o mesmo charcoal, então o resultado é um único
+   * bloco contínuo (sem aparência de "card flutuante"). Mantém o expand/collapse.
+   */
+  seamless?: boolean;
 }
 
 export function CollapsiblePageHeader({
@@ -49,6 +55,7 @@ export function CollapsiblePageHeader({
   collapsedStats,
   className,
   mergeUtilityRow,
+  seamless,
 }: CollapsiblePageHeaderProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
@@ -175,26 +182,43 @@ export function CollapsiblePageHeader({
         className="will-change-[opacity]"
       >
         <div className="overflow-visible">
-          {/* Utility Bar — moldura escura */}
-          <div className={HEADER_STYLE.utilityRow}>
+          {/* Utility Bar — moldura escura. Sem border-b no modo seamless. */}
+          <div className={cn(HEADER_STYLE.utilityRow, seamless && "border-b-0")}>
             <HeaderUtilityRow variant="embedded" />
           </div>
 
-          {/* Gap sutil entre utility e page header */}
-          <div className="h-1.5 bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
+          {/* Gap sutil entre utility e page header — suprimido no seamless */}
+          {!seamless && <div className="h-1.5 bg-[#f5f5f5] dark:bg-[#1a1a1e]" />}
 
-          {/* Page Header — card com accent emerald no topo */}
-          <div className={cn(HEADER_STYLE.container, "mx-3 sm:mx-4 lg:mx-5 mb-2 overflow-visible")}>
-            {/* Row 1 — título/ações */}
-            <div className="px-4 sm:px-5 pb-4 pt-4">
-              {children}
-            </div>
+          {/* Page Header — card no modo padrão; contínuo no seamless */}
+          <div
+            className={cn(
+              HEADER_STYLE.container,
+              "overflow-visible",
+              seamless ? "rounded-none" : "mx-3 sm:mx-4 lg:mx-5 mb-2",
+            )}
+          >
+            {/* Row 1 — título/ações. Omitida quando children é null/undefined. */}
+            {children && (
+              <div className="px-4 sm:px-5 pb-4 pt-4">
+                {children}
+              </div>
+            )}
 
             {/* Divisor cor do fundo — cria separação visual real */}
             {bottomRow && (
               <>
-                <div className="h-[2px] bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
-                <div className="px-4 sm:px-5 pb-3 pt-2.5 bg-white/[0.10] dark:bg-white/[0.04] rounded-b-xl">
+                {!seamless && children && (
+                  <div className="h-[2px] bg-[#f5f5f5] dark:bg-[#1a1a1e]" />
+                )}
+                <div
+                  className={cn(
+                    "px-4 sm:px-5 pb-3 pt-2.5",
+                    seamless
+                      ? children && "border-t border-white/[0.06]"
+                      : "bg-white/[0.10] dark:bg-white/[0.04] rounded-b-xl",
+                  )}
+                >
                   {bottomRow}
                 </div>
               </>

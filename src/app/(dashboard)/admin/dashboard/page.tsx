@@ -98,6 +98,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { KpisSection } from "@/components/dashboard/kpis-section";
 import { AnimatePresence } from "motion/react";
 import { trpc } from "@/lib/trpc/client";
@@ -794,6 +795,21 @@ export default function DashboardJuriPage() {
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
 
+      <HeaderSlotTitle
+        icon={LayoutDashboard}
+        title="Dashboard"
+        stats={
+          <span className="text-white/55">
+            <span className="text-white/85 font-semibold tabular-nums">{demandasFiltradas.length}</span>
+            <span className="text-white/40"> · </span>
+            <span className="tabular-nums">{estatisticasPrazos.venceHoje}</span>
+            <span className="text-white/40"> hoje · </span>
+            <span className="tabular-nums">{estatisticasPrazos.vencidos}</span>
+            <span className="text-white/40"> vencidas</span>
+          </span>
+        }
+      />
+
       <CollapsiblePageHeader
         title="Dashboard"
         icon={LayoutDashboard}
@@ -802,9 +818,10 @@ export default function DashboardJuriPage() {
             {demandasFiltradas.filter((d: any) => !d.arquivado).length} demandas
           </span>
         }
+        seamless
         bottomRow={
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0 overflow-x-auto scrollbar-none">
               <AtribuicaoPills
                 variant="dark"
                 options={atribuicaoOptions}
@@ -831,29 +848,11 @@ export default function DashboardJuriPage() {
                 )}
               />
             </div>
-          </div>
-        }
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <LayoutDashboard className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Dashboard</h1>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] text-white/55 tabular-nums">
-                  {demandasFiltradas.length} demandas · {estatisticasPrazos.venceHoje} hoje · {estatisticasPrazos.vencidos} vencidas
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
             <button
               onClick={toggleKpis}
               title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
               className={cn(
-                "h-8 px-3 rounded-xl text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
+                "h-7 px-2.5 rounded-lg text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
                 showKpis
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-emerald-500 hover:bg-emerald-600",
@@ -863,8 +862,8 @@ export default function DashboardJuriPage() {
               KPIs
             </button>
           </div>
-        </div>
-      </CollapsiblePageHeader>
+        }
+      />
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
@@ -1120,7 +1119,7 @@ export default function DashboardJuriPage() {
                                     return (
                                       <button
                                         key={aud.id}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors text-left"
+                                        className="w-full flex items-center gap-0 p-0 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors text-left rounded-md overflow-hidden group/aud"
                                         onClick={() => {
                                           if (aud.assistido?.id) {
                                             setAtendimentoRapido(prev => ({
@@ -1132,21 +1131,28 @@ export default function DashboardJuriPage() {
                                           }
                                         }}
                                       >
-                                        <span className={cn("w-2 h-2 rounded-full flex-shrink-0", atribColors.dot)} />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-xs font-semibold text-foreground/80 tabular-nums">
-                                              {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
-                                            </span>
-                                            <span className={cn("text-[9px] px-1 py-0.5 rounded", atribColors.bgSolid, atribColors.text)}>
-                                              {atribColors.shortLabel}
-                                            </span>
+                                        {/* Faixa lateral colorida (mesmo padrão do dropdown de assistidos) */}
+                                        <span className={cn(
+                                          "w-[3px] self-stretch flex-shrink-0 transition-opacity duration-200",
+                                          atribColors.dot,
+                                          "opacity-50 group-hover/aud:opacity-80",
+                                        )} />
+                                        <div className="flex items-center gap-2.5 flex-1 min-w-0 py-2 pl-2.5 pr-3">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-xs font-semibold text-foreground/80 tabular-nums">
+                                                {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
+                                              </span>
+                                              <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", atribColors.bg, atribColors.textMuted)}>
+                                                {atribColors.shortLabel}
+                                              </span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground truncate">
+                                              {aud.assistido?.nome || aud.titulo || "Sem assistido"}
+                                            </p>
                                           </div>
-                                          <p className="text-[11px] text-muted-foreground truncate">
-                                            {aud.assistido?.nome || aud.titulo || "Sem assistido"}
-                                          </p>
+                                          <span className="text-[10px] text-muted-foreground flex-shrink-0">{aud.tipo}</span>
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{aud.tipo}</span>
                                       </button>
                                     );
                                   })}
@@ -1162,7 +1168,7 @@ export default function DashboardJuriPage() {
                                     return (
                                       <button
                                         key={aud.id}
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 transition-colors text-left"
+                                        className="w-full flex items-center gap-0 p-0 hover:bg-emerald-50/40 dark:hover:bg-emerald-900/10 transition-colors text-left rounded-md overflow-hidden group/aud"
                                         onClick={() => {
                                           if (aud.assistido?.id) {
                                             setAtendimentoRapido(prev => ({
@@ -1174,21 +1180,28 @@ export default function DashboardJuriPage() {
                                           }
                                         }}
                                       >
-                                        <span className={cn("w-2 h-2 rounded-full flex-shrink-0", atribColors.dot)} />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-1.5">
-                                            <span className="text-xs font-semibold text-foreground/80 tabular-nums">
-                                              {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
-                                            </span>
-                                            <span className={cn("text-[9px] px-1 py-0.5 rounded", atribColors.bgSolid, atribColors.text)}>
-                                              {atribColors.shortLabel}
-                                            </span>
+                                        {/* Faixa lateral colorida (mesmo padrão do dropdown de assistidos) */}
+                                        <span className={cn(
+                                          "w-[3px] self-stretch flex-shrink-0 transition-opacity duration-200",
+                                          atribColors.dot,
+                                          "opacity-50 group-hover/aud:opacity-80",
+                                        )} />
+                                        <div className="flex items-center gap-2.5 flex-1 min-w-0 py-2 pl-2.5 pr-3">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-xs font-semibold text-foreground/80 tabular-nums">
+                                                {format(new Date(aud.dataHora), "dd/MM HH:mm", { locale: ptBR })}
+                                              </span>
+                                              <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-medium", atribColors.bg, atribColors.textMuted)}>
+                                                {atribColors.shortLabel}
+                                              </span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground truncate">
+                                              {aud.assistido?.nome || aud.titulo || "Sem assistido"}
+                                            </p>
                                           </div>
-                                          <p className="text-[11px] text-muted-foreground truncate">
-                                            {aud.assistido?.nome || aud.titulo || "Sem assistido"}
-                                          </p>
+                                          <span className="text-[10px] text-muted-foreground flex-shrink-0">{aud.tipo}</span>
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground flex-shrink-0">{aud.tipo}</span>
                                       </button>
                                     );
                                   })}

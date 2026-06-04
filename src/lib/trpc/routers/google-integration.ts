@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { users, userGoogleTokens } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { isGoogleLinked, getUserGoogleEmail, createUserDriveStructure } from "@/lib/services/google-drive-peruser";
-import { createUserSpreadsheet } from "@/lib/services/google-sheets-peruser";
+import { createUserSpreadsheet, invalidateUserSheetsContext } from "@/lib/services/google-sheets-peruser";
 import { TRPCError } from "@trpc/server";
 
 export const googleIntegrationRouter = router({
@@ -55,6 +55,7 @@ export const googleIntegrationRouter = router({
       googleLinked: false, driveFolderId: null,
       sheetsSpreadsheetId: null, sheetsSpreadsheetUrl: null, sheetsSyncEnabled: false,
     }).where(eq(users.id, ctx.user.id));
+    invalidateUserSheetsContext(ctx.user.id);
     return { success: true };
   }),
 });

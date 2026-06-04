@@ -35,6 +35,13 @@ export interface SheetsAuthContext {
   getToken: () => Promise<string | null>;
   /** ID da planilha alvo. */
   spreadsheetId: string;
+  /**
+   * Dono da planilha (users.id). Quando presente, o filtro de ownership
+   * (demandaPertenceAoOwner) compara contra este id em vez do env
+   * OMBUDS_SHEETS_OWNER_DEFENSOR_ID — a planilha per-user só recebe
+   * demandas do próprio defensor.
+   */
+  ownerDefensorId?: number;
 }
 
 const authStorage = new AsyncLocalStorage<SheetsAuthContext>();
@@ -210,6 +217,12 @@ function getOwnerDefensorId(): number | null {
 }
 
 export function demandaPertenceAoOwner(defensorId: number | null | undefined): boolean {
+  // Contexto per-user ativo: a planilha pertence a um defensor específico —
+  // só recebe demandas dele (o env OMBUDS_SHEETS_OWNER_DEFENSOR_ID é da master).
+  const userCtx = authStorage.getStore();
+  if (userCtx?.ownerDefensorId != null) {
+    return defensorId === userCtx.ownerDefensorId;
+  }
   const owner = getOwnerDefensorId();
   if (owner === null) return true;
   return defensorId === owner;

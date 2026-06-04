@@ -29,7 +29,7 @@ export function PessoaSheet({ pessoaId, open, onOpenChange }: Props) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[520px] p-0 flex flex-col gap-0">
+      <SheetContent side="right" className="w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] p-0 flex flex-col gap-0">
         <div className="bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 px-4 py-3 flex items-center justify-between">
           <SheetHeader className="p-0">
             <SheetTitle className="text-sm font-semibold">Pessoa</SheetTitle>

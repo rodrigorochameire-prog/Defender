@@ -51,6 +51,56 @@ function makeUserTokenGetter(refreshToken: string): () => Promise<string | null>
   };
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Contexto de auth per-user para sincronização contínua
+// ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Cache de contextos por usuário (TTL 5 min). Reaproveita o token getter
+ * (que cacheia o access token por ~55 min) entre pushes na mesma instância,
+ * e evita um round-trip ao banco a cada push. Cacheia também o negativo
+ * (usuário sem sync ativo) para não consultar o banco em vão.
+ */
+const ctxCache = new Map<number, { ctx: SheetsAuthContext | null; expiresAt: number }>();
+const CTX_CACHE_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Resolve o contexto de auth da planilha pessoal de um defensor.
+ * Retorna null quando o usuário não vinculou o Google, não criou planilha
+ * ou desativou o sync — caso em que o caller simplesmente pula o push.
+ */
+export async function getUserSheetsContext(userId: number): Promise<SheetsAuthContext | null> {
+  const cached = ctxCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) return cached.ctx;
+
+  let ctx: SheetsAuthContext | null = null;
+  try {
+    const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+    if (user?.sheetsSyncEnabled && user.sheetsSpreadsheetId) {
+      const tokenRow = await db.query.userGoogleTokens.findFirst({
+        where: eq(userGoogleTokens.userId, userId),
+      });
+      if (tokenRow) {
+        ctx = {
+          getToken: makeUserTokenGetter(tokenRow.refreshToken),
+          spreadsheetId: user.sheetsSpreadsheetId,
+          ownerDefensorId: userId,
+        };
+      }
+    }
+  } catch (err) {
+    console.error(`[peruser] Falha ao resolver contexto Sheets do usuário ${userId}:`, err);
+  }
+
+  ctxCache.set(userId, { ctx, expiresAt: Date.now() + CTX_CACHE_TTL_MS });
+  return ctx;
+}
+
+/** Invalida o cache de contexto (ex.: após unlink/criação de planilha). */
+export function invalidateUserSheetsContext(userId: number): void {
+  ctxCache.delete(userId);
+}
+
 /**
  * Cria uma planilha no Google Drive do usuário com o MESMO layout,
  * cores, dropdowns e formatação da planilha master — usando ensureSheet()
@@ -153,6 +203,7 @@ export async function createUserSpreadsheet(userId: number): Promise<{
       sheets_sync_enabled = true
     WHERE id = ${userId}
   `);
+  invalidateUserSheetsContext(userId);
 
   return { spreadsheetId, spreadsheetUrl, tabsCreated: sheetNames };
 }

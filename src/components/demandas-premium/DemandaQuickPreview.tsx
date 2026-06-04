@@ -657,7 +657,7 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
+        className="w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -737,24 +737,26 @@ export function DemandaQuickPreview({
 
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div className="flex-1 overflow-y-auto">
-          {/* ===== HERO CARD — branco com outline + accent esquerdo (Padrão Defender) ===== */}
-          <div
-            className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
-            style={{ borderLeftColor: atribuicaoColor }}
-          >
+          {/* ===== HERO CARD — ring neutro + shadow sutil. Identidade da
+              atribuição vive no avatar colorido (substitui o border-l). ===== */}
+          <div className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
             <div className="flex items-start gap-3">
-              {/* Avatar — tile único, sem badges. A atribuição passou a viver
-                  como linha em "Detalhes" (junto de Prazo/Tipo/etc), mantendo
-                  o header limpo e a edição acessível. */}
-              <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+              {/* Avatar colorido — única fonte de identidade visual da atribuição. */}
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300"
+                style={{
+                  backgroundColor: `${atribuicaoColor}14`,
+                  boxShadow: `inset 0 0 0 1px ${atribuicaoColor}40`,
+                }}
+              >
+                <span className="text-sm font-semibold" style={{ color: atribuicaoColor }}>
                   {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
                 {/* Linha 1: Nome + flags (preso/urgente) */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
+                  <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                     {demanda.assistido}
                   </h2>
                   {isPreso && (

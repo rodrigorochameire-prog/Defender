@@ -383,6 +383,23 @@ export function getStatusConfig(status: string | null | undefined): StatusConfig
   };
 }
 
+/**
+ * Grupo efetivo de uma demanda — considera substatus, status e delegação.
+ * Demanda delegada (badge "Delegada a X") pertence ao grupo "acompanhar",
+ * independente do status base — exceto se já concluída/arquivada.
+ */
+export function getDemandaGroup(d: {
+  status?: string | null;
+  substatus?: string | null;
+  delegadoPara?: string | null;
+}): StatusGroup {
+  const cfg = getStatusConfig(d.substatus || d.status || "triagem");
+  if (d.delegadoPara && cfg.group !== "concluida" && cfg.group !== "arquivado") {
+    return "acompanhar";
+  }
+  return cfg.group;
+}
+
 // ==========================================
 // STATUS OPTIONS (para selects e dropdowns)
 // ==========================================

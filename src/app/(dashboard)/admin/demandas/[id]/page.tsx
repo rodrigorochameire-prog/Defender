@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ import {
   RefreshCw,
   Send,
   Eye,
-  Edit2,
   Check,
   X,
   Plus,
@@ -34,6 +33,7 @@ import { format, parseISO, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/demanda-status";
+import { REGISTRO_TIPOS, TIPO_KEYS, type TipoRegistro } from "@/components/registros/registro-tipo-config";
 
 // ─── Status color map (DB enum → badge style) ────────────────────────
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -124,6 +124,27 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     { enabled: !isNaN(demandaId) && !!demanda }
   );
 
+  const { data: registrosDemanda } = trpc.registros.list.useQuery(
+    { demandaId, limit: 100 },
+    { enabled: !isNaN(demandaId) && !!demanda }
+  );
+
+  // Registros agrupados por tipo (ordem canônica de REGISTRO_TIPOS),
+  // mais recentes primeiro dentro de cada grupo.
+  const registrosPorTipo = useMemo(() => {
+    if (!registrosDemanda || registrosDemanda.length === 0) return [];
+    const grupos = new Map<TipoRegistro, typeof registrosDemanda>();
+    for (const r of registrosDemanda) {
+      const tipo = r.tipo as TipoRegistro;
+      const grupo = grupos.get(tipo) ?? [];
+      grupo.push(r);
+      grupos.set(tipo, grupo);
+    }
+    return TIPO_KEYS.filter((t) => grupos.has(t)).map(
+      (t) => [t, grupos.get(t)!] as const
+    );
+  }, [registrosDemanda]);
+
   // ─── Mutations ────────────────────────
   const updateMutation = trpc.demandas.update.useMutation({
     onSuccess: () => {
@@ -134,6 +155,12 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     },
     onError: (err) => {
       toast.error(`Erro ao atualizar: ${err.message}`);
+    },
+  });
+
+  const createRegistroMutation = trpc.registros.create.useMutation({
+    onError: (err) => {
+      toast.error(`Erro ao registrar providência: ${err.message}`);
     },
   });
 
@@ -200,12 +227,24 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     setEditingProvidencias(true);
   };
 
+  // Providência vira um registro tipado (tabela `registros`) — sincronizado
+  // com a coluna "Providências" da planilha do Google.
   const handleSaveProvidencias = () => {
-    updateMutation.mutate(
-      { id: demandaId, providencias: providenciasText },
+    if (!demanda?.assistidoId || !providenciasText.trim()) return;
+    createRegistroMutation.mutate(
+      {
+        assistidoId: demanda.assistidoId,
+        demandaId,
+        processoId: demanda.processoId ?? undefined,
+        tipo: "providencia",
+        conteudo: providenciasText.trim(),
+      },
       {
         onSuccess: () => {
+          setProvidenciasText("");
           setEditingProvidencias(false);
+          utils.registros.list.invalidate({ demandaId, limit: 100 });
+          toast.success("Providência registrada");
         },
       }
     );
@@ -547,7 +586,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* ─── Providências (inline editable) ─── */}
+      {/* ─── Providências (registros da demanda agrupados por tipo) ─── */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -555,6 +594,11 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Providências
             </h3>
+            {registrosDemanda && registrosDemanda.length > 0 && (
+              <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-0 text-xs h-5 px-1.5">
+                {registrosDemanda.length}
+              </Badge>
+            )}
           </div>
           {!editingProvidencias && (
             <Button
@@ -563,19 +607,69 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               onClick={handleEditProvidencias}
               className="h-7 px-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
             >
-              <Edit2 className="h-3.5 w-3.5 mr-1" />
-              Editar
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Adicionar
             </Button>
           )}
         </div>
 
+        {/* Registros da demanda agrupados por tipo */}
+        {registrosPorTipo.length > 0 && (
+          <div className="space-y-4 mb-4">
+            {registrosPorTipo.map(([tipo, itens]) => {
+              const cfg = REGISTRO_TIPOS[tipo];
+              const TipoIcon = cfg.Icon;
+              return (
+                <div key={tipo}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.text}`}
+                    >
+                      <TipoIcon className="h-3 w-3" />
+                      {cfg.label}
+                    </span>
+                    <span className="text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500">
+                      {itens.length}
+                    </span>
+                  </div>
+                  <ul
+                    className="space-y-1.5 ml-1.5 pl-3 border-l-2"
+                    style={{ borderColor: `${cfg.color}40` }}
+                  >
+                    {itens.map((r) => (
+                      <li key={r.id} className="flex items-start gap-2">
+                        <span className="text-[11px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 shrink-0 mt-0.5">
+                          {formatDate(r.dataRegistro, "dd/MM/yy")}
+                        </span>
+                        <div className="min-w-0">
+                          {r.titulo && (
+                            <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
+                              {r.titulo}
+                            </p>
+                          )}
+                          {r.conteudo && (
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 whitespace-pre-line">
+                              {r.conteudo}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Nova providência — vira registro tipado, sincronizado com a planilha */}
         {editingProvidencias ? (
           <div className="space-y-3">
             <Textarea
               value={providenciasText}
               onChange={(e) => setProvidenciasText(e.target.value)}
-              placeholder="Descreva as providências a serem tomadas..."
-              rows={5}
+              placeholder="Descreva a providência a ser tomada..."
+              rows={4}
               className="text-sm resize-none"
               autoFocus
             />
@@ -583,7 +677,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               <Button
                 size="sm"
                 onClick={handleSaveProvidencias}
-                disabled={updateMutation.isPending}
+                disabled={createRegistroMutation.isPending || !providenciasText.trim()}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white h-8"
               >
                 <Check className="h-3.5 w-3.5 mr-1.5" />
@@ -593,7 +687,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 variant="outline"
                 size="sm"
                 onClick={() => setEditingProvidencias(false)}
-                disabled={updateMutation.isPending}
+                disabled={createRegistroMutation.isPending}
                 className="h-8 border-neutral-200 dark:border-neutral-700"
               >
                 <X className="h-3.5 w-3.5 mr-1.5" />
@@ -601,15 +695,15 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
               </Button>
             </div>
           </div>
-        ) : (
+        ) : registrosPorTipo.length === 0 ? (
           <button
             onClick={handleEditProvidencias}
             className="w-full text-left text-sm text-neutral-400 dark:text-neutral-500 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-lg p-3 hover:border-emerald-300 dark:hover:border-emerald-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
             <Plus className="h-3.5 w-3.5 inline mr-1.5 -mt-0.5" />
-            Adicionar providências...
+            Adicionar providência...
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* ─── Documentos & Ofícios vinculados ─── */}

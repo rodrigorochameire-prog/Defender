@@ -81,13 +81,14 @@ export function AtribuicaoPills({
 
   return (
     <div className={className ?? "flex items-center gap-1"}>
-      {/* Switch container — segmented control style */}
-      <div className={cn(
-          "inline-flex items-center gap-0.5 p-[3px] rounded-xl",
+      {/* Cluster — sem moldura no dark (vive sobre charcoal); segmented no light. */}
+      <div
+        className={cn(
           isDark
-            ? "bg-black/[0.15] ring-1 ring-white/[0.06]"
-            : "bg-neutral-200/60 dark:bg-neutral-800 ring-1 ring-neutral-300/50 dark:ring-neutral-700/60"
-        )}>
+            ? "inline-flex items-center gap-0.5"
+            : "inline-flex items-center gap-0.5 p-[3px] rounded-xl bg-neutral-200/60 dark:bg-neutral-800 ring-1 ring-neutral-300/50 dark:ring-neutral-700/60",
+        )}
+      >
         {/* Botão "Todas" — ativo quando all selecionado ou nenhum filtro específico */}
         {!singleSelect && (() => {
           const allOption = options.find((o) => o.value === "all" || o.value === "Todas" || o.label === "Todas");
@@ -100,14 +101,14 @@ export function AtribuicaoPills({
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                 iconOnly ? "p-1.5" : "px-2.5 py-1",
-                isAllActive && "shadow-sm"
+                isAllActive && !isDark && "shadow-sm",
               )}
               style={
                 isAllActive
                   ? isDark
-                    ? { backgroundColor: "rgba(255,255,255,0.1)", color: "white" }
+                    ? { backgroundColor: "rgba(255,255,255,0.10)", color: "white" }
                     : { backgroundColor: "#e5e5e5", color: "#1a1a1a" }
-                  : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
+                  : { color: isDark ? "rgba(255,255,255,0.50)" : "#9ca3af" }
               }
             >
               {iconOnly ? <LayoutGrid className="w-[17px] h-[17px]" /> : allOption.label}
@@ -121,6 +122,14 @@ export function AtribuicaoPills({
           const Icon = ICONS[opt.label];
           const count = counts?.[opt.label];
 
+          // Dark + active: outline-leading — tint mínimo, contorno e ícone fazem o trabalho.
+          // Light + active: mantém o cinza-claro do segmented original.
+          const activeStyleDark: React.CSSProperties = {
+            backgroundColor: `${hex}14`,
+            boxShadow: `inset 0 0 0 1px ${hex}66`,
+            color: "white",
+          };
+
           return (
             <button
               key={opt.value}
@@ -128,30 +137,43 @@ export function AtribuicaoPills({
               title={opt.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                iconOnly ? "p-1.5" : isActive ? "px-2.5 py-1 shadow-sm text-white" : "px-2 py-1"
+                iconOnly ? "p-1.5" : isActive ? "px-2.5 py-1" : "px-2 py-1",
+                isActive && !isDark && "shadow-sm text-white",
               )}
               style={
                 isActive
                   ? isDark
-                    ? { backgroundColor: "rgba(255,255,255,0.12)", color: "white" }
+                    ? activeStyleDark
                     : { backgroundColor: "#e5e5e5", color: "#1a1a1a" }
-                  : { color: isDark ? "rgba(255,255,255,0.45)" : "#9ca3af" }
+                  : { color: isDark ? "rgba(255,255,255,0.50)" : "#9ca3af" }
               }
             >
               {Icon && (
                 <Icon
                   className="w-[17px] h-[17px] flex-shrink-0"
-                  style={{ color: isActive ? (isDark ? "white" : "#1a1a1a") : isDark ? "rgba(255,255,255,0.50)" : "#71717a" }}
+                  style={{
+                    color: isActive
+                      ? isDark
+                        ? hex
+                        : "#1a1a1a"
+                      : isDark
+                        ? "rgba(255,255,255,0.55)"
+                        : "#71717a",
+                  }}
                 />
               )}
-              {!iconOnly && isActive && <span className={compact ? "hidden sm:inline" : ""}>{opt.label}</span>}
-              {!iconOnly && !compact && count !== undefined && (
+              {!iconOnly && isActive && <span className={compact ? "hidden md:inline" : "hidden sm:inline"}>{opt.label}</span>}
+              {/* Count: visível só quando ativo (evita poluir todos os ícones).
+                  No dark, inativo + count > 0 mostra mini-bullet sutil. */}
+              {!iconOnly && isActive && count !== undefined && (
                 <span
                   className="text-[9px] font-bold tabular-nums px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
                   style={
                     isActive
-                      ? { backgroundColor: "rgba(255,255,255,0.25)", color: isDark ? "rgba(255,255,255,0.6)" : "#fff" }
-                      : { color: isDark ? "rgba(255,255,255,0.3)" : "#9ca3af" }
+                      ? isDark
+                        ? { backgroundColor: `${hex}33`, color: "white" }
+                        : { backgroundColor: "rgba(255,255,255,0.25)", color: "#fff" }
+                      : { color: isDark ? "rgba(255,255,255,0.30)" : "#9ca3af" }
                   }
                 >
                   {count}

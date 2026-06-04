@@ -5,6 +5,21 @@ import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "../defensor-scope";
 import { getParceirosIds } from "@/lib/trpc/comarca-scope";
+import { buildDemandaSync, syncDemandaToSheets } from "@/lib/services/demanda-sync";
+
+/**
+ * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
+ * da demanda na planilha (master + planilha pessoal do defensor) após
+ * criar/editar/excluir um registro vinculado.
+ */
+function syncProvidenciasToSheet(demandaId: number | null | undefined): void {
+  if (!demandaId) return;
+  buildDemandaSync(demandaId)
+    .then((d) => {
+      if (d) syncDemandaToSheets(d).catch(console.error);
+    })
+    .catch(console.error);
+}
 
 // ==========================================
 // REGISTROS — router tipado
@@ -188,6 +203,9 @@ export const registrosRouter = router({
         return registro;
       });
 
+      // Atualiza a célula "Providências" da planilha (fire-and-forget)
+      syncProvidenciasToSheet(created.demandaId);
+
       return created;
     }),
 
@@ -245,6 +263,9 @@ export const registrosRouter = router({
         });
       }
 
+      // Atualiza a célula "Providências" da planilha (fire-and-forget)
+      syncProvidenciasToSheet(updated.demandaId);
+
       return updated;
     }),
 
@@ -254,7 +275,12 @@ export const registrosRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ input }) => {
-      await db.delete(registros).where(eq(registros.id, input.id));
+      const [removido] = await db
+        .delete(registros)
+        .where(eq(registros.id, input.id))
+        .returning({ demandaId: registros.demandaId });
+      // Atualiza a célula "Providências" da planilha (fire-and-forget)
+      syncProvidenciasToSheet(removido?.demandaId);
       return { ok: true } as const;
     }),
 

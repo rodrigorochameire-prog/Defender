@@ -25,6 +25,7 @@ import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
 import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
 import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
@@ -292,17 +293,103 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[520px] md:w-[640px] lg:w-[720px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
+        className="w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
-        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
-          <SheetHeader className="p-0">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
-          </SheetHeader>
+        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <SheetHeader className="p-0">
+              <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
+            </SheetHeader>
+            {processoId && (
+              <>
+                <span className="h-3.5 w-px bg-white/[0.12] shrink-0" aria-hidden />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      title="Patrocínio"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-[10.5px] font-semibold tracking-tight transition-colors cursor-pointer ring-1 ring-inset",
+                        tipoPatrocinio === "DEFENSORIA"
+                          ? "bg-emerald-500/15 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/25"
+                          : "bg-amber-500/15 text-amber-200 ring-amber-400/30 hover:bg-amber-500/25",
+                      )}
+                    >
+                      <Scale className="w-3 h-3" />
+                      <span>{tipoPatrocinio === "DEFENSORIA" ? "Defensoria" : "Particular"}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    sideOffset={6}
+                    className="w-64 p-2 rounded-xl"
+                  >
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 px-1 pb-1.5">
+                      Patrocínio
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(["DEFENSORIA", "PARTICULAR"] as const).map((opt) => {
+                        const active = tipoPatrocinio === opt;
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            disabled={setPatrocinio.isPending}
+                            onClick={() =>
+                              setPatrocinio.mutate({
+                                processoId,
+                                tipoPatrocinio: opt,
+                                advogadoParticular:
+                                  opt === "PARTICULAR" ? advogadoDraft : null,
+                              })
+                            }
+                            className={cn(
+                              "px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer ring-1 ring-inset",
+                              active
+                                ? opt === "DEFENSORIA"
+                                  ? "bg-emerald-500 text-white ring-emerald-500"
+                                  : "bg-amber-500 text-white ring-amber-500"
+                                : "bg-transparent text-neutral-700 dark:text-neutral-300 ring-neutral-200 dark:ring-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
+                            )}
+                          >
+                            {opt === "DEFENSORIA" ? "Defensoria" : "Particular"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {tipoPatrocinio === "PARTICULAR" && (
+                      <div className="mt-2">
+                        <label className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 px-1">
+                          Advogado
+                        </label>
+                        <Input
+                          value={advogadoDraft}
+                          onChange={(e) => setAdvogadoDraft(e.target.value)}
+                          onBlur={() => {
+                            const atual = advogadoParticular ?? "";
+                            if (advogadoDraft.trim() !== atual.trim()) {
+                              setPatrocinio.mutate({
+                                processoId,
+                                tipoPatrocinio: "PARTICULAR",
+                                advogadoParticular: advogadoDraft,
+                              });
+                            }
+                          }}
+                          placeholder="Nome do advogado"
+                          className="h-7 text-xs rounded-lg mt-1"
+                        />
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
+          </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer"
+            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer shrink-0"
             title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
@@ -312,6 +399,17 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
         </div>
+
+        {/* Strip de "flags do caso" — chip de patrocínio particular + futura
+            casa pra outras flags (vínculo Drive, pendências críticas, etc.). */}
+        {tipoPatrocinio === "PARTICULAR" && advogadoParticular && (
+          <div className="px-3 pt-2 pb-1 flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
+              <Scale className="w-3 h-3" />
+              Particular — {advogadoParticular}
+            </span>
+          </div>
+        )}
 
         <div className="px-3 pt-2">
           <BannerInteligencia
@@ -328,19 +426,32 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
             const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
             return (
-              <div
-                className="mx-3 mt-3 mb-3 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 border-l-[3px]"
-                style={{ borderLeftColor: atribColor }}
-              >
+              <div className="mx-3 mt-3 mb-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
                 <div className="flex items-start gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
-                      {(assistidoNome || evento.titulo || "").split(" ").filter(Boolean).slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()}
+                  {/* Avatar colorido — única fonte de identidade visual da atribuição. */}
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300"
+                    style={{
+                      backgroundColor: `${atribColor}14`,
+                      boxShadow: `inset 0 0 0 1px ${atribColor}40`,
+                    }}
+                  >
+                    <span
+                      className="text-sm font-semibold"
+                      style={{ color: atribColor }}
+                    >
+                      {(assistidoNome || evento.titulo || "")
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((n: string) => n[0])
+                        .join("")
+                        .toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     {assistidoNome && (
-                      <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
+                      <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                         {assistidoNome}
                       </h2>
                     )}
@@ -348,11 +459,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                       {processoNum && (
                         <button
                           onClick={(e) => { e.stopPropagation(); copyProcesso(processoNum); }}
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/50 dark:bg-neutral-700/60 hover:bg-white/80 dark:hover:bg-neutral-700 cursor-pointer"
+                          className="inline-flex items-center gap-1 px-1 -mx-1 rounded-md text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                           title="Copiar número"
                         >
-                          <span className="font-mono text-[11px] tabular-nums text-neutral-600 dark:text-neutral-400">{processoNum}</span>
-                          {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 text-neutral-500" />}
+                          <span className="font-mono text-[11px] tabular-nums">{processoNum}</span>
+                          {copied ? <Check className="w-2.5 h-2.5 text-emerald-500" /> : <Copy className="w-2.5 h-2.5 opacity-60" />}
                         </button>
                       )}
                       {dataHora && (
@@ -361,62 +472,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         </span>
                       )}
                     </div>
-                    {vara && (
-                      <p className="text-[10px] text-neutral-500 mt-1.5">
-                        {vara}
-                        {evento.atribuicao && ` · ${evento.atribuicao}`}
-                      </p>
-                    )}
-                    {processoId && (
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-[10px] uppercase tracking-wide text-neutral-400">Patrocínio</span>
-                        <div className="inline-flex rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
-                          {(["DEFENSORIA", "PARTICULAR"] as const).map((opt) => (
-                            <button
-                              key={opt}
-                              type="button"
-                              aria-pressed={tipoPatrocinio === opt}
-                              disabled={setPatrocinio.isPending}
-                              onClick={() =>
-                                setPatrocinio.mutate({
-                                  processoId,
-                                  tipoPatrocinio: opt,
-                                  advogadoParticular: opt === "PARTICULAR" ? advogadoDraft : null,
-                                })
-                              }
-                              className={cn(
-                                "px-2.5 py-1 text-xs cursor-pointer transition-colors",
-                                tipoPatrocinio === opt
-                                  ? "bg-emerald-500 text-white"
-                                  : "bg-transparent text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800",
-                              )}
-                            >
-                              {opt === "DEFENSORIA" ? "Defensoria" : "Particular"}
-                            </button>
-                          ))}
-                        </div>
-                        {tipoPatrocinio === "PARTICULAR" && (
-                          <Input
-                            value={advogadoDraft}
-                            onChange={(e) => setAdvogadoDraft(e.target.value)}
-                            onBlur={() => {
-                              const atual = advogadoParticular ?? "";
-                              if (advogadoDraft.trim() !== atual.trim()) {
-                                setPatrocinio.mutate({
-                                  processoId,
-                                  tipoPatrocinio: "PARTICULAR",
-                                  advogadoParticular: advogadoDraft,
-                                });
-                              }
-                            }}
-                            placeholder="Nome do advogado"
-                            className="h-7 text-xs rounded-lg w-48"
+                    {(vara || evento.atribuicao) && (
+                      <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-neutral-500 dark:text-neutral-400 flex-wrap">
+                        {vara && <span>{vara}</span>}
+                        {vara && evento.atribuicao && (
+                          <span
+                            className="inline-block w-1 h-1 rounded-full shrink-0"
+                            style={{ backgroundColor: atribColor }}
+                            aria-hidden
                           />
                         )}
-                        {tipoPatrocinio === "PARTICULAR" && advogadoParticular && (
-                          <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
-                            <Scale className="w-3 h-3" />
-                            Particular — {advogadoParticular}
+                        {evento.atribuicao && (
+                          <span style={{ color: atribColor }} className="font-medium">
+                            {evento.atribuicao}
                           </span>
                         )}
                       </div>
@@ -427,7 +495,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             );
           })()}
 
-          <div className="px-3 pb-4 space-y-2.5">
+          <div className="px-3 pb-4 space-y-3">
             {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />

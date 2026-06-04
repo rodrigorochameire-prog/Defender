@@ -8,58 +8,13 @@ import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
-import { pushDemanda as sheetsPush, removeDemanda as sheetsRemove, moveDemanda as sheetsMove, type DemandaParaSync } from "@/lib/services/google-sheets";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
-import { buildProvidenciasCell } from "@/lib/services/registros-summary";
-
-/**
- * Monta o objeto DemandaParaSync buscando dados relacionados.
- * Usado para sync com Google Sheets (fire-and-forget).
- */
-async function buildDemandaSync(demandaId: number): Promise<DemandaParaSync | null> {
-  const result = await db
-    .select({
-      id: demandas.id,
-      status: demandas.status,
-      substatus: demandas.substatus,
-      reuPreso: demandas.reuPreso,
-      dataEntrada: demandas.dataEntrada,
-      dataExpedicao: demandas.dataExpedicao,
-      ato: demandas.ato,
-      prazo: demandas.prazo,
-      defensorId: demandas.defensorId,
-      assistidoNome: assistidos.nome,
-      numeroAutos: processos.numeroAutos,
-      atribuicao: processos.atribuicao,
-      delegadoNome: users.name,
-    })
-    .from(demandas)
-    .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
-    .leftJoin(processos, eq(demandas.processoId, processos.id))
-    .leftJoin(users, eq(demandas.delegadoParaId, users.id))
-    .where(eq(demandas.id, demandaId))
-    .limit(1);
-
-  const row = result[0];
-  if (!row) return null;
-
-  return {
-    id: row.id,
-    status: row.status,
-    substatus: row.substatus ?? null,
-    reuPreso: row.reuPreso,
-    dataEntrada: row.dataEntrada,
-    dataExpedicao: row.dataExpedicao,
-    ato: row.ato,
-    prazo: row.prazo,
-    providencias: await buildProvidenciasCell(row.id),
-    assistidoNome: row.assistidoNome ?? "",
-    numeroAutos: row.numeroAutos ?? "",
-    atribuicao: row.atribuicao ?? "SUBSTITUICAO",
-    delegadoNome: row.delegadoNome ?? null,
-    defensorId: row.defensorId,
-  };
-}
+import {
+  buildDemandaSync,
+  syncDemandaToSheets,
+  removeDemandaFromSheets,
+  moveDemandaInSheets,
+} from "@/lib/services/demanda-sync";
 
 // Helper: inferir fase processual com base no tipo de documento PJe
 function inferirFaseProcessual(tipoDocumento?: string): string | undefined {
@@ -206,6 +161,101 @@ export const demandasRouter = router({
       if (offset) query = query.offset(offset);
 
       return await query;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // arquivo — histórico consultável de demandas arquivadas/concluídas.
+  // Alimenta a página /admin/demandas/arquivo (consulta do histórico).
+  // ────────────────────────────────────────────────────────────────────
+  arquivo: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        /** Inclui também concluídas ainda não arquivadas (histórico completo). */
+        incluirConcluidas: z.boolean().default(false),
+        /** Período sobre a data de conclusão (ISO yyyy-MM-dd). */
+        de: z.string().optional(),
+        ate: z.string().optional(),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const { search, incluirConcluidas = false, de, ate, limit = 50, offset = 0 } = input || {};
+      const defensoresVisiveis = getDefensoresVisiveis(ctx.user);
+
+      const statusAlvo = (incluirConcluidas
+        ? ["ARQUIVADO", "CONCLUIDO", "7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO"]
+        : ["ARQUIVADO"]) as Array<typeof demandas.status._.data>;
+
+      const conditions: SQL[] = [
+        isNull(demandas.deletedAt),
+        inArray(demandas.status, statusAlvo),
+      ];
+
+      if (search) {
+        const term = `%${search}%`;
+        conditions.push(
+          or(
+            ilike(demandas.ato, term),
+            ilike(assistidos.nome, term),
+            ilike(processos.numeroAutos, term),
+          )!
+        );
+      }
+
+      // Data de referência do histórico: conclusão (ou última atualização como proxy)
+      const dataRef = sql`COALESCE(${demandas.dataConclusao}, ${demandas.updatedAt})`;
+      if (de) conditions.push(sql`${dataRef} >= ${new Date(de)}`);
+      if (ate) {
+        const fim = new Date(ate);
+        fim.setDate(fim.getDate() + 1); // inclusivo até o fim do dia
+        conditions.push(sql`${dataRef} < ${fim}`);
+      }
+
+      // ISOLAMENTO POR DEFENSOR (mesmo padrão de `list`)
+      if (defensoresVisiveis !== "all") {
+        if (defensoresVisiveis.length === 1) {
+          conditions.push(eq(demandas.defensorId, defensoresVisiveis[0]));
+        } else if (defensoresVisiveis.length > 1) {
+          conditions.push(inArray(demandas.defensorId, defensoresVisiveis));
+        }
+      }
+
+      const whereClause = and(...conditions);
+
+      const [items, totalRows] = await Promise.all([
+        db
+          .select({
+            id: demandas.id,
+            ato: demandas.ato,
+            status: demandas.status,
+            substatus: demandas.substatus,
+            prazo: demandas.prazo,
+            dataEntrada: demandas.dataEntrada,
+            dataConclusao: demandas.dataConclusao,
+            updatedAt: demandas.updatedAt,
+            assistidoId: demandas.assistidoId,
+            assistidoNome: assistidos.nome,
+            numeroAutos: processos.numeroAutos,
+            atribuicao: processos.atribuicao,
+          })
+          .from(demandas)
+          .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+          .leftJoin(processos, eq(demandas.processoId, processos.id))
+          .where(whereClause)
+          .orderBy(sql`COALESCE(${demandas.dataConclusao}, ${demandas.updatedAt}) DESC`)
+          .limit(limit)
+          .offset(offset),
+        db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(demandas)
+          .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+          .leftJoin(processos, eq(demandas.processoId, processos.id))
+          .where(whereClause),
+      ]);
+
+      return { items, total: totalRows[0]?.count ?? 0 };
     }),
 
   // Buscar demanda por ID
@@ -627,7 +677,7 @@ export const demandasRouter = router({
       buildDemandaSync(nova.id)
         .then((d) => {
           if (!d) return;
-          sheetsPush(d).catch(console.error);
+          syncDemandaToSheets(d).catch(console.error);
           triggerReorder(d.atribuicao, "create", nova.id);
         })
         .catch(console.error);
@@ -723,7 +773,7 @@ export const demandasRouter = router({
       // Sync Google Sheets (fire-and-forget — não bloqueia resposta)
       buildDemandaSync(novaDemanda.id).then((d) => {
         if (!d) return;
-        sheetsPush(d).catch(console.error);
+        syncDemandaToSheets(d).catch(console.error);
         triggerReorder(d.atribuicao, "create", novaDemanda.id);
       }).catch(console.error);
 
@@ -770,9 +820,13 @@ export const demandasRouter = router({
         updatedAt: new Date(),
       };
 
-      // Se marcado como concluído, registrar data
-      if (data.status === "CONCLUIDO") {
-        updateData.concluidoEm = new Date();
+      // Se marcado como concluído, registrar data de conclusão — usada pelo
+      // cron de arquivamento automático (/api/cron/arquivar-concluidas)
+      if (
+        data.status &&
+        ["CONCLUIDO", "7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO"].includes(data.status)
+      ) {
+        updateData.dataConclusao = new Date();
       }
 
       // Construir condições de acesso
@@ -873,11 +927,11 @@ export const demandasRouter = router({
         if (!d) return;
         if (atribuicao) {
           // Atribuição mudou — move de aba
-          sheetsMove(d, atribuicao).catch(console.error);
+          moveDemandaInSheets(d, atribuicao).catch(console.error);
           // Reordena tanto a aba de origem quanto a de destino
           triggerReorder(d.atribuicao, "move", id);
         } else {
-          sheetsPush(d).catch(console.error);
+          syncDemandaToSheets(d).catch(console.error);
           triggerReorder(d.atribuicao, "update", id);
         }
       }).catch(console.error);
@@ -947,7 +1001,7 @@ export const demandasRouter = router({
           .limit(1)
           .then(([proc]) => {
             if (proc?.atribuicao) {
-              sheetsRemove(excluido.id, proc.atribuicao).catch(console.error);
+              removeDemandaFromSheets(excluido.id, proc.atribuicao, excluido.defensorId).catch(console.error);
               triggerReorder(proc.atribuicao, "delete", excluido.id);
             }
           })
@@ -1575,7 +1629,7 @@ export const demandasRouter = router({
             try {
               const d = await buildDemandaSync(id);
               if (!d) continue;
-              await sheetsPush(d);
+              await syncDemandaToSheets(d);
               if (d.atribuicao) reorderAtribuicoes.add(d.atribuicao);
             } catch (err) {
               console.error(`[import] sheets push falhou para demanda ${id}:`, err);
@@ -1897,7 +1951,7 @@ export const demandasRouter = router({
       for (const row of atualizados) {
         buildDemandaSync(row.id).then((d) => {
           if (!d) return;
-          sheetsPush(d).catch(console.error);
+          syncDemandaToSheets(d).catch(console.error);
           triggerReorder(d.atribuicao, "bulk", row.id);
         }).catch(console.error);
       }

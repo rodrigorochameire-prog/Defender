@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -806,12 +807,42 @@ export default function AssistidosPage() {
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      {/* Header — Padrão Defender v5 (CollapsiblePageHeader) */}
+      {/* Título + filtros stats portados pra utility bar. Badges seguem clicáveis. */}
+      <HeaderSlotTitle
+        icon={Users}
+        title="Assistidos"
+        stats={
+          <>
+            {[
+              { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
+              { value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", danger: stats.presos > 0 },
+              { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+            ].map((s) => (
+              <button
+                key={s.label}
+                onClick={s.onClick}
+                className={cn(
+                  "text-[9px] font-semibold px-1.5 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
+                  s.active ? "bg-emerald-500/20 text-emerald-300"
+                    : (s as any).danger ? "bg-red-500/15 text-red-300"
+                    : "bg-white/[0.08] text-white/70 hover:text-white/90",
+                )}
+              >
+                {s.value} {s.label}
+              </button>
+            ))}
+          </>
+        }
+      />
+
+      {/* Header — Padrão Defender v5 seamless: sem row 1, tudo na utility bar + bottomRow */}
       <CollapsiblePageHeader
         title="Assistidos"
         icon={Users}
+        seamless
         bottomRow={
-          <div className="flex items-center gap-3 overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 overflow-x-auto scrollbar-none">
             {/* Atribuição pills */}
             {!showNaoIdentificados && (
               <AtribuicaoPills
@@ -919,89 +950,60 @@ export default function AssistidosPage() {
             <Link href="/admin/whatsapp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
               <MessageCircle className="w-3.5 h-3.5" />
             </Link>
+            </div>
+
+            {/* Right cluster: busca + ações + Novo (migrou do row 1) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+                <Input
+                  ref={searchInputRef}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Nome, CPF, processo..."
+                  className="pl-8 w-[140px] sm:w-[180px] md:w-[220px] h-7 text-xs bg-black/[0.15] border border-white/[0.08] text-white/90 placeholder:text-white/40 rounded-lg"
+                />
+                {isProcessoSearch && (
+                  <p className="text-[10px] text-white/50 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
+                    Buscando por processo...
+                  </p>
+                )}
+              </div>
+              <Link href="/admin/inteligencia">
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência">
+                  <Brain className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
+                <Download className="w-3.5 h-3.5" />
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
+                {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
+              </Button>
+              <Button variant="ghost" size="sm" className={cn("h-7 w-7 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
+                <Sun className="w-3.5 h-3.5" />
+              </Button>
+              {batchSelectMode && (
+                <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-white/15">
+                  <span className="text-[10px] text-white/60 tabular-nums">{batchSelectedIds.size} sel.</span>
+                  <Button size="sm" className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg" disabled={batchSelectedIds.size === 0 || exportarBatch.isPending} onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}>
+                    {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
+                  </Button>
+                  <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-white/50 hover:text-white">
+                    <XCircle className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+              <div className="w-px h-5 bg-white/[0.10] mx-0.5" />
+              <Link href="/admin/assistidos/novo">
+                <Button size="sm" className="h-7 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Novo
+                </Button>
+              </Link>
+            </div>
           </div>
         }
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-white/70" />
-            </div>
-            <h1 className="text-white text-[17px] font-semibold tracking-tight">Assistidos</h1>
-            {/* Stats como badges inline (igual Demandas) */}
-            <div className="flex items-center gap-1.5 ml-1">
-              {[
-                { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-                { value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", danger: stats.presos > 0 },
-                { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-              ].map((s) => (
-                <button
-                  key={s.label}
-                  onClick={s.onClick}
-                  className={cn(
-                    "text-[9px] font-semibold px-2 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
-                    s.active ? "bg-emerald-500/20 text-emerald-400"
-                      : (s as any).danger ? "bg-red-500/15 text-red-300"
-                      : "bg-white/[0.08] text-white/70 hover:text-white/90"
-                  )}
-                >
-                  {s.value} {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Busca + Ações */}
-          <div className="flex items-center gap-1.5">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-              <Input
-                ref={searchInputRef}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Nome, CPF, processo..."
-                className="pl-8 w-[140px] sm:w-[200px] md:w-[260px] h-8 text-xs bg-black/[0.15] border border-white/[0.08] text-white/90 placeholder:text-white/40 rounded-lg"
-              />
-              {isProcessoSearch && (
-                <p className="text-[10px] text-white/50 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
-                  Buscando por processo...
-                </p>
-              )}
-            </div>
-            <Link href="/admin/inteligencia">
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência">
-                <Brain className="w-3.5 h-3.5" />
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
-              <Download className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
-              {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
-            </Button>
-            <Button variant="ghost" size="sm" className={cn("h-8 w-8 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
-              <Sun className="w-3.5 h-3.5" />
-            </Button>
-            {batchSelectMode && (
-              <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-white/15">
-                <span className="text-[10px] text-white/60 tabular-nums">{batchSelectedIds.size} sel.</span>
-                <Button size="sm" className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg" disabled={batchSelectedIds.size === 0 || exportarBatch.isPending} onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}>
-                  {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
-                </Button>
-                <button onClick={() => { setBatchSelectMode(false); setBatchSelectedIds(new Set()); }} className="text-white/50 hover:text-white">
-                  <XCircle className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-            <div className="w-px h-5 bg-white/[0.10] mx-0.5" />
-            <Link href="/admin/assistidos/novo">
-              <Button size="sm" className="h-8 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-                <Plus className="w-3.5 h-3.5 mr-1" /> Novo
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      />
 
       {/* Sticky Summary Bar */}
       {showStickyBar && (

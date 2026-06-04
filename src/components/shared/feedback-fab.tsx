@@ -171,22 +171,21 @@ export function FeedbackFAB() {
     (pathname === "/admin/agenda" ? 0 : 1) +
     (pathname === "/admin/demandas" ? 0 : 1);
 
-  // Desktop: dock at bottom-6 (24px). Feedback = 24 + dockH + 32 gap
-  // Mobile: dock at bottom-[5rem] (80px). Feedback = 80 + dockH + 32 gap
-  // (Gap aumentado de 16 → 32 pra criar separação visual clara entre o FAB
-  // de feedback e o dock de agenda/demandas — antes pareciam sobrepostos.)
+  // Cluster colado: feedback fica logo acima do dock com 4px de gap apenas.
+  // Antes era 32px (parecia 2 pilhas isoladas); agora parece 1 cluster contínuo.
+  // Desktop dock@24 · h=80(2it)/44(1it). Mobile dock@80.
   const btnBottomClass =
     dockItems === 2
-      ? "bottom-[12.125rem] md:bottom-[8.625rem]" // 194 / 138
+      ? "bottom-[10.25rem] md:bottom-[6.75rem]"  // 164 / 108
       : dockItems === 1
-      ? "bottom-[9.75rem] md:bottom-[6.25rem]"    // 156 / 100
+      ? "bottom-[8rem] md:bottom-[4.5rem]"        // 128 / 72
       : "bottom-[5rem] md:bottom-6";              //  80 / 24
 
   const popoverBottomClass =
     dockItems === 2
-      ? "bottom-[15.25rem] md:bottom-[11.75rem]"  // ~244 / 188
+      ? "bottom-[13.5rem] md:bottom-[10rem]"      // ~216 / 160
       : dockItems === 1
-      ? "bottom-[12.875rem] md:bottom-[9.375rem]" // ~206 / 150
+      ? "bottom-[11.25rem] md:bottom-[7.75rem]"   // ~180 / 124
       : "bottom-[8.125rem] md:bottom-[4.625rem]"; // ~130 / 74
 
   return (

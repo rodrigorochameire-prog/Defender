@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos, users } from "@/lib/db/schema";
 import { eq, isNull } from "drizzle-orm";
-import { pushDemanda, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { pushDemanda, withSheetsAuth, type DemandaParaSync } from "@/lib/services/google-sheets";
+import { getUserSheetsContext } from "@/lib/services/google-sheets-peruser";
 import { buildProvidenciasCell } from "@/lib/services/registros-summary";
 
 function getWebhookSecret(): string {
@@ -67,15 +68,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   let pushed = 0;
   let conflicts = 0;
+  let pushedPerUser = 0;
   for (const row of lista) {
     const result = await pushDemanda(row);
     if (result.pushed) pushed++;
     if (result.conflict) conflicts++;
+
+    // Fan-out: planilha pessoal do defensor (quando sync ativo)
+    if (row.defensorId) {
+      const ctx = await getUserSheetsContext(row.defensorId);
+      if (ctx) {
+        try {
+          const userResult = await withSheetsAuth(ctx, () => pushDemanda(row));
+          if (userResult.pushed) pushedPerUser++;
+        } catch (err) {
+          console.error(`[resync] push per-user falhou demanda=${row.id}:`, err);
+        }
+      }
+    }
   }
 
   return NextResponse.json({
     total: lista.length,
     pushed,
+    pushedPerUser,
     conflicts,
     message: conflicts > 0
       ? `${conflicts} conflitos detectados — resolva em /conflitos`

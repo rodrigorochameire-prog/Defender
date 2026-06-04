@@ -19,7 +19,7 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
   return (
     <nav
       aria-label="Navegação do sheet"
-      className="sticky top-0 z-[5] bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-3 py-2"
+      className="sticky top-0 z-[5] bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-3 py-1.5"
     >
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
         {sections.map((s) => {
