@@ -985,6 +985,27 @@ class EnrichmentClient {
   }
 
   /**
+   * Diarização async de speakers — retorna 202 Accepted imediatamente.
+   * Identifica speakers com Claude Sonnet em background.
+   * Resultado salvo na tabela speaker_labels via Supabase.
+   */
+  async diarizeAsync(input: {
+    fileId: number;
+    assistidoId: number;
+    transcriptionText: string;
+    existingLabels?: Array<{ speaker_key: string; label: string; role: string }>;
+    casoContexto?: string;
+  }): Promise<{ status: string; message: string; file_id: number }> {
+    return await this.request<{ status: string; message: string; file_id: number }>("/api/diarize", {
+      file_id: input.fileId,
+      assistido_id: input.assistidoId,
+      transcription_text: input.transcriptionText,
+      existing_labels: input.existingLabels ?? null,
+      caso_contexto: input.casoContexto ?? null,
+    }, 30_000);
+  }
+
+  /**
    * Chamar enriquecimento de forma assíncrona (fire-and-forget).
    * Não bloqueia o fluxo principal — erros são logados mas ignorados.
    */

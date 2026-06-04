@@ -57,6 +57,7 @@ import { oficiosRouter } from "./oficios";
 import { templatesRouter } from "./templates";
 import { preparacaoRouter } from "./preparacao";
 import { offlineRouter } from "./offline";
+import { speakerLabelsRouter } from "./speakerLabels";
 
 
 export const appRouter = router({
@@ -243,6 +244,11 @@ export const appRouter = router({
   // OFFLINE SYNC (PWA / INDEXEDDB)
   // ==========================================
   offline: offlineRouter,
+
+  // ==========================================
+  // SPEAKER LABELS (DIARIZAÇÃO DE TRANSCRIÇÕES)
+  // ==========================================
+  speakerLabels: speakerLabelsRouter,
 });
 
 export type AppRouter = typeof appRouter;

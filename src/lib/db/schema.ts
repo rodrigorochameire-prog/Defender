@@ -5489,6 +5489,34 @@ export const crossAnalysesRelations = relations(crossAnalyses, ({ one }) => ({
 }));
 
 // ==========================================
+// SPEAKER LABELS — Diarização de Transcrições
+// ==========================================
+
+export const speakerLabels = pgTable("speaker_labels", {
+  id: serial("id").primaryKey(),
+  assistidoId: integer("assistido_id").notNull().references(() => assistidos.id, { onDelete: "cascade" }),
+  fileId: integer("file_id").references(() => driveFiles.id, { onDelete: "set null" }),
+  speakerKey: varchar("speaker_key", { length: 50 }).notNull(), // "Speaker 1", "Speaker 2"
+  label: varchar("label", { length: 200 }).notNull(), // "Defensor", "Juiz", nome da pessoa
+  role: varchar("role", { length: 50 }), // "defensor", "assistido", "juiz", "promotor", "testemunha", "perito", "outro"
+  confidence: real("confidence"), // 0-1 confidence score
+  isManual: boolean("is_manual").default(false).notNull(), // true if user corrected
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("speaker_labels_assistido_idx").on(table.assistidoId),
+  index("speaker_labels_file_idx").on(table.fileId),
+]);
+
+export type SpeakerLabel = typeof speakerLabels.$inferSelect;
+export type InsertSpeakerLabel = typeof speakerLabels.$inferInsert;
+
+export const speakerLabelsRelations = relations(speakerLabels, ({ one }) => ({
+  assistido: one(assistidos, { fields: [speakerLabels.assistidoId], references: [assistidos.id] }),
+  file: one(driveFiles, { fields: [speakerLabels.fileId], references: [driveFiles.id] }),
+}));
+
+// ==========================================
 // QUESITOS DO JÚRI (Preparação)
 // ==========================================
 
