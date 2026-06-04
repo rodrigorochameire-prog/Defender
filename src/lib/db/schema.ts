@@ -5534,3 +5534,33 @@ export const quesitosRelations = relations(quesitos, ({ one }) => ({
   sessaoJuri: one(sessoesJuri, { fields: [quesitos.sessaoJuriId], references: [sessoesJuri.id] }),
   tese: one(tesesDefensivas, { fields: [quesitos.teseId], references: [tesesDefensivas.id] }),
 }));
+
+// ==========================================
+// DOCUMENT EMBEDDINGS (BUSCA SEMANTICA - PGVECTOR)
+// ==========================================
+
+// Note: document_embeddings uses pgvector which Drizzle doesn't support natively.
+// The table is created via raw SQL migration (drizzle/0013_semantic_search.sql).
+// This is a partial representation for basic queries — the embedding column is omitted.
+export const documentEmbeddings = pgTable("document_embeddings", {
+  id: serial("id").primaryKey(),
+  fileId: integer("file_id").notNull().references(() => driveFiles.id, { onDelete: "cascade" }),
+  assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
+  chunkIndex: integer("chunk_index").notNull().default(0),
+  chunkText: text("chunk_text").notNull(),
+  // embedding field omitted — managed via raw SQL (pgvector type)
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("document_embeddings_file_idx").on(table.fileId),
+  index("document_embeddings_assistido_idx").on(table.assistidoId),
+]);
+
+export type DocumentEmbedding = typeof documentEmbeddings.$inferSelect;
+export type InsertDocumentEmbedding = typeof documentEmbeddings.$inferInsert;
+
+export const documentEmbeddingsRelations = relations(documentEmbeddings, ({ one }) => ({
+  driveFile: one(driveFiles, { fields: [documentEmbeddings.fileId], references: [driveFiles.id] }),
+  assistido: one(assistidos, { fields: [documentEmbeddings.assistidoId], references: [assistidos.id] }),
+}));

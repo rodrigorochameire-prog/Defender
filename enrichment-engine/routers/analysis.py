@@ -150,6 +150,49 @@ async def _maybe_trigger_cross_analysis(client, db_record_id: int, analysis: dic
         )
 
 
+async def _maybe_trigger_embedding(client, db_record_id: int, input_data: AnalyzeAsyncInput):
+    """Auto-trigger document embedding generation after analysis completes."""
+    try:
+        # Get file info including assistido_id
+        file_row = client.table("drive_files").select(
+            "assistido_id"
+        ).eq("id", db_record_id).single().execute()
+
+        if not file_row.data:
+            return
+
+        assistido_id = file_row.data.get("assistido_id")
+
+        # Use the transcript text for embedding
+        text = input_data.transcript
+        if not text or len(text.strip()) < 50:
+            return
+
+        from services.document_embedding_service import get_document_embedding_service
+        service = get_document_embedding_service()
+        if not service.available:
+            logger.info("Document embedding skipped — service not configured")
+            return
+
+        count = await service.embed_document(
+            file_id=db_record_id,
+            assistido_id=assistido_id,
+            text=text,
+            metadata={"file_name": input_data.file_name, "source": "auto_analysis"},
+        )
+
+        logger.info(
+            "Auto-embedded %d chunks for file %d (assistido=%s)",
+            count, db_record_id, assistido_id,
+        )
+
+    except Exception as e:
+        logger.warning(
+            "Auto embedding failed (non-critical) | db_id=%d | error=%s",
+            db_record_id, str(e),
+        )
+
+
 async def _process_analysis_background(input_data: AnalyzeAsyncInput):
     """Background task: analisa transcricao e salva resultado no Supabase."""
     db_record_id = input_data.db_record_id
@@ -207,6 +250,9 @@ async def _process_analysis_background(input_data: AnalyzeAsyncInput):
 
         # Auto-trigger cross-analysis if 2+ analyses exist for this assistido
         await _maybe_trigger_cross_analysis(client, db_record_id, analysis)
+
+        # Auto-trigger document embedding for semantic search
+        await _maybe_trigger_embedding(client, db_record_id, input_data)
 
     except Exception as e:
         logger.error("Analysis FAILED | db_id=%d | error=%s", db_record_id, str(e))

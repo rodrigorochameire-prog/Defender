@@ -18,6 +18,8 @@ import {
   FileText,
   User,
   Scale,
+  Brain,
+  Loader2,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -138,6 +140,25 @@ export function DriveCommandPalette() {
     { search: debouncedSearch },
     { enabled: open && hasSearch }
   );
+
+  // ── Semantic search (depoimentos) ──
+  const semanticSearch = trpc.search.documentSearch.useMutation();
+
+  useEffect(() => {
+    if (open && hasSearch && debouncedSearch.length >= 3) {
+      semanticSearch.mutate({
+        query: debouncedSearch,
+        threshold: 0.35,
+        limit: 5,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, debouncedSearch]);
+
+  const semanticResults = useMemo(() => {
+    if (!semanticSearch.data?.results) return [];
+    return semanticSearch.data.results.slice(0, 5);
+  }, [semanticSearch.data]);
 
   // ── Mutations ──
   const syncJobId = "sync-drive-all";
@@ -303,6 +324,57 @@ export function DriveCommandPalette() {
                   </div>
                 </CommandItem>
               ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {/* ── BUSCA SEMANTICA (depoimentos) ── */}
+        {hasSearch && debouncedSearch.length >= 3 && (semanticSearch.isPending || semanticResults.length > 0) && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="BUSCA SEMANTICA">
+              {semanticSearch.isPending && (
+                <CommandItem value="semantic-loading" disabled className="gap-3 opacity-60">
+                  <Loader2 className="h-4 w-4 shrink-0 text-emerald-400 animate-spin" />
+                  <span className="text-sm text-zinc-400">Buscando em depoimentos...</span>
+                </CommandItem>
+              )}
+              {semanticResults.map((result) => {
+                const score = Math.round((result.combined_score ?? 0) * 100);
+                return (
+                  <CommandItem
+                    key={`semantic-${result.file_id}-${result.chunk_index}`}
+                    value={`semantic-${result.chunk_text?.slice(0, 30)}`}
+                    onSelect={() => {
+                      ctx.openDetailPanel(result.file_id);
+                      close();
+                    }}
+                    className="gap-3"
+                  >
+                    <Brain className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm text-zinc-200">
+                          {result.fileName || `Arquivo #${result.file_id}`}
+                        </span>
+                        <span className={`text-[10px] tabular-nums shrink-0 ${
+                          score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-zinc-500"
+                        }`}>
+                          {score}%
+                        </span>
+                      </div>
+                      <span className="text-xs text-zinc-500 line-clamp-1">
+                        {result.chunk_text?.slice(0, 100)}
+                      </span>
+                      {result.assistidoNome && (
+                        <span className="text-[10px] text-zinc-600">
+                          {result.assistidoNome}
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </>
         )}
