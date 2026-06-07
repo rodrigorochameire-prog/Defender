@@ -156,6 +156,8 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
   "Execução Penal": Lock,
   "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
+  "Mutirão (TJBA Protege)": Users,
+  MUTIRAO_PROTEGE: Users,
 };
 
 // Stable empty array to prevent useEffect infinite loop from inline `= []` default
@@ -188,6 +190,7 @@ const ATRIBUICAO_ENUM_TO_LABEL: Record<string, string> = {
   "EXECUCAO_PENAL": "Execução Penal",
   "SUBSTITUICAO": "Substituição Criminal",
   "SUBSTITUICAO_CIVEL": "Curadoria Especial",
+  "MUTIRAO_PROTEGE": "Mutirão (TJBA Protege)",
 };
 
 const atribuicaoColors: Record<string, string> = {
@@ -197,6 +200,8 @@ const atribuicaoColors: Record<string, string> = {
   "Execução Penal": "text-blue-600 dark:text-blue-500",
   "Substituição Criminal": "text-purple-600 dark:text-purple-500",
   "Curadoria Especial": "text-gray-600 dark:text-gray-400",
+  "Mutirão (TJBA Protege)": "text-violet-600 dark:text-violet-500",
+  MUTIRAO_PROTEGE: "text-violet-600 dark:text-violet-500",
 };
 
 // Cores HEX para bordas de atribuição (usadas nos cards)
@@ -207,6 +212,8 @@ const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
   "Execução Penal": "#3b82f6",          // Azul
   "Substituição Criminal": "#8b5cf6",   // Roxo
   "Curadoria Especial": "#71717a",      // Cinza
+  "Mutirão (TJBA Protege)": "#a855f7",  // Violeta
+  MUTIRAO_PROTEGE: "#a855f7",           // Violeta
 };
 
 // Background suave para atribuição
@@ -217,6 +224,8 @@ const ATRIBUICAO_BG_COLORS: Record<string, string> = {
   "Execução Penal": "bg-blue-50 dark:bg-blue-950/20",
   "Substituição Criminal": "bg-purple-50 dark:bg-purple-950/20",
   "Curadoria Especial": "bg-neutral-50 dark:bg-neutral-800/30",
+  "Mutirão (TJBA Protege)": "bg-violet-50 dark:bg-violet-950/20",
+  MUTIRAO_PROTEGE: "bg-violet-50 dark:bg-violet-950/20",
 };
 
 // ==========================================
@@ -338,6 +347,7 @@ const atribuicaoOptions = [
   { value: "Execução Penal", label: "Execução Penal", icon: Lock },
   { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
+  { value: "Mutirão (TJBA Protege)", label: "Mutirão (TJBA Protege)", icon: Users },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
 ];
 
@@ -355,6 +365,7 @@ const AREA_KEY_TO_ATRIBUICAO_LABEL: Record<string, string> = {
   CURADORIA: "Curadoria Especial",
   VIOLENCIA_DOMESTICA: "Violência Doméstica",
   EXECUCAO_PENAL: "Execução Penal",
+  MUTIRAO_PROTEGE: "Mutirão (TJBA Protege)",
 };
 
 // Persistência do default de atribuição. Override do usuário (qualquer

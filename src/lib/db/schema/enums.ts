@@ -12,6 +12,7 @@ export const atribuicaoEnum = pgEnum("atribuicao", [
   "SUBSTITUICAO",       // Substituição Criminal
   "SUBSTITUICAO_CIVEL", // Substituição Não Penal (Cível, Família, etc.)
   "GRUPO_JURI",         // Grupo Especial de Atuação (Apenas Plenários pelo Estado)
+  "MUTIRAO_PROTEGE",  // Mutirão TJBA Protege (cobertura externa - não titularidade)
   "CRIMINAL_CAMACARI",        // Varas Criminais Comuns Camaçari
   "CRIMINAL_SIMOES_FILHO",    // Varas Criminais Simões Filho
   "CRIMINAL_LAURO_DE_FREITAS",// Varas Criminais Lauro de Freitas
