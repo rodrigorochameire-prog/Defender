@@ -11,6 +11,7 @@ import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, and, gte, isNull, inArray, sql } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 import { classificarMatchNome } from "@/lib/assistido-match";
+import { ehAssistidoNaoIdentificado, placeholderAssistidoParaCnj } from "@/lib/assistido-placeholder";
 
 // ============================================================================
 // TIPOS
@@ -182,6 +183,10 @@ export async function importarDemandas(
       // 1. Buscar ou criar assistido
       let assistido;
 
+      // Expediente sigiloso sem parte verificada → placeholder isolado por CNJ.
+      // Nunca casar por nome (evita vincular ao assistido errado) e marcar revisão.
+      const naoIdentificado = ehAssistidoNaoIdentificado(row.assistido);
+
       if (row.assistidoMatchId) {
         assistido = await db.query.assistidos.findFirst({
           where: and(
@@ -189,6 +194,34 @@ export async function importarDemandas(
             isNull(assistidos.deletedAt),
           ),
         });
+      }
+
+      // 1a. Não identificado: usa/cria placeholder `⚠ A identificar — <cnj>`,
+      //     pulando todo o casamento por nome. Sem pasta no Drive.
+      if (naoIdentificado && !assistido) {
+        const nomePlaceholder = placeholderAssistidoParaCnj(row.processoNumero);
+        assistido = await db.query.assistidos.findFirst({
+          where: and(
+            eq(assistidos.nome, nomePlaceholder),
+            isNull(assistidos.deletedAt),
+          ),
+        });
+        if (!assistido) {
+          const targetAtribuicaoPrimaria = (
+            ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || "JURI_CAMACARI"
+          ) as any;
+          const [novoPlaceholder] = await db.insert(assistidos).values({
+            nome: nomePlaceholder,
+            statusPrisional: "SOLTO",
+            atribuicaoPrimaria: targetAtribuicaoPrimaria,
+            defensorId,
+          }).returning();
+          assistido = novoPlaceholder;
+          console.log(
+            `[pje-import] placeholder criado para expediente sem parte: ` +
+            `"${nomePlaceholder}" processo=${row.processoNumero || "-"}`,
+          );
+        }
       }
 
       // 1b. Desempate por CNJ: se o processo já existe e seu assistido tem
@@ -458,6 +491,7 @@ export async function importarDemandas(
         substatus,
         prioridade: reuPreso ? "REU_PRESO" : "NORMAL",
         reuPreso,
+        revisaoPendente: naoIdentificado,
         defensorId,
         importBatchId: row.importBatchId || null,
         ordemOriginal: row.ordemOriginal ?? null,
