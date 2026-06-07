@@ -1122,6 +1122,24 @@ export const audienciasRouter = router({
     .mutation(async ({ ctx, input }) => {
       const { eventos } = input;
 
+      // Status canônico da audiência a partir da situação textual da pauta
+      // (fonte rica), com fallback no status já mapeado pelo front. A UI
+      // (status-tone, detectar-tipo-audiencia) espera exatamente estes valores:
+      // agendada | redesignada | realizada | cancelada.
+      const statusCanonico = (situacao?: string, statusFront?: string): string => {
+        const s = (situacao ?? "").toLowerCase();
+        if (s.includes("cancel") || s.includes("nao-realiz") || s.includes("não-realiz")) return "cancelada";
+        if (s.includes("redesign")) return "redesignada";
+        if (s.includes("realiz")) return "realizada";
+        if (s.includes("design")) return "agendada";
+        switch (statusFront) {
+          case "cancelado": return "cancelada";
+          case "remarcado": return "redesignada";
+          case "concluido": return "realizada";
+          default: return "agendada";
+        }
+      };
+
       // Mapear atribuição para o enum do banco de dados
       // Valores válidos: JURI_CAMACARI, VVD_CAMACARI, EXECUCAO_PENAL, SUBSTITUICAO, SUBSTITUICAO_CIVEL, GRUPO_JURI
       const mapAtribuicao = (atrib: string | undefined): "VVD_CAMACARI" | "JURI_CAMACARI" | "EXECUCAO_PENAL" | "SUBSTITUICAO" | "SUBSTITUICAO_CIVEL" | "GRUPO_JURI" => {
@@ -1324,9 +1342,7 @@ export const audienciasRouter = router({
                 descricao: evento.descricao,
                 local: evento.local,
                 horario: evento.horarioInicio,
-                status: evento.status === "confirmado" ? "agendada" :
-                       evento.status === "cancelado" ? "cancelada" :
-                       evento.status === "remarcado" ? "reagendada" : "agendada",
+                status: statusCanonico(evento.situacaoAudiencia, evento.status),
               })
               .where(eq(audiencias.id, audienciaExistente.id));
 
@@ -1570,9 +1586,7 @@ export const audienciasRouter = router({
                 descricao: evento.descricao,
                 local: evento.local,
                 horario: evento.horarioInicio,
-                status: evento.status === "confirmado" ? "agendada" :
-                       evento.status === "cancelado" ? "cancelada" :
-                       evento.status === "remarcado" ? "reagendada" : "agendada",
+                status: statusCanonico(evento.situacaoAudiencia, evento.status),
               })
               .returning({ id: audiencias.id });
 
