@@ -368,6 +368,7 @@ export const audiencias = pgTable("audiencias", {
 	juiz: text(),
 	promotor: text(),
 	status: varchar({ length: 30 }).default('agendada'),
+	contexto: varchar({ length: 30 }),
 	resultado: text(),
 	observacoes: text(),
 	anotacoes: text(),
