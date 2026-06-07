@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Loader2, Paperclip } from "lucide-react";
+import { ChevronDown, Loader2, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
@@ -46,6 +46,7 @@ export function RegistroEditor({
 
   // Arquivos "staged" em memória — enviados após a criação do registro (precisa do id).
   const [staged, setStaged] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const stagedRef = useRef<File[]>([]);
   useEffect(() => {
     stagedRef.current = staged;
@@ -151,6 +152,11 @@ export function RegistroEditor({
   }, [tipo, tiposPrimarios, tipos, create, assistidoId, processoId, demandaId, audienciaId, onCancel]);
 
   return (
+    <AnexoDropzone
+      onFiles={(files) => setStaged((s) => [...s, ...files])}
+      dragHint="Solte para anexar"
+      className="rounded-xl"
+    >
     <div
       className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden border-l-2 transition-colors"
       style={{ borderLeftColor: `${activeCfg.color}66` }}
@@ -246,40 +252,40 @@ export function RegistroEditor({
           className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
         />
 
-        <AnexoDropzone
-          onFiles={(files) => setStaged((s) => [...s, ...files])}
-          className="border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-3 mt-2"
-        >
-          <label className="flex items-center gap-2 text-sm text-neutral-500 cursor-pointer">
-            <Paperclip className="w-4 h-4" />
-            Arraste arquivos aqui ou
-            <input
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) =>
-                setStaged((s) => [...s, ...Array.from(e.target.files ?? [])])
-              }
-            />
-            <span className="underline">selecione</span>
-          </label>
-          {staged.length > 0 && (
-            <ul className="mt-2 text-xs text-neutral-600 dark:text-neutral-300 space-y-1">
-              {staged.map((f, i) => (
-                <li key={i} className="flex items-center justify-between">
-                  <span className="truncate">{f.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setStaged((s) => s.filter((_, j) => j !== i))}
-                    className="text-neutral-400"
-                  >
-                    remover
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </AnexoDropzone>
+        {/* Input de arquivo oculto — acionado pelo clipe no rodapé */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            setStaged((s) => [...s, ...Array.from(e.target.files ?? [])]);
+            e.target.value = "";
+          }}
+        />
+
+        {/* Chips compactos dos arquivos selecionados (só aparecem quando há algum) */}
+        {staged.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {staged.map((f, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 max-w-[160px] pl-2 pr-1 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-300"
+              >
+                <Paperclip className="w-3 h-3 shrink-0 text-neutral-400" />
+                <span className="truncate">{f.name}</span>
+                <button
+                  type="button"
+                  aria-label={`Remover ${f.name}`}
+                  onClick={() => setStaged((s) => s.filter((_, j) => j !== i))}
+                  className="shrink-0 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Footer com counter + actions */}
         <div className="flex items-center justify-between pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60">
@@ -292,6 +298,15 @@ export function RegistroEditor({
             {conteudo.length > 0 ? `${conteudo.length} caracteres` : ""}
           </span>
           <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Anexar arquivo"
+              aria-label="Anexar arquivo"
+              className="h-7 w-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
             {onCancel && (
               <Button
                 variant="ghost"
@@ -333,5 +348,6 @@ export function RegistroEditor({
         </div>
       </div>
     </div>
+    </AnexoDropzone>
   );
 }
