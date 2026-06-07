@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db } from "@/lib/db";
+import { db, withTransaction } from "@/lib/db";
 import {
   partesVVD,
   processosVVD,
@@ -761,120 +761,129 @@ export const vvdRouter = router({
       for (const intimacao of input.intimacoes) {
         console.log("[VVD Import] Processando:", intimacao.assistido, intimacao.numeroProcesso);
         try {
-          // 1. Buscar ou criar a parte (requerido = assistido da DPE)
-          let [parteExistente] = await db
-            .select()
-            .from(partesVVD)
-            .where(
-              and(
-                ilike(partesVVD.nome, intimacao.assistido),
-                eq(partesVVD.tipoParte, "requerido")
+          // Tudo da linha numa transação: parte + processo + intimação.
+          // Se qualquer passo falhar, NADA é gravado (sem partes órfãs).
+          // Contadores só são aplicados após o commit.
+          const flags = await withTransaction(async (tx) => {
+            let parteNova = false, processoNovo = false, intimacaoNova = false;
+
+            // 1. Buscar ou criar a parte (requerido = assistido da DPE)
+            let [parteExistente] = await tx
+              .select()
+              .from(partesVVD)
+              .where(
+                and(
+                  ilike(partesVVD.nome, intimacao.assistido),
+                  eq(partesVVD.tipoParte, "requerido")
+                )
               )
-            )
-            .limit(1);
-
-          if (!parteExistente) {
-            [parteExistente] = await db
-              .insert(partesVVD)
-              .values({
-                nome: intimacao.assistido,
-                tipoParte: "requerido",
-                defensorId: ctx.user.id,
-              })
-              .returning();
-            resultados.partesNovas++;
-          }
-
-          // 2. Buscar ou criar o processo
-          let [processoExistente] = await db
-            .select()
-            .from(processosVVD)
-            .where(eq(processosVVD.numeroAutos, intimacao.numeroProcesso))
-            .limit(1);
-
-          if (!processoExistente) {
-            const decisaoISO = parseDataParaISO(intimacao.dataExpedicao)
-              ?? new Date().toISOString().split('T')[0];
-            const dataReanalise = new Date(decisaoISO + "T00:00:00");
-            dataReanalise.setFullYear(dataReanalise.getFullYear() + 1);
-            const dataReanaliseStr = dataReanalise.toISOString().split('T')[0];
-
-            [processoExistente] = await db
-              .insert(processosVVD)
-              .values({
-                requeridoId: parteExistente.id,
-                numeroAutos: intimacao.numeroProcesso,
-                tipoProcesso: intimacao.tipoProcesso || "MPU",
-                crime: intimacao.crime,
-                mpuAtiva: true,
-                dataDecisaoMPU: decisaoISO,
-                dataVencimentoMPU: dataReanaliseStr,
-                defensorId: ctx.user.id,
-              })
-              .returning();
-            resultados.processosNovos++;
-          }
-
-          // 3. Criar a intimação
-          let dataExpedicaoFormatada = parseDataParaISO(intimacao.dataExpedicao) ?? undefined;
-          let horaExpedicao = "00";
-          let minutoExpedicao = "00";
-
-          if (intimacao.dataExpedicao) {
-            const [, horaParte] = intimacao.dataExpedicao.split(' ');
-            if (horaParte && horaParte.includes(':')) {
-              const [hora, minuto] = horaParte.split(':');
-              horaExpedicao = hora;
-              minutoExpedicao = minuto;
-            }
-          }
-
-          const createdAtPreciso = new Date();
-          const temHora = horaExpedicao !== "00" || minutoExpedicao !== "00";
-
-          if (temHora) {
-            createdAtPreciso.setHours(parseInt(horaExpedicao, 10));
-            createdAtPreciso.setMinutes(parseInt(minutoExpedicao, 10));
-            createdAtPreciso.setSeconds(0);
-            createdAtPreciso.setMilliseconds(0);
-          } else if (intimacao.ordemOriginal !== undefined) {
-            createdAtPreciso.setMilliseconds(999 - intimacao.ordemOriginal);
-          }
-
-          // Dedup: se já há intimação com o mesmo pjeDocumentoId neste processoVVD,
-          // NÃO criar nova. Respeita também a regra "última edição vence": se
-          // existir demanda vinculada com edição manual, não mexe.
-          let duplicada = false;
-          if (intimacao.pjeDocumentoId) {
-            const [existente] = await db
-              .select({ id: intimacoesVVD.id })
-              .from(intimacoesVVD)
-              .where(and(
-                eq(intimacoesVVD.processoVVDId, processoExistente.id),
-                eq(intimacoesVVD.pjeDocumentoId, intimacao.pjeDocumentoId),
-              ))
               .limit(1);
-            if (existente) duplicada = true;
-          }
-          if (duplicada) {
-            // Pula silenciosamente — já importada antes
-          } else {
-            await db.insert(intimacoesVVD).values({
-              processoVVDId: processoExistente.id,
-              tipoIntimacao: intimacao.tipoIntimacao,
-              ato: intimacao.pjeTipoDocumento || "Intimação",
-              dataExpedicao: dataExpedicaoFormatada,
-              prazoDias: intimacao.prazo,
-              pjeDocumentoId: intimacao.pjeDocumentoId,
-              pjeTipoDocumento: intimacao.pjeTipoDocumento,
-              providencias: intimacao.tipoIntimacao === "CIENCIA"
-                ? "Classificar demanda"
-                : "Peticionar nos autos",
-              defensorId: ctx.user.id,
-              createdAt: createdAtPreciso,
-            });
-            resultados.intimacoesNovas++;
-          }
+
+            if (!parteExistente) {
+              [parteExistente] = await tx
+                .insert(partesVVD)
+                .values({
+                  nome: intimacao.assistido,
+                  tipoParte: "requerido",
+                  defensorId: ctx.user.id,
+                })
+                .returning();
+              parteNova = true;
+            }
+
+            // 2. Buscar ou criar o processo
+            let [processoExistente] = await tx
+              .select()
+              .from(processosVVD)
+              .where(eq(processosVVD.numeroAutos, intimacao.numeroProcesso))
+              .limit(1);
+
+            if (!processoExistente) {
+              const decisaoISO = parseDataParaISO(intimacao.dataExpedicao)
+                ?? new Date().toISOString().split('T')[0];
+              const dataReanalise = new Date(decisaoISO + "T00:00:00");
+              dataReanalise.setFullYear(dataReanalise.getFullYear() + 1);
+              const dataReanaliseStr = dataReanalise.toISOString().split('T')[0];
+
+              [processoExistente] = await tx
+                .insert(processosVVD)
+                .values({
+                  requeridoId: parteExistente.id,
+                  numeroAutos: intimacao.numeroProcesso,
+                  tipoProcesso: intimacao.tipoProcesso || "MPU",
+                  crime: intimacao.crime,
+                  mpuAtiva: true,
+                  dataDecisaoMPU: decisaoISO,
+                  dataVencimentoMPU: dataReanaliseStr,
+                  defensorId: ctx.user.id,
+                })
+                .returning();
+              processoNovo = true;
+            }
+
+            // 3. Criar a intimação
+            const dataExpedicaoFormatada = parseDataParaISO(intimacao.dataExpedicao) ?? undefined;
+            let horaExpedicao = "00";
+            let minutoExpedicao = "00";
+
+            if (intimacao.dataExpedicao) {
+              const [, horaParte] = intimacao.dataExpedicao.split(' ');
+              if (horaParte && horaParte.includes(':')) {
+                const [hora, minuto] = horaParte.split(':');
+                horaExpedicao = hora;
+                minutoExpedicao = minuto;
+              }
+            }
+
+            const createdAtPreciso = new Date();
+            const temHora = horaExpedicao !== "00" || minutoExpedicao !== "00";
+
+            if (temHora) {
+              createdAtPreciso.setHours(parseInt(horaExpedicao, 10));
+              createdAtPreciso.setMinutes(parseInt(minutoExpedicao, 10));
+              createdAtPreciso.setSeconds(0);
+              createdAtPreciso.setMilliseconds(0);
+            } else if (intimacao.ordemOriginal !== undefined) {
+              createdAtPreciso.setMilliseconds(999 - intimacao.ordemOriginal);
+            }
+
+            // Dedup: mesma intimação (pjeDocumentoId) no mesmo processoVVD → pula.
+            let duplicada = false;
+            if (intimacao.pjeDocumentoId) {
+              const [existente] = await tx
+                .select({ id: intimacoesVVD.id })
+                .from(intimacoesVVD)
+                .where(and(
+                  eq(intimacoesVVD.processoVVDId, processoExistente.id),
+                  eq(intimacoesVVD.pjeDocumentoId, intimacao.pjeDocumentoId),
+                ))
+                .limit(1);
+              if (existente) duplicada = true;
+            }
+            if (!duplicada) {
+              await tx.insert(intimacoesVVD).values({
+                processoVVDId: processoExistente.id,
+                tipoIntimacao: intimacao.tipoIntimacao,
+                ato: intimacao.pjeTipoDocumento || "Intimação",
+                dataExpedicao: dataExpedicaoFormatada,
+                prazoDias: intimacao.prazo,
+                pjeDocumentoId: intimacao.pjeDocumentoId,
+                pjeTipoDocumento: intimacao.pjeTipoDocumento,
+                providencias: intimacao.tipoIntimacao === "CIENCIA"
+                  ? "Classificar demanda"
+                  : "Peticionar nos autos",
+                defensorId: ctx.user.id,
+                createdAt: createdAtPreciso,
+              });
+              intimacaoNova = true;
+            }
+
+            return { parteNova, processoNovo, intimacaoNova };
+          });
+
+          if (flags.parteNova) resultados.partesNovas++;
+          if (flags.processoNovo) resultados.processosNovos++;
+          if (flags.intimacaoNova) resultados.intimacoesNovas++;
         } catch (error) {
           resultados.erros.push(
             `Erro ao importar ${intimacao.assistido}: ${error instanceof Error ? error.message : "Erro desconhecido"}`
