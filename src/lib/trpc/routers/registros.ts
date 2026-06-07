@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, registros, demandas, users, processos, assistidos, audiencias } from "@/lib/db";
+import { registroAnexos } from "@/lib/db/schema/agenda";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
 import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getSupabaseAdmin } from "@/lib/supabase/client";
 import { getDefensoresVisiveis } from "../defensor-scope";
 import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { buildDemandaSync, syncDemandaToSheets } from "@/lib/services/demanda-sync";
@@ -402,4 +404,35 @@ export const registrosRouter = router({
         assistido: r.assistido?.id ? r.assistido : null,
       }));
     }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // anexos — sub-router para gerenciar anexos de um registro
+  // ────────────────────────────────────────────────────────────────────
+  anexos: router({
+    list: protectedProcedure
+      .input(z.object({ registroId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        const rows = await db.query.registroAnexos.findMany({
+          where: eq(registroAnexos.registroId, input.registroId),
+          orderBy: (a, { asc }) => [asc(a.createdAt)],
+        });
+        const supabase = getSupabaseAdmin();
+        return Promise.all(rows.map(async (a) => {
+          const { data } = await supabase.storage
+            .from("documents")
+            .createSignedUrl(a.storagePath, 60 * 60);
+          return { ...a, url: data?.signedUrl ?? null };
+        }));
+      }),
+
+    remove: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        const anexo = await db.query.registroAnexos.findFirst({ where: eq(registroAnexos.id, input.id) });
+        if (!anexo) throw new TRPCError({ code: "NOT_FOUND", message: "anexo não encontrado" });
+        await getSupabaseAdmin().storage.from("documents").remove([anexo.storagePath]);
+        await db.delete(registroAnexos).where(eq(registroAnexos.id, input.id));
+        return { ok: true };
+      }),
+  }),
 });
