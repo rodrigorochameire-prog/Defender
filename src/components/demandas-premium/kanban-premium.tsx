@@ -46,6 +46,7 @@ import {
   type EmAndamentoSubGroup,
   type StatusGroup,
 } from "@/config/demanda-status";
+import { bucketIntoSections } from "./section-bucketing";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
@@ -1159,18 +1160,13 @@ function SectionsList({
     [storageKey],
   );
 
+  // Distribui os itens nas seções + leftover (garante: contagem == cards exibidos)
+  const { perSection, leftover } = bucketIntoSections(items, sections);
+
   return (
     <>
       {sections.map((section) => {
-        const sectionItems = items.filter((d) => {
-          const key = (d.substatus || d.status || "")
-            .replace(/^\d+\s*-\s*/, "")
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[̀-ͯ]/g, "")
-            .replace(/\s+/g, "_");
-          return section.statuses.includes(key);
-        });
+        const sectionItems = perSection.get(section.label) ?? [];
         // While dragging, render every section as a drop target (even empty ones)
         // so the user can move a card into a status that has no current items.
         if (sectionItems.length === 0 && !isDragging) return null;
@@ -1229,6 +1225,20 @@ function SectionsList({
           </div>
         );
       })}
+      {/* Leftover — itens do sub-grupo que não casaram com nenhuma seção.
+          Sem isto, eles eram contados no cabeçalho mas não apareciam (contagem-fantasma). */}
+      {leftover.length > 0 && (
+        <div>
+          <div className="w-full flex items-center gap-1.5 px-2 py-1 mb-1.5">
+            <ListTodo className="w-3 h-3 text-neutral-400" />
+            <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">Outros</span>
+            <span className="text-[9px] font-mono text-neutral-300 ml-auto">{leftover.length}</span>
+          </div>
+          <div className="space-y-2 mb-3 min-h-[8px]">
+            {leftover.map(renderCard)}
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -1851,17 +1861,12 @@ export function KanbanPremium({
             if (items.length === 0) continue;
             const sections = SUB_GROUP_SECTIONS[sg];
             if (sections) {
+              // Mesma distribuição do render (SectionsList): seções na ordem + leftover.
+              const { perSection, leftover } = bucketIntoSections(items, sections);
               for (const section of sections) {
-                for (const d of items) {
-                  const key = (d.substatus || d.status || "")
-                    .replace(/^\d+\s*-\s*/, "")
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[̀-ͯ]/g, "")
-                    .replace(/\s+/g, "_");
-                  if (section.statuses.includes(key)) ids.push(String(d.id));
-                }
+                for (const d of perSection.get(section.label) ?? []) ids.push(String(d.id));
               }
+              for (const d of leftover) ids.push(String(d.id));
             } else {
               for (const d of items.slice(0, 30)) ids.push(String(d.id));
             }

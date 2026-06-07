@@ -1,0 +1,72 @@
+// ==========================================
+// SECTION BUCKETING — distribui demandas de um sub-grupo nas suas seções
+// ==========================================
+//
+// Invariante garantida: TODO item entregue volta exatamente uma vez — numa
+// seção que casa, ou no "leftover". O cabeçalho do sub-grupo conta items.length,
+// então o leftover impede a contagem-fantasma (header diz N, render mostra 0)
+// quando um item não casa com nenhuma seção (ex.: demanda delegada cujo status
+// base não é "delegar", ou status de enum como "4_MONITORAR").
+
+export interface BucketItem {
+  id: string | number;
+  status?: string | null;
+  substatus?: string | null;
+  /** Nome do delegatário (preenchido = demanda delegada). */
+  delegadoPara?: string | null;
+}
+
+export interface BucketSection {
+  label: string;
+  statuses: string[];
+}
+
+/**
+ * Normaliza um status/substatus para a chave canônica das seções.
+ * Remove prefixo de ordenação em qualquer forma — "2 - Elaborar", "4_MONITORAR",
+ * "4-monitorar" — depois minúsculas, sem acentos, espaços → underscore.
+ */
+export function normalizeStatusKey(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return raw
+    .replace(/^\d+\s*[-_]\s*/, "") // "2 - ", "4_", "4-"
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, "_");
+}
+
+/**
+ * Chaves efetivas de um item para fins de seção.
+ * Demanda delegada pertence à seção "Delegação" (statuses: ["delegar"]),
+ * espelhando getDemandaGroup (delegação força o grupo "acompanhar").
+ * Caso contrário, usa o substatus (ou status) normalizado.
+ */
+export function effectiveSectionKeys(item: BucketItem): string[] {
+  if (item.delegadoPara) return ["delegar"];
+  return [normalizeStatusKey(item.substatus || item.status)];
+}
+
+/**
+ * Distribui os itens nas seções. Cada item entra na PRIMEIRA seção cujas
+ * `statuses` interceptam as chaves efetivas do item; os sem correspondência
+ * vão para `leftover`.
+ */
+export function bucketIntoSections<T extends BucketItem>(
+  items: T[],
+  sections: BucketSection[],
+): { perSection: Map<string, T[]>; leftover: T[] } {
+  const perSection = new Map<string, T[]>();
+  for (const s of sections) perSection.set(s.label, []);
+  const leftover: T[] = [];
+
+  for (const item of items) {
+    const keys = effectiveSectionKeys(item);
+    const section = sections.find((s) => s.statuses.some((st) => keys.includes(st)));
+    if (section) perSection.get(section.label)!.push(item);
+    else leftover.push(item);
+  }
+
+  return { perSection, leftover };
+}
