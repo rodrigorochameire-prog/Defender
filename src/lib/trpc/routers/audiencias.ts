@@ -687,6 +687,8 @@ export const audienciasRouter = router({
         .select({
           id: audiencias.id,
           dataHora: audiencias.dataAudiencia,
+          horario: audiencias.horario,
+          contexto: audiencias.contexto,
           tipo: audiencias.tipo,
           local: audiencias.local,
           titulo: audiencias.titulo,
