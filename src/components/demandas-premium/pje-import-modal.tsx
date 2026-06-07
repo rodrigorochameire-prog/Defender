@@ -502,7 +502,10 @@ export function PJeImportModal({
             status: row.status,
             prazo: row.prazo,
             estadoPrisional: row.estadoPrisional,
-            assistidoMatchId: row.assistidoMatch.matchedId,
+            assistidoMatchId:
+              row.assistidoMatch.type === "exact" || row.matchConfirmed
+                ? row.assistidoMatch.matchedId
+                : undefined,
             providencias: row.providencias,
           });
         }).filter(Boolean);
@@ -538,7 +541,10 @@ export function PJeImportModal({
           status: row.status,
           prazo: row.prazo,
           estadoPrisional: row.estadoPrisional,
-          assistidoMatchId: row.assistidoMatch.matchedId,
+          assistidoMatchId:
+            row.assistidoMatch.type === "exact" || row.matchConfirmed
+              ? row.assistidoMatch.matchedId
+              : undefined,
           providencias: row.providencias,
         });
 

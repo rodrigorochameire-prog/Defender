@@ -58,6 +58,9 @@ export interface PjeReviewRow {
 
   // Match
   assistidoMatch: AssistidoMatch;
+  /** "similar" só vincula ao sugerido após confirmação explícita do usuário.
+   *  Sem confirmar, a importação cria assistido novo (seguro por padrão). */
+  matchConfirmed?: boolean;
 }
 
 interface PjeReviewTableProps {
@@ -208,6 +211,10 @@ export function PjeReviewTable({
     // Converter ISO para BR format para display
     const brDate = converterISOParaBR(isoDate);
     updateRow(index, { prazo: brDate, prazoManual: true });
+  };
+
+  const handleConfirmMatch = (index: number) => {
+    updateRow(index, { matchConfirmed: !rows[index].matchConfirmed });
   };
 
   const handleToggleExclude = (index: number) => {
@@ -523,6 +530,7 @@ export function PjeReviewTable({
               onStatusChange={(i, v) => updateRow(i, { status: v })}
               onEstadoPrisionalChange={(i, v) => updateRow(i, { estadoPrisional: v })}
               onToggleExclude={handleToggleExclude}
+              onConfirmMatch={handleConfirmMatch}
               onProvidenciasChange={handleProvidenciasChange}
               onAudienciaChange={handleAudienciaChange}
               showTipoProcesso={showTipoProcesso}
@@ -563,6 +571,7 @@ interface PjeReviewRowProps {
   onStatusChange: (index: number, value: string) => void;
   onEstadoPrisionalChange: (index: number, value: string) => void;
   onToggleExclude: (index: number) => void;
+  onConfirmMatch: (index: number) => void;
   onProvidenciasChange: (index: number, value: string) => void;
   onAudienciaChange: (index: number, fields: { data?: string; hora?: string; tipo?: string; criarEvento?: boolean }) => void;
   showTipoProcesso?: boolean;
@@ -576,6 +585,7 @@ interface PjeReviewRowProps {
 function PjeReviewRowComponent({
   row,
   index,
+  onConfirmMatch,
   atoOptions,
   statusOptions,
   estadoPrisionalOptions,
@@ -692,6 +702,22 @@ function PjeReviewRowComponent({
             </Tooltip>
             {matchLabel && (
               <span className={`text-[9px] font-medium ${matchLabelColor}`}>{matchLabel}</span>
+            )}
+            {row.assistidoMatch.type === "similar" && !row.excluded && (
+              <button
+                type="button"
+                onClick={() => onConfirmMatch(index)}
+                title={row.matchConfirmed
+                  ? `Vinculado a ${row.assistidoMatch.matchedNome}. Clique para criar assistido novo.`
+                  : `Vincular a ${row.assistidoMatch.matchedNome}? Sem confirmar, será criado um novo assistido.`}
+                className={`text-[9px] font-semibold px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  row.matchConfirmed
+                    ? "bg-amber-500 text-white hover:bg-amber-600"
+                    : "border border-amber-400 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                }`}
+              >
+                {row.matchConfirmed ? "✓ vinculado" : "vincular?"}
+              </button>
             )}
           </div>
           <div className="flex items-center gap-1 mt-0.5">
