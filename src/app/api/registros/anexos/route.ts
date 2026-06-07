@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/client";
 import {
   ACCEPTED_MIME, MAX_BYTES, mimeToTipo, buildStoragePath,
 } from "@/lib/registros/anexo-utils";
+import { mirrorAnexoToDrive } from "@/lib/registros/mirror-anexo-to-drive";
 
 const BUCKET = "documents";
 
@@ -61,6 +62,9 @@ export async function POST(request: NextRequest) {
     tipo: mimeToTipo(file.type),
     autorId: userId,
   }).returning();
+
+  // espelho no Drive — fire-and-forget, não bloqueia a resposta
+  if (anexo) void mirrorAnexoToDrive(anexo.id);
 
   return NextResponse.json({ anexo }, { status: 201 });
 }
