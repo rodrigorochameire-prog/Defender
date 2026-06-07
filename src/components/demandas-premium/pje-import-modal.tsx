@@ -108,10 +108,20 @@ export function PJeImportModal({
   // Mutation para importação VVD
   const importarVVDMutation = trpc.vvd.importarIntimacoesPJe.useMutation({
     onSuccess: (resultado) => {
-      toast.success(
-        `Importação VVD concluída: ${resultado.processosNovos} processos, ${resultado.partesNovas} partes, ${resultado.intimacoesNovas} intimações`,
-        { duration: 5000 }
-      );
+      const erros = resultado.erros ?? [];
+      if (erros.length > 0) {
+        // Nunca reportar sucesso silencioso quando linhas falharam.
+        toast.error(
+          `Importação VVD: ${resultado.intimacoesNovas} intimações OK, ${erros.length} falharam. ${erros[0] ?? ""}`,
+          { duration: 9000 }
+        );
+        console.error("[VVD Import] erros:", erros);
+      } else {
+        toast.success(
+          `Importação VVD concluída: ${resultado.processosNovos} processos, ${resultado.partesNovas} partes, ${resultado.intimacoesNovas} intimações`,
+          { duration: 5000 }
+        );
+      }
       if (onVVDImportComplete) {
         onVVDImportComplete();
       }
