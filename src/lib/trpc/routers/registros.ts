@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db, withTransaction, registros, demandas, users, processos, assistidos } from "@/lib/db";
+import { db, withTransaction, registros, demandas, users, processos, assistidos, audiencias } from "@/lib/db";
 import { registroAnexos } from "@/lib/db/schema/agenda";
+import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
 import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
@@ -202,13 +203,79 @@ export const registrosRouter = router({
             .where(eq(demandas.id, input.demandaId));
         }
 
-        return registro;
+        // 3. Side-effect de ciência: despacho designando audiência no texto →
+        //    agenda a audiência automaticamente (dedupe por processo+dia).
+        let audienciaCriada: {
+          id: number;
+          data: string;
+          horario: string;
+          tipo: string;
+        } | null = null;
+        if (input.tipo === "ciencia" && input.processoId) {
+          const det = detectarDesignacaoAudiencia(input.conteudo);
+          if (det) {
+            const inicioDia = new Date(`${det.data}T00:00:00-03:00`);
+            const fimDia = new Date(`${det.data}T23:59:59-03:00`);
+            const jaExiste = await tx
+              .select({ id: audiencias.id })
+              .from(audiencias)
+              .where(
+                and(
+                  eq(audiencias.processoId, input.processoId),
+                  gte(audiencias.dataAudiencia, inicioDia),
+                  lte(audiencias.dataAudiencia, fimDia)
+                )
+              )
+              .limit(1);
+            if (jaExiste.length === 0) {
+              const [proc] = await tx
+                .select({ numero: processos.numeroAutos })
+                .from(processos)
+                .where(eq(processos.id, input.processoId))
+                .limit(1);
+              const [assistido] = await tx
+                .select({ nome: assistidos.nome })
+                .from(assistidos)
+                .where(eq(assistidos.id, input.assistidoId))
+                .limit(1);
+              const [aud] = await tx
+                .insert(audiencias)
+                .values({
+                  processoId: input.processoId,
+                  assistidoId: input.assistidoId,
+                  // hora local de Camaçari (UTC-3) gravada como UTC verdadeiro;
+                  // `horario` é a fonte da verdade de exibição
+                  dataAudiencia: new Date(`${det.data}T${det.horario}:00-03:00`),
+                  horario: det.horario,
+                  tipo: det.tipo.slice(0, 50),
+                  titulo: `${det.tipo} - ${assistido?.nome ?? ""} - ${proc?.numero ?? ""}`.trim(),
+                  descricao:
+                    `Agendada automaticamente a partir de registro de ciência (designação detectada).` +
+                    (det.modalidade ? `\nModalidade: ${det.modalidade}` : "") +
+                    `\nTrecho: "${det.trecho}"`,
+                  status: "agendada",
+                  defensorId: ctx.user.id,
+                })
+                .returning({ id: audiencias.id });
+              if (aud) {
+                audienciaCriada = {
+                  id: aud.id,
+                  data: det.data,
+                  horario: det.horario,
+                  tipo: det.tipo,
+                };
+              }
+            }
+          }
+        }
+
+        return { registro, audienciaCriada };
       });
 
       // Atualiza a célula "Providências" da planilha (fire-and-forget)
-      syncProvidenciasToSheet(created.demandaId);
+      syncProvidenciasToSheet(created.registro.demandaId);
 
-      return created;
+      return { ...created.registro, audienciaCriada: created.audienciaCriada };
     }),
 
   // ────────────────────────────────────────────────────────────────────

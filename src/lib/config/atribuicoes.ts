@@ -320,6 +320,20 @@ export const ATRIBUICAO_COLORS = {
     shortLabel: "Cível",
     iconName: "Briefcase",
   },
+  MUTIRAO: {
+    border: "border-l-cyan-500",
+    bg: "bg-cyan-50/50 dark:bg-cyan-900/20",
+    bgSolid: "bg-cyan-100 dark:bg-cyan-900/30",
+    text: "text-cyan-700 dark:text-cyan-400",
+    textMuted: "text-cyan-600/70 dark:text-cyan-400/70",
+    hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-900/20",
+    indicator: "bg-cyan-500",
+    ring: "ring-cyan-500/20",
+    dot: "bg-cyan-500",
+    label: "Mutirão",
+    shortLabel: "Mutirão",
+    iconName: "Users",
+  },
   FAMILIA: {
     border: "border-l-orange-500",
     bg: "bg-orange-50/50 dark:bg-orange-900/20",
@@ -382,7 +396,9 @@ export const ATRIBUICAO_COLORS = {
 
 // Mapeamento de cores sólidas por atribuição (para estilos inline)
 export const SOLID_COLOR_MAP: Record<string, string> = {
-  all: "#737373",           // neutral-500
+  all: "#737373",
+  MUTIRAO: "#22d3ee",      // cyan-400
+  "Mutirão": "#22d3ee",           // neutral-500
   VVD: "#eab308",           // yellow-500 (mais quente e suave que amber-500)
   "Violência Doméstica": "#eab308",
   VVD_CAMACARI: "#eab308",
@@ -505,6 +521,10 @@ const AREA_TO_FILTER_MAP: Record<string, string> = {
   FAMILIA: "SUBSTITUICAO_CIVEL",
   FAZENDA_PUBLICA: "SUBSTITUICAO_CIVEL",
   
+  // Mutirão (contexto da audiência, não do processo)
+  MUTIRAO: "MUTIRAO",
+  "Mutirão": "MUTIRAO",
+
   // Curadoria
   CURADORIA: "CURADORIA",
   "Curadoria Especial": "CURADORIA",

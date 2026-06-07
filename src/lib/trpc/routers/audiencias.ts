@@ -444,6 +444,7 @@ export const audienciasRouter = router({
           promotor: audiencias.promotor,
           status: audiencias.status,
           resultado: audiencias.resultado,
+          contexto: audiencias.contexto,
           responsavelId: audiencias.defensorId, // Alias para compatibilidade
           processo: {
             id: processos.id,
@@ -686,6 +687,8 @@ export const audienciasRouter = router({
         .select({
           id: audiencias.id,
           dataHora: audiencias.dataAudiencia,
+          horario: audiencias.horario,
+          contexto: audiencias.contexto,
           tipo: audiencias.tipo,
           local: audiencias.local,
           titulo: audiencias.titulo,

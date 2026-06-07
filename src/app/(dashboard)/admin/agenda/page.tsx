@@ -143,6 +143,7 @@ const FILTER_HEX: Record<string, string> = {
   EXECUCAO: "#60a5fa",
   SUBSTITUICAO: "#fb7185",
   SUBSTITUICAO_CIVEL: "#fb923c",
+  MUTIRAO: "#22d3ee",
 };
 
 // Opções de filtro para a agenda (sem duplicatas)
@@ -153,6 +154,7 @@ const AGENDA_FILTER_OPTIONS = [
   { key: "EXECUCAO", icon: Lock, hex: FILTER_HEX.EXECUCAO, ...getAtribuicaoColors("EXECUCAO") },
   { key: "SUBSTITUICAO", icon: RefreshCw, hex: FILTER_HEX.SUBSTITUICAO, ...getAtribuicaoColors("SUBSTITUICAO") },
   { key: "SUBSTITUICAO_CIVEL", icon: Briefcase, hex: FILTER_HEX.SUBSTITUICAO_CIVEL, ...getAtribuicaoColors("SUBSTITUICAO_CIVEL") },
+  { key: "MUTIRAO", icon: Users, hex: FILTER_HEX.MUTIRAO, ...getAtribuicaoColors("MUTIRAO") },
 ];
 
 // Criar config com ícones JSX para este componente
@@ -180,6 +182,7 @@ const AGENDA_ATRIBUICAO_PILL_OPTIONS = [
   { value: "EXECUCAO", label: "Execução Penal" },
   { value: "SUBSTITUICAO", label: "Substituição Criminal" },
   { value: "SUBSTITUICAO_CIVEL", label: "Curadoria Especial" },
+  { value: "MUTIRAO", label: "Mutirão" },
 ];
 
 // Função para gerar escalas padrão
@@ -738,7 +741,11 @@ export default function AgendaPage() {
     // 1. Processar audiências (tabela audiencias)
     if (audienciasData) {
       audienciasData.forEach((a) => {
-        const atribuicaoKey = mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
+        // Mutirão: contexto da própria audiência sobrepõe a atribuição do processo
+        // (o processo continua na atribuição de origem; só o ato é de mutirão)
+        const atribuicaoKey = a.contexto === "MUTIRAO"
+          ? "MUTIRAO"
+          : mapAtribuicaoToKey(a.processo?.atribuicao, a.processo?.area);
         const atribuicaoConfig = getAtribuicaoColors(atribuicaoKey);
         const dataFormatada = format(new Date(a.dataHora), "yyyy-MM-dd");
 
