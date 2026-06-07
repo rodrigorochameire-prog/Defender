@@ -5,6 +5,7 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   REGISTRO_TIPOS,
@@ -54,8 +55,17 @@ export function RegistroEditor({
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.registros.list.invalidate();
+      if (data?.audienciaCriada) {
+        // ciência com designação detectada → audiência agendada automaticamente
+        utils.audiencias.invalidate();
+        const { data: dia, horario, tipo: tipoAud } = data.audienciaCriada;
+        const [y, m, d] = dia.split("-");
+        toast.success(`Audiência agendada automaticamente`, {
+          description: `${tipoAud} — ${d}/${m}/${y} às ${horario}`,
+        });
+      }
       setConteudo("");
       setTitulo("");
       onSaved?.();
