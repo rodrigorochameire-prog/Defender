@@ -8,7 +8,7 @@
 
 import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
-import { eq, ilike, and, gte, isNull, inArray, sql } from "drizzle-orm";
+import { eq, ilike, and, or, gte, isNull, inArray, sql } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 import { classificarMatchNome } from "@/lib/assistido-match";
 
@@ -373,7 +373,10 @@ export async function importarDemandas(
             eq(demandas.processoId, processo.id),
             eq(demandas.assistidoId, assistido.id),
             eq(demandas.ato, row.ato),
-            eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+            or(
+              eq(demandas.dataExpedicao, dataExpedicaoParaBusca),
+              eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+            ),
             isNull(demandas.deletedAt),
           ),
         });

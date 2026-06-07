@@ -182,7 +182,7 @@ export const processosVVD = pgTable("processos_vvd", {
   observacoes: text("observacoes"),
 
   // Integração PJe
-  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
+  pjeDocumentoId: varchar("pje_documento_id", { length: 50 }),
   pjeUltimaAtualizacao: timestamp("pje_ultima_atualizacao"),
 
 
@@ -263,7 +263,7 @@ export const intimacoesVVD = pgTable("intimacoes_vvd", {
   prazoDias: integer("prazo_dias"),
 
   // ID do documento no PJe
-  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
+  pjeDocumentoId: varchar("pje_documento_id", { length: 50 }),
   pjeTipoDocumento: varchar("pje_tipo_documento", { length: 50 }),
 
   // Status
@@ -322,7 +322,7 @@ export const historicoMPU = pgTable("historico_mpu", {
   novaDistancia: integer("nova_distancia"),
 
   // Documento relacionado
-  pjeDocumentoId: varchar("pje_documento_id", { length: 20 }),
+  pjeDocumentoId: varchar("pje_documento_id", { length: 50 }),
 
   // Metadados
   createdAt: timestamp("created_at").defaultNow().notNull(),
