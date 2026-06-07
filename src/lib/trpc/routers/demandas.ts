@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
+import { classificarMatchNome } from "@/lib/assistido-match";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 import {
   buildDemandaSync,
@@ -1734,9 +1735,12 @@ export const demandasRouter = router({
         nomeNormalizado: normalizarNome(a.nome),
       }));
 
-      // 3. Para cada nome da importação, encontrar melhor match
+      // 3. Para cada nome da importação, encontrar melhor match.
+      //    Usa classificação ciente de tokens (primeiro nome como porteiro)
+      //    p/ não colidir pessoas diferentes com o mesmo sobrenome comum.
+      //    Rank: exact (3) > similar (2) > new (1); desempate por similarity.
+      const rank = { exact: 3, similar: 2, new: 1 } as const;
       return input.nomes.map((nome) => {
-        const nomeNorm = normalizarNome(nome);
         let bestMatch: {
           type: "exact" | "similar" | "new";
           matchedId?: number;
@@ -1745,33 +1749,22 @@ export const demandasRouter = router({
           statusPrisional?: string | null;
           similarity?: number;
         } = { type: "new" };
-        let bestSimilarity = 0;
 
         for (const assistido of assistidosNormalizados) {
-          const similarity = calcularSimilaridade(nomeNorm, assistido.nomeNormalizado);
-
-          if (similarity > bestSimilarity) {
-            bestSimilarity = similarity;
-
-            if (similarity >= 0.90) {
-              bestMatch = {
-                type: "exact",
-                matchedId: assistido.id,
-                matchedNome: assistido.nome,
-                matchedCpf: assistido.cpf,
-                statusPrisional: assistido.statusPrisional,
-                similarity,
-              };
-            } else if (similarity >= 0.75) {
-              bestMatch = {
-                type: "similar",
-                matchedId: assistido.id,
-                matchedNome: assistido.nome,
-                matchedCpf: assistido.cpf,
-                statusPrisional: assistido.statusPrisional,
-                similarity,
-              };
-            }
+          const { tipo, similarity } = classificarMatchNome(nome, assistido.nome);
+          if (tipo === "new") continue;
+          const melhora =
+            rank[tipo] > rank[bestMatch.type] ||
+            (rank[tipo] === rank[bestMatch.type] && similarity > (bestMatch.similarity ?? 0));
+          if (melhora) {
+            bestMatch = {
+              type: tipo,
+              matchedId: assistido.id,
+              matchedNome: assistido.nome,
+              matchedCpf: assistido.cpf,
+              statusPrisional: assistido.statusPrisional,
+              similarity,
+            };
           }
         }
 
