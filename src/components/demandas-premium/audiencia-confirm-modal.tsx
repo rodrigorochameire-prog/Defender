@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Save, X } from "lucide-react";
+import { Calendar, Clock, Save, X, ClipboardPaste } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -75,10 +75,39 @@ export function AudienciaConfirmModal({
     hora: false,
     tipo: false,
   });
+  // Texto livre da designação: o usuário cola o despacho e os campos são
+  // preenchidos pelo parser, sem deixar de poder editar à mão.
+  const [textoDesignacao, setTextoDesignacao] = useState("");
+  const [parseMiss, setParseMiss] = useState(false);
+
+  const aplicarTextoDesignacao = (texto: string) => {
+    setTextoDesignacao(texto);
+    if (!texto.trim()) {
+      setParseMiss(false);
+      return;
+    }
+    const parsed = parseAudienciaFromText(texto);
+    const achou = !!(parsed.data || parsed.hora || parsed.tipo);
+    setParseMiss(!achou);
+    if (achou) {
+      setForm((f) => ({
+        data: parsed.data ?? f.data,
+        hora: parsed.hora ?? f.hora,
+        tipo: parsed.tipo ?? f.tipo,
+      }));
+      setAutoFilled({
+        data: !!parsed.data,
+        hora: !!parsed.hora,
+        tipo: !!parsed.tipo,
+      });
+    }
+  };
 
   // Ao abrir, pré-popula a partir do parser
   useEffect(() => {
     if (!isOpen) return;
+    setTextoDesignacao("");
+    setParseMiss(false);
     const parsed = parseAudienciaFromText(...sources);
     setForm({
       data: parsed.data ?? "",
@@ -165,10 +194,30 @@ export function AudienciaConfirmModal({
             className="flex flex-col flex-1 min-h-0"
           >
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Colar texto da designação → parsing automático */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-medium text-neutral-700 dark:text-neutral-300 flex items-center gap-1">
+                  <ClipboardPaste className="w-3 h-3 text-emerald-500" />
+                  Colar texto da designação (opcional)
+                </Label>
+                <textarea
+                  value={textoDesignacao}
+                  onChange={(e) => aplicarTextoDesignacao(e.target.value)}
+                  rows={2}
+                  placeholder='Ex.: "designo audiência de instrução e julgamento para o dia 14/07/2026, às 09h50min." — preenche data, hora e tipo automaticamente.'
+                  className="w-full text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 py-2 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all resize-y"
+                />
+                {parseMiss && (
+                  <p className="text-[10.5px] text-amber-600 dark:text-amber-400">
+                    Não consegui identificar data/hora no texto. Preencha manualmente abaixo.
+                  </p>
+                )}
+              </div>
+
               {/* Hint de autopreenchimento */}
               {(autoFilled.data || autoFilled.hora || autoFilled.tipo) && (
                 <div className="px-3 py-2 rounded-lg bg-emerald-50/70 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-700 dark:text-emerald-300">
-                  Campos pré-preenchidos a partir das providências. Ajuste se necessário.
+                  Campos preenchidos automaticamente. Ajuste se necessário.
                 </div>
               )}
 

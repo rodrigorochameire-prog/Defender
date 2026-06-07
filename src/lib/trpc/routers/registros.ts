@@ -258,6 +258,11 @@ export const registrosRouter = router({
                 })
                 .returning({ id: audiencias.id });
               if (aud) {
+                // Vincula a audiência ao registro de ciência (selo durável na timeline)
+                await tx
+                  .update(registros)
+                  .set({ audienciaId: aud.id })
+                  .where(eq(registros.id, registro.id));
                 audienciaCriada = {
                   id: aud.id,
                   data: det.data,

@@ -733,6 +733,26 @@ export const audienciasRouter = router({
       promotor: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
+      // Dedupe: se já existe audiência para o processo no mesmo dia, não cria
+      // outra (cobre o caso de a ciência-texto já ter agendado automaticamente).
+      const diaRef = new Date(input.dataAudiencia);
+      const inicioDia = new Date(diaRef); inicioDia.setHours(0, 0, 0, 0);
+      const fimDia = new Date(diaRef); fimDia.setHours(23, 59, 59, 999);
+      const [jaExiste] = await db
+        .select({ id: audiencias.id })
+        .from(audiencias)
+        .where(
+          and(
+            eq(audiencias.processoId, input.processoId),
+            gte(audiencias.dataAudiencia, inicioDia),
+            lte(audiencias.dataAudiencia, fimDia)
+          )
+        )
+        .limit(1);
+      if (jaExiste) {
+        return { id: jaExiste.id, duplicate: true as const, calendarSyncOk: false as const };
+      }
+
       const [audiencia] = await db
         .insert(audiencias)
         .values({

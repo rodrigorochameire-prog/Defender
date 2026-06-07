@@ -478,7 +478,7 @@ export function DemandaQuickPreview({
   });
 
   // Próxima audiência do processo
-  const { data: audienciasProximas } = trpc.audiencias.list.useQuery(
+  const { data: audienciasProximas, refetch: refetchAudiencias } = trpc.audiencias.list.useQuery(
     { apenasProximas: true },
     { enabled: !!demanda?.processoId && open }
   );
@@ -1008,7 +1008,10 @@ export function DemandaQuickPreview({
                         "anotacao",
                         "peticao",
                       ]}
-                      onSaved={() => setNovoRegistroOpen(false)}
+                      onSaved={() => {
+                        setNovoRegistroOpen(false);
+                        refetchAudiencias();
+                      }}
                       onCancel={() => setNovoRegistroOpen(false)}
                     />
                   )}

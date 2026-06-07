@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Edit3, Trash2, Mic } from "lucide-react";
+import { Edit3, Trash2, Mic, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { RegistroTipoChip } from "./registro-tipo-chip";
@@ -21,6 +21,7 @@ export interface RegistroCardData {
   autor?: { id?: number; name: string | null; email?: string | null } | null;
   audioUrl?: string | null;
   transcricaoStatus?: string | null;
+  audienciaId?: number | null;
 }
 
 interface Props {
@@ -126,6 +127,13 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
         <h4 className="mt-2 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
           {registro.titulo}
         </h4>
+      )}
+
+      {registro.audienciaId && (
+        <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-cyan-50 dark:bg-cyan-900/20 px-2 py-1 text-[11px] font-medium text-cyan-700 dark:text-cyan-300 ring-1 ring-inset ring-cyan-500/20">
+          <CalendarCheck className="w-3 h-3" />
+          Audiência agendada automaticamente
+        </div>
       )}
 
       {conteudo && (
