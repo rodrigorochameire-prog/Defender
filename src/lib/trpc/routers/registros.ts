@@ -2,6 +2,7 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, registros, demandas, users, processos, assistidos, audiencias } from "@/lib/db";
 import { registroAnexos } from "@/lib/db/schema/agenda";
+import { mirrorAnexoToDrive } from "@/lib/registros/mirror-anexo-to-drive";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
 import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -432,6 +433,13 @@ export const registrosRouter = router({
         if (!anexo) throw new TRPCError({ code: "NOT_FOUND", message: "anexo não encontrado" });
         await getSupabaseAdmin().storage.from("documents").remove([anexo.storagePath]);
         await db.delete(registroAnexos).where(eq(registroAnexos.id, input.id));
+        return { ok: true };
+      }),
+    retryMirror: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.update(registroAnexos).set({ driveStatus: "pending" }).where(eq(registroAnexos.id, input.id));
+        void mirrorAnexoToDrive(input.id);
         return { ok: true };
       }),
   }),
