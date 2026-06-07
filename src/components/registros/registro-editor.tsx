@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { AnexoDropzone } from "./anexos/anexo-dropzone";
+import { useAnexoUpload } from "./anexos/use-anexo-upload";
 import {
   REGISTRO_TIPOS,
   TIPO_KEYS,
@@ -41,6 +43,14 @@ export function RegistroEditor({
   const [titulo, setTitulo] = useState("");
   const [conteudo, setConteudo] = useState("");
 
+  // Arquivos "staged" em memória — enviados após a criação do registro (precisa do id).
+  const [staged, setStaged] = useState<File[]>([]);
+  const stagedRef = useRef<File[]>([]);
+  useEffect(() => {
+    stagedRef.current = staged;
+  }, [staged]);
+  const { upload } = useAnexoUpload(() => {});
+
   const conteudoRef = useRef(conteudo);
   const tituloRef = useRef(titulo);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -54,11 +64,17 @@ export function RegistroEditor({
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.registros.list.invalidate();
       setConteudo("");
       setTitulo("");
       onSaved?.();
+      // Envia os arquivos staged ao registro recém-criado (fire-and-forget).
+      const files = stagedRef.current;
+      if (files.length && data?.id) {
+        void upload(data.id, files);
+        setStaged([]);
+      }
     },
   });
 
@@ -219,6 +235,41 @@ export function RegistroEditor({
           rows={3}
           className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
         />
+
+        <AnexoDropzone
+          onFiles={(files) => setStaged((s) => [...s, ...files])}
+          className="border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-3 mt-2"
+        >
+          <label className="flex items-center gap-2 text-sm text-neutral-500 cursor-pointer">
+            <Paperclip className="w-4 h-4" />
+            Arraste arquivos aqui ou
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) =>
+                setStaged((s) => [...s, ...Array.from(e.target.files ?? [])])
+              }
+            />
+            <span className="underline">selecione</span>
+          </label>
+          {staged.length > 0 && (
+            <ul className="mt-2 text-xs text-neutral-600 dark:text-neutral-300 space-y-1">
+              {staged.map((f, i) => (
+                <li key={i} className="flex items-center justify-between">
+                  <span className="truncate">{f.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setStaged((s) => s.filter((_, j) => j !== i))}
+                    className="text-neutral-400"
+                  >
+                    remover
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AnexoDropzone>
 
         {/* Footer com counter + actions */}
         <div className="flex items-center justify-between pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60">
