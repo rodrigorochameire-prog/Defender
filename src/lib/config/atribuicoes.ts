@@ -189,6 +189,22 @@ export const ATRIBUICAO_COLORS = {
     iconName: "Gavel",
   },
 
+  // Mutirão (TJBA Protege) - VIOLETA
+  MUTIRAO_PROTEGE: {
+    border: "border-l-violet-500",
+    bg: "bg-violet-50/50 dark:bg-violet-900/20",
+    bgSolid: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400",
+    textMuted: "text-violet-600/70 dark:text-violet-400/70",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+    indicator: "bg-violet-500",
+    ring: "ring-violet-500/20",
+    dot: "bg-violet-500",
+    label: "Mutirão (TJBA Protege)",
+    shortLabel: "Mutirão",
+    iconName: "Users",
+  },
+
   // Execução Penal - AZUL
   EXECUCAO: {
     border: "border-l-blue-500",
@@ -408,6 +424,8 @@ export const SOLID_COLOR_MAP: Record<string, string> = {
   JURI_CAMACARI: "#34d399",
   "Grupo Especial do Júri": "#fb923c", // orange-400
   GRUPO_JURI: "#fb923c",
+  MUTIRAO_PROTEGE: "#a855f7",  // violet-500
+  "Mutirão (TJBA Protege)": "#a855f7",
   EXECUCAO: "#60a5fa",      // blue-400 (mais suave e equilibrado)
   EXECUCAO_PENAL: "#60a5fa",
   "Execução Penal": "#60a5fa",
@@ -467,6 +485,7 @@ export const ATRIBUICAO_OPTIONS = [
   { value: "EXECUCAO", label: "Execução Penal", shortLabel: "Exec." },
   { value: "SUBSTITUICAO", label: "Substituição Criminal", shortLabel: "Subst." },
   { value: "SUBSTITUICAO_CIVEL", label: "Substituição Não Penal", shortLabel: "S. Cível" },
+  { value: "MUTIRAO_PROTEGE", label: "Mutirão (TJBA Protege)", shortLabel: "Mutirão" },
   { value: "CURADORIA", label: "Curadoria Especial", shortLabel: "Curad." },
 ];
 
@@ -524,6 +543,10 @@ const AREA_TO_FILTER_MAP: Record<string, string> = {
   // Mutirão (contexto da audiência, não do processo)
   MUTIRAO: "MUTIRAO",
   "Mutirão": "MUTIRAO",
+
+  // Mutirão (TJBA Protege) — atribuição (cobertura externa, não titularidade)
+  MUTIRAO_PROTEGE: "MUTIRAO_PROTEGE",
+  "Mutirão (TJBA Protege)": "MUTIRAO_PROTEGE",
 
   // Curadoria
   CURADORIA: "CURADORIA",
