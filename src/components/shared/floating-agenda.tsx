@@ -161,13 +161,20 @@ export function AgendaQuickSheet({ onClose }: { onClose: () => void }) {
     if (audienciasData) {
       for (const aud of audienciasData) {
         const raw = new Date(aud.dataHora);
+        // Fonte da verdade do horário local é o campo `horario` ("HH:mm").
+        // O banco tem duas convenções históricas em data_audiencia (hora local
+        // rotulada como UTC nas linhas antigas; UTC verdadeiro nas novas), então
+        // o dia vem dos componentes UTC (vale nas duas, audiências são diurnas)
+        // e a hora vem de `horario`; fallback = relógio UTC (legado).
+        const [hStr, mStr] = (aud.horario ?? "").split(":");
+        const temHorario = hStr !== undefined && mStr !== undefined && hStr !== "";
         const dataHora = new Date(
           raw.getUTCFullYear(),
           raw.getUTCMonth(),
           raw.getUTCDate(),
-          raw.getUTCHours(),
-          raw.getUTCMinutes(),
-          raw.getUTCSeconds()
+          temHorario ? Number(hStr) : raw.getUTCHours(),
+          temHorario ? Number(mStr) : raw.getUTCMinutes(),
+          0
         );
         events.push({
           id: `aud-${aud.id}`,
