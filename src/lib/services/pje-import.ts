@@ -10,7 +10,7 @@ import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, and, or, gte, isNull, inArray, sql } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
-import { classificarMatchNome } from "@/lib/assistido-match";
+import { classificarMatchNome, normalizarNome } from "@/lib/assistido-match";
 
 // ============================================================================
 // TIPOS
