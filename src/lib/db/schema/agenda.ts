@@ -278,12 +278,45 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
   createdBy: one(users, { fields: [calendarEvents.createdById], references: [users.id] }),
 }));
 
-export const registrosRelations = relations(registros, ({ one }) => ({
+export const registrosRelations = relations(registros, ({ one, many }) => ({
   assistido: one(assistidos, { fields: [registros.assistidoId], references: [assistidos.id] }),
   processo: one(processos, { fields: [registros.processoId], references: [processos.id] }),
   demanda: one(demandas, { fields: [registros.demandaId], references: [demandas.id] }),
   audiencia: one(audiencias, { fields: [registros.audienciaId], references: [audiencias.id] }),
   autor: one(users, { fields: [registros.autorId], references: [users.id] }),
+  anexos: many(registroAnexos),
+}));
+
+// ==========================================
+// ANEXOS DE REGISTRO
+// ==========================================
+
+export const registroAnexos = pgTable("registro_anexos", {
+  id: serial("id").primaryKey(),
+  registroId: integer("registro_id")
+    .notNull()
+    .references(() => registros.id, { onDelete: "cascade" }),
+  storagePath: text("storage_path").notNull(),
+  nomeOriginal: varchar("nome_original", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  tamanho: integer("tamanho").notNull(),
+  tipo: varchar("tipo", { length: 20 }).notNull(), // 'imagem' | 'documento'
+  driveFileId: varchar("drive_file_id", { length: 100 }),
+  driveStatus: varchar("drive_status", { length: 20 }).default("pending"),
+  autorId: integer("autor_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("registro_anexos_registro_id_idx").on(table.registroId),
+  index("registro_anexos_autor_idx").on(table.autorId),
+  index("registro_anexos_drive_status_idx").on(table.driveStatus),
+]);
+
+export type RegistroAnexo = typeof registroAnexos.$inferSelect;
+export type InsertRegistroAnexo = typeof registroAnexos.$inferInsert;
+
+export const registroAnexosRelations = relations(registroAnexos, ({ one }) => ({
+  registro: one(registros, { fields: [registroAnexos.registroId], references: [registros.id] }),
+  autor: one(users, { fields: [registroAnexos.autorId], references: [users.id] }),
 }));
 
 export const testemunhasRelations = relations(testemunhas, ({ one }) => ({
