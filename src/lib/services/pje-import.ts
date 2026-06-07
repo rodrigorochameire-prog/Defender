@@ -10,6 +10,7 @@ import { db } from "@/lib/db";
 import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, and, gte, isNull, inArray, sql } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { classificarMatchNome } from "@/lib/assistido-match";
 
 // ============================================================================
 // TIPOS
@@ -188,6 +189,39 @@ export async function importarDemandas(
             isNull(assistidos.deletedAt),
           ),
         });
+      }
+
+      // 1b. Desempate por CNJ: se o processo já existe e seu assistido tem
+      //     nome COMPATÍVEL com o importado, ele é a fonte de verdade (mesma
+      //     pessoa no mesmo feito). Evita tanto emprestar homônimo de outro
+      //     processo quanto criar duplicata do mesmo réu. Nome incompatível
+      //     (corréu) NÃO é reusado — cai no fluxo normal abaixo.
+      if (!assistido && row.processoNumero?.trim()) {
+        const procExistente = await db.query.processos.findFirst({
+          where: and(
+            eq(processos.numeroAutos, row.processoNumero.trim()),
+            isNull(processos.deletedAt),
+          ),
+        });
+        if (procExistente?.assistidoId) {
+          const cand = await db.query.assistidos.findFirst({
+            where: and(
+              eq(assistidos.id, procExistente.assistidoId),
+              isNull(assistidos.deletedAt),
+            ),
+          });
+          if (cand) {
+            const { tipo } = classificarMatchNome(row.assistido.trim(), cand.nome);
+            if (tipo === "exact" || tipo === "similar") {
+              assistido = cand;
+              console.log(
+                `[pje-import] assistido reaproveitado por CNJ: ` +
+                `id=${cand.id} nome="${cand.nome}" processo=${row.processoNumero} ` +
+                `(import="${row.assistido.trim()}", match=${tipo})`,
+              );
+            }
+          }
+        }
       }
 
       if (!assistido) {
