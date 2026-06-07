@@ -135,6 +135,7 @@ export const demandasRouter = router({
           createdAt: demandas.createdAt,
           updatedAt: demandas.updatedAt,
           syncedAt: demandas.syncedAt,
+          registrosCount: sql<number>`(SELECT count(*)::int FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id})`,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,

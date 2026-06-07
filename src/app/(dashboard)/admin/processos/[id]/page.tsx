@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 
 export default function ProcessoPage() {
   const params = useParams();
@@ -42,6 +43,13 @@ export default function ProcessoPage() {
       {!raw && !processo.casoId && (
         <p className="text-xs italic text-amber-600">Processo sem caso vinculado — vista standalone.</p>
       )}
+      <section className="pt-2">
+        <h2 className="text-base font-semibold mb-2">Registros</h2>
+        <RegistrosTimeline
+          processoId={id}
+          emptyHint="Nenhum registro neste processo ainda."
+        />
+      </section>
     </div>
   );
 }
