@@ -12,6 +12,7 @@ import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/
 import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "@/lib/services/google-calendar";
 import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 import { removeNotaByTimestamp } from "@/lib/agenda/anotacoes-rapidas";
+import { idsParaSuperar } from "@/lib/agenda/reconciliar-pauta";
 
 // ==========================================
 // Shared analysis helper used by both
@@ -1323,6 +1324,14 @@ export const audienciasRouter = router({
         const atualizados: number[] = [];
         const assistidosCriados: number[] = [];
 
+        // Reconciliação de redesignações (ver reconciliar-pauta.ts):
+        // rastreamos os processos tocados nesta importação e os ids de
+        // AUDIÊNCIA tocados (criadas + atualizadas). Slots de audiência antigos
+        // do mesmo processo, dentro da janela da pauta e ainda "agendada", que
+        // NÃO foram tocados, são fantasmas de uma redesignação e serão superados.
+        const touchedProcessoIds = new Set<number>();
+        const audienciasCriadas: number[] = []; // só ids de `audiencias` (sem sessões de júri)
+
         for (const evento of eventos) {
           // Construir data/hora completa (forçar BRT — ver comentário no allDataHoras acima)
           const dataHora = new Date(`${evento.data}T${evento.horarioInicio}:00-03:00`);
@@ -1363,6 +1372,7 @@ export const audienciasRouter = router({
             }
 
             atualizados.push(audienciaExistente.id);
+            if (audienciaExistente.processoId) touchedProcessoIds.add(audienciaExistente.processoId);
             duplicados.push(evento.processo);
             continue;
           }
@@ -1541,6 +1551,9 @@ export const audienciasRouter = router({
             });
           }
 
+          // Marcar processo como tocado nesta importação (para a reconciliação adiante)
+          if (processoId) touchedProcessoIds.add(processoId);
+
           // Verificar se é SESSÃO DE JÚRI (não apenas audiência na Vara do Júri)
           // Critério: deve ser "Sessão de Julgamento" ou "Plenário", não apenas mencionar "Júri"
           const tituloLower = evento.titulo?.toLowerCase() || "";
@@ -1591,10 +1604,70 @@ export const audienciasRouter = router({
               .returning({ id: audiencias.id });
 
             importados.push(audiencia.id);
+            audienciasCriadas.push(audiencia.id);
+          }
+        }
+
+        // ==========================================
+        // RECONCILIAÇÃO: superar slots redesignados
+        // ==========================================
+        // Quando uma audiência é redesignada (mesmo processo, nova data), o slot
+        // novo é inserido acima mas o antigo ("agendada") fica fantasma na agenda.
+        // Aqui marcamos como "redesignada" os slots velhos dos processos tocados,
+        // DENTRO da janela de datas da pauta (escopo proposital: uma pauta parcial
+        // nunca apaga audiências fora do seu intervalo).
+        let superados = 0;
+        if (touchedProcessoIds.size > 0) {
+          // Janela = min/max das datas dos eventos (BRT), início do dia .. fim do dia.
+          const datas = eventos.map(e => e.data).sort();
+          const windowStart = new Date(`${datas[0]}T00:00:00-03:00`);
+          const windowEnd = new Date(`${datas[datas.length - 1]}T23:59:59-03:00`);
+
+          // Audiências existentes dos processos tocados dentro da janela.
+          const processoIdsArr = [...touchedProcessoIds];
+          const existentesNaJanela = await tx
+            .select({
+              id: audiencias.id,
+              processoId: audiencias.processoId,
+              dataAudiencia: audiencias.dataAudiencia,
+              status: audiencias.status,
+            })
+            .from(audiencias)
+            .where(
+              and(
+                inArray(audiencias.processoId, processoIdsArr),
+                gte(audiencias.dataAudiencia, windowStart),
+                lte(audiencias.dataAudiencia, windowEnd),
+              )
+            );
+
+          // ids tocados = audiências criadas ∪ atualizadas
+          const touchedAudienciaIds = new Set<number>([...audienciasCriadas, ...atualizados]);
+
+          const ids = idsParaSuperar({
+            existing: existentesNaJanela.map(a => ({
+              id: a.id,
+              processoId: a.processoId,
+              dataAudiencia: a.dataAudiencia as Date,
+              status: a.status ?? "",
+            })),
+            touchedProcessoIds,
+            touchedAudienciaIds,
+            windowStart,
+            windowEnd,
+          });
+
+          if (ids.length > 0) {
+            await tx
+              .update(audiencias)
+              .set({ status: "redesignada", updatedAt: new Date() })
+              .where(inArray(audiencias.id, ids));
+            superados = ids.length;
           }
         }
 
         return {
+          superados,
           importados: importados.length,
           duplicados: duplicados.length,
           atualizados: atualizados.length,
