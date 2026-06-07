@@ -15,6 +15,20 @@ import { eq, and, desc, asc, sql, isNull, isNotNull, or, ilike, gte, lte, count,
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
 import { syncVVDIntimacoesToSheet } from "@/lib/services/vvd-sync";
+// Converte "DD/MM/AAAA", "DD/MM/AAAA HH:MM", ISO ou Date em "YYYY-MM-DD".
+// Robusto ao componente de hora que vinha do PJe e quebrava o insert
+// (gerava "2026 14:22-06-07", rejeitado como date pelo Postgres).
+function parseDataParaISO(valor?: string | null): string | null {
+  if (!valor) return null;
+  const soData = String(valor).trim().split(/[ T]/)[0]; // descarta hora
+  if (/^\d{4}-\d{2}-\d{2}$/.test(soData)) return soData; // já ISO
+  const m = soData.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const [, d, mes, a] = m;
+    return `${a}-${mes.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return null;
+}
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 // ==========================================
@@ -779,10 +793,9 @@ export const vvdRouter = router({
             .limit(1);
 
           if (!processoExistente) {
-            const dataExpedicao = intimacao.dataExpedicao
-              ? new Date(intimacao.dataExpedicao.split('/').reverse().join('-'))
-              : new Date();
-            const dataReanalise = new Date(dataExpedicao);
+            const decisaoISO = parseDataParaISO(intimacao.dataExpedicao)
+              ?? new Date().toISOString().split('T')[0];
+            const dataReanalise = new Date(decisaoISO + "T00:00:00");
             dataReanalise.setFullYear(dataReanalise.getFullYear() + 1);
             const dataReanaliseStr = dataReanalise.toISOString().split('T')[0];
 
@@ -794,9 +807,7 @@ export const vvdRouter = router({
                 tipoProcesso: intimacao.tipoProcesso || "MPU",
                 crime: intimacao.crime,
                 mpuAtiva: true,
-                dataDecisaoMPU: intimacao.dataExpedicao
-                  ? intimacao.dataExpedicao.split('/').reverse().join('-')
-                  : new Date().toISOString().split('T')[0],
+                dataDecisaoMPU: decisaoISO,
                 dataVencimentoMPU: dataReanaliseStr,
                 defensorId: ctx.user.id,
               })
@@ -805,16 +816,12 @@ export const vvdRouter = router({
           }
 
           // 3. Criar a intimação
-          let dataExpedicaoFormatada = intimacao.dataExpedicao;
+          let dataExpedicaoFormatada = parseDataParaISO(intimacao.dataExpedicao) ?? undefined;
           let horaExpedicao = "00";
           let minutoExpedicao = "00";
 
           if (intimacao.dataExpedicao) {
-            const [dataParte, horaParte] = intimacao.dataExpedicao.split(' ');
-            if (dataParte && dataParte.includes('/')) {
-              const [dia, mes, ano] = dataParte.split('/');
-              dataExpedicaoFormatada = `${ano}-${mes}-${dia}`;
-            }
+            const [, horaParte] = intimacao.dataExpedicao.split(' ');
             if (horaParte && horaParte.includes(':')) {
               const [hora, minuto] = horaParte.split(':');
               horaExpedicao = hora;
