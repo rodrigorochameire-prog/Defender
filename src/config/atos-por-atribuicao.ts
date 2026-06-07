@@ -58,6 +58,7 @@ export const ATOS_POR_ATRIBUICAO: Record<string, string[]> = {
     "Contrarrazões de ED",
     "Embargos de Declaração",
     "Incidente de insanidade",
+    "Ciência de MPU",
     "Revogação de MPU",
     "Modulação de MPU",
     "Revogação da prisão",
@@ -346,6 +347,7 @@ export const ATO_PRIORITY: Record<string, number> = {
   "Cumprimento ANPP": 54,
   "Atendimento Inicial": 55,
   // Ciências (triviais)
+  "Ciência de MPU": 90,
   "Ciência habilitação DPE": 90,
   "Ciência de decisão": 91,
   "Ciência de sentença": 91,

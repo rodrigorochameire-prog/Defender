@@ -23,9 +23,9 @@ import { randomUUID } from "crypto";
 import { parsePJeIntimacoesCompleto, intimacaoToDemanda } from "@/lib/pje-parser";
 import { importarDemandas, type ImportRow } from "@/lib/services/pje-import";
 import { db } from "@/lib/db";
-import { processos } from "@/lib/db/schema/core";
+import { processos, demandas } from "@/lib/db/schema/core";
 import { processosVVD } from "@/lib/db/schema/vvd";
-import { and, eq, isNull, like } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 
 // ============================================================================
 // HELPERS
@@ -78,8 +78,14 @@ async function processarTexto(
 }
 
 /**
- * Após o import VVD, garante que todo processo MPU (numero `MPUMP*`) tenha
- * entrada em `processos_vvd` com `tipo_processo='MPU'` e `mpu_ativa=true`.
+ * Após o import VVD, garante que todo processo de MPU tenha entrada em
+ * `processos_vvd` com `tipo_processo='MPU'` e `mpu_ativa=true` — para que vá à
+ * página especializada de Medidas Protetivas com o monitoramento próprio.
+ *
+ * A MPU-ness vive na CLASSE (`MPUMPCrim`), gravada em
+ * `demandas.enrichment_data->>'tipo_processo'` — NÃO no número dos autos (o CNJ
+ * começa com dígito; a versão anterior filtrava `numeroAutos LIKE 'MPUMP%'` e
+ * por isso nunca casava nada).
  *
  * Idempotente: só insere quando NÃO existe (LEFT JOIN + IS NULL); não
  * sobrescreve dados manuais já preenchidos.
@@ -88,14 +94,16 @@ async function processarTexto(
  */
 async function syncMpuProcessosVvd(): Promise<{ created: number }> {
   const processosMpu = await db
-    .select({ id: processos.id, numero: processos.numeroAutos })
+    .selectDistinct({ id: processos.id, numero: processos.numeroAutos })
     .from(processos)
+    .innerJoin(demandas, eq(demandas.processoId, processos.id))
     .leftJoin(processosVVD, eq(processosVVD.processoId, processos.id))
     .where(
       and(
         eq(processos.atribuicao, "VVD_CAMACARI"),
-        like(processos.numeroAutos, "MPUMP%"),
         isNull(processosVVD.id),
+        isNull(demandas.deletedAt),
+        sql`${demandas.enrichmentData}->>'tipo_processo' = 'MPUMPCrim'`,
       ),
     );
 

@@ -56,9 +56,9 @@ const ATO_RULES: AtoRule[] = [
   {
     tipoDocumento: /^Intimação$/i,
     tipoProcesso: /^MPUMPCrim$/i,
-    ato: "Modulação de MPU",
+    ato: "Ciência de MPU",
     confidence: "medium",
-    reason: "MPU — verificar se é modulação, revogação ou resposta",
+    reason: "MPU — ciência por padrão; trocar p/ modulação/revogação/resposta se for o caso",
   },
 
   // ── Júri ──
