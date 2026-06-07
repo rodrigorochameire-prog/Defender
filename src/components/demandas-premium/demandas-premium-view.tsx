@@ -1080,6 +1080,7 @@ export default function Demandas() {
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
       providenciaResumo: d.providenciaResumo || "",
+      registrosCount: d.registrosCount ?? 0,
       atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
       atribuicaoEnum: d.processo?.atribuicao || null,
       estadoPrisional: d.reuPreso ? "preso" : (d.assistido?.statusPrisional || "solto"),

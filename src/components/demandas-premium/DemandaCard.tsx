@@ -36,6 +36,7 @@ import {
   X,
   UserPlus,
   Forward,
+  NotebookPen,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
@@ -66,6 +67,7 @@ interface Demanda {
   estadoPrisional?: string;
   prioridade?: string;
   arquivado?: boolean;
+  registrosCount?: number;
 }
 
 interface DemandaCardProps {
@@ -790,6 +792,18 @@ export function DemandaCard({
             <span className="text-neutral-400 dark:text-neutral-500 flex-shrink-0">
               Exp: <span className="text-neutral-600 dark:text-neutral-300 font-medium">{demanda.data}</span>
             </span>
+            {!!demanda.registrosCount && demanda.registrosCount > 0 && (
+              <>
+                <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                <span
+                  className="inline-flex items-center gap-1 text-neutral-500 dark:text-neutral-400 flex-shrink-0"
+                  title={`${demanda.registrosCount} registro(s) no diário de bordo`}
+                >
+                  <NotebookPen className="w-3 h-3" />
+                  {demanda.registrosCount}
+                </span>
+              </>
+            )}
             {demanda.prazo && (
               <>
                 <span className="text-neutral-300 dark:text-neutral-600">·</span>

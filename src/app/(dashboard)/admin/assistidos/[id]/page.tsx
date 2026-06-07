@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 
 /**
  * Nível 1 (Assistido) — aba "Geral" default.
@@ -48,6 +49,13 @@ export default function AssistidoHubPage() {
           </p>
         </section>
       )}
+      <section>
+        <h2 className="text-base font-semibold mb-2">Registros</h2>
+        <RegistrosTimeline
+          assistidoId={id}
+          emptyHint="Nenhum registro deste assistido ainda."
+        />
+      </section>
     </div>
   );
 }
