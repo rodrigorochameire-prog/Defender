@@ -5,8 +5,12 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Edit3, Trash2, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 import { RegistroTipoChip } from "./registro-tipo-chip";
 import { REGISTRO_TIPOS, type TipoRegistro } from "./registro-tipo-config";
+import { AnexoList } from "./anexos/anexo-list";
+import { AnexoDropzone } from "./anexos/anexo-dropzone";
+import { useAnexoUpload } from "./anexos/use-anexo-upload";
 
 export interface RegistroCardData {
   id: number;
@@ -38,6 +42,11 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
 
   const conteudo = registro.conteudo ?? "";
 
+  const utils = trpc.useUtils();
+  const { upload } = useAnexoUpload(() =>
+    utils.registros.anexos.list.invalidate({ registroId: registro.id }),
+  );
+
   // Detecta overflow comparando scrollHeight (altura real) vs clientHeight
   // (altura visível com line-clamp). Se scrollHeight > clientHeight, há
   // texto cortado e a "Ver mais" deve aparecer. Reavaliamos quando o
@@ -66,10 +75,11 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
     .toUpperCase();
 
   return (
-    <div
-      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
-      style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}33` }}
-    >
+    <AnexoDropzone onFiles={(files) => upload(registro.id, files)}>
+      <div
+        className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
+        style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}33` }}
+      >
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -155,6 +165,9 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
           </span>
         </div>
       )}
-    </div>
+
+        <AnexoList registroId={registro.id} />
+      </div>
+    </AnexoDropzone>
   );
 }
