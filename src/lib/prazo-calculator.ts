@@ -70,6 +70,7 @@ export const PRAZOS_POR_ATO: Record<string, number> = {
   "Relaxamento e revogação": 2,
 
   // === VIOLÊNCIA DOMÉSTICA ===
+  "Ciência de MPU": 0,
   "Modulação de MPU": 5,
   "Manifestação contrarrazões": 5,
 

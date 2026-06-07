@@ -23,14 +23,16 @@ describe("montarReviewRow — pré-preenchimento de ato", () => {
     expect(row.prazoManual).toBe(false);
   });
 
-  it("confiança média preenche ato", () => {
+  it("confiança média preenche ato — MPU vira Ciência de MPU por padrão", () => {
     const row = montarReviewRow(
       { ...base, tipoDocumento: "Intimação", tipoProcesso: "MPUMPCrim" },
       "Violência Doméstica",
       0,
     );
-    expect(row.ato).toBe("Modulação de MPU");
+    expect(row.ato).toBe("Ciência de MPU");
     expect(row.atoConfidence).toBe("medium");
+    // Ciência não tem prazo (0 dias)
+    expect(row.prazo).toBe("");
   });
 
   it("confiança baixa deixa ato e prazo vazios", () => {
