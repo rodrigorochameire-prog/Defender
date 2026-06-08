@@ -215,6 +215,7 @@ export type PillFilterInput = {
   prazo?: string | null;
   /** YYYY-MM-DD (data de expedição/entrada) — usado pelos pills de expedição. */
   dataExpedicaoRaw?: string | null;
+  ordemOriginal?: number | null;
   prioridade?: string | null;
   estadoPrisional?: string | null;
   reuPreso?: boolean;
@@ -1766,6 +1767,13 @@ export function KanbanPremium({
         if (!bx) return -1;
         return bx.localeCompare(ax); // DESC
       }
+      // Mesma data: respeita a ordem do expediente no PJe (ordemOriginal ASC —
+      // o PJe lista o mais recente primeiro, ord 1 = topo). Fallback dataInclusao DESC.
+      const ao = (a.ordemOriginal as number | null | undefined);
+      const bo = (b.ordemOriginal as number | null | undefined);
+      if (ao != null && bo != null && ao !== bo) return ao - bo;
+      if (ao != null && bo == null) return -1;
+      if (ao == null && bo != null) return 1;
       const ai = (a.dataInclusao as string | null | undefined) ?? "";
       const bi = (b.dataInclusao as string | null | undefined) ?? "";
       return bi.localeCompare(ai); // DESC
