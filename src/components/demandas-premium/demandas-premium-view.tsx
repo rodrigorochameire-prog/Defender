@@ -347,7 +347,6 @@ const atribuicaoOptions = [
   { value: "Execução Penal", label: "Execução Penal", icon: Lock },
   { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
-  { value: "Mutirão (TJBA Protege)", label: "Mutirão (TJBA Protege)", icon: Users },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
 ];
 

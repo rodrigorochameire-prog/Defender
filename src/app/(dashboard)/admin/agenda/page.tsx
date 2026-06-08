@@ -143,7 +143,7 @@ const FILTER_HEX: Record<string, string> = {
   EXECUCAO: "#60a5fa",
   SUBSTITUICAO: "#fb7185",
   SUBSTITUICAO_CIVEL: "#fb923c",
-  MUTIRAO: "#22d3ee",
+  MUTIRAO: "#a855f7",
 };
 
 // Opções de filtro para a agenda (sem duplicatas)
