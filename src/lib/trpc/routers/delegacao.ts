@@ -283,7 +283,7 @@ export const delegacaoRouter = router({
       if (delegacao.demandaId) {
         await db.update(demandas)
           .set({
-            statusDelegacao: input.status,
+            delegacaoWorkStatus: input.status,
             updatedAt: new Date(),
           })
           .where(eq(demandas.id, delegacao.demandaId));
@@ -464,7 +464,7 @@ export const delegacaoRouter = router({
     .mutation(async ({ ctx, input }) => {
       const [dem] = await db
         .update(demandas)
-        .set({ statusDelegacao: "delegado", updatedAt: new Date() })
+        .set({ statusDelegacao: "delegado", delegacaoWorkStatus: "pendente", updatedAt: new Date() })
         .where(eq(demandas.id, input.demandaId))
         .returning();
       if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
@@ -490,7 +490,7 @@ export const delegacaoRouter = router({
     .mutation(async ({ ctx, input }) => {
       const rows = await db
         .update(demandas)
-        .set({ statusDelegacao: "delegado", updatedAt: new Date() })
+        .set({ statusDelegacao: "delegado", delegacaoWorkStatus: "pendente", updatedAt: new Date() })
         .where(inArray(demandas.id, input.demandaIds))
         .returning();
       const remetente = await db.query.users.findFirst({
@@ -525,6 +525,55 @@ export const delegacaoRouter = router({
         .where(eq(demandas.id, input.demandaId))
         .returning();
       if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
+      return dem;
+    }),
+
+  // Retomar a demanda: cancela a delegação (único caminho que a desfaz).
+  retomar: protectedProcedure
+    .input(z.object({ demandaId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [dem] = await db
+        .update(demandas)
+        .set({
+          delegadoParaId: null,
+          statusDelegacao: null,
+          delegacaoWorkStatus: null,
+          dataDelegacao: null,
+          motivoDelegacao: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(demandas.id, input.demandaId))
+        .returning();
+      if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
+
+      const ativos = await db
+        .update(delegacoesHistorico)
+        .set({ status: "cancelada" })
+        .where(
+          and(
+            eq(delegacoesHistorico.demandaId, input.demandaId),
+            inArray(delegacoesHistorico.status, ["pendente", "aceita", "em_andamento", "aguardando_revisao"]),
+          ),
+        )
+        .returning({ delegadoParaId: delegacoesHistorico.delegadoParaId });
+
+      const destinatarios = new Set(
+        ativos.map((a) => a.delegadoParaId).filter((x): x is number => !!x),
+      );
+      const remetente = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user.id),
+        columns: { name: true },
+      });
+      for (const destinatarioId of destinatarios) {
+        await db.insert(notifications).values({
+          userId: destinatarioId,
+          title: "Delegação retomada",
+          message: `${remetente?.name || "Um defensor"} retomou uma demanda que estava com você.`,
+          type: "warning",
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
+      }
       return dem;
     }),
 
