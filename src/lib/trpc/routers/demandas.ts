@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
-import { demandas, processos, assistidos, users, registros, delegacoesHistorico } from "@/lib/db/schema";
+import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
 import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -11,8 +11,7 @@ import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { classificarMatchNome } from "@/lib/assistido-match";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
-// Status de delegação considerados "ativos" no histórico — cancelados ao retomar a demanda.
-const DELEGACAO_STATUS_ATIVOS = ["pendente", "aceita", "em_andamento", "aguardando_revisao"] as const;
+
 import {
   buildDemandaSync,
   syncDemandaToSheets,
@@ -133,6 +132,7 @@ export const demandasRouter = router({
           delegadoPara: users.name,
           dataDelegacao: demandas.dataDelegacao,
           statusDelegacao: demandas.statusDelegacao,
+          delegacaoWorkStatus: demandas.delegacaoWorkStatus,
           ordemManual: demandas.ordemManual,
           importBatchId: demandas.importBatchId,
           ordemOriginal: demandas.ordemOriginal,
@@ -300,6 +300,7 @@ export const demandasRouter = router({
           dataDelegacao: demandas.dataDelegacao,
           motivoDelegacao: demandas.motivoDelegacao,
           statusDelegacao: demandas.statusDelegacao,
+          delegacaoWorkStatus: demandas.delegacaoWorkStatus,
           enrichmentData: demandas.enrichmentData,
           createdAt: demandas.createdAt,
           updatedAt: demandas.updatedAt,
@@ -832,35 +833,6 @@ export const demandasRouter = router({
         ["CONCLUIDO", "7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO"].includes(data.status)
       ) {
         updateData.dataConclusao = new Date();
-      }
-
-      // Cancelar delegação: se um status/substatus de pipeline é aplicado a uma
-      // demanda atualmente delegada, a delegação é desfeita (o defensor retomou).
-      // a_delegar/delegado nunca chegam por aqui (vêm do router de delegação),
-      // então qualquer status/substatus aqui é da pipeline.
-      if (data.status !== undefined || data.substatus !== undefined) {
-        const [atual] = await db
-          .select({
-            delegadoParaId: demandas.delegadoParaId,
-            statusDelegacao: demandas.statusDelegacao,
-          })
-          .from(demandas)
-          .where(eq(demandas.id, id));
-        if (atual?.delegadoParaId || atual?.statusDelegacao) {
-          updateData.delegadoParaId = null;
-          updateData.statusDelegacao = null;
-          updateData.dataDelegacao = null;
-          updateData.motivoDelegacao = null;
-          await db
-            .update(delegacoesHistorico)
-            .set({ status: "cancelada" })
-            .where(
-              and(
-                eq(delegacoesHistorico.demandaId, id),
-                inArray(delegacoesHistorico.status, [...DELEGACAO_STATUS_ATIVOS]),
-              ),
-            );
-        }
       }
 
       // Construir condições de acesso
@@ -1957,25 +1929,6 @@ export const demandasRouter = router({
       }
       if (data.atribuicao) {
         updateData.atribuicao = data.atribuicao;
-      }
-
-      // Cancelar delegação em lote: aplicar um status/substatus de pipeline a
-      // demandas delegadas desfaz a delegação (mesma regra do update individual).
-      // Campos nulos em demandas não-delegadas são no-op inofensivo.
-      if (data.status !== undefined || data.substatus !== undefined) {
-        updateData.delegadoParaId = null;
-        updateData.statusDelegacao = null;
-        updateData.dataDelegacao = null;
-        updateData.motivoDelegacao = null;
-        await db
-          .update(delegacoesHistorico)
-          .set({ status: "cancelada" })
-          .where(
-            and(
-              inArray(delegacoesHistorico.demandaId, ids),
-              inArray(delegacoesHistorico.status, [...DELEGACAO_STATUS_ATIVOS]),
-            ),
-          );
       }
 
       // Build access condition
