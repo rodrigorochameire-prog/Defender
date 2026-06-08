@@ -49,6 +49,11 @@ describe("extrairTipo", () => {
     expect(out.endsWith("…")).toBe(true);
     expect(out.length).toBeLessThanOrEqual(21);
   });
+
+  it("siglas vêm do catálogo (Depoimento Especial e sem typo Adminitória)", () => {
+    expect(extrairTipo("Depoimento Especial — Maria")).toBe("Oitiva Especial");
+    expect(extrairTipo("Audiência Admonitória — João")).toBe("Admonitória");
+  });
 });
 
 describe("extrairTipoEvento", () => {

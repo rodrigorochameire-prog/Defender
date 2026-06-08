@@ -1,37 +1,7 @@
 import { toTitleCase } from "@/lib/utils/title-case";
+import { buildTipoAbreviacoes } from "@/lib/agenda/tipos-audiencia";
 
-const tipoAbreviacoes: Record<string, string> = {
-  "Audiência de Instrução e Julgamento": "AIJ",
-  "Instrução e Julgamento": "AIJ",
-  "Audiência de Custódia": "Custódia",
-  "Audiência de Justificação": "Justificação",
-  "Audiência Concentrada": "Concentrada",
-  "Audiência Preliminar": "Preliminar",
-  "Audiência de Apresentação": "Apresentação",
-  "Audiência de Conciliação": "Conciliação",
-  "Sessão de Julgamento do Tribunal do Júri": "Júri",
-  "Sessão do Tribunal do Júri": "Júri",
-  "Tribunal do Júri": "Júri",
-  "Sessão de Júri": "Júri",
-  "Plenário do Júri": "Júri",
-  "Produção Antecipada de Provas": "PAP",
-  "Acordo de Não Persecução Penal": "ANPP",
-  "Audiência Admonitória": "Admonitória",
-  "Oitiva Especial": "Oitiva Especial",
-  "Audiência de Retratação": "Retratação",
-  "Audiência de Execução": "Execução",
-  "Audiência de Progressão": "Progressão",
-  "Audiência de Livramento": "Livramento",
-  "Audiência de Unificação": "Unificação",
-  "Audiência Adminitória": "Adminitória",
-  "Adminitória": "Adminitória",
-  "Retratação": "Retratação",
-  "Audiência de Medidas Protetivas": "Med. Protetivas",
-  "Medidas Protetivas": "Med. Protetivas",
-  "Atendimento": "Atendimento",
-  "Reunião": "Reunião",
-  "Diligência": "Diligência",
-};
+const tipoAbreviacoes: Record<string, string> = buildTipoAbreviacoes();
 
 function lookupTipo(segment: string): string | null {
   const normalized = segment.toLowerCase();
