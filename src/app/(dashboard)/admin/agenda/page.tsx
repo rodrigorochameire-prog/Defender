@@ -741,6 +741,9 @@ export default function AgendaPage() {
     // 1. Processar audiências (tabela audiencias)
     if (audienciasData) {
       audienciasData.forEach((a) => {
+        // Esconder slots redesignados/cancelados da agenda (slots superados pela
+        // reconciliação da pauta, ou cancelados). Mantém agendada/realizada/outros.
+        if (a.status === "redesignada" || a.status === "cancelada") return;
         // Mutirão: contexto da própria audiência sobrepõe a atribuição do processo
         // (o processo continua na atribuição de origem; só o ato é de mutirão)
         const atribuicaoKey = a.contexto === "MUTIRAO"
@@ -786,6 +789,9 @@ export default function AgendaPage() {
     const audienciaKeys = new Set<string>();
     if (audienciasData) {
       audienciasData.forEach((a) => {
+        // Não usar audiências redesignadas/canceladas como chave de dedup —
+        // elas não aparecem na agenda, então não devem suprimir um calendar_event.
+        if (a.status === "redesignada" || a.status === "cancelada") return;
         if (a.processo?.id) {
           const dia = format(new Date(a.dataHora), "yyyy-MM-dd");
           audienciaKeys.add(`${a.processo.id}|${dia}`);
