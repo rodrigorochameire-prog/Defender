@@ -1214,8 +1214,11 @@ export default function Demandas() {
     const numericId = parseInt(demandaId, 10);
     const demanda = demandas.find((d) => d.id === demandaId);
 
-    // 0) Drop em coluna "Delegação" (sub-grupo Acompanhar) → abre seletor de pessoa.
-    if (key === "delegar" && demanda) {
+    // 0a) Drop em subsection "Delegados" → no-op (não cancela delegação existente).
+    if (key === "delegado") return;
+
+    // 0) Drop em coluna "Delegação" / subsection "A delegar" → abre seletor de pessoa.
+    if ((key === "delegar" || key === "a_delegar") && demanda) {
       setPessoaSelectorDemanda({
         demandaId: isNaN(numericId) ? null : numericId,
         demandaAto: demanda.ato || "",
