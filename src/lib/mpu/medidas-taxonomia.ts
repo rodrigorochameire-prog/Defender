@@ -92,3 +92,27 @@ export function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase();
 }
+
+export const STATUS_MEDIDA = {
+  ATIVA: "ativa",
+  CUMPRIDA: "cumprida",
+  DESCUMPRIDA: "descumprida",
+  REVOGADA: "revogada",
+  SUSPENSA: "suspensa",
+} as const;
+
+export type StatusMedida = (typeof STATUS_MEDIDA)[keyof typeof STATUS_MEDIDA];
+
+export const STATUS_MEDIDA_LABEL: Record<StatusMedida, string> = {
+  ativa: "Ativa",
+  cumprida: "Cumprida",
+  descumprida: "Descumprida",
+  revogada: "Revogada",
+  suspensa: "Suspensa",
+};
+
+/** Rótulo legal (do catálogo) para um código de medida; fallback = o próprio código. */
+export function rotuloMedida(codigo: string): string {
+  const cat = CATALOGO_MEDIDAS.find((c) => c.codigo === codigo);
+  return cat ? cat.rotulo : codigo;
+}
