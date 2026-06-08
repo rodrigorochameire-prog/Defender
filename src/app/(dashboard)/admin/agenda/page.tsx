@@ -55,6 +55,7 @@ import {
   Clock,
   Plus,
   Search,
+  Download,
   Upload,
   Gavel,
   Users,
@@ -1718,6 +1719,15 @@ export default function AgendaPage() {
                 <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Atalho de uso frequente: Importar do PJe */}
+            <button
+              onClick={() => setIsPJeImportModalOpen(true)}
+              title="Importar do PJe"
+              className="h-8 px-2.5 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <Download className="w-[15px] h-[15px]" />
+              <span className="hidden sm:inline">PJe</span>
+            </button>
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"
