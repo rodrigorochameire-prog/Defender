@@ -101,6 +101,7 @@ import { ptBR } from "date-fns/locale";
 import type { AgendaItem } from "@/lib/agenda/agenda-item";
 import { mapAtribuicaoToKey } from "@/lib/agenda/atribuicao-key";
 import { registroAgendadoToAgendaItem } from "@/lib/agenda/registro-to-agenda-item";
+import { resolverTipo } from "@/lib/agenda/tipos-audiencia";
 
 // ==========================================
 // TIPOS
@@ -110,11 +111,14 @@ interface EventoFormData {
   id?: string;
   titulo: string;
   tipo: string;
+  /** Descrição canônica do tipo de audiência (ex: "Audiência de Instrução e Julgamento"). */
+  tipoAudiencia?: string;
   data: string;
   horarioInicio: string;
   horarioFim: string;
   local: string;
   assistido: string;
+  assistidoId?: number | null;
   processo: string;
   atribuicao: string;
   status: string;
@@ -1016,8 +1020,23 @@ export default function AgendaPage() {
       return;
     }
 
+    // Build notes from observacoes only.
+    const notesPartes: string[] = [];
+    if (eventoData.observacoes) notesPartes.push(eventoData.observacoes);
+
+    // Prefix sigla into title so extrairTipoEvento resolves the badge for calendar_events.
+    const tituloBase = eventoData.titulo?.trim() || "";
+    const sigla =
+      eventoData.tipo === "audiencia" && eventoData.tipoAudiencia
+        ? resolverTipo(eventoData.tipoAudiencia).sigla
+        : "";
+    const tituloFinal =
+      sigla
+        ? `${sigla}${tituloBase ? ` - ${tituloBase}` : eventoData.assistido ? ` - ${eventoData.assistido}` : ""}`
+        : tituloBase;
+
     await createCalendarEvent.mutateAsync({
-      title: eventoData.titulo,
+      title: tituloFinal || tituloBase || eventoData.titulo,
       description: eventoData.descricao || undefined,
       eventDate: buildIso(eventoData.data, eventoData.horarioInicio),
       endDate: eventoData.horarioFim ? buildIso(eventoData.data, eventoData.horarioFim) : undefined,
@@ -1026,7 +1045,7 @@ export default function AgendaPage() {
       assistidoId,
       isAllDay: !eventoData.horarioInicio,
       location: eventoData.local || undefined,
-      notes: eventoData.observacoes || undefined,
+      notes: notesPartes.length ? notesPartes.join("\n") : undefined,
       priority: PRIORIDADE_MAP[eventoData.prioridade] || "normal",
       status: STATUS_MAP[eventoData.status] || "scheduled",
       isRecurring: !!recurrenceType,
@@ -1118,7 +1137,9 @@ export default function AgendaPage() {
       updateEvento.mutate({
         id: item.rawId,
         dataAudiencia: dataHora,
-        tipo: data.tipo,
+        // When editing an audiência, persist the canonical tipo (e.g. "AIJ") chosen in the
+        // "Tipo de audiência" selector; fall back to whatever was already stored (data.tipo).
+        tipo: data.tipoAudiencia || data.tipo,
         local: data.local,
         titulo: data.titulo,
         descricao: data.descricao,
