@@ -277,6 +277,7 @@ export const demandas = pgTable("demandas", {
   dataDelegacao: timestamp("data_delegacao"),
   motivoDelegacao: text("motivo_delegacao"),
   statusDelegacao: varchar("status_delegacao", { length: 20 }),
+  delegacaoWorkStatus: varchar("delegacao_work_status", { length: 20 }),
   prazoSugerido: date("prazo_sugerido"),
   reuPreso: boolean("reu_preso").default(false),
   googleCalendarEventId: text("google_calendar_event_id"),
