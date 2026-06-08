@@ -148,6 +148,10 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
     const segNorm = normalizar(seg);
 
     // Polarity gate (C1): skip all triggers in segments that deny the measure.
+    // Erra para o lado seguro (falso-negativo, nunca falso-positivo): quando uma
+    // negação e um deferimento dividem o MESMO segmento sem separador de alínea
+    // (ex.: "Indeferida a medida X; defiro o afastamento"), o segmento inteiro é
+    // descartado. O defensor confere as medidas no preview antes de gravar.
     if (NEGACAO.test(segNorm)) continue;
 
     for (const cat of CATALOGO_MEDIDAS) {

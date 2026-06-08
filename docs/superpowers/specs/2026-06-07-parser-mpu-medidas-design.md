@@ -161,3 +161,9 @@ Cada teste valida o JSON de `parseDecisaoMPU` campo a campo.
 | `registro-editor.tsx` | exibe `medidasCriadas` / preview | tRPC |
 
 O parser é a peça central e totalmente testável em isolamento.
+
+## Limitações conhecidas (pós-review)
+
+- **Polaridade (deferido × indeferido):** o parser tem um gate que descarta segmentos contendo verbos de negação (`indefiro`, `indeferido`, `rejeito`, `deixo de deferir`, etc.), de modo que medidas **indeferidas nunca são gravadas como deferidas** (sem falso-positivo — o dano crítico evitado). O custo é um **falso-negativo seguro**: quando uma negação e um deferimento dividem o mesmo segmento sem separador de alínea (ex.: "Indeferida a medida X; defiro o afastamento"), o segmento inteiro é descartado e a medida deferida pode não ser capturada. Mitigação: o defensor confere as medidas no **preview** antes de gravar. Evolução futura: herança de polaridade por cláusula (split em `;` com propagação do verbo regente).
+- **Partes (`ofendida`/`agressor`):** extraídas por âncoras de redação padrão ("em favor de … e," / "determino que … cumpra"); decisões com redação muito divergente retornam `null` (degrada, não mente).
+- **Taxonomia viva:** redações atípicas de medidas podem escapar dos gatilhos; o ponto único de evolução é `medidas-taxonomia.ts`.
