@@ -475,7 +475,6 @@ export function PJeImportModal({
       // Filtrar rows não excluídas e separar por tipo
       const includedRows = reviewRows.filter((r) => !r.excluded);
       const mpuRows = includedRows.filter((r) => r.tipoProcesso === "MPUMPCrim");
-      const geraisRows = includedRows.filter((r) => r.tipoProcesso !== "MPUMPCrim");
 
       // 1. Importar MPUs para tabela especial
       if (mpuRows.length > 0) {
@@ -500,36 +499,40 @@ export function PJeImportModal({
         importarVVDMutation.mutate({ intimacoes: intimacoesParaVVD });
       }
 
-      // 2. Importar demandas gerais (não-MPU) com overrides da review table
-      if (geraisRows.length > 0) {
-        const demandasGerais = geraisRows.map((row) => {
-          const intimacao = intimacoes.find(
-            (i) => (i.ordemOriginal ?? 0) === row.ordemOriginal
-          );
-          if (!intimacao) return null;
-          return intimacaoToDemanda(intimacao, "Violência Doméstica", {
-            ato: row.ato,
-            status: row.status,
-            prazo: row.prazo,
-            estadoPrisional: row.estadoPrisional,
-            assistidoMatchId:
-              row.assistidoMatch.type === "exact" || row.matchConfirmed
-                ? row.assistidoMatch.matchedId
-                : undefined,
-            providencias: row.providencias,
-          });
-        }).filter(Boolean);
+      // 2. Importar TODAS as linhas como demanda (inclusive MPU): as MPU vão
+      //    para a página especial (acima) E entram no quadro de Demandas sob o
+      //    filtro MPU, para triagem (a maioria fica Ciência; as que exigirem
+      //    providência o defensor move para Elaborar/outro status). O tipo
+      //    "MPUMPCrim" é normalizado para "MPU" no importFromSheets.
+      const demandasTodas = includedRows.map((row) => {
+        const intimacao = intimacoes.find(
+          (i) => (i.ordemOriginal ?? 0) === row.ordemOriginal
+        );
+        if (!intimacao) return null;
+        return intimacaoToDemanda(intimacao, "Violência Doméstica", {
+          ato: row.ato,
+          status: row.status,
+          prazo: row.prazo,
+          estadoPrisional: row.estadoPrisional,
+          assistidoMatchId:
+            row.assistidoMatch.type === "exact" || row.matchConfirmed
+              ? row.assistidoMatch.matchedId
+              : undefined,
+          providencias: row.providencias,
+        });
+      }).filter(Boolean);
 
-        if (demandasGerais.length > 0) {
-          onImport(demandasGerais);
-          toast.success(
-            `${demandasGerais.length} demandas VVD importadas para a lista geral`,
-            { duration: 3000 }
-          );
-        }
+      if (demandasTodas.length > 0) {
+        onImport(demandasTodas);
+        const nMpu = mpuRows.length;
+        toast.success(
+          `${demandasTodas.length} demandas VVD importadas` +
+            (nMpu > 0 ? ` (${nMpu} MPU também na página especial)` : ""),
+          { duration: 3000 }
+        );
       }
 
-      // Se não tem MPUs, só fecha
+      // Sem MPU: fecha aqui (com MPU, o importarVVD.onSuccess fecha)
       if (mpuRows.length === 0) {
         onClose();
         resetModal();
