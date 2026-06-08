@@ -89,34 +89,51 @@ interface MedidaParsed {
 
 Partes (ofendida/agressor) extraídas dos padrões "em favor de X" e "determino que Y cumpra".
 
-## 3. Persistência — 1 linha por medida em `medidas_protetivas`
+## 3. Persistência — nova tabela `medidas_mpu` (1 linha por medida)
 
-Cada `MedidaParsed` vira uma linha:
+> **Decisão (08/06):** `medidas_protetivas` está marcada como LEGADA no schema ("NÃO usar em novas features"). O modelo VVD novo (`partes_vvd` / `processos_vvd` / `historico_mpu`) não tem tabela por-medida. Criamos **`medidas_mpu`** nesse modelo novo, com FK → `processos_vvd`.
 
-- `tipoMedida` = `codigo`
-- `distanciaMetros` = `distanciaMetros`
-- `nomeVitima` = `ofendida`
-- `dataDecisao`, `dataVencimento` (se `prazoDias`)
-- `status` = `'ativa'`
-- **nova coluna `parametros jsonb`** — guarda `{ protegidos, meios, lugares, valor, artigo, literal }` de forma estruturada. Sem ela esses dados morreriam em texto livre.
+Tabela `medidas_mpu`:
+
+| Coluna | Tipo | Origem |
+|---|---|---|
+| `id` | serial PK | — |
+| `processo_vvd_id` | int FK → `processos_vvd` (cascade) | match por CNJ |
+| `codigo` | varchar(40) | `MedidaParsed.codigo` |
+| `artigo` | varchar(20) | `MedidaParsed.artigo` |
+| `distancia_metros` | int null | `distanciaMetros` |
+| `parametros` | jsonb null | `{ protegidos, meios, lugares, valor }` |
+| `literal` | text | trecho da decisão |
+| `data_decisao` | date null | data da decisão |
+| `data_vencimento` | date null | se `prazoDias` |
+| `status` | varchar(20) default `'ativa'` | manual ou derivado |
+| `origem` | varchar(20) default `'parser'` | distingue derivado de manual |
+| `created_at` / `updated_at` | timestamp | — |
+
+Schema drizzle em `src/lib/db/schema/vvd.ts` (módulo novo, não o legado).
 
 ### Migration
 
-`ALTER TABLE medidas_protetivas ADD COLUMN parametros jsonb;` — aditiva, nullable, sem backfill. Schema drizzle em `src/lib/db/schema/vvd.ts` ganha `parametros: jsonb("parametros").$type<MedidaParametros>()`.
+Nova migration `drizzle/0048_medidas_mpu.sql` (sequência atual termina em 0047): `CREATE TABLE medidas_mpu (...)` + índices em `processo_vvd_id` e `status`.
 
 ### Idempotência
 
-Reparse do mesmo processo **substitui** as medidas derivadas (delete-where-processo + insert) em vez de duplicar. Medidas com status manual alterado pelo defensor não são sobrescritas (respeita o princípio "última edição manual vence").
+Reparse do mesmo processo **substitui** apenas as medidas de `origem='parser'` (delete-where-processo-and-origem-parser + insert) em vez de duplicar. Linhas com `origem='manual'` (criadas/editadas pelo defensor) nunca são tocadas (respeita "última edição manual vence").
 
 ## 4. Gatilho + avanço da esteira
 
-Disparo ao **salvar o registro "Ciência de MPU"** (tipo `ciencia`), com **preview de confirmação**: o parser roda sobre `registros.conteudo`, exibe as medidas detectadas, e ao confirmar:
+Espelha o padrão já existente no `registros.create` (`detectarDesignacaoAudiencia`, que auto-cria audiência a partir de despacho de ciência).
 
-1. Grava/atualiza as linhas em `medidas_protetivas`.
-2. Atualiza `processos_vvd`: `mpuAtiva = true`, `faseProcedimento = DECISAO_LIMINAR`, `motivoUltimaIntimacao = CIENCIA_DECISAO_MPU`.
-3. Cria evento em `historico_mpu`: `tipoEvento = 'concessao'`, `medidasVigentes` = resumo, `novaDistancia`, `dataEvento`.
+**Preview:** query tRPC `mpu.previewMedidas({ texto })` (dry-run, sem efeito) que a UI do editor de registro chama para mostrar as medidas detectadas antes de salvar.
 
-Esses campos é que movem a esteira e os KPIs de monitoramento. O preview dá a revisão humana antes de gravar (atende ao requisito de conferência).
+**Persistência (no save):** dentro do `registros.create`, quando `tipo === 'ciencia'`, `processoId` presente e `parseDecisaoMPU(conteudo).medidas.length > 0`:
+
+1. Resolve `processos_vvd` por CNJ (`processos.numeroAutos` do `processoId` → `processosVVD.numeroAutos`). Se não houver, retorna as medidas no payload mas pula a persistência.
+2. Substitui as linhas `origem='parser'` em `medidas_mpu` e insere as novas.
+3. Atualiza `processos_vvd`: `mpuAtiva = true`, `dataDecisaoMPU`, `faseProcedimento = 'decisao_liminar'`, `motivoUltimaIntimacao = 'ciencia_decisao_mpu'`, `distanciaMinima` (maior distância), `prazoMpuDias`, `dataVencimentoMPU`.
+4. Cria evento em `historico_mpu`: `tipoEvento = 'concessao'`, `medidasVigentes` = resumo, `novaDistancia`, `dataEvento`.
+
+O `registros.create` retorna `medidasCriadas` no payload (espelhando o `audienciaCriada` já existente), que o `registro-editor.tsx` exibe. Esses campos de `processos_vvd` é que movem a esteira e os KPIs.
 
 ## 5. Testes
 
@@ -137,8 +154,10 @@ Cada teste valida o JSON de `parseDecisaoMPU` campo a campo.
 |---|---|---|
 | `medidas-taxonomia.ts` | catálogo + vocabulários + gatilhos | nada |
 | `parse-decisao.ts` | texto → `DecisaoMPUParsed` (pura) | taxonomia |
-| migration + schema `vvd.ts` | coluna `parametros jsonb` | — |
-| mutation de save do registro | orquestra parse → persist → esteira | parser, schema |
-| preview (UI) | mostra medidas antes de confirmar | tRPC do parser |
+| migration + schema `vvd.ts` | tabela `medidas_mpu` | — |
+| `aplicar-medidas-mpu.ts` | parse → persist medidas + esteira + histórico (tx) | parser, schema |
+| `registros.create` hook | dispara `aplicarMedidasMPU` no save | aplicar |
+| `mpu.previewMedidas` (tRPC) | dry-run para o preview | parser |
+| `registro-editor.tsx` | exibe `medidasCriadas` / preview | tRPC |
 
 O parser é a peça central e totalmente testável em isolamento.
