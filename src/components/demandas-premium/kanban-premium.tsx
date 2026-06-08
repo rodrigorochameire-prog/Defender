@@ -1755,6 +1755,23 @@ export function KanbanPremium({
     for (const key of Object.keys(cols) as KanbanColumn[]) cols[key].sort(sortByAtoAndExpedicao);
     for (const key of Object.keys(subs)) (subs as any)[key].sort(sortByAtoAndExpedicao);
 
+    // Triagem é a entrada de expedientes: ordem cronológica pura, do mais
+    // recente para o mais antigo (data de expedição DESC; desempate por
+    // dataInclusao DESC), para o defensor triar um a um na ordem em que chegam.
+    const triagemCronologicoDesc = (a: KanbanDemanda, b: KanbanDemanda) => {
+      const ax = (a.dataExpedicaoRaw as string | null | undefined) ?? null;
+      const bx = (b.dataExpedicaoRaw as string | null | undefined) ?? null;
+      if (ax !== bx) {
+        if (!ax) return 1;
+        if (!bx) return -1;
+        return bx.localeCompare(ax); // DESC
+      }
+      const ai = (a.dataInclusao as string | null | undefined) ?? "";
+      const bi = (b.dataInclusao as string | null | undefined) ?? "";
+      return bi.localeCompare(ai); // DESC
+    };
+    cols.triagem.sort(triagemCronologicoDesc);
+
     return {
       columnDemandas: cols,
       subGroupDemandas: subs,
@@ -2191,8 +2208,9 @@ export function KanbanPremium({
                 </div>
                 <div className="space-y-2.5 flex-1">
                   <GroupedByAtoList
-                    items={items.slice(0, 30)}
+                    items={col === "triagem" ? items : items.slice(0, 100)}
                     storageKey={`kanban:atogroup:col:${col}`}
+                    enabled={col !== "triagem"}
                     renderCard={(d) => (
                       <KanbanCard
                         key={d.id}
@@ -2215,9 +2233,9 @@ export function KanbanPremium({
                       />
                     )}
                   />
-                  {items.length > 30 && (
+                  {col !== "triagem" && items.length > 100 && (
                     <p className="text-[10px] text-center text-neutral-400 py-2">
-                      +{items.length - 30} mais
+                      +{items.length - 100} mais
                     </p>
                   )}
                   {items.length === 0 && (
