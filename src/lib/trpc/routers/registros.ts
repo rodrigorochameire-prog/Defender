@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/client";
 import { getDefensoresVisiveis } from "../defensor-scope";
 import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { buildDemandaSync, syncDemandaToSheets } from "@/lib/services/demanda-sync";
+import { aplicarMedidasMPU, type MedidaCriada } from "@/lib/mpu/aplicar-medidas-mpu";
 
 /**
  * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
@@ -275,13 +276,28 @@ export const registrosRouter = router({
           }
         }
 
-        return { registro, audienciaCriada };
+        // 4. Side-effect de ciência: medidas protetivas no texto da decisão →
+        //    persiste medidas estruturadas e move a esteira (dedupe por origem=parser).
+        let medidasCriadas: MedidaCriada[] = [];
+        if (input.tipo === "ciencia" && input.processoId) {
+          medidasCriadas = await aplicarMedidasMPU(tx, {
+            processoId: input.processoId,
+            conteudo: input.conteudo,
+            dataDecisaoISO: input.dataRegistro.toISOString().slice(0, 10),
+          });
+        }
+
+        return { registro, audienciaCriada, medidasCriadas };
       });
 
       // Atualiza a célula "Providências" da planilha (fire-and-forget)
       syncProvidenciasToSheet(created.registro.demandaId);
 
-      return { ...created.registro, audienciaCriada: created.audienciaCriada };
+      return {
+        ...created.registro,
+        audienciaCriada: created.audienciaCriada,
+        medidasCriadas: created.medidasCriadas,
+      };
     }),
 
   // ────────────────────────────────────────────────────────────────────
