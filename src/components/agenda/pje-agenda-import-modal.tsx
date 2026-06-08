@@ -694,7 +694,7 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
 
             eventos.push({
               titulo: tituloSEEU,
-              tipo: tipoAudienciaSEEU.descricao || tipoPautaRaw,
+              tipo: tipoAudienciaSEEU.descricao,
               data: dataSEEU,
               horarioInicio: horaSEEU,
               horarioFim: horFimSEEU,
