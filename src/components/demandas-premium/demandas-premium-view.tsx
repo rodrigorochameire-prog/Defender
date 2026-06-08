@@ -1108,6 +1108,7 @@ export default function Demandas() {
       delegadoPara: d.delegadoPara ?? null,
       delegadoParaId: d.delegadoParaId ?? null,
       statusDelegacao: d.statusDelegacao ?? null,
+      delegacaoWorkStatus: d.delegacaoWorkStatus ?? null,
       dataDelegacao: d.dataDelegacao ? new Date(d.dataDelegacao).toISOString() : null,
       // Rastreamento de importação
       importBatchId: d.importBatchId || null,

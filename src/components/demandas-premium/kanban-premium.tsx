@@ -53,6 +53,7 @@ import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
+import { rotuloDelegacaoChip } from "./delegacao-chip";
 
 // Context para edição do ato direto no card do kanban. Evita threadar
 // onAtoChange por todos os níveis (colunas, listas, agrupamentos) — o
@@ -98,6 +99,7 @@ interface KanbanDemanda {
   processos?: Array<{ numero?: string }>;
   delegadoPara?: string | null;
   statusDelegacao?: string | null;
+  delegacaoWorkStatus?: string | null;
   reuPreso?: boolean;
   providenciaResumo?: string | null;
   lastEvento?: EventoLine | null;
@@ -465,6 +467,10 @@ function KanbanCard({
   });
   const reabrirDelegacao = trpc.delegacao.reabrirDelegacao.useMutation({
     onSuccess: () => { utilsDeleg.demandas.list.invalidate(); toast.success("Delegação reaberta"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const retomarDelegacao = trpc.delegacao.retomar.useMutation({
+    onSuccess: () => { utilsDeleg.demandas.list.invalidate(); toast.success("Delegação retomada"); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -927,41 +933,58 @@ function KanbanCard({
           )}
         </div>
 
-        {/* Chip delegação — dois estados: a_delegar (dashed) e delegado (sólido) */}
-        {demanda.delegadoPara && (demanda.statusDelegacao === "a_delegar" || demanda.statusDelegacao === "delegado") && (
-          <div className="flex items-center justify-between mt-1 pl-8">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px]",
-                demanda.statusDelegacao === "a_delegar"
-                  ? "border border-dashed border-violet-400 text-violet-600 dark:text-violet-300"
-                  : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
-              )}
-            >
-              <UserPlus className="h-3 w-3" />
-              {demanda.statusDelegacao === "a_delegar" ? "Delegar a" : "Delegado a"}{" "}
-              {demanda.delegadoPara.split(" ")[0]}
-            </span>
-            {demanda.statusDelegacao === "a_delegar" && (
-              <button
-                type="button"
-                className="text-[11px] text-violet-600 hover:underline"
-                onClick={(e) => { e.stopPropagation(); marcarDelegado.mutate({ demandaId: Number(demanda.id) }); }}
-              >
-                Marcar como delegado
-              </button>
-            )}
-            {demanda.statusDelegacao === "delegado" && (
-              <button
-                type="button"
-                className="text-[11px] text-neutral-500 hover:underline"
-                onClick={(e) => { e.stopPropagation(); reabrirDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
-              >
-                Reabrir
-              </button>
-            )}
-          </div>
-        )}
+        {/* Chip delegação — tom driven by rotuloDelegacaoChip (a_delegar/ativo/concluida) */}
+        {(() => {
+          const chip = demanda.delegadoPara
+            ? rotuloDelegacaoChip({
+                statusDelegacao: demanda.statusDelegacao,
+                delegacaoWorkStatus: demanda.delegacaoWorkStatus,
+                nome: demanda.delegadoPara,
+              })
+            : null;
+          if (!chip) return null;
+          const tomClass =
+            chip.tom === "a_delegar"
+              ? "border border-dashed border-violet-400 text-violet-600 dark:text-violet-300"
+              : chip.tom === "concluida"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300";
+          return (
+            <div className="flex items-center justify-between mt-1 pl-8 gap-2">
+              <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px]", tomClass)}>
+                <UserPlus className="h-3 w-3" />
+                {chip.texto}
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                {demanda.statusDelegacao === "a_delegar" && (
+                  <button
+                    type="button"
+                    className="text-[11px] text-violet-600 hover:underline"
+                    onClick={(e) => { e.stopPropagation(); marcarDelegado.mutate({ demandaId: Number(demanda.id) }); }}
+                  >
+                    Marcar como delegado
+                  </button>
+                )}
+                {demanda.statusDelegacao === "delegado" && (
+                  <button
+                    type="button"
+                    className="text-[11px] text-neutral-500 hover:underline"
+                    onClick={(e) => { e.stopPropagation(); reabrirDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
+                  >
+                    Reabrir
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="text-[11px] text-red-500 hover:underline"
+                  onClick={(e) => { e.stopPropagation(); retomarDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
+                >
+                  Retomar
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Pendência — só se houver diligência pendente */}
         {demanda.pendenteEvento && (
