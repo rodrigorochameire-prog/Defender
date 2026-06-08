@@ -27,7 +27,7 @@ import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
-import { PrepararAudienciasButton } from "@/components/agenda/preparar-audiencias-button";
+import { prepararAudienciasActions } from "@/hooks/use-preparar-audiencias";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
 import { AgendaExportModal } from "@/components/agenda/agenda-export-modal";
 import { PJeAgendaImportModal } from "@/components/agenda/pje-agenda-import-modal";
@@ -55,7 +55,6 @@ import {
   Clock,
   Plus,
   Search,
-  Download,
   Upload,
   Gavel,
   Users,
@@ -70,6 +69,7 @@ import {
   Scale,
   MoreHorizontal,
   Filter,
+  Target,
   ChevronDown,
   Zap,
   FileUp,
@@ -1704,6 +1704,8 @@ export default function AgendaPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => prepararAudienciasActions.open()}><Target className="w-4 h-4 mr-2" />Preparar audiências</DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}><Settings className="w-4 h-4 mr-2" />Configuracoes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsBuscaRegistrosModalOpen(true)}><Database className="w-4 h-4 mr-2" />Buscar Registros</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}><UserCog className="w-4 h-4 mr-2" />Configurar Escalas</DropdownMenuItem>
@@ -1716,14 +1718,6 @@ export default function AgendaPage() {
                 <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <button
-              onClick={() => setIsPJeImportModalOpen(true)}
-              title="Importar do PJe"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-            >
-              <Download className="w-[15px] h-[15px]" />
-            </button>
-            <PrepararAudienciasButton variant="dark" />
             <button
               onClick={() => setIsCreateModalOpen(true)}
               title="Novo Evento"
