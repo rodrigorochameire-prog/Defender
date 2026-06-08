@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
+import { TIPOS_AUDIENCIA } from "@/lib/agenda/tipos-audiencia";
 
 interface CalendarWeekViewProps {
   eventos: any[];
@@ -92,18 +93,10 @@ const detectarAdvogadoConstituido = (titulo: string): boolean => {
   return /^ADV\b/i.test(tipoRaw);
 };
 
-// Mapa de abreviações → nome completo (tipo de audiência)
-const tipoNomeCompleto: Record<string, string> = {
-  "AIJ": "Instrução e Julgamento",
-  "Júri": "Sessão do Tribunal do Júri",
-  "Custódia": "Audiência de Custódia",
-  "Justificação": "Audiência de Justificação",
-  "PAP": "Produção Antecipada de Provas",
-  "ANPP": "Acordo de Não Persecução Penal",
-  "Admonitória": "Audiência Admonitória",
-  "Concentrada": "Audiência Concentrada",
-  "Conciliação": "Audiência de Conciliação",
-};
+// sigla → descrição (para o popover). Derivado do catálogo único.
+const tipoNomeCompleto: Record<string, string> = Object.fromEntries(
+  TIPOS_AUDIENCIA.map((t) => [t.sigla, t.descricao]),
+);
 
 // Horários do dia (6h às 22h)
 const HORAS_DIA = Array.from({ length: 17 }, (_, i) => i + 6);
