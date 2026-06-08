@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { gerarMensagemWhatsApp } from "./delegacao-modal";
+import { montarMensagemDelegacao } from "./delegacao-message";
 
 // Templates (mesmos do modal individual)
 const INSTRUCAO_TEMPLATES = [
@@ -101,30 +102,20 @@ export function DelegacaoBatchModal({
   useEffect(() => {
     if (enviarWhatsApp && !editandoWhatsApp) {
       const nomeDest = membrosEquipe?.find(m => m.id === parseInt(destinatarioId))?.name || "Colega";
-      const hora = new Date().getHours();
-      const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
-      const primeiroNome = nomeDest.split(" ")[0];
-
-      let msg = `${saudacao}, ${primeiroNome}!\n\nSegue(m) ${demandas.length} demanda(s) para você:\n`;
-
-      demandas.slice(0, 5).forEach((d, i) => {
-        msg += `\n${i + 1}. `;
-        if (d.processoNumero) msg += `*${d.processoNumero}*`;
-        if (d.assistidoNome) msg += ` - ${d.assistidoNome}`;
-        if (d.ato) msg += ` (${d.ato})`;
+      const msg = montarMensagemDelegacao({
+        destinatarioNome: nomeDest,
+        demandas: demandas.map(d => ({
+          processoNumero: d.processoNumero,
+          assistidoNome: d.assistidoNome,
+          ato: d.ato,
+        })),
+        instrucoes,
+        prazo: prazoSugerido || undefined,
+        horaDoDia: new Date().getHours(),
       });
-
-      if (demandas.length > 5) {
-        msg += `\n... e mais ${demandas.length - 5} demanda(s)`;
-      }
-
-      if (instrucoes) {
-        msg += `\n\n${instrucoes}`;
-      }
-
       setWhatsAppMsg(msg);
     }
-  }, [enviarWhatsApp, destinatarioId, instrucoes, demandas, membrosEquipe, editandoWhatsApp]);
+  }, [enviarWhatsApp, destinatarioId, instrucoes, prazoSugerido, demandas, membrosEquipe, editandoWhatsApp]);
 
   const resetForm = () => {
     setDestinatarioId("");
