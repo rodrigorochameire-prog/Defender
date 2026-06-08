@@ -337,15 +337,15 @@ export const ATRIBUICAO_COLORS = {
     iconName: "Briefcase",
   },
   MUTIRAO: {
-    border: "border-l-cyan-500",
-    bg: "bg-cyan-50/50 dark:bg-cyan-900/20",
-    bgSolid: "bg-cyan-100 dark:bg-cyan-900/30",
-    text: "text-cyan-700 dark:text-cyan-400",
-    textMuted: "text-cyan-600/70 dark:text-cyan-400/70",
-    hoverBg: "hover:bg-cyan-50 dark:hover:bg-cyan-900/20",
-    indicator: "bg-cyan-500",
-    ring: "ring-cyan-500/20",
-    dot: "bg-cyan-500",
+    border: "border-l-violet-500",
+    bg: "bg-violet-50/50 dark:bg-violet-900/20",
+    bgSolid: "bg-violet-100 dark:bg-violet-900/30",
+    text: "text-violet-700 dark:text-violet-400",
+    textMuted: "text-violet-600/70 dark:text-violet-400/70",
+    hoverBg: "hover:bg-violet-50 dark:hover:bg-violet-900/20",
+    indicator: "bg-violet-500",
+    ring: "ring-violet-500/20",
+    dot: "bg-violet-500",
     label: "Mutirão",
     shortLabel: "Mutirão",
     iconName: "Users",
@@ -413,8 +413,8 @@ export const ATRIBUICAO_COLORS = {
 // Mapeamento de cores sólidas por atribuição (para estilos inline)
 export const SOLID_COLOR_MAP: Record<string, string> = {
   all: "#737373",
-  MUTIRAO: "#22d3ee",      // cyan-400
-  "Mutirão": "#22d3ee",           // neutral-500
+  MUTIRAO: "#a855f7",      // violet-500
+  "Mutirão": "#a855f7",           // violet-500
   VVD: "#eab308",           // yellow-500 (mais quente e suave que amber-500)
   "Violência Doméstica": "#eab308",
   VVD_CAMACARI: "#eab308",
@@ -485,7 +485,6 @@ export const ATRIBUICAO_OPTIONS = [
   { value: "EXECUCAO", label: "Execução Penal", shortLabel: "Exec." },
   { value: "SUBSTITUICAO", label: "Substituição Criminal", shortLabel: "Subst." },
   { value: "SUBSTITUICAO_CIVEL", label: "Substituição Não Penal", shortLabel: "S. Cível" },
-  { value: "MUTIRAO_PROTEGE", label: "Mutirão (TJBA Protege)", shortLabel: "Mutirão" },
   { value: "CURADORIA", label: "Curadoria Especial", shortLabel: "Curad." },
 ];
 
