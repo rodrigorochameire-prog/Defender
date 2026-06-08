@@ -96,3 +96,23 @@ describe("bucketIntoSections — invariante de contagem", () => {
     expect(leftover).toHaveLength(1);
   });
 });
+
+describe("effectiveSectionKeys — delegado parado vs movido", () => {
+  it("delegado com substatus placeholder 'delegar' fica em 'delegado'", () => {
+    expect(
+      effectiveSectionKeys({ id: 1, delegadoPara: "Amanda", statusDelegacao: "delegado", substatus: "delegar" }),
+    ).toEqual(["delegado"]);
+  });
+
+  it("delegado sem substatus fica em 'delegado'", () => {
+    expect(
+      effectiveSectionKeys({ id: 2, delegadoPara: "Amanda", statusDelegacao: "delegado", substatus: null }),
+    ).toEqual(["delegado"]);
+  });
+
+  it("delegado MOVIDO para coluna real sai de 'delegado' e vai para a pipeline", () => {
+    expect(
+      effectiveSectionKeys({ id: 3, delegadoPara: "Amanda", statusDelegacao: "delegado", substatus: "monitorar" }),
+    ).toEqual(["monitorar"]);
+  });
+});

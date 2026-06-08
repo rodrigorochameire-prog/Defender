@@ -47,18 +47,27 @@ export function normalizeStatusKey(raw: string | null | undefined): string {
  * Chaves efetivas de um item para fins de seção.
  *
  * A dimensão delegação (statusDelegacao) tem precedência sobre o status da
- * pipeline. Não chaveamos mais pela mera presença de delegadoPara — uma
- * demanda com delegatário mas sem statusDelegacao (ex.: delegação cancelada)
- * volta a cair no status escolhido.
+ * pipeline, exceto quando o defensor MOVE o card para uma coluna real — aí
+ * ele migra mantendo o chip de delegação (a delegação persiste, só muda de
+ * lugar no quadro).
  *
  * Valores canônicos de statusDelegacao:
  *   "a_delegar" → seção "A delegar"
- *   "delegado"  → seção "Delegados"
+ *   "delegado"  → seção "Delegados" (padrão), ou coluna da pipeline se
+ *                 substatus for um status real (não placeholder "delegar")
  *   null/undefined → usa substatus (ou status) normalizado
  */
 export function effectiveSectionKeys(item: BucketItem): string[] {
+  // Delegação (statusDelegacao) tem precedência sobre o status da pipeline,
+  // exceto quando o defensor MOVE o card para uma coluna real — aí ele migra
+  // mantendo o chip (a delegação persiste, só muda de lugar no quadro).
   if (item.statusDelegacao === "a_delegar") return ["a_delegar"];
-  if (item.statusDelegacao === "delegado") return ["delegado"];
+  if (item.statusDelegacao === "delegado") {
+    const sub = normalizeStatusKey(item.substatus);
+    // Placeholder ("delegar") ou vazio = ainda na casa padrão "Delegados".
+    if (!sub || sub === "delegar") return ["delegado"];
+    return [sub];
+  }
   return [normalizeStatusKey(item.substatus || item.status)];
 }
 
