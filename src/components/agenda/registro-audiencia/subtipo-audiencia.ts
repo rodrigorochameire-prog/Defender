@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { Gavel, Scale, Shield, ShieldAlert, Users, HelpCircle } from "lucide-react";
+import { detectarSlug } from "@/lib/agenda/tipos-audiencia";
 
 export type SubtipoAudiencia =
   | "justificacao"
@@ -132,34 +133,23 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
   },
 };
 
-/**
- * Detecta o subtipo a partir do tipo do evento (string livre, gravado em
- * `audiencias.tipo`) e da classe processual (opcional, ajuda em casos
- * ambíguos como APF que vem como Justificação na pauta).
- */
-export function detectarSubtipo(
-  tipoAudiencia: string | null | undefined,
-  classeProcessual: string | null | undefined = null,
-): SubtipoAudiencia {
-  const t = (tipoAudiencia || "").toUpperCase();
-  const c = (classeProcessual || "").toUpperCase();
+// Catálogo (slug) → subtipo local do registro de audiência.
+const SLUG_PARA_SUBTIPO: Record<string, SubtipoAudiencia> = {
+  plenario_juri: "plenario",
+  aij: "aij",
+  instrucao_oitiva: "aij",
+  justificacao: "justificacao",
+  oitiva_especial: "oitiva_especial",
+  custodia: "custodia",
+};
 
-  if (c.includes("FLAGRANTE") || c.includes("APF") || t.includes("CUSTÓDIA") || t.includes("CUSTODIA")) {
-    return "custodia";
-  }
-  if (t.includes("PLEN") || t.includes("JULGAMENTO PELO JÚRI") || t.includes("SESSÃO")) {
-    return "plenario";
-  }
-  if (t.includes("DEPOIMENTO ESPECIAL") || (t.includes("ESPECIAL") && !t.includes("ESPECIAL DO JÚRI"))) {
-    return "oitiva_especial";
-  }
-  if (t.includes("JUSTIFICA")) {
-    return "justificacao";
-  }
-  if (t.includes("INSTRUÇÃO") || t.includes("INSTRUCAO") || t.includes("AIJ") || t.includes("SUMÁRIO") || t.includes("SUMARIO")) {
-    return "aij";
-  }
-  return "indefinido";
+export function detectarSubtipo(
+  tipoAudiencia?: string | null,
+  classeProcessual?: string | null,
+): SubtipoAudiencia {
+  const base = `${tipoAudiencia ?? ""} ${classeProcessual ?? ""}`.trim();
+  if (!base) return "indefinido";
+  return SLUG_PARA_SUBTIPO[detectarSlug(base)] ?? "indefinido";
 }
 
 export function corBadge(cor: string): {

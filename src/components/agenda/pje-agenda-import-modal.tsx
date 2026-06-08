@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { NAME_ACCENTS } from "@/lib/utils/title-case";
-import { detectarTipoAudiencia, detectarSituacao } from "./detectar-tipo-audiencia";
+import { detectarSituacao } from "./detectar-tipo-audiencia";
+import { detectarSlug, tipoPorSlug, TIPOS_AUDIENCIA, type AtribuicaoTipo } from "@/lib/agenda/tipos-audiencia";
 import {
   Upload,
   AlertTriangle,
@@ -64,12 +65,16 @@ interface ParsedEvento {
 }
 
 // Opções de atribuição disponíveis com ícones Lucide
+function siglasDe(attr: AtribuicaoTipo): string {
+  return TIPOS_AUDIENCIA.filter((t) => t.atribuicoes.includes(attr)).map((t) => t.sigla).join(", ");
+}
+
 const ATRIBUICAO_OPTIONS = [
   { value: "auto", label: "Detectar automaticamente", description: "O sistema analisa o texto e identifica a atribuição", icon: RefreshCw },
-  { value: "Tribunal do Júri", label: "Tribunal do Júri", description: "AIJ, Júri (Plenário), PAP, Custódia", icon: Gavel },
-  { value: "Violência Doméstica", label: "Violência Doméstica", description: "AIJ, Justificação, Oitiva Especial, Custódia, Retratação", icon: Shield },
-  { value: "Execução Penal", label: "Execução Penal", description: "Justificação, Admonitória", icon: Lock },
-  { value: "Criminal Geral", label: "Criminal Geral", description: "AIJ, PAP, Custódia, ANPP, Justificação", icon: Folder },
+  { value: "Tribunal do Júri", label: "Tribunal do Júri", description: siglasDe("JURI"), icon: Gavel },
+  { value: "Violência Doméstica", label: "Violência Doméstica", description: siglasDe("VVD"), icon: Shield },
+  { value: "Execução Penal", label: "Execução Penal", description: siglasDe("EP"), icon: Lock },
+  { value: "Criminal Geral", label: "Criminal Geral", description: siglasDe("CRIMINAL"), icon: Folder },
 ] as const;
 
 export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, description, defaultAtribuicao }: PJeAgendaImportModalProps) {
@@ -166,167 +171,6 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
     }
 
     return "";
-  };
-
-  // ============================================
-  // TIPOS DE AUDIÊNCIA POR ATRIBUIÇÃO
-  // ============================================
-  // Júri: Júri, AIJ, Custódia, PAP
-  // Violência Doméstica: AIJ, Justificação, Custódia, Oitiva especial, Retratação
-  // Execução Penal: Justificação, Admonitória
-  // Criminal Geral: AIJ, Custódia, ANPP, Justificação
-  // ============================================
-  
-  const mapearTipoAudiencia = (tipoTexto: string, atribuicao: string): { sigla: string; descricao: string } => {
-    const tipo = tipoTexto.toUpperCase();
-    const isJuri = atribuicao === "Tribunal do Júri";
-    const isViolenciaDomestica = atribuicao === "Violência Doméstica";
-    const isExecucaoPenal = atribuicao === "Execução Penal";
-    const isCriminalGeral = atribuicao === "Criminal Geral";
-
-    // === TRIBUNAL DO JÚRI ===
-    if (isJuri) {
-      // Sessão de Julgamento do Júri (Plenário)
-      if (tipo.includes("SESSÃO") || tipo.includes("PLENÁRIO") || tipo.includes("PLENARIO") || 
-          tipo.includes("JULGAMENTO DO JÚRI") || tipo.includes("JULGAMENTO DO JURI") ||
-          tipo.includes("TRIBUNAL DO JÚRI") || tipo.includes("TRIBUNAL DO JURI")) {
-        return { sigla: "Júri", descricao: "Sessão de Julgamento do Tribunal do Júri" };
-      }
-      // AIJ - Audiência de Instrução e Julgamento (fase de instrução do júri)
-      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || 
-          (tipo.includes("JULGAMENTO") && !tipo.includes("SESSÃO"))) {
-        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
-      }
-      // Custódia
-      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
-        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
-      }
-      // PAP - Produção Antecipada de Provas
-      if (tipo.includes("PRODUÇÃO ANTECIPADA") || tipo.includes("PRODUCAO ANTECIPADA") || 
-          tipo.includes("PAP") || tipo.includes("ANTECIPADA DE PROVAS") ||
-          tipo.includes("PRESENCIAL")) {
-        return { sigla: "PAP", descricao: "Produção Antecipada de Provas" };
-      }
-    }
-
-    // === VIOLÊNCIA DOMÉSTICA ===
-    if (isViolenciaDomestica) {
-      // AIJ
-      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || tipo.includes("JULGAMENTO")) {
-        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
-      }
-      // Justificação
-      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
-        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
-      }
-      // Custódia
-      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
-        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
-      }
-      // Oitiva especial
-      if (tipo.includes("OITIVA") || tipo.includes("DEPOIMENTO ESPECIAL")) {
-        return { sigla: "Oitiva especial", descricao: "Oitiva Especial" };
-      }
-      // Retratação
-      if (tipo.includes("RETRATAÇÃO") || tipo.includes("RETRATACAO")) {
-        return { sigla: "Retratação", descricao: "Audiência de Retratação" };
-      }
-    }
-
-    // === EXECUÇÃO PENAL ===
-    if (isExecucaoPenal) {
-      // Justificação
-      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
-        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
-      }
-      // Admonitória
-      if (tipo.includes("ADMONITÓRIA") || tipo.includes("ADMONITORIA") || tipo.includes("ADMONIT")) {
-        return { sigla: "Admonitória", descricao: "Audiência Admonitória" };
-      }
-    }
-
-    // === CRIMINAL GERAL ===
-    if (isCriminalGeral) {
-      // AIJ
-      if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || tipo.includes("JULGAMENTO")) {
-        return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
-      }
-      // Custódia
-      if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
-        return { sigla: "Custódia", descricao: "Audiência de Custódia" };
-      }
-      // ANPP - Acordo de Não Persecução Penal
-      if (tipo.includes("ANPP") || tipo.includes("NÃO PERSECUÇÃO") || tipo.includes("NAO PERSECUCAO") ||
-          tipo.includes("ACORDO") || tipo.includes("NÃO-PERSECUÇÃO") || tipo.includes("NAO-PERSECUCAO")) {
-        return { sigla: "ANPP", descricao: "Acordo de Não Persecução Penal" };
-      }
-      // Justificação
-      if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
-        return { sigla: "Justificação", descricao: "Audiência de Justificação" };
-      }
-    }
-
-    // === TIPOS GENÉRICOS (qualquer atribuição) ===
-    
-    // AIJ - padrão para instrução em qualquer vara
-    if (tipo.includes("INSTRUÇÃO") || tipo.includes("INSTRUCAO") || 
-        (tipo.includes("JULGAMENTO") && !tipo.includes("SESSÃO") && !tipo.includes("TRIBUNAL"))) {
-      return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
-    }
-    
-    // Custódia
-    if (tipo.includes("CUSTÓDIA") || tipo.includes("CUSTODIA")) {
-      return { sigla: "Custódia", descricao: "Audiência de Custódia" };
-    }
-    
-    // Justificação
-    if (tipo.includes("JUSTIFICAÇÃO") || tipo.includes("JUSTIFICACAO")) {
-      return { sigla: "Justificação", descricao: "Audiência de Justificação" };
-    }
-    
-    // Retratação
-    if (tipo.includes("RETRATAÇÃO") || tipo.includes("RETRATACAO")) {
-      return { sigla: "Retratação", descricao: "Audiência de Retratação" };
-    }
-    
-    // Oitiva especial
-    if (tipo.includes("OITIVA") || tipo.includes("DEPOIMENTO ESPECIAL")) {
-      return { sigla: "Oitiva especial", descricao: "Oitiva Especial" };
-    }
-    
-    // ANPP
-    if (tipo.includes("ANPP") || tipo.includes("NÃO PERSECUÇÃO") || tipo.includes("NAO PERSECUCAO")) {
-      return { sigla: "ANPP", descricao: "Acordo de Não Persecução Penal" };
-    }
-    
-    // Admonitória
-    if (tipo.includes("ADMONITÓRIA") || tipo.includes("ADMONITORIA")) {
-      return { sigla: "Admonitória", descricao: "Audiência Admonitória" };
-    }
-    
-    // PAP
-    if (tipo.includes("PRODUÇÃO ANTECIPADA") || tipo.includes("PRODUCAO ANTECIPADA") || tipo.includes("PAP")) {
-      return { sigla: "PAP", descricao: "Produção Antecipada de Provas" };
-    }
-    
-    // Conciliação
-    if (tipo.includes("CONCILIAÇÃO") || tipo.includes("CONCILIACAO")) {
-      return { sigla: "Conciliação", descricao: "Audiência de Conciliação" };
-    }
-    
-    // Sessão de Julgamento do Júri
-    if (tipo.includes("SESSÃO DE JULGAMENTO") || tipo.includes("TRIBUNAL DO JÚRI") || tipo.includes("TRIBUNAL DO JURI")) {
-      return { sigla: "Júri", descricao: "Sessão de Julgamento do Tribunal do Júri" };
-    }
-
-    // Fallback - usa o texto original se não for reconhecido, mas nunca "Audiência" genérico
-    const textoLimpo = tipoTexto.trim();
-    if (textoLimpo && textoLimpo.toLowerCase() !== "audiência") {
-      return { sigla: textoLimpo, descricao: textoLimpo };
-    }
-    
-    // Se chegou aqui sem identificar, usa AIJ como padrão (mais comum)
-    return { sigla: "AIJ", descricao: "Audiência de Instrução e Julgamento" };
   };
 
   const mapearSituacao = (situacaoTexto: string): string => {
@@ -477,16 +321,12 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
           ? forcedAtribuicao
           : mapearAtribuicao(orgaoJulgador, classeJudicial, textoBloco);
 
-        // Extrair tipo de audiência — lógica pura e testável em detectar-tipo-audiencia.ts,
-        // robusta contra a quebra de palavra mid-word da coluna "Tipo" do PJe.
-        const tipoAudienciaTexto = detectarTipoAudiencia(textoBloco);
-        
-        // Mapear tipo de audiência para sigla e descrição
-        const tipoAudienciaMapeado = mapearTipoAudiencia(tipoAudienciaTexto, atribuicao);
+        // Detecta o tipo via catálogo único (imune à quebra de coluna do PJe).
+        const tipo = tipoPorSlug(detectarSlug(textoBloco));
 
         // Local fixo - Fórum Clemente Mariani de Camaçari
         const local = "Fórum Clemente Mariani - Camaçari";
-        
+
         // Órgão julgador em Title Case
         const orgaoJulgadorFormatado = toTitleCase(orgaoJulgador);
 
@@ -494,15 +334,12 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
         const situacao = detectarSituacao(textoBloco);
 
         // Criar título no formato: Tipo de audiência - Nome do assistido - número do processo
-        const processoCurto = processo.substring(0, 20) + "...";
         const nomeAssistidoTitulo = assistido || "Sem assistido";
-        const titulo = `${tipoAudienciaMapeado.sigla} - ${nomeAssistidoTitulo} - ${processo}`;
+        const titulo = `${tipo.sigla} - ${nomeAssistidoTitulo} - ${processo}`;
 
-        // Calcular horário fim
+        // Calcular horário fim usando duração do catálogo
         const [h, m] = bloco.hora.split(":").map(Number);
-        let duracao = 30; // Padrão 30min
-        if (tipoAudienciaMapeado.sigla === "AIJ") duracao = 90;
-        else if (tipoAudienciaMapeado.sigla.includes("Júri")) duracao = 480; // 8 horas para plenário
+        const duracao = tipo.duracaoMin;
         const fimMinutos = (h * 60 + m + duracao) % 1440;
         const horarioFim = `${String(Math.floor(fimMinutos / 60)).padStart(2, "0")}:${String(fimMinutos % 60).padStart(2, "0")}`;
 
@@ -511,13 +348,13 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
 
         // Formatar lista de assistidos para exibição
         const assistidosTexto = assistidosUnicos.map(a => a.nome).join(", ");
-        
+
         // Criar descrição estruturada no formato padrão
         const descricaoCompleta = `INFORMAÇÕES DA AUDIÊNCIA
 
 Órgão Julgador: ${orgaoJulgadorFormatado || "Não informado"}
 
-Tipo de Audiência: ${tipoAudienciaMapeado.descricao}
+Tipo de Audiência: ${tipo.descricao}
 
 Processo: ${processo}
 
@@ -533,7 +370,7 @@ Status: ${situacao}`;
           titulo,
           // Enviar o tipo real da audiência para o backend poder diferenciar
           // Sessão de Julgamento do Tribunal do Júri vs Instrução e Julgamento
-          tipo: tipoAudienciaMapeado.descricao || tipoAudienciaTexto || "Audiência",
+          tipo: tipo.descricao,
           data: bloco.data,
           horarioInicio: bloco.hora,
           horarioFim,
@@ -652,24 +489,9 @@ Status: ${situacao}`;
               ? forcedAtribuicao
               : mapearAtribuicao(orgao, "", textoContexto);
             
-            // Determinar tipo de audiência
-            let tipoAudTexto = "Audiência";
-            if (textoContexto.match(/Sessão\s+de\s+Julgamento.*Tribunal\s+do\s+Juri|Sessão\s+do\s+Tribunal\s+do\s+Júri/i)) {
-              tipoAudTexto = "Sessão de Julgamento do Tribunal do Júri";
-            } else if (textoContexto.match(/AUDIÊNCIA\s+DE\s+INSTRUÇÃO\s+E\s+JULGAMENTO/i) || textoContexto.match(/INSTRUÇÃO\s+E\s+JULGAMENTO/i)) {
-              tipoAudTexto = "Audiência de Instrução e Julgamento";
-            } else if (textoContexto.match(/JUSTIFICAÇÃO/i) || textoContexto.match(/JUSTIFICAÇ/i)) {
-              tipoAudTexto = "Justificação";
-            } else if (textoContexto.match(/CUSTÓDIA/i) || textoContexto.match(/CUSTODIA/i)) {
-              tipoAudTexto = "Custódia";
-            } else if (textoContexto.match(/RETRATAÇÃO/i) || textoContexto.match(/RETRATACAO/i)) {
-              tipoAudTexto = "Retratação";
-            } else if (textoContexto.match(/OITIVA\s+ESPECIAL/i) || textoContexto.match(/DEPOIMENTO\s+ESPECIAL/i)) {
-              tipoAudTexto = "Oitiva especial";
-            }
-            
-            const tipoAudMapeado = mapearTipoAudiencia(tipoAudTexto, atribuicaoAlt);
-            
+            // Detecta o tipo via catálogo único (imune à quebra de coluna do PJe).
+            const tipoAud = tipoPorSlug(detectarSlug(textoContexto));
+
             // Situação
             // Situação: buscar na LINHA inteira do evento (desta data até a próxima),
             // não na janela de 500 caracteres — em linhas longas (vários réus) a coluna
@@ -686,21 +508,21 @@ Status: ${situacao}`;
             const classeMatchAlt = textoContexto.match(/AÇÃO\s+PENAL|MEDIDAS\s+PROTETIVAS\s+DE\s+URGÊNCIA|MEDIDAS\s+PROTETIVAS|EXECUÇÃO\s+PENAL|INQUÉRITO\s+POLICIAL|AUTO\s+DE\s+PRISÃO/i);
             const classeAlt = classeMatchAlt ? toTitleCase(classeMatchAlt[0].trim()) : "Ação Penal";
             
-            // Calcular horário fim
+            // Calcular horário fim usando duração do catálogo
             const [hh, mm] = horarioInicio.split(":").map(Number);
-            let dur = tipoAudMapeado.sigla.includes("Júri") ? 480 : tipoAudMapeado.sigla === "AIJ" ? 90 : 30;
+            const dur = tipoAud.duracaoMin;
             const fimMin = (hh * 60 + mm + dur) % 1440;
             const horFim = `${String(Math.floor(fimMin / 60)).padStart(2, "0")}:${String(fimMin % 60).padStart(2, "0")}`;
-            
+
             // Formatar data/horário para descrição
             const dataFormatadaAlt = `${dataCompleta.substring(8, 10)}/${dataCompleta.substring(5, 7)}/${dataCompleta.substring(2, 4)} ${horarioInicio}`;
-            
+
             // Criar descrição estruturada
             const descricaoAlt = `INFORMAÇÕES DA AUDIÊNCIA
 
 Órgão Julgador: ${orgao}
 
-Tipo de Audiência: ${tipoAudMapeado.descricao}
+Tipo de Audiência: ${tipoAud.descricao}
 
 Processo: ${processoMaisProximo}
 
@@ -711,11 +533,11 @@ Parte(s) Assistida(s): ${assistidosTextoAlt || "Não identificado"}
 Data e Horário: ${dataFormatadaAlt}
 
 Status: ${sit}`;
-            
+
             const eventoAlt: ParsedEvento = {
-              titulo: `${tipoAudMapeado.sigla} - ${assistidoAlt || "Sem assistido"} - ${processoMaisProximo}`,
+              titulo: `${tipoAud.sigla} - ${assistidoAlt || "Sem assistido"} - ${processoMaisProximo}`,
               // Enviar o tipo real da audiência para o backend poder diferenciar
-              tipo: tipoAudMapeado.descricao || tipoAudTexto || "Audiência",
+              tipo: tipoAud.descricao,
               data: dataCompleta,
               horarioInicio,
               horarioFim: horFim,
@@ -777,7 +599,8 @@ Status: ${sit}`;
             ? forcedAtribuicao
             : mapearAtribuicao(vara, "", `${vara} ${tipoPautaRaw} Execução Penal`);
 
-          const tipoAudienciaSEEU = mapearTipoAudiencia(tipoPautaRaw, atribuicaoSEEU);
+          // Detecta o tipo via catálogo único
+          const tipoAudienciaSEEU = tipoPorSlug(detectarSlug(`${vara} ${tipoPautaRaw}`));
 
           // 3. Extrair blocos de eventos
           // Cada bloco segue o padrão:
@@ -837,9 +660,9 @@ Status: ${sit}`;
             // Formatar nome em Title Case
             const nomeFormatado = nomeReu ? toTitleCase(nomeReu) : "";
 
-            // Calcular horário fim (admonitória = 15min, justificação = 30min)
+            // Calcular horário fim usando duração do catálogo
             const [hSEEU, mSEEU] = horaSEEU.split(":").map(Number);
-            const duracaoSEEU = tipoAudienciaSEEU.sigla === "Admonitória" ? 15 : 30;
+            const duracaoSEEU = tipoAudienciaSEEU.duracaoMin;
             const fimMinSEEU = (hSEEU * 60 + mSEEU + duracaoSEEU) % 1440;
             const horFimSEEU = `${String(Math.floor(fimMinSEEU / 60)).padStart(2, "0")}:${String(fimMinSEEU % 60).padStart(2, "0")}`;
 
@@ -871,7 +694,7 @@ Fonte: Pauta SEEU - ${tipoPautaRaw}`;
 
             eventos.push({
               titulo: tituloSEEU,
-              tipo: tipoAudienciaSEEU.descricao || tipoPautaRaw,
+              tipo: tipoAudienciaSEEU.descricao,
               data: dataSEEU,
               horarioInicio: horaSEEU,
               horarioFim: horFimSEEU,

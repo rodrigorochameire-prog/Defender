@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CustomSelect } from "@/components/CustomSelect";
+import { TIPOS_AUDIENCIA } from "@/lib/agenda/tipos-audiencia";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
@@ -43,6 +44,9 @@ export interface EventoFormData {
   id?: string;
   titulo: string;
   tipo: string;
+  /** Descrição canônica do tipo de audiência (ex: "Audiência de Instrução e Julgamento").
+   *  Preenchido apenas quando tipo === "audiencia". */
+  tipoAudiencia?: string;
   data: string;
   horarioInicio: string;
   horarioFim: string;
@@ -87,6 +91,10 @@ interface EventoCreateModalProps {
     titulo?: string;
   } | null;
 }
+
+const tipoAudienciaOptions = TIPOS_AUDIENCIA
+  .filter((t) => t.slug !== "indefinido")
+  .map((t) => ({ value: t.descricao, label: `${t.sigla} — ${t.descricao}` }));
 
 const tipoOptions = [
   { value: "audiencia", label: "Audiência", icon: Gavel },
@@ -147,6 +155,7 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
   const emptyForm: EventoFormData = {
     titulo: "",
     tipo: "audiencia",
+    tipoAudiencia: "",
     data: "",
     horarioInicio: "",
     horarioFim: "",
@@ -189,7 +198,11 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
 
   useEffect(() => {
     if (editData) {
-      setFormData(editData);
+      // AgendaItem stores the canonical audiência tipo in `tipoAudiencia`; hydrate the form field.
+      const tipoAudienciaHydrated =
+        editData.tipoAudiencia ??
+        (editData.tipo !== "audiencia" ? undefined : "");
+      setFormData({ ...editData, tipoAudiencia: tipoAudienciaHydrated ?? "" });
     } else if (prefill) {
       // Duplicar: pré-preenche identidade, mas NUNCA data/hora ou descrição/observações
       setFormData({
@@ -309,10 +322,24 @@ export function EventoCreateModal({ isOpen, onClose, onSave, editData, defaultDa
                 <CustomSelect
                   options={tipoOptions}
                   value={formData.tipo}
-                  onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tipo: value, tipoAudiencia: value === "audiencia" ? (formData.tipoAudiencia ?? "") : "" })
+                  }
                   placeholder="Selecione o tipo"
                 />
               </div>
+
+              {formData.tipo === "audiencia" && (
+                <div>
+                  <Label>Tipo de audiência</Label>
+                  <CustomSelect
+                    options={[{ value: "", label: "Selecione…" }, ...tipoAudienciaOptions]}
+                    value={formData.tipoAudiencia ?? ""}
+                    onValueChange={(value) => setFormData({ ...formData, tipoAudiencia: value })}
+                    placeholder="Selecione…"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label>Status *</Label>

@@ -19,12 +19,12 @@ describe("detectarTipoAudiencia", () => {
 
   it("detecta AIJ com 'INSTRUÇÃO/JULGAMENTO' quebrados em várias linhas", () => {
     const bloco = `AÇÃO PENAL\n-\nPROCEDIME\nNTO\nORDINÁRIO\n(283)\nAUDIÊNCIA\nDE\nINSTRUÇÃO\nE\nJULGAMENT\nO\ndesignada`;
-    expect(detectarTipoAudiencia(bloco)).toBe("Instrução e Julgamento");
+    expect(detectarTipoAudiencia(bloco)).toBe("Audiência de Instrução e Julgamento");
   });
 
   it("detecta Oitiva Especial (cautelar) com texto quebrado", () => {
     const bloco = `CAUTELAR\nINOMINADA\nCRIMINAL\n(11955)\nOITIVA\nESPECIAL\nredesignada`;
-    expect(detectarTipoAudiencia(bloco)).toBe("Oitiva especial");
+    expect(detectarTipoAudiencia(bloco)).toBe("Oitiva Especial");
   });
 
   it("detecta Sessão de Julgamento do Júri", () => {
@@ -39,12 +39,12 @@ describe("detectarTipoAudiencia", () => {
       "Justificação"
     );
     expect(detectarTipoAudiencia("(283) sem tipo textual")).toBe(
-      "Instrução e Julgamento"
+      "Audiência de Instrução e Julgamento"
     );
   });
 
   it("retorna vazio quando nada casa (deixa o chamador decidir pela atribuição)", () => {
-    expect(detectarTipoAudiencia("texto qualquer sem pistas")).toBe("");
+    expect(detectarTipoAudiencia("texto qualquer sem pistas")).toBe("Audiência");
   });
 });
 
