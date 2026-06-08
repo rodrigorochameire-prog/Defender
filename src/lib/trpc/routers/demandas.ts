@@ -10,6 +10,9 @@ import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { classificarMatchNome } from "@/lib/assistido-match";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+
+// Status de delegação considerados "ativos" no histórico — cancelados ao retomar a demanda.
+const DELEGACAO_STATUS_ATIVOS = ["pendente", "aceita", "em_andamento", "aguardando_revisao"] as const;
 import {
   buildDemandaSync,
   syncDemandaToSheets,
@@ -854,12 +857,7 @@ export const demandasRouter = router({
             .where(
               and(
                 eq(delegacoesHistorico.demandaId, id),
-                inArray(delegacoesHistorico.status, [
-                  "pendente",
-                  "aceita",
-                  "em_andamento",
-                  "aguardando_revisao",
-                ]),
+                inArray(delegacoesHistorico.status, [...DELEGACAO_STATUS_ATIVOS]),
               ),
             );
         }
@@ -1959,6 +1957,25 @@ export const demandasRouter = router({
       }
       if (data.atribuicao) {
         updateData.atribuicao = data.atribuicao;
+      }
+
+      // Cancelar delegação em lote: aplicar um status/substatus de pipeline a
+      // demandas delegadas desfaz a delegação (mesma regra do update individual).
+      // Campos nulos em demandas não-delegadas são no-op inofensivo.
+      if (data.status !== undefined || data.substatus !== undefined) {
+        updateData.delegadoParaId = null;
+        updateData.statusDelegacao = null;
+        updateData.dataDelegacao = null;
+        updateData.motivoDelegacao = null;
+        await db
+          .update(delegacoesHistorico)
+          .set({ status: "cancelada" })
+          .where(
+            and(
+              inArray(delegacoesHistorico.demandaId, ids),
+              inArray(delegacoesHistorico.status, [...DELEGACAO_STATUS_ATIVOS]),
+            ),
+          );
       }
 
       // Build access condition
