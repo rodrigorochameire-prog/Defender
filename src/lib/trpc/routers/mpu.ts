@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { eq, asc } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { processos } from "@/lib/db/schema/core";
@@ -90,7 +91,10 @@ export const mpuRouter = router({
         .set({ status: input.status, origem: "manual", updatedAt: new Date() })
         .where(eq(medidasMPU.id, input.id))
         .returning();
-      return row ?? null;
+      if (!row) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Medida não encontrada." });
+      }
+      return row;
     }),
 
   // Adiciona uma medida manualmente (origem='manual').
@@ -114,6 +118,17 @@ export const mpuRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
+      const [pvvd] = await db
+        .select({ id: processosVVD.id })
+        .from(processosVVD)
+        .where(eq(processosVVD.id, input.processoVvdId))
+        .limit(1);
+      if (!pvvd) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Processo VVD não encontrado.",
+        });
+      }
       const [row] = await db
         .insert(medidasMPU)
         .values({
