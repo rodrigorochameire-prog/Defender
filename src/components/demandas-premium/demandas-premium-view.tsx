@@ -348,6 +348,7 @@ const atribuicaoOptions = [
   { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
+  { value: "Mutirão (TJBA Protege)", label: "Mutirão", icon: Users },
 ];
 
 // Mapeia chaves da coluna `users.areasPrincipais` (jsonb) para os labels

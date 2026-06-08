@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X, LayoutGrid } from "lucide-react";
+import { X, LayoutGrid, Users } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
@@ -14,6 +14,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; style?: Re
   "Execução Penal": Lock,
   "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
+  "Mutirão": Users,
 };
 
 // Re-export do master config para compatibilidade com consumers existentes
@@ -24,6 +25,7 @@ export const ATRIBUICAO_COLORS: Record<string, string> = {
   "Execução Penal": SOLID_COLOR_MAP["Execução Penal"] || SOLID_COLOR_MAP.EXECUCAO,
   "Substituição Criminal": SOLID_COLOR_MAP.SUBSTITUICAO,
   "Curadoria Especial": SOLID_COLOR_MAP["Curadoria Especial"] || SOLID_COLOR_MAP.CURADORIA,
+  "Mutirão": SOLID_COLOR_MAP["Mutirão"] || "#a855f7",
 };
 
 const DEFAULT_HEX = SOLID_COLOR_MAP.all || "#71717a";
