@@ -12,8 +12,14 @@ export interface BucketItem {
   id: string | number;
   status?: string | null;
   substatus?: string | null;
-  /** Nome do delegatário (preenchido = demanda delegada). */
+  /** Nome do delegatário (preenchido = demanda tem ou teve delegação). */
   delegadoPara?: string | null;
+  /**
+   * Estado canônico da delegação: "a_delegar" (pendente de aceite) ou
+   * "delegado" (ativa). Quando null/undefined a demanda não está em fluxo de
+   * delegação e cai no status normal da pipeline.
+   */
+  statusDelegacao?: string | null;
 }
 
 export interface BucketSection {
@@ -39,12 +45,20 @@ export function normalizeStatusKey(raw: string | null | undefined): string {
 
 /**
  * Chaves efetivas de um item para fins de seção.
- * Demanda delegada pertence à seção "Delegação" (statuses: ["delegar"]),
- * espelhando getDemandaGroup (delegação força o grupo "acompanhar").
- * Caso contrário, usa o substatus (ou status) normalizado.
+ *
+ * A dimensão delegação (statusDelegacao) tem precedência sobre o status da
+ * pipeline. Não chaveamos mais pela mera presença de delegadoPara — uma
+ * demanda com delegatário mas sem statusDelegacao (ex.: delegação cancelada)
+ * volta a cair no status escolhido.
+ *
+ * Valores canônicos de statusDelegacao:
+ *   "a_delegar" → seção "A delegar"
+ *   "delegado"  → seção "Delegados"
+ *   null/undefined → usa substatus (ou status) normalizado
  */
 export function effectiveSectionKeys(item: BucketItem): string[] {
-  if (item.delegadoPara) return ["delegar"];
+  if (item.statusDelegacao === "a_delegar") return ["a_delegar"];
+  if (item.statusDelegacao === "delegado") return ["delegado"];
   return [normalizeStatusKey(item.substatus || item.status)];
 }
 
