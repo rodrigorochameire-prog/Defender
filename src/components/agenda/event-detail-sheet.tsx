@@ -18,6 +18,7 @@ import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
 import { DocumentosBlock } from "./sheet/documentos-block";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
+import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -514,6 +515,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               <CollapsibleSection id="dossie" label="Dossiê" defaultOpen>
                 <DossieV2Block dossie={dossieV2} />
               </CollapsibleSection>
+            )}
+
+            {typeof processoId === "number" && (
+              <div className="mt-3">
+                <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                  Medidas protetivas vigentes
+                </h4>
+                <MedidasVigentesPanel processoId={processoId} readOnly />
+              </div>
             )}
 
             {!isLoading && (
