@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
-import { extrairTipo } from "@/components/agenda/extrair-tipo";
+import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
 import {
   format,
   startOfMonth,
@@ -195,7 +195,7 @@ function EventoCompacto({
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
 
   // Tipo de audiência extraído (compartilhado com o sheet)
-  const tipoAbrev = extrairTipo(evento.titulo);
+  const tipoAbrev = extrairTipoEvento(evento);
 
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;

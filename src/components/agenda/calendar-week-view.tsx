@@ -52,7 +52,7 @@ import {
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
-import { extrairTipo } from "@/components/agenda/extrair-tipo";
+import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
 
 interface CalendarWeekViewProps {
   eventos: any[];
@@ -131,7 +131,7 @@ function EventoSemana({
   const temAdvogado = detectarAdvogadoConstituido(evento.titulo);
 
   // Tipo de audiência extraído e expandido
-  const tipoAbrev = extrairTipo(evento.titulo);
+  const tipoAbrev = extrairTipoEvento(evento);
   const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
   return (

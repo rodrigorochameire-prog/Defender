@@ -81,6 +81,16 @@ export function MedidasVigentesPanel(props: Props) {
   };
 
   if (medidas.length === 0) {
+    // No sheet (readOnly) o empty state segue o padrão enxuto das demais seções
+    // (texto itálico cinza, alinhado à esquerda) em vez da caixa tracejada, que
+    // destoava. Nas telas de gestão (read-write) a caixa + botão "Adicionar" fica.
+    if (readOnly) {
+      return (
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">
+          Nenhuma medida estruturada. Gere pela Ciência de MPU.
+        </p>
+      );
+    }
     return (
       <div className="rounded-lg border border-dashed border-neutral-300 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700">
         <Scale className="mx-auto mb-1 h-5 w-5 opacity-50" />

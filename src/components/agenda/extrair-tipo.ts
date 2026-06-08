@@ -73,3 +73,27 @@ export function extrairTipo(titulo: string): string {
   if (titled.length <= 21) return titled;
   return titled.substring(0, 20) + "…";
 }
+
+// Valores genéricos da coluna `tipo` que NÃO descrevem o ato (natureza/placeholder)
+// e por isso devem ceder ao parsing do título.
+const TIPO_PLACEHOLDER = new Set(["audiencia", "audiência", "atendimento", ""]);
+
+/**
+ * Sigla a exibir para um evento da agenda.
+ *
+ * A coluna `tipoAudiencia` (= audiencias.tipo no banco) é a fonte AUTORITATIVA do
+ * ato e vence o `titulo` — que é texto livre e pode ficar stale (ex.: a pauta
+ * 09/06/2026 teve o `tipo` corrigido para "Justificação" mas o título manteve
+ * "AIJ - ..."). Só caímos no título quando a coluna está ausente (fontes
+ * calendar/registros) ou traz apenas o placeholder genérico ("audiencia").
+ */
+export function extrairTipoEvento(evento: {
+  tipoAudiencia?: string | null;
+  titulo: string;
+}): string {
+  const col = (evento.tipoAudiencia ?? "").trim();
+  if (col && !TIPO_PLACEHOLDER.has(col.toLowerCase())) {
+    return extrairTipo(col);
+  }
+  return extrairTipo(evento.titulo);
+}

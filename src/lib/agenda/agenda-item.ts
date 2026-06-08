@@ -6,7 +6,10 @@ export interface AgendaItem {
   /** Id numérico cru da fonte (audiencias.id, calendar_events.id OU registros.id). Use com `fonte`. */
   rawId: number;
   titulo: string;
+  /** Natureza do item para o visual/filtros: "audiencia" | "atendimento" | tipo de evento do calendário. */
   tipo: string;
+  /** Ato real da audiência (= audiencias.tipo). Fonte autoritativa da sigla exibida; vence o título. */
+  tipoAudiencia?: string | null;
   data: string;
   horarioInicio: string;
   horarioFim: string;

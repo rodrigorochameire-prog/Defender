@@ -25,7 +25,7 @@ import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions"
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
-import { toTitleCasePtBr } from "@/lib/format/title-case";
+import { nomeVaraExibicao } from "@/lib/format/nome-vara";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
@@ -151,7 +151,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento?.processo ?? null;
   const assistidoNome = ctx?.assistido?.nome ?? evento?.assistido ?? null;
   const varaRaw = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
-  const vara = varaRaw ? toTitleCasePtBr(varaRaw) : null;
+  const vara = nomeVaraExibicao(varaRaw);
 
   const ad = ctx?.analysisData;
   const dossieV2 = hasDossieV2(ad) ? (ad as any).dossie : null;
@@ -518,12 +518,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             )}
 
             {typeof processoId === "number" && (
-              <div className="mt-3">
-                <h4 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
-                  Medidas protetivas vigentes
-                </h4>
+              <CollapsibleSection id="medidas" label="Medidas protetivas vigentes" defaultOpen>
                 <MedidasVigentesPanel processoId={processoId} readOnly />
-              </div>
+              </CollapsibleSection>
             )}
 
             {!isLoading && (
