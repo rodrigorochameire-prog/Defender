@@ -1572,124 +1572,130 @@ export default function AgendaPage() {
 
           {/* Direita — view + busca + filtros + ações */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <ViewModeDropdown
-              options={AGENDA_VIEW_OPTIONS}
-              value={viewMode}
-              onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
-              variant="dark"
-            />
+            {/* ViewModeDropdown — oculto abaixo de lg (fica no menu "...") */}
+            <div className="hidden lg:flex items-center gap-1.5">
+              <ViewModeDropdown
+                options={AGENDA_VIEW_OPTIONS}
+                value={viewMode}
+                onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
+                variant="dark"
+              />
 
-            <div className="w-px h-5 bg-white/[0.10]" />
+              <div className="w-px h-5 bg-white/[0.10]" />
+            </div>
 
-            {/* Search toggle */}
-            {isSearchOpen ? (
-              <div className="relative animate-in slide-in-from-right-2 duration-200">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-                <Input
-                  ref={searchInputRef}
-                  autoFocus
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
-                  onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
-                  className="pl-8 pr-7 h-7 w-40 text-[11px] bg-black/[0.15] ring-1 ring-white/[0.08] text-white/90 border-0 rounded-lg placeholder:text-white/35"
-                />
-                <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
-                  <XCircle className="w-3 h-3" />
+            {/* Search + Filter — ocultos abaixo de md (ficam no menu "...") */}
+            <div className="hidden md:flex items-center gap-1.5">
+              {/* Search toggle */}
+              {isSearchOpen ? (
+                <div className="relative animate-in slide-in-from-right-2 duration-200">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+                  <Input
+                    ref={searchInputRef}
+                    autoFocus
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
+                    onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
+                    className="pl-8 pr-7 h-7 w-40 text-[11px] bg-black/[0.15] ring-1 ring-white/[0.08] text-white/90 border-0 rounded-lg placeholder:text-white/35"
+                  />
+                  <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
+                    <XCircle className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+                  className={cn(
+                    "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                    searchTerm && "bg-white/[0.14] text-white"
+                  )}
+                  title="Buscar"
+                >
+                  <Search className="w-[13px] h-[13px]" />
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                className={cn(
-                  "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
-                  searchTerm && "bg-white/[0.14] text-white"
-                )}
-                title="Buscar"
-              >
-                <Search className="w-[13px] h-[13px]" />
-              </button>
-            )}
-
-            <div className="relative">
-              <button
-                onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                className={cn(
-                  "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
-                  (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
-                )}
-                title="Filtros"
-              >
-                <Filter className="w-[13px] h-[13px]" />
-                {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  </span>
-                )}
-              </button>
-              {isFiltersExpanded && (
-                <>
-                  <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
-                  <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
-                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
-                    {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
-                      <button
-                        key={tipo}
-                        onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        <span className="flex-1 capitalize">{tipo}</span>
-                        {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                    ))}
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
-                    {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        <span className="flex-1 capitalize">{status}</span>
-                        {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                    ))}
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
-                    {["urgente", "alta", "normal", "baixa"].map((prio) => (
-                      <button
-                        key={prio}
-                        onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        <span className="flex-1 capitalize">{prio}</span>
-                        {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                    ))}
-                    <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                    <button
-                      onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                    >
-                      {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
-                      <span className="flex-1">Cancelados/Redesignados</span>
-                      {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                    </button>
-                    {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-                      <>
-                        <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                        <button
-                          onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(true); }}
-                          className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
-                        >
-                          Limpar filtros
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
               )}
+
+              <div className="relative">
+                <button
+                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                  className={cn(
+                    "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+                    (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
+                  )}
+                  title="Filtros"
+                >
+                  <Filter className="w-[13px] h-[13px]" />
+                  {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                    </span>
+                  )}
+                </button>
+                {isFiltersExpanded && (
+                  <>
+                    <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
+                    <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
+                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
+                      {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
+                        <button
+                          key={tipo}
+                          onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                        >
+                          <span className="flex-1 capitalize">{tipo}</span>
+                          {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                        </button>
+                      ))}
+                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
+                      {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                        >
+                          <span className="flex-1 capitalize">{status}</span>
+                          {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                        </button>
+                      ))}
+                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
+                      {["urgente", "alta", "normal", "baixa"].map((prio) => (
+                        <button
+                          key={prio}
+                          onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                        >
+                          <span className="flex-1 capitalize">{prio}</span>
+                          {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                        </button>
+                      ))}
+                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                      <button
+                        onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+                      >
+                        {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
+                        <span className="flex-1">Cancelados/Redesignados</span>
+                        {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                      </button>
+                      {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+                        <>
+                          <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                          <button
+                            onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(true); }}
+                            className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
+                          >
+                            Limpar filtros
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="w-px h-5 bg-white/[0.10]" />
@@ -1705,6 +1711,35 @@ export default function AgendaPage() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {/* Visualização — visível só abaixo de lg */}
+                {AGENDA_VIEW_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={opt.value}
+                      className="lg:hidden"
+                      onClick={() => { setViewMode(opt.value as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
+                    >
+                      {Icon && <Icon className="w-4 h-4 mr-2" />}
+                      {opt.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+                {/* Buscar — visível só abaixo de md */}
+                <DropdownMenuItem
+                  className="md:hidden"
+                  onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+                >
+                  <Search className="w-4 h-4 mr-2" />Buscar
+                </DropdownMenuItem>
+                {/* Filtros — visível só abaixo de md */}
+                <DropdownMenuItem
+                  className="md:hidden"
+                  onClick={() => setIsFiltersExpanded(true)}
+                >
+                  <Filter className="w-4 h-4 mr-2" />Filtros
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="md:hidden" />
                 <DropdownMenuItem onClick={() => prepararAudienciasActions.open()}><Target className="w-4 h-4 mr-2" />Preparar audiências</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}><Settings className="w-4 h-4 mr-2" />Configuracoes</DropdownMenuItem>
@@ -1734,7 +1769,7 @@ export default function AgendaPage() {
               className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              Novo
+              <span className="hidden sm:inline">Novo</span>
             </button>
           </div>
         </div>
