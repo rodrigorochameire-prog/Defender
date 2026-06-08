@@ -52,6 +52,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toTitleCasePtBr } from "@/lib/format/title-case";
 import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
@@ -340,11 +341,11 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                     <span className="flex items-center gap-1.5 sm:gap-2 hover:text-foreground transition-colors">
                       <MapPin className="w-4 h-4 sm:w-4.5 sm:h-4.5 flex-shrink-0" />
                       <span className="truncate max-w-[120px] sm:max-w-[180px]">
-                        {data.vara ? `${data.vara}` : data.comarca}
+                        {data.vara ? toTitleCasePtBr(data.vara) : data.comarca}
                       </span>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>{data.vara} - {data.comarca}</TooltipContent>
+                  <TooltipContent>{toTitleCasePtBr(data.vara)} - {data.comarca}</TooltipContent>
                 </Tooltip>
 
                 <span className="flex items-center gap-1.5 sm:gap-2">

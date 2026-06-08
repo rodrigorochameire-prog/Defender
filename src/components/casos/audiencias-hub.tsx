@@ -67,6 +67,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toTitleCasePtBr } from "@/lib/format/title-case";
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
@@ -406,7 +407,7 @@ function ListView({
                       {audiencia.numeroAutos}
                     </span>
                     {audiencia.vara && (
-                      <span className="text-xs text-muted-foreground">{audiencia.vara}</span>
+                      <span className="text-xs text-muted-foreground">{toTitleCasePtBr(audiencia.vara)}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -860,7 +861,7 @@ function AudienciaSidePeek({
                 {audiencia.numeroAutos}
               </p>
               {audiencia.vara && (
-                <p className="text-xs text-muted-foreground mt-0.5">{audiencia.vara} - {audiencia.comarca}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{toTitleCasePtBr(audiencia.vara)} - {audiencia.comarca}</p>
               )}
             </div>
           )}
