@@ -29,6 +29,7 @@ export function resumirParaProcessoVVD(
   const distancias = parsed.medidas
     .map((m) => m.distanciaMetros)
     .filter((d): d is number => typeof d === "number");
+  // distanciaMinima stores the GOVERNING (largest/most restrictive) radius among granted measures — intentionally Math.max, not Math.min.
   const distanciaMinima = distancias.length ? Math.max(...distancias) : null;
   const dataVencimentoMPU =
     parsed.prazoDias && dataDecisaoISO ? addDias(dataDecisaoISO, parsed.prazoDias) : null;

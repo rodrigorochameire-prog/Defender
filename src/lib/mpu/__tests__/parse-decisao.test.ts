@@ -99,3 +99,56 @@ describe("parseDecisaoMPU — variações", () => {
     expect(parseDecisaoMPU(t).medidas).toEqual([]);
   });
 });
+
+describe("parseDecisaoMPU — polaridade (deferido vs indeferido)", () => {
+  it("indeferimento parcial: só a medida deferida é capturada (frases separadas)", () => {
+    const t = `DEFIRO o afastamento do lar. INDEFIRO a proibição de aproximação por ausência de risco atual.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo)).toEqual(["AFASTAMENTO_LAR"]);
+  });
+
+  it("indeferimento em alínea inline: a) deferida, b) indeferida", () => {
+    const t = `Decido: a) DEFIRO o afastamento do lar; b) INDEFIRO a proibição de aproximação.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo)).toEqual(["AFASTAMENTO_LAR"]);
+  });
+
+  it("indeferimento governando duas medidas na mesma frase", () => {
+    const t = `INDEFIRO o pedido de proibição de contato e de proibição de frequentar os locais indicados.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas).toEqual([]);
+  });
+
+  it("não confunde 'deferimento' com negação", () => {
+    const t = `DEFIRO a proibição de contato com a vítima.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo)).toEqual(["PROIBICAO_CONTATO"]);
+  });
+});
+
+describe("parseDecisaoMPU — alíneas inline e distância escopada", () => {
+  it("três alíneas inline são segmentadas e todas capturadas", () => {
+    const t = `Determino: a) afastamento do lar; b) proibição de aproximação a 250 metros; c) proibição de contato.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo).sort()).toEqual(
+      ["AFASTAMENTO_LAR", "PROIBICAO_APROXIMACAO", "PROIBICAO_CONTATO"].sort(),
+    );
+    expect(r.medidas.find((m) => m.codigo === "PROIBICAO_APROXIMACAO")?.distanciaMetros).toBe(250);
+  });
+
+  it("não captura número não relacionado como distância", () => {
+    const t = `b) proibição de aproximação da ofendida, fixada a distância de 300 metros.`;
+    const r = parseDecisaoMPU(t);
+    // a distância correta é 300, não outro número do texto
+    expect(r.medidas.find((m) => m.codigo === "PROIBICAO_APROXIMACAO")?.distanciaMetros).toBe(300);
+  });
+});
+
+describe("parseDecisaoMPU — partes com conectivos", () => {
+  it("captura nome com conectivos minúsculos", () => {
+    const t = `DEFIRO em favor de MARIA da SILVA SANTOS e, por consequência, determino que JOAO dos SANTOS cumpra: a) afastamento do lar.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.ofendida).toBe("MARIA da SILVA SANTOS");
+    expect(r.agressor).toBe("JOAO dos SANTOS");
+  });
+});

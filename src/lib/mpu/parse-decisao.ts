@@ -27,14 +27,35 @@ export interface DecisaoMPUParsed {
   medidas: MedidaParsed[];
 }
 
-/** Divide o texto em segmentos: por alíneas (a) b)…) ou incisos (I - II -). */
+/**
+ * Detecta se um segmento normalizado contém um token de negação/indeferimento.
+ * Quando verdadeiro, nenhuma medida nesse segmento deve ser capturada.
+ */
+const NEGACAO =
+  /\b(indefiro|indeferi|indeferid\w*|indeferimento|nao defiro|deixo de deferir|rejeito|nao ha (?:elementos|risco))\b/;
+
+/**
+ * Divide o texto em segmentos por alíneas (`a) b)…`) — incluindo alíneas inline
+ * separadas por `;` ou `.` — ou por incisos romanos (`I - II -`), ou por
+ * fronteiras de frase. Garante que cada polarity gate (deferido/indeferido) seja
+ * aplicado ao segmento correto.
+ */
 function segmentar(texto: string): string[] {
-  const porAlinea = texto.split(/(?=^\s*[a-z]\)\s)/im).filter((s) => /^\s*[a-z]\)/i.test(s));
-  if (porAlinea.length >= 2) return porAlinea;
+  // 1. Alíneas: linha-início OU após ; ou . (alíneas inline)
+  const alineaSplit = texto.split(/(?:(?<=^)|(?<=;\s*)|(?<=\.\s*))(?=[a-z]\)\s)/im);
+  if (alineaSplit.length >= 2) return alineaSplit;
+
+  // 2. Incisos romanos
   const porInciso = texto
     .split(/(?=\b[IVX]{1,4}\s*[-–]\s)/g)
     .filter((s) => /^\s*[IVX]{1,4}\s*[-–]/.test(s));
   if (porInciso.length >= 2) return porInciso;
+
+  // 3. Fronteiras de frase — cada frase é um segmento independente, o que
+  //    permite isolar o polarity gate por frase (ex.: "DEFIRO X. INDEFIRO Y.")
+  const sentences = texto.split(/(?<=\.)\s+/).filter((s) => s.trim());
+  if (sentences.length >= 2) return sentences;
+
   return [texto];
 }
 
@@ -64,7 +85,8 @@ function extrairLugares(norm: string): Lugar[] {
 }
 
 function extrairDistancia(norm: string): number | undefined {
-  const m = norm.match(/(\d{1,4})\s*(?:\([^)]*\)\s*)?met/);
+  // Bind tightly to "metros" to avoid grabbing unrelated numbers.
+  const m = norm.match(/(\d{1,4})\s*(?:\([^)]*\)\s*)?metros?\b/);
   return m ? parseInt(m[1], 10) : undefined;
 }
 
@@ -88,8 +110,9 @@ function enriquecer(codigo: MedidaMpuCodigo, segmentoNorm: string): Partial<Medi
 }
 
 function extrairPartes(texto: string): { ofendida: string | null; agressor: string | null } {
-  const ofendida = texto.match(/em favor de\s+([A-ZÀ-Ý][A-ZÀ-Ý\s]+?)\s+e,/);
-  const agressor = texto.match(/determino que\s+([A-ZÀ-Ý][A-ZÀ-Ý\s]+?)\s+cumpra/);
+  // Allow lowercase connectors inside names (e.g. "MARIA da SILVA SANTOS").
+  const ofendida = texto.match(/em favor de\s+([A-ZÀ-Ý][A-Za-zÀ-ÿ' ]+?)\s+e,/);
+  const agressor = texto.match(/determino que\s+([A-ZÀ-Ý][A-Za-zÀ-ÿ' ]+?)\s+cumpra/);
   return {
     ofendida: ofendida ? ofendida[1].trim() : null,
     agressor: agressor ? agressor[1].trim() : null,
@@ -123,6 +146,10 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
 
   for (const seg of segmentos) {
     const segNorm = normalizar(seg);
+
+    // Polarity gate (C1): skip all triggers in segments that deny the measure.
+    if (NEGACAO.test(segNorm)) continue;
+
     for (const cat of CATALOGO_MEDIDAS) {
       if (cat.gatilhos.some((g) => g.test(segNorm)) && !porCodigo.has(cat.codigo)) {
         porCodigo.set(cat.codigo, {
@@ -132,18 +159,6 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
           ...enriquecer(cat.codigo, segNorm),
         });
       }
-    }
-  }
-
-  // Passo global: pega medidas em texto corrido que a segmentação não isolou.
-  for (const cat of CATALOGO_MEDIDAS) {
-    if (!porCodigo.has(cat.codigo) && cat.gatilhos.some((g) => g.test(normFull))) {
-      porCodigo.set(cat.codigo, {
-        codigo: cat.codigo,
-        artigo: cat.artigo,
-        literal: texto.trim().slice(0, 500),
-        ...enriquecer(cat.codigo, normFull),
-      });
     }
   }
 
