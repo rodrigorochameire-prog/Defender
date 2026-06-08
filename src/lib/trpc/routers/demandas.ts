@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
-import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
+import { demandas, processos, assistidos, users, registros, delegacoesHistorico } from "@/lib/db/schema";
 import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -829,6 +829,40 @@ export const demandasRouter = router({
         ["CONCLUIDO", "7_PROTOCOLADO", "7_CIENCIA", "7_SEM_ATUACAO"].includes(data.status)
       ) {
         updateData.dataConclusao = new Date();
+      }
+
+      // Cancelar delegação: se um status/substatus de pipeline é aplicado a uma
+      // demanda atualmente delegada, a delegação é desfeita (o defensor retomou).
+      // a_delegar/delegado nunca chegam por aqui (vêm do router de delegação),
+      // então qualquer status/substatus aqui é da pipeline.
+      if (data.status !== undefined || data.substatus !== undefined) {
+        const [atual] = await db
+          .select({
+            delegadoParaId: demandas.delegadoParaId,
+            statusDelegacao: demandas.statusDelegacao,
+          })
+          .from(demandas)
+          .where(eq(demandas.id, id));
+        if (atual?.delegadoParaId || atual?.statusDelegacao) {
+          updateData.delegadoParaId = null;
+          updateData.statusDelegacao = null;
+          updateData.dataDelegacao = null;
+          updateData.motivoDelegacao = null;
+          await db
+            .update(delegacoesHistorico)
+            .set({ status: "cancelada" })
+            .where(
+              and(
+                eq(delegacoesHistorico.demandaId, id),
+                inArray(delegacoesHistorico.status, [
+                  "pendente",
+                  "aceita",
+                  "em_andamento",
+                  "aguardando_revisao",
+                ]),
+              ),
+            );
+        }
       }
 
       // Construir condições de acesso
