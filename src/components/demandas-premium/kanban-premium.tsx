@@ -29,7 +29,6 @@ import {
   CheckCircle2,
   CloudOff,
   CalendarPlus,
-  StickyNote,
   ExternalLink,
   UserPlus,
 } from "lucide-react";
@@ -601,15 +600,15 @@ function KanbanCard({
             <CalendarPlus className="w-3 h-3" />
           </button>
         )}
-        {onOpenRegistro && (
+        {onStatusChange && (demanda.substatus || demanda.status || "").toLowerCase() !== "ciencia" && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              onOpenRegistro(String(demanda.id));
+              handleStatusSelect("ciencia");
             }}
-            aria-label="Adicionar registro"
-            title="Adicionar registro"
+            aria-label="Dar ciência"
+            title="Dar ciência (move para status Ciência)"
             className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = `${groupColor}1a`;
@@ -620,7 +619,7 @@ function KanbanCard({
               e.currentTarget.style.color = "";
             }}
           >
-            <StickyNote className="w-3 h-3" />
+            <Eye className="w-3 h-3" />
           </button>
         )}
         {onToggleUrgent && (
