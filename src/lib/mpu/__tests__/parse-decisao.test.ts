@@ -152,3 +152,32 @@ describe("parseDecisaoMPU — partes com conectivos", () => {
     expect(r.agressor).toBe("JOAO dos SANTOS");
   });
 });
+
+describe("parseDecisaoMPU — herança de polaridade por cláusula", () => {
+  it("indeferida + deferida no mesmo período (separadas por ;): captura só a deferida", () => {
+    const t = `Indeferida a medida de proibição de contato; defiro o afastamento do lar.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo)).toEqual(["AFASTAMENTO_LAR"]);
+  });
+
+  it("indeferimento governando lista por ; (cláusula sem verbo herda a negação)", () => {
+    const t = `INDEFIRO: proibição de contato; proibição de aproximação.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas).toEqual([]);
+  });
+
+  it("deferimento governando lista por ; (cláusula sem verbo herda o deferimento)", () => {
+    const t = `DEFIRO: proibição de contato; proibição de aproximação a 100 metros.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo).sort()).toEqual(
+      ["PROIBICAO_APROXIMACAO", "PROIBICAO_CONTATO"].sort(),
+    );
+    expect(r.medidas.find((m) => m.codigo === "PROIBICAO_APROXIMACAO")?.distanciaMetros).toBe(100);
+  });
+
+  it("verbo explícito de deferimento sobrepõe negação anterior em outra frase", () => {
+    const t = `Indefiro a proibição de aproximação. Defiro a proibição de contato.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo)).toEqual(["PROIBICAO_CONTATO"]);
+  });
+});

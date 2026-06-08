@@ -29,16 +29,22 @@ export interface DecisaoMPUParsed {
 
 /**
  * Detecta se um segmento normalizado contém um token de negação/indeferimento.
- * Quando verdadeiro, nenhuma medida nesse segmento deve ser capturada.
  */
 const NEGACAO =
   /\b(indefiro|indeferi|indeferid\w*|indeferimento|nao defiro|deixo de deferir|rejeito|nao ha (?:elementos|risco))\b/;
 
 /**
+ * Detecta verbo explícito de deferimento (com word boundaries que impedem
+ * match dentro de palavras de negação: `indefiro` começa com `in`, portanto
+ * `\bdefiro\b` NÃO casa dentro de `indefiro`).
+ */
+const DEFERIMENTO = /\b(defiro|deferid\w*|deferi|determino|concedo|concede)\b/;
+
+/**
  * Divide o texto em segmentos por alíneas (`a) b)…`) — incluindo alíneas inline
- * separadas por `;` ou `.` — ou por incisos romanos (`I - II -`), ou por
- * fronteiras de frase. Garante que cada polarity gate (deferido/indeferido) seja
- * aplicado ao segmento correto.
+ * separadas por `;` ou `.` — ou por incisos romanos (`I - II -`), por
+ * fronteiras de frase (`.`), ou por ponto-e-vírgula (`;`). Garante que a máquina
+ * de polaridade opere sobre cláusulas granulares.
  */
 function segmentar(texto: string): string[] {
   // 1. Alíneas: linha-início OU após ; ou . (alíneas inline)
@@ -55,6 +61,11 @@ function segmentar(texto: string): string[] {
   //    permite isolar o polarity gate por frase (ex.: "DEFIRO X. INDEFIRO Y.")
   const sentences = texto.split(/(?<=\.)\s+/).filter((s) => s.trim());
   if (sentences.length >= 2) return sentences;
+
+  // 4. Ponto-e-vírgula — separa cláusulas dentro da mesma frase
+  //    (ex.: "Indeferida a proibição de contato; defiro o afastamento do lar.")
+  const semColons = texto.split(/;\s*/).filter((s) => s.trim());
+  if (semColons.length >= 2) return semColons;
 
   return [texto];
 }
@@ -144,15 +155,31 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
   const segmentos = segmentar(texto);
   const porCodigo = new Map<MedidaMpuCodigo, MedidaParsed>();
 
+  // Máquina de polaridade por cláusula (C1+):
+  //   - Padrão "defere" (cobre listas de alíneas/incisos governadas por verbo anterior
+  //     e frases sem verbo explícito).
+  //   - Negação tem precedência quando ambos os sinais aparecem no mesmo segmento.
+  //   - Verbo explícito de deferimento sobrepõe polaridade herdada de segmento anterior.
+  //   - Cláusulas sem verbo herdam a polaridade do segmento precedente (propagação
+  //     necessária para listas como "INDEFIRO: x; y" ou "DEFIRO: x; y").
+  //   - Falso-positivo (medida indeferida gravada como deferida) nunca ocorre:
+  //     no pior caso (negação+deferimento em cláusula única sem `;`), a cláusula
+  //     inteira é tratada como "indefere" — falso-negativo seguro.
+  let polaridade: "defere" | "indefere" = "defere";
+
   for (const seg of segmentos) {
     const segNorm = normalizar(seg);
 
-    // Polarity gate (C1): skip all triggers in segments that deny the measure.
-    // Erra para o lado seguro (falso-negativo, nunca falso-positivo): quando uma
-    // negação e um deferimento dividem o MESMO segmento sem separador de alínea
-    // (ex.: "Indeferida a medida X; defiro o afastamento"), o segmento inteiro é
-    // descartado. O defensor confere as medidas no preview antes de gravar.
-    if (NEGACAO.test(segNorm)) continue;
+    // Atualiza polaridade: negação tem precedência; verbo de deferimento sobrepõe
+    // polaridade herdada; ausência de verbo → herda polaridade anterior.
+    if (NEGACAO.test(segNorm)) {
+      polaridade = "indefere";
+    } else if (DEFERIMENTO.test(segNorm)) {
+      polaridade = "defere";
+    }
+    // else: herda polaridade anterior (sem alteração)
+
+    if (polaridade === "indefere") continue;
 
     for (const cat of CATALOGO_MEDIDAS) {
       if (cat.gatilhos.some((g) => g.test(segNorm)) && !porCodigo.has(cat.codigo)) {
