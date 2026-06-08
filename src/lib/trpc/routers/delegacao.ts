@@ -521,7 +521,7 @@ export const delegacaoRouter = router({
     .mutation(async ({ input }) => {
       const [dem] = await db
         .update(demandas)
-        .set({ statusDelegacao: "a_delegar", updatedAt: new Date() })
+        .set({ statusDelegacao: "a_delegar", delegacaoWorkStatus: null, updatedAt: new Date() })
         .where(eq(demandas.id, input.demandaId))
         .returning();
       if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
