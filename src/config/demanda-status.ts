@@ -24,6 +24,13 @@ import {
   UserPlus,
 } from "lucide-react";
 
+// Estados de envio da delegação (lado do defensor) — independem do status da pipeline.
+export const STATUS_DELEGACAO = {
+  A_DELEGAR: "a_delegar",
+  DELEGADO: "delegado",
+} as const;
+export type StatusDelegacao = (typeof STATUS_DELEGACAO)[keyof typeof STATUS_DELEGACAO];
+
 // ==========================================
 // TIPOS
 // ==========================================
@@ -141,7 +148,8 @@ export const SUB_GROUP_SECTIONS: Partial<Record<EmAndamentoSubGroup, Array<{
   ],
   acompanhar: [
     { label: "Monitorar", icon: Eye, statuses: ["monitorar"] },
-    { label: "Delegação", icon: UserPlus, statuses: ["delegar"] },
+    { label: "A delegar", icon: UserPlus, statuses: ["a_delegar"] },
+    { label: "Delegados", icon: UserPlus, statuses: ["delegado"] },
   ],
 };
 
