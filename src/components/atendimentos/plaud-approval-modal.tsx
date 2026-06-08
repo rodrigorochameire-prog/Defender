@@ -70,8 +70,10 @@ const TIPOS_GRAVACAO = [
 const SUBTIPOS_AUDIENCIA = [
   { value: "aij", label: "AIJ" },
   { value: "justificacao", label: "Justificação" },
-  { value: "juri_instrucao", label: "Júri - Instrução" },
-  { value: "juri_debates", label: "Júri - Debates" },
+  { value: "oitiva_especial", label: "Oitiva Especial" },
+  { value: "plenario_juri", label: "Júri (Plenário)" },
+  { value: "juri_instrucao", label: "Júri — Instrução" },
+  { value: "juri_debates", label: "Júri — Debates" },
   { value: "pap", label: "PAP" },
 ] as const;
 
