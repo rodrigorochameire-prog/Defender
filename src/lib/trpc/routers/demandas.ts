@@ -1233,14 +1233,19 @@ export const demandasRouter = router({
             });
           }
 
-          // Fallback: buscar por nome (comportamento original)
+          // Fallback: buscar por nome — accent/caixa-insensitive (senão
+          // "Conceicao" vs "Conceição" cria assistido duplicado e a demanda
+          // duplica, pois o dedup é por assistidoId).
           if (!assistido) {
-            assistido = await db.query.assistidos.findFirst({
+            const alvoNorm = normalizarNome(row.assistido.trim());
+            const primeiroToken = row.assistido.trim().split(/\s+/)[0] || row.assistido.trim();
+            const candidatos = await db.query.assistidos.findMany({
               where: and(
-                ilike(assistidos.nome, row.assistido.trim()),
+                ilike(assistidos.nome, `${primeiroToken}%`),
                 isNull(assistidos.deletedAt),
               ),
             });
+            assistido = candidatos.find((c) => normalizarNome(c.nome) === alvoNorm);
           }
 
           // Backfill: se assistido existente não tem atribuicaoPrimaria, preencher
@@ -1429,11 +1434,15 @@ export const demandasRouter = router({
           }
 
           if (!existingDemanda && dataExpedicaoParaBusca) {
-            // Dedup 2: processo + data de expedição (match clássico)
+            // Dedup 2: processo + data. O import grava a data factual em
+            // dataExpedicao (dataEntrada fica NULL), então casa pelas duas.
             existingDemanda = await db.query.demandas.findFirst({
               where: and(
                 eq(demandas.processoId, processo.id),
-                eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+                or(
+                  eq(demandas.dataExpedicao, dataExpedicaoParaBusca),
+                  eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+                ),
                 isNull(demandas.deletedAt),
               ),
             });
@@ -1448,7 +1457,10 @@ export const demandasRouter = router({
                 eq(demandas.processoId, processo.id),
                 eq(demandas.ato, row.ato),
                 dataExpedicaoParaBusca
-                  ? eq(demandas.dataEntrada, dataExpedicaoParaBusca)
+                  ? or(
+                      eq(demandas.dataExpedicao, dataExpedicaoParaBusca),
+                      eq(demandas.dataEntrada, dataExpedicaoParaBusca),
+                    )
                   : isNull(demandas.dataEntrada),
                 isNull(demandas.deletedAt),
               ),
