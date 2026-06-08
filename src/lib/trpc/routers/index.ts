@@ -88,6 +88,7 @@ import { pessoasRouter } from "./pessoas";
 import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
 import { tipificacoesRouter } from "./tipificacoes";
+import { mpuRouter } from "./mpu";
 
 
 export const appRouter = router({
@@ -421,6 +422,11 @@ export const appRouter = router({
   // TIPIFICACOES (FASE III-A — CATÁLOGO + VÍNCULO AO PROCESSO)
   // ==========================================
   tipificacoes: tipificacoesRouter,
+
+  // ==========================================
+  // MPU — PARSER DE MEDIDAS PROTETIVAS (DRY-RUN)
+  // ==========================================
+  mpu: mpuRouter,
 });
 
 export type AppRouter = typeof appRouter;
