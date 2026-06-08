@@ -204,7 +204,7 @@ export const delegacaoRouter = router({
             delegadoParaId: input.destinatarioId,
             dataDelegacao: new Date(),
             motivoDelegacao: input.instrucoes,
-            statusDelegacao: "pendente",
+            statusDelegacao: "a_delegar",
             status: "4_MONITORAR",
             substatus: "delegar",
             prazoSugerido: input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null,
@@ -229,25 +229,6 @@ export const delegacaoRouter = router({
           processoId: input.processoId || null,
         })
         .returning();
-
-      // Buscar nome do remetente para a notificação
-      const remetente = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-        columns: { name: true },
-      });
-
-      // Label do tipo para notificação
-      const tipoLabel = TIPOS_PEDIDO[input.tipo]?.label || "Tarefa";
-
-      // Criar notificação para o destinatário
-      await db.insert(notifications).values({
-        userId: input.destinatarioId,
-        title: `Novo pedido: ${tipoLabel}`,
-        message: `${remetente?.name || "Um defensor"} enviou um pedido de ${tipoLabel.toLowerCase()} para você.`,
-        type: input.prioridade === "URGENTE" ? "warning" : "info",
-        actionUrl: "/admin/delegacoes",
-        isRead: false,
-      });
 
       return delegacao;
     }),
@@ -439,11 +420,6 @@ export const delegacaoRouter = router({
         });
       }
 
-      const remetente = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-        columns: { name: true },
-      });
-
       const prazo = input.prazoSugerido ? new Date(input.prazoSugerido).toISOString().split("T")[0] : null;
 
       const delegacoes = await withTransaction(async (tx) => {
@@ -454,7 +430,7 @@ export const delegacaoRouter = router({
             delegadoParaId: input.destinatarioId,
             dataDelegacao: new Date(),
             motivoDelegacao: input.instrucoes,
-            statusDelegacao: "pendente",
+            statusDelegacao: "a_delegar",
             status: "4_MONITORAR",
             substatus: "delegar",
             prazoSugerido: prazo,
@@ -476,20 +452,80 @@ export const delegacaoRouter = router({
           })))
           .returning();
 
-        // Uma única notificação consolidada
-        await tx.insert(notifications).values({
-          userId: input.destinatarioId,
-          title: `${input.demandaIds.length} novas tarefas delegadas`,
-          message: `${remetente?.name || "Um defensor"} delegou ${input.demandaIds.length} demanda(s) para você.`,
-          type: input.prioridade === "URGENTE" ? "warning" : "info",
-          actionUrl: "/admin/delegacoes",
-          isRead: false,
-        });
-
         return results;
       });
 
       return { count: delegacoes.length, delegacoes };
+    }),
+
+  // Marca a demanda como entregue (a_delegar → delegado) e notifica o destinatário.
+  marcarDelegado: protectedProcedure
+    .input(z.object({ demandaId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [dem] = await db
+        .update(demandas)
+        .set({ statusDelegacao: "delegado", updatedAt: new Date() })
+        .where(eq(demandas.id, input.demandaId))
+        .returning();
+      if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
+      if (dem.delegadoParaId) {
+        const remetente = await db.query.users.findFirst({
+          where: eq(users.id, ctx.user.id),
+          columns: { name: true },
+        });
+        await db.insert(notifications).values({
+          userId: dem.delegadoParaId,
+          title: "Nova demanda delegada",
+          message: `${remetente?.name || "Um defensor"} delegou uma demanda para você.`,
+          type: "info",
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
+      }
+      return dem;
+    }),
+
+  marcarDelegadoEmLote: protectedProcedure
+    .input(z.object({ demandaIds: z.array(z.number()).min(1).max(50) }))
+    .mutation(async ({ ctx, input }) => {
+      const rows = await db
+        .update(demandas)
+        .set({ statusDelegacao: "delegado", updatedAt: new Date() })
+        .where(inArray(demandas.id, input.demandaIds))
+        .returning();
+      const remetente = await db.query.users.findFirst({
+        where: eq(users.id, ctx.user.id),
+        columns: { name: true },
+      });
+      const porDestinatario = new Map<number, number>();
+      for (const r of rows) {
+        if (r.delegadoParaId)
+          porDestinatario.set(r.delegadoParaId, (porDestinatario.get(r.delegadoParaId) ?? 0) + 1);
+      }
+      for (const [destinatarioId, count] of porDestinatario) {
+        await db.insert(notifications).values({
+          userId: destinatarioId,
+          title: `${count} demanda(s) delegada(s)`,
+          message: `${remetente?.name || "Um defensor"} delegou ${count} demanda(s) para você.`,
+          type: "info",
+          actionUrl: "/admin/delegacoes",
+          isRead: false,
+        });
+      }
+      return { count: rows.length };
+    }),
+
+  // Reabre (delegado → a_delegar), sem notificar.
+  reabrirDelegacao: protectedProcedure
+    .input(z.object({ demandaId: z.number() }))
+    .mutation(async ({ input }) => {
+      const [dem] = await db
+        .update(demandas)
+        .set({ statusDelegacao: "a_delegar", updatedAt: new Date() })
+        .where(eq(demandas.id, input.demandaId))
+        .returning();
+      if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
+      return dem;
     }),
 
   // Estatísticas de delegações
