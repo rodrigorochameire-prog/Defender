@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extrairTipo } from "../extrair-tipo";
+import { extrairTipo, extrairTipoEvento } from "../extrair-tipo";
 
 describe("extrairTipo", () => {
   it("título com em-dash separa pelo dash (regressão do bug 2026-04-28)", () => {
@@ -48,5 +48,43 @@ describe("extrairTipo", () => {
     const out = extrairTipo(titulo);
     expect(out.endsWith("…")).toBe(true);
     expect(out.length).toBeLessThanOrEqual(21);
+  });
+});
+
+describe("extrairTipoEvento", () => {
+  // Regressão da pauta 09/06/2026: a coluna `tipo` foi corrigida para
+  // "Justificação", mas o `titulo` continuou "AIJ - ...". O painel reparsava o
+  // título e mostrava AIJ. A coluna autoritativa deve vencer o título.
+  it("prefere a coluna tipo (Justificação) ainda que o título diga AIJ", () => {
+    expect(
+      extrairTipoEvento({
+        tipoAudiencia: "Justificação",
+        titulo: "AIJ - Jaiem Silva - 8006899-32.2026.8.05.0039",
+      })
+    ).toBe("Justificação");
+  });
+
+  it("abrevia a descrição completa da coluna (AIJ)", () => {
+    expect(
+      extrairTipoEvento({
+        tipoAudiencia: "Audiência de Instrução e Julgamento",
+        titulo: "AIJ - Fulano",
+      })
+    ).toBe("AIJ");
+  });
+
+  it("ignora o placeholder genérico 'audiencia' e cai no título", () => {
+    expect(
+      extrairTipoEvento({
+        tipoAudiencia: "audiencia",
+        titulo: "AIJ - Fulano - 123",
+      })
+    ).toBe("AIJ");
+  });
+
+  it("sem coluna tipo, usa o título (compatível com fontes calendar/registros)", () => {
+    expect(
+      extrairTipoEvento({ titulo: "Justificação - Fulano" })
+    ).toBe("Justificação");
   });
 });

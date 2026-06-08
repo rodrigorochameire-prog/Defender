@@ -758,6 +758,7 @@ export default function AgendaPage() {
           rawId: a.id,
           titulo: a.titulo || `Audiência - ${a.tipo}`,
           tipo: "audiencia",
+          tipoAudiencia: a.tipo,
           data: dataFormatada,
           horarioInicio: a.horario || format(new Date(a.dataHora), "HH:mm"),
           horarioFim: "",

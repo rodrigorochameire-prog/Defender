@@ -50,7 +50,7 @@ import {
   normalizeAreaToFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
-import { extrairTipo } from "./extrair-tipo";
+import { extrairTipoEvento } from "./extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 interface DayEventsSheetProps {
@@ -261,7 +261,7 @@ export function DayEventsSheet({
                   ? "#a1a1aa"
                   : (colors as any).color || "#71717a";
                 const visual = agendaItemVisual(evento);
-                const tipo = extrairTipo(evento.titulo);
+                const tipo = extrairTipoEvento(evento);
                 const assistidoNome = evento.assistido || "";
                 const processo = evento.processo || "";
 
