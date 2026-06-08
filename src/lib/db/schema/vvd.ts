@@ -336,6 +336,39 @@ export type HistoricoMPU = typeof historicoMPU.$inferSelect;
 export type InsertHistoricoMPU = typeof historicoMPU.$inferInsert;
 
 // ==========================================
+// MEDIDAS MPU — uma linha por medida deferida (modelo novo)
+// Origem 'parser' = derivada do texto da decisão; 'manual' = editada pelo defensor.
+// ==========================================
+export const medidasMPU = pgTable("medidas_mpu", {
+  id: serial("id").primaryKey(),
+  processoVvdId: integer("processo_vvd_id")
+    .notNull()
+    .references(() => processosVVD.id, { onDelete: "cascade" }),
+  codigo: varchar("codigo", { length: 40 }).notNull(),
+  artigo: varchar("artigo", { length: 20 }),
+  distanciaMetros: integer("distancia_metros"),
+  parametros: jsonb("parametros").$type<{
+    protegidos?: string[];
+    meios?: string[];
+    lugares?: string[];
+    valor?: string;
+  }>(),
+  literal: text("literal"),
+  dataDecisao: date("data_decisao"),
+  dataVencimento: date("data_vencimento"),
+  status: varchar("status", { length: 20 }).default("ativa"),
+  origem: varchar("origem", { length: 20 }).default("parser"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("medidas_mpu_processo_vvd_id_idx").on(table.processoVvdId),
+  index("medidas_mpu_status_idx").on(table.status),
+]);
+
+export type MedidaMPURow = typeof medidasMPU.$inferSelect;
+export type InsertMedidaMPU = typeof medidasMPU.$inferInsert;
+
+// ==========================================
 // RELAÇÕES - VVD
 // ==========================================
 
