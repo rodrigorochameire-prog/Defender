@@ -44,6 +44,7 @@ import {
   CheckSquare,
   Building2,
   CalendarPlus,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
@@ -844,6 +845,17 @@ export function DemandaQuickPreview({
                   com as ações de navegação aqui e abre o dropdown sem cortar. */}
               {(demanda.assistidoId || driveFolderUrl || demanda.processoId) && (
               <div className="flex flex-col items-center gap-0.5 shrink-0 -mr-1">
+                {(demanda.substatus || demanda.status || "").toLowerCase() !== "ciencia" && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(demanda.id, "ciencia"); }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    title="Dar ciência (move para status Ciência)"
+                    aria-label="Dar ciência"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {demanda.assistidoId && (
                   <Link
                     href={`/admin/assistidos/${demanda.assistidoId}`}
