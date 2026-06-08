@@ -62,3 +62,40 @@ describe("parseDecisaoMPU — decisão Cacia (4 medidas)", () => {
     );
   });
 });
+
+describe("parseDecisaoMPU — variações", () => {
+  it("incisos romanos (I - II -)", () => {
+    const t = `DEFIRO as medidas: I - afastamento do lar; II - proibição de aproximação, distância de 200 metros da ofendida.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo).sort()).toEqual(
+      ["AFASTAMENTO_LAR", "PROIBICAO_APROXIMACAO"].sort(),
+    );
+    expect(r.medidas.find((m) => m.codigo === "PROIBICAO_APROXIMACAO")?.distanciaMetros).toBe(200);
+  });
+
+  it("texto corrido (sem enumeração)", () => {
+    const t = `Defiro a proibição de contato com a vítima por telefone e a proibição de frequentar o seu local de trabalho.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo).sort()).toEqual(
+      ["PROIBICAO_CONTATO", "PROIBICAO_FREQUENTAR"].sort(),
+    );
+  });
+
+  it("captura prazo em dias", () => {
+    const t = `Defiro o afastamento do lar pelo prazo de 90 (noventa) dias.`;
+    expect(parseDecisaoMPU(t).prazoDias).toBe(90);
+  });
+
+  it("tornozeleira + suspensão de porte", () => {
+    const t = `Determino a monitoração eletrônica (tornozeleira) e a suspensão do porte de arma de fogo do requerido.`;
+    const r = parseDecisaoMPU(t);
+    expect(r.medidas.map((m) => m.codigo).sort()).toEqual(
+      ["MONITORACAO_ELETRONICA", "SUSPENSAO_PORTE_ARMA"].sort(),
+    );
+  });
+
+  it("não inventa medidas em texto sem nenhuma", () => {
+    const t = `Indefiro o pedido por ausência de elementos. Arquive-se.`;
+    expect(parseDecisaoMPU(t).medidas).toEqual([]);
+  });
+});
