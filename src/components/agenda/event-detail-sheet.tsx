@@ -24,6 +24,7 @@ import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions"
 import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
+import { toTitleCasePtBr } from "@/lib/format/title-case";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
@@ -148,7 +149,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
   const processoNum = (ctx?.processo as any)?.numeroAutos ?? evento?.processo ?? null;
   const assistidoNome = ctx?.assistido?.nome ?? evento?.assistido ?? null;
-  const vara = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
+  const varaRaw = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
+  const vara = varaRaw ? toTitleCasePtBr(varaRaw) : null;
 
   const ad = ctx?.analysisData;
   const dossieV2 = hasDossieV2(ad) ? (ad as any).dossie : null;
