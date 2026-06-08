@@ -77,6 +77,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
+import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
 
 // Tipos de MPU
 const TIPOS_MPU = [
@@ -611,6 +612,14 @@ export default function MonitoramentoMPUPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Medidas estruturadas */}
+              <div className="mt-4">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Medidas estruturadas
+                </h4>
+                <MedidasVigentesPanel processoVvdId={selectedProcesso.id} />
+              </div>
 
               {/* Timeline do Histórico */}
               <div>
