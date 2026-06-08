@@ -77,6 +77,18 @@ export function RegistroEditor({
           description: `${tipoAud} — ${d}/${m}/${y} às ${horario}`,
         });
       }
+      if (data?.medidasCriadas && data.medidasCriadas.length > 0) {
+        // ciência de MPU com medidas protetivas detectadas
+        const n = data.medidasCriadas.length;
+        const lista = data.medidasCriadas
+          .map((m) =>
+            m.distanciaMetros ? `${m.codigo} (${m.distanciaMetros}m)` : m.codigo
+          )
+          .join(", ");
+        toast.success(`${n} medida(s) protetiva(s) detectada(s)`, {
+          description: lista,
+        });
+      }
       setConteudo("");
       setTitulo("");
       onSaved?.();
