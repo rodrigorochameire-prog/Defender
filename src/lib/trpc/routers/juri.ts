@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { sessoesJuri, processos } from "@/lib/db/schema";
-import { eq, sql, gte, and } from "drizzle-orm";
+import { sessoesJuri, processos, audiencias, users } from "@/lib/db/schema";
+import { eq, sql, gte, and, ilike, isNull } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
 import { normalizeDefensor } from "@/lib/juri/normalize-defensor";
@@ -307,13 +307,51 @@ export const juriRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(sessoesJuri.id, sessaoId))
-        .returning({ id: sessoesJuri.id, defensorNome: sessoesJuri.defensorNome });
+        .returning({
+          id: sessoesJuri.id,
+          defensorNome: sessoesJuri.defensorNome,
+          processoId: sessoesJuri.processoId,
+          dataSessao: sessoesJuri.dataSessao,
+        });
 
       if (!updated) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Sessão não encontrada" });
       }
 
-      return updated;
+      // Sincroniza a agenda (best-effort): a atribuição na Pauta deve refletir no
+      // defensor da audiência de plenário (mesmo processo + mesma data), senão a
+      // etiqueta R/J/G da agenda diverge da divisão. Resolve o usuário pelo nome
+      // canônico (Rodrigo/Juliane) ou pelo virtual "Grupo do Júri"; null = sem atribuição.
+      try {
+        const canonico = normalizeDefensor(defensorNome);
+        let defensorId: number | null = null;
+        if (canonico) {
+          const where =
+            canonico === "Grupo do Júri"
+              ? eq(users.name, "Grupo do Júri")
+              : and(
+                  ilike(users.name, canonico === "Dr. Rodrigo" ? "%rodrigo%" : "%juliane%"),
+                  isNull(users.deletedAt),
+                );
+          const [u] = await db.select({ id: users.id }).from(users).where(where).orderBy(users.id).limit(1);
+          defensorId = u?.id ?? null;
+        }
+        const dateStr = new Date(updated.dataSessao).toISOString().slice(0, 10);
+        await db
+          .update(audiencias)
+          .set({ defensorId, updatedAt: new Date() })
+          .where(
+            and(
+              eq(audiencias.processoId, updated.processoId),
+              eq(audiencias.tipo, "Sessão de Julgamento do Tribunal do Júri"),
+              sql`DATE(${audiencias.dataAudiencia}) = ${dateStr}::date`,
+            ),
+          );
+      } catch (e) {
+        console.error("[juri.atribuirDefensor] falha ao sincronizar agenda:", (e as Error).message);
+      }
+
+      return { id: updated.id, defensorNome: updated.defensorNome };
     }),
 
   // Importar sessões da pauta do PJe (batch)
