@@ -31,6 +31,7 @@ import {
   CalendarPlus,
   ExternalLink,
   UserPlus,
+  Undo2,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -47,6 +48,13 @@ import {
 } from "@/config/demanda-status";
 import { bucketIntoSections } from "./section-bucketing";
 import { StatusPipelineSelector } from "./StatusPipelineSelector";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
 import { trpc } from "@/lib/trpc/client";
@@ -465,10 +473,6 @@ function KanbanCard({
     onSuccess: () => { utilsDeleg.demandas.list.invalidate(); toast.success("Marcada como delegada"); },
     onError: (e) => toast.error(e.message),
   });
-  const reabrirDelegacao = trpc.delegacao.reabrirDelegacao.useMutation({
-    onSuccess: () => { utilsDeleg.demandas.list.invalidate(); toast.success("Delegação reaberta"); },
-    onError: (e) => toast.error(e.message),
-  });
   const retomarDelegacao = trpc.delegacao.retomar.useMutation({
     onSuccess: () => { utilsDeleg.demandas.list.invalidate(); toast.success("Delegação retomada"); },
     onError: (e) => toast.error(e.message),
@@ -870,30 +874,63 @@ function KanbanCard({
             const cor = isDeleg ? "#9B84B8" : groupColor; // violeta (Acompanhar) p/ delegação
             const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
             const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
-            return (
-              <button
-                ref={badgeRef}
-                onClick={handleBadgeClick}
-                className={cn(
-                  "ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap border transition-all duration-150",
-                  onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default",
-                  delegSt === "a_delegar" && "border-dashed",
-                )}
-                style={{
-                  backgroundColor: `${cor}14`,
-                  borderColor: `${cor}40`,
-                  color: cor,
-                  filter: "saturate(1.1)",
-                  // @ts-ignore -- ring color via inline
-                  "--tw-ring-color": `${cor}60`,
-                } as React.CSSProperties}
-                title={onStatusChange ? "Alterar status" : undefined}
-              >
+            const pillClass = cn(
+              "ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap border transition-all duration-150",
+              onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default",
+              delegSt === "a_delegar" && "border-dashed",
+            );
+            const pillStyle = {
+              backgroundColor: `${cor}14`,
+              borderColor: `${cor}40`,
+              color: cor,
+              filter: "saturate(1.1)",
+              // @ts-ignore -- ring color via inline
+              "--tw-ring-color": `${cor}60`,
+            } as React.CSSProperties;
+            const pillInner = (
+              <>
                 {isDeleg ? <UserPlus className="w-3 h-3 shrink-0" /> : <StatusIcon className="w-3 h-3 shrink-0" />}
                 {isDeleg ? (delegSt === "a_delegar" ? "Delegar" : "Delegado") : statusDisplay}
                 {onStatusChange && (
-                  <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
+                  <ChevronDown className={cn("w-2.5 h-2.5 transition-opacity", isDeleg ? "opacity-60" : "opacity-0 group-hover/kcard:opacity-70")} />
                 )}
+              </>
+            );
+
+            // No fluxo de delegação, o chevron do pill abre um menu com as ações
+            // (Devolver a mim / Marcar enviada / Alterar status…). Fora dele, o
+            // pill abre direto o seletor de status (comportamento padrão).
+            if (isDeleg && onStatusChange) {
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button ref={badgeRef} className={pillClass} style={pillStyle} onClick={(e) => e.stopPropagation()} title="Gerir delegação">
+                      {pillInner}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[12rem]" onClick={(e) => e.stopPropagation()}>
+                    {delegSt === "a_delegar" && (
+                      <DropdownMenuItem onClick={() => marcarDelegado.mutate({ demandaId: Number(demanda.id) })}>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-2 text-violet-500" /> Marcar como enviada
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => retomarDelegacao.mutate({ demandaId: Number(demanda.id) })}
+                      className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                    >
+                      <Undo2 className="w-3.5 h-3.5 mr-2" /> Devolver a mim
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowStatusPopover(true)}>
+                      <ListTodo className="w-3.5 h-3.5 mr-2 text-neutral-500" /> Alterar status…
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+            return (
+              <button ref={badgeRef} onClick={handleBadgeClick} className={pillClass} style={pillStyle} title={onStatusChange ? "Alterar status" : undefined}>
+                {pillInner}
               </button>
             );
           })()}
@@ -920,49 +957,26 @@ function KanbanCard({
               })
             : null;
           if (!chip) return null;
-          // Linha sutil (sem fundo): só cor de texto por tom. Harmoniza com o
-          // status sem competir com a pílula. a_delegar=violeta suave/itálico,
-          // ativo=violeta, concluída=emerald.
-          const tomClass =
-            chip.tom === "a_delegar"
-              ? "text-violet-500/90 dark:text-violet-300/80 italic"
-              : chip.tom === "concluida"
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-violet-600 dark:text-violet-300";
+          // Linha apenas informativa (as ações vivem no menu do pill). Nome no
+          // violeta suave do card (#9B84B8) — mesma família do pill/ato; o
+          // andamento em cinza, para não competir. Concluída em emerald.
+          const cor = chip.tom === "concluida" ? "#10b981" : "#9B84B8";
+          const [nomePart, ...resto] = chip.texto.split(" · ");
+          const andamento = resto.join(" · ");
           return (
-            <div className="flex items-center justify-between mt-1 pl-8 gap-2">
-              <span className={cn("inline-flex items-center gap-1 text-[11px] min-w-0", tomClass)}>
-                <UserPlus className="h-3 w-3 shrink-0 opacity-70" />
-                <span className="truncate">{chip.texto}</span>
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
-                {demanda.statusDelegacao === "a_delegar" && (
-                  <button
-                    type="button"
-                    className="text-violet-500/90 hover:text-violet-600 hover:underline"
-                    onClick={(e) => { e.stopPropagation(); marcarDelegado.mutate({ demandaId: Number(demanda.id) }); }}
-                  >
-                    Marcar delegado
-                  </button>
-                )}
-                {demanda.statusDelegacao === "delegado" && (
-                  <button
-                    type="button"
-                    className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline"
-                    onClick={(e) => { e.stopPropagation(); reabrirDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
-                  >
-                    Reabrir
-                  </button>
-                )}
-                <span className="text-neutral-300 dark:text-neutral-600" aria-hidden>·</span>
-                <button
-                  type="button"
-                  className="text-red-400/90 hover:text-red-500 hover:underline"
-                  onClick={(e) => { e.stopPropagation(); retomarDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
+            <div className="mt-1 pl-8">
+              <span className="inline-flex items-center gap-1 text-[11px] min-w-0 max-w-full">
+                <UserPlus className="h-3 w-3 shrink-0 opacity-70" style={{ color: cor }} />
+                <span
+                  className={cn("truncate font-medium", chip.tom === "a_delegar" && "italic font-normal")}
+                  style={{ color: cor }}
                 >
-                  Retomar
-                </button>
-              </div>
+                  {nomePart}
+                </span>
+                {andamento && (
+                  <span className="text-neutral-400 dark:text-neutral-500 truncate">· {andamento}</span>
+                )}
+              </span>
             </div>
           );
         })()}
