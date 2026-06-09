@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
 import { TIPOS_AUDIENCIA } from "@/lib/agenda/tipos-audiencia";
@@ -127,6 +128,9 @@ function EventoSemana({
   const tipoAbrev = extrairTipoEvento(evento);
   const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
+  // Etiqueta R/J: de quem é o júri (só em eventos de júri com defensor conhecido)
+  const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -178,6 +182,14 @@ function EventoSemana({
               )}
               {hasRegistro && (
                 <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+              )}
+              {defBadge && !eventoCancelado && (
+                <span
+                  title={`Júri de ${defBadge.label}`}
+                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold text-white shrink-0 ml-auto ${defBadge.dot}`}
+                >
+                  {defBadge.initial}
+                </span>
               )}
             </div>
 

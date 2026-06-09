@@ -5,6 +5,7 @@ import { sessoesJuri, processos } from "@/lib/db/schema";
 import { eq, sql, gte, and } from "drizzle-orm";
 import { addDays } from "date-fns";
 import { TRPCError } from "@trpc/server";
+import { normalizeDefensor } from "@/lib/juri/normalize-defensor";
 
 export const juriRouter = router({
   // Listar todas as sessões do júri
@@ -274,11 +275,14 @@ export const juriRouter = router({
         )
         .orderBy(sessoesJuri.dataSessao);
 
-      // Count per defender (only agendada + realizada)
+      // Count per defender (only agendada + realizada).
+      // Normaliza as variantes de defensor_nome (nome completo, forma curta,
+      // sufixo "(PEDIR AUXÍLIO)") para o defensor canônico — senão a paridade
+      // só enxerga linhas exatamente "Dr. Rodrigo"/"Dra. Juliane".
       const contagem: Record<string, number> = {};
       for (const s of sessoes) {
         if (s.status === "cancelada" || s.status === "adiada") continue;
-        const nome = s.defensorNome || "Não atribuído";
+        const nome = normalizeDefensor(s.defensorNome) ?? "Não atribuído";
         contagem[nome] = (contagem[nome] || 0) + 1;
       }
 

@@ -65,6 +65,7 @@ interface CalendarMonthViewProps {
 
 import { getAtribuicaoColors, ATRIBUICAO_COLORS } from "@/lib/config/atribuicoes";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { defensorBadge } from "@/lib/juri/normalize-defensor";
 
 // Ícones por tipo/atribuição (labels)
 const atribuicaoIcons: Record<string, any> = {
@@ -197,6 +198,9 @@ function EventoCompacto({
   // Tipo de audiência extraído (compartilhado com o sheet)
   const tipoAbrev = extrairTipoEvento(evento);
 
+  // Etiqueta R/J: de quem é o júri (só em eventos de júri com defensor conhecido)
+  const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
+
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;
 
@@ -302,6 +306,14 @@ function EventoCompacto({
 
             {/* Dots de status (atendimento / advogado / urgente / com registro) */}
             <span className="hidden sm:flex items-center gap-0.5 shrink-0">
+              {defBadge && !eventoCancelado && (
+                <span
+                  title={`Júri de ${defBadge.label}`}
+                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold text-white ${defBadge.dot}`}
+                >
+                  {defBadge.initial}
+                </span>
+              )}
               {visual.dashed && !eventoCancelado && (
                 <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
               )}
