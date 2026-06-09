@@ -461,7 +461,16 @@ export function CalendarMonthView({
 
   const getEventosForDate = (date: Date) => {
     // Adicionar T12:00:00 para evitar problemas de timezone
-    return eventos.filter((evento) => isSameDay(new Date(evento.data + "T12:00:00"), date));
+    const list = eventos.filter((evento) => isSameDay(new Date(evento.data + "T12:00:00"), date));
+    // Júri sempre no topo do dia: como a célula só mostra os 3 primeiros, o júri
+    // (ato mais importante) não pode ficar escondido atrás de audiências de VVD
+    // mais cedo. Depois do júri, ordem cronológica normal.
+    return list.sort((a, b) => {
+      const aJuri = a.atribuicaoKey === "JURI" ? 0 : 1;
+      const bJuri = b.atribuicaoKey === "JURI" ? 0 : 1;
+      if (aJuri !== bJuri) return aJuri - bJuri;
+      return (a.horarioInicio || "").localeCompare(b.horarioInicio || "");
+    });
   };
 
   const handleDayClick = (date: Date, event: React.MouseEvent) => {
@@ -638,9 +647,16 @@ export function CalendarMonthView({
                       )}
                     </div>
 
-                    {/* Lista de Eventos — até 3 cards de 1 linha visíveis em todos
-                        os breakpoints (cabe folgado em 112px, mesmo em mês de 6 semanas). */}
-                    <div className="space-y-0.5 flex-1 min-h-0 overflow-hidden">
+                    {/* Lista de Eventos — até 3 cards de 1 linha. Quando estoura a
+                        altura da célula, a base esmaece (fade) em vez de corte seco;
+                        quando cabe, o fade cai sobre o espaço vazio (sem efeito). */}
+                    <div
+                      className="space-y-0.5 flex-1 min-h-0 overflow-hidden"
+                      style={{
+                        maskImage: "linear-gradient(to bottom, black calc(100% - 10px), transparent)",
+                        WebkitMaskImage: "linear-gradient(to bottom, black calc(100% - 10px), transparent)",
+                      }}
+                    >
                       {dayEvents.slice(0, 3).map((evento) => (
                         <EventoCompacto
                           key={evento.id}
