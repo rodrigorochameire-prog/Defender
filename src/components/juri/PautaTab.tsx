@@ -20,6 +20,7 @@ import { normalizeDefensor, parseAuxilio } from "@/lib/juri/normalize-defensor";
 const DEFENSORES = [
   { nome: "Dr. Rodrigo", short: "Rodrigo", bg: "bg-emerald-500", bgLight: "bg-emerald-500/5", text: "text-white", ring: "ring-emerald-500/20", icon: "text-emerald-200", initial: "R" },
   { nome: "Dra. Juliane", short: "Juliane", bg: "bg-violet-500", bgLight: "bg-violet-500/5", text: "text-white", ring: "ring-violet-500/20", icon: "text-violet-200", initial: "J" },
+  { nome: "Grupo do Júri", short: "Grupo", bg: "bg-orange-500", bgLight: "bg-orange-500/5", text: "text-white", ring: "ring-orange-500/20", icon: "text-orange-200", initial: "G" },
 ] as const;
 
 const MESES = [
@@ -121,6 +122,7 @@ export default function PautaTab({ ano }: PautaTabProps) {
   const contagem = data?.contagem ?? {};
   const totalRodrigo = contagem["Dr. Rodrigo"] ?? 0;
   const totalJuliane = contagem["Dra. Juliane"] ?? 0;
+  const totalGrupo = contagem["Grupo do Júri"] ?? 0;
   const totalNaoAtribuido = contagem["Não atribuído"] ?? 0;
   const maxCount = Math.max(totalRodrigo, totalJuliane, 1);
   const balance = totalRodrigo - totalJuliane;
@@ -225,6 +227,16 @@ export default function PautaTab({ ano }: PautaTabProps) {
 
           {/* Pending — shown in parent page header only */}
         </div>
+
+        {/* Grupo do Júri (auxílio) — fora da paridade Rodrigo×Juliane */}
+        {totalGrupo > 0 && (
+          <div className="flex items-center justify-center gap-2 mt-2 pt-2 border-t border-border/60">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-orange-500 text-white text-[10px] font-bold">G</span>
+            <span className="text-xs font-medium text-foreground">Grupo do Júri</span>
+            <span className="text-sm font-bold tabular-nums text-orange-600 dark:text-orange-400">{totalGrupo}</span>
+            <span className="text-[10px] text-muted-foreground">júri{totalGrupo > 1 ? "s" : ""} de auxílio</span>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -425,6 +437,23 @@ function getProximityStyle(diffDays: number, defensorNome: string | null) {
       bar: "bg-violet-500/90", badge: null, badgeStyle: "",
     };
     return { dateBg: "", dateText: "text-foreground/75", border: "border-border/60", cardBg: "bg-card", bar: "bg-violet-500/80", badge: null, badgeStyle: "" };
+  }
+
+  if (defensorNome === "Grupo do Júri") {
+    // Orange — 100-90-80
+    if (diffDays <= 7) return {
+      dateBg: "bg-orange-500/10", dateText: "text-foreground",
+      border: "border-orange-300/40 dark:border-orange-700/40", cardBg: "bg-orange-50/40 dark:bg-orange-950/10",
+      bar: "bg-orange-500",
+      badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
+      badgeStyle: "",
+    };
+    if (diffDays <= 30) return {
+      dateBg: "", dateText: "text-foreground/85",
+      border: "border-border", cardBg: "bg-card",
+      bar: "bg-orange-500/90", badge: null, badgeStyle: "",
+    };
+    return { dateBg: "", dateText: "text-foreground/75", border: "border-border/60", cardBg: "bg-card", bar: "bg-orange-500/80", badge: null, badgeStyle: "" };
   }
 
   // Não atribuído — tons neutros
