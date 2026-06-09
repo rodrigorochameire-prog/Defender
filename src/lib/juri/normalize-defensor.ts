@@ -3,18 +3,22 @@
  *
  * O valor gravado varia bastante: forma curta ("Dr. Rodrigo"), nome completo
  * ("Rodrigo Rocha Meire"), com sufixo de pedido de auxílio
- * ("Rodrigo Rocha Meire (PEDIR AUXÍLIO)") ou genérico ("Defensor").
- * A paridade e o estilo dos cards precisam reconhecer todas essas variantes
- * como o mesmo defensor canônico — sem destruir o sufixo de auxílio, que é
- * uma informação real (o defensor está pedindo/tentando auxílio naquele júri).
+ * ("Rodrigo Rocha Meire (PEDIR AUXÍLIO)") ou "Grupo do Júri (...)".
+ *
+ * Categorias canônicas do júri: Dr. Rodrigo, Dra. Juliane e Grupo do Júri.
+ * O auxílio (PEDIR/TENTAR AUXÍLIO) é responsabilidade do GRUPO DO JÚRI — não
+ * do titular cujo nome eventualmente apareça no campo. Por isso o auxílio tem
+ * precedência sobre o nome na classificação.
  */
 
-export type DefensorCanonico = "Dr. Rodrigo" | "Dra. Juliane";
+export type DefensorCanonico = "Dr. Rodrigo" | "Dra. Juliane" | "Grupo do Júri";
 
-/** Mapeia qualquer variante de defensor_nome para o defensor canônico (ou null se não atribuído a R/J). */
+/** Mapeia qualquer variante de defensor_nome para a categoria canônica (ou null se não atribuído). */
 export function normalizeDefensor(nome: string | null | undefined): DefensorCanonico | null {
   if (!nome) return null;
   const n = nome.toLowerCase();
+  // Auxílio (PEDIR/TENTAR) e "grupo" → Grupo do Júri, com precedência sobre o nome.
+  if (n.includes("grupo") || /\((pedir|tentar)\s+aux[ií]lio\)/.test(n)) return "Grupo do Júri";
   if (n.includes("rodrigo")) return "Dr. Rodrigo";
   if (n.includes("juliane")) return "Dra. Juliane";
   return null;
@@ -28,16 +32,18 @@ export function parseAuxilio(nome: string | null | undefined): string | null {
 }
 
 /**
- * Etiqueta de defensor (R/J) p/ sinalizar de quem é o júri na agenda.
- * Cores na mesma convenção da aba Pauta: Rodrigo=emerald, Juliane=violet.
+ * Etiqueta de defensor p/ sinalizar de quem é o júri na agenda e no switch.
+ * Cores: Rodrigo=emerald, Juliane=violet, Grupo do Júri=orange.
  */
 export function defensorBadge(
   nome: string | null | undefined
-): { initial: "R" | "J"; dot: string; text: string; label: DefensorCanonico } | null {
+): { initial: "R" | "J" | "G"; dot: string; text: string; label: DefensorCanonico } | null {
   const c = normalizeDefensor(nome);
   if (c === "Dr. Rodrigo")
     return { initial: "R", dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400", label: c };
   if (c === "Dra. Juliane")
     return { initial: "J", dot: "bg-violet-500", text: "text-violet-700 dark:text-violet-400", label: c };
+  if (c === "Grupo do Júri")
+    return { initial: "G", dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400", label: c };
   return null;
 }
