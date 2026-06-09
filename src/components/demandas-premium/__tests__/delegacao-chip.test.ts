@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { rotuloDelegacaoChip } from "../delegacao-chip";
 
 describe("rotuloDelegacaoChip", () => {
-  it("a_delegar → {primeiroNome} · a delegar, tom a_delegar", () => {
+  it("a_delegar → só o {primeiroNome} (pílula já diz 'Delegar'), tom a_delegar", () => {
     expect(rotuloDelegacaoChip({ statusDelegacao: "a_delegar", nome: "Amanda Silva" }))
-      .toEqual({ texto: "Amanda · a delegar", tom: "a_delegar" });
+      .toEqual({ texto: "Amanda", tom: "a_delegar" });
   });
 
   it("delegado sem andamento → só o {primeiroNome}, tom ativo", () => {

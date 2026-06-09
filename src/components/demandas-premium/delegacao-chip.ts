@@ -36,7 +36,8 @@ export function rotuloDelegacaoChip(p: {
   // (some o descompasso de gênero e fica mais sutil junto ao status).
   const primeiro = p.nome.split(" ")[0] || p.nome;
   if (p.statusDelegacao === "a_delegar") {
-    return { texto: `${primeiro} · a delegar`, tom: "a_delegar" };
+    // a pílula de status já mostra "Delegar"; a linha traz só a quem
+    return { texto: primeiro, tom: "a_delegar" };
   }
   if (p.statusDelegacao === "delegado") {
     const ws = p.delegacaoWorkStatus;

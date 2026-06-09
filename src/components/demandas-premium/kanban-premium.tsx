@@ -860,39 +860,43 @@ function KanbanCard({
             </span>
           )}
 
-          {/* Status badge — SEMPRE o status processual real (a delegação vai
-              numa linha sutil abaixo, sem hijack do slot de status). */}
-          <button
-            ref={badgeRef}
-            onClick={handleBadgeClick}
-            className={`
-              ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
-              border transition-all duration-150
-              ${onStatusChange
-                ? "hover:ring-1 cursor-pointer"
-                : "cursor-default"
-              }
-            `}
-            style={{
-              backgroundColor: `${groupColor}14`,
-              borderColor: `${groupColor}40`,
-              color: groupColor,
-              filter: "saturate(1.1)",
-              // @ts-ignore -- ring color via inline
-              "--tw-ring-color": `${groupColor}60`,
-            } as React.CSSProperties}
-            title={onStatusChange ? "Alterar status" : undefined}
-          >
-            {(() => {
-              const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
-              const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
-              return <StatusIcon className="w-3 h-3 shrink-0" />;
-            })()}
-            {statusDisplay}
-            {onStatusChange && (
-              <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
-            )}
-          </button>
+          {/* Status badge — no fluxo de delegação, o próprio estado É o status:
+              "Delegar" (falta enviar) / "Delegado" (já enviei), em paleta
+              violeta; fora dele, o status processual real. A linha abaixo traz
+              quem + andamento. */}
+          {(() => {
+            const delegSt = demanda.statusDelegacao;
+            const isDeleg = delegSt === "a_delegar" || delegSt === "delegado";
+            const cor = isDeleg ? "#9B84B8" : groupColor; // violeta (Acompanhar) p/ delegação
+            const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
+            const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
+            return (
+              <button
+                ref={badgeRef}
+                onClick={handleBadgeClick}
+                className={cn(
+                  "ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap border transition-all duration-150",
+                  onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default",
+                  delegSt === "a_delegar" && "border-dashed",
+                )}
+                style={{
+                  backgroundColor: `${cor}14`,
+                  borderColor: `${cor}40`,
+                  color: cor,
+                  filter: "saturate(1.1)",
+                  // @ts-ignore -- ring color via inline
+                  "--tw-ring-color": `${cor}60`,
+                } as React.CSSProperties}
+                title={onStatusChange ? "Alterar status" : undefined}
+              >
+                {isDeleg ? <UserPlus className="w-3 h-3 shrink-0" /> : <StatusIcon className="w-3 h-3 shrink-0" />}
+                {isDeleg ? (delegSt === "a_delegar" ? "Delegar" : "Delegado") : statusDisplay}
+                {onStatusChange && (
+                  <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
+                )}
+              </button>
+            );
+          })()}
 
           {/* Pipeline Selector */}
           {showStatusPopover && (
