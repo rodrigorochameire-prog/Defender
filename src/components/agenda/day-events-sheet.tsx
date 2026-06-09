@@ -51,6 +51,7 @@ import {
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
 import { extrairTipoEvento } from "./extrair-tipo";
+import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 interface DayEventsSheetProps {
@@ -264,6 +265,8 @@ export function DayEventsSheet({
                 const tipo = extrairTipoEvento(evento);
                 const assistidoNome = evento.assistido || "";
                 const processo = evento.processo || "";
+                // Etiqueta R/J: de quem é o júri (só em júri com defensor conhecido)
+                const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
 
                 return (
                   <div
@@ -324,6 +327,17 @@ export function DayEventsSheet({
                               style={{ color: solidColor }}
                               title="Atendimento"
                             />
+                          )}
+                          {defBadge && !cancelado && (
+                            <span
+                              title={`Júri de ${defBadge.label}`}
+                              className={cn("inline-flex items-center gap-1 shrink-0", defBadge.text)}
+                            >
+                              <span className={cn("inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white", defBadge.dot)}>
+                                {defBadge.initial}
+                              </span>
+                              <span className="text-[10px] font-semibold">{defBadge.label.replace(/^Dr[a]?\. /, "")}</span>
+                            </span>
                           )}
                           {cancelado && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">

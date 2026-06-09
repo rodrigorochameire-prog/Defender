@@ -134,6 +134,7 @@ interface EventoFormData {
 }
 
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // ==========================================
@@ -362,8 +363,22 @@ function EventoDetalhado({
           >
             {atribuicaoConfig.shortLabel}
           </Badge>
+          {evento.atribuicaoKey === "JURI" && (() => {
+            const b = defensorBadge(evento.defensorNome);
+            return b ? (
+              <Badge
+                title={`Júri de ${b.label}`}
+                className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
+              >
+                <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white ${b.dot}`}>
+                  {b.initial}
+                </span>
+                <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>
+              </Badge>
+            ) : null;
+          })()}
         </div>
-        
+
         {evento.descricao && (
           <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
             {evento.descricao}
@@ -784,6 +799,7 @@ export default function AgendaPage() {
           documentos: [],
           dataInclusao: new Date().toISOString(),
           responsavel: resolverResponsavelPorEscala(atribuicaoKey, dataFormatada, a.defensorId),
+          defensorNome: a.defensorNome ?? undefined, // p/ etiqueta R/J nos júris
           fonte: "audiencias" as const,
         });
       });

@@ -32,6 +32,8 @@ export interface AgendaItem {
   documentos: string[];
   dataInclusao: string;
   responsavel?: string;
+  /** Nome do defensor responsável (audiencias.defensor) — usado p/ a etiqueta R/J nos júris da agenda. */
+  defensorNome?: string;
   registro?: RegistroAudienciaData;
   fonte?: "audiencias" | "calendar" | "registros";
 }

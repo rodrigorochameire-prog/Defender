@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PautaImportModal, type SessaoParsed } from "./pauta-parser";
+import { normalizeDefensor, parseAuxilio } from "@/lib/juri/normalize-defensor";
 
 // ==========================================
 // CONFIG
@@ -456,14 +457,16 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
   const mesAbrev = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
   const statusCfg = STATUS_STYLE[sessao.status ?? "agendada"] ?? STATUS_STYLE.agendada;
   const StatusIcon = statusCfg.icon;
-  const defensorAtual = DEFENSORES.find(def => def.nome === sessao.defensorNome);
+  // Reconhece variantes do nome ("Rodrigo Rocha Meire (PEDIR AUXÍLIO)" etc.) como o defensor canônico.
+  const defensorCanonico = normalizeDefensor(sessao.defensorNome);
+  const auxilio = parseAuxilio(sessao.defensorNome);
   const isUnassigned = !sessao.defensorNome;
   const isCancelled = sessao.status === "cancelada";
   const isAdiada = sessao.status === "adiada";
 
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((d.getTime() - now.getTime()) / 86400000);
-  const proximity = !muted && !isCancelled && !isAdiada ? getProximityStyle(diffDays, sessao.defensorNome) : null;
+  const proximity = !muted && !isCancelled && !isAdiada ? getProximityStyle(diffDays, defensorCanonico) : null;
 
   return (
     <div className={cn(
@@ -545,6 +548,14 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             <StatusIcon className="w-2.5 h-2.5" />
             {sessao.status === "agendada" ? "Agendada" : sessao.status === "realizada" ? "Realizada" : sessao.status === "adiada" ? "Adiada" : "Cancelada"}
           </span>
+          {auxilio && !isCancelled && !isAdiada && (
+            <span
+              title="Defensor solicitou auxílio neste júri"
+              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md ring-1 ring-amber-300/50 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 whitespace-nowrap"
+            >
+              {auxilio}
+            </span>
+          )}
         </div>
       </div>
 
@@ -554,7 +565,7 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
         {!isCancelled && !isAdiada && (
           <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-muted border border-border">
             {DEFENSORES.map((def) => {
-              const isActive = sessao.defensorNome === def.nome;
+              const isActive = defensorCanonico === def.nome;
               // Switch opacity matches card proximity: 100-80-60
               const switchBg = isActive && proximity ? proximity.bar : isActive ? def.bg : "";
               return (

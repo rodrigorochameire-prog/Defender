@@ -447,6 +447,7 @@ export const audienciasRouter = router({
           resultado: audiencias.resultado,
           contexto: audiencias.contexto,
           responsavelId: audiencias.defensorId, // Alias para compatibilidade
+          defensorNome: users.name, // p/ sinalização de defensor na agenda (etiqueta R/J nos júris)
           processo: {
             id: processos.id,
             numero: processos.numeroAutos,
@@ -461,6 +462,7 @@ export const audienciasRouter = router({
         .from(audiencias)
         .leftJoin(processos, eq(audiencias.processoId, processos.id))
         .leftJoin(assistidos, eq(audiencias.assistidoId, assistidos.id))
+        .leftJoin(users, eq(audiencias.defensorId, users.id))
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(asc(audiencias.dataAudiencia))
         .offset(offset);
