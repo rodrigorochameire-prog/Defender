@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayEventsSheet } from "@/components/agenda/day-events-sheet";
-import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
+import { extrairTipoEvento, isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import {
   format,
   startOfMonth,
@@ -198,8 +198,9 @@ function EventoCompacto({
   // Tipo de audiência extraído (compartilhado com o sheet)
   const tipoAbrev = extrairTipoEvento(evento);
 
-  // Etiqueta R/J: de quem é o júri (só em eventos de júri com defensor conhecido)
-  const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
+  // Etiqueta R/J/G: de quem é a SESSÃO DE JULGAMENTO (plenário). Não marca AIJ /
+  // instrução da fase sumariante — essas são audiências comuns do defensor do caso.
+  const defBadge = isSessaoPlenario(evento) ? defensorBadge(evento.defensorNome) : null;
 
   // Nome do assistido — completo, truncado via CSS
   const assistidoNome = evento.assistido || null;
@@ -462,13 +463,14 @@ export function CalendarMonthView({
   const getEventosForDate = (date: Date) => {
     // Adicionar T12:00:00 para evitar problemas de timezone
     const list = eventos.filter((evento) => isSameDay(new Date(evento.data + "T12:00:00"), date));
-    // Júri sempre no topo do dia: como a célula só mostra os 3 primeiros, o júri
-    // (ato mais importante) não pode ficar escondido atrás de audiências de VVD
-    // mais cedo. Depois do júri, ordem cronológica normal.
+    // Sessão de julgamento (plenário) sempre no topo do dia: como a célula só
+    // mostra os 3 primeiros, o plenário (ato mais importante) não pode ficar
+    // escondido atrás de audiências mais cedo. AIJ/instrução não tem prioridade —
+    // segue a ordem cronológica normal. Depois do plenário, cronológico.
     return list.sort((a, b) => {
-      const aJuri = a.atribuicaoKey === "JURI" ? 0 : 1;
-      const bJuri = b.atribuicaoKey === "JURI" ? 0 : 1;
-      if (aJuri !== bJuri) return aJuri - bJuri;
+      const aPlen = isSessaoPlenario(a) ? 0 : 1;
+      const bPlen = isSessaoPlenario(b) ? 0 : 1;
+      if (aPlen !== bPlen) return aPlen - bPlen;
       return (a.horarioInicio || "").localeCompare(b.horarioInicio || "");
     });
   };

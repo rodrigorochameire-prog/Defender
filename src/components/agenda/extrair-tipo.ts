@@ -67,3 +67,16 @@ export function extrairTipoEvento(evento: {
   }
   return extrairTipo(evento.titulo);
 }
+
+/**
+ * True somente para a Sessão de Julgamento (plenário) do Tribunal do Júri — o ato
+ * a que se aplica a divisão de defensores (Rodrigo/Juliane/Grupo) e a prioridade
+ * "topo do dia". NÃO inclui AIJ/instrução da fase sumariante nem PAP, que são
+ * audiências comuns do defensor do caso. A sigla do plenário no catálogo é "Júri".
+ */
+export function isSessaoPlenario(evento: {
+  tipoAudiencia?: string | null;
+  titulo: string;
+}): boolean {
+  return extrairTipoEvento(evento) === "Júri";
+}
