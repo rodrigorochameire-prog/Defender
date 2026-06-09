@@ -860,66 +860,39 @@ function KanbanCard({
             </span>
           )}
 
-          {/* Status badge — quando delegada, mostra "Delegada a X" em vez do status */}
-          {demanda.delegadoPara ? (
-            <button
-              ref={badgeRef}
-              onClick={handleBadgeClick}
-              className={`
-                ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
-                border transition-all duration-150
-                ${onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default"}
-              `}
-              style={{
-                // Mesma palette do grupo Acompanhar (#9B84B8) — pills idênticas
-                backgroundColor: "#9B84B814",
-                borderColor: "#9B84B840",
-                color: "#9B84B8",
-                filter: "saturate(1.1)",
-                // @ts-ignore
-                "--tw-ring-color": "#9B84B860",
-              } as React.CSSProperties}
-              title={onStatusChange ? `Delegada a ${demanda.delegadoPara}` : undefined}
-            >
-              <UserPlus className="w-3 h-3 shrink-0" />
-              Delegada a {demanda.delegadoPara.split(" ")[0]}
-              {onStatusChange && (
-                <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
-              )}
-            </button>
-          ) : (
-            <button
-              ref={badgeRef}
-              onClick={handleBadgeClick}
-              className={`
-                ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
-                border transition-all duration-150
-                ${onStatusChange
-                  ? "hover:ring-1 cursor-pointer"
-                  : "cursor-default"
-                }
-              `}
-              style={{
-                backgroundColor: `${groupColor}14`,
-                borderColor: `${groupColor}40`,
-                color: groupColor,
-                filter: "saturate(1.1)",
-                // @ts-ignore -- ring color via inline
-                "--tw-ring-color": `${groupColor}60`,
-              } as React.CSSProperties}
-              title={onStatusChange ? "Alterar status" : undefined}
-            >
-              {(() => {
-                const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
-                const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
-                return <StatusIcon className="w-3 h-3 shrink-0" />;
-              })()}
-              {statusDisplay}
-              {onStatusChange && (
-                <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
-              )}
-            </button>
-          )}
+          {/* Status badge — SEMPRE o status processual real (a delegação vai
+              numa linha sutil abaixo, sem hijack do slot de status). */}
+          <button
+            ref={badgeRef}
+            onClick={handleBadgeClick}
+            className={`
+              ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap
+              border transition-all duration-150
+              ${onStatusChange
+                ? "hover:ring-1 cursor-pointer"
+                : "cursor-default"
+              }
+            `}
+            style={{
+              backgroundColor: `${groupColor}14`,
+              borderColor: `${groupColor}40`,
+              color: groupColor,
+              filter: "saturate(1.1)",
+              // @ts-ignore -- ring color via inline
+              "--tw-ring-color": `${groupColor}60`,
+            } as React.CSSProperties}
+            title={onStatusChange ? "Alterar status" : undefined}
+          >
+            {(() => {
+              const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
+              const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
+              return <StatusIcon className="w-3 h-3 shrink-0" />;
+            })()}
+            {statusDisplay}
+            {onStatusChange && (
+              <ChevronDown className="w-2.5 h-2.5 opacity-0 group-hover/kcard:opacity-70 transition-opacity" />
+            )}
+          </button>
 
           {/* Pipeline Selector */}
           {showStatusPopover && (
@@ -943,40 +916,44 @@ function KanbanCard({
               })
             : null;
           if (!chip) return null;
+          // Linha sutil (sem fundo): só cor de texto por tom. Harmoniza com o
+          // status sem competir com a pílula. a_delegar=violeta suave/itálico,
+          // ativo=violeta, concluída=emerald.
           const tomClass =
             chip.tom === "a_delegar"
-              ? "border border-dashed border-violet-400 text-violet-600 dark:text-violet-300"
+              ? "text-violet-500/90 dark:text-violet-300/80 italic"
               : chip.tom === "concluida"
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300";
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-violet-600 dark:text-violet-300";
           return (
             <div className="flex items-center justify-between mt-1 pl-8 gap-2">
-              <span className={cn("inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px]", tomClass)}>
-                <UserPlus className="h-3 w-3" />
-                {chip.texto}
+              <span className={cn("inline-flex items-center gap-1 text-[11px] min-w-0", tomClass)}>
+                <UserPlus className="h-3 w-3 shrink-0 opacity-70" />
+                <span className="truncate">{chip.texto}</span>
               </span>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
                 {demanda.statusDelegacao === "a_delegar" && (
                   <button
                     type="button"
-                    className="text-[11px] text-violet-600 hover:underline"
+                    className="text-violet-500/90 hover:text-violet-600 hover:underline"
                     onClick={(e) => { e.stopPropagation(); marcarDelegado.mutate({ demandaId: Number(demanda.id) }); }}
                   >
-                    Marcar como delegado
+                    Marcar delegado
                   </button>
                 )}
                 {demanda.statusDelegacao === "delegado" && (
                   <button
                     type="button"
-                    className="text-[11px] text-neutral-500 hover:underline"
+                    className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:underline"
                     onClick={(e) => { e.stopPropagation(); reabrirDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
                   >
                     Reabrir
                   </button>
                 )}
+                <span className="text-neutral-300 dark:text-neutral-600" aria-hidden>·</span>
                 <button
                   type="button"
-                  className="text-[11px] text-red-500 hover:underline"
+                  className="text-red-400/90 hover:text-red-500 hover:underline"
                   onClick={(e) => { e.stopPropagation(); retomarDelegacao.mutate({ demandaId: Number(demanda.id) }); }}
                 >
                   Retomar
