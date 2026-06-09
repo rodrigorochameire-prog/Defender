@@ -4,16 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, User, Scale, FileText, MapPin, Save, X, Sparkles, Info, ChevronDown, Check, Calendar, Clock } from "lucide-react";
+import { Plus, Trash2, User, Scale, FileText, MapPin, Save, X, Sparkles, Info, ChevronDown, Check, Calendar, Clock, Loader2 } from "lucide-react";
 import { calcularPrazoPorAto, obterDiasPrazoPorAto } from "@/lib/prazo-calculator";
 import { SITUACAO_PRISIONAL_OPTIONS } from "@/config/templates";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
 
 export interface DemandaFormData {
   id?: string;
   assistido: string;
+  assistidoId?: number | null; // setado quando o usuário escolhe um assistido existente no autocomplete; null = novo cadastro pelo nome
   status: string;
   data: string;
   prazo: string;
@@ -198,6 +200,177 @@ function SimpleSelect({
   );
 }
 
+// Autocomplete do assistido — busca ao vivo no cadastro (searchAssistidos).
+// Selecionar um resultado vincula pelo id (sem duplicar); digitar livre limpa
+// o vínculo e cai no cadastro por nome. Dropdown fixed com z-index acima do modal.
+function AssistidoAutocomplete({
+  value,
+  valueId,
+  onSelect,
+  onTextChange,
+}: {
+  value: string;
+  valueId?: number | null;
+  onSelect: (id: number, nome: string) => void;
+  onTextChange: (text: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [debounced, setDebounced] = useState(value);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  const wrapRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value.trim()), 250);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  const { data: results = [], isFetching } = trpc.demandas.searchAssistidos.useQuery(
+    { search: debounced },
+    { enabled: open && debounced.length >= 2 },
+  );
+
+  const updatePosition = () => {
+    if (inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    updatePosition();
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        wrapRef.current && !wrapRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
+        setOpen(false);
+      }
+    };
+    const reposition = () => updatePosition();
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+    };
+  }, [open]);
+
+  const trimmed = value.trim();
+  const exactMatch = results.some((r) => r.nome.trim().toLowerCase() === trimmed.toLowerCase());
+  const showCreate = trimmed.length >= 2 && !exactMatch;
+  const showDropdown = open && trimmed.length >= 2;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => {
+            onTextChange(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => {
+            updatePosition();
+            setOpen(true);
+          }}
+          placeholder="Digite o nome ou CPF — buscamos no cadastro"
+          autoComplete="off"
+          className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 pr-8 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+        />
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
+          {isFetching ? (
+            <Loader2 className="w-3.5 h-3.5 text-neutral-400 animate-spin" />
+          ) : valueId ? (
+            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          ) : null}
+        </div>
+      </div>
+      {valueId ? (
+        <p className="mt-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+          Vinculado a assistido já cadastrado.
+        </p>
+      ) : trimmed.length >= 2 ? (
+        <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-500">
+          Novo cadastro — escolha na lista se já existir.
+        </p>
+      ) : null}
+
+      {showDropdown && (
+        <div
+          ref={dropdownRef}
+          style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 999999 }}
+          className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150"
+        >
+          <div className="max-h-[240px] overflow-y-auto py-1">
+            {isFetching && results.length === 0 && (
+              <div className="px-4 py-2.5 text-xs text-neutral-400 flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando…
+              </div>
+            )}
+            {!isFetching && results.length === 0 && (
+              <div className="px-4 py-2.5 text-xs text-neutral-400">Nenhum assistido encontrado.</div>
+            )}
+            {results.map((a) => {
+              const isSel = valueId === a.id;
+              const preso = a.statusPrisional && a.statusPrisional !== "SOLTO";
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onSelect(a.id, a.nome);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-colors",
+                    "hover:bg-emerald-50 dark:hover:bg-emerald-950/40",
+                    isSel ? "bg-emerald-50 dark:bg-emerald-950/30" : "",
+                  )}
+                >
+                  <span className="flex-1 truncate text-neutral-700 dark:text-neutral-200">{a.nome}</span>
+                  {a.cpf && <span className="text-[10px] text-neutral-400 font-mono shrink-0">{a.cpf}</span>}
+                  {preso && (
+                    <span className="text-[9px] font-semibold px-1 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 shrink-0">
+                      PRESO
+                    </span>
+                  )}
+                  {isSel && <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
+                </button>
+              );
+            })}
+            {showCreate && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onTextChange(trimmed);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 border-t border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="text-neutral-600 dark:text-neutral-300">
+                  Criar novo: <strong className="text-neutral-800 dark:text-neutral-100">{trimmed}</strong>
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DemandaCreateModal({
   isOpen,
   onClose,
@@ -210,6 +383,7 @@ export function DemandaCreateModal({
   const [formData, setFormData] = useState<DemandaFormData>(
     initialData || {
       assistido: "",
+      assistidoId: null,
       status: "triagem",
       data: "", // data de expedição — opcional; preencher só quando for intimação
       prazo: "",
@@ -404,11 +578,11 @@ export function DemandaCreateModal({
                   <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   Nome do Assistido
                 </Label>
-                <Input
+                <AssistidoAutocomplete
                   value={formData.assistido}
-                  onChange={(e) => setFormData({ ...formData, assistido: e.target.value })}
-                  placeholder="Nome completo do assistido"
-                  className="h-9 text-xs rounded-lg border border-neutral-200/60 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 text-foreground/80 px-3 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:border-emerald-600 transition-all"
+                  valueId={formData.assistidoId ?? null}
+                  onSelect={(id, nome) => setFormData({ ...formData, assistido: nome, assistidoId: id })}
+                  onTextChange={(text) => setFormData({ ...formData, assistido: text, assistidoId: null })}
                 />
               </div>
 

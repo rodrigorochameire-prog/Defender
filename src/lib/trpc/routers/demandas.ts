@@ -482,6 +482,7 @@ export const demandasRouter = router({
     .input(
       z.object({
         assistidoNome: z.string().min(1),
+        assistidoId: z.number().optional(), // quando o usuário seleciona um assistido existente no autocomplete — vincula direto, sem find-or-create por nome
         numeroAutos: z.string().optional(),
         tipoProcesso: z.string().optional(),
         atribuicao: z.string().min(1), // aceita label ("Tribunal do Júri") ou enum ("JURI_CAMACARI")
@@ -577,13 +578,27 @@ export const demandasRouter = router({
       const dataEntradaDB = normalizeDate(input.dataEntrada) ?? dataExpedicaoDB;
       const prazoDB = normalizeDate(input.prazo);
 
-      // 4. Find-or-create assistido pelo nome (case-insensitive)
+      // 4. Resolver assistido. Se o usuário selecionou um existente no
+      // autocomplete (assistidoId), vincula direto — evita duplicata por
+      // diferença de acento/espaço/abreviação. Senão, find-or-create pelo nome.
       const nomeTrimmed = input.assistidoNome.trim();
-      let [assistido] = await db
-        .select({ id: assistidos.id })
-        .from(assistidos)
-        .where(and(ilike(assistidos.nome, nomeTrimmed), isNull(assistidos.deletedAt)))
-        .limit(1);
+      let assistido: { id: number } | undefined;
+      if (input.assistidoId) {
+        [assistido] = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(and(eq(assistidos.id, input.assistidoId), isNull(assistidos.deletedAt)))
+          .limit(1);
+        // Se o id veio inválido (assistido removido entre a busca e o salvar),
+        // não falha o fluxo: cai no find-or-create por nome abaixo.
+      }
+      if (!assistido) {
+        [assistido] = await db
+          .select({ id: assistidos.id })
+          .from(assistidos)
+          .where(and(ilike(assistidos.nome, nomeTrimmed), isNull(assistidos.deletedAt)))
+          .limit(1);
+      }
       if (!assistido) {
         const [novo] = await db
           .insert(assistidos)
