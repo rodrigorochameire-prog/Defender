@@ -440,20 +440,21 @@ function getProximityStyle(diffDays: number, defensorNome: string | null) {
   }
 
   if (defensorNome === "Grupo do Júri") {
-    // Orange — 100-90-80
+    // Suavizado de propósito: o Grupo (auxílio) recua visualmente para não
+    // competir com a divisão Rodrigo×Juliane. Tons neutros + traço laranja
+    // tênue apenas para identificar; o "G" laranja no card já marca a autoria.
     if (diffDays <= 7) return {
-      dateBg: "bg-orange-500/10", dateText: "text-foreground",
-      border: "border-orange-300/40 dark:border-orange-700/40", cardBg: "bg-orange-50/40 dark:bg-orange-950/10",
-      bar: "bg-orange-500",
+      dateBg: "", dateText: "text-muted-foreground",
+      border: "border-border/50", cardBg: "bg-card",
+      bar: "bg-orange-300/50 dark:bg-orange-500/30",
       badge: diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `${diffDays}d`,
       badgeStyle: "",
     };
-    if (diffDays <= 30) return {
-      dateBg: "", dateText: "text-foreground/85",
-      border: "border-border", cardBg: "bg-card",
-      bar: "bg-orange-500/90", badge: null, badgeStyle: "",
+    return {
+      dateBg: "", dateText: "text-muted-foreground",
+      border: "border-border/40", cardBg: "bg-card",
+      bar: "bg-orange-300/40 dark:bg-orange-500/25", badge: null, badgeStyle: "",
     };
-    return { dateBg: "", dateText: "text-foreground/75", border: "border-border/60", cardBg: "bg-card", bar: "bg-orange-500/80", badge: null, badgeStyle: "" };
   }
 
   // Não atribuído — tons neutros
@@ -596,7 +597,9 @@ function SessionCard({ sessao, onAtribuir, onInativar, onReativar, isUpdating, m
             {DEFENSORES.map((def) => {
               const isActive = defensorCanonico === def.nome;
               // Switch opacity matches card proximity: 100-80-60
-              const switchBg = isActive && proximity ? proximity.bar : isActive ? def.bg : "";
+              // Botão ativo sempre na cor sólida do defensor (legível); a suavização
+              // da linha do Grupo fica por conta do card/bar, não do toggle.
+              const switchBg = isActive ? def.bg : "";
               return (
                 <button
                   key={def.nome}
