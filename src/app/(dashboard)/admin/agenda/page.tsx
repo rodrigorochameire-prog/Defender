@@ -135,6 +135,7 @@ interface EventoFormData {
 
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
+import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
 // ==========================================
@@ -363,7 +364,7 @@ function EventoDetalhado({
           >
             {atribuicaoConfig.shortLabel}
           </Badge>
-          {evento.atribuicaoKey === "JURI" && (() => {
+          {isSessaoPlenario(evento) && (() => {
             const b = defensorBadge(evento.defensorNome);
             return b ? (
               <Badge

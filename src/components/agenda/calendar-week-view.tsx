@@ -53,7 +53,7 @@ import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
-import { extrairTipoEvento } from "@/components/agenda/extrair-tipo";
+import { extrairTipoEvento, isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { TIPOS_AUDIENCIA } from "@/lib/agenda/tipos-audiencia";
 
 interface CalendarWeekViewProps {
@@ -128,8 +128,8 @@ function EventoSemana({
   const tipoAbrev = extrairTipoEvento(evento);
   const tipoCompleto = tipoNomeCompleto[tipoAbrev] || tipoAbrev;
 
-  // Etiqueta R/J: de quem é o júri (só em eventos de júri com defensor conhecido)
-  const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
+  // Etiqueta R/J/G: só na Sessão de Julgamento (plenário), não em AIJ/instrução.
+  const defBadge = isSessaoPlenario(evento) ? defensorBadge(evento.defensorNome) : null;
 
   return (
     <Popover>

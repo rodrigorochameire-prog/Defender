@@ -50,7 +50,7 @@ import {
   normalizeAreaToFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
-import { extrairTipoEvento } from "./extrair-tipo";
+import { extrairTipoEvento, isSessaoPlenario } from "./extrair-tipo";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 
@@ -265,8 +265,8 @@ export function DayEventsSheet({
                 const tipo = extrairTipoEvento(evento);
                 const assistidoNome = evento.assistido || "";
                 const processo = evento.processo || "";
-                // Etiqueta R/J: de quem é o júri (só em júri com defensor conhecido)
-                const defBadge = evento.atribuicaoKey === "JURI" ? defensorBadge(evento.defensorNome) : null;
+                // Etiqueta R/J/G: só na Sessão de Julgamento (plenário), não em AIJ/instrução.
+                const defBadge = isSessaoPlenario(evento) ? defensorBadge(evento.defensorNome) : null;
 
                 return (
                   <div
