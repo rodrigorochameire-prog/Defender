@@ -45,19 +45,30 @@ export const CATALOGO_MEDIDAS: CatalogoMedida[] = [
     codigo: MEDIDA_MPU.AFASTAMENTO_LAR,
     artigo: "22, II",
     rotulo: "Afastamento do lar",
-    gatilhos: [/afastamento do (lar|domicilio)/, /afastar-se do (lar|domicilio)/],
+    // Tolera adjetivos/qualificadores entre o verbo e "do lar" (ex.: "afastamento
+    // IMEDIATO do lar"; "afastar-se imediatamente do domicílio").
+    gatilhos: [/afasta(mento|r-se)\b.{0,30}\bdo (lar|domicilio)/, /afastamento do (lar|domicilio)/],
   },
   {
     codigo: MEDIDA_MPU.PROIBICAO_APROXIMACAO,
     artigo: "22, III, a",
     rotulo: "Proibição de aproximação",
-    gatilhos: [/proibicao de aproximacao/, /proibido.{0,20}aproximar/, /nao.{0,10}aproximar/],
+    // A medida do art. 22, III, "a" costuma vir fraseada como "distância mínima
+    // de X metros" — sem a palavra "aproximar". `\baproximacao\b`/`aproximar`
+    // evitam casar "aproximadamente".
+    gatilhos: [
+      /\baproximacao\b/,
+      /aproximar/,
+      /distancia minima/,
+      /limite\b.{0,20}distancia/,
+    ],
   },
   {
     codigo: MEDIDA_MPU.PROIBICAO_CONTATO,
     artigo: "22, III, b",
     rotulo: "Proibição de contato",
-    gatilhos: [/proibicao de contato/, /proibido.{0,20}contato/, /nao.{0,10}contatar/],
+    // Tolera "proibição de MANTER (qualquer) contato" e variações (proibido/vedado).
+    gatilhos: [/(proibicao|proibid\w*|vedad\w*)\b.{0,30}contat(o|ar)/, /nao.{0,15}contat(ar|o)/],
   },
   {
     codigo: MEDIDA_MPU.PROIBICAO_FREQUENTAR,
