@@ -9,11 +9,11 @@
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/node</string>
-    <string>/Users/rodrigorochameire/projetos/Defender/scripts/claude-code-daemon.mjs</string>
+    <string>/Users/rodrigorochameire/Projetos/Defender/scripts/claude-code-daemon.mjs</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/rodrigorochameire/projetos/Defender</string>
+  <string>/Users/rodrigorochameire/Projetos/Defender</string>
 
   <key>RunAtLoad</key>
   <true/>
@@ -33,9 +33,9 @@
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/Users/rodrigorochameire/projetos/Defender/logs/daemon.log</string>
+  <string>/Users/rodrigorochameire/Projetos/Defender/logs/daemon.log</string>
 
   <key>StandardErrorPath</key>
-  <string>/Users/rodrigorochameire/projetos/Defender/logs/daemon-error.log</string>
+  <string>/Users/rodrigorochameire/Projetos/Defender/logs/daemon-error.log</string>
 </dict>
 </plist>
