@@ -89,6 +89,7 @@ export default function OficioEditorPage() {
   // Export states
   const [exportingGDocs, setExportingGDocs] = useState(false);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [iaTask, setIaTask] = useState<{ id: number; kind: "gerar" | "melhorar" | "revisar" } | null>(null);
 
   // Fetch oficio data
   const { data: oficio, isLoading, refetch } = trpc.oficios.getById.useQuery(
@@ -108,50 +109,54 @@ export default function OficioEditorPage() {
     },
   });
 
-  const gerarMutation = trpc.oficios.gerarComIA.useMutation({
-    onSuccess: (data) => {
-      setConteudo(data.conteudo);
-      setDirty(true);
-      setGenerating(false);
-      setShowGerarInput(false);
-      setInstrucaoGerar("");
-      toast.success(`Corpo gerado com ${data.modelo} (${data.tokensEntrada + data.tokensSaida} tokens)`);
-      refetch();
+  // IA via daemon do Claude Code (conta Max, SEM custo de API). Enfileira a
+  // tarefa e faz polling do resultado, despachando por tipo (gerar/melhorar/revisar).
+  const gerarTextoMutation = trpc.oficios.gerarTextoIA.useMutation({
+    onSuccess: (r) => {
+      setIaTask({ id: r.taskId, kind: r.kind });
+      toast.info("Enviado ao Claude Code (daemon). Aguarde…");
     },
     onError: (err) => {
-      setGenerating(false);
-      toast.error("Erro ao gerar: " + err.message);
+      setGenerating(false); setReviewing(false); setImproving(false);
+      toast.error("Erro: " + err.message);
     },
   });
-
-  const revisarMutation = trpc.oficios.revisarComIA.useMutation({
-    onSuccess: (data) => {
-      setReviewResult(data);
-      setShowReview(true);
-      setReviewing(false);
-      toast.success(`Revisao concluida — Score: ${data.score}/100`);
+  const iaResultadoQuery = trpc.oficios.tarefaResultado.useQuery(
+    { taskId: iaTask?.id ?? 0 },
+    {
+      enabled: !!iaTask,
+      refetchInterval: (q) => {
+        const st = (q.state.data as any)?.status;
+        return st === "pending" || st === "processing" ? 4000 : false;
+      },
     },
-    onError: (err) => {
-      setReviewing(false);
-      toast.error("Erro ao revisar: " + err.message);
-    },
-  });
-
-  const melhorarMutation = trpc.oficios.melhorarComIA.useMutation({
-    onSuccess: (data) => {
-      setConteudo(data.conteudo);
-      setDirty(true);
-      setImproving(false);
-      setShowMelhorarInput(false);
-      setInstrucaoMelhorar("");
-      toast.success(`Texto melhorado com ${data.modelo}`);
-      refetch();
-    },
-    onError: (err) => {
-      setImproving(false);
-      toast.error("Erro ao melhorar: " + err.message);
-    },
-  });
+  );
+  useEffect(() => {
+    const t = iaResultadoQuery.data as any;
+    if (!iaTask || !t) return;
+    if (t.status === "completed") {
+      const res = t.resultado ?? {};
+      if (iaTask.kind === "revisar") {
+        setReviewResult({
+          score: res.score ?? 0,
+          pontosFortes: res.pontos_fortes ?? [],
+          sugestoes: res.sugestoes ?? [],
+          conteudoRevisado: res.conteudo_sugerido ?? null,
+        } as any);
+        setShowReview(true); setReviewing(false);
+        toast.success(`Revisão concluída — Score: ${res.score ?? "?"}/100`);
+      } else {
+        if (res.conteudo) { setConteudo(res.conteudo); setDirty(true); }
+        setGenerating(false); setImproving(false);
+        setShowGerarInput(false); setShowMelhorarInput(false);
+        toast.success("Texto gerado pelo Claude Code (Max).");
+      }
+      setIaTask(null); refetch();
+    } else if (t.status === "error" || t.status === "failed") {
+      setGenerating(false); setReviewing(false); setImproving(false);
+      toast.error("Falha no daemon: " + (t.erro ?? "erro")); setIaTask(null);
+    }
+  }, [iaResultadoQuery.data, iaTask]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportGDocsMutation = trpc.oficios.exportarGoogleDocs.useMutation({
     onSuccess: (data) => {
@@ -242,11 +247,11 @@ export default function OficioEditorPage() {
       handleSave();
     }
     setGenerating(true);
-    gerarMutation.mutate({
-      oficioId: id,
+    gerarTextoMutation.mutate({
+      kind: "gerar",
       tipoOficio,
-      templateBase: conteudo || "",
-      instrucoes: instrucaoGerar,
+      conteudoAtual: conteudo || "",
+      instrucao: instrucaoGerar,
     });
   };
 
@@ -257,8 +262,10 @@ export default function OficioEditorPage() {
       handleSave();
     }
     setReviewing(true);
-    revisarMutation.mutate({
-      oficioId: id,
+    gerarTextoMutation.mutate({
+      kind: "revisar",
+      tipoOficio,
+      conteudoAtual: conteudo || "",
     });
   };
 
@@ -268,8 +275,10 @@ export default function OficioEditorPage() {
       handleSave();
     }
     setImproving(true);
-    melhorarMutation.mutate({
-      oficioId: id,
+    gerarTextoMutation.mutate({
+      kind: "melhorar",
+      tipoOficio,
+      conteudoAtual: conteudo || "",
       instrucao: instrucaoMelhorar,
     });
   };
