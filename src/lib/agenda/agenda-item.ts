@@ -34,6 +34,10 @@ export interface AgendaItem {
   responsavel?: string;
   /** Nome do defensor responsável (audiencias.defensor) — usado p/ a etiqueta R/J nos júris da agenda. */
   defensorNome?: string;
+  /** Patrocínio do processo (processos.tipo_patrocinio) — sinaliza advogado constituído na agenda. */
+  tipoPatrocinio?: "DEFENSORIA" | "PARTICULAR";
+  /** Nome/OAB do advogado constituído (processos.advogado_particular). */
+  advogadoParticular?: string | null;
   registro?: RegistroAudienciaData;
   fonte?: "audiencias" | "calendar" | "registros";
 }

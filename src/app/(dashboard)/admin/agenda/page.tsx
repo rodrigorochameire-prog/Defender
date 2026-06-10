@@ -801,6 +801,8 @@ export default function AgendaPage() {
           dataInclusao: new Date().toISOString(),
           responsavel: resolverResponsavelPorEscala(atribuicaoKey, dataFormatada, a.defensorId),
           defensorNome: a.defensorNome ?? undefined, // p/ etiqueta R/J nos júris
+          tipoPatrocinio: (a.processo?.tipoPatrocinio as "DEFENSORIA" | "PARTICULAR") ?? "DEFENSORIA",
+          advogadoParticular: a.processo?.advogadoParticular ?? undefined,
           fonte: "audiencias" as const,
         });
       });

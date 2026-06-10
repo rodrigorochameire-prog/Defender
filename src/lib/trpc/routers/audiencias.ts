@@ -453,6 +453,8 @@ export const audienciasRouter = router({
             numero: processos.numeroAutos,
             atribuicao: processos.atribuicao,
             area: processos.area,
+            tipoPatrocinio: processos.tipoPatrocinio,
+            advogadoParticular: processos.advogadoParticular,
           },
           assistido: {
             id: assistidos.id,
