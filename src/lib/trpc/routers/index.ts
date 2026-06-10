@@ -41,6 +41,7 @@ import { smartExtractRouter } from "./smart-extract";
 import { briefingRouter } from "./briefing";
 import { coberturaRouter } from "./cobertura";
 import { coberturasRouter } from "./coberturas";
+import { substituicoesRouter } from "./substituicoes";
 import { acompanhamentoRouter } from "./acompanhamento";
 import { parecerRouter } from "./parecer";
 import { pareceresRouter } from "./pareceres";
@@ -199,6 +200,7 @@ export const appRouter = router({
   // ==========================================
   cobertura: coberturaRouter,
   coberturas: coberturasRouter,
+  substituicoes: substituicoesRouter,
 
   // ==========================================
   // COWORK - ACOMPANHAMENTO (SEGUIR ENTIDADES)

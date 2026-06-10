@@ -106,6 +106,7 @@ const COWORK_NAV: AssignmentMenuItem[] = [
   { label: "Agenda Equipe", path: "/admin/agenda-equipe", icon: "CalendarDays" },
   { label: "Pareceres", path: "/admin/pareceres", icon: "FileCheck", requiredRoles: ["admin", "defensor", "servidor"] },
   { label: "Coberturas", path: "/admin/coberturas", icon: "ArrowLeftRight", requiredRoles: ["admin", "defensor"] },
+  { label: "Substituições", path: "/admin/substituicoes", icon: "ArrowLeftRight", requiredRoles: ["admin", "defensor"] },
 ];
 
 // 5. News - Notícias jurídicas, monitoramento e informação institucional
