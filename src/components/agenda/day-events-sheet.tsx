@@ -333,7 +333,7 @@ export function DayEventsSheet({
                               className="shrink-0 inline-flex"
                               title={`Advogado constituído${evento.advogadoParticular ? ` — ${evento.advogadoParticular}` : ""}`}
                             >
-                              <Scale className="w-3 h-3 text-amber-500/70 dark:text-amber-400/60" />
+                              <Scale className="w-3 h-3 text-red-500/80 dark:text-red-400/70" />
                             </span>
                           )}
                           {defBadge && !cancelado && (
