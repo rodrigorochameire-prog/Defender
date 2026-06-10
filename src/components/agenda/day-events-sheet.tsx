@@ -255,6 +255,9 @@ export function DayEventsSheet({
               filteredEventos.map((evento) => {
                 const cancelado = isEventoCancelado(evento.status);
                 const concluido = evento.status === "concluido";
+                // Advogado constituído: o card recua visualmente (foco do dia é
+                // o que a DPE sustenta) e ganha indicador discreto à direita.
+                const temAdv = evento.tipoPatrocinio === "PARTICULAR";
                 const colors = getAtribuicaoColors(
                   evento.atribuicaoKey || evento.atribuicao,
                 );
@@ -275,7 +278,9 @@ export function DayEventsSheet({
                       "group rounded-xl overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800/60 transition-all duration-200 flex",
                       cancelado
                         ? "opacity-60"
-                        : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80",
+                        : temAdv
+                          ? "opacity-55 hover:opacity-100 shadow-none hover:shadow-sm"
+                          : "shadow-sm shadow-black/[0.04] hover:shadow-md hover:border-neutral-300/80",
                     )}
                   >
                     {/* Body — clicável: abre detalhes (substitui botão "Detalhes") */}
@@ -328,12 +333,13 @@ export function DayEventsSheet({
                               title="Atendimento"
                             />
                           )}
-                          {evento.tipoPatrocinio === "PARTICULAR" && !cancelado && (
+                          {temAdv && !cancelado && (
                             <span
-                              className="shrink-0 inline-flex"
+                              className="ml-auto inline-flex items-center gap-1 shrink-0 text-neutral-400 dark:text-neutral-500"
                               title={`Advogado constituído${evento.advogadoParticular ? ` — ${evento.advogadoParticular}` : ""}`}
                             >
-                              <Scale className="w-3 h-3 text-red-500/80 dark:text-red-400/70" />
+                              <User className="w-3 h-3" />
+                              <span className="text-[9px] font-medium uppercase tracking-wider">adv</span>
                             </span>
                           )}
                           {defBadge && !cancelado && (
