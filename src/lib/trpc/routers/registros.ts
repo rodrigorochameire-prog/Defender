@@ -4,6 +4,7 @@ import { db, withTransaction, registros, demandas, users, processos, assistidos,
 import { registroAnexos } from "@/lib/db/schema/agenda";
 import { mirrorAnexoToDrive } from "@/lib/registros/mirror-anexo-to-drive";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
+import { ATO_CIENCIA_DESIGNACAO, ATO_CIENCIA_REDESIGNACAO } from "@/lib/audiencia-parser";
 import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
@@ -213,9 +214,30 @@ export const registrosRouter = router({
           horario: string;
           tipo: string;
         } | null = null;
+        let atoAtualizado: string | null = null;
         if (input.tipo === "ciencia" && input.processoId) {
           const det = detectarDesignacaoAudiencia(input.conteudo);
           if (det) {
+            // Designação detectada → o ato da demanda acompanha a classificação
+            // (designação × redesignação), dispensando o ajuste manual no Kanban
+            // que reabriria o modal de agendamento.
+            if (input.demandaId) {
+              const novoAto = det.redesignacao
+                ? ATO_CIENCIA_REDESIGNACAO
+                : ATO_CIENCIA_DESIGNACAO;
+              const [demandaAtual] = await tx
+                .select({ ato: demandas.ato })
+                .from(demandas)
+                .where(eq(demandas.id, input.demandaId))
+                .limit(1);
+              if (demandaAtual && demandaAtual.ato !== novoAto) {
+                await tx
+                  .update(demandas)
+                  .set({ ato: novoAto, updatedAt: new Date() })
+                  .where(eq(demandas.id, input.demandaId));
+                atoAtualizado = novoAto;
+              }
+            }
             const inicioDia = new Date(`${det.data}T00:00:00-03:00`);
             const fimDia = new Date(`${det.data}T23:59:59-03:00`);
             const jaExiste = await tx
@@ -287,7 +309,7 @@ export const registrosRouter = router({
           });
         }
 
-        return { registro, audienciaCriada, medidasCriadas };
+        return { registro, audienciaCriada, medidasCriadas, atoAtualizado };
       });
 
       // Atualiza a célula "Providências" da planilha (fire-and-forget)
@@ -297,6 +319,7 @@ export const registrosRouter = router({
         ...created.registro,
         audienciaCriada: created.audienciaCriada,
         medidasCriadas: created.medidasCriadas,
+        atoAtualizado: created.atoAtualizado,
       };
     }),
 

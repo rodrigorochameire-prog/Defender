@@ -99,9 +99,12 @@ export function parseAudienciaFromText(...sources: Array<string | null | undefin
 /**
  * Atos que devem abrir o modal de confirmação de audiência.
  */
+export const ATO_CIENCIA_DESIGNACAO = "Ciência designação de audiência";
+export const ATO_CIENCIA_REDESIGNACAO = "Ciência redesignação de audiência";
+
 export const ATOS_AUDIENCIA = new Set([
-  "Ciência designação de audiência",
-  "Ciência redesignação de audiência",
+  ATO_CIENCIA_DESIGNACAO,
+  ATO_CIENCIA_REDESIGNACAO,
 ]);
 
 export function isAtoAudiencia(ato: string | null | undefined): boolean {

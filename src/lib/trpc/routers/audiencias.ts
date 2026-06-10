@@ -720,6 +720,33 @@ export const audienciasRouter = router({
       return results;
     }),
 
+  // Próxima audiência futura ainda válida (não cancelada/realizada) do processo.
+  // Usada pelo gatilho de "Ciência designação/redesignação de audiência" para
+  // não reabrir o modal de agendamento quando a audiência já existe.
+  proximaAgendada: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [proxima] = await db
+        .select({
+          id: audiencias.id,
+          dataAudiencia: audiencias.dataAudiencia,
+          horario: audiencias.horario,
+          tipo: audiencias.tipo,
+          status: audiencias.status,
+        })
+        .from(audiencias)
+        .where(
+          and(
+            eq(audiencias.processoId, input.processoId),
+            gte(audiencias.dataAudiencia, new Date()),
+            sql`(${audiencias.status} IS NULL OR ${audiencias.status} NOT IN ('cancelada', 'realizada'))`
+          )
+        )
+        .orderBy(asc(audiencias.dataAudiencia))
+        .limit(1);
+      return proxima ?? null;
+    }),
+
   // Criar audiência
   create: protectedProcedure
     .input(z.object({
