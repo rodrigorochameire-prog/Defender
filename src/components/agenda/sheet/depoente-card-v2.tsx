@@ -113,18 +113,27 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
               {depoente.versaoDelegacia ?? <span className="italic text-neutral-300">vazio</span>}
             </p>
           </div>
-          <div>
-            <div className="text-[9px] font-semibold text-neutral-400 tracking-wide mb-0.5">
-              ⚖ EM JUÍZO
-            </div>
-            <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              {depoente.sinteseJuizo ?? depoente.versaoJuizo ?? <span className="italic text-neutral-300">vazio</span>}
-            </p>
-          </div>
+          {(() => {
+            const ouvidoJuizo = depoente.sinteseJuizo ?? depoente.versaoJuizo ?? null;
+            return (
+              <div>
+                <div className="text-[9px] font-semibold text-neutral-400 tracking-wide mb-0.5">
+                  ⚖ EM JUÍZO
+                </div>
+                {ouvidoJuizo ? (
+                  <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">{ouvidoJuizo}</p>
+                ) : (
+                  <p className="text-[11px] text-neutral-400 dark:text-neutral-500 italic leading-relaxed">
+                    Ainda não ouvido em juízo — preparar inquirição.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
           {depoente.perguntasSugeridas && (
             <div>
-              <div className="text-[9px] font-semibold text-neutral-400 tracking-wide mb-0.5">
-                🎯 PERGUNTAS PREPARADAS
+              <div className="text-[9px] font-semibold text-emerald-600/80 dark:text-emerald-500/70 tracking-wide mb-0.5">
+                🎯 {(depoente.sinteseJuizo ?? depoente.versaoJuizo) ? "PERGUNTAS PREPARADAS" : "IDEIAS PARA INQUIRIÇÃO"}
               </div>
               <p className="text-[11px] text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap leading-relaxed">
                 {depoente.perguntasSugeridas}
