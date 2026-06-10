@@ -422,7 +422,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                           className={cn(
                             "inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[10px] font-medium transition-colors cursor-pointer ring-1 ring-inset disabled:opacity-60",
                             tipoPatrocinio === "PARTICULAR"
-                              ? "bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800/60 dark:hover:bg-amber-900/50"
+                              ? "bg-red-50 text-red-700 ring-red-200 hover:bg-red-100 dark:bg-red-900/25 dark:text-red-300 dark:ring-red-800/60 dark:hover:bg-red-900/40"
                               : "bg-neutral-50 text-neutral-400 ring-neutral-200 hover:bg-neutral-100 hover:text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-500 dark:ring-neutral-700 dark:hover:text-neutral-300",
                           )}
                         >
@@ -440,7 +440,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                                 type="button"
                                 title="Nome/OAB do advogado"
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-300 hover:text-amber-600 hover:bg-amber-50 dark:text-neutral-600 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors cursor-pointer"
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-300 hover:text-red-600 hover:bg-red-50 dark:text-neutral-600 dark:hover:text-red-400 dark:hover:bg-red-900/25 transition-colors cursor-pointer"
                               >
                                 <Edit3 className="w-3 h-3" />
                               </button>
