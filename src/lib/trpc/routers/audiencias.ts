@@ -46,6 +46,42 @@ interface PreparedDepoente {
   pontosFavoraveis: string | null;
   pontosDesfavoraveis: string | null;
   observacoes: string | null;
+  // Status detalhado (de analysis_data.depoentes_detalhe) — pré-popula o Registro.
+  statusIntimacao?: string | null;
+  comparecimento?: string | null;
+  motivoAusencia?: string | null;
+  formaOitiva?: string | null;
+  jaOuvido?: string | null;
+  jaOuvidoData?: string | null;
+  jaOuvidoPeca?: string | null;
+  depoimentoIp?: string | null;
+  depoimentoJuizo?: string | null;
+}
+
+const MOTIVO_AUSENCIA_TEXT: Record<string, string> = {
+  nao_localizado: "Não localizado", mandado_nao_cumprido: "Mandado não cumprido",
+  endereco_invalido: "Endereço inválido", em_diligencia: "Em diligência",
+  recusa_recebimento: "Recusou ciência", precatoria_devolvida: "Precatória devolvida",
+  precatoria_pendente: "Precatória pendente", mandado_nao_emitido: "Mandado não expedido",
+  falta_de_informacoes: "Sem informação nos autos",
+};
+
+/** Mapeia o vocabulário do dossiê (intimacao+motivo) p/ o enum statusIntimacao. */
+function _mapStatusIntimacao(intim?: string | null, motivo?: string | null): string | null {
+  switch ((intim ?? "").toLowerCase()) {
+    case "intimado": return "intimado";
+    case "dispensada": return "dispensado";
+    case "pendente": return "pendente";
+    case "desconhecido": return "pendente";
+    case "nao_intimado":
+      switch ((motivo ?? "").toLowerCase()) {
+        case "nao_localizado": return "frustrada-nao-localizado";
+        case "endereco_invalido": return "frustrada-endereco-incorreto";
+        case "mandado_nao_emitido": return "sem-diligencia";
+        default: return "nao-intimado";
+      }
+    default: return null;
+  }
 }
 
 interface PreparacaoComputed {
@@ -356,6 +392,12 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
     if (!dep.observacoes && match.observacoes) dep.observacoes = match.observacoes;
   }
 
+  // Índice do painel de status (intimação/comparecimento/já ouvido/forma) por nome.
+  const detalheByName = new Map<string, any>();
+  for (const d of collect(ad?.depoentes_detalhe)) {
+    if (d.nome) detalheByName.set(_normalizeName(d.nome), d);
+  }
+
   const depoentes: PreparedDepoente[] = raws
     .filter((d): d is RawDep & { nome: string } => !!d.nome)
     .map((dep) => {
@@ -370,16 +412,35 @@ async function computePreparacao(audienciaId: number): Promise<PreparacaoCompute
       const observacoes =
         [dep.observacoes?.trim() || null, telefonesText].filter(Boolean).join("\n") || null;
 
+      const det = detalheByName.get(_normalizeName(dep.nome));
+      const jo = det?.ja_ouvido;
+      const depoimentoIp = (dep as any).depoimento_ip?.trim?.() || (dep as any).versaoDelegacia?.trim?.() || null;
+      const depoimentoJuizo = (dep as any).depoimento_juizo?.trim?.() || (dep as any).versaoJuizo?.trim?.() || (jo?.resumo_breve ?? null);
+      const jaOuvido = jo?.sim
+        ? (depoimentoIp ? "ambos" : "juizo-anterior")
+        : (depoimentoIp ? "delegacia" : "nenhum");
+
       return {
         nome: dep.nome,
         tipo,
         vinculo: dep.vinculo?.trim() || dep.papel?.trim() || null,
         endereco: dep.endereco?.trim() || null,
-        resumo: dep.resumo?.trim() || null,
+        resumo: dep.resumo?.trim() || depoimentoIp || null,
         perguntasSugeridas,
         pontosFavoraveis,
         pontosDesfavoraveis,
-        observacoes,
+        observacoes: observacoes || (det?.observacao?.trim() || null),
+        statusIntimacao: _mapStatusIntimacao(det?.intimacao, det?.motivo_nao_intimacao),
+        comparecimento: det?.comparecimento ?? null,
+        motivoAusencia: det?.motivo_nao_intimacao
+          ? (MOTIVO_AUSENCIA_TEXT[det.motivo_nao_intimacao] ?? det.motivo_nao_intimacao)
+          : null,
+        formaOitiva: det?.forma ?? null,
+        jaOuvido,
+        jaOuvidoData: jo?.data ?? null,
+        jaOuvidoPeca: jo?.peca ?? null,
+        depoimentoIp,
+        depoimentoJuizo,
       };
     });
 
