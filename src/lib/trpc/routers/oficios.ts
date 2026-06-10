@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import {
   documentoModelos,
   documentosGerados,
@@ -1935,5 +1936,51 @@ export const oficiosRouter = router({
         .where(eq(documentoModelos.id, input.id));
 
       return { success: true };
+    }),
+
+  // ==========================================
+  // IA via DAEMON (Claude Code / conta Max — SEM custo de API)
+  // ==========================================
+  /** Enfileira a redação/melhoria/revisão do ofício para o daemon (claude -p). */
+  gerarTextoIA: protectedProcedure
+    .input(z.object({
+      kind: z.enum(["gerar", "melhorar", "revisar"]),
+      tipoOficio: z.string().optional(),
+      conteudoAtual: z.string().optional(),
+      instrucao: z.string().optional(),
+      contextoAdicional: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const partes: string[] = [
+        `ACAO: ${input.kind}`,
+        input.tipoOficio ? `Tipo de oficio: ${input.tipoOficio}` : "",
+        input.instrucao ? `Instrucao: ${input.instrucao}` : "",
+        input.contextoAdicional ? `Contexto adicional:\n${input.contextoAdicional.slice(0, 20000)}` : "",
+        input.conteudoAtual ? `Texto atual:\n${input.conteudoAtual.slice(0, 30000)}` : "",
+        "",
+        input.kind === "revisar"
+          ? "Revise e retorne APENAS JSON {score, pontos_fortes[], sugestoes[], conteudo_sugerido?}."
+          : "Retorne APENAS JSON {conteudo, observacoes?} com o corpo do oficio pronto para o editor.",
+      ].filter(Boolean);
+      const [task] = await db.insert(claudeCodeTasks).values({
+        skill: "oficio-redacao",
+        prompt: partes.join("\n"),
+        status: "pending",
+        createdBy: (ctx as any)?.user?.id ?? 1,
+        assistidoId: null,
+      }).returning({ id: claudeCodeTasks.id });
+      return { taskId: task.id, kind: input.kind };
+    }),
+
+  /** Status/resultado de uma task de redação (p/ a UI fazer polling). */
+  tarefaResultado: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .query(async ({ input }) => {
+      const [t] = await db
+        .select({ status: claudeCodeTasks.status, resultado: claudeCodeTasks.resultado, erro: claudeCodeTasks.erro })
+        .from(claudeCodeTasks)
+        .where(eq(claudeCodeTasks.id, input.taskId))
+        .limit(1);
+      return t ?? null;
     }),
 });
