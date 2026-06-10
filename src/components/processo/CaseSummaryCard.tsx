@@ -34,10 +34,22 @@ export function CaseSummaryCard({ assistidoId }: CaseSummaryCardProps) {
   const [expanded, setExpanded] = useState(false);
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.intelligence.getForAssistido.useQuery({ assistidoId });
-  const generateMutation = trpc.processo.quickSummary.useMutation({
+  const { data, isLoading } = trpc.intelligence.getForAssistido.useQuery(
+    { assistidoId },
+    {
+      // Enquanto o daemon processa a análise, faz polling até concluir.
+      refetchInterval: (q) => {
+        const st = (q.state.data as any)?.analysis?.status;
+        return st === "processing" || st === "queued" || st === "pending" ? 5000 : false;
+      },
+    },
+  );
+  // Aciona a análise pelo daemon do Claude Code (conta Max, SEM custo de API),
+  // em vez da chamada direta à API Anthropic (paga).
+  const generateMutation = trpc.analise.criarTask.useMutation({
     onSuccess: () => utils.intelligence.getForAssistido.invalidate({ assistidoId }),
   });
+  const dispararAnalise = () => generateMutation.mutate({ assistidoId, skill: "analise-autos" });
 
   if (isLoading) {
     return <Skeleton className="h-24 w-full rounded-lg" />;
@@ -74,7 +86,7 @@ export function CaseSummaryCard({ assistidoId }: CaseSummaryCardProps) {
           </div>
           <Button
             size="sm"
-            onClick={() => generateMutation.mutate({ assistidoId })}
+            onClick={dispararAnalise}
             disabled={generateMutation.isPending}
             className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
           >
@@ -244,7 +256,7 @@ export function CaseSummaryCard({ assistidoId }: CaseSummaryCardProps) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => generateMutation.mutate({ assistidoId })}
+              onClick={dispararAnalise}
               disabled={generateMutation.isPending}
               className="text-xs"
             >
