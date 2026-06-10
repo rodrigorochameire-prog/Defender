@@ -2,13 +2,17 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
-import { audiencias } from "@/lib/db/schema/agenda";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { classificarMatchNome } from "@/lib/assistido-match";
+import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
+import {
+  aplicarDesignacaoAudiencia,
+  limparCalendarSupersedidas,
+} from "@/lib/registros/aplicar-designacao-audiencia";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 
@@ -1615,30 +1619,40 @@ export const demandasRouter = router({
             metadata: { importBatchId: row.importBatchId, ato: row.ato, assistido: row.nomeAssistido },
           });
 
-          // 7. Criar audiência quando a intimação é de audiência
-          // Nota: NÃO criar calendar_event aqui — `audiencias` é a única fonte
-          // de verdade para audiências; a UI da agenda mescla as duas tabelas e
-          // criar nas duas gera duplicatas visíveis no calendário.
-          const isAudienciaAto = row.ato === "Ciência designação de audiência" ||
-            row.ato === "Ciência redesignação de audiência";
+          // 7. Criar audiência quando a intimação designa audiência.
+          // Detecção server-side no texto do ato/providências (cobre o
+          // movimento automatizado do PJe, "AUDIÊNCIA X DESIGNADA CONDUZIDA
+          // POR DD/MM/YYYY HH:MM EM/PARA ..."), com fallback nos campos
+          // detectados pelo modal (PJe Import v2). O helper cuida de dedupe
+          // por processo+dia, correção de hora 00:00 e supersede de
+          // redesignação — e `audiencias` segue como única fonte de verdade
+          // (nada de calendar_event duplicado aqui).
+          const detImport =
+            detectarDesignacaoAudiencia(
+              [row.ato, row.providencias].filter(Boolean).join("\n")
+            ) ??
+            (row.criarEventoAgenda && row.audienciaData
+              ? {
+                  data: row.audienciaData,
+                  horario: row.audienciaHora || "00:00",
+                  tipo: row.audienciaTipo || "Audiência",
+                  modalidade: null,
+                  local: row.vara || null,
+                  redesignacao: row.ato === "Ciência redesignação de audiência",
+                  trecho: row.ato,
+                }
+              : null);
 
-          if (isAudienciaAto && row.criarEventoAgenda && row.audienciaData && insertedDemanda) {
+          if (detImport && insertedDemanda) {
             try {
-              const dataStr = row.audienciaData;
-              const horaStr = row.audienciaHora || "09:00";
-              const dataAudiencia = new Date(`${dataStr}T${horaStr}:00`);
-
-              const tipoAud = row.audienciaTipo || "Instrução e Julgamento";
-              const titulo = `${tipoAud} — ${row.assistido}`;
-
-              await db.insert(audiencias).values({
+              const resultado = await aplicarDesignacaoAudiencia(db, {
                 processoId: processo.id,
                 assistidoId: assistido.id,
-                dataAudiencia,
-                tipo: tipoAud.toLowerCase().replace(/ e /g, "_").replace(/ /g, "_"),
-                titulo,
-                status: "agendada",
+                defensorId: defensorId ?? ctx.user.id,
+                det: detImport,
+                origem: "importação de intimações do PJe",
               });
+              limparCalendarSupersedidas(processo.id, resultado.supersedidas);
             } catch (audienciaError) {
               console.error(`[import] Audiência creation failed for ${row.assistido}:`, audienciaError);
             }
