@@ -15,6 +15,7 @@ import {
   RefreshCw,
   ExternalLink,
   Maximize2,
+  EyeOff,
   User,
   Users,
   Scale,
@@ -45,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  ATRIBUICAO_OPTIONS,
   getAtribuicaoColors,
   getAtribuicaoIcon,
   normalizeAreaToFilter,
@@ -151,17 +153,29 @@ export function DayEventsSheet({
     return { nDpe: dpe, nAdv: adv };
   }, [eventos]);
 
-  // Atribuições presentes no dia (deduplicadas por filterKey)
+  // Atribuições presentes no dia (deduplicadas por filterKey, com contagem)
   const dayAtribuicoes = useMemo(() => {
-    const seen = new Map<string, { key: string; color: string; Icon: any }>();
+    const seen = new Map<
+      string,
+      { key: string; color: string; Icon: any; label: string; shortLabel: string; count: number }
+    >();
     for (const ev of eventos) {
       const filterKey = normalizeAreaToFilter(
         ev.atribuicaoKey || ev.atribuicao,
       );
-      if (filterKey === "all" || seen.has(filterKey)) continue;
+      if (filterKey === "all") continue;
+      const existing = seen.get(filterKey);
+      if (existing) {
+        existing.count++;
+        continue;
+      }
       const color = SOLID_COLOR_MAP[filterKey] || "#71717a";
       const Icon = getAtribuicaoIcon(filterKey);
-      seen.set(filterKey, { key: filterKey, color, Icon });
+      const label = getAtribuicaoColors(filterKey).label;
+      const shortLabel =
+        ATRIBUICAO_OPTIONS.find((o) => o.value === filterKey)?.shortLabel ||
+        label;
+      seen.set(filterKey, { key: filterKey, color, Icon, label, shortLabel, count: 1 });
     }
     return Array.from(seen.values());
   }, [eventos]);
@@ -225,10 +239,10 @@ export function DayEventsSheet({
                   {dayDate}
                 </h2>
 
-                {/* Filtro de atribuições inline */}
-                <div className="flex items-center gap-1.5 mt-2">
+                {/* Filtro de atribuições inline (pills Padrão Defender) */}
+                <div className="flex items-center flex-wrap gap-1.5 mt-2">
                   {dayAtribuicoes.length > 1 &&
-                    dayAtribuicoes.map(({ key, color, Icon }) => {
+                    dayAtribuicoes.map(({ key, color, Icon, label, shortLabel, count }) => {
                       const isActive = activeAtribFilter === key;
                       return (
                         <button
@@ -237,15 +251,34 @@ export function DayEventsSheet({
                             setActiveAtribFilter(isActive ? null : key)
                           }
                           className={cn(
-                            "w-6 h-6 rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                            isActive
-                              ? "bg-neutral-100 dark:bg-neutral-800"
-                              : "opacity-40 hover:opacity-70",
+                            "inline-flex items-center gap-1 h-[22px] px-2 rounded-full text-[10px] font-medium ring-1 ring-inset transition-colors cursor-pointer",
+                            !isActive &&
+                              "bg-white text-neutral-500 ring-neutral-200 hover:ring-neutral-300 hover:text-neutral-700 dark:bg-neutral-900 dark:text-neutral-400 dark:ring-neutral-700 dark:hover:ring-neutral-600",
                           )}
-                          style={{ color }}
-                          title={getAtribuicaoColors(key).label}
+                          style={
+                            isActive
+                              ? {
+                                  color,
+                                  backgroundColor: `${color}14`,
+                                  boxShadow: `inset 0 0 0 1px ${color}55`,
+                                }
+                              : undefined
+                          }
+                          title={label}
                         >
-                          <Icon className="w-3.5 h-3.5" />
+                          <Icon
+                            className="w-3 h-3"
+                            style={isActive ? undefined : { color }}
+                          />
+                          {shortLabel}
+                          <span
+                            className={cn(
+                              "tabular-nums",
+                              !isActive && "text-neutral-400 dark:text-neutral-500",
+                            )}
+                          >
+                            {count}
+                          </span>
                         </button>
                       );
                     })}
@@ -255,26 +288,30 @@ export function DayEventsSheet({
                       onClick={() => setOcultarAdv((v) => !v)}
                       title={ocultarAdv ? "Mostrar audiências com advogado constituído" : "Ocultar audiências com advogado constituído"}
                       className={cn(
-                        "ml-auto inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ring-1 ring-inset",
+                        "ml-auto inline-flex items-center gap-1 h-[22px] px-1.5 rounded-full text-[10px] font-medium transition-colors cursor-pointer",
                         ocultarAdv
-                          ? "bg-neutral-800 text-neutral-100 ring-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:ring-neutral-300"
-                          : "bg-neutral-50 text-neutral-400 ring-neutral-200 hover:text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-500 dark:ring-neutral-700",
+                          ? "text-neutral-600 bg-neutral-100 ring-1 ring-inset ring-neutral-200 dark:text-neutral-300 dark:bg-neutral-800 dark:ring-neutral-700"
+                          : "text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300",
                       )}
                     >
-                      <User className="w-2.5 h-2.5" />
-                      {ocultarAdv ? "advogado oculto" : "ocultar adv"}
+                      {ocultarAdv ? (
+                        <EyeOff className="w-3 h-3" />
+                      ) : (
+                        <User className="w-3 h-3" />
+                      )}
+                      {ocultarAdv ? "adv ocultos" : "ocultar adv"}
                     </button>
                   )}
                   <span
                     className={cn(
-                      "text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800",
+                      "h-[22px] inline-flex items-center text-[10px] font-medium tabular-nums text-neutral-500 dark:text-neutral-500 px-2 rounded-full bg-neutral-100 dark:bg-neutral-800",
                       nAdv === 0 && "ml-auto",
                     )}
                     title={nAdv > 0 ? `${nDpe} da Defensoria · ${nAdv} com advogado constituído` : undefined}
                   >
                     {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
                     {nAdv > 0 && (
-                      <span className="text-neutral-400 dark:text-neutral-600 font-normal"> · {nDpe} DPE · {nAdv} adv</span>
+                      <span className="text-neutral-400 dark:text-neutral-600 font-normal">&nbsp;· {nDpe} DPE · {nAdv} adv</span>
                     )}
                   </span>
                 </div>
