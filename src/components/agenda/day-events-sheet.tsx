@@ -328,6 +328,14 @@ export function DayEventsSheet({
                               title="Atendimento"
                             />
                           )}
+                          {evento.tipoPatrocinio === "PARTICULAR" && !cancelado && (
+                            <span
+                              className="shrink-0 inline-flex"
+                              title={`Advogado constituído${evento.advogadoParticular ? ` — ${evento.advogadoParticular}` : ""}`}
+                            >
+                              <Scale className="w-3 h-3 text-amber-500/70 dark:text-amber-400/60" />
+                            </span>
+                          )}
                           {defBadge && !cancelado && (
                             <span
                               title={`Júri de ${defBadge.label}`}

@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Loader2, Scale, Trash2, X,
+  AlertTriangle, Check, Copy, Edit3, Loader2, Scale, Trash2, X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -305,90 +305,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             <SheetHeader className="p-0">
               <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
             </SheetHeader>
-            {processoId && (
-              <>
-                <span className="h-3.5 w-px bg-white/[0.12] shrink-0" aria-hidden />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      title="Patrocínio"
-                      className={cn(
-                        "inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-[10.5px] font-semibold tracking-tight transition-colors cursor-pointer ring-1 ring-inset",
-                        tipoPatrocinio === "DEFENSORIA"
-                          ? "bg-emerald-500/15 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/25"
-                          : "bg-amber-500/15 text-amber-200 ring-amber-400/30 hover:bg-amber-500/25",
-                      )}
-                    >
-                      <Scale className="w-3 h-3" />
-                      <span>{tipoPatrocinio === "DEFENSORIA" ? "Defensoria" : "Particular"}</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    sideOffset={6}
-                    className="w-64 p-2 rounded-xl"
-                  >
-                    <div className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 px-1 pb-1.5">
-                      Patrocínio
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(["DEFENSORIA", "PARTICULAR"] as const).map((opt) => {
-                        const active = tipoPatrocinio === opt;
-                        return (
-                          <button
-                            key={opt}
-                            type="button"
-                            disabled={setPatrocinio.isPending}
-                            onClick={() =>
-                              setPatrocinio.mutate({
-                                processoId,
-                                tipoPatrocinio: opt,
-                                advogadoParticular:
-                                  opt === "PARTICULAR" ? advogadoDraft : null,
-                              })
-                            }
-                            className={cn(
-                              "px-2.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer ring-1 ring-inset",
-                              active
-                                ? opt === "DEFENSORIA"
-                                  ? "bg-emerald-500 text-white ring-emerald-500"
-                                  : "bg-amber-500 text-white ring-amber-500"
-                                : "bg-transparent text-neutral-700 dark:text-neutral-300 ring-neutral-200 dark:ring-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800",
-                            )}
-                          >
-                            {opt === "DEFENSORIA" ? "Defensoria" : "Particular"}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {tipoPatrocinio === "PARTICULAR" && (
-                      <div className="mt-2">
-                        <label className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400 px-1">
-                          Advogado
-                        </label>
-                        <Input
-                          value={advogadoDraft}
-                          onChange={(e) => setAdvogadoDraft(e.target.value)}
-                          onBlur={() => {
-                            const atual = advogadoParticular ?? "";
-                            if (advogadoDraft.trim() !== atual.trim()) {
-                              setPatrocinio.mutate({
-                                processoId,
-                                tipoPatrocinio: "PARTICULAR",
-                                advogadoParticular: advogadoDraft,
-                              });
-                            }
-                          }}
-                          placeholder="Nome do advogado"
-                          className="h-7 text-xs rounded-lg mt-1"
-                        />
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </>
-            )}
           </div>
           <button
             onClick={() => onOpenChange(false)}
@@ -402,17 +318,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
           <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
         </div>
-
-        {/* Strip de "flags do caso" — chip de patrocínio particular + futura
-            casa pra outras flags (vínculo Drive, pendências críticas, etc.). */}
-        {tipoPatrocinio === "PARTICULAR" && advogadoParticular && (
-          <div className="px-3 pt-2 pb-1 flex items-center gap-1.5 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5">
-              <Scale className="w-3 h-3" />
-              Particular — {advogadoParticular}
-            </span>
-          </div>
-        )}
 
         <div className="px-3 pt-2">
           <BannerInteligencia
@@ -489,6 +394,82 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                           <span style={{ color: atribColor }} className="font-medium">
                             {evento.atribuicao}
                           </span>
+                        )}
+                      </div>
+                    )}
+                    {/* Patrocínio — 1 clique alterna DPE ↔ advogado constituído;
+                        lápis (só quando Particular) edita nome/OAB. */}
+                    {processoId && (
+                      <div className="flex items-center gap-1 mt-2">
+                        <button
+                          type="button"
+                          disabled={setPatrocinio.isPending}
+                          aria-pressed={tipoPatrocinio === "PARTICULAR"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const novo = tipoPatrocinio === "PARTICULAR" ? "DEFENSORIA" : "PARTICULAR";
+                            setPatrocinio.mutate({
+                              processoId,
+                              tipoPatrocinio: novo,
+                              advogadoParticular: novo === "PARTICULAR" ? (advogadoDraft.trim() || null) : null,
+                            });
+                          }}
+                          title={
+                            tipoPatrocinio === "PARTICULAR"
+                              ? "Advogado constituído — clique para voltar à Defensoria"
+                              : "Patrocínio da Defensoria — clique se apareceu advogado constituído"
+                          }
+                          className={cn(
+                            "inline-flex items-center gap-1.5 h-6 px-2 rounded-full text-[10px] font-medium transition-colors cursor-pointer ring-1 ring-inset disabled:opacity-60",
+                            tipoPatrocinio === "PARTICULAR"
+                              ? "bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800/60 dark:hover:bg-amber-900/50"
+                              : "bg-neutral-50 text-neutral-400 ring-neutral-200 hover:bg-neutral-100 hover:text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-500 dark:ring-neutral-700 dark:hover:text-neutral-300",
+                          )}
+                        >
+                          <Scale className="w-3 h-3" />
+                          <span className="truncate max-w-[190px]">
+                            {tipoPatrocinio === "PARTICULAR"
+                              ? (advogadoParticular || "Advogado constituído")
+                              : "Defensoria"}
+                          </span>
+                        </button>
+                        {tipoPatrocinio === "PARTICULAR" && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                title="Nome/OAB do advogado"
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-300 hover:text-amber-600 hover:bg-amber-50 dark:text-neutral-600 dark:hover:text-amber-400 dark:hover:bg-amber-900/30 transition-colors cursor-pointer"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" sideOffset={6} className="w-64 p-2.5 rounded-xl">
+                              <label className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400">
+                                Advogado (nome / OAB)
+                              </label>
+                              <Input
+                                value={advogadoDraft}
+                                onChange={(e) => setAdvogadoDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                }}
+                                onBlur={() => {
+                                  const atual = advogadoParticular ?? "";
+                                  if (advogadoDraft.trim() !== atual.trim()) {
+                                    setPatrocinio.mutate({
+                                      processoId,
+                                      tipoPatrocinio: "PARTICULAR",
+                                      advogadoParticular: advogadoDraft.trim() || null,
+                                    });
+                                  }
+                                }}
+                                placeholder="Ex.: João Silva (OAB/BA 12.345)"
+                                className="h-7 text-xs rounded-lg mt-1"
+                              />
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </div>
                     )}
