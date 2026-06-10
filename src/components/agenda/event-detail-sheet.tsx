@@ -167,6 +167,7 @@ interface Props {
 
 export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, onDuplicate }: Props) {
   const [copied, setCopied] = useState(false);
+  const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -261,6 +262,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
   const imputacao = extractString(ad, "imputacao", "crimes_imputados") ?? extractString(caso, "foco") ?? null;
   const fatos = caso?.narrativaDenuncia ?? extractString(ad, "resumo_executivo", "narrativa_denuncia") ?? null;
+  const fatosLiteral = extractString(ad, "narrativa_denuncia_literal");
   const laudos = extractArray(ad, "laudos", "laudos_mencionados", "laudos_periciais");
   const lacunas = extractArray(ad, "vulnerabilidades_acusacao", "lacunas_probatorias", "lacunas");
   const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
@@ -345,7 +347,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const tocSections: ToCSection[] = useMemo(() => {
     const s: ToCSection[] = [];
     if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
-    if (fatos) s.push({ id: "fatos", label: "Fatos" });
+    if (fatos || fatosLiteral) s.push({ id: "fatos", label: "Fatos" });
     if (cronologia.length) s.push({ id: "sintese", label: "Síntese" });
     if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
     const nDep = depoentes.length || depoentesDetalhe.length;
@@ -358,7 +360,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     s.push({ id: "documentos", label: "Docs" });
     s.push({ id: "midia", label: "Mídia" });
     return s;
-  }, [imputacao, fatos, cronologia.length, versaoDelegacia, versaoJuizo, depoentes.length,
+  }, [imputacao, fatos, fatosLiteral, cronologia.length, versaoDelegacia, versaoJuizo, depoentes.length,
       depoentesDetalhe.length, contradicoes.length,
       laudos.length, diligencias.length, pendencias.length, teses.length]);
 
@@ -692,8 +694,27 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                       <FreshnessBadge analyzedAt={analyzedAt} />
                     </div>
                   )}
-                  {fatos ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos}</p>
+                  {fatos || fatosLiteral ? (
+                    <div className="space-y-2">
+                      {fatosLiteral && (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setVerFatosLiteral((v) => !v)}
+                            className="text-[10px] font-medium px-2 py-0.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                          >
+                            {verFatosLiteral ? "ver resumo" : "ver trecho literal"}
+                          </button>
+                        </div>
+                      )}
+                      {verFatosLiteral && fatosLiteral ? (
+                        <blockquote className="text-[13px] text-neutral-700 dark:text-neutral-300 leading-relaxed border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 italic whitespace-pre-wrap">
+                          {fatosLiteral}
+                        </blockquote>
+                      ) : (
+                        <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos ?? fatosLiteral}</p>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <EmptyHint text="Narrativa da denúncia não disponível." />

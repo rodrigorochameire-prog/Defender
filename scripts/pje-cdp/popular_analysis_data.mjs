@@ -50,12 +50,21 @@ for (const item of items) {
     imputacao: p.imputacao?.principal ?? ra.imputacao?.principal ?? null,
     resumo_executivo: (p.resumo_executivo ?? []).join("\n\n") || null,
     narrativa_denuncia: (p.resumo_executivo ?? [])[0] ?? null,
+    // Trecho literal "DOS FATOS" da denúncia (régua de adstrição/correlação na instrução)
+    narrativa_denuncia_literal: p.narrativa_denuncia_literal ?? ra.narrativa_denuncia_literal ?? null,
     teses_defesa: (p.teses ?? []).map(t => `${t.nome} — ${t.viabilidade ?? ""}${t.fundamento ? " · " + t.fundamento : ""}`),
     vulnerabilidades_acusacao: p.pontos_criticos ?? ra.pontos_criticos ?? [],
     pendencias: p.pendencias ?? ra.pendencias ?? [],
     perguntas_estrategicas: p.perguntas_estrategicas ?? ra.perguntas_estrategicas ?? {},
-    testemunhas_acusacao: deps.filter(d => ["ofendida", "testemunha_acusacao", "informante"].includes(d.tipo)).map(d => ({ nome: d.nome, vinculo: d.tipo, intimacao: d.intimacao, observacao: d.observacao ?? "" })),
-    testemunhas_defesa: deps.filter(d => d.tipo === "testemunha_defesa").map(d => ({ nome: d.nome, vinculo: d.tipo, intimacao: d.intimacao, observacao: d.observacao ?? "" })),
+    testemunhas_acusacao: deps.filter(d => ["ofendida", "testemunha_acusacao", "informante"].includes(d.tipo)).map(d => ({
+      nome: d.nome, vinculo: d.tipo, intimacao: d.intimacao, observacao: d.observacao ?? "",
+      versaoDelegacia: d.depoimento_ip ?? null, versaoJuizo: d.depoimento_juizo ?? (d.ja_ouvido?.resumo_breve ?? null),
+      perguntasSugeridas: (p.perguntas_estrategicas?.[d.tipo] ?? p.perguntas_estrategicas?.ofendida ?? []).join("\n") || null,
+    })),
+    testemunhas_defesa: deps.filter(d => d.tipo === "testemunha_defesa").map(d => ({
+      nome: d.nome, vinculo: d.tipo, intimacao: d.intimacao, observacao: d.observacao ?? "",
+      versaoDelegacia: d.depoimento_ip ?? null, versaoJuizo: d.depoimento_juizo ?? (d.ja_ouvido?.resumo_breve ?? null),
+    })),
     orientacao_assistido: p.orientacao_assistido ?? ra.orientacao_assistido ?? null,
     medidas_protetivas_vigentes: p.medidas_mpu ?? [],
     // Síntese processual (ato + data) p/ aferir adstrição/correlação na instrução
@@ -68,6 +77,7 @@ for (const item of items) {
       motivo_nao_intimacao: d.motivo_nao_intimacao ?? null,
       comparecimento: d.comparecimento ?? "nao_verificado",
       ja_ouvido: d.ja_ouvido ?? null, forma: d.forma ?? null, observacao: d.observacao ?? "",
+      depoimento_ip: d.depoimento_ip ?? null, depoimento_juizo: d.depoimento_juizo ?? null,
     })),
     documentos_relevantes: p.documentos_relevantes ?? ra.documentos_relevantes ?? [],
     dossie: {

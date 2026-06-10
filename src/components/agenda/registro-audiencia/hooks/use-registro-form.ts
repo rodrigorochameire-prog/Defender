@@ -194,24 +194,41 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
       }
     };
 
-    const imported: Depoente[] = preparacaoData.depoentes.map((t, i) => ({
-      id: `auto-${i}-${t.nome}`,
-      nome: t.nome,
-      tipo: mapTipo(t.tipo ?? "COMUM", t),
-      lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
-      intimado: false,
-      presente: false,
-      statusIntimacao: "pendente" as const,
-      jaOuvido: (t.resumo ? "delegacia" : "nenhum") as Depoente["jaOuvido"],
-      depoimentoDelegacia: t.resumo ?? "",
-      depoimentoAnterior: "",
-      pontosFortes: t.pontosFavoraveis ?? "",
-      pontosFracos: t.pontosDesfavoraveis ?? "",
-      estrategiaInquiricao: t.perguntasSugeridas ?? "",
-      perguntasDefesa: "",
-      depoimentoLiteral: "",
-      analisePercepcoes: t.observacoes ?? "",
-    }));
+    const imported: Depoente[] = preparacaoData.depoentes.map((t, i) => {
+      const tt = t as typeof t & {
+        statusIntimacao?: string | null; comparecimento?: string | null;
+        motivoAusencia?: string | null; formaOitiva?: string | null;
+        jaOuvido?: string | null; jaOuvidoData?: string | null; jaOuvidoPeca?: string | null;
+        depoimentoIp?: string | null; depoimentoJuizo?: string | null;
+      };
+      const status = (tt.statusIntimacao ?? "pendente") as Depoente["statusIntimacao"];
+      const intimado = status === "intimado" || status === "intimado-pessoalmente"
+        || status === "intimado-advogado" || status === "intimado-edital";
+      return {
+        id: `auto-${i}-${t.nome}`,
+        nome: t.nome,
+        tipo: mapTipo(t.tipo ?? "COMUM", t),
+        lado: (t.tipo === "ACUSACAO" ? "acusacao" : t.tipo === "DEFESA" ? "defesa" : undefined) as Depoente["lado"],
+        intimado,
+        presente: tt.comparecimento === "compareceu",
+        statusIntimacao: status,
+        motivoAusencia: tt.motivoAusencia ?? undefined,
+        comparecimento: (tt.comparecimento ?? undefined) as Depoente["comparecimento"],
+        formaOitiva: (tt.formaOitiva ?? undefined) as Depoente["formaOitiva"],
+        jaOuvido: (tt.jaOuvido ?? (t.resumo ? "delegacia" : "nenhum")) as Depoente["jaOuvido"],
+        jaOuvidoData: tt.jaOuvidoData ?? undefined,
+        jaOuvidoPeca: tt.jaOuvidoPeca ?? undefined,
+        jaOuvidoResumo: tt.depoimentoJuizo ?? undefined,
+        depoimentoDelegacia: tt.depoimentoIp ?? t.resumo ?? "",
+        depoimentoAnterior: tt.depoimentoJuizo ?? "",
+        pontosFortes: t.pontosFavoraveis ?? "",
+        pontosFracos: t.pontosDesfavoraveis ?? "",
+        estrategiaInquiricao: t.perguntasSugeridas ?? "",
+        perguntasDefesa: "",
+        depoimentoLiteral: "",
+        analisePercepcoes: t.observacoes ?? "",
+      };
+    });
 
     if (imported.length > 0) {
       setRegistro((prev) => ({ ...prev, depoentes: imported }));
