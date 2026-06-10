@@ -12,6 +12,7 @@
  */
 
 import { z } from "zod";
+import { assertClaudeApiAllowed } from "@/lib/services/claude-api-guard";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
@@ -1035,6 +1036,7 @@ export const briefingRouter = router({
         });
       }
 
+      assertClaudeApiAllowed("briefing.analiseProfunda");
       // 3. Chamar Claude Sonnet via API Anthropic
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {

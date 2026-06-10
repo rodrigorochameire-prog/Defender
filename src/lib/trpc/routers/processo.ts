@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
+import { assertClaudeApiAllowed } from "@/lib/services/claude-api-guard";
 import { db } from "@/lib/db";
 import { driveDocumentSections, driveFiles } from "@/lib/db/schema";
 import { processos, assistidos } from "@/lib/db/schema/core";
@@ -190,6 +191,7 @@ export const processoRouter = router({
         })
         .join("\n");
 
+      assertClaudeApiAllowed("processo.quickSummary");
       // 4. Single Claude call to generate structured summary
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
       const client = new Anthropic();

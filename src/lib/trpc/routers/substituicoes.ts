@@ -2,9 +2,11 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { substituicoes } from "@/lib/db/schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, inArray } from "drizzle-orm";
 import { audiencias, processos } from "@/lib/db/schema";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 const substituicaoInput = z.object({
   unidadeSubstituida: z.string().min(1),
@@ -95,4 +97,66 @@ export const substituicoesRouter = router({
       }
       return { totalAudiencias: rows.length, porAtribuicao, audiencias: rows };
     }),
+
+  /**
+   * Gera a gratificação (ofício + relatório) ENFILEIRANDO uma tarefa para o
+   * daemon do Claude Code (`claude -p`, conta Max — SEM custo de API paga).
+   * O OMBUDS é só o ativador: insere em claude_code_tasks e o daemon, rodando
+   * na máquina dedicada com o Drive montado, executa a skill oficio-gratificacao.
+   */
+  gerarGratificacao: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const [s] = await db.select().from(substituicoes).where(eq(substituicoes.id, input.id)).limit(1);
+      if (!s) throw new TRPCError({ code: "NOT_FOUND", message: "Substituição não encontrada" });
+
+      // Evitar duplicar task pendente/processando para esta substituição
+      const abertas = await db
+        .select({ id: claudeCodeTasks.id, status: claudeCodeTasks.status })
+        .from(claudeCodeTasks)
+        .where(and(eq(claudeCodeTasks.skill, "oficio-gratificacao"), inArray(claudeCodeTasks.status, ["pending", "processing"])));
+      if (abertas.length > 0) {
+        return { jaEnfileirada: true, taskId: abertas[0].id };
+      }
+
+      const escopo = Array.isArray(s.escopoAtribuicoes) ? s.escopoAtribuicoes.join(", ") : "";
+      const prompt = [
+        `Gere a gratificação por substituição seguindo a skill oficio-gratificacao (autônomo, sem perguntar).`,
+        `Unidade substituída: ${s.unidadeSubstituida}`,
+        `Tipo: ${s.tipo}`,
+        `Período: ${s.dataInicio} a ${s.dataFim ?? s.dataInicio}`,
+        `ESCOPO DE VARA (já decidido — não perguntar): ${escopo || "(confirmar nos autos)"}`,
+        `Motivo: ${s.motivo ?? "-"}`,
+        ``,
+        `Passos: (1) ache o próximo número de ofício livre (scripts/proximo_numero.py); (2) levante as petições do Drive por DATA DE ASSINATURA no período, filtrando pela(s) vara(s) do escopo, + audiências do OMBUDS no período/atribuição; (3) gere ofício (modelo recente) + relatório (modelo da natureza), preenchidos; (4) salve os canônicos (ofício em Ofícios/ano e 1-Protocolar; relatório em Substituições e gratificações/Relatórios) e monte o par em PDF no _Enviar ao SEI; (5) retorne JSON: {oficio_numero, oficio_pdf, relatorio_pdf, manifestacoes, audiencias, observacoes}.`,
+      ].join("\n");
+
+      const [task] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          skill: "oficio-gratificacao",
+          prompt,
+          status: "pending",
+          createdBy: (ctx as any)?.user?.id ?? 1,
+          assistidoId: null,
+        })
+        .returning({ id: claudeCodeTasks.id });
+
+      // marca a substituição como concluída (trabalho encerrado, gerando docs)
+      if (s.status === "em_andamento") {
+        await db.update(substituicoes).set({ status: "concluida", updatedAt: new Date() }).where(eq(substituicoes.id, s.id));
+      }
+      return { taskId: task.id, prompt };
+    }),
+
+  /** Status da última task de gratificação (p/ a UI acompanhar o daemon). */
+  statusGeracao: protectedProcedure.query(async () => {
+    const [t] = await db
+      .select({ id: claudeCodeTasks.id, status: claudeCodeTasks.status, etapa: claudeCodeTasks.etapa, resultado: claudeCodeTasks.resultado, erro: claudeCodeTasks.erro, createdAt: claudeCodeTasks.createdAt })
+      .from(claudeCodeTasks)
+      .where(eq(claudeCodeTasks.skill, "oficio-gratificacao"))
+      .orderBy(desc(claudeCodeTasks.createdAt))
+      .limit(1);
+    return t ?? null;
+  }),
 });

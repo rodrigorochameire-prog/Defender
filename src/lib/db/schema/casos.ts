@@ -429,9 +429,7 @@ export type InsertAnaliseCowork = typeof analisesCowork.$inferInsert;
 
 export const claudeCodeTasks = pgTable("claude_code_tasks", {
   id: serial("id").primaryKey(),
-  assistidoId: integer("assistido_id")
-    .notNull()
-    .references(() => assistidos.id),
+  assistidoId: integer("assistido_id").references(() => assistidos.id),
   processoId: integer("processo_id").references(() => processos.id),
   casoId: integer("caso_id").references(() => casos.id),
   skill: text("skill").notNull(),

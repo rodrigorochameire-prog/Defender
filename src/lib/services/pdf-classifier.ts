@@ -11,6 +11,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { assertClaudeApiAllowed } from "./claude-api-guard";
 
 // ==========================================
 // CONFIGURACAO
@@ -26,6 +27,7 @@ const GEMINI_API_KEY =
 let anthropicClient: Anthropic | null = null;
 
 function getAnthropicClient(): Anthropic {
+  assertClaudeApiAllowed("pdf-classifier.classifyPageChunk");
   if (!ANTHROPIC_API_KEY) throw new Error("Anthropic API key nao configurada (ANTHROPIC_API_KEY)");
   if (!anthropicClient) anthropicClient = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
   return anthropicClient;
