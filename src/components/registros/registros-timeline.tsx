@@ -37,6 +37,8 @@ export function RegistrosTimeline({
   onEdit,
 }: Props) {
   const [filtroTipo, setFiltroTipo] = useState<TipoRegistro | null>(null);
+  // Edição inline (fallback quando o pai não fornece onEdit próprio)
+  const [editandoId, setEditandoId] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
   // Busca colapsada por padrão; ⌘K (handler externo) ou clique na lupa expandem.
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -66,6 +68,13 @@ export function RegistrosTimeline({
 
   const deleteMut = trpc.registros.delete.useMutation({
     onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const updateMut = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      setEditandoId(null);
       refetch();
     },
   });
@@ -247,20 +256,89 @@ export function RegistrosTimeline({
         </p>
       ) : (
         <div className="space-y-2">
-          {registros.map((r) => (
-            <RegistroCard
-              key={r.id}
-              registro={r as RegistroCardData}
-              onEdit={onEdit}
-              onDelete={(id) => {
-                if (confirm("Excluir este registro?")) {
-                  deleteMut.mutate({ id });
+          {registros.map((r) =>
+            editandoId === r.id ? (
+              <RegistroInlineEdit
+                key={r.id}
+                registro={r as RegistroCardData}
+                saving={updateMut.isPending}
+                onSave={(titulo, conteudo) =>
+                  updateMut.mutate({ id: r.id, titulo, conteudo })
                 }
-              }}
-            />
-          ))}
+                onCancel={() => setEditandoId(null)}
+              />
+            ) : (
+              <RegistroCard
+                key={r.id}
+                registro={r as RegistroCardData}
+                onEdit={onEdit ?? ((id) => setEditandoId(id))}
+                onDelete={(id) => {
+                  if (confirm("Excluir este registro?")) {
+                    deleteMut.mutate({ id });
+                  }
+                }}
+              />
+            )
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Editor inline de registro — título + conteúdo, no lugar do card.
+ * Cobre o caso de parsing imperfeito da ciência: o defensor corrige o texto
+ * sem precisar excluir e recriar o registro.
+ */
+function RegistroInlineEdit({
+  registro,
+  saving,
+  onSave,
+  onCancel,
+}: {
+  registro: RegistroCardData;
+  saving: boolean;
+  onSave: (titulo: string, conteudo: string) => void;
+  onCancel: () => void;
+}) {
+  const [titulo, setTitulo] = useState(registro.titulo ?? "");
+  const [conteudo, setConteudo] = useState(registro.conteudo ?? "");
+
+  return (
+    <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-300/80 dark:ring-neutral-700 px-4 py-3 space-y-2">
+      <input
+        type="text"
+        value={titulo}
+        onChange={(e) => setTitulo(e.target.value)}
+        placeholder="Título (opcional)"
+        maxLength={120}
+        className="w-full bg-transparent text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 outline-none placeholder:text-neutral-400 placeholder:font-normal"
+      />
+      <textarea
+        value={conteudo}
+        onChange={(e) => setConteudo(e.target.value)}
+        rows={Math.min(10, Math.max(3, conteudo.split("\n").length))}
+        autoFocus
+        className="w-full bg-neutral-50 dark:bg-neutral-800/40 rounded-md text-[13px] text-neutral-700 dark:text-neutral-300 leading-relaxed p-2 outline-none border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700 resize-y"
+      />
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-[11px] px-2.5 py-1 rounded-md text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          disabled={saving || !conteudo.trim()}
+          onClick={() => onSave(titulo.trim(), conteudo.trim())}
+          className="text-[11px] px-2.5 py-1 rounded-md bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-medium hover:opacity-90 disabled:opacity-50 cursor-pointer"
+        >
+          {saving ? "Salvando…" : "Salvar"}
+        </button>
+      </div>
     </div>
   );
 }

@@ -11,6 +11,11 @@ import { demandas, processos, assistidos } from "@/lib/db/schema";
 import { eq, ilike, and, or, gte, isNull, inArray, sql } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 import { classificarMatchNome, normalizarNome } from "@/lib/assistido-match";
+import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
+import {
+  aplicarDesignacaoAudiencia,
+  limparCalendarSupersedidas,
+} from "@/lib/registros/aplicar-designacao-audiencia";
 
 // ============================================================================
 // TIPOS
@@ -331,6 +336,31 @@ export async function importarDemandas(
           atribuicao: targetAtribuicao,
         }).returning();
         processo = newProcesso;
+      }
+
+      // 2b. Designação de audiência no texto do ato (movimento automatizado
+      //     do PJe, ex. "AUDIÊNCIA JUSTIFICAÇÃO DESIGNADA CONDUZIDA POR
+      //     28/07/2026 08:20 EM/PARA VARA ...") → agenda já na importação.
+      //     Idempotente: dedupe por processo+dia dentro do helper, então
+      //     reimportações não duplicam.
+      const textoAudiencia = [row.ato, row.providencias].filter(Boolean).join("\n");
+      const detAudiencia = detectarDesignacaoAudiencia(textoAudiencia);
+      if (detAudiencia) {
+        try {
+          const resultado = await aplicarDesignacaoAudiencia(db, {
+            processoId: processo.id,
+            assistidoId: assistido.id,
+            defensorId,
+            det: detAudiencia,
+            origem: "importação de intimação do PJe",
+          });
+          limparCalendarSupersedidas(processo.id, resultado.supersedidas);
+        } catch (err) {
+          console.error(
+            `[pje-import] falha ao agendar audiência detectada (processo ${processo.numeroAutos}):`,
+            err,
+          );
+        }
       }
 
       // 3. Converter data de expedição para busca de duplicata

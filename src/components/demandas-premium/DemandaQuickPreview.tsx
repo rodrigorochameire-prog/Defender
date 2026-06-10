@@ -17,6 +17,7 @@ import {
   Check,
   Archive,
   Trash2,
+  Pencil,
   ChevronUp,
   ChevronDown,
   ChevronRight,
@@ -478,14 +479,14 @@ export function DemandaQuickPreview({
     onSuccess: () => { void refetchDriveFolder(); },
   });
 
-  // Próxima audiência do processo
-  const { data: audienciasProximas, refetch: refetchAudiencias } = trpc.audiencias.list.useQuery(
-    { apenasProximas: true },
-    { enabled: !!demanda?.processoId && open }
-  );
-  const proximaAudiencia = audienciasProximas?.find(
-    (a: any) => a.processoId === demanda?.processoId || a.processo?.id === demanda?.processoId
-  );
+  // Próxima audiência do processo — query dedicada que ignora canceladas e
+  // realizadas (a antiga list+find mostrava audiência cancelada por
+  // redesignação como se ainda estivesse de pé)
+  const { data: proximaAudiencia, refetch: refetchAudiencias } =
+    trpc.audiencias.proximaAgendada.useQuery(
+      { processoId: demanda?.processoId ?? 0 },
+      { enabled: !!demanda?.processoId && open }
+    );
 
   // Pasta do assistido no Drive — onde ficam PDFs de análise + mídias.
   // Query lightweight (só driveFolderId), só corre quando o sheet está aberto.
@@ -1719,20 +1720,10 @@ export function DemandaQuickPreview({
 
         {/* ===== PRÓXIMA AUDIÊNCIA ===== */}
         {proximaAudiencia && (
-          <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-              <span className="text-[10px] text-neutral-400 tracking-wider font-medium">Próxima Audiência</span>
-            </div>
-            <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-              {new Date(proximaAudiencia.dataHora).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
-              {proximaAudiencia.horario ? ` · ${proximaAudiencia.horario}` : ""}
-            </p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
-              {proximaAudiencia.tipo}
-              {proximaAudiencia.local ? ` · ${proximaAudiencia.local}` : ""}
-            </p>
-          </div>
+          <ProximaAudienciaBlock
+            audiencia={proximaAudiencia}
+            onChanged={() => refetchAudiencias()}
+          />
         )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
@@ -1773,5 +1764,157 @@ export function DemandaQuickPreview({
         assistidoNome={demanda.assistido}
       />
     </Sheet>
+  );
+}
+
+/**
+ * Bloco "Próxima Audiência" com edição/exclusão inline — quando o parsing da
+ * ciência erra (hora 00:00, tipo trocado) ou a audiência caiu, o defensor
+ * corrige aqui mesmo, sem sair do sheet.
+ */
+function ProximaAudienciaBlock({
+  audiencia,
+  onChanged,
+}: {
+  audiencia: {
+    id: number;
+    dataAudiencia: Date | string;
+    horario: string | null;
+    tipo: string | null;
+    local: string | null;
+  };
+  onChanged: () => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  const dt = new Date(audiencia.dataAudiencia);
+  // Componentes locais de Camaçari (UTC-3) — `horario` é a fonte da verdade
+  const dataLocal = dt.toLocaleDateString("en-CA", { timeZone: "America/Bahia" });
+  const horaLocal =
+    audiencia.horario ??
+    dt.toLocaleTimeString("pt-BR", { timeZone: "America/Bahia", hour: "2-digit", minute: "2-digit" });
+
+  const [data, setData] = useState(dataLocal);
+  const [hora, setHora] = useState(horaLocal);
+  const [tipo, setTipo] = useState(audiencia.tipo ?? "");
+  const [local, setLocal] = useState(audiencia.local ?? "");
+
+  const updateMut = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      setEditando(false);
+      onChanged();
+    },
+  });
+  const deleteMut = trpc.audiencias.delete.useMutation({
+    onSuccess: () => onChanged(),
+  });
+
+  const inputCls =
+    "w-full bg-neutral-50 dark:bg-neutral-800/40 rounded-md text-xs px-2 py-1.5 outline-none border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700 text-neutral-700 dark:text-neutral-300";
+
+  return (
+    <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5 group">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+        <span className="text-[10px] text-neutral-400 tracking-wider font-medium">Próxima Audiência</span>
+        <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={() => {
+              if (!editando) {
+                setData(dataLocal);
+                setHora(horaLocal);
+                setTipo(audiencia.tipo ?? "");
+                setLocal(audiencia.local ?? "");
+              }
+              setEditando((v) => !v);
+            }}
+            title={editando ? "Cancelar edição" : "Editar audiência"}
+            aria-label={editando ? "Cancelar edição" : "Editar audiência"}
+            className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+          >
+            {editando ? (
+              <X className="w-3 h-3 text-neutral-400" />
+            ) : (
+              <Pencil className="w-3 h-3 text-neutral-400" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm("Excluir esta audiência? O evento do calendário também será removido.")) {
+                deleteMut.mutate({ id: audiencia.id });
+              }
+            }}
+            title="Excluir audiência"
+            aria-label="Excluir audiência"
+            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+          >
+            <Trash2 className="w-3 h-3 text-neutral-400 hover:text-red-500" />
+          </button>
+        </div>
+      </div>
+
+      {editando ? (
+        <div className="space-y-1.5">
+          <div className="flex gap-1.5">
+            <input
+              type="date"
+              value={data}
+              onChange={(e) => setData(e.target.value)}
+              className={cn(inputCls, "flex-1")}
+            />
+            <input
+              type="time"
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+              className={cn(inputCls, "w-24")}
+            />
+          </div>
+          <input
+            type="text"
+            value={tipo}
+            onChange={(e) => setTipo(e.target.value)}
+            placeholder="Tipo (ex.: Audiência de Justificação)"
+            className={inputCls}
+          />
+          <input
+            type="text"
+            value={local}
+            onChange={(e) => setLocal(e.target.value)}
+            placeholder="Local / vara"
+            className={inputCls}
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={updateMut.isPending || !data}
+              onClick={() =>
+                updateMut.mutate({
+                  id: audiencia.id,
+                  dataAudiencia: `${data}T${hora || "00:00"}:00-03:00`,
+                  horario: hora || undefined,
+                  tipo: tipo.trim() || undefined,
+                  local: local.trim() || undefined,
+                })
+              }
+              className="text-[11px] px-2.5 py-1 rounded-md bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-medium hover:opacity-90 disabled:opacity-50 cursor-pointer"
+            >
+              {updateMut.isPending ? "Salvando…" : "Salvar"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
+            {dt.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "America/Bahia" })}
+            {audiencia.horario ? ` · ${audiencia.horario}` : ""}
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
+            {audiencia.tipo}
+            {audiencia.local ? ` · ${audiencia.local}` : ""}
+          </p>
+        </>
+      )}
+    </div>
   );
 }

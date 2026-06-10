@@ -793,6 +793,7 @@ export const audienciasRouter = router({
           dataAudiencia: audiencias.dataAudiencia,
           horario: audiencias.horario,
           tipo: audiencias.tipo,
+          local: audiencias.local,
           status: audiencias.status,
         })
         .from(audiencias)
