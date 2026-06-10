@@ -13,6 +13,7 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
+import { assertClaudeApiAllowed } from "./claude-api-guard";
 
 // ==========================================
 // CONFIGURAÇÃO
@@ -151,6 +152,7 @@ export async function revisarOficio(
   destinatario: string,
   contextoAdicional?: string
 ): Promise<RevisaoOficioResult> {
+  assertClaudeApiAllowed("anthropic.revisarOficio");
   const client = getClient();
 
   const prompt = `## TAREFA
@@ -305,6 +307,7 @@ ${conteudo}
 export async function generateOficio(
   input: GenerateOficioInput
 ): Promise<GenerateOficioResult> {
+  assertClaudeApiAllowed("anthropic.generateOficio");
   const client = getClient();
 
   const systemPrompt = `${CONTEXTO_JURIDICO_SISTEMA}
@@ -453,6 +456,7 @@ export async function analisarDadosEstruturados(
   dadosEstruturados: Record<string, unknown>,
   pergunta: string
 ): Promise<InsightEstruturadoResult> {
+  assertClaudeApiAllowed("anthropic.analisarDadosEstruturados");
   const client = getClient();
 
   // Guard: verificar tamanho do input

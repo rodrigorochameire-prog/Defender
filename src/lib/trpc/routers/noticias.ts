@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
+import { assertClaudeApiAllowed } from "@/lib/services/claude-api-guard";
 import { db } from "@/lib/db";
 import { noticiasJuridicas, noticiasFontes, noticiasTemas, noticiasFavoritos, noticiasProcessos, jurisprudenciaJulgados, noticiasPastas, noticiasPastaItens } from "@/lib/db/schema";
 import { processos } from "@/lib/db/schema/core";
@@ -40,6 +41,7 @@ async function extrairTeseParaJurisprudencia(noticiaId: number): Promise<void> {
 
   // 4. Chamar Claude para extrair tese
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  assertClaudeApiAllowed("noticias");
   const client = new Anthropic();
 
   const message = await client.messages.create({
@@ -126,6 +128,7 @@ async function vincularNoticiasAProcessos(noticiaId: number, userId: number): Pr
   if (processosList.length === 0) return;
 
   const { Anthropic } = await import("@anthropic-ai/sdk");
+  assertClaudeApiAllowed("noticias");
   const client = new Anthropic();
 
   const resumo = (noticia.analiseIa as Record<string, string> | null)?.resumoExecutivo ?? "";
@@ -718,6 +721,7 @@ export const noticiasRouter = router({
       }).join("\n");
 
       const Anthropic = (await import("@anthropic-ai/sdk")).default;
+      assertClaudeApiAllowed("noticias");
       const client = new Anthropic();
 
       const periodoTexto = `${dataInicio.toLocaleDateString("pt-BR")} a ${agora.toLocaleDateString("pt-BR")}`;

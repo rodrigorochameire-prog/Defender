@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2, ArrowLeftRight, Scale, Trash2, FileText } from "lucide-react";
+import { Plus, Loader2, ArrowLeftRight, Scale, Trash2, FileText, Sparkles, CheckCircle2, AlertTriangle } from "lucide-react";
 import {
   DP_ATRIBUICOES,
   UNIDADES_CONHECIDAS,
@@ -117,6 +117,16 @@ function SubstituicaoCard({ s }: { s: any }) {
   const remover = trpc.substituicoes.remover.useMutation({
     onSuccess: () => { utils.substituicoes.listar.invalidate(); toast.success("Removida"); },
   });
+  const gerar = trpc.substituicoes.gerarGratificacao.useMutation({
+    onSuccess: (r) => {
+      utils.substituicoes.listar.invalidate();
+      utils.substituicoes.statusGeracao.invalidate();
+      if ((r as any).jaEnfileirada) toast.info("Já há uma geração em andamento.");
+      else toast.success("Tarefa enviada ao Claude Code (daemon). Acompanhe abaixo.");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const podeGerar = s.status === "em_andamento" || s.status === "concluida";
   return (
     <Card className="p-3.5">
       <div className="flex items-start justify-between gap-2">
@@ -149,6 +159,41 @@ function SubstituicaoCard({ s }: { s: any }) {
           <button onClick={() => remover.mutate({ id: s.id })} className="p-1 text-neutral-400 hover:text-rose-600 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
+      {podeGerar && (
+        <div className="mt-2.5 pt-2.5 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-2">
+          <span className="text-[10px] text-neutral-400">Ofício + relatório via Claude Code (conta Max, sem custo de API)</span>
+          <Button size="sm" variant="outline" disabled={gerar.isPending}
+            onClick={() => gerar.mutate({ id: s.id })}>
+            {gerar.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Sparkles className="w-3.5 h-3.5 mr-1" /> Gerar gratificação</>}
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function StatusGeracao() {
+  const { data: t } = trpc.substituicoes.statusGeracao.useQuery(undefined, {
+    refetchInterval: (q) => {
+      const st = (q.state.data as any)?.status;
+      return st === "pending" || st === "processing" ? 5000 : false;
+    },
+  });
+  if (!t) return null;
+  const ativo = t.status === "pending" || t.status === "processing";
+  const ok = t.status === "completed";
+  const res: any = t.resultado ?? {};
+  return (
+    <Card className="p-3">
+      <div className="flex items-center gap-2">
+        {ativo ? <Loader2 className="w-4 h-4 animate-spin text-amber-500" /> : ok ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertTriangle className="w-4 h-4 text-rose-500" />}
+        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-200">
+          Geração de gratificação — {t.status}{t.etapa ? ` · ${t.etapa}` : ""}
+        </span>
+      </div>
+      {ativo && <p className="text-[11px] text-neutral-400 mt-1">O daemon do Claude Code está processando (precisa estar ligado na máquina dedicada, com o Drive montado).</p>}
+      {ok && res.oficio_numero && <p className="text-[11px] text-neutral-600 dark:text-neutral-300 mt-1">Ofício {res.oficio_numero} gerado · {res.manifestacoes ?? "?"} manifestações. Confira no <span className="font-medium">_Enviar ao SEI</span>.</p>}
+      {t.erro && <p className="text-[11px] text-rose-500 mt-1">{t.erro}</p>}
     </Card>
   );
 }
@@ -167,6 +212,8 @@ export default function SubstituicoesPage() {
       </div>
 
       {novo && <NovaSubstituicaoForm onDone={() => setNovo(false)} />}
+
+      <StatusGeracao />
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-neutral-400" /></div>
