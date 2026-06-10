@@ -142,11 +142,14 @@ export function DayEventsSheet({
     (a.horarioInicio || "").localeCompare(b.horarioInicio || ""),
   );
 
-  // Contagem por patrocínio (só audiências reais, ignora cancelados/atendimentos)
+  // Contagem por patrocínio (só audiências reais de titularidade — ignora
+  // cancelados, atendimentos e eventos de mutirão, que não são patrocínio DPE)
   const { nDpe, nAdv } = useMemo(() => {
     let dpe = 0, adv = 0;
     for (const ev of eventos) {
       if (ev.fonte !== "audiencias" || isEventoCancelado(ev.status)) continue;
+      const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+      if (filterKey === "MUTIRAO" || filterKey === "MUTIRAO_PROTEGE") continue;
       if (ev.tipoPatrocinio === "PARTICULAR") adv++;
       else dpe++;
     }
@@ -222,25 +225,37 @@ export function DayEventsSheet({
           {/* ===== HERO CARD — branco com outline (Padrão Defender) ===== */}
           <div className="mx-3 mt-3 mb-4 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800">
             <div className="flex items-start gap-3.5">
-              {/* Avatar calendário */}
+              {/* Avatar calendário (mês + dia — o dia da semana vive no título) */}
               <div className="w-11 h-11 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex flex-col items-center justify-center shrink-0">
                 <span className="text-[9px] font-medium text-neutral-500 dark:text-neutral-500 leading-none uppercase">
-                  {format(date, "EEE", { locale: ptBR }).replace(".", "")}
+                  {format(date, "MMM", { locale: ptBR }).replace(".", "")}
                 </span>
                 <span className="text-base font-bold text-neutral-700 dark:text-neutral-200 leading-tight">
                   {format(date, "d")}
                 </span>
               </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 font-medium capitalize">
-                  {dayName}
-                </p>
-                <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight capitalize">
-                  {dayDate}
-                </h2>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-h-[28px]">
+                  <h2
+                    className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate"
+                    title={`${dayName}, ${dayDate}`}
+                  >
+                    {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
+                  </h2>
+                  <span
+                    className="ml-auto shrink-0 h-[22px] inline-flex items-center text-[10px] font-medium tabular-nums text-neutral-500 dark:text-neutral-500 px-2 rounded-full bg-neutral-100 dark:bg-neutral-800"
+                    title={nAdv > 0 ? `${nDpe} da Defensoria · ${nAdv} com advogado constituído (mutirão fora da conta)` : undefined}
+                  >
+                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                    {nAdv > 0 && (
+                      <span className="text-neutral-400 dark:text-neutral-600 font-normal">&nbsp;· {nDpe} DPE · {nAdv} adv</span>
+                    )}
+                  </span>
+                </div>
 
                 {/* Filtro de atribuições inline (pills Padrão Defender) */}
-                <div className="flex items-center flex-wrap gap-1.5 mt-2">
+                {(dayAtribuicoes.length > 1 || nAdv > 0) && (
+                <div className="flex items-center flex-wrap gap-1.5 mt-1.5">
                   {dayAtribuicoes.length > 1 &&
                     dayAtribuicoes.map(({ key, color, Icon, label, shortLabel, count }) => {
                       const isActive = activeAtribFilter === key;
@@ -302,19 +317,8 @@ export function DayEventsSheet({
                       {ocultarAdv ? "adv ocultos" : "ocultar adv"}
                     </button>
                   )}
-                  <span
-                    className={cn(
-                      "h-[22px] inline-flex items-center text-[10px] font-medium tabular-nums text-neutral-500 dark:text-neutral-500 px-2 rounded-full bg-neutral-100 dark:bg-neutral-800",
-                      nAdv === 0 && "ml-auto",
-                    )}
-                    title={nAdv > 0 ? `${nDpe} da Defensoria · ${nAdv} com advogado constituído` : undefined}
-                  >
-                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
-                    {nAdv > 0 && (
-                      <span className="text-neutral-400 dark:text-neutral-600 font-normal">&nbsp;· {nDpe} DPE · {nAdv} adv</span>
-                    )}
-                  </span>
                 </div>
+                )}
               </div>
             </div>
           </div>
