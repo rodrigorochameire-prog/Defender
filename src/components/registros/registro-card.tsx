@@ -96,7 +96,9 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
           <time className="text-[10.5px] text-neutral-500 dark:text-neutral-400 tabular-nums">
             {format(data, "dd 'de' MMM · HH:mm", { locale: ptBR })}
           </time>
-          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex gap-0.5">
+          {/* Ações: hover-reveal no desktop; sempre visíveis em telas de toque
+              (sem hover não há como descobri-las — era impossível editar/excluir no iPad) */}
+          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity flex gap-0.5">
             {onEdit && (
               <button
                 type="button"

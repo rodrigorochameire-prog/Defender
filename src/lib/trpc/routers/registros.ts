@@ -4,6 +4,11 @@ import { db, withTransaction, registros, demandas, users, processos, assistidos,
 import { registroAnexos } from "@/lib/db/schema/agenda";
 import { mirrorAnexoToDrive } from "@/lib/registros/mirror-anexo-to-drive";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
+import {
+  aplicarDesignacaoAudiencia,
+  limparCalendarSupersedidas,
+  type AudienciaSupersedida,
+} from "@/lib/registros/aplicar-designacao-audiencia";
 import { ATO_CIENCIA_DESIGNACAO, ATO_CIENCIA_REDESIGNACAO } from "@/lib/audiencia-parser";
 import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -213,8 +218,12 @@ export const registrosRouter = router({
           data: string;
           horario: string;
           tipo: string;
+          atualizada?: boolean;
         } | null = null;
         let atoAtualizado: string | null = null;
+        // Audiências futuras canceladas por redesignação — eventos do Google
+        // Calendar são removidos best-effort após o commit.
+        let audienciasSupersedidas: AudienciaSupersedida[] = [];
         if (input.tipo === "ciencia" && input.processoId) {
           const det = detectarDesignacaoAudiencia(input.conteudo);
           if (det) {
@@ -238,62 +247,21 @@ export const registrosRouter = router({
                 atoAtualizado = novoAto;
               }
             }
-            const inicioDia = new Date(`${det.data}T00:00:00-03:00`);
-            const fimDia = new Date(`${det.data}T23:59:59-03:00`);
-            const jaExiste = await tx
-              .select({ id: audiencias.id })
-              .from(audiencias)
-              .where(
-                and(
-                  eq(audiencias.processoId, input.processoId),
-                  gte(audiencias.dataAudiencia, inicioDia),
-                  lte(audiencias.dataAudiencia, fimDia)
-                )
-              )
-              .limit(1);
-            if (jaExiste.length === 0) {
-              const [proc] = await tx
-                .select({ numero: processos.numeroAutos })
-                .from(processos)
-                .where(eq(processos.id, input.processoId))
-                .limit(1);
-              const [assistido] = await tx
-                .select({ nome: assistidos.nome })
-                .from(assistidos)
-                .where(eq(assistidos.id, input.assistidoId))
-                .limit(1);
-              const [aud] = await tx
-                .insert(audiencias)
-                .values({
-                  processoId: input.processoId,
-                  assistidoId: input.assistidoId,
-                  // hora local de Camaçari (UTC-3) gravada como UTC verdadeiro;
-                  // `horario` é a fonte da verdade de exibição
-                  dataAudiencia: new Date(`${det.data}T${det.horario}:00-03:00`),
-                  horario: det.horario,
-                  tipo: det.tipo.slice(0, 50),
-                  titulo: `${det.tipo} - ${assistido?.nome ?? ""} - ${proc?.numero ?? ""}`.trim(),
-                  descricao:
-                    `Agendada automaticamente a partir de registro de ciência (designação detectada).` +
-                    (det.modalidade ? `\nModalidade: ${det.modalidade}` : "") +
-                    `\nTrecho: "${det.trecho}"`,
-                  status: "agendada",
-                  defensorId: ctx.user.id,
-                })
-                .returning({ id: audiencias.id });
-              if (aud) {
-                // Vincula a audiência ao registro de ciência (selo durável na timeline)
-                await tx
-                  .update(registros)
-                  .set({ audienciaId: aud.id })
-                  .where(eq(registros.id, registro.id));
-                audienciaCriada = {
-                  id: aud.id,
-                  data: det.data,
-                  horario: det.horario,
-                  tipo: det.tipo,
-                };
-              }
+            const resultado = await aplicarDesignacaoAudiencia(tx, {
+              processoId: input.processoId,
+              assistidoId: input.assistidoId,
+              defensorId: ctx.user.id,
+              det,
+              origem: "registro de ciência",
+            });
+            audienciasSupersedidas = resultado.supersedidas;
+            if (resultado.audiencia) {
+              // Vincula a audiência ao registro de ciência (selo durável na timeline)
+              await tx
+                .update(registros)
+                .set({ audienciaId: resultado.audiencia.id })
+                .where(eq(registros.id, registro.id));
+              audienciaCriada = resultado.audiencia;
             }
           }
         }
@@ -309,8 +277,23 @@ export const registrosRouter = router({
           });
         }
 
-        return { registro, audienciaCriada, medidasCriadas, atoAtualizado };
+        return {
+          registro,
+          audienciaCriada,
+          medidasCriadas,
+          atoAtualizado,
+          audienciasSupersedidas,
+        };
       });
+
+      // Remove do Google Calendar os eventos das audiências canceladas por
+      // redesignação (best-effort, fora da transação)
+      if (created.registro.processoId) {
+        limparCalendarSupersedidas(
+          created.registro.processoId,
+          created.audienciasSupersedidas
+        );
+      }
 
       // Atualiza a célula "Providências" da planilha (fire-and-forget)
       syncProvidenciasToSheet(created.registro.demandaId);
