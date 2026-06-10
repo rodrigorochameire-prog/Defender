@@ -350,8 +350,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     if (fatos || fatosLiteral) s.push({ id: "fatos", label: "Fatos" });
     if (cronologia.length) s.push({ id: "sintese", label: "Síntese" });
     if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
-    const nDep = depoentes.length || depoentesDetalhe.length;
+    const nDep = depoentesDetalhe.length || depoentes.length;
     if (nDep) s.push({ id: "depoentes", label: "Depoentes", count: nDep });
+    if (depoentes.length) s.push({ id: "depoimentos", label: "Depoimentos", count: depoentes.length });
     if (contradicoes.length) s.push({ id: "contradicoes", label: "Contradições" });
     if (laudos.length) s.push({ id: "laudos", label: "Laudos" });
     if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
@@ -756,8 +757,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                 )}
                 </>)}
 
-                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length || depoentesDetalhe.length} defaultOpen>
-                  <PainelDepoentesStatus depoentes={depoentesDetalhe} />
+                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
+                  {depoentesDetalhe.length > 0 ? (
+                    <PainelDepoentesStatus depoentes={depoentesDetalhe} />
+                  ) : (
+                    <EmptyHint text="Status dos depoentes não disponível." />
+                  )}
+                </CollapsibleSection>
+
+                <CollapsibleSection id="depoimentos" label="Depoimentos" count={depoentes.length} defaultOpen>
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => {
@@ -811,9 +819,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         );
                       })}
                     </div>
-                  ) : depoentesDetalhe.length === 0 ? (
-                    <EmptyHint text="Nenhum depoente cadastrado." />
-                  ) : null}
+                  ) : (
+                    <EmptyHint text="Sem síntese de depoimentos (IP/juízo) nos autos." />
+                  )}
                 </CollapsibleSection>
 
                 {!dossieV2 && (<>
