@@ -6,8 +6,10 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Edit3, Loader2, Scale, Trash2, X,
+  AlertTriangle, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
 } from "lucide-react";
+import Link from "next/link";
+import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
@@ -108,6 +110,64 @@ function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** Banner do rito — foco + lembretes específicos do subtipo da audiência. */
+function SubtipoBanner({ subtipo, processoNum }: { subtipo: ReturnType<typeof detectarSubtipo>; processoNum?: string | null }) {
+  const cfg = SUBTIPO_CONFIG[subtipo];
+  const [open, setOpen] = useState(false);
+  if (!cfg || subtipo === "indefinido") return null;
+  const cores = corBadge(cfg.cor);
+  const Icon = cfg.icon;
+
+  // Sessão do Júri → direciona ao Cockpit em vez da preparação padrão.
+  if (cfg.direcionaCockpit) {
+    return (
+      <div className={cn("rounded-xl border p-3 mb-3", cores.border, cores.bgSubtle)}>
+        <div className="flex items-start gap-2.5">
+          <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", cores.text)} />
+          <div className="flex-1 min-w-0">
+            <div className={cn("text-xs font-semibold", cores.text)}>{cfg.label}</div>
+            <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">
+              Esta é uma sessão de plenário — a preparação e o acompanhamento ao vivo ficam no Cockpit do Júri.
+            </p>
+            <Link
+              href={`/admin/juri/cockpit${processoNum ? `?processo=${encodeURIComponent(processoNum)}` : ""}`}
+              className={cn("inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white transition-opacity hover:opacity-90", cores.bg)}
+            >
+              Abrir Cockpit do Júri
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("rounded-xl border p-3 mb-3", cores.border, cores.bgSubtle)}>
+      <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-start gap-2.5 text-left cursor-pointer">
+        <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", cores.text)} />
+        <div className="flex-1 min-w-0">
+          <div className={cn("text-xs font-semibold", cores.text)}>{cfg.label}</div>
+          <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">{cfg.foco}</p>
+        </div>
+        {cfg.lembretes.length > 0 && (
+          <span className="text-[9px] text-neutral-400 shrink-0 mt-0.5">{open ? "menos" : "lembretes"}</span>
+        )}
+      </button>
+      {open && cfg.lembretes.length > 0 && (
+        <ul className="mt-2 pl-1 space-y-1 border-t border-dashed border-neutral-200 dark:border-neutral-700 pt-2">
+          {cfg.lembretes.map((l, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-[10.5px] text-neutral-600 dark:text-neutral-400 leading-snug">
+              <Lightbulb className={cn("w-2.5 h-2.5 mt-0.5 shrink-0", cores.text)} />
+              <span>{l}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -231,6 +291,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  // Subtipo do rito — define o foco/lembretes do banner e quais seções de
+  // instrução fazem sentido (AIJ/PAP/plenário = completas; justificação/
+  // admonitória/ANPP = enxutas, sem ordem do art. 400).
+  const subtipo = useMemo(
+    () => detectarSubtipo(
+      evento?.tipoAudiencia ?? evento?.tipo,
+      (ctx?.processo as any)?.classeProcessual ?? evento?.classeProcessual,
+      evento?.atribuicaoKey ?? evento?.atribuicao ?? (ctx?.processo as any)?.atribuicao,
+    ),
+    [evento, ctx],
+  );
+  const subtipoCfg = SUBTIPO_CONFIG[subtipo];
 
   const dataHora = useMemo(() => {
     if (!evento) return null;
@@ -579,6 +652,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           })()}
 
           <div className="px-3 pb-4 space-y-3">
+            {!isLoading && <SubtipoBanner subtipo={subtipo} processoNum={processoNum} />}
+
             {isLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />

@@ -129,8 +129,9 @@ export function useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento }: U
 
   // Subtipo detectado a partir do tipo do evento + classe processual
   const subtipoAuto: SubtipoAudiencia = detectarSubtipo(
-    evento.tipo ?? evento.tipoAudiencia,
+    evento.tipoAudiencia ?? evento.tipo,
     evento.classeProcessual ?? evento.processo?.classeProcessual,
+    evento.atribuicaoKey ?? evento.atribuicao ?? evento.processo?.atribuicao,
   );
   const [subtipoOverride, setSubtipoOverride] = useState<SubtipoAudiencia | null>(null);
   const subtipoAudiencia: SubtipoAudiencia = subtipoOverride ?? subtipoAuto;
