@@ -51,14 +51,8 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
         </div>
       )}
 
-      {dossie.resumo && dossie.resumo.length > 0 && (
-        <div className="space-y-1.5">
-          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Resumo</h4>
-          {dossie.resumo.map((p, i) => (
-            <p key={`${i}-${p.slice(0, 24)}`} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{p}</p>
-          ))}
-        </div>
-      )}
+      {/* Resumo NÃO é repetido aqui — vive na seção "Resumo Executivo" do painel,
+          evitando redundância. O Dossiê foca em teses/fragilidades/perguntas/providências. */}
 
       {dossie.teses && dossie.teses.length > 0 && (
         <div className="space-y-2">

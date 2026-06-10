@@ -37,6 +37,97 @@ function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
 }
 
+const INTIMACAO_TONE: Record<string, string> = {
+  intimado: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  dispensada: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+  pendente: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  nao_intimado: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+  desconhecido: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+};
+const INTIMACAO_LABEL: Record<string, string> = {
+  intimado: "intimado", dispensada: "dispensada", pendente: "pendente",
+  nao_intimado: "não intimado", desconhecido: "intimação a verificar",
+};
+const MOTIVO_LABEL: Record<string, string> = {
+  nao_localizado: "não localizado", mandado_nao_cumprido: "mandado não cumprido",
+  endereco_invalido: "endereço inválido", em_diligencia: "em diligência",
+  recusa_recebimento: "recusou ciência", precatoria_devolvida: "precatória devolvida",
+  precatoria_pendente: "precatória pendente", mandado_nao_emitido: "mandado não expedido",
+  falta_de_informacoes: "sem informação nos autos",
+};
+const TIPO_DEP_LABEL: Record<string, string> = {
+  ofendida: "ofendida", testemunha_acusacao: "test. acusação",
+  testemunha_defesa: "test. defesa", informante: "informante",
+  interrogando: "interrogando", perito: "perito",
+};
+
+/** Painel de status dos depoentes — quem será ouvido, intimação e motivo. */
+function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
+  if (!depoentes?.length) return null;
+  const jaOuvidos = depoentes.filter((d) => d.ja_ouvido?.sim || d.comparecimento === "ouvido_anteriormente").length;
+  const naoIntimados = depoentes.filter((d) => d.intimacao === "nao_intimado").length;
+  const aVerificar = depoentes.filter((d) => d.intimacao === "desconhecido").length;
+  return (
+    <div className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden mb-2">
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-900/60 text-[10px] font-medium text-neutral-500 flex-wrap">
+        <span>{depoentes.length} a ouvir</span>
+        {jaOuvidos > 0 && <span className="text-emerald-600 dark:text-emerald-400">· {jaOuvidos} já ouvido(s)</span>}
+        {naoIntimados > 0 && <span className="text-rose-600 dark:text-rose-400">· {naoIntimados} não intimado(s)</span>}
+        {aVerificar > 0 && <span className="text-amber-600 dark:text-amber-400">· {aVerificar} a verificar</span>}
+      </div>
+      <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
+        {depoentes.map((d, i) => {
+          const intim = (d.intimacao ?? "desconhecido") as string;
+          const jo = d.ja_ouvido?.sim || d.comparecimento === "ouvido_anteriormente";
+          return (
+            <div key={`${i}-${d.nome}`} className="flex items-start gap-2 px-2.5 py-1.5">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-200 truncate">{d.nome}</span>
+                  {TIPO_DEP_LABEL[d.tipo] && (
+                    <span className="text-[9px] text-neutral-400">{TIPO_DEP_LABEL[d.tipo]}</span>
+                  )}
+                </div>
+                {(d.motivo_nao_intimacao || d.observacao) && (
+                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-snug mt-0.5">
+                    {d.motivo_nao_intimacao ? (MOTIVO_LABEL[d.motivo_nao_intimacao] ?? d.motivo_nao_intimacao) : d.observacao}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <span className={cn("text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap", INTIMACAO_TONE[intim] ?? INTIMACAO_TONE.desconhecido)}>
+                  {INTIMACAO_LABEL[intim] ?? intim}
+                </span>
+                {jo && (
+                  <span className="text-[8.5px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap">
+                    já ouvido{d.ja_ouvido?.data ? ` ${d.ja_ouvido.data}` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Síntese processual — linha do tempo ato + data. */
+function SinteseProcessual({ eventos }: { eventos: any[] }) {
+  if (!eventos?.length) return null;
+  return (
+    <ol className="relative border-l border-neutral-200 dark:border-neutral-800 ml-1 space-y-2.5 pl-3">
+      {eventos.map((e, i) => (
+        <li key={`${i}-${e.data}`} className="relative">
+          <span className="absolute -left-[15px] top-1 text-[10px] leading-none">{e.marcador ?? "⚪"}</span>
+          <div className="text-[10px] font-mono tabular-nums text-neutral-400">{e.data ?? "—"}</div>
+          <div className="text-[11px] text-neutral-700 dark:text-neutral-300 leading-snug">{e.evento}</div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function extractArray(obj: Record<string, any> | null | undefined, ...keys: string[]): any[] {
   if (!obj) return [];
   const nested = (obj as any).vvd_analise_audiencia;
@@ -175,6 +266,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const versaoDelegacia = extractString(ad, "versao_delegacia", "versao_reu_delegacia");
   const versaoJuizo = extractString(ad, "versao_juizo", "versao_audiencia");
   const diligencias = ctx?.diligencias ?? [];
+  const cronologia = extractArray(ad, "cronologia");
+  const depoentesDetalhe = extractArray(ad, "depoentes_detalhe");
   const testemunhasDB = ctx?.testemunhas ?? [];
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
@@ -253,8 +346,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     const s: ToCSection[] = [];
     if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
     if (fatos) s.push({ id: "fatos", label: "Fatos" });
+    if (cronologia.length) s.push({ id: "sintese", label: "Síntese" });
     if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
-    if (depoentes.length) s.push({ id: "depoentes", label: "Depoentes", count: depoentes.length });
+    const nDep = depoentes.length || depoentesDetalhe.length;
+    if (nDep) s.push({ id: "depoentes", label: "Depoentes", count: nDep });
     if (contradicoes.length) s.push({ id: "contradicoes", label: "Contradições" });
     if (laudos.length) s.push({ id: "laudos", label: "Laudos" });
     if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
@@ -263,7 +358,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     s.push({ id: "documentos", label: "Docs" });
     s.push({ id: "midia", label: "Mídia" });
     return s;
-  }, [imputacao, fatos, versaoDelegacia, versaoJuizo, depoentes.length, contradicoes.length,
+  }, [imputacao, fatos, cronologia.length, versaoDelegacia, versaoJuizo, depoentes.length,
+      depoentesDetalhe.length, contradicoes.length,
       laudos.length, diligencias.length, pendencias.length, teses.length]);
 
   useEffect(() => {
@@ -610,6 +706,12 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   )}
                 </CollapsibleSection>
 
+                {cronologia.length > 0 && (
+                  <CollapsibleSection id="sintese" label="Síntese Processual">
+                    <SinteseProcessual eventos={cronologia} />
+                  </CollapsibleSection>
+                )}
+
                 {(versaoDelegacia || versaoJuizo) && (
                   <CollapsibleSection id="versao" label="Versão do Acusado">
                     {analyzedAt && (
@@ -633,7 +735,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                 )}
                 </>)}
 
-                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length} defaultOpen>
+                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentes.length || depoentesDetalhe.length} defaultOpen>
+                  <PainelDepoentesStatus depoentes={depoentesDetalhe} />
                   {depoentes.length > 0 ? (
                     <div className="space-y-2">
                       {depoentes.map((d: any, i: number) => {
@@ -687,7 +790,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         );
                       })}
                     </div>
-                  ) : <EmptyHint text="Nenhum depoente cadastrado." />}
+                  ) : depoentesDetalhe.length === 0 ? (
+                    <EmptyHint text="Nenhum depoente cadastrado." />
+                  ) : null}
                 </CollapsibleSection>
 
                 {!dossieV2 && (<>
