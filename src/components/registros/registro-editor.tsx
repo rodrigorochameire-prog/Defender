@@ -77,6 +77,13 @@ export function RegistroEditor({
           description: `${tipoAud} — ${d}/${m}/${y} às ${horario}`,
         });
       }
+      if (data?.atoAtualizado) {
+        // designação/redesignação detectada → o ato da demanda foi reclassificado
+        utils.demandas.invalidate();
+        toast.success("Ato da demanda atualizado", {
+          description: `Reclassificado para "${data.atoAtualizado}".`,
+        });
+      }
       if (data?.medidasCriadas && data.medidasCriadas.length > 0) {
         // ciência de MPU com medidas protetivas detectadas
         const n = data.medidasCriadas.length;

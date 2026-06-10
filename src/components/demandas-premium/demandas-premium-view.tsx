@@ -1346,15 +1346,37 @@ export default function Demandas() {
 
     // Gatilho: "Ciência designação/redesignação de audiência" → abrir modal
     // de confirmação, pré-preenchendo com dados detectados em providências.
+    // Antes de abrir, confere se o processo já tem audiência futura (ex.:
+    // agendada pelo parser do registro de ciência) — nesse caso só informa.
     if (!isNaN(numericId) && isAtoAudiencia(newAto)) {
       const demanda = demandas.find((d) => d.id === demandaId);
-      setAudienciaModal({
-        open: true,
-        demandaId: numericId,
-        assistidoNome: demanda?.assistido,
-        numeroAutos: demanda?.processos?.[0]?.numero,
-        sources: [demanda?.providencias, demanda?.ato, newAto],
-      });
+      const abrirModal = () =>
+        setAudienciaModal({
+          open: true,
+          demandaId: numericId,
+          assistidoNome: demanda?.assistido,
+          numeroAutos: demanda?.processos?.[0]?.numero,
+          sources: [demanda?.providencias, demanda?.ato, newAto],
+        });
+      const processoId = demanda?.processoId ?? null;
+      if (!processoId) {
+        abrirModal();
+        return;
+      }
+      void utils.audiencias.proximaAgendada
+        .fetch({ processoId })
+        .then((existente) => {
+          if (!existente) {
+            abrirModal();
+            return;
+          }
+          const dt = new Date(existente.dataAudiencia);
+          const quando = `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+          toast.info("Audiência já agendada para este processo", {
+            description: `${existente.tipo} — ${quando}${existente.horario ? ` às ${existente.horario}` : ""}. Se a data mudou, ajuste na tela de Audiências.`,
+          });
+        })
+        .catch(() => abrirModal());
     }
   };
 
