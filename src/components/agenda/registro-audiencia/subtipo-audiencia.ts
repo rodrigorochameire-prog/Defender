@@ -1,9 +1,13 @@
 import type { LucideIcon } from "lucide-react";
-import { Gavel, Scale, Shield, ShieldAlert, Users, HelpCircle } from "lucide-react";
+import { Gavel, Scale, Shield, ShieldAlert, Users, HelpCircle, FileClock, Handshake, BookCheck } from "lucide-react";
 import { detectarSlug } from "@/lib/agenda/tipos-audiencia";
 
 export type SubtipoAudiencia =
   | "justificacao"
+  | "justificacao_ep"
+  | "admonitoria"
+  | "pap"
+  | "anpp"
   | "oitiva_especial"
   | "aij"
   | "custodia"
@@ -30,6 +34,10 @@ export interface SubtipoConfig {
   tiposDepoente: Array<"testemunha" | "vitima" | "reu" | "perito" | "informante" | "policial">;
   /** Lembretes específicos (mostrados no briefing/banner) */
   lembretes: string[];
+  /** Rito de instrução completa (ordem art. 400, prova oral plena). AIJ/PAP/plenário. */
+  instrucaoCompleta: boolean;
+  /** Sessão do Júri → o painel deve direcionar para o Cockpit em vez da preparação padrão. */
+  direcionaCockpit?: boolean;
 }
 
 export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
@@ -49,6 +57,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Verificar FNAR (Formulário Nacional de Avaliação de Risco) — Parte II não preenchida = vício técnico.",
       "Em caso de reaproximação voluntária, art. 24-A pode ser atípico (STJ AgRg AREsp 2.330.912/DF, HC 521.622/SC).",
     ],
+    instrucaoCompleta: false,
   },
   oitiva_especial: {
     key: "oitiva_especial",
@@ -66,6 +75,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Perguntas curtas, claras, NÃO sugestivas. Via profissional capacitado.",
       "Vedação a revitimização: a oitiva substitui o depoimento policial — não se repete.",
     ],
+    instrucaoCompleta: false,
   },
   aij: {
     key: "aij",
@@ -83,6 +93,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Lei 13.431/17 obriga depoimento especial para ofendida menor / em situação de vulnerabilidade.",
       "Ofendida pode ser ouvida fora da presença do defendido (art. 217 CPP).",
     ],
+    instrucaoCompleta: true,
   },
   custodia: {
     key: "custodia",
@@ -100,6 +111,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Perguntar ao defendido sobre tortura/maus-tratos (quesito obrigatório).",
       "Demonstrar inexistência dos requisitos da preventiva (art. 312, 313). Propor MPU como substitutiva.",
     ],
+    instrucaoCompleta: false,
   },
   plenario: {
     key: "plenario",
@@ -117,6 +129,82 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Pronúncia NÃO pode ser lida na frente dos jurados (art. 478 CPP).",
       "Quesito 4 (absolvição genérica, art. 483 III) é a alavanca da defesa — basta convencer 4 jurados.",
     ],
+    instrucaoCompleta: true,
+    direcionaCockpit: true,
+  },
+  justificacao_ep: {
+    key: "justificacao_ep",
+    label: "Justificação (Execução Penal)",
+    icon: FileClock,
+    cor: "sky",
+    descricao: "Justificação na execução penal — apurar suposta falta disciplinar / descumprimento de condição antes de decisão sobre regressão, revogação de benefício ou prática de falta grave.",
+    foco: "Justificar a ausência/descumprimento e evitar regressão de regime ou perda de dias remidos. NÃO é instrução de mérito.",
+    labelAbaDepoentes: "Reeducando e testemunhas",
+    exibeAbaDepoentes: true,
+    resultadoDetalhado: false,
+    tiposDepoente: ["reu", "testemunha", "informante"],
+    lembretes: [
+      "Reeducando/assistido (nunca 'réu'); 'benefício' (nunca 'regalia').",
+      "Falta grave exige PAD com contraditório (Súmula 533 STJ) — apontar nulidade se ausente.",
+      "Regressão cautelar exige oitiva prévia (art. 118 §2º LEP). Conferir contemporaneidade da falta.",
+      "Prazo prescricional da falta disciplinar (analogia: menor prazo do art. 109 CP).",
+    ],
+    instrucaoCompleta: false,
+  },
+  admonitoria: {
+    key: "admonitoria",
+    label: "Audiência Admonitória",
+    icon: BookCheck,
+    cor: "sky",
+    descricao: "Início do cumprimento de pena/benefício em meio aberto — leitura das condições e advertência das consequências do descumprimento (sursis, livramento, PRD, ANPP, suspensão).",
+    foco: "Cientificar o assistido das condições e formalizar o início do cumprimento. Negociar/ajustar condições desproporcionais.",
+    labelAbaDepoentes: "Assistido",
+    exibeAbaDepoentes: false,
+    resultadoDetalhado: false,
+    tiposDepoente: ["reu"],
+    lembretes: [
+      "Reeducando/assistido. Conferir se as condições são proporcionais (comparecimento, recolhimento, vedações).",
+      "Pleitear adequação de condição incompatível com trabalho/residência/saúde.",
+      "Registrar data-base do cumprimento e período de prova; alertar sobre consequências do descumprimento.",
+    ],
+    instrucaoCompleta: false,
+  },
+  pap: {
+    key: "pap",
+    label: "Produção Antecipada de Provas",
+    icon: FileClock,
+    cor: "emerald",
+    descricao: "Coleta antecipada de prova oral (art. 366 CPP / art. 156 I CPP) — testemunha que pode não ser localizada depois, prova urgente. A prova é colhida agora para uso futuro.",
+    foco: "Produzir a prova oral com contraditório pleno agora — é instrução, com a mesma técnica da AIJ. Atenção redobrada: pode ser a única oportunidade de inquirir.",
+    labelAbaDepoentes: "Depoentes",
+    exibeAbaDepoentes: true,
+    resultadoDetalhado: true,
+    tiposDepoente: ["vitima", "testemunha", "perito", "informante", "policial"],
+    lembretes: [
+      "Súmula 455 STJ: a antecipação exige fundamentação concreta da urgência (não basta o decurso do prazo).",
+      "Contraditório pleno — inquirir como se fosse a AIJ; pode ser a única chance de ouvir a testemunha.",
+      "Réu citado por edital e ausente: conferir nomeação de defensor e ciência dos atos.",
+    ],
+    instrucaoCompleta: true,
+  },
+  anpp: {
+    key: "anpp",
+    label: "Acordo de Não Persecução Penal",
+    icon: Handshake,
+    cor: "emerald",
+    descricao: "Homologação/audiência do ANPP (art. 28-A CPP) — confissão formal e pactuação de condições, com extinção da punibilidade ao final do cumprimento.",
+    foco: "Avaliar cabimento e proporcionalidade das condições; orientar o assistido sobre a confissão formal e os efeitos do acordo.",
+    labelAbaDepoentes: "Assistido",
+    exibeAbaDepoentes: false,
+    resultadoDetalhado: false,
+    tiposDepoente: ["reu"],
+    lembretes: [
+      "Requisitos do art. 28-A: confissão formal, pena mínima < 4 anos, sem violência/grave ameaça, não reincidente.",
+      "Conferir proporcionalidade das condições (prestação de serviço, pecuniária) — negociar excessos.",
+      "ANPP cumprido extingue a punibilidade (art. 28-A §13) e não gera reincidência.",
+      "ANPP homologado faz cessar cautelares/monitoração por perda de objeto.",
+    ],
+    instrucaoCompleta: false,
   },
   indefinido: {
     key: "indefinido",
@@ -130,6 +218,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
     resultadoDetalhado: true,
     tiposDepoente: ["vitima", "testemunha", "reu", "perito", "informante", "policial"],
     lembretes: [],
+    instrucaoCompleta: true,
   },
 };
 
@@ -139,17 +228,31 @@ const SLUG_PARA_SUBTIPO: Record<string, SubtipoAudiencia> = {
   aij: "aij",
   instrucao_oitiva: "aij",
   justificacao: "justificacao",
+  justificacao_ep: "justificacao_ep",
+  admonitoria: "admonitoria",
+  pap: "pap",
+  anpp: "anpp",
   oitiva_especial: "oitiva_especial",
   custodia: "custodia",
 };
 
+/**
+ * Detecta o subtipo a partir do tipo do evento + classe processual + atribuição.
+ * A atribuição desempata ritos de mesmo nome com dinâmica distinta — sobretudo
+ * a Justificação, que em EP (falta/descumprimento) difere da de VVD (MPU).
+ */
 export function detectarSubtipo(
   tipoAudiencia?: string | null,
   classeProcessual?: string | null,
+  atribuicao?: string | null,
 ): SubtipoAudiencia {
   const base = `${tipoAudiencia ?? ""} ${classeProcessual ?? ""}`.trim();
   if (!base) return "indefinido";
-  return SLUG_PARA_SUBTIPO[detectarSlug(base)] ?? "indefinido";
+  const slug = detectarSlug(base);
+  const atrib = (atribuicao ?? "").toUpperCase();
+  const isEP = atrib.includes("EXECUCAO") || atrib.includes("EXECUÇÃO") || atrib === "EP";
+  if (slug === "justificacao" && isEP) return "justificacao_ep";
+  return SLUG_PARA_SUBTIPO[slug] ?? "indefinido";
 }
 
 export function corBadge(cor: string): {
