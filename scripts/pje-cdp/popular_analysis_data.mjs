@@ -58,6 +58,18 @@ for (const item of items) {
     testemunhas_defesa: deps.filter(d => d.tipo === "testemunha_defesa").map(d => ({ nome: d.nome, vinculo: d.tipo, intimacao: d.intimacao, observacao: d.observacao ?? "" })),
     orientacao_assistido: p.orientacao_assistido ?? ra.orientacao_assistido ?? null,
     medidas_protetivas_vigentes: p.medidas_mpu ?? [],
+    // Síntese processual (ato + data) p/ aferir adstrição/correlação na instrução
+    cronologia: (p.cronologia ?? []).map(e => ({
+      data: e.data ?? null, evento: e.evento ?? "", marcador: e.marcador ?? "⚪",
+    })),
+    // Depoentes ricos (intimação/motivo/comparecimento/já ouvido) — alimenta painel de status
+    depoentes_detalhe: deps.map(d => ({
+      nome: d.nome, tipo: d.tipo, intimacao: d.intimacao ?? "desconhecido",
+      motivo_nao_intimacao: d.motivo_nao_intimacao ?? null,
+      comparecimento: d.comparecimento ?? "nao_verificado",
+      ja_ouvido: d.ja_ouvido ?? null, forma: d.forma ?? null, observacao: d.observacao ?? "",
+    })),
+    documentos_relevantes: p.documentos_relevantes ?? ra.documentos_relevantes ?? [],
     dossie: {
       ato: `${p.audiencia?.tipo ?? ""} ${p.audiencia?.horario ?? ""} — 11/06/2026`.trim(),
       gerado_em: hoje,

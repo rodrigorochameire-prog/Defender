@@ -134,10 +134,22 @@ export function DayEventsSheet({
   const [activeAtribFilter, setActiveAtribFilter] = useState<string | null>(
     null,
   );
+  const [ocultarAdv, setOcultarAdv] = useState(false);
 
   const sortedEventos = [...eventos].sort((a, b) =>
     (a.horarioInicio || "").localeCompare(b.horarioInicio || ""),
   );
+
+  // Contagem por patrocínio (só audiências reais, ignora cancelados/atendimentos)
+  const { nDpe, nAdv } = useMemo(() => {
+    let dpe = 0, adv = 0;
+    for (const ev of eventos) {
+      if (ev.fonte !== "audiencias" || isEventoCancelado(ev.status)) continue;
+      if (ev.tipoPatrocinio === "PARTICULAR") adv++;
+      else dpe++;
+    }
+    return { nDpe: dpe, nAdv: adv };
+  }, [eventos]);
 
   // Atribuições presentes no dia (deduplicadas por filterKey)
   const dayAtribuicoes = useMemo(() => {
@@ -154,15 +166,17 @@ export function DayEventsSheet({
     return Array.from(seen.values());
   }, [eventos]);
 
-  // Filtrar por atribuição se ativo
-  const filteredEventos = activeAtribFilter
-    ? sortedEventos.filter((ev) => {
-        const filterKey = normalizeAreaToFilter(
-          ev.atribuicaoKey || ev.atribuicao,
-        );
-        return filterKey === activeAtribFilter;
-      })
-    : sortedEventos;
+  // Filtrar por atribuição + ocultar-advogado se ativos
+  const filteredEventos = sortedEventos.filter((ev) => {
+    if (ocultarAdv && ev.tipoPatrocinio === "PARTICULAR" && !isEventoCancelado(ev.status)) {
+      return false;
+    }
+    if (activeAtribFilter) {
+      const filterKey = normalizeAreaToFilter(ev.atribuicaoKey || ev.atribuicao);
+      return filterKey === activeAtribFilter;
+    }
+    return true;
+  });
 
   const dayName = format(date, "EEEE", { locale: ptBR });
   const dayDate = format(date, "d 'de' MMMM", { locale: ptBR });
@@ -235,9 +249,33 @@ export function DayEventsSheet({
                         </button>
                       );
                     })}
-                  <span className="ml-auto text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800">
-                    {filteredEventos.length} evento
-                    {filteredEventos.length !== 1 ? "s" : ""}
+                  {nAdv > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setOcultarAdv((v) => !v)}
+                      title={ocultarAdv ? "Mostrar audiências com advogado constituído" : "Ocultar audiências com advogado constituído"}
+                      className={cn(
+                        "ml-auto inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md transition-colors cursor-pointer ring-1 ring-inset",
+                        ocultarAdv
+                          ? "bg-neutral-800 text-neutral-100 ring-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:ring-neutral-300"
+                          : "bg-neutral-50 text-neutral-400 ring-neutral-200 hover:text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-500 dark:ring-neutral-700",
+                      )}
+                    >
+                      <User className="w-2.5 h-2.5" />
+                      {ocultarAdv ? "advogado oculto" : "ocultar adv"}
+                    </button>
+                  )}
+                  <span
+                    className={cn(
+                      "text-[10px] font-medium tabular-nums text-neutral-600 dark:text-neutral-500 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800",
+                      nAdv === 0 && "ml-auto",
+                    )}
+                    title={nAdv > 0 ? `${nDpe} da Defensoria · ${nAdv} com advogado constituído` : undefined}
+                  >
+                    {filteredEventos.length} evento{filteredEventos.length !== 1 ? "s" : ""}
+                    {nAdv > 0 && (
+                      <span className="text-neutral-400 dark:text-neutral-600 font-normal"> · {nDpe} DPE · {nAdv} adv</span>
+                    )}
                   </span>
                 </div>
               </div>
