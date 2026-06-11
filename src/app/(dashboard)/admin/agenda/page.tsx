@@ -371,7 +371,7 @@ function EventoDetalhado({
                 title={`Júri de ${b.label}`}
                 className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
               >
-                <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white ${b.dot}`}>
+                <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold ${b.badgeClass}`}>
                   {b.initial}
                 </span>
                 <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>

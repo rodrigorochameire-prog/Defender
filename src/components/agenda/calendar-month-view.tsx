@@ -311,7 +311,7 @@ function EventoCompacto({
               {defBadge && !eventoCancelado && (
                 <span
                   title={`Júri de ${defBadge.label}`}
-                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold text-white ${defBadge.dot}`}
+                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold ${defBadge.badgeClass}`}
                 >
                   {defBadge.initial}
                 </span>
