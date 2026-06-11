@@ -35,6 +35,8 @@ interface Props {
   fileSize?: string | null;
   enrichmentStatus?: string | null;
   transcricao?: string | null;
+  /** Página inicial para abrir no visualizador (deep-link via #page=N). */
+  initialPage?: number;
   list?: PreviewFile[];
   onNavigate?: (file: PreviewFile) => void;
   onCompare?: () => void;
@@ -74,6 +76,7 @@ export function DocumentPreviewDialog({
   fileSize,
   enrichmentStatus,
   transcricao,
+  initialPage,
   list,
   onNavigate,
   onCompare,
@@ -112,7 +115,9 @@ export function DocumentPreviewDialog({
   // PDFs renderizam pelo proxy do app por padrão (não exige login no Google).
   // Outros tipos (Docs/Sheets/Word) só renderizam bem no Drive /preview.
   const isPdf = mime === "application/pdf";
-  const bodyUrl = isPdf && viewSource === "app" ? proxyUrl : drivePreviewUrl;
+  const bodyUrl = isPdf && viewSource === "app"
+    ? (proxyUrl ? proxyUrl + (initialPage ? `#page=${initialPage}` : "") : null)
+    : drivePreviewUrl;
 
   // Mostra o spinner ao trocar de documento/fonte e o remove no onLoad — com uma
   // rede de segurança, pois o onLoad do visualizador nativo de PDF nem sempre dispara.

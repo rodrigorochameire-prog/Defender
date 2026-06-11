@@ -12,6 +12,8 @@ interface Props {
   files: PreviewFile[];
   /** driveFileId inicialmente selecionado (default: primeiro da lista). */
   initialId?: string | null;
+  /** Página inicial para abrir no visualizador (deep-link via #page=N). */
+  initialPage?: number;
   label?: string;
   className?: string;
   /** Altura do corpo do visualizador (default h-[60vh]). */
@@ -26,6 +28,7 @@ interface Props {
 export function AutosPreviewPane({
   files,
   initialId,
+  initialPage,
   label = "Autos",
   className = "",
   bodyClassName = "h-[60vh]",
@@ -70,8 +73,8 @@ export function AutosPreviewPane({
   const fileId = selected.driveFileId!;
   const previewUrl =
     viewSource === "app"
-      ? `/api/drive/proxy?fileId=${fileId}`
-      : `https://drive.google.com/file/d/${fileId}/preview`;
+      ? `/api/drive/proxy?fileId=${fileId}${initialPage ? `#page=${initialPage}` : ""}`
+      : `https://drive.google.com/file/d/${fileId}/preview${initialPage ? `#page=${initialPage}` : ""}`;
   const driveUrl =
     selected.webViewLink ?? `https://drive.google.com/file/d/${fileId}/view`;
 
