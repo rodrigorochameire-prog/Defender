@@ -25,6 +25,8 @@ export interface DecisaoMPUParsed {
   fundamentos: string[];
   prazoDias: number | null;
   medidas: MedidaParsed[];
+  /** Códigos cujas cláusulas vieram sob verbo de revogação (ajuste posterior). */
+  medidasRevogadas: MedidaMpuCodigo[];
 }
 
 /**
@@ -38,7 +40,15 @@ const NEGACAO =
  * match dentro de palavras de negação: `indefiro` começa com `in`, portanto
  * `\bdefiro\b` NÃO casa dentro de `indefiro`).
  */
-const DEFERIMENTO = /\b(defiro|deferid\w*|deferi|determino|concedo|concede)\b/;
+const DEFERIMENTO =
+  /\b(defiro|deferid\w*|deferi|determin\w*|concedo|concede|acolh\w*|mantenho|mantid\w*|mantem)\b/;
+
+/**
+ * Revogação de medida já deferida (≠ indeferimento): a cláusula não vira
+ * concessão e o código detectado é exposto em `medidasRevogadas` para o
+ * chamador atualizar o status das medidas existentes.
+ */
+const REVOGACAO = /\b(revogo|revogad\w*|revoga(?:-se)?|casso|cassad\w*|torno sem efeito)\b/;
 
 /**
  * Divide o texto em segmentos por alíneas (`a) b)…`) — incluindo alíneas inline
@@ -147,7 +157,14 @@ function extrairPrazo(norm: string): number | null {
 
 export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
   if (!texto || !texto.trim()) {
-    return { ofendida: null, agressor: null, fundamentos: [], prazoDias: null, medidas: [] };
+    return {
+      ofendida: null,
+      agressor: null,
+      fundamentos: [],
+      prazoDias: null,
+      medidas: [],
+      medidasRevogadas: [],
+    };
   }
   const normFull = normalizar(texto);
   const { ofendida, agressor } = extrairPartes(texto);
@@ -165,15 +182,18 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
   //   - Falso-positivo (medida indeferida gravada como deferida) nunca ocorre:
   //     no pior caso (negação+deferimento em cláusula única sem `;`), a cláusula
   //     inteira é tratada como "indefere" — falso-negativo seguro.
-  let polaridade: "defere" | "indefere" = "defere";
+  let polaridade: "defere" | "indefere" | "revoga" = "defere";
+  const revogadas = new Set<MedidaMpuCodigo>();
 
   for (const seg of segmentos) {
     const segNorm = normalizar(seg);
 
-    // Atualiza polaridade: negação tem precedência; verbo de deferimento sobrepõe
-    // polaridade herdada; ausência de verbo → herda polaridade anterior.
+    // Atualiza polaridade: negação tem precedência, depois revogação; verbo de
+    // deferimento sobrepõe polaridade herdada; sem verbo → herda a anterior.
     if (NEGACAO.test(segNorm)) {
       polaridade = "indefere";
+    } else if (REVOGACAO.test(segNorm)) {
+      polaridade = "revoga";
     } else if (DEFERIMENTO.test(segNorm)) {
       polaridade = "defere";
     }
@@ -182,7 +202,10 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
     if (polaridade === "indefere") continue;
 
     for (const cat of CATALOGO_MEDIDAS) {
-      if (cat.gatilhos.some((g) => g.test(segNorm)) && !porCodigo.has(cat.codigo)) {
+      if (!cat.gatilhos.some((g) => g.test(segNorm))) continue;
+      if (polaridade === "revoga") {
+        revogadas.add(cat.codigo);
+      } else if (!porCodigo.has(cat.codigo)) {
         porCodigo.set(cat.codigo, {
           codigo: cat.codigo,
           artigo: cat.artigo,
@@ -193,11 +216,16 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
     }
   }
 
+  // Concessão na mesma decisão prevalece sobre revogação do mesmo código
+  // (ex.: "revogo X; defiro X com nova distância" = modificação, não fim).
+  for (const cod of porCodigo.keys()) revogadas.delete(cod);
+
   return {
     ofendida,
     agressor,
     fundamentos: extrairFundamentos(normFull),
     prazoDias: extrairPrazo(normFull),
     medidas: [...porCodigo.values()],
+    medidasRevogadas: [...revogadas],
   };
 }

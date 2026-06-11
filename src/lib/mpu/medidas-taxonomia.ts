@@ -11,6 +11,7 @@ export const MEDIDA_MPU = {
   RESTRICAO_VISITAS: "RESTRICAO_VISITAS",
   ALIMENTOS_PROVISORIOS: "ALIMENTOS_PROVISORIOS",
   MONITORACAO_ELETRONICA: "MONITORACAO_ELETRONICA",
+  RECONDUCAO_VITIMA: "RECONDUCAO_VITIMA",
   OUTRA: "OUTRA",
 } as const;
 
@@ -45,9 +46,13 @@ export const CATALOGO_MEDIDAS: CatalogoMedida[] = [
     codigo: MEDIDA_MPU.AFASTAMENTO_LAR,
     artigo: "22, II",
     rotulo: "Afastamento do lar",
-    // Tolera adjetivos/qualificadores entre o verbo e "do lar" (ex.: "afastamento
-    // IMEDIATO do lar"; "afastar-se imediatamente do domicílio").
-    gatilhos: [/afasta(mento|r-se)\b.{0,30}\bdo (lar|domicilio)/, /afastamento do (lar|domicilio)/],
+    // Tolera adjetivos/qualificadores e o nome do agressor entre o verbo e o
+    // imóvel (ex.: "afastamento IMEDIATO do agressor FULANO DE TAL do imóvel
+    // localizado em..."), e as variações "imóvel/residência/local de convivência".
+    gatilhos: [
+      /afasta(mento|r-se)\b.{0,60}\b(do (lar|domicilio|imovel)|da residencia|local de convivencia)/,
+      /afastamento do (lar|domicilio)/,
+    ],
   },
   {
     codigo: MEDIDA_MPU.PROIBICAO_APROXIMACAO,
@@ -87,6 +92,12 @@ export const CATALOGO_MEDIDAS: CatalogoMedida[] = [
     artigo: "22, V",
     rotulo: "Alimentos provisórios/provisionais",
     gatilhos: [/alimentos provis(orios|ionais)/, /prestacao de alimentos/],
+  },
+  {
+    codigo: MEDIDA_MPU.RECONDUCAO_VITIMA,
+    artigo: "23, II",
+    rotulo: "Recondução da ofendida ao domicílio",
+    gatilhos: [/reconducao\b.{0,40}\b(vitima|ofendida|ao lar|domicilio)/],
   },
   {
     codigo: MEDIDA_MPU.MONITORACAO_ELETRONICA,
