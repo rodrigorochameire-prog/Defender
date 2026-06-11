@@ -19,6 +19,7 @@ import {
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
+import { IcsFeedsSection } from "@/components/settings/ics-feeds-section";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState("geral");
@@ -300,6 +301,7 @@ export default function AdminSettingsPage() {
 
         {/* TAB: INTEGRAÇÕES */}
         <TabsContent value="integracoes" className="space-y-6">
+          <IcsFeedsSection />
           <Card>
             <CardHeader>
               <CardTitle>Google Drive</CardTitle>

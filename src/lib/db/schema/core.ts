@@ -56,6 +56,8 @@ export const users = pgTable("users", {
   areasPrincipais: jsonb("areas_principais").$type<string[]>(),
   mustChangePassword: boolean("must_change_password").default(false),
   inviteToken: varchar("invite_token", { length: 64 }),
+  // Token secreto dos feeds ICS (/api/ics/[slug]?t=...) — regenerar invalida as URLs
+  icsToken: varchar("ics_token", { length: 64 }),
   expiresAt: timestamp("expires_at"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
   googleLinked: boolean("google_linked").default(false),

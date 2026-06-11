@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { userSettings } from "@/lib/db/schema";
+import { userSettings, users } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { FEEDS_ICS } from "@/lib/ics/feeds";
 
 const settingsSchema = z.object({
   // Configurações Gerais
@@ -29,6 +31,30 @@ const settingsSchema = z.object({
 }).passthrough(); // Allow extra fields for future settings
 
 export const settingsRouter = router({
+  /**
+   * Feeds ICS (Outlook) — token do defensor + URLs prontas para assinar.
+   */
+  icsFeeds: protectedProcedure.query(async ({ ctx }) => {
+    const [u] = await db
+      .select({ token: users.icsToken })
+      .from(users)
+      .where(eq(users.id, ctx.user.id))
+      .limit(1);
+    return {
+      token: u?.token ?? null,
+      feeds: FEEDS_ICS.map((f) => ({ slug: f.slug, nome: f.nome, fonte: f.fonte })),
+    };
+  }),
+
+  /**
+   * Gera (ou regenera) o token dos feeds ICS — regenerar invalida as URLs antigas.
+   */
+  gerarIcsToken: protectedProcedure.mutation(async ({ ctx }) => {
+    const token = randomBytes(24).toString("hex"); // 48 chars
+    await db.update(users).set({ icsToken: token }).where(eq(users.id, ctx.user.id));
+    return { token };
+  }),
+
   /**
    * Get current user settings
    */
