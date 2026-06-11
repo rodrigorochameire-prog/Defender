@@ -27,8 +27,8 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
 
   const utils = trpc.useUtils();
 
-  const autos = trpc.drive.filesByProcesso.useQuery(
-    { processoId: processoId ?? 0 },
+  const autos = trpc.drive.autosDoProcesso.useQuery(
+    { processoId: processoId ?? 0, assistidoId: assistidoId ?? undefined },
     { enabled: !!processoId }
   );
   const assistido = trpc.drive.filesByAssistido.useQuery(
@@ -47,13 +47,20 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
   const upload = trpc.drive.uploadWithLink.useMutation({
     onSuccess: () => {
       toast.success("Arquivo enviado");
-      if (processoId) utils.drive.filesByProcesso.invalidate({ processoId });
+      if (processoId) utils.drive.autosDoProcesso.invalidate({ processoId });
       if (assistidoId) utils.drive.filesByAssistido.invalidate({ assistidoId });
     },
     onError: (e) => toast.error(e.message ?? "Erro no upload"),
   });
 
-  const autosList: DriveFileLite[] = (autos.data as any) ?? [];
+  const autosGrupos = (autos.data as
+    | { desteProcesso: DriveFileLite[]; correlacionados: { cnj: string; classe?: string | null; files: DriveFileLite[] }[]; outros: DriveFileLite[] }
+    | undefined) ?? { desteProcesso: [], correlacionados: [], outros: [] };
+  const autosList: DriveFileLite[] = [
+    ...autosGrupos.desteProcesso,
+    ...autosGrupos.correlacionados.flatMap((g) => g.files),
+    ...autosGrupos.outros,
+  ];
   const assistidoList: DriveFileLite[] = (assistido.data as any) ?? [];
   const rawList = tab === "autos" ? autosList : assistidoList;
   const activeList = useMemo(() => {
@@ -166,25 +173,67 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
           <a href="/admin/configuracoes/drive" className="underline hover:text-neutral-700">Configurar</a>
         </p>
       )}
-      {driveConnected && activeList.length === 0 && (
-        <p className="text-[11px] text-neutral-400 italic py-4 text-center">
-          {query.trim()
-            ? `Nenhum arquivo corresponde à busca "${query}".`
-            : "Nenhum arquivo nesta pasta. Arraste um acima."}
-        </p>
-      )}
-      {activeList.length > 0 && (
-        <div className="space-y-1.5">
-          {activeList.map((f) => (
-            <DocumentosItem
-              key={f.driveFileId}
-              file={f}
-              isOpen={openId === f.driveFileId}
-              onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+
+      {tab === "autos" ? (
+        <div className="space-y-2">
+          {autosGrupos.desteProcesso.length > 0 && (
+            <GrupoAutos
+              titulo="Deste processo"
+              files={autosGrupos.desteProcesso}
+              openId={openId}
+              setOpenId={setOpenId}
+              onExpand={setExpanded}
+              defaultOpen
+            />
+          )}
+          {autosGrupos.correlacionados.map((g) => (
+            <GrupoAutos
+              key={g.cnj}
+              titulo={`Correlacionado · ${g.classe ?? "Processo"} ${g.cnj}`}
+              files={g.files}
+              openId={openId}
+              setOpenId={setOpenId}
               onExpand={setExpanded}
             />
           ))}
+          {autosGrupos.outros.length > 0 && (
+            <GrupoAutos
+              titulo="Outros do assistido"
+              files={autosGrupos.outros}
+              openId={openId}
+              setOpenId={setOpenId}
+              onExpand={setExpanded}
+            />
+          )}
+          {autosList.length === 0 && driveConnected && (
+            <p className="text-[11px] text-neutral-400 italic py-4 text-center">
+              Nenhum arquivo nesta pasta. Arraste um acima.
+            </p>
+          )}
         </div>
+      ) : (
+        <>
+          {driveConnected && activeList.length === 0 && (
+            <p className="text-[11px] text-neutral-400 italic py-4 text-center">
+              {query.trim()
+                ? `Nenhum arquivo corresponde à busca "${query}".`
+                : "Nenhum arquivo nesta pasta. Arraste um acima."}
+            </p>
+          )}
+          {activeList.length > 0 && (
+            <div className="space-y-1.5">
+              {activeList.map((f) => (
+                <DocumentosItem
+                  key={f.driveFileId}
+                  file={f}
+                  isOpen={openId === f.driveFileId}
+                  onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+                  onExpand={setExpanded}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <DocumentPreviewDialog
@@ -224,6 +273,52 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
           currentFolderId={(compareFile as any).driveFolderId ?? undefined}
           assistidoId={assistidoId ?? undefined}
         />
+      )}
+    </div>
+  );
+}
+
+function GrupoAutos({
+  titulo,
+  files,
+  openId,
+  setOpenId,
+  onExpand,
+  defaultOpen = false,
+}: {
+  titulo: string;
+  files: DriveFileLite[];
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+  onExpand: (f: DriveFileLite) => void;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 cursor-pointer"
+      >
+        <span>
+          {titulo}{" "}
+          <span className="text-neutral-400 font-normal">{files.length}</span>
+        </span>
+        <span className="text-neutral-400">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div className="px-1.5 pb-1.5 space-y-1.5">
+          {files.map((fl) => (
+            <DocumentosItem
+              key={fl.driveFileId}
+              file={fl}
+              isOpen={openId === fl.driveFileId}
+              onToggle={() => setOpenId(openId === fl.driveFileId ? null : fl.driveFileId)}
+              onExpand={onExpand}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
