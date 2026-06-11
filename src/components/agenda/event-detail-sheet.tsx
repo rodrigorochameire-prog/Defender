@@ -489,17 +489,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       <SheetContent
         side="right"
         className={cn(
-          "p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden",
+          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden",
+          // Docado: container transparente ocupa a tela toda; o sheet visível é a
+          // coluna de conteúdo (1040px à direita) e o PDF é a coluna à esquerda.
           docaAutos
-            ? "w-full sm:w-[96vw] sm:max-w-none"
-            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+            ? "w-full sm:w-screen sm:max-w-none bg-transparent shadow-none"
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] bg-white dark:bg-neutral-950 shadow-2xl",
         )}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
         <div className="flex-1 flex min-h-0">
           {docaAutos && (
-            <div className="hidden sm:flex flex-col min-w-0 flex-1 border-r border-neutral-200 dark:border-neutral-800">
+            <div className="hidden sm:flex flex-col min-w-0 flex-1 bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
                 <span className="text-[11px] font-medium text-neutral-500">Autos</span>
                 <button
@@ -519,7 +521,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               />
             </div>
           )}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0 bg-white dark:bg-neutral-950 shadow-2xl" : "flex-1")}>
 
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
