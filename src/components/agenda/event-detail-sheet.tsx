@@ -233,6 +233,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [copied, setCopied] = useState(false);
   // Modal de autos encaixado à esquerda do sheet (não altera a largura do sheet).
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
+  // Largura (px) que o sheet assume enquanto o modal está aberto. O modal ocupa
+  // todo o espaço à esquerda até a borda do sheet (right = sheetW → encaixe perfeito).
+  // Ajustável pela alça de arraste e persistida no localStorage.
+  const [sheetW, setSheetW] = useState(560);
+  const [draggingDivider, setDraggingDivider] = useState(false);
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
@@ -427,6 +432,34 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // Fecha o modal de autos ao trocar de evento ou fechar o sheet.
   useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
 
+  // Largura preferida do sheet (com modal aberto) — persistida entre sessões.
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem("ombuds_autos_modal_split"));
+      if (Number.isFinite(v) && v >= 360) setSheetW(v);
+    } catch {}
+  }, []);
+
+  // Arraste da alça (borda direita do modal = limite com o sheet). Atualiza ao
+  // vivo e grava no localStorage ao soltar.
+  const startDividerDrag = (e: React.PointerEvent) => {
+    e.preventDefault();
+    setDraggingDivider(true);
+    let last = sheetW;
+    const onMove = (ev: PointerEvent) => {
+      last = Math.min(Math.max(window.innerWidth - ev.clientX, 360), window.innerWidth - 360);
+      setSheetW(last);
+    };
+    const onUp = () => {
+      setDraggingDivider(false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      try { localStorage.setItem("ombuds_autos_modal_split", String(Math.round(last))); } catch {}
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
   }, [advogadoParticular, processoId]);
@@ -488,25 +521,36 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       <SheetContent
         side="right"
         className={cn(
-          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl",
-          "transition-[width] duration-300 ease-out",
-          // Ao abrir o modal de autos, o sheet recolhe suavemente para dar espaço
-          // ao documento (master-detail), sem deixar de ser usável.
-          autosModalId
-            ? "w-full sm:w-[640px] lg:w-[720px]"
-            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl max-w-full",
+          !draggingDivider && "transition-[width] duration-300 ease-out",
+          // Com o modal aberto, a largura vem do sheetW (inline) para encaixar
+          // exatamente com o modal; fechado, largura responsiva padrão.
+          autosModalId ? "w-full" : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
         )}
+        style={autosModalId ? { width: sheetW } : undefined}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
         {/* Modal de autos ENCAIXADO à esquerda do sheet: painel fixo da borda esquerda
             até onde o sheet começa. O sheet mantém sua largura (1040px) e segue funcional. */}
         {autosModalId && (
-          <div className="hidden sm:flex flex-col fixed inset-y-2 left-2 sm:right-[652px] lg:right-[732px] z-50 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-left-8 duration-300 ease-out">
+          <div
+            className="hidden sm:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 shadow-2xl animate-in fade-in slide-in-from-left-6 duration-300 ease-out"
+            style={{ right: sheetW }}
+          >
             <AutosModalViewer
               driveFileId={autosModalId}
               processoId={typeof processoId === "number" ? processoId : null}
               onClose={() => setAutosModalId(null)}
+            />
+            {/* Alça de redimensionamento (borda direita = limite com o sheet) */}
+            <div
+              onPointerDown={startDividerDrag}
+              title="Arraste para ajustar a largura — fica salvo"
+              className={cn(
+                "absolute top-0 right-0 bottom-0 w-1.5 cursor-col-resize transition-colors",
+                draggingDivider ? "bg-emerald-500/60" : "bg-transparent hover:bg-emerald-400/40",
+              )}
             />
           </div>
         )}
