@@ -230,6 +230,8 @@ interface Props {
 
 export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, onDuplicate }: Props) {
   const [copied, setCopied] = useState(false);
+  // Modal de autos encaixado à esquerda do sheet (não altera a largura do sheet).
+  const [autosModalId, setAutosModalId] = useState<string | null>(null);
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
@@ -421,6 +423,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
   }, [audienciaIdNum, depoentes.length]);
 
+  // Fecha o modal de autos ao trocar de evento ou fechar o sheet.
+  useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
+
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
   }, [advogadoParticular, processoId]);
@@ -487,6 +492,38 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         )}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
+
+        {/* Modal de autos ENCAIXADO à esquerda do sheet: painel fixo da borda esquerda
+            até onde o sheet começa. O sheet mantém sua largura (1040px) e segue funcional. */}
+        {autosModalId && (
+          <div className="hidden sm:flex flex-col fixed inset-y-0 left-0 sm:right-[600px] md:right-[780px] lg:right-[920px] xl:right-[1040px] z-50 bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 shadow-2xl">
+            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/60">
+              <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300">Autos</span>
+              <div className="flex items-center gap-1">
+                <a
+                  href={`/api/drive/proxy?fileId=${autosModalId}&download=1`}
+                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  Baixar
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setAutosModalId(null)}
+                  aria-label="Fechar"
+                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  Fechar ✕
+                </button>
+              </div>
+            </div>
+            <iframe
+              key={autosModalId}
+              src={`/api/drive/proxy?fileId=${autosModalId}#view=FitH`}
+              className="w-full flex-1 border-0 bg-neutral-100 dark:bg-neutral-900"
+              title="Autos"
+            />
+          </div>
+        )}
 
         <div className="flex-1 flex min-h-0">
           <div className="flex flex-col min-h-0 min-w-0 flex-1">
@@ -1172,6 +1209,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   <DocumentosBlock
                     processoId={typeof processoId === "number" ? processoId : null}
                     assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                    onExpandLeft={setAutosModalId}
                   />
                 </CollapsibleSection>
 

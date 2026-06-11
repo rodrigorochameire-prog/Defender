@@ -17,9 +17,11 @@ type TabKey = "autos" | "assistido" | "atos";
 interface Props {
   processoId: number | null;
   assistidoId: number | null;
+  /** Abre o modal encaixado à esquerda do sheet (não alarga o sheet). */
+  onExpandLeft?: (fileDriveId: string) => void;
 }
 
-export function DocumentosBlock({ processoId, assistidoId }: Props) {
+export function DocumentosBlock({ processoId, assistidoId, onExpandLeft }: Props) {
   const [tab, setTab] = useState<TabKey>("autos");
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<DriveFileLite | null>(null);
@@ -28,6 +30,9 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
 
   // Abre o preview de um arquivo inline na aba Autos (sem doca, sem alargar o sheet).
   const abrirInline = (fileDriveId: string) => { setTab("autos"); setOpenId(fileDriveId); };
+  // "Expandir" → modal encaixado à esquerda do sheet (fallback: overlay de tela cheia).
+  const openExpand = (f: DriveFileLite) =>
+    onExpandLeft ? onExpandLeft(f.driveFileId) : setExpanded(f);
 
   const utils = trpc.useUtils();
 
@@ -244,7 +249,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
               files={autosGrupos.desteProcesso}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={openExpand}
               defaultOpen
             />
           )}
@@ -255,7 +260,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
               files={g.files}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={openExpand}
             />
           ))}
           {autosGrupos.outros.length > 0 && (
@@ -264,7 +269,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
               files={autosGrupos.outros}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={openExpand}
             />
           )}
           {autosList.length === 0 && driveConnected && (
@@ -290,7 +295,7 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
                   file={f}
                   isOpen={openId === f.driveFileId}
                   onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
-                  onExpand={setExpanded}
+                  onExpand={openExpand}
                 />
               ))}
             </div>
