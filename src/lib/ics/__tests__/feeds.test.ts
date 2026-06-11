@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FEEDS_ICS, feedPorSlug } from "../feeds";
-import { atribuicaoEnum } from "@/lib/db/schema/core";
+import { atribuicaoEnum } from "@/lib/db/schema/enums";
 
 describe("catálogo de feeds ICS", () => {
   it("slugs únicos", () => {
