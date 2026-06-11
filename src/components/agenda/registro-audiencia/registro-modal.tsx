@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Users, Notebook, BookOpen,
   Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed, ChevronDown,
+  PanelRightClose, PanelRightOpen,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc/client";
+import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
+import { rankAutos } from "@/lib/autos-pick";
+import type { PreviewFile } from "./shared/document-preview-dialog";
 import { useRegistroForm } from "./hooks/use-registro-form";
 import { TabBriefing } from "./tabs/tab-briefing";
 import { TabDepoentes } from "./tabs/tab-depoentes";
@@ -59,6 +64,46 @@ function buildTabConfig(subtipo: SubtipoAudiencia): TabDef[] {
 
 export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCriarNovoEvento }: RegistroAudienciaModalProps) {
   const form = useRegistroForm({ evento, isOpen, onSave, onCriarNovoEvento });
+
+  // Autos do processo + PDFs do assistido para leitura inline (split view)
+  const evProcessoId: number | undefined =
+    (evento?.processo?.id ?? evento?.processoId) || undefined;
+  const evAssistidoId: number | undefined =
+    (evento?.assistido?.id ?? evento?.assistidoId) || undefined;
+  const autosFilesQ = trpc.drive.filesByProcesso.useQuery(
+    { processoId: evProcessoId ?? 0 },
+    { enabled: isOpen && !!evProcessoId },
+  );
+  const assistidoFilesQ = trpc.drive.filesByAssistido.useQuery(
+    { assistidoId: evAssistidoId ?? 0 },
+    { enabled: isOpen && !!evAssistidoId },
+  );
+  const previewFiles: PreviewFile[] = useMemo(() => {
+    const autos = ((autosFilesQ.data as any[]) ?? []).filter(
+      (f) => f.mimeType === "application/pdf",
+    );
+    const assist = ((assistidoFilesQ.data as any[]) ?? []).filter(
+      (f) => f.mimeType === "application/pdf",
+    );
+    const seen = new Set<string>();
+    const dedup: any[] = [];
+    for (const f of [...autos, ...assist]) {
+      if (f.driveFileId && !seen.has(f.driveFileId)) {
+        seen.add(f.driveFileId);
+        dedup.push(f);
+      }
+    }
+    return rankAutos(dedup).map((f) => ({
+      driveFileId: f.driveFileId,
+      name: f.name,
+      mimeType: f.mimeType,
+      webViewLink: f.webViewLink,
+      fileSize: f.fileSize,
+      enrichmentStatus: f.enrichmentStatus,
+    }));
+  }, [autosFilesQ.data, assistidoFilesQ.data]);
+  const hasAutos = previewFiles.length > 0;
+  const [showAutos, setShowAutos] = useState(true);
 
   const tabCounts: Record<string, number> = {
     depoentes: form.registro.depoentes.length,
@@ -162,13 +207,29 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Fechar"
-            className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer flex-shrink-0"
-          >
-            <X className="w-5 h-5 text-foreground/80" />
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {hasAutos && (
+              <button
+                onClick={() => setShowAutos((v) => !v)}
+                title={showAutos ? "Ocultar autos" : "Mostrar autos"}
+                className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted/80 text-xs font-medium text-foreground/80 transition-colors cursor-pointer"
+              >
+                {showAutos ? (
+                  <PanelRightClose className="w-4 h-4" />
+                ) : (
+                  <PanelRightOpen className="w-4 h-4" />
+                )}
+                Autos
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Fechar"
+              className="w-9 h-9 rounded-lg bg-neutral-100 dark:bg-muted flex items-center justify-center hover:bg-neutral-200 dark:hover:bg-muted transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5 text-foreground/80" />
+            </button>
+          </div>
         </div>
 
         {/* Linha 2: banner do subtipo de audiência + seletor manual */}
@@ -316,8 +377,9 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Content + autos (split view) */}
+        <div className="flex-1 flex min-h-0">
+          <div className="flex-1 min-w-0 overflow-y-auto custom-scrollbar">
           <div className="p-4">
               {form.activeTab === "briefing" && (
                 <TabBriefing
@@ -399,6 +461,16 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                   />
               )}
           </div>
+          </div>
+          {hasAutos && showAutos && (
+            <aside className="hidden lg:flex flex-col w-[42%] xl:w-[46%] border-l border-neutral-200 dark:border-border bg-white dark:bg-neutral-900 min-h-0">
+              <AutosPreviewPane
+                files={previewFiles}
+                className="flex-1 min-h-0"
+                bodyClassName="flex-1 min-h-0"
+              />
+            </aside>
+          )}
         </div>
 
         {/* Footer */}

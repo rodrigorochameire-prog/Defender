@@ -48,9 +48,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Buffered mode: baixar arquivo inteiro (PDFs, docs, imagens)
+    const wantsDownload = request.nextUrl.searchParams.get("download") === "1";
     let contentType = "application/pdf";
+    let fileName: string | null = null;
     try {
       const info = await getFileInfo(fileId);
+      if (info?.name) fileName = info.name;
       if (info?.mimeType) {
         if (info.mimeType.startsWith("application/vnd.google-apps.")) {
           contentType = "application/pdf";
@@ -80,16 +83,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Content-Length": String(buffer.byteLength),
-        "Cache-Control": "private, max-age=3600",
-        "Accept-Ranges": "bytes",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Content-Length": String(buffer.byteLength),
+      "Cache-Control": "private, max-age=3600",
+      "Accept-Ranges": "bytes",
+      "Access-Control-Allow-Origin": "*",
+    };
+    // download=1 força salvar; senão renderiza inline (iframe/embed)
+    const safeName = (fileName ?? `documento-${fileId}`).replace(/["\\\r\n]/g, "_");
+    headers["Content-Disposition"] = `${wantsDownload ? "attachment" : "inline"}; filename="${safeName}"`;
+
+    return new NextResponse(buffer, { status: 200, headers });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     console.error(`[Drive Proxy] Erro fileId=${fileId}:`, errMsg);
