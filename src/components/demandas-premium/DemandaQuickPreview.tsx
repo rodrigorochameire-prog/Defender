@@ -728,10 +728,12 @@ export function DemandaQuickPreview({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         className={cn(
-          "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950",
+          "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none border-l-0 outline-none",
+          // Docado: container transparente em tela cheia; o sheet visível é a coluna
+          // de conteúdo (1040px à direita) e o PDF é a coluna à esquerda.
           docaAutos
-            ? "w-full sm:w-screen sm:max-w-none"
-            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+            ? "w-full sm:w-screen sm:max-w-none bg-transparent shadow-none"
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] shadow-2xl bg-[#f7f7f7] dark:bg-neutral-950",
         )}
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
@@ -784,7 +786,7 @@ export function DemandaQuickPreview({
             </div>
           )}
           {/* ===== COLUNA DIREITA — conteúdo do sheet (preservado integralmente) ===== */}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0 bg-[#f7f7f7] dark:bg-neutral-950 shadow-2xl" : "flex-1")}>
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
