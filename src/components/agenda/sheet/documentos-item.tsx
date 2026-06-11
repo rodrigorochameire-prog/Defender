@@ -103,7 +103,7 @@ export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
               </button>
             )}
           </div>
-          <DrivePreviewIframe driveFileId={file.driveFileId} />
+          <DrivePreviewIframe driveFileId={file.driveFileId} mimeType={file.mimeType} />
           <div className="flex gap-1.5">
             {file.webViewLink && (
               <a
