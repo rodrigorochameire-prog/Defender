@@ -33,9 +33,9 @@ export function parseAuxilio(nome: string | null | undefined): string | null {
 
 /**
  * Etiqueta de defensor p/ sinalizar de quem é o júri na agenda e no switch.
- * Cores: Rodrigo=emerald, Juliane=violet (círculo cheio, letra branca);
- * Grupo do Júri=orange SUTIL (só o contorno do círculo + G laranja) — pedido
- * do Rodrigo 11/06: o grupo é cobertura, não pode gritar mais que o titular.
+ * Cores: Rodrigo=emerald, Juliane=violet, Grupo do Júri=cinza NEUTRO —
+ * todos círculo cheio com letra branca; o grupo é cobertura e não pode
+ * competir com as cores dos titulares (pedido do Rodrigo 11/06).
  * `badgeClass` é a composição pronta do círculo — os consumidores NÃO devem
  * recompor cor (text-white + dot) por conta própria.
  */
@@ -68,8 +68,7 @@ export function defensorBadge(nome: string | null | undefined): {
       initial: "G",
       dot: "bg-orange-500",
       text: "text-orange-700 dark:text-orange-400",
-      badgeClass:
-        "border border-orange-400 text-orange-500 dark:border-orange-500 dark:text-orange-400 bg-transparent",
+      badgeClass: "bg-neutral-400 dark:bg-neutral-600 text-white",
       label: c,
     };
   return null;

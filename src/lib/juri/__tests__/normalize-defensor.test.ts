@@ -18,11 +18,9 @@ describe("defensorBadge — classes prontas do selo", () => {
     expect(defensorBadge("Juliane")?.badgeClass).toBe("bg-violet-500 text-white");
   });
 
-  it("Grupo do Júri: sutil — só contorno laranja com G laranja", () => {
+  it("Grupo do Júri: círculo cheio cinza neutro (não compete com os titulares)", () => {
     const b = defensorBadge("Grupo do Júri");
     expect(b?.initial).toBe("G");
-    expect(b?.badgeClass).toBe(
-      "border border-orange-400 text-orange-500 dark:border-orange-500 dark:text-orange-400 bg-transparent",
-    );
+    expect(b?.badgeClass).toBe("bg-neutral-400 dark:bg-neutral-600 text-white");
   });
 });
