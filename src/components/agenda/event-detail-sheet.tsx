@@ -236,7 +236,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // Largura (px) que o sheet assume enquanto o modal está aberto. O modal ocupa
   // todo o espaço à esquerda até a borda do sheet (right = sheetW → encaixe perfeito).
   // Ajustável pela alça de arraste e persistida no localStorage.
-  const [sheetW, setSheetW] = useState(560);
+  const [sheetW, setSheetW] = useState(700);
   const [draggingDivider, setDraggingDivider] = useState(false);
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
