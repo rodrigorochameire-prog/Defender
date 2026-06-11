@@ -352,6 +352,13 @@ export const medidasMPU = pgTable("medidas_mpu", {
     meios?: string[];
     lugares?: string[];
     valor?: string;
+    /** Trilha de modulações: decisão posterior alterou a medida (anterior → nova). */
+    alteracoes?: Array<{
+      em: string | null;
+      descricao: string;
+      anterior: { distanciaMetros: number | null; parametros: unknown; literal: string | null };
+      nova: { distanciaMetros: number | null; parametros: unknown; literal: string | null };
+    }>;
   }>(),
   literal: text("literal"),
   dataDecisao: date("data_decisao"),

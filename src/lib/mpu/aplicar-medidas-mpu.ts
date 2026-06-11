@@ -55,12 +55,70 @@ export interface MedidaExistente {
   codigo: string;
   origem: string | null;
   status: string | null;
+  distanciaMetros?: number | null;
+  parametros?: {
+    protegidos?: string[];
+    meios?: string[];
+    lugares?: string[];
+    valor?: string;
+    alteracoes?: AlteracaoMedida[];
+  } | null;
+  literal?: string | null;
+}
+
+export interface AlteracaoMedida {
+  em: string | null;
+  descricao: string;
+  anterior: { distanciaMetros: number | null; parametros: unknown; literal: string | null };
+  nova: { distanciaMetros: number | null; parametros: unknown; literal: string | null };
 }
 
 export interface PlanoMergeMedidas {
   inserir: MedidaParsed[];
-  atualizar: Array<{ id: number; medida: MedidaParsed }>;
+  atualizar: Array<{ id: number; medida: MedidaParsed; alteracao: string | null }>;
   revogarIds: number[];
+}
+
+const CAMPO_LISTA = [
+  ["protegidos", "protegidos"],
+  ["meios", "meios"],
+  ["lugares", "lugares"],
+] as const;
+
+/**
+ * Descreve a modulação de uma medida existente por uma decisão posterior
+ * (anterior → nova) — null quando nada material mudou (reimportação idêntica
+ * não gera observação). Pura.
+ */
+export function descreverModulacao(
+  antes: MedidaExistente,
+  depois: MedidaParsed,
+): string | null {
+  const partes: string[] = [];
+
+  const distAntes = antes.distanciaMetros ?? null;
+  const distDepois = depois.distanciaMetros ?? null;
+  if (distAntes !== distDepois) {
+    partes.push(
+      `distância: ${distAntes != null ? `${distAntes} m` : "—"} → ${distDepois != null ? `${distDepois} m` : "—"}`,
+    );
+  }
+
+  for (const [campo, rotulo] of CAMPO_LISTA) {
+    const a = [...((antes.parametros?.[campo] as string[] | undefined) ?? [])].sort();
+    const d = [...((depois[campo] as string[] | undefined) ?? [])].sort();
+    if (a.join(",") !== d.join(",") && (a.length || d.length)) {
+      partes.push(`${rotulo}: ${a.join(", ") || "—"} → ${d.join(", ") || "—"}`);
+    }
+  }
+
+  const valorAntes = antes.parametros?.valor ?? null;
+  const valorDepois = depois.valor ?? null;
+  if (valorAntes !== valorDepois && (valorAntes || valorDepois)) {
+    partes.push(`valor: ${valorAntes ?? "—"} → ${valorDepois ?? "—"}`);
+  }
+
+  return partes.length ? partes.join("; ") : null;
 }
 
 /**
@@ -78,7 +136,7 @@ export function planejarMergeMedidas(
   parsed: DecisaoMPUParsed,
 ): PlanoMergeMedidas {
   const inserir: MedidaParsed[] = [];
-  const atualizar: Array<{ id: number; medida: MedidaParsed }> = [];
+  const atualizar: Array<{ id: number; medida: MedidaParsed; alteracao: string | null }> = [];
 
   for (const m of parsed.medidas) {
     const mesmas = existentes.filter((e) => e.codigo === m.codigo);
@@ -87,7 +145,13 @@ export function planejarMergeMedidas(
       continue;
     }
     const doParser = mesmas.find((e) => e.origem === "parser");
-    if (doParser) atualizar.push({ id: doParser.id, medida: m });
+    if (doParser) {
+      atualizar.push({
+        id: doParser.id,
+        medida: m,
+        alteracao: descreverModulacao(doParser, m),
+      });
+    }
     // só manual → não duplica nem sobrescreve
   }
 
@@ -147,13 +211,26 @@ export async function aplicarMedidasMPU(
       codigo: medidasMPU.codigo,
       origem: medidasMPU.origem,
       status: medidasMPU.status,
+      distanciaMetros: medidasMPU.distanciaMetros,
+      parametros: medidasMPU.parametros,
+      literal: medidasMPU.literal,
     })
     .from(medidasMPU)
     .where(eq(medidasMPU.processoVvdId, pvvd.id));
 
   const plano = planejarMergeMedidas(existentes, parsed);
 
-  const valoresDe = (m: MedidaParsed) => ({
+  type ValoresMedida = {
+    codigo: string;
+    artigo: string;
+    distanciaMetros: number | null;
+    parametros: NonNullable<MedidaExistente["parametros"]>;
+    literal: string;
+    dataDecisao: string | null;
+    dataVencimento: string | null;
+    status: "ativa";
+  };
+  const valoresDe = (m: MedidaParsed): ValoresMedida => ({
     codigo: m.codigo,
     artigo: m.artigo,
     distanciaMetros: m.distanciaMetros ?? null,
@@ -179,8 +256,34 @@ export async function aplicarMedidasMPU(
       .values({ processoVvdId: pvvd.id, origem: "parser", ...valoresDe(m) });
     rows.push({ codigo: m.codigo, artigo: m.artigo, distanciaMetros: m.distanciaMetros ?? null });
   }
-  for (const { id, medida } of plano.atualizar) {
-    await tx.update(medidasMPU).set(valoresDe(medida)).where(eq(medidasMPU.id, id));
+  const modulacoes: string[] = [];
+  for (const { id, medida, alteracao } of plano.atualizar) {
+    const valores = valoresDe(medida);
+    if (alteracao) {
+      // Observação durável da modulação: versão anterior → nova, no jsonb da
+      // própria medida (a UI exibe) e no histórico do processo (abaixo).
+      const antes = existentes.find((e) => e.id === id);
+      const trilha: AlteracaoMedida[] = [
+        ...(antes?.parametros?.alteracoes ?? []),
+        {
+          em: params.dataDecisaoISO,
+          descricao: alteracao,
+          anterior: {
+            distanciaMetros: antes?.distanciaMetros ?? null,
+            parametros: antes?.parametros ?? null,
+            literal: antes?.literal ?? null,
+          },
+          nova: {
+            distanciaMetros: medida.distanciaMetros ?? null,
+            parametros: valores.parametros,
+            literal: medida.literal,
+          },
+        },
+      ];
+      valores.parametros = { ...valores.parametros, alteracoes: trilha };
+      modulacoes.push(`${medida.codigo}: ${alteracao}`);
+    }
+    await tx.update(medidasMPU).set(valores).where(eq(medidasMPU.id, id));
     rows.push({
       codigo: medida.codigo,
       artigo: medida.artigo,
@@ -225,6 +328,7 @@ export async function aplicarMedidasMPU(
   if (plano.inserir.length) partes.push(`${plano.inserir.length} concedida(s)`);
   if (plano.atualizar.length) partes.push(`${plano.atualizar.length} atualizada(s)`);
   if (plano.revogarIds.length) partes.push(`${plano.revogarIds.length} revogada(s)`);
+  if (modulacoes.length) partes.push(`modulação — ${modulacoes.join(" | ")}`);
   await tx.insert(historicoMPU).values({
     processoVVDId: pvvd.id,
     tipoEvento:

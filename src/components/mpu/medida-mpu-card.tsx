@@ -26,6 +26,11 @@ const LUGAR_LABEL: Record<string, string> = {
 
 type Parametros = MedidaMPURow["parametros"];
 
+function formatarDataBR(iso: string): string {
+  const [a, m, d] = iso.split("-");
+  return a && m && d ? `${d}/${m}/${a}` : iso;
+}
+
 /** Helper puro: traduz os parâmetros estruturados em chips legíveis. */
 export function chipsDaMedida(parametros: Parametros): string[] {
   if (!parametros) return [];
@@ -87,6 +92,14 @@ export function MedidaMpuCard({
       {medida.dataVencimento && (
         <p className="mt-1 text-[11px] text-neutral-500">Vence em {medida.dataVencimento}</p>
       )}
+      {(medida.parametros?.alteracoes ?? []).map((alt, i) => (
+        <p
+          key={i}
+          className="mt-1.5 rounded border-l-2 border-amber-400 bg-amber-100/40 px-2 py-1 text-[11px] text-amber-900 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          Modulada{alt.em ? ` em ${formatarDataBR(alt.em)}` : ""}: {alt.descricao}
+        </p>
+      ))}
       {actions && <div className="mt-2">{actions}</div>}
     </div>
   );

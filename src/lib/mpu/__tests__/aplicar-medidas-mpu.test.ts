@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { planejarMergeMedidas, resumirParaProcessoVVD } from "../aplicar-medidas-mpu";
+import { descreverModulacao, planejarMergeMedidas, resumirParaProcessoVVD } from "../aplicar-medidas-mpu";
 import { parseDecisaoMPU } from "../parse-decisao";
 
 const DECISAO = `DEFIRO em favor de MARIA cumpra JOAO: a) afastamento do lar; b) proibição de aproximação, mínimo de 300 metros da ofendida. Pelo prazo de 180 dias.`;
@@ -64,5 +64,50 @@ describe("planejarMergeMedidas — ajuste posterior não apaga medidas anteriore
     const plano = planejarMergeMedidas(comManual, parsed);
     expect(plano.inserir).toEqual([]);
     expect(plano.atualizar).toEqual([]);
+  });
+});
+
+describe("modulação de medida existente — observação anterior → nova", () => {
+  const aproximacao200 = {
+    id: 1,
+    codigo: "PROIBICAO_APROXIMACAO",
+    origem: "parser",
+    status: "ativa",
+    distanciaMetros: 200,
+    parametros: { protegidos: ["ofendida"] },
+    literal: "distância mínima de 200 metros",
+  };
+
+  it("descreverModulacao detecta mudança de distância e de protegidos", () => {
+    const parsed = parseDecisaoMPU(
+      "DEFIRO a ampliação: proibição de aproximação da ofendida e de seus familiares, distância mínima de 300 metros.",
+    );
+    const desc = descreverModulacao(aproximacao200, parsed.medidas[0]);
+    expect(desc).toContain("200 m → 300 m");
+    expect(desc).toContain("familiares");
+  });
+
+  it("reimportação idêntica não gera observação (null)", () => {
+    const parsed = parseDecisaoMPU(
+      "DEFIRO: proibição de aproximação da ofendida, distância mínima de 200 metros.",
+    );
+    expect(descreverModulacao(aproximacao200, parsed.medidas[0])).toBeNull();
+  });
+
+  it("plano de merge carrega a modulação na atualização", () => {
+    const parsed = parseDecisaoMPU(
+      "DEFIRO a ampliação do perímetro: proibição de aproximação da ofendida, distância mínima de 500 metros.",
+    );
+    const plano = planejarMergeMedidas([aproximacao200], parsed);
+    expect(plano.atualizar).toHaveLength(1);
+    expect(plano.atualizar[0].alteracao).toContain("200 m → 500 m");
+  });
+
+  it("atualização sem mudança material vem com alteracao null", () => {
+    const parsed = parseDecisaoMPU(
+      "DEFIRO: proibição de aproximação da ofendida, distância mínima de 200 metros.",
+    );
+    const plano = planejarMergeMedidas([aproximacao200], parsed);
+    expect(plano.atualizar[0].alteracao).toBeNull();
   });
 });
