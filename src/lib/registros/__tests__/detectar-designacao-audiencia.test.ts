@@ -117,12 +117,12 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r!.modalidade).toBe("presencial");
   });
 
-  it("detecta audiência una com tipo canônico do catálogo", () => {
+  it("detecta instrução sumariante (1ª fase do júri) sem cair em AIJ", () => {
     const r = detectarDesignacaoAudiencia(
-      "Designo audiência una de conciliação, instrução e julgamento para o dia 03/08/2026, às 13h30min."
+      "Designo audiência de instrução sumariante para o dia 03/08/2026, às 13h30min."
     );
     expect(r!.data).toBe("2026-08-03");
-    expect(r!.tipo).toBe("Audiência Una");
+    expect(r!.tipo).toBe("Audiência de Instrução Sumariante");
   });
 
   it("detecta audiência preliminar com tipo canônico do catálogo", () => {
