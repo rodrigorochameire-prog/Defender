@@ -130,7 +130,7 @@ const TIPOS_AUDIENCIA: Record<string, { label: string; icon: LucideIcon; color: 
   INSTRUCAO: { label: "Instrução", icon: Scale, color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400", dotColor: "bg-sky-500" },
   JULGAMENTO: { label: "Julgamento", icon: Gavel, color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400", dotColor: "bg-indigo-500" },
   // Lei 13.431/2017 — depoimento sem dano de criança/adolescente em VVD/PPP/Cautelar
-  OITIVA_ESPECIAL: { label: "Oitiva Especial", icon: Mic, color: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400", dotColor: "bg-fuchsia-500" },
+  OITIVA_ESPECIAL: { label: "Depoimento Especial", icon: Mic, color: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400", dotColor: "bg-fuchsia-500" },
   // Art. 366 CPP — produção antecipada de prova
   ANTECIPACAO_PROVA: { label: "Antecipação de Prova", icon: Hourglass, color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400", dotColor: "bg-purple-500" },
   CUSTODIA: { label: "Custódia", icon: Lock, color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", dotColor: "bg-red-500" },

@@ -16,14 +16,14 @@ const DATA_REGEX = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/;
 const HORA_REGEX = /(\d{1,2})\s*(?:h|:)\s*(\d{2})?/i;
 
 // Ordem importa: padrões mais específicos primeiro (ex.: "Instrução e Julgamento"
-// antes de "Instrução"; "Oitiva Especial" antes de "Oitiva"). Match na primeira
+// antes de "Instrução"; "Depoimento Especial" antes de "Oitiva"). Match na primeira
 // ocorrência — se não bater nenhum, modal cai pro estado vazio.
 const TIPOS_CONHECIDOS = [
   { needle: /instru[cç][aã]o\s+e\s+julgamento/i, label: "Instrução e Julgamento" },
   { needle: /instru[cç][aã]o/i, label: "Instrução" },
   // Lei 13.431/2017 — depoimento sem dano (criança/adolescente vítima ou testemunha).
   // Cobre "oitiva especial", "oitiva especializada", "depoimento sem dano".
-  { needle: /oitiva\s+especial(?:izad[ao])?|depoimento\s+sem\s+dano/i, label: "Oitiva Especial" },
+  { needle: /oitiva\s+especial(?:izad[ao])?|depoimento\s+sem\s+dano/i, label: "Depoimento Especial" },
   // Art. 366 CPP — produção antecipada de prova.
   { needle: /antecipa[cç][aã]o\s+de\s+prova|produ[cç][aã]o\s+antecipada/i, label: "Antecipação de Prova" },
   // Plenário do Júri — sessão de julgamento (júri popular).

@@ -65,7 +65,7 @@ export const TIPOS_PROCESSO = {
   },
   OE: {
     sigla: "OE",
-    label: "Oitiva Especial",
+    label: "Depoimento Especial",
     descricao: "Procedimento especial para ouvir crianças pré-processualmente (evita revitimização)",
   },
 } as const;
@@ -88,7 +88,7 @@ export const TIPO_PROCESSO_OPTIONS = [
   { value: "HC", label: "HC - Habeas Corpus" },
   { value: "TC", label: "TC - Termo Circ." },
   { value: "RC", label: "RC - Revisão Criminal" },
-  { value: "OE", label: "OE - Oitiva Especial" },
+  { value: "OE", label: "OE - Depoimento Especial" },
 ];
 
 /**

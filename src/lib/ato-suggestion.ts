@@ -341,7 +341,7 @@ function extractTipoAudiencia(text: string): string | undefined {
   // parser canônico em audiencia-parser.ts (TIPOS_CONHECIDOS). Mantenha
   // sincronizados — divergência aqui significa modal abrindo sem o tipo.
   if (/instru[çc][aã]o\s+e\s+julgamento/.test(lower)) return "Instrução e Julgamento";
-  if (/oitiva\s+especial(?:izad[ao])?|depoimento\s+sem\s+dano/.test(lower)) return "Oitiva Especial";
+  if (/oitiva\s+especial(?:izad[ao])?|depoimento\s+sem\s+dano/.test(lower)) return "Depoimento Especial";
   if (/antecipa[çc][aã]o\s+de\s+prova|produ[çc][aã]o\s+antecipada/.test(lower)) return "Antecipação de Prova";
   if (/plen[aá]rio\s+(?:do\s+)?j[uú]ri|sess[aã]o\s+(?:de\s+)?j[uú]ri/.test(lower)) return "Plenário do Júri";
   if (/preliminar\s+\(?maria\s+da\s+penha|art\.?\s*16\s+(?:da\s+)?lei\s+maria/.test(lower)) return "Preliminar (Maria da Penha)";

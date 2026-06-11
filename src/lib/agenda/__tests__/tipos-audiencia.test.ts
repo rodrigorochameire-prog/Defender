@@ -48,6 +48,12 @@ describe("detectarSlug — ordem de especificidade", () => {
   it("Instrução Sumariante vence AIJ (1ª fase do júri)", () => {
     expect(detectarSlug("AUDIÊNCIA DE INSTRUÇÃO SUMARIANTE")).toBe("sumariante");
   });
+  it("PAP para depoimento especial de criança classifica como Depoimento Especial", () => {
+    expect(detectarSlug("PRODUÇÃO ANTECIPADA DE PROVAS — DEPOIMENTO ESPECIAL DA CRIANÇA")).toBe("oitiva_especial");
+  });
+  it("PAP pura (sem depoimento especial) segue PAP", () => {
+    expect(detectarSlug("PRODUÇÃO ANTECIPADA DE PROVAS")).toBe("pap");
+  });
   it("Audiência Preliminar detecta", () => {
     expect(detectarSlug("AUDIÊNCIA PRELIMINAR")).toBe("preliminar");
   });
@@ -86,7 +92,8 @@ describe("buildTipoAbreviacoes", () => {
     const m = buildTipoAbreviacoes();
     expect(m["Audiência de Instrução e Julgamento"]).toBe("AIJ");
     expect(m["Instrução e Julgamento"]).toBe("AIJ");
-    expect(m["Oitiva Especial"]).toBe("Oitiva Especial");
+    expect(m["Oitiva Especial"]).toBe("Dep. Especial");
+    expect(m["Depoimento Especial"]).toBe("Dep. Especial");
     expect(m["Sessão de Julgamento do Tribunal do Júri"]).toBe("Júri");
   });
   it("inclui siglas legadas e NÃO inclui o typo 'Adminitória'", () => {

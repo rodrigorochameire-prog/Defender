@@ -133,8 +133,9 @@ const abreviarTitulo = (titulo: string): string => {
     "Acordo de Não Persecução Penal": "ANPP",
     // Admonitória
     "Audiência Admonitória": "Admonitória",
-    // Oitiva Especial
-    "Oitiva Especial": "Oitiva especial",
+    // Depoimento Especial (títulos legados ainda dizem "Oitiva Especial")
+    "Depoimento Especial": "Dep. especial",
+    "Oitiva Especial": "Dep. especial",
     // Retratação
     "Audiência de Retratação": "Retratação",
     // Outros

@@ -30,7 +30,7 @@ const TIPOS_AUDIENCIA = [
   "Plenário do Júri",
   // Lei 13.431/2017 — depoimento sem dano de criança/adolescente vítima
   // ou testemunha. Comum em processos de medida cautelar e ações VVD.
-  "Oitiva Especial",
+  "Depoimento Especial",
   // Art. 366 CPP / produção antecipada de prova
   "Antecipação de Prova",
   "Conciliação",

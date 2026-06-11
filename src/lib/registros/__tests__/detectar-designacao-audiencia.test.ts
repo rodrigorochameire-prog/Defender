@@ -92,7 +92,7 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r).not.toBeNull();
     expect(r!.data).toBe("2026-07-15");
     expect(r!.horario).toBe("09:15");
-    expect(r!.tipo).toBe("Oitiva Especial");
+    expect(r!.tipo).toBe("Depoimento Especial");
     expect(r!.modalidade).toBe("presencial");
     expect(r!.redesignacao).toBe(false);
   });
@@ -103,7 +103,7 @@ describe("detectarDesignacaoAudiencia", () => {
     );
     expect(r!.data).toBe("2026-09-22");
     expect(r!.horario).toBe("10:00");
-    expect(r!.tipo).toBe("Oitiva Especial");
+    expect(r!.tipo).toBe("Depoimento Especial");
   });
 
   it("detecta oitiva especializada com espaço duplo após ID (caso Leinho, registro 461)", () => {
@@ -113,7 +113,7 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r).not.toBeNull();
     expect(r!.data).toBe("2026-07-14");
     expect(r!.horario).toBe("08:30");
-    expect(r!.tipo).toBe("Oitiva Especial");
+    expect(r!.tipo).toBe("Depoimento Especial");
     expect(r!.modalidade).toBe("presencial");
   });
 

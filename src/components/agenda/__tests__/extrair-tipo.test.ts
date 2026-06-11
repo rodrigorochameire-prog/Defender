@@ -51,7 +51,7 @@ describe("extrairTipo", () => {
   });
 
   it("siglas vêm do catálogo (Depoimento Especial e sem typo Adminitória)", () => {
-    expect(extrairTipo("Depoimento Especial — Maria")).toBe("Oitiva Especial");
+    expect(extrairTipo("Depoimento Especial — Maria")).toBe("Dep. Especial");
     expect(extrairTipo("Audiência Admonitória — João")).toBe("Admonitória");
   });
 });

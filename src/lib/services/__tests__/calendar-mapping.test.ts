@@ -64,7 +64,8 @@ describe("colorIdForAudiencia", () => {
     expect(colorIdForAudiencia("custodia")).toBe("11");
   });
 
-  it("Oitiva Especial / Depoimento sem dano → LARANJA ('6')", () => {
+  it("Depoimento Especial / Oitiva Especial / Depoimento sem dano → LARANJA ('6')", () => {
+    expect(colorIdForAudiencia("Depoimento Especial")).toBe("6");
     expect(colorIdForAudiencia("Oitiva Especial")).toBe("6");
     expect(colorIdForAudiencia("Depoimento sem dano")).toBe("6");
   });

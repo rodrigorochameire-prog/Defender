@@ -61,7 +61,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
   },
   oitiva_especial: {
     key: "oitiva_especial",
-    label: "Oitiva Especial (Lei 13.431/17)",
+    label: "Depoimento Especial (Lei 13.431/17)",
     icon: ShieldAlert,
     cor: "rose",
     descricao: "Depoimento especial de criança ou adolescente em situação de violência. Escuta protegida em sala separada, com profissional capacitado.",

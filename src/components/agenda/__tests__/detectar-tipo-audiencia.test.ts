@@ -24,7 +24,7 @@ describe("detectarTipoAudiencia", () => {
 
   it("detecta Oitiva Especial (cautelar) com texto quebrado", () => {
     const bloco = `CAUTELAR\nINOMINADA\nCRIMINAL\n(11955)\nOITIVA\nESPECIAL\nredesignada`;
-    expect(detectarTipoAudiencia(bloco)).toBe("Oitiva Especial");
+    expect(detectarTipoAudiencia(bloco)).toBe("Depoimento Especial");
   });
 
   it("detecta Sessão de Julgamento do Júri", () => {

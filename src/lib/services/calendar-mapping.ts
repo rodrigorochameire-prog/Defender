@@ -35,7 +35,7 @@ export function colorIdForAudiencia(tipo: string): string {
   const t = (tipo || "").toLowerCase();
   if (/plen[áa]rio|j[úu]ri/.test(t)) return CalendarColors.ROXO;
   if (/cust[óo]dia/.test(t)) return CalendarColors.VERMELHO;
-  if (/oitiva\s+especial|depoimento\s+sem\s+dano/.test(t)) return CalendarColors.LARANJA;
+  if (/oitiva\s+especial|depoimento\s+(?:sem\s+dano|especial)/.test(t)) return CalendarColors.LARANJA;
   if (/preliminar.*maria/.test(t)) return CalendarColors.AMARELO;
   return CalendarColors.AZUL;
 }
