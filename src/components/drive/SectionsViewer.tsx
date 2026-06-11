@@ -12,6 +12,7 @@ import { SectionDetailSheet } from "./SectionDetailSheet";
 interface SectionsViewerProps {
   assistidoId: number;
   processoId?: number;
+  onOpenSection?: (section: { fileDriveId: string | null; paginaInicio: number; titulo: string; tipo: string }) => void;
 }
 
 const TIER_ORDER = ["critico", "alto", "medio", "baixo"];
@@ -21,7 +22,7 @@ const DEPOIMENTO_TIPOS = [
   "interrogatorio", "ata_audiencia", "acareacao",
 ];
 
-export function SectionsViewer({ assistidoId, processoId }: SectionsViewerProps) {
+export function SectionsViewer({ assistidoId, processoId, onOpenSection }: SectionsViewerProps) {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [selectedTipo, setSelectedTipo] = useState<string | null>(null);
   const [groupByDepoente, setGroupByDepoente] = useState(false);
@@ -82,6 +83,10 @@ export function SectionsViewer({ assistidoId, processoId }: SectionsViewerProps)
   }, [filtered, groupByDepoente]);
 
   const handleOpenSection = (section: any) => {
+    if (onOpenSection) {
+      onOpenSection({ fileDriveId: section.fileDriveId, paginaInicio: section.paginaInicio, titulo: section.titulo, tipo: section.tipo });
+      return;
+    }
     setSelectedSection(section);
     setSheetOpen(true);
   };
