@@ -85,6 +85,27 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r!.tipo).toBe("Audiência de Instrução e Julgamento");
   });
 
+  it("detecta oitiva especializada sem a palavra 'audiência' (caso ID.521881185)", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Em cumprimento a decisão de ID.521881185, designo oitiva especializada na modalidade presencial para o dia 15/07/2026, às 09h15min."
+    );
+    expect(r).not.toBeNull();
+    expect(r!.data).toBe("2026-07-15");
+    expect(r!.horario).toBe("09:15");
+    expect(r!.tipo).toBe("Oitiva Especial");
+    expect(r!.modalidade).toBe("presencial");
+    expect(r!.redesignacao).toBe(false);
+  });
+
+  it("detecta depoimento especial designado sem a palavra 'audiência'", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Designo depoimento especial da vítima para o dia 22/09/2026, às 10h00min, na modalidade presencial."
+    );
+    expect(r!.data).toBe("2026-09-22");
+    expect(r!.horario).toBe("10:00");
+    expect(r!.tipo).toBe("Depoimento Especial");
+  });
+
   it("não dispara sem verbo de designação", () => {
     expect(
       detectarDesignacaoAudiencia(

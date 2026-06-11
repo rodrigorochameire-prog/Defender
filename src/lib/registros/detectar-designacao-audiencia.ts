@@ -42,15 +42,18 @@ const TIPOS: Array<[RegExp, string]> = [
   [/cust[oó]dia/i, "Audiência de Custódia"],
   [/admonit[oó]ria/i, "Audiência Admonitória"],
   [/depoimento\s+especial/i, "Depoimento Especial"],
+  [/oitiva\s+especial(?:izada)?/i, "Oitiva Especial"],
   [/oitiva/i, "Oitiva"],
   [/\buna\b/i, "Audiência UNA"],
   [/preliminar/i, "Audiência Preliminar"],
 ];
 
-// Gatilho: verbo de designação + a palavra audiência por perto (até ~80 chars),
-// ou a forma passiva "audiência ... designada".
+// Gatilho: verbo de designação + substantivo do ato por perto (até ~80 chars),
+// ou a forma passiva "audiência ... designada". Além de "audiência", despachos
+// designam "oitiva especializada" e "depoimento especial" sem usar a palavra
+// audiência (ex.: "designo oitiva especializada na modalidade presencial").
 const GATILHO =
-  /\b(?:(re)?designo|(re)?designa(?:r|da|-se)?|fica(?:m)?\s+(re)?designad[ao]s?|aprazo|aprazada)\b[\s\S]{0,80}?\baudi[eê]ncia\b|\baudi[eê]ncia\b[\s\S]{0,80}?\b(re)?designad[ao]\b/i;
+  /\b(?:(re)?designo|(re)?designa(?:r|da|-se)?|fica(?:m)?\s+(re)?designad[ao]s?|aprazo|aprazada)\b[\s\S]{0,80}?\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b|\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b[\s\S]{0,80}?\b(re)?designad[ao]\b/i;
 
 const DATA_RE = /\bdia\s+(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/i;
 const DATA_FALLBACK_RE = /\bpara\s+(?:o\s+)?(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/i;
