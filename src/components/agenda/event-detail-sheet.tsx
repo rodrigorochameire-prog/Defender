@@ -273,6 +273,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     onError: (e) => toast.error(e.message),
   });
 
+  // Ajuste manual da pendência "aguardando nova data" (clique no badge).
+  const resolverPendencia = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      toast.success("Pendência resolvida manualmente");
+      if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const midiasQuery = trpc.drive.midiasByAssistido.useQuery(
     { assistidoId: (ctx?.assistido as any)?.id ?? 0 },
     { enabled: !!(ctx?.assistido as any)?.id && open, retry: false }
@@ -556,9 +565,24 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         </span>
                       )}
                       {(ctx as any)?.audiencia?.aguardandoNovaData && (
-                        <AguardandoNovaDataBadge
-                          motivo={(ctx as any)?.audiencia?.motivoNaoRealizacao}
-                        />
+                        <button
+                          type="button"
+                          title="Clique para resolver a pendência manualmente"
+                          className="cursor-pointer"
+                          disabled={resolverPendencia.isPending}
+                          onClick={() => {
+                            if (
+                              audienciaIdNum &&
+                              confirm("Limpar a pendência 'aguardando nova data' desta audiência?")
+                            ) {
+                              resolverPendencia.mutate({ id: audienciaIdNum, aguardandoNovaData: false });
+                            }
+                          }}
+                        >
+                          <AguardandoNovaDataBadge
+                            motivo={(ctx as any)?.audiencia?.motivoNaoRealizacao}
+                          />
+                        </button>
                       )}
                     </div>
                     {(vara || evento.atribuicao) && (
