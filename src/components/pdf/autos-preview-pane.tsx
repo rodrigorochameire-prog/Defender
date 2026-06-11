@@ -12,6 +12,8 @@ interface Props {
   files: PreviewFile[];
   /** driveFileId inicialmente selecionado (default: primeiro da lista). */
   initialId?: string | null;
+  /** Página inicial para abrir no visualizador (deep-link via #page=N). */
+  initialPage?: number;
   label?: string;
   className?: string;
   /** Altura do corpo do visualizador (default h-[60vh]). */
@@ -26,6 +28,7 @@ interface Props {
 export function AutosPreviewPane({
   files,
   initialId,
+  initialPage,
   label = "Autos",
   className = "",
   bodyClassName = "h-[60vh]",
@@ -49,12 +52,17 @@ export function AutosPreviewPane({
     }
   }, [usable, selectedId]);
 
+  // Reage quando o pai aponta outro documento (ex.: clicar um ato diferente).
+  useEffect(() => {
+    if (initialId) setSelectedId(initialId);
+  }, [initialId]);
+
   useEffect(() => {
     setIframeLoading(true);
     // rede de segurança: o onLoad do visualizador nativo de PDF nem sempre dispara
     const t = setTimeout(() => setIframeLoading(false), 3500);
     return () => clearTimeout(t);
-  }, [selectedId, viewSource]);
+  }, [selectedId, viewSource, initialPage]);
 
   const selected = usable.find((f) => f.driveFileId === selectedId) ?? usable[0] ?? null;
 
@@ -70,8 +78,8 @@ export function AutosPreviewPane({
   const fileId = selected.driveFileId!;
   const previewUrl =
     viewSource === "app"
-      ? `/api/drive/proxy?fileId=${fileId}`
-      : `https://drive.google.com/file/d/${fileId}/preview`;
+      ? `/api/drive/proxy?fileId=${fileId}${initialPage ? `#page=${initialPage}` : ""}`
+      : `https://drive.google.com/file/d/${fileId}/preview${initialPage ? `#page=${initialPage}` : ""}`;
   const driveUrl =
     selected.webViewLink ?? `https://drive.google.com/file/d/${fileId}/view`;
 
@@ -157,7 +165,7 @@ export function AutosPreviewPane({
           </div>
         )}
         <iframe
-          key={fileId}
+          key={`${fileId}:${initialPage ?? ""}:${viewSource}`}
           src={previewUrl}
           className="w-full h-full border-0"
           title={selected.name ?? "Visualização do PDF"}

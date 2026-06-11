@@ -88,7 +88,7 @@ export function SectionCard({ section, onClick }: SectionCardProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-3 rounded-lg border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50 transition-all group"
+      className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-neutral-800 hover:border-zinc-300 dark:hover:border-neutral-700 hover:bg-zinc-50/50 dark:hover:bg-neutral-800/40 transition-all group"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -101,16 +101,16 @@ export function SectionCard({ section, onClick }: SectionCardProps) {
             </Badge>
           )}
         </div>
-        <span className="text-[10px] text-zinc-400 font-mono shrink-0">{pageRange}</span>
+        <span className="text-[10px] text-zinc-400 dark:text-neutral-500 font-mono shrink-0">{pageRange}</span>
       </div>
-      <p className="text-sm font-medium text-zinc-800 mt-1.5 line-clamp-1">{section.titulo}</p>
+      <p className="text-sm font-medium text-zinc-800 dark:text-neutral-100 mt-1.5 line-clamp-1">{section.titulo}</p>
       {section.resumo && (
-        <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{section.resumo}</p>
+        <p className="text-xs text-zinc-500 dark:text-neutral-400 mt-1 line-clamp-2">{section.resumo}</p>
       )}
       <div className="flex items-center justify-between mt-2">
         <div className="flex items-center gap-1.5">
           {pessoas && pessoas.length > 0 && (
-            <span className="text-[10px] text-zinc-400">
+            <span className="text-[10px] text-zinc-400 dark:text-neutral-500">
               {pessoas.map(p => p.nome).join(", ")}
             </span>
           )}
@@ -127,7 +127,7 @@ export function SectionCard({ section, onClick }: SectionCardProps) {
               {section.confianca}%
             </span>
           )}
-          <FileText className="w-3 h-3 text-zinc-300" />
+          <FileText className="w-3 h-3 text-zinc-300 dark:text-neutral-600" />
         </div>
       </div>
     </button>

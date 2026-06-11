@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
+  AlertTriangle, CalendarClock, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
@@ -18,6 +18,7 @@ import { CollapsibleSection } from "./sheet/collapsible-section";
 import { SheetActionFooter } from "./sheet/sheet-action-footer";
 import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
 import { DocumentosBlock } from "./sheet/documentos-block";
+import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
@@ -31,6 +32,9 @@ import { nomeVaraExibicao } from "@/lib/format/nome-vara";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
+import { parseAnotacaoAudiencia, type AnotacaoAudienciaParsed } from "@/lib/agenda/parse-anotacao-audiencia";
+import { EventoDetectadoBanner } from "./sheet/evento-detectado-banner";
+import { AguardandoNovaDataBadge } from "./aguardando-nova-data-badge";
 import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
 import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
 import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
@@ -230,6 +234,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
+  const [deteccaoPendente, setDeteccaoPendente] = useState<AnotacaoAudienciaParsed | null>(null);
+  const [docaAutos, setDocaAutos] = useState<{ fileId: string; page?: number } | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const audienciaIdNum = useMemo(() => {
@@ -264,6 +270,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const utils = trpc.useUtils();
   const setPatrocinio = trpc.processos.setPatrocinio.useMutation({
     onSuccess: () => {
+      if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Ajuste manual da pendência "aguardando nova data" (clique no badge).
+  const resolverPendencia = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      toast.success("Pendência resolvida manualmente");
       if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
     },
     onError: (e) => toast.error(e.message),
@@ -408,6 +423,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
   }, [audienciaIdNum, depoentes.length]);
 
+  // Recolhe a doca de autos ao trocar de evento ou fechar o sheet.
+  useEffect(() => {
+    setDocaAutos(null);
+  }, [audienciaIdNum, open]);
+
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
   }, [advogadoParticular, processoId]);
@@ -468,9 +488,38 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden"
+        className={cn(
+          "p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden",
+          docaAutos
+            ? "w-full sm:w-[96vw] sm:max-w-none"
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+        )}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
+
+        <div className="flex-1 flex min-h-0">
+          {docaAutos && (
+            <div className="hidden sm:flex flex-col min-w-0 flex-1 border-r border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
+                <span className="text-[11px] font-medium text-neutral-500">Autos</span>
+                <button
+                  type="button"
+                  onClick={() => setDocaAutos(null)}
+                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  Recolher ⇥
+                </button>
+              </div>
+              <AutosPreviewPane
+                files={[{ driveFileId: docaAutos.fileId }]}
+                initialId={docaAutos.fileId}
+                initialPage={docaAutos.page}
+                className="flex-1 min-h-0"
+                bodyClassName="flex-1 min-h-0"
+              />
+            </div>
+          )}
+          <div className={cn("flex flex-col min-h-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
 
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -550,6 +599,26 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         <span className="text-[11px] text-neutral-600 dark:text-neutral-500 tabular-nums">
                           {format(dataHora, "HH:mm", { locale: ptBR })}
                         </span>
+                      )}
+                      {(ctx as any)?.audiencia?.aguardandoNovaData && (
+                        <button
+                          type="button"
+                          title="Clique para resolver a pendência manualmente"
+                          className="cursor-pointer"
+                          disabled={resolverPendencia.isPending}
+                          onClick={() => {
+                            if (
+                              audienciaIdNum &&
+                              confirm("Limpar a pendência 'aguardando nova data' desta audiência?")
+                            ) {
+                              resolverPendencia.mutate({ id: audienciaIdNum, aguardandoNovaData: false });
+                            }
+                          }}
+                        >
+                          <AguardandoNovaDataBadge
+                            motivo={(ctx as any)?.audiencia?.motivoNaoRealizacao}
+                          />
+                        </button>
                       )}
                     </div>
                     {(vara || evento.atribuicao) && (
@@ -685,6 +754,29 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                 count={anotacoesRapidas.length}
                 defaultOpen
               >
+                {deteccaoPendente && audienciaIdNum && (
+                  <div className="mb-2">
+                    <EventoDetectadoBanner
+                      deteccao={deteccaoPendente}
+                      isPending={actions.aplicarEvento.isPending}
+                      onDescartar={() => setDeteccaoPendente(null)}
+                      onAplicar={(d) =>
+                        actions.aplicarEvento.mutate(
+                          {
+                            audienciaId: audienciaIdNum,
+                            evento: d.evento,
+                            motivo: d.motivo,
+                            motivoDetalhe: d.motivoDetalhe,
+                            ...(d.novaData
+                              ? { novaData: d.novaData, novaHora: d.novaHora ?? "00:00" }
+                              : {}),
+                          },
+                          { onSuccess: () => setDeteccaoPendente(null) }
+                        )
+                      }
+                    />
+                  </div>
+                )}
                 {anotacoesRapidas.length === 0 ? (
                   <EmptyHint text="Nenhuma anotação ainda" />
                 ) : (
@@ -706,6 +798,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                             })}
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          aria-label="Estruturar anotação"
+                          title="Detectar evento de audiência (redesignação/suspensão)"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
+                          onClick={() => {
+                            const d = parseAnotacaoAudiencia(n.texto);
+                            if (d) setDeteccaoPendente(d);
+                            else toast.info("Nenhum evento de audiência detectado nesta anotação");
+                          }}
+                        >
+                          <CalendarClock className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           aria-label="Apagar anotação"
@@ -1097,6 +1202,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   <DocumentosBlock
                     processoId={typeof processoId === "number" ? processoId : null}
                     assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                    onDockPdf={(fileId, page) => setDocaAutos({ fileId, page })}
                   />
                 </CollapsibleSection>
 
@@ -1126,12 +1232,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           jaConcluida={jaConcluida}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
+          onDeteccao={setDeteccaoPendente}
         />
         <PessoaSheet
           pessoaId={pessoaSheetId}
           open={pessoaSheetId !== null}
           onOpenChange={(o) => !o && setPessoaSheetId(null)}
         />
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

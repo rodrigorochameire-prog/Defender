@@ -9,10 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Users, Notebook, BookOpen,
   Sparkles, Gavel, X, Save, CheckCircle2, Circle, CircleDashed, ChevronDown,
-  PanelRightClose, PanelRightOpen,
+  PanelRightClose, PanelRightOpen, Layers,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
+import { SectionsViewer } from "@/components/drive/SectionsViewer";
 import { rankAutos } from "@/lib/autos-pick";
 import type { PreviewFile } from "./shared/document-preview-dialog";
 import { useRegistroForm } from "./hooks/use-registro-form";
@@ -59,6 +60,7 @@ function buildTabConfig(subtipo: SubtipoAudiencia): TabDef[] {
   tabs.push({ key: "anotacoes", label: "Anotações", icon: Notebook });
   tabs.push({ key: "resultado", label: "Resultado", icon: CheckCircle2 });
   tabs.push({ key: "historico", label: "Histórico", icon: BookOpen, countKey: "historico" });
+  tabs.push({ key: "atos", label: "Atos", icon: Layers });
   return tabs;
 }
 
@@ -104,6 +106,7 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
   }, [autosFilesQ.data, assistidoFilesQ.data]);
   const hasAutos = previewFiles.length > 0;
   const [showAutos, setShowAutos] = useState(true);
+  const [atoSel, setAtoSel] = useState<{ fileId: string; page?: number } | null>(null);
 
   const tabCounts: Record<string, number> = {
     depoentes: form.registro.depoentes.length,
@@ -367,10 +370,12 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                       {count}
                     </Badge>
                   )}
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${completudeStateColor(completude.byTab[tab.key])}`}
-                    title={`Completude: ${COMPLETUDE_LABEL[completude.byTab[tab.key]]}`}
-                  />
+                  {tab.key !== "atos" && (
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${completudeStateColor(completude.byTab[tab.key])}`}
+                      title={`Completude: ${COMPLETUDE_LABEL[completude.byTab[tab.key]]}`}
+                    />
+                  )}
                 </button>
               );
             })}
@@ -460,6 +465,23 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                     statusAtual={form.statusAudiencia}
                   />
               )}
+
+              {form.activeTab === "atos" && (
+                evProcessoId ? (
+                  <SectionsViewer
+                    processoId={evProcessoId}
+                    assistidoId={evAssistidoId ?? 0}
+                    onOpenSection={(s) => {
+                      if (s.fileDriveId) {
+                        setAtoSel({ fileId: s.fileDriveId, page: s.paginaInicio });
+                        setShowAutos(true);
+                      }
+                    }}
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground p-4 text-center">Sem processo vinculado para sistematizar.</p>
+                )
+              )}
           </div>
           </div>
           {hasAutos && showAutos && (
@@ -468,6 +490,8 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 files={previewFiles}
                 className="flex-1 min-h-0"
                 bodyClassName="flex-1 min-h-0"
+                initialId={atoSel?.fileId}
+                initialPage={atoSel?.page}
               />
             </aside>
           )}
@@ -492,7 +516,9 @@ export function RegistroAudienciaModal({ isOpen, onClose, onSave, evento, onCria
                 <div className="text-[10px] font-semibold text-muted-foreground px-2 py-1 uppercase tracking-wide">
                   Completude do registro
                 </div>
-                {tabConfig.map((tab) => {
+                {tabConfig
+                  .filter((tab): tab is TabDef & { key: Exclude<TabKey, "atos"> } => tab.key !== "atos")
+                  .map((tab) => {
                   const state = completude.byTab[tab.key];
                   const Icon = state === "full" ? CheckCircle2 : state === "partial" ? CircleDashed : Circle;
                   const color =

@@ -12,7 +12,7 @@ import type { Depoente, RegistroAudienciaData } from "../types";
 import { detectarSubtipo, SUBTIPO_CONFIG, type SubtipoAudiencia } from "../subtipo-audiencia";
 
 export type StatusAudiencia = "concluida" | "redesignada" | "suspensa";
-export type TabKey = "briefing" | "depoentes" | "anotacoes" | "resultado" | "historico";
+export type TabKey = "briefing" | "depoentes" | "anotacoes" | "resultado" | "historico" | "atos";
 
 interface UseRegistroFormProps {
   evento: any;

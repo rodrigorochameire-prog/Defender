@@ -12,6 +12,11 @@ import { gerarPreparacaoAudienciaPdf, type PreparacaoDepoente } from "@/lib/pdf/
 import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "@/lib/services/google-calendar";
 import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 import { removeNotaByTimestamp } from "@/lib/agenda/anotacoes-rapidas";
+import { parseAnotacaoAudiencia } from "@/lib/agenda/parse-anotacao-audiencia";
+import {
+  aplicarDesignacaoAudiencia,
+  limparCalendarSupersedidas,
+} from "@/lib/registros/aplicar-designacao-audiencia";
 import { idsParaSuperar } from "@/lib/agenda/reconciliar-pauta";
 
 // ==========================================
@@ -795,12 +800,16 @@ export const audienciasRouter = router({
           tipo: audiencias.tipo,
           local: audiencias.local,
           status: audiencias.status,
+          aguardandoNovaData: audiencias.aguardandoNovaData,
+          motivoNaoRealizacao: audiencias.motivoNaoRealizacao,
         })
         .from(audiencias)
         .where(
           and(
             eq(audiencias.processoId, input.processoId),
             gte(audiencias.dataAudiencia, new Date()),
+            // Audiência aguardando nova designação não é "próxima audiência"
+            eq(audiencias.aguardandoNovaData, false),
             sql`(${audiencias.status} IS NULL OR ${audiencias.status} NOT IN ('cancelada', 'realizada'))`
           )
         )
@@ -915,6 +924,9 @@ export const audienciasRouter = router({
       promotor: z.string().optional(),
       status: z.string().optional(),
       resultado: z.string().optional(),
+      motivoNaoRealizacao: z.string().max(40).optional(),
+      motivoDetalhe: z.string().optional(),
+      aguardandoNovaData: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
@@ -2220,7 +2232,9 @@ export const audienciasRouter = router({
         .update(audiencias)
         .set({ anotacoesRapidas: notasAtualizadas, updatedAt: new Date() })
         .where(eq(audiencias.id, input.audienciaId));
-      return { nota: novaNota };
+      // Detecção sem efeito colateral: a UI mostra banner e o usuário decide
+      // aplicar (aplicarEventoAudiencia) ou descartar.
+      return { nota: novaNota, deteccao: parseAnotacaoAudiencia(input.texto) };
     }),
 
   removeQuickNote: protectedProcedure
@@ -2331,6 +2345,84 @@ export const audienciasRouter = router({
         })
         .where(eq(audiencias.id, input.audienciaId));
       return { ok: true };
+    }),
+
+  // Funil único de "audiência não realizada": banner das anotações rápidas,
+  // fluxo Concluir e ajuste manual. Sem nova data → flag aguardandoNovaData
+  // (resolvida automaticamente quando a próxima designação chegar); com nova
+  // data → delega a aplicarDesignacaoAudiencia (cria a nova, cancela futuras
+  // fora do dia). Spec docs/superpowers/specs/2026-06-11-*.md
+  aplicarEventoAudiencia: protectedProcedure
+    .input(z.object({
+      audienciaId: z.number(),
+      evento: z.enum(["redesignada", "suspensa", "adiada", "cancelada"]),
+      motivo: z.enum([
+        "ausencia_vitima", "ausencia_testemunha", "ausencia_reu",
+        "reu_nao_conduzido", "pauta_juizo", "problema_tecnico", "outro",
+      ]),
+      motivoDetalhe: z.string().optional(),
+      novaData: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      novaHora: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+      novoLocal: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const resultado = await withTransaction(async (tx) => {
+        const [atual] = await tx.select().from(audiencias).where(eq(audiencias.id, input.audienciaId));
+        if (!atual) throw new TRPCError({ code: "NOT_FOUND", message: "Audiência não encontrada" });
+
+        await tx
+          .update(audiencias)
+          .set({
+            status: input.evento === "cancelada" ? "cancelada" : "redesignada",
+            motivoNaoRealizacao: input.motivo,
+            motivoDetalhe: input.motivoDetalhe ?? null,
+            aguardandoNovaData: input.evento !== "cancelada" && !input.novaData,
+            updatedAt: new Date(),
+          })
+          .where(eq(audiencias.id, input.audienciaId));
+
+        if (!input.novaData) {
+          return {
+            processoId: atual.processoId,
+            googleCalendarEventId: atual.googleCalendarEventId,
+            designacao: null,
+          };
+        }
+
+        const designacao = await aplicarDesignacaoAudiencia(tx, {
+          processoId: atual.processoId,
+          assistidoId: atual.assistidoId ?? 0,
+          defensorId: atual.defensorId ?? ctx.user.id,
+          det: {
+            data: input.novaData,
+            horario: input.novaHora ?? "00:00",
+            tipo: atual.tipo,
+            modalidade: null,
+            local: input.novoLocal ?? atual.local,
+            redesignacao: true,
+            trecho: input.motivoDetalhe ?? `Evento aplicado manualmente (${input.evento})`,
+          },
+          origem: "evento de audiência (anotação/conclusão)",
+        });
+        return {
+          processoId: atual.processoId,
+          googleCalendarEventId: atual.googleCalendarEventId,
+          designacao,
+        };
+      });
+
+      // Google Calendar best-effort fora da transação (padrão do módulo):
+      // com nova data o cleanup das supersedidas já cobre; sem nova data,
+      // remove o evento da audiência que não vai acontecer.
+      if (resultado.designacao) {
+        limparCalendarSupersedidas(resultado.processoId, resultado.designacao.supersedidas);
+      } else if (resultado.googleCalendarEventId) {
+        limparCalendarSupersedidas(resultado.processoId, [
+          { id: input.audienciaId, googleCalendarEventId: resultado.googleCalendarEventId },
+        ]);
+      }
+
+      return { ok: true, novaAudiencia: resultado.designacao?.audiencia ?? null };
     }),
 
   redesignarAudiencia: protectedProcedure

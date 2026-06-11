@@ -10,15 +10,17 @@ import { DropZone } from "./drop-zone";
 import { fileToBase64 } from "@/lib/agenda/file-to-base64";
 import { DocumentPreviewDialog } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
 import { DocumentCompareModal } from "@/components/drive/DocumentCompareModal";
+import { SectionsViewer } from "@/components/drive/SectionsViewer";
 
-type TabKey = "autos" | "assistido";
+type TabKey = "autos" | "assistido" | "atos";
 
 interface Props {
   processoId: number | null;
   assistidoId: number | null;
+  onDockPdf?: (fileDriveId: string, page?: number) => void;
 }
 
-export function DocumentosBlock({ processoId, assistidoId }: Props) {
+export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
   const [tab, setTab] = useState<TabKey>("autos");
   const [openId, setOpenId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<DriveFileLite | null>(null);
@@ -27,8 +29,8 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
 
   const utils = trpc.useUtils();
 
-  const autos = trpc.drive.filesByProcesso.useQuery(
-    { processoId: processoId ?? 0 },
+  const autos = trpc.drive.autosDoProcesso.useQuery(
+    { processoId: processoId ?? 0, assistidoId: assistidoId ?? undefined },
     { enabled: !!processoId }
   );
   const assistido = trpc.drive.filesByAssistido.useQuery(
@@ -44,16 +46,37 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
     { enabled: !!assistidoId, retry: false }
   );
 
+  const sectionsQ = trpc.drive.sectionsByProcesso.useQuery(
+    { processoId: processoId ?? 0 },
+    { enabled: !!processoId && tab === "atos" }
+  );
+  const triggerClassif = trpc.documentSections.triggerClassification.useMutation({
+    onSuccess: () => {
+      toast.success("Sistematização iniciada — atualize em instantes.");
+      if (processoId) utils.drive.sectionsByProcesso.invalidate({ processoId });
+    },
+    onError: (e) => toast.error(e.message ?? "Falha ao sistematizar"),
+  });
+
   const upload = trpc.drive.uploadWithLink.useMutation({
     onSuccess: () => {
       toast.success("Arquivo enviado");
-      if (processoId) utils.drive.filesByProcesso.invalidate({ processoId });
+      if (processoId) utils.drive.autosDoProcesso.invalidate({ processoId });
       if (assistidoId) utils.drive.filesByAssistido.invalidate({ assistidoId });
     },
     onError: (e) => toast.error(e.message ?? "Erro no upload"),
   });
 
-  const autosList: DriveFileLite[] = (autos.data as any) ?? [];
+  const autosGrupos = (autos.data as
+    | { desteProcesso: DriveFileLite[]; correlacionados: { cnj: string; classe?: string | null; files: DriveFileLite[] }[]; outros: DriveFileLite[] }
+    | undefined) ?? { desteProcesso: [], correlacionados: [], outros: [] };
+  const temSecoes = ((sectionsQ.data as any[]) ?? []).length > 0;
+  const autosFileId: number | null = (autosGrupos.desteProcesso[0] as any)?.id ?? null;
+  const autosList: DriveFileLite[] = [
+    ...autosGrupos.desteProcesso,
+    ...autosGrupos.correlacionados.flatMap((g) => g.files),
+    ...autosGrupos.outros,
+  ];
   const assistidoList: DriveFileLite[] = (assistido.data as any) ?? [];
   const rawList = tab === "autos" ? autosList : assistidoList;
   const activeList = useMemo(() => {
@@ -136,6 +159,22 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
             <span className="ml-1 text-[9px] text-neutral-400 tabular-nums">{assistidoList.length}</span>
           )}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "atos"}
+          disabled={!processoId}
+          onClick={() => { setTab("atos"); setOpenId(null); }}
+          className={cn(
+            "px-3 py-1.5 text-[11px] font-medium border-b-2 cursor-pointer transition-colors",
+            tab === "atos"
+              ? "border-foreground text-foreground"
+              : "border-transparent text-neutral-500 hover:text-neutral-700",
+            !processoId && "opacity-40 cursor-not-allowed"
+          )}
+        >
+          Atos
+        </button>
       </div>
 
       {driveConnected && folderId && (
@@ -166,25 +205,95 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
           <a href="/admin/configuracoes/drive" className="underline hover:text-neutral-700">Configurar</a>
         </p>
       )}
-      {driveConnected && activeList.length === 0 && (
-        <p className="text-[11px] text-neutral-400 italic py-4 text-center">
-          {query.trim()
-            ? `Nenhum arquivo corresponde à busca "${query}".`
-            : "Nenhum arquivo nesta pasta. Arraste um acima."}
-        </p>
-      )}
-      {activeList.length > 0 && (
-        <div className="space-y-1.5">
-          {activeList.map((f) => (
-            <DocumentosItem
-              key={f.driveFileId}
-              file={f}
-              isOpen={openId === f.driveFileId}
-              onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+
+      {tab === "atos" ? (
+        processoId ? (
+          temSecoes ? (
+            <SectionsViewer
+              assistidoId={assistidoId ?? 0}
+              processoId={processoId}
+              onOpenSection={(s) => {
+                if (s.fileDriveId && onDockPdf) onDockPdf(s.fileDriveId, s.paginaInicio);
+              }}
+            />
+          ) : (
+            <div className="py-6 text-center space-y-2">
+              <p className="text-[11px] text-neutral-400 italic">Autos ainda não sistematizados por tipo.</p>
+              {autosFileId && (
+                <button
+                  type="button"
+                  disabled={triggerClassif.isPending}
+                  onClick={() => triggerClassif.mutate({ driveFileId: autosFileId })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-foreground text-background text-[11px] font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {triggerClassif.isPending ? "Sistematizando…" : "Sistematizar"}
+                </button>
+              )}
+            </div>
+          )
+        ) : (
+          <p className="text-[11px] text-neutral-400 italic py-4 text-center">Sem processo vinculado.</p>
+        )
+      ) : tab === "autos" ? (
+        <div className="space-y-2">
+          {autosGrupos.desteProcesso.length > 0 && (
+            <GrupoAutos
+              titulo="Deste processo"
+              files={autosGrupos.desteProcesso}
+              openId={openId}
+              setOpenId={setOpenId}
+              onExpand={setExpanded}
+              defaultOpen
+            />
+          )}
+          {autosGrupos.correlacionados.map((g) => (
+            <GrupoAutos
+              key={g.cnj}
+              titulo={`Correlacionado · ${g.classe ?? "Processo"} ${g.cnj}`}
+              files={g.files}
+              openId={openId}
+              setOpenId={setOpenId}
               onExpand={setExpanded}
             />
           ))}
+          {autosGrupos.outros.length > 0 && (
+            <GrupoAutos
+              titulo="Outros do assistido"
+              files={autosGrupos.outros}
+              openId={openId}
+              setOpenId={setOpenId}
+              onExpand={setExpanded}
+            />
+          )}
+          {autosList.length === 0 && driveConnected && (
+            <p className="text-[11px] text-neutral-400 italic py-4 text-center">
+              Nenhum arquivo nesta pasta. Arraste um acima.
+            </p>
+          )}
         </div>
+      ) : (
+        <>
+          {driveConnected && activeList.length === 0 && (
+            <p className="text-[11px] text-neutral-400 italic py-4 text-center">
+              {query.trim()
+                ? `Nenhum arquivo corresponde à busca "${query}".`
+                : "Nenhum arquivo nesta pasta. Arraste um acima."}
+            </p>
+          )}
+          {activeList.length > 0 && (
+            <div className="space-y-1.5">
+              {activeList.map((f) => (
+                <DocumentosItem
+                  key={f.driveFileId}
+                  file={f}
+                  isOpen={openId === f.driveFileId}
+                  onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+                  onExpand={setExpanded}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <DocumentPreviewDialog
@@ -224,6 +333,52 @@ export function DocumentosBlock({ processoId, assistidoId }: Props) {
           currentFolderId={(compareFile as any).driveFolderId ?? undefined}
           assistidoId={assistidoId ?? undefined}
         />
+      )}
+    </div>
+  );
+}
+
+function GrupoAutos({
+  titulo,
+  files,
+  openId,
+  setOpenId,
+  onExpand,
+  defaultOpen = false,
+}: {
+  titulo: string;
+  files: DriveFileLite[];
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+  onExpand: (f: DriveFileLite) => void;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-800">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 cursor-pointer"
+      >
+        <span>
+          {titulo}{" "}
+          <span className="text-neutral-400 font-normal">{files.length}</span>
+        </span>
+        <span className="text-neutral-400">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div className="px-1.5 pb-1.5 space-y-1.5">
+          {files.map((fl) => (
+            <DocumentosItem
+              key={fl.driveFileId}
+              file={fl}
+              isOpen={openId === fl.driveFileId}
+              onToggle={() => setOpenId(openId === fl.driveFileId ? null : fl.driveFileId)}
+              onExpand={onExpand}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
