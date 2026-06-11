@@ -4,7 +4,12 @@
  * Spec: docs/superpowers/specs/2026-06-11-ics-feeds-outlook-design.md
  */
 
-export type FonteFeed = "audiencias" | "sessoes_juri" | "atendimentos" | "prazos";
+export type FonteFeed =
+  | "audiencias"
+  | "sessoes_juri"
+  | "atendimentos"
+  | "prazos"
+  | "substituicoes";
 
 export interface FeedICS {
   slug: string;
@@ -61,6 +66,9 @@ export const FEEDS_ICS: FeedICS[] = [
     atribuicoes: ["SUBSTITUICAO_CIVEL"],
   },
   { slug: "atendimentos", nome: "OMBUDS – Atendimentos", fonte: "atendimentos" },
+  // Períodos de substituição (barra de dia inteiro, multi-dia) — substitui o
+  // evento manual "Substituição 7DP" mantido à mão no Outlook.
+  { slug: "substituicoes", nome: "OMBUDS – Substituições", fonte: "substituicoes" },
   { slug: "prazos", nome: "OMBUDS – Prazos", fonte: "prazos" },
 ];
 

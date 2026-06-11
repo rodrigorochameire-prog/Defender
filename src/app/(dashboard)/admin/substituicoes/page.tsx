@@ -150,6 +150,14 @@ function SubstituicaoCard({ s }: { s: any }) {
           )}
           {s.oficioNumero && <div className="text-[11px] text-neutral-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> Ofício {s.oficioNumero}{s.seiProtocolo ? ` · SEI ${s.seiProtocolo}` : ""}</div>}
           {s.motivo && <div className="text-[11px] text-neutral-400 mt-0.5">{s.motivo}</div>}
+          {Array.isArray(s.pendencias) && s.pendencias.length > 0 && (
+            <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+              {s.pendencias.map((pend: string) => (
+                <span key={pend} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{pend}</span>
+              ))}
+            </div>
+          )}
+          <DadosPeriodo id={s.id} />
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <select value={s.status} onChange={(e) => atualizar.mutate({ id: s.id, status: e.target.value as any })}
@@ -195,6 +203,17 @@ function StatusGeracao() {
       {ok && res.oficio_numero && <p className="text-[11px] text-neutral-600 dark:text-neutral-300 mt-1">Ofício {res.oficio_numero} gerado · {res.manifestacoes ?? "?"} manifestações. Confira no <span className="font-medium">_Enviar ao SEI</span>.</p>}
       {t.erro && <p className="text-[11px] text-rose-500 mt-1">{t.erro}</p>}
     </Card>
+  );
+}
+
+function DadosPeriodo({ id }: { id: number }) {
+  const { data } = trpc.substituicoes.previewDados.useQuery({ id });
+  if (!data) return null;
+  return (
+    <div className="text-[11px] text-neutral-500 mt-1">
+      No período (vinculado à substituição): {data.totalAudiencias} audiência(s) ·{" "}
+      {data.totalDemandas} demanda(s) · {data.totalAtendimentos} atendimento(s)
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@
  */
 
 import { and, eq, gte, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
-import { db, audiencias, processos, assistidos, demandas, registros } from "@/lib/db";
+import { db, audiencias, processos, assistidos, demandas, registros, substituicoes } from "@/lib/db";
 import { sessoesJuri } from "@/lib/db/schema/juri";
 import type { FeedICS } from "./feeds";
 import type { EventoICS } from "./serializar";
@@ -34,7 +34,34 @@ export async function eventosDoFeed(feed: FeedICS, defensorId: number): Promise<
       return eventosAtendimentos(defensorId);
     case "prazos":
       return eventosPrazos(defensorId);
+    case "substituicoes":
+      return eventosSubstituicoes(defensorId);
   }
+}
+
+async function eventosSubstituicoes(defensorId: number): Promise<EventoICS[]> {
+  const rows = await db
+    .select()
+    .from(substituicoes)
+    .where(eq(substituicoes.defensorId, defensorId));
+
+  return rows.map((r) => {
+    const fim = r.dataFim ?? r.dataInicio;
+    // DTEND de evento all-day é EXCLUSIVO — somar 1 dia para incluir o último
+    const fimExclusivo = new Date(`${fim}T00:00:00Z`);
+    fimExclusivo.setUTCDate(fimExclusivo.getUTCDate() + 1);
+    const escopo = Array.isArray(r.escopoAtribuicoes) ? (r.escopoAtribuicoes as string[]).join(", ") : "";
+    return {
+      uid: `substituicao-${r.id}@ombuds.app`,
+      titulo: `Substituição – ${r.unidadeSubstituida} (${r.tipo ?? "automática"})`,
+      descricao: [r.motivo, escopo ? `Escopo: ${escopo}` : null, `Status: ${r.status ?? "—"}`]
+        .filter(Boolean)
+        .join("\n"),
+      inicio: r.dataInicio as string,
+      fim: fimExclusivo.toISOString().slice(0, 10),
+      allDay: true,
+    };
+  });
 }
 
 async function eventosAudiencias(atribuicoes: string[], defensorId: number): Promise<EventoICS[]> {
@@ -61,7 +88,9 @@ async function eventosAudiencias(atribuicoes: string[], defensorId: number): Pro
     .where(
       and(
         inArray(processos.atribuicao, atribuicoes as never),
-        eq(audiencias.defensorId, defensorId),
+        // defensor nulo = audiência da pauta ainda sem vínculo — é da vara do
+        // defensor (atribuição já filtra), então entra no calendário dele.
+        or(eq(audiencias.defensorId, defensorId), isNull(audiencias.defensorId)),
         gte(audiencias.dataAudiencia, ini),
         lte(audiencias.dataAudiencia, fim),
       ),
