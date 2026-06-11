@@ -18,6 +18,8 @@
  * a audiência automaticamente. Função pura — testável sem banco.
  */
 
+import { detectarSlug, tipoPorSlug } from "@/lib/agenda/tipos-audiencia";
+
 export interface DesignacaoAudiencia {
   /** yyyy-MM-dd */
   data: string;
@@ -33,20 +35,6 @@ export interface DesignacaoAudiencia {
   /** Trecho do texto que disparou a detecção (para auditoria na descrição) */
   trecho: string;
 }
-
-const TIPOS: Array<[RegExp, string]> = [
-  [/instru[cç][ãa]o\s+e\s+julgamento/i, "Audiência de Instrução e Julgamento"],
-  [/instru[cç][ãa]o/i, "Audiência de Instrução"],
-  [/concilia[cç][ãa]o/i, "Audiência de Conciliação"],
-  [/justifica[cç][ãa]o/i, "Audiência de Justificação"],
-  [/cust[oó]dia/i, "Audiência de Custódia"],
-  [/admonit[oó]ria/i, "Audiência Admonitória"],
-  [/depoimento\s+especial/i, "Depoimento Especial"],
-  [/oitiva\s+especial(?:izada)?/i, "Oitiva Especial"],
-  [/oitiva/i, "Oitiva"],
-  [/\buna\b/i, "Audiência UNA"],
-  [/preliminar/i, "Audiência Preliminar"],
-];
 
 // Gatilho: verbo de designação + substantivo do ato por perto (até ~80 chars),
 // ou a forma passiva "audiência ... designada". Além de "audiência", despachos
@@ -101,13 +89,9 @@ export function detectarDesignacaoAudiencia(
   const minuto = hm?.[2] ? Number(hm[2]) : 0;
   if (hora > 23 || minuto > 59) return null;
 
-  let tipo = "Audiência";
-  for (const [re, label] of TIPOS) {
-    if (re.test(aPartir.slice(0, 200))) {
-      tipo = label;
-      break;
-    }
-  }
+  // Tipo resolvido pelo catálogo canônico (fonte única) — a janela de 200
+  // chars após o gatilho evita pegar tipos citados em outros trechos.
+  const tipo = tipoPorSlug(detectarSlug(aPartir.slice(0, 200))).descricao;
 
   const mod = MODALIDADE_RE.exec(aPartir.slice(0, 250));
   const loc = LOCAL_RE.exec(aPartir);

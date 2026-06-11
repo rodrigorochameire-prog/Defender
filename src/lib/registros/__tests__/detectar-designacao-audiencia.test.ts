@@ -40,7 +40,7 @@ describe("detectarDesignacaoAudiencia", () => {
     );
     expect(r!.data).toBe("2026-10-20");
     expect(r!.horario).toBe("11:15");
-    expect(r!.tipo).toBe("Audiência de Justificação");
+    expect(r!.tipo).toBe("Justificação");
   });
 
   it("detecta o movimento automatizado do PJe (caixa alta, hora colada à data)", () => {
@@ -50,7 +50,7 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r).not.toBeNull();
     expect(r!.data).toBe("2026-07-28");
     expect(r!.horario).toBe("08:20");
-    expect(r!.tipo).toBe("Audiência de Justificação");
+    expect(r!.tipo).toBe("Justificação");
     expect(r!.local).toBe(
       "VARA DE VIOLÊNCIA DOMÉSTICA FAM CONTRA A MULHER DE CAMAÇARI"
     );
@@ -63,7 +63,7 @@ describe("detectarDesignacaoAudiencia", () => {
     );
     expect(r!.data).toBe("2026-07-28");
     expect(r!.horario).toBe("08:20");
-    expect(r!.tipo).toBe("Audiência de Justificação");
+    expect(r!.tipo).toBe("Justificação");
   });
 
   it("detecta verbo no infinitivo ('hei por bem designar')", () => {
@@ -72,7 +72,7 @@ describe("detectarDesignacaoAudiencia", () => {
     );
     expect(r!.data).toBe("2026-10-20");
     expect(r!.horario).toBe("11:30");
-    expect(r!.tipo).toBe("Audiência de Justificação");
+    expect(r!.tipo).toBe("Justificação");
   });
 
   it("detecta redesignação por readequação de pauta (caso Erivelton)", () => {
@@ -97,13 +97,40 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r!.redesignacao).toBe(false);
   });
 
-  it("detecta depoimento especial designado sem a palavra 'audiência'", () => {
+  it("normaliza depoimento especial para o rótulo canônico do catálogo", () => {
     const r = detectarDesignacaoAudiencia(
       "Designo depoimento especial da vítima para o dia 22/09/2026, às 10h00min, na modalidade presencial."
     );
     expect(r!.data).toBe("2026-09-22");
     expect(r!.horario).toBe("10:00");
-    expect(r!.tipo).toBe("Depoimento Especial");
+    expect(r!.tipo).toBe("Oitiva Especial");
+  });
+
+  it("detecta oitiva especializada com espaço duplo após ID (caso Leinho, registro 461)", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Em cumprimento ao despacho de ID.  557513733, designo oitiva especializada na modalidade presencial para o dia 14/07/2026, às 08h30min."
+    );
+    expect(r).not.toBeNull();
+    expect(r!.data).toBe("2026-07-14");
+    expect(r!.horario).toBe("08:30");
+    expect(r!.tipo).toBe("Oitiva Especial");
+    expect(r!.modalidade).toBe("presencial");
+  });
+
+  it("detecta audiência una com tipo canônico do catálogo", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Designo audiência una de conciliação, instrução e julgamento para o dia 03/08/2026, às 13h30min."
+    );
+    expect(r!.data).toBe("2026-08-03");
+    expect(r!.tipo).toBe("Audiência Una");
+  });
+
+  it("detecta audiência preliminar com tipo canônico do catálogo", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Fica designada audiência preliminar para o dia 05/08/2026, às 08h45min."
+    );
+    expect(r!.data).toBe("2026-08-05");
+    expect(r!.tipo).toBe("Audiência Preliminar");
   });
 
   it("não dispara sem verbo de designação", () => {

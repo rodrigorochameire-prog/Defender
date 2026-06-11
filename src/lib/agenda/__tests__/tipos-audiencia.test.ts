@@ -45,6 +45,12 @@ describe("detectarSlug — ordem de especificidade", () => {
   it("fallback por código de classe (1268 → justificação)", () => {
     expect(detectarSlug("MEDIDAS PROTETIVAS (1268) designada")).toBe("justificacao");
   });
+  it("Audiência Una vence AIJ (una de conciliação, instrução e julgamento)", () => {
+    expect(detectarSlug("AUDIÊNCIA UNA DE CONCILIAÇÃO, INSTRUÇÃO E JULGAMENTO")).toBe("una");
+  });
+  it("Audiência Preliminar detecta", () => {
+    expect(detectarSlug("AUDIÊNCIA PRELIMINAR")).toBe("preliminar");
+  });
   it("sem match → indefinido", () => {
     expect(detectarSlug("ALGO QUE NÃO EXISTE")).toBe("indefinido");
   });
