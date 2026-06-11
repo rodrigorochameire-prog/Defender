@@ -10,6 +10,7 @@ import {
   index,
   jsonb,
   real,
+  smallint,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { atribuicaoEnum, prioridadeEnum, quesitosResultadoEnum } from "./enums";
@@ -437,6 +438,11 @@ export const claudeCodeTasks = pgTable("claude_code_tasks", {
   instrucaoAdicional: text("instrucao_adicional"),
   status: text("status").notNull().default("pending"),
   etapa: text("etapa"),
+  // Fase 1 (daemon v2): prioridade da fila — menor = mais urgente.
+  // Interativo (oficios/quickSummary/briefing/whatsapp) = 10; lote = 100 (default).
+  priority: smallint("priority").notNull().default(100),
+  // Origem da tarefa (whatsapp, engine, oficios, noticias, …) — observabilidade.
+  source: text("source"),
   resultado: jsonb("resultado").$type<Record<string, unknown>>(),
   erro: text("erro"),
   createdBy: integer("created_by")
@@ -449,6 +455,8 @@ export const claudeCodeTasks = pgTable("claude_code_tasks", {
   index("claude_code_tasks_status_idx").on(table.status),
   index("claude_code_tasks_assistido_id_idx").on(table.assistidoId),
   index("claude_code_tasks_caso_id_idx").on(table.casoId),
+  // Cobre a seleção da fila: pendentes por prioridade e ordem de chegada.
+  index("claude_code_tasks_priority_idx").on(table.status, table.priority, table.createdAt),
 ]);
 
 export type ClaudeCodeTask = typeof claudeCodeTasks.$inferSelect;
