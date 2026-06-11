@@ -61,7 +61,9 @@ async function eventosAudiencias(atribuicoes: string[], defensorId: number): Pro
     .where(
       and(
         inArray(processos.atribuicao, atribuicoes as never),
-        eq(audiencias.defensorId, defensorId),
+        // defensor nulo = audiência da pauta ainda sem vínculo — é da vara do
+        // defensor (atribuição já filtra), então entra no calendário dele.
+        or(eq(audiencias.defensorId, defensorId), isNull(audiencias.defensorId)),
         gte(audiencias.dataAudiencia, ini),
         lte(audiencias.dataAudiencia, fim),
       ),
