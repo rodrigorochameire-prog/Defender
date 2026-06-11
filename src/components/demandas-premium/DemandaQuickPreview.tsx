@@ -1678,7 +1678,7 @@ export function DemandaQuickPreview({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (canPreview) setPreviewFileId(f.driveFileId);
+                                if (canPreview) setDocaAutos({ fileId: f.driveFileId });
                                 else if (f.webViewLink) window.open(f.webViewLink, "_blank");
                               }}
                               className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md max-w-[160px] transition-colors cursor-pointer ${
