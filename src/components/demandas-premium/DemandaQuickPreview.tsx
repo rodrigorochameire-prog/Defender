@@ -58,6 +58,12 @@ import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { RegistroEditor } from "@/components/registros/registro-editor";
+import { RegistroComAutosDialog } from "@/components/registros/registro-com-autos-dialog";
+import {
+  DocumentPreviewDialog,
+  type PreviewFile,
+} from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
+import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 
@@ -518,6 +524,44 @@ export function DemandaQuickPreview({
     if (!allFiles) return [];
     return (allFiles as any[]).filter((f) => f.mimeType === "application/pdf");
   }, [allFiles]);
+
+  // Autos do processo (PDFs vinculados ao processo) — fonte preferida para o destaque.
+  const { data: autosFilesData } = trpc.drive.filesByProcesso.useQuery(
+    { processoId: demanda?.processoId ?? 0 },
+    { enabled: !!demanda?.processoId && open },
+  );
+
+  // Lista única de PDFs para visualização inline (autos do processo primeiro,
+  // depois PDFs do assistido), de-duplicada e ranqueada (autos no topo).
+  const previewFiles: PreviewFile[] = useMemo(() => {
+    const autos = ((autosFilesData as any[]) ?? []).filter(
+      (f) => f.mimeType === "application/pdf",
+    );
+    const merged = [...autos, ...pdfFiles];
+    const seen = new Set<string>();
+    const dedup: any[] = [];
+    for (const f of merged) {
+      if (f.driveFileId && !seen.has(f.driveFileId)) {
+        seen.add(f.driveFileId);
+        dedup.push(f);
+      }
+    }
+    return rankAutos(dedup).map((f) => ({
+      driveFileId: f.driveFileId,
+      name: f.name,
+      mimeType: f.mimeType,
+      webViewLink: f.webViewLink,
+      fileSize: f.fileSize,
+      enrichmentStatus: f.enrichmentStatus,
+    }));
+  }, [autosFilesData, pdfFiles]);
+
+  const primaryAutos = previewFiles[0] ?? null;
+  const [previewFileId, setPreviewFileId] = useState<string | null>(null);
+  const previewSelected = useMemo(
+    () => previewFiles.find((f) => f.driveFileId === previewFileId) ?? null,
+    [previewFiles, previewFileId],
+  );
 
   // Close popover when demanda changes or sheet closes
   useEffect(() => {
@@ -997,7 +1041,8 @@ export function DemandaQuickPreview({
                       </button>
                     )}
                   </div>
-                  {novoRegistroOpen && (
+                  {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
+                  {novoRegistroOpen && previewFiles.length === 0 && (
                     <RegistroEditor
                       assistidoId={demanda.assistidoId}
                       processoId={demanda.processoId ?? undefined}
@@ -1430,6 +1475,33 @@ export function DemandaQuickPreview({
               </>
             )}
 
+            {/* ===== AUTOS EM DESTAQUE — visualização inline (sem sair da plataforma) ===== */}
+            {primaryAutos && (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setPreviewFileId(primaryAutos.driveFileId)}
+                  className="w-full flex items-center gap-3 px-3.5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer text-left group/autos"
+                >
+                  <span className="shrink-0 w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center ring-1 ring-sky-100 dark:ring-sky-900/40">
+                    <FileText className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[12px] font-semibold text-foreground">Ver autos</span>
+                    <span className="block text-[11px] text-neutral-500 dark:text-neutral-400 truncate" title={primaryAutos.name ?? undefined}>
+                      {primaryAutos.name ?? "Documento do processo"}
+                      {previewFiles.length > 1 && (
+                        <span className="text-neutral-400"> · +{previewFiles.length - 1} doc{previewFiles.length - 1 > 1 ? "s" : ""}</span>
+                      )}
+                    </span>
+                  </span>
+                  <span className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-sky-600 dark:text-sky-400 opacity-0 group-hover/autos:opacity-100 transition-opacity">
+                    Abrir <ArrowRight className="w-3.5 h-3.5" />
+                  </span>
+                </button>
+              </div>
+            )}
+
             {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive (compact) ===== */}
             {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
               <>
@@ -1527,25 +1599,28 @@ export function DemandaQuickPreview({
                             nameLower.includes("relatorio");
                           const Icon = isAnalise ? FileSignature : FileText;
                           const displayName = f.name || `PDF ${idx + 1}`;
+                          const canPreview = !!f.driveFileId;
                           return (
-                            <a
+                            <button
                               key={f.id}
-                              href={f.webViewLink || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md max-w-[160px] transition-colors ${
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (canPreview) setPreviewFileId(f.driveFileId);
+                                else if (f.webViewLink) window.open(f.webViewLink, "_blank");
+                              }}
+                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md max-w-[160px] transition-colors cursor-pointer ${
                                 isAnalise
                                   ? "bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/30"
                                   : "bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700"
                               }`}
-                              title={displayName}
+                              title={`${displayName} — abrir aqui`}
                             >
                               <Icon className={`w-3 h-3 shrink-0 ${isAnalise ? "text-sky-600 dark:text-sky-400" : "text-neutral-400"}`} />
                               <span className={`text-[10px] truncate ${isAnalise ? "text-sky-700 dark:text-sky-300 font-medium" : "text-neutral-700 dark:text-neutral-300"}`}>
                                 {displayName}
                               </span>
-                            </a>
+                            </button>
                           );
                         })}
                         {pdfFiles.length > 8 && driveFolderUrl && (
@@ -1756,6 +1831,44 @@ export function DemandaQuickPreview({
             <Trash2 className="w-3 h-3" />
           </button>
         </div>
+
+        {/* Visualizador inline de PDF (autos + PDFs do assistido) — sem sair da plataforma */}
+        <DocumentPreviewDialog
+          driveFileId={previewFileId}
+          title={previewSelected?.name ?? "Documento"}
+          mimeType={previewSelected?.mimeType}
+          webViewLink={previewSelected?.webViewLink}
+          fileSize={previewSelected?.fileSize != null ? String(previewSelected.fileSize) : null}
+          enrichmentStatus={previewSelected?.enrichmentStatus}
+          list={previewFiles}
+          onNavigate={(f) => setPreviewFileId(f.driveFileId)}
+          onClose={() => setPreviewFileId(null)}
+        />
+
+        {/* Novo registro lendo os autos (split view) — quando há PDFs no caso */}
+        {demanda.assistidoId && previewFiles.length > 0 && (
+          <RegistroComAutosDialog
+            open={novoRegistroOpen}
+            onOpenChange={setNovoRegistroOpen}
+            assistidoId={demanda.assistidoId}
+            processoId={demanda.processoId ?? undefined}
+            demandaId={Number(demanda.id)}
+            tipoDefault="ciencia"
+            tiposPrimarios={[
+              "ciencia",
+              "providencia",
+              "diligencia",
+              "atendimento",
+              "delegacao",
+              "anotacao",
+              "peticao",
+            ]}
+            files={previewFiles}
+            onSaved={() => {
+              refetchAudiencias();
+            }}
+          />
+        )}
       </SheetContent>
       <DemandaTimelineDrawer
         isOpen={timelineOpen}
