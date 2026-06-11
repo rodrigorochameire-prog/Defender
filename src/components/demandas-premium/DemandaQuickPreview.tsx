@@ -63,6 +63,8 @@ import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
+import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
+import { SectionsViewer } from "@/components/drive/SectionsViewer";
 import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -577,14 +579,17 @@ export function DemandaQuickPreview({
 
   const primaryAutos = previewFiles[0] ?? null;
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
+  // Doca à esquerda: PDF dos autos ancorado ao lado do conteúdo (sheet segue ativo).
+  const [docaAutos, setDocaAutos] = useState<{ fileId: string; page?: number } | null>(null);
   const previewSelected = useMemo(
     () => previewFiles.find((f) => f.driveFileId === previewFileId) ?? null,
     [previewFiles, previewFileId],
   );
 
-  // Close popover when demanda changes or sheet closes
+  // Close popover / recolhe a doca quando demanda muda ou o sheet fecha
   useEffect(() => {
     setActiveStagePopover(null);
+    setDocaAutos(null);
   }, [demanda?.id, open]);
 
   // Atalhos de teclado quando o sheet está aberto:
@@ -722,7 +727,12 @@ export function DemandaQuickPreview({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950"
+        className={cn(
+          "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950",
+          docaAutos
+            ? "w-full sm:w-[96vw] sm:max-w-none"
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+        )}
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -750,6 +760,31 @@ export function DemandaQuickPreview({
           }
         }}
       >
+        <div className="flex-1 flex min-h-0">
+          {/* ===== DOCA À ESQUERDA — PDF dos autos ancorado; o sheet segue ativo ===== */}
+          {docaAutos && (
+            <div className="hidden sm:flex flex-col min-w-0 flex-1 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+              <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
+                <span className="text-[11px] font-medium text-neutral-500">Autos</span>
+                <button
+                  type="button"
+                  onClick={() => setDocaAutos(null)}
+                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  Recolher ⇥
+                </button>
+              </div>
+              <AutosPreviewPane
+                files={[{ driveFileId: docaAutos.fileId }]}
+                initialId={docaAutos.fileId}
+                initialPage={docaAutos.page}
+                className="flex-1 min-h-0"
+                bodyClassName="flex-1 min-h-0"
+              />
+            </div>
+          )}
+          {/* ===== COLUNA DIREITA — conteúdo do sheet (preservado integralmente) ===== */}
+          <div className={cn("flex flex-col min-h-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
@@ -1499,7 +1534,7 @@ export function DemandaQuickPreview({
               <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
                 <button
                   type="button"
-                  onClick={() => setPreviewFileId(primaryAutos.driveFileId)}
+                  onClick={() => setDocaAutos({ fileId: primaryAutos.driveFileId })}
                   className="w-full flex items-center gap-3 px-3.5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer text-left group/autos"
                 >
                   <span className="shrink-0 w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center ring-1 ring-sky-100 dark:ring-sky-900/40">
@@ -1519,6 +1554,24 @@ export function DemandaQuickPreview({
                   </span>
                 </button>
               </div>
+            )}
+
+            {/* ===== ATOS — seções dos autos por tipo (clique doca o PDF na página) ===== */}
+            {demanda.processoId && (
+              <>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
+                  Atos
+                </h3>
+                <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
+                  <SectionsViewer
+                    processoId={demanda.processoId}
+                    assistidoId={demanda.assistidoId ?? 0}
+                    onOpenSection={(s) => {
+                      if (s.fileDriveId) setDocaAutos({ fileId: s.fileDriveId, page: s.paginaInicio });
+                    }}
+                  />
+                </div>
+              </>
             )}
 
             {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive (compact) ===== */}
@@ -1888,6 +1941,8 @@ export function DemandaQuickPreview({
             }}
           />
         )}
+          </div>
+        </div>
       </SheetContent>
       <DemandaTimelineDrawer
         isOpen={timelineOpen}
