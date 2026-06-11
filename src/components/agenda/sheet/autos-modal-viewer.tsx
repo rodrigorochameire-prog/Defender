@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RefreshCw, Download, ExternalLink, X, List, FileText, FileScan, Loader2 } from "lucide-react";
+import { RefreshCw, Download, ExternalLink, X, List, FileText, FileScan, Loader2, Highlighter } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { TIPO_LABELS } from "@/components/drive/SectionCard";
+import { PdfViewerModal } from "@/components/drive/PdfViewerModal";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -32,6 +33,14 @@ export function AutosModalViewer({ driveFileId, processoId, onClose }: Props) {
   const [source, setSource] = useState<"app" | "drive">("app");
   const [page, setPage] = useState<number | null>(null);
   const [showIndex, setShowIndex] = useState(false);
+  const [grifarOpen, setGrifarOpen] = useState(false);
+
+  // Resolve o id interno + nome do arquivo (necessário para grifos/anotações).
+  const fileRef = trpc.drive.resolveByDriveId.useQuery(
+    { driveFileId },
+    { enabled: !!driveFileId },
+  );
+  const fileInterno = fileRef.data as { id: number; name: string } | null | undefined;
 
   const sectionsQ = trpc.drive.sectionsByProcesso.useQuery(
     { processoId: processoId ?? 0 },
@@ -111,6 +120,15 @@ export function AutosModalViewer({ driveFileId, processoId, onClose }: Props) {
         </div>
 
         <div className="flex items-center gap-0.5 shrink-0">
+          <button
+            type="button"
+            disabled={!fileInterno}
+            onClick={() => fileInterno && setGrifarOpen(true)}
+            title="Grifar / anotar (grifos, sublinhado, notas)"
+            className="inline-flex items-center gap-1 h-6 px-2 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-[10px] font-medium cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-default"
+          >
+            <Highlighter className="w-3 h-3" /> Grifar
+          </button>
           {view === "pdf" && (
             <button
               type="button"
@@ -223,6 +241,17 @@ export function AutosModalViewer({ driveFileId, processoId, onClose }: Props) {
           )}
         </div>
       </div>
+
+      {/* Ferramenta completa de grifos/anotações (mesma usada na sistematização) */}
+      {grifarOpen && fileInterno && (
+        <PdfViewerModal
+          isOpen={grifarOpen}
+          onClose={() => setGrifarOpen(false)}
+          fileId={fileInterno.id}
+          fileName={fileInterno.name}
+          pdfUrl={`/api/drive/proxy?fileId=${driveFileId}`}
+        />
+      )}
     </div>
   );
 }

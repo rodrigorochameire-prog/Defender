@@ -2575,6 +2575,25 @@ export const driveRouter = router({
       }, "Erro ao buscar arquivo");
     }),
 
+  // Resolve o ID-string do Google Drive para o registro interno (id + nome),
+  // necessário para abrir o visualizador de grifos (annotations usam o id interno).
+  resolveByDriveId: protectedProcedure
+    .input(z.object({ driveFileId: z.string() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const [file] = await db
+          .select({
+            id: driveFiles.id,
+            name: driveFiles.name,
+            webViewLink: driveFiles.webViewLink,
+          })
+          .from(driveFiles)
+          .where(eq(driveFiles.driveFileId, input.driveFileId))
+          .limit(1);
+        return file || null;
+      }, "Erro ao resolver arquivo do Drive");
+    }),
+
   linkFileToEntity: protectedProcedure
     .input(z.object({
       fileId: z.number(),
