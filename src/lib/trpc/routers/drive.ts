@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure, adminProcedure } from "../init";
 import { db, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, users, userMicrosoftTokens } from "@/lib/db";
-import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray } from "drizzle-orm";
+import { type SQL, eq, and, desc, asc, sql, isNull, or, like, not, gt, lt, inArray, ne } from "drizzle-orm";
 import { safeAsync, Errors } from "@/lib/errors";
 import { getDriveProvider, getProviderForFile } from "@/lib/services/drive-factory";
 import {
@@ -60,6 +60,7 @@ import {
   type TranscribeOutput,
 } from "@/lib/services/enrichment-client";
 import { calculateSimilarity, normalizeNameForMatch } from "@/lib/utils/name-matching";
+import { classificarAutos } from "@/lib/match-autos";
 
 export const driveRouter = router({
   /**
@@ -1928,6 +1929,80 @@ export const driveRouter = router({
 
         return files;
       }, "Erro ao listar arquivos do processo");
+    }),
+
+  /**
+   * Lista arquivos do assistido classificados em 3 grupos:
+   * - desteProcesso: CNJ idêntico ou já vinculado ao processo
+   * - correlacionados: irmãos do mesmo caso (processos conexos)
+   * - outros: demais arquivos do assistido
+   * Faz auto-vínculo silencioso dos arquivos "deste processo" ainda não vinculados.
+   */
+  autosDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number(), assistidoId: z.number().nullish() }))
+    .query(async ({ input }) => {
+      return safeAsync(async () => {
+        const [proc] = await db
+          .select({
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            casoId: processos.casoId,
+            assistidoId: processos.assistidoId,
+            driveFolderId: processos.driveFolderId,
+          })
+          .from(processos)
+          .where(eq(processos.id, input.processoId))
+          .limit(1);
+
+        if (!proc) return { desteProcesso: [], correlacionados: [], outros: [] };
+
+        const assistidoId = input.assistidoId ?? proc.assistidoId ?? null;
+
+        // Irmãos do mesmo caso = CNJs correlacionados (conexos do caso, não antecedentes)
+        const correlatos = proc.casoId
+          ? await db
+              .select({ numeroAutos: processos.numeroAutos, classe: processos.classeProcessual })
+              .from(processos)
+              .where(and(eq(processos.casoId, proc.casoId), ne(processos.id, proc.id)))
+          : [];
+
+        // PDFs do assistido + os já vinculados a este processo
+        const cond = assistidoId
+          ? or(eq(driveFiles.assistidoId, assistidoId), eq(driveFiles.processoId, proc.id))
+          : eq(driveFiles.processoId, proc.id);
+        const files = await db
+          .select()
+          .from(driveFiles)
+          .where(and(cond, eq(driveFiles.mimeType, "application/pdf")))
+          .orderBy(desc(driveFiles.lastModifiedTime));
+
+        const grupos = classificarAutos({
+          files,
+          processoId: proc.id,
+          processoCNJ: proc.numeroAutos,
+          correlatos: correlatos.map((c) => ({ cnj: c.numeroAutos, classe: c.classe })),
+        });
+
+        // Auto-vínculo silencioso: só "deste processo" ainda não vinculado
+        const idsParaVincular = grupos.desteProcesso
+          .filter((f) => f.processoId !== proc.id)
+          .map((f) => f.id);
+        if (idsParaVincular.length > 0) {
+          try {
+            await db.update(driveFiles).set({ processoId: proc.id }).where(inArray(driveFiles.id, idsParaVincular));
+            if (!proc.driveFolderId) {
+              const folderId = (grupos.desteProcesso.find((f) => (f as any).driveFolderId)?.["driveFolderId" as keyof typeof grupos.desteProcesso[number]] ?? null) as string | null;
+              if (folderId) {
+                await db.update(processos).set({ driveFolderId: folderId }).where(eq(processos.id, proc.id));
+              }
+            }
+          } catch (e) {
+            console.error("[autosDoProcesso] auto-vínculo falhou:", e);
+          }
+        }
+
+        return grupos;
+      }, "Erro ao listar autos do processo");
     }),
 
   /**
