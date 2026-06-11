@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, ChevronRight, ExternalLink, Loader2, Maximize2, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, Loader2, Maximize2, Minimize2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DrivePreviewIframe } from "./drive-preview-iframe";
@@ -40,7 +41,10 @@ function formatSize(bytes?: number | null): string {
   return `${Math.round(bytes / 1024)} KB`;
 }
 
-export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
+export function DocumentosItem({ file, isOpen, onToggle }: Props) {
+  // "Expandir" aumenta o preview inline aqui mesmo (mais alto), sem alargar o sheet
+  // nem abrir overlay. Toda a leitura acontece dentro do sheet.
+  const [tall, setTall] = useState(false);
   const dataStr = file.lastModifiedTime
     ? format(new Date(file.lastModifiedTime), "dd/MMM", { locale: ptBR })
     : "";
@@ -71,20 +75,19 @@ export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
             ? <ChevronDown className="w-3.5 h-3.5 text-neutral-400" />
             : <ChevronRight className="w-3.5 h-3.5 text-neutral-300" />}
         </button>
-        {onExpand && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onExpand(file);
-            }}
-            aria-label="Expandir visualização"
-            title="Expandir em tela cheia"
-            className="w-6 h-6 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer flex-shrink-0"
-          >
-            <Maximize2 className="w-3 h-3" />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isOpen) { onToggle(); setTall(true); }
+            else setTall((t) => !t);
+          }}
+          aria-label="Expandir visualização"
+          title={isOpen && tall ? "Reduzir o preview" : "Expandir o preview (no sheet)"}
+          className="w-6 h-6 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer flex-shrink-0"
+        >
+          {isOpen && tall ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+        </button>
       </div>
       {isOpen && (
         <div className="px-3 pb-3 border-t border-neutral-100 dark:border-neutral-800/40 pt-2.5 space-y-2">
@@ -93,17 +96,15 @@ export function DocumentosItem({ file, isOpen, onToggle, onExpand }: Props) {
               <span>{file.mimeType}</span>
               {file.fileSize && <span>· {formatSize(file.fileSize)}</span>}
             </div>
-            {onExpand && (
-              <button
-                type="button"
-                onClick={() => onExpand(file)}
-                className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
-              >
-                <Maximize2 className="w-2.5 h-2.5" /> Expandir
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setTall((t) => !t)}
+              className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
+            >
+              {tall ? <><Minimize2 className="w-2.5 h-2.5" /> Reduzir</> : <><Maximize2 className="w-2.5 h-2.5" /> Expandir</>}
+            </button>
           </div>
-          <DrivePreviewIframe driveFileId={file.driveFileId} mimeType={file.mimeType} />
+          <DrivePreviewIframe driveFileId={file.driveFileId} mimeType={file.mimeType} height={tall ? 820 : 480} />
           <div className="flex gap-1.5">
             {file.webViewLink && (
               <a

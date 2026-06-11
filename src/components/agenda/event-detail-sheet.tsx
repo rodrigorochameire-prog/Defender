@@ -18,7 +18,6 @@ import { CollapsibleSection } from "./sheet/collapsible-section";
 import { SheetActionFooter } from "./sheet/sheet-action-footer";
 import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
 import { DocumentosBlock } from "./sheet/documentos-block";
-import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
@@ -235,7 +234,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
   const [deteccaoPendente, setDeteccaoPendente] = useState<AnotacaoAudienciaParsed | null>(null);
-  const [docaAutos, setDocaAutos] = useState<{ fileId: string; page?: number } | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const audienciaIdNum = useMemo(() => {
@@ -423,11 +421,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     setOpenDepoenteIdx(firstPending >= 0 ? firstPending : (depoentes.length > 0 ? 0 : null));
   }, [audienciaIdNum, depoentes.length]);
 
-  // Recolhe a doca de autos ao trocar de evento ou fechar o sheet.
-  useEffect(() => {
-    setDocaAutos(null);
-  }, [audienciaIdNum, open]);
-
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
   }, [advogadoParticular, processoId]);
@@ -490,38 +483,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         side="right"
         className={cn(
           "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden",
-          // Docado: container transparente ocupa a tela toda; o sheet visível é a
-          // coluna de conteúdo (1040px à direita) e o PDF é a coluna à esquerda.
-          docaAutos
-            ? "w-full sm:w-screen sm:max-w-none bg-transparent shadow-none"
-            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] bg-white dark:bg-neutral-950 shadow-2xl",
+          "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] bg-white dark:bg-neutral-950 shadow-2xl",
         )}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
         <div className="flex-1 flex min-h-0">
-          {docaAutos && (
-            <div className="hidden sm:flex flex-col min-w-0 flex-1 bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800">
-              <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
-                <span className="text-[11px] font-medium text-neutral-500">Autos</span>
-                <button
-                  type="button"
-                  onClick={() => setDocaAutos(null)}
-                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  Recolher ⇥
-                </button>
-              </div>
-              <AutosPreviewPane
-                files={[{ driveFileId: docaAutos.fileId }]}
-                initialId={docaAutos.fileId}
-                initialPage={docaAutos.page}
-                className="flex-1 min-h-0"
-                bodyClassName="flex-1 min-h-0"
-              />
-            </div>
-          )}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0 bg-white dark:bg-neutral-950 shadow-2xl" : "flex-1")}>
+          <div className="flex flex-col min-h-0 min-w-0 flex-1">
 
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -1204,7 +1172,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   <DocumentosBlock
                     processoId={typeof processoId === "number" ? processoId : null}
                     assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                    onDockPdf={(fileId, page) => setDocaAutos({ fileId, page })}
                   />
                 </CollapsibleSection>
 
