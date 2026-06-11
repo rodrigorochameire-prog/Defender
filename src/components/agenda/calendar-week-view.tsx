@@ -186,7 +186,7 @@ function EventoSemana({
               {defBadge && !eventoCancelado && (
                 <span
                   title={`Júri de ${defBadge.label}`}
-                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold text-white shrink-0 ml-auto ${defBadge.dot}`}
+                  className={`inline-flex items-center justify-center w-3 h-3 rounded-full text-[7px] font-bold shrink-0 ml-auto ${defBadge.badgeClass}`}
                 >
                   {defBadge.initial}
                 </span>

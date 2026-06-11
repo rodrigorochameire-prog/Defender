@@ -426,7 +426,7 @@ export function DayEventsSheet({
                               title={`Júri de ${defBadge.label}`}
                               className={cn("inline-flex items-center gap-1 shrink-0", defBadge.text)}
                             >
-                              <span className={cn("inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold text-white", defBadge.dot)}>
+                              <span className={cn("inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold", defBadge.badgeClass)}>
                                 {defBadge.initial}
                               </span>
                               <span className="text-[10px] font-semibold">{defBadge.label.replace(/^Dr[a]?\. /, "")}</span>

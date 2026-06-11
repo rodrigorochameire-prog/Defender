@@ -33,17 +33,44 @@ export function parseAuxilio(nome: string | null | undefined): string | null {
 
 /**
  * Etiqueta de defensor p/ sinalizar de quem é o júri na agenda e no switch.
- * Cores: Rodrigo=emerald, Juliane=violet, Grupo do Júri=orange.
+ * Cores: Rodrigo=emerald, Juliane=violet (círculo cheio, letra branca);
+ * Grupo do Júri=orange SUTIL (só o contorno do círculo + G laranja) — pedido
+ * do Rodrigo 11/06: o grupo é cobertura, não pode gritar mais que o titular.
+ * `badgeClass` é a composição pronta do círculo — os consumidores NÃO devem
+ * recompor cor (text-white + dot) por conta própria.
  */
-export function defensorBadge(
-  nome: string | null | undefined
-): { initial: "R" | "J" | "G"; dot: string; text: string; label: DefensorCanonico } | null {
+export function defensorBadge(nome: string | null | undefined): {
+  initial: "R" | "J" | "G";
+  dot: string;
+  text: string;
+  badgeClass: string;
+  label: DefensorCanonico;
+} | null {
   const c = normalizeDefensor(nome);
   if (c === "Dr. Rodrigo")
-    return { initial: "R", dot: "bg-emerald-500", text: "text-emerald-700 dark:text-emerald-400", label: c };
+    return {
+      initial: "R",
+      dot: "bg-emerald-500",
+      text: "text-emerald-700 dark:text-emerald-400",
+      badgeClass: "bg-emerald-500 text-white",
+      label: c,
+    };
   if (c === "Dra. Juliane")
-    return { initial: "J", dot: "bg-violet-500", text: "text-violet-700 dark:text-violet-400", label: c };
+    return {
+      initial: "J",
+      dot: "bg-violet-500",
+      text: "text-violet-700 dark:text-violet-400",
+      badgeClass: "bg-violet-500 text-white",
+      label: c,
+    };
   if (c === "Grupo do Júri")
-    return { initial: "G", dot: "bg-orange-500", text: "text-orange-700 dark:text-orange-400", label: c };
+    return {
+      initial: "G",
+      dot: "bg-orange-500",
+      text: "text-orange-700 dark:text-orange-400",
+      badgeClass:
+        "border border-orange-400 text-orange-500 dark:border-orange-500 dark:text-orange-400 bg-transparent",
+      label: c,
+    };
   return null;
 }
