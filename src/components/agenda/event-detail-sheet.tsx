@@ -7,7 +7,6 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle, CalendarClock, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
-  RefreshCw, Download, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
@@ -19,6 +18,7 @@ import { CollapsibleSection } from "./sheet/collapsible-section";
 import { SheetActionFooter } from "./sheet/sheet-action-footer";
 import { DepoenteCardV2 } from "./sheet/depoente-card-v2";
 import { DocumentosBlock } from "./sheet/documentos-block";
+import { AutosModalViewer } from "./sheet/autos-modal-viewer";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
@@ -233,9 +233,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [copied, setCopied] = useState(false);
   // Modal de autos encaixado à esquerda do sheet (não altera a largura do sheet).
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
-  // Fonte do visualizador: "app" = proxy autenticado (rápido, sem login Google);
-  // "drive" = visualizador do Google Drive (grifos/comentários nativos).
-  const [autosSource, setAutosSource] = useState<"app" | "drive">("app");
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
@@ -428,7 +425,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   }, [audienciaIdNum, depoentes.length]);
 
   // Fecha o modal de autos ao trocar de evento ou fechar o sheet.
-  useEffect(() => { setAutosModalId(null); setAutosSource("app"); }, [audienciaIdNum, open]);
+  useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
 
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
@@ -506,54 +503,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             até onde o sheet começa. O sheet mantém sua largura (1040px) e segue funcional. */}
         {autosModalId && (
           <div className="hidden sm:flex flex-col fixed inset-y-2 left-2 sm:right-[652px] lg:right-[732px] z-50 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-left-8 duration-300 ease-out">
-            <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/70 shrink-0">
-              <span className="text-[11px] font-semibold tracking-tight text-neutral-600 dark:text-neutral-300 shrink-0">Visualizador de autos</span>
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => setAutosSource((s) => (s === "app" ? "drive" : "app"))}
-                  title={autosSource === "app"
-                    ? "Vendo pelo app (rápido). Trocar para o Drive (grifos e comentários)."
-                    : "Vendo pelo Drive (grifos/comentários). Trocar para o app."}
-                  className="inline-flex items-center gap-1 h-6 px-2 rounded-md hover:bg-neutral-200/70 dark:hover:bg-neutral-800 text-[10px] font-medium text-neutral-500 hover:text-foreground cursor-pointer transition-colors"
-                >
-                  <RefreshCw className="w-3 h-3" />{autosSource === "app" ? "App" : "Drive"}
-                </button>
-                <a
-                  href={`/api/drive/proxy?fileId=${autosModalId}&download=1`}
-                  title="Baixar"
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-neutral-200/70 dark:hover:bg-neutral-800 text-neutral-500 hover:text-foreground cursor-pointer transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                </a>
-                <a
-                  href={`https://drive.google.com/file/d/${autosModalId}/view`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Abrir no Drive (grifos, comentários)"
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-neutral-200/70 dark:hover:bg-neutral-800 text-neutral-500 hover:text-foreground cursor-pointer transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setAutosModalId(null)}
-                  aria-label="Fechar"
-                  title="Fechar"
-                  className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-neutral-200/70 dark:hover:bg-neutral-800 text-neutral-500 hover:text-foreground cursor-pointer transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-            <iframe
-              key={`${autosModalId}:${autosSource}`}
-              src={autosSource === "app"
-                ? `/api/drive/proxy?fileId=${autosModalId}#view=FitH`
-                : `https://drive.google.com/file/d/${autosModalId}/preview`}
-              className="w-full flex-1 border-0 bg-neutral-100 dark:bg-neutral-900"
-              title="Autos"
-              {...(autosSource === "drive" ? { sandbox: "allow-scripts allow-same-origin allow-popups allow-forms" } : {})}
+            <AutosModalViewer
+              driveFileId={autosModalId}
+              processoId={typeof processoId === "number" ? processoId : null}
+              onClose={() => setAutosModalId(null)}
             />
           </div>
         )}
