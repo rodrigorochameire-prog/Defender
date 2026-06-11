@@ -52,12 +52,17 @@ export function AutosPreviewPane({
     }
   }, [usable, selectedId]);
 
+  // Reage quando o pai aponta outro documento (ex.: clicar um ato diferente).
+  useEffect(() => {
+    if (initialId) setSelectedId(initialId);
+  }, [initialId]);
+
   useEffect(() => {
     setIframeLoading(true);
     // rede de segurança: o onLoad do visualizador nativo de PDF nem sempre dispara
     const t = setTimeout(() => setIframeLoading(false), 3500);
     return () => clearTimeout(t);
-  }, [selectedId, viewSource]);
+  }, [selectedId, viewSource, initialPage]);
 
   const selected = usable.find((f) => f.driveFileId === selectedId) ?? usable[0] ?? null;
 
@@ -160,7 +165,7 @@ export function AutosPreviewPane({
           </div>
         )}
         <iframe
-          key={fileId}
+          key={`${fileId}:${initialPage ?? ""}:${viewSource}`}
           src={previewUrl}
           className="w-full h-full border-0"
           title={selected.name ?? "Visualização do PDF"}
