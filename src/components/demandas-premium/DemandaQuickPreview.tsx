@@ -784,7 +784,7 @@ export function DemandaQuickPreview({
             </div>
           )}
           {/* ===== COLUNA DIREITA — conteúdo do sheet (preservado integralmente) ===== */}
-          <div className={cn("flex flex-col min-h-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">

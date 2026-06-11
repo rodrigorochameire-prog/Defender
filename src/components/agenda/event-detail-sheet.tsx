@@ -519,7 +519,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               />
             </div>
           )}
-          <div className={cn("flex flex-col min-h-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
 
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">
