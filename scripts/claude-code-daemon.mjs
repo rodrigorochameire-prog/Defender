@@ -20,6 +20,7 @@ import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, statSy
 import { resolve, dirname, join } from 'path'
 import { tmpdir } from 'os'
 import { fileURLToPath } from 'url'
+import { createDispatcher } from './lib/dispatcher.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_DIR = resolve(__dirname, '..')
@@ -293,8 +294,11 @@ async function catchUp() {
   }
 
   console.log(`${LOG_PREFIX} Found ${tasks.length} pending task(s).`)
+  // Empurra para o dispatcher; ele ordena por priority in-memory (task.priority ?? 100),
+  // então NÃO dependemos da coluna `priority` existir no banco para o catch-up funcionar.
+  // O dedup do dispatcher evita corrida com o Realtime.
   for (const task of tasks) {
-    await processTask(task)
+    dispatcher.enqueue(task)
   }
 }
 
@@ -307,6 +311,16 @@ let channel = null
 let reconnectTimer = null
 let reconnectAttempts = 0
 let shuttingDown = false
+
+// --- Dispatcher: cap de concorrência + prioridade ---
+// Tanto o INSERT do Realtime quanto o catch-up empurram para a MESMA fila via
+// dispatcher.enqueue (nunca chamam processTask direto). Assim o cap vale para as
+// duas fontes e tarefas interativas (priority menor) furam a fila do lote.
+const MAX_CONCURRENT = Math.max(
+  1,
+  parseInt(ENV.DAEMON_MAX_CONCURRENT || process.env.DAEMON_MAX_CONCURRENT || '3', 10) || 3,
+)
+const dispatcher = createDispatcher({ maxConcurrent: MAX_CONCURRENT, run: processTask })
 
 function scheduleReconnect(reason) {
   if (shuttingDown || reconnectTimer) return // já agendado / encerrando
@@ -328,7 +342,7 @@ function subscribe() {
     .channel('claude-code-tasks')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'claude_code_tasks' }, (payload) => {
       console.log(`${LOG_PREFIX} New task received: ${payload.new.id}`)
-      processTask(payload.new)
+      dispatcher.enqueue(payload.new)
     })
     .subscribe(async (status) => {
       console.log(`${LOG_PREFIX} Realtime status: ${status}`)
@@ -349,6 +363,7 @@ console.log(`${LOG_PREFIX} Project: ${PROJECT_DIR}`)
 console.log(`${LOG_PREFIX} Supabase: ${SUPABASE_URL}`)
 console.log(`${LOG_PREFIX} Skills root: ${SKILLS_ROOT}`)
 console.log(`${LOG_PREFIX} Loaded ${Object.keys(SKILL_ALIASES).length} skill alias(es)`)
+console.log(`${LOG_PREFIX} Concurrency cap: ${MAX_CONCURRENT} | priority queue: on`)
 
 // Sync skills from git before processing (multi-Mac source-of-truth is the repo).
 // Non-fatal: if git fails (offline, conflicts), daemon still starts with local state.
