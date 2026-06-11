@@ -11,6 +11,7 @@ import {
   Link as LinkIcon,
   Loader2,
   Maximize2,
+  RefreshCw,
   Sparkles,
   X,
 } from "lucide-react";
@@ -80,6 +81,9 @@ export function DocumentPreviewDialog({
 }: Props) {
   const [iframeLoading, setIframeLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  // Fonte do preview: "app" = proxy autenticado (renderiza inline sem depender do
+  // login do Google); "drive" = Drive /preview (progressivo, bom para arquivos grandes).
+  const [viewSource, setViewSource] = useState<"app" | "drive">("app");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const open = !!driveFileId;
@@ -101,9 +105,23 @@ export function DocumentPreviewDialog({
   const drivePreviewUrl = driveFileId
     ? `https://drive.google.com/file/d/${driveFileId}/preview`
     : null;
+  const proxyUrl = driveFileId ? `/api/drive/proxy?fileId=${driveFileId}` : null;
   const streamUrl = driveFileId ? `/api/drive/proxy?fileId=${driveFileId}&stream=1` : null;
   const driveUrl =
     webViewLink ?? (driveFileId ? `https://drive.google.com/file/d/${driveFileId}/view` : null);
+  // PDFs renderizam pelo proxy do app por padrão (não exige login no Google).
+  // Outros tipos (Docs/Sheets/Word) só renderizam bem no Drive /preview.
+  const isPdf = mime === "application/pdf";
+  const bodyUrl = isPdf && viewSource === "app" ? proxyUrl : drivePreviewUrl;
+
+  // Mostra o spinner ao trocar de documento/fonte e o remove no onLoad — com uma
+  // rede de segurança, pois o onLoad do visualizador nativo de PDF nem sempre dispara.
+  useEffect(() => {
+    if (!bodyUrl) return;
+    setIframeLoading(true);
+    const t = setTimeout(() => setIframeLoading(false), 3500);
+    return () => clearTimeout(t);
+  }, [bodyUrl]);
 
   const goPrev = useCallback(() => {
     if (!canPrev || !list || !onNavigate) return;
@@ -277,6 +295,26 @@ export function DocumentPreviewDialog({
           </div>
         )}
 
+        {isPdf && (
+          <button
+            type="button"
+            onClick={() => {
+              setIframeLoading(true);
+              setViewSource((s) => (s === "app" ? "drive" : "app"));
+            }}
+            title={
+              viewSource === "app"
+                ? "Vendo pelo app (sempre carrega). Trocar para o Drive (modo rápido)."
+                : "Vendo pelo Drive. Trocar para o app (não exige login no Google)."
+            }
+            aria-label="Alternar fonte do preview"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            {viewSource === "app" ? "App" : "Drive"}
+          </button>
+        )}
+
         {onCompare && kind === "other" && (
           <button
             type="button"
@@ -400,7 +438,7 @@ export function DocumentPreviewDialog({
             </video>
           )}
 
-          {kind === "other" && drivePreviewUrl && (
+          {kind === "other" && bodyUrl && (
             <>
               {iframeLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 z-10">
@@ -413,12 +451,17 @@ export function DocumentPreviewDialog({
                 </div>
               )}
               <iframe
-                key={drivePreviewUrl}
-                src={drivePreviewUrl}
+                key={bodyUrl}
+                src={bodyUrl}
                 className="w-full h-full border-0"
                 title={title}
                 loading="eager"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                /* PDF servido pelo proxy é same-origin nosso: sem sandbox, para o
+                   visualizador nativo de PDF do navegador funcionar. O Drive /preview
+                   (cross-origin) mantém o sandbox. */
+                {...(isPdf && viewSource === "app"
+                  ? {}
+                  : { sandbox: "allow-scripts allow-same-origin allow-popups allow-forms allow-downloads" })}
                 onLoad={() => setIframeLoading(false)}
               />
             </>
