@@ -27,6 +27,11 @@ export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
   const [compareFile, setCompareFile] = useState<DriveFileLite | null>(null);
   const [query, setQuery] = useState("");
 
+  // Expandir: dentro do sheet, docar o PDF à esquerda (sheet continua visível e
+  // funcional à direita). Fora de um sheet docável, cai no overlay de tela cheia.
+  const handleExpand = (f: DriveFileLite) =>
+    onDockPdf ? onDockPdf(f.driveFileId) : setExpanded(f);
+
   const utils = trpc.useUtils();
 
   const autos = trpc.drive.autosDoProcesso.useQuery(
@@ -242,7 +247,7 @@ export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
               files={autosGrupos.desteProcesso}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={handleExpand}
               defaultOpen
             />
           )}
@@ -253,7 +258,7 @@ export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
               files={g.files}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={handleExpand}
             />
           ))}
           {autosGrupos.outros.length > 0 && (
@@ -262,7 +267,7 @@ export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
               files={autosGrupos.outros}
               openId={openId}
               setOpenId={setOpenId}
-              onExpand={setExpanded}
+              onExpand={handleExpand}
             />
           )}
           {autosList.length === 0 && driveConnected && (
@@ -288,7 +293,7 @@ export function DocumentosBlock({ processoId, assistidoId, onDockPdf }: Props) {
                   file={f}
                   isOpen={openId === f.driveFileId}
                   onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
-                  onExpand={setExpanded}
+                  onExpand={handleExpand}
                 />
               ))}
             </div>
