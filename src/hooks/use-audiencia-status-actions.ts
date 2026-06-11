@@ -43,6 +43,18 @@ export function useAudienciaStatusActions(audienciaId: number | null) {
     onError: (e) => toast.error(e.message),
   });
 
+  const aplicarEvento = trpc.audiencias.aplicarEventoAudiencia.useMutation({
+    onSuccess: (r) => {
+      toast.success(
+        r.novaAudiencia
+          ? "Evento aplicado — nova audiência criada"
+          : "Evento aplicado — aguardando nova data"
+      );
+      invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const addNote = trpc.audiencias.addQuickNote.useMutation({
     onSuccess: () => {
       toast.success("Anotação salva");
@@ -59,5 +71,5 @@ export function useAudienciaStatusActions(audienciaId: number | null) {
     onError: (e) => toast.error(e.message),
   });
 
-  return { concluir, redesignar, marcarOuvido, redesignarDep, addNote, removeNote };
+  return { concluir, redesignar, marcarOuvido, redesignarDep, addNote, removeNote, aplicarEvento };
 }

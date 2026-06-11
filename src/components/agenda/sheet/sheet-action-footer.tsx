@@ -8,15 +8,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ConcluirDialog } from "./concluir-dialog";
 import { RedesignarDialog } from "./redesignar-dialog";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
+import type { AnotacaoAudienciaParsed } from "@/lib/agenda/parse-anotacao-audiencia";
 
 interface Props {
   audienciaId: number | null;
   jaConcluida: boolean;
   onAbrirRegistroCompleto: () => void;
   onDuplicar?: () => void;
+  /** Chamado quando o parser detecta evento de audiência na nota recém-salva */
+  onDeteccao?: (d: AnotacaoAudienciaParsed) => void;
 }
 
-export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCompleto, onDuplicar }: Props) {
+export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCompleto, onDuplicar, onDeteccao }: Props) {
   const [quickNote, setQuickNote] = useState("");
   const [concluirOpen, setConcluirOpen] = useState(false);
   const [redesignarOpen, setRedesignarOpen] = useState(false);
@@ -24,7 +27,10 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
 
   const submitNote = () => {
     if (!audienciaId || !quickNote.trim()) return;
-    actions.addNote.mutate({ audienciaId, texto: quickNote.trim() });
+    actions.addNote.mutate(
+      { audienciaId, texto: quickNote.trim() },
+      { onSuccess: (r) => { if (r.deteccao) onDeteccao?.(r.deteccao); } }
+    );
     setQuickNote("");
   };
 
