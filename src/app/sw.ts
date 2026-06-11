@@ -106,13 +106,19 @@ serwist.addEventListeners();
 // deploy — combined with skipWaiting + clientsClaim, the transition is
 // effectively instant.
 const LEGACY_API_CACHES = new Set(["trpc-api"]);
+// Caches de código da aplicação que precisam ser zerados a cada nova versão do SW.
+// next-static guarda os chunks JS/CSS via StaleWhileRevalidate; sem isso, um chunk
+// já cacheado pode ser servido (stale) mesmo após um novo deploy, fazendo a UI
+// "não atualizar". Como skipWaiting+clientsClaim trocam o SW de imediato, limpar
+// aqui garante que o cliente puxe o bundle novo no carregamento seguinte.
+const APP_CODE_CACHES = new Set(["next-static"]);
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter((name) => LEGACY_API_CACHES.has(name))
+          .filter((name) => LEGACY_API_CACHES.has(name) || APP_CODE_CACHES.has(name))
           .map((name) => caches.delete(name))
       );
     })()
