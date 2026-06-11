@@ -786,7 +786,10 @@ export const audienciasRouter = router({
       return results;
     }),
 
-  // Próxima audiência futura ainda válida (não cancelada/realizada) do processo.
+  // Próxima audiência futura ainda válida do processo. "redesignada" (status
+  // gravado pela importação do PJe quando a audiência foi remarcada) também é
+  // não-vigente — sem excluí-la, uma redesignada futura anterior à nova data
+  // continuaria aparecendo como "Próxima Audiência" no painel.
   // Usada pelo gatilho de "Ciência designação/redesignação de audiência" para
   // não reabrir o modal de agendamento quando a audiência já existe.
   proximaAgendada: protectedProcedure
@@ -810,7 +813,7 @@ export const audienciasRouter = router({
             gte(audiencias.dataAudiencia, new Date()),
             // Audiência aguardando nova designação não é "próxima audiência"
             eq(audiencias.aguardandoNovaData, false),
-            sql`(${audiencias.status} IS NULL OR ${audiencias.status} NOT IN ('cancelada', 'realizada'))`
+            sql`(${audiencias.status} IS NULL OR ${audiencias.status} NOT IN ('cancelada', 'realizada', 'redesignada'))`
           )
         )
         .orderBy(asc(audiencias.dataAudiencia))
