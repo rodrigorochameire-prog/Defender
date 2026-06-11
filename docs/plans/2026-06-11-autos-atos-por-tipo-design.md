@@ -51,6 +51,12 @@ Entrega em 2 fases independentes; cada uma com valor próprio.
 ### Deep-link à página
 - `DocumentPreviewDialog`/`AutosPreviewPane` aceitam `initialPage?: number`; quando fonte = proxy, montam `src` com `#page=N`.
 
+### "Expandir à esquerda" (doca não-modal, sheet continua ativo)
+Hoje o expandir abre o `DocumentPreviewDialog` como **overlay que tapa tudo** — o sheet fica inacessível. Acrescentar um modo **doca à esquerda**: ao expandir (do "Ver autos", da aba Autos ou de um ato), o **próprio sheet alarga** (ex.: `w-[1040px]` → `w-[96vw]`) e o corpo vira um split **[PDF à esquerda | conteúdo do sheet à direita]**. Não é um segundo modal: é a mesma superfície do sheet, então **o manuseio do sheet permanece ativo** (abas, registro, anotações) enquanto se lê o PDF ao lado.
+- Estado no sheet: `docaAutos: { fileId, page? } | null`. Quando setado, `SheetContent` aplica a largura expandida e renderiza `AutosPreviewPane` (proxy, `#page`) numa coluna à esquerda; conteúdo normal à direita; botão para recolher.
+- O **"Expandir à esquerda" passa a ser o expandir primário** a partir do sheet; **"Tela cheia"** (overlay) continua disponível como opção (para quem quer o PDF dominando a tela).
+- Reusa `AutosPreviewPane` (já tem toolbar App/Drive, baixar, etc.). Vale para `event-detail-sheet` (agenda) e `DemandaQuickPreview` (demanda).
+
 ---
 
 ## Reuso x Novo
