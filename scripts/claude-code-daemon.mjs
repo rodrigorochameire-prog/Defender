@@ -298,9 +298,33 @@ async function catchUp() {
   }
 }
 
-// --- Realtime subscription ---
+// --- Realtime subscription (auto-reconnect) ---
+// O cliente supabase-js às vezes deixa o canal em CLOSED/TIMED_OUT após um blip
+// de rede e NÃO se reinscreve sozinho. Sem isto o processo fica vivo mas surdo
+// (e o KeepAlive do launchd não ajuda, pois o processo não morre). Recriamos o
+// canal com backoff exponencial e rodamos catch-up ao voltar.
+let channel = null
+let reconnectTimer = null
+let reconnectAttempts = 0
+let shuttingDown = false
+
+function scheduleReconnect(reason) {
+  if (shuttingDown || reconnectTimer) return // já agendado / encerrando
+  reconnectAttempts++
+  const delay = Math.min(30_000, 1000 * 2 ** Math.min(reconnectAttempts, 5)) // 2s→30s cap
+  console.warn(`${LOG_PREFIX} Realtime caiu (${reason}); reconectando em ${delay / 1000}s (tentativa ${reconnectAttempts})`)
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    subscribe()
+  }, delay)
+}
+
 function subscribe() {
-  const channel = supabase
+  if (channel) {
+    try { supabase.removeChannel(channel) } catch {}
+    channel = null
+  }
+  channel = supabase
     .channel('claude-code-tasks')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'claude_code_tasks' }, (payload) => {
       console.log(`${LOG_PREFIX} New task received: ${payload.new.id}`)
@@ -309,7 +333,10 @@ function subscribe() {
     .subscribe(async (status) => {
       console.log(`${LOG_PREFIX} Realtime status: ${status}`)
       if (status === 'SUBSCRIBED') {
+        reconnectAttempts = 0
         await catchUp()
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        scheduleReconnect(status)
       }
     })
 
@@ -336,7 +363,7 @@ try {
   console.warn(`${LOG_PREFIX} git pull failed (non-fatal): ${err.message.split('\n')[0]}`)
 }
 
-const channel = subscribe()
+subscribe()
 
 // --- Heartbeat: upsert into system_heartbeat every 30s ---
 // Allows the /admin/daemon page to show liveness (🟢 ativo / 🔴 parado há Xs).
@@ -364,8 +391,10 @@ const heartbeatInterval = setInterval(sendHeartbeat, 30_000)
 // --- Graceful shutdown ---
 function shutdown() {
   console.log(`${LOG_PREFIX} Shutting down...`)
+  shuttingDown = true
+  if (reconnectTimer) clearTimeout(reconnectTimer)
   clearInterval(heartbeatInterval)
-  supabase.removeChannel(channel)
+  if (channel) supabase.removeChannel(channel)
   process.exit(0)
 }
 
