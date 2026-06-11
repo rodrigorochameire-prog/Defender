@@ -487,8 +487,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       <SheetContent
         side="right"
         className={cn(
-          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden",
-          "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] bg-white dark:bg-neutral-950 shadow-2xl",
+          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl",
+          "transition-[width] duration-300 ease-out",
+          // Ao abrir o modal de autos, o sheet recolhe suavemente para dar espaço
+          // ao documento (master-detail), sem deixar de ser usável.
+          autosModalId
+            ? "w-full sm:w-[640px] lg:w-[720px]"
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
         )}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
@@ -496,7 +501,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         {/* Modal de autos ENCAIXADO à esquerda do sheet: painel fixo da borda esquerda
             até onde o sheet começa. O sheet mantém sua largura (1040px) e segue funcional. */}
         {autosModalId && (
-          <div className="hidden sm:flex flex-col fixed inset-y-0 left-0 sm:right-[600px] md:right-[780px] lg:right-[920px] xl:right-[1040px] z-50 bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 shadow-2xl">
+          <div className="hidden sm:flex flex-col fixed inset-y-2 left-2 sm:right-[656px] lg:right-[736px] z-50 rounded-2xl overflow-hidden bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-left-8 duration-300 ease-out">
             <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/60">
               <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300">Autos</span>
               <div className="flex items-center gap-1">
