@@ -531,9 +531,35 @@ export function DemandaQuickPreview({
     { enabled: !!demanda?.processoId && open },
   );
 
+  // Autos agrupados por processo (deste processo / correlacionados / outros) —
+  // fonte primária para ordenação quando há processoId.
+  const { data: autosAgrupados } = trpc.drive.autosDoProcesso.useQuery(
+    { processoId: demanda?.processoId ?? 0, assistidoId: demanda?.assistidoId ?? undefined },
+    { enabled: !!demanda?.processoId && open },
+  );
+
   // Lista única de PDFs para visualização inline (autos do processo primeiro,
   // depois PDFs do assistido), de-duplicada e ranqueada (autos no topo).
   const previewFiles: PreviewFile[] = useMemo(() => {
+    const toPF = (f: any): PreviewFile => ({
+      driveFileId: f.driveFileId,
+      name: f.name,
+      mimeType: f.mimeType,
+      webViewLink: f.webViewLink,
+      fileSize: f.fileSize,
+      enrichmentStatus: f.enrichmentStatus,
+    });
+    if (autosAgrupados) {
+      const ordered = [
+        ...autosAgrupados.desteProcesso,
+        ...autosAgrupados.correlacionados.flatMap((g: any) => g.files),
+        ...autosAgrupados.outros,
+      ];
+      const seen = new Set<string>();
+      const dedup = ordered.filter((f: any) => f.driveFileId && !seen.has(f.driveFileId) && seen.add(f.driveFileId));
+      return dedup.map(toPF);
+    }
+    // fallback atual (autosFilesData + pdfFiles + rankAutos) permanece
     const autos = ((autosFilesData as any[]) ?? []).filter(
       (f) => f.mimeType === "application/pdf",
     );
@@ -546,15 +572,8 @@ export function DemandaQuickPreview({
         dedup.push(f);
       }
     }
-    return rankAutos(dedup).map((f) => ({
-      driveFileId: f.driveFileId,
-      name: f.name,
-      mimeType: f.mimeType,
-      webViewLink: f.webViewLink,
-      fileSize: f.fileSize,
-      enrichmentStatus: f.enrichmentStatus,
-    }));
-  }, [autosFilesData, pdfFiles]);
+    return rankAutos(dedup).map(toPF);
+  }, [autosAgrupados, autosFilesData, pdfFiles]);
 
   const primaryAutos = previewFiles[0] ?? null;
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
