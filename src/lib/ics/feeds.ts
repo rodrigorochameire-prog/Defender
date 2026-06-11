@@ -37,7 +37,7 @@ export const FEEDS_ICS: FeedICS[] = [
     slug: "vvd",
     nome: "Vara da Justiça pela Paz em Casa",
     fonte: "audiencias",
-    atribuicoes: ["VVD_CAMACARI", "VVD_MPU", "MUTIRAO_PROTEGE"],
+    atribuicoes: ["VVD_CAMACARI", "MUTIRAO_PROTEGE"],
   },
   {
     slug: "ep",

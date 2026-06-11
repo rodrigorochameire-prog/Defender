@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FEEDS_ICS, feedPorSlug } from "../feeds";
+import { atribuicaoEnum } from "@/lib/db/schema/core";
 
 describe("catálogo de feeds ICS", () => {
   it("slugs únicos", () => {
@@ -29,6 +30,15 @@ describe("catálogo de feeds ICS", () => {
       for (const a of f.atribuicoes ?? []) {
         expect(vistas.has(a)).toBe(false);
         vistas.add(a);
+      }
+    }
+  });
+
+  it("toda atribuição do catálogo existe no enum do banco (evita 500 no feed)", () => {
+    const validas = new Set<string>(atribuicaoEnum.enumValues);
+    for (const f of FEEDS_ICS) {
+      for (const a of f.atribuicoes ?? []) {
+        expect(validas.has(a), `${f.slug}: atribuição inválida ${a}`).toBe(true);
       }
     }
   });
