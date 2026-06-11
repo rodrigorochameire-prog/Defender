@@ -8,7 +8,7 @@ describe("catálogo de feeds ICS", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("tem os 9 feeds aprovados", () => {
+  it("tem os 10 feeds aprovados", () => {
     expect(FEEDS_ICS.map((f) => f.slug).sort()).toEqual(
       [
         "juri-audiencias",
@@ -20,6 +20,7 @@ describe("catálogo de feeds ICS", () => {
         "substituicao-cumulativa",
         "atendimentos",
         "prazos",
+        "substituicoes",
       ].sort(),
     );
   });

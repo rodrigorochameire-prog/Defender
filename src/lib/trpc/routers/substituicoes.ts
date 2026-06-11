@@ -3,7 +3,9 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { substituicoes } from "@/lib/db/schema";
 import { eq, desc, and, gte, lte, inArray } from "drizzle-orm";
-import { audiencias, processos } from "@/lib/db/schema";
+import { audiencias, processos, demandas, registros, assistidos } from "@/lib/db/schema";
+import { pendenciasDaSubstituicao } from "@/lib/substituicoes/vinculo";
+import { dadosDoPeriodo, resumirParaPrompt } from "@/lib/substituicoes/dados";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -25,7 +27,16 @@ const substituicaoInput = z.object({
 
 export const substituicoesRouter = router({
   listar: protectedProcedure.query(async () => {
-    return db.select().from(substituicoes).orderBy(desc(substituicoes.dataInicio));
+    const rows = await db.select().from(substituicoes).orderBy(desc(substituicoes.dataInicio));
+    return rows.map((s) => ({
+      ...s,
+      pendencias: pendenciasDaSubstituicao({
+        status: s.status ?? "em_andamento",
+        oficioNumero: s.oficioNumero,
+        relatorioPath: s.relatorioPath,
+        seiProtocolo: s.seiProtocolo,
+      }),
+    }));
   }),
 
   criar: protectedProcedure
@@ -66,36 +77,26 @@ export const substituicoesRouter = router({
    * Filtra audiências do período; o orquestrador da skill complementa com
    * demandas/atendimentos e petições do Drive.
    */
+  /**
+   * Dados do período de uma substituição, já com a regra de vínculo aprovada:
+   * item criado no período + processo no escopo + processo que TAMBÉM chegou
+   * no período (titularidade prévia fica de fora). Fonte única do relatório
+   * de gratificação — o número exibido aqui é o que vai ao ofício.
+   */
+  /**
+   * Dados do período de uma substituição (regra de vínculo aprovada) — fonte
+   * única do relatório de gratificação; o número daqui é o que vai ao ofício.
+   */
   previewDados: protectedProcedure
-    .input(z.object({ dataInicio: z.string(), dataFim: z.string() }))
+    .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const rows = await db
-        .select({
-          atribuicao: processos.atribuicao,
-          numero: processos.numeroAutos,
-          tipo: audiencias.tipo,
-          data: audiencias.dataAudiencia,
-        })
-        .from(audiencias)
-        .leftJoin(processos, eq(audiencias.processoId, processos.id))
-        .where(
-          and(
-            gte(
-              sql`DATE(${audiencias.dataAudiencia} AT TIME ZONE 'America/Bahia')`,
-              input.dataInicio,
-            ),
-            lte(
-              sql`DATE(${audiencias.dataAudiencia} AT TIME ZONE 'America/Bahia')`,
-              input.dataFim,
-            ),
-          ),
-        );
-      const porAtribuicao: Record<string, number> = {};
-      for (const r of rows) {
-        const k = r.atribuicao ?? "—";
-        porAtribuicao[k] = (porAtribuicao[k] ?? 0) + 1;
-      }
-      return { totalAudiencias: rows.length, porAtribuicao, audiencias: rows };
+      const [sub] = await db
+        .select()
+        .from(substituicoes)
+        .where(eq(substituicoes.id, input.id))
+        .limit(1);
+      if (!sub) throw new TRPCError({ code: "NOT_FOUND", message: "Substituição não encontrada" });
+      return dadosDoPeriodo(sub);
     }),
 
   /**
@@ -120,6 +121,11 @@ export const substituicoesRouter = router({
       }
 
       const escopo = Array.isArray(s.escopoAtribuicoes) ? s.escopoAtribuicoes.join(", ") : "";
+      // Números do OMBUDS pela regra de vínculo (mesma consulta do
+      // previewDados) — vão no prompt para o relatório bater com a UI.
+      const resumoOmbuds = await dadosDoPeriodo(s)
+        .then(resumirParaPrompt)
+        .catch(() => "DADOS DO OMBUDS: indisponíveis (usar Drive + agenda como fonte)");
       const prompt = [
         `Gere a gratificação por substituição seguindo a skill oficio-gratificacao (autônomo, sem perguntar).`,
         `Unidade substituída: ${s.unidadeSubstituida}`,
@@ -127,6 +133,7 @@ export const substituicoesRouter = router({
         `Período: ${s.dataInicio} a ${s.dataFim ?? s.dataInicio}`,
         `ESCOPO DE VARA (já decidido — não perguntar): ${escopo || "(confirmar nos autos)"}`,
         `Motivo: ${s.motivo ?? "-"}`,
+        resumoOmbuds,
         ``,
         `Passos: (1) ache o próximo número de ofício livre (scripts/proximo_numero.py); (2) levante as petições do Drive por DATA DE ASSINATURA no período, filtrando pela(s) vara(s) do escopo, + audiências do OMBUDS no período/atribuição; (3) gere ofício (modelo recente) + relatório (modelo da natureza), preenchidos; (4) salve os canônicos (ofício em Ofícios/ano e 1-Protocolar; relatório em Substituições e gratificações/Relatórios) e monte o par em PDF no _Enviar ao SEI; (5) retorne JSON: {oficio_numero, oficio_pdf, relatorio_pdf, manifestacoes, audiencias, observacoes}.`,
       ].join("\n");
