@@ -10,6 +10,7 @@ import { db, audiencias, processos, assistidos, demandas, registros } from "@/li
 import { sessoesJuri } from "@/lib/db/schema/juri";
 import type { FeedICS } from "./feeds";
 import type { EventoICS } from "./serializar";
+import { combinarDataHorario } from "./horario-local";
 
 const DIA = 24 * 3600_000;
 
@@ -76,7 +77,7 @@ async function eventosAudiencias(atribuicoes: string[], defensorId: number): Pro
         .filter(Boolean)
         .join("\n"),
       local: r.local ?? undefined,
-      inicio: r.data,
+      inicio: combinarDataHorario(r.data, r.horario),
       cancelado: cancelada,
       atualizadoEm: r.atualizadoEm,
     };
@@ -89,6 +90,7 @@ async function eventosSessoesJuri(defensorId: number): Promise<EventoICS[]> {
     .select({
       id: sessoesJuri.id,
       data: sessoesJuri.dataSessao,
+      horario: sessoesJuri.horario,
       sala: sessoesJuri.sala,
       status: sessoesJuri.status,
       assistido: sessoesJuri.assistidoNome,
@@ -104,16 +106,20 @@ async function eventosSessoesJuri(defensorId: number): Promise<EventoICS[]> {
       ),
     );
 
-  return rows.map((r) => ({
-    uid: `sessao-${r.id}@ombuds.app`,
-    titulo: `Plenário – ${r.assistido ?? "Sem assistido"} – ${r.numero ?? ""}`.trim(),
-    descricao: r.numero ? `Processo ${r.numero}` : undefined,
-    local: r.sala ?? undefined,
-    inicio: r.data,
-    // sessão dura o dia de trabalho — 8h é a duração padrão do plenário
-    fim: new Date(r.data.getTime() + 8 * 3600_000),
-    cancelado: (r.status ?? "").toLowerCase() === "cancelada",
-  }));
+  return rows.map((r) => {
+    const inicio = combinarDataHorario(r.data, r.horario);
+    const status = (r.status ?? "").toLowerCase();
+    return {
+      uid: `sessao-${r.id}@ombuds.app`,
+      titulo: `Plenário – ${r.assistido ?? "Sem assistido"} – ${r.numero ?? ""}`.trim(),
+      descricao: r.numero ? `Processo ${r.numero}` : undefined,
+      local: r.sala ?? undefined,
+      inicio,
+      // sessão dura o dia de trabalho — 8h é a duração padrão do plenário
+      fim: new Date(inicio.getTime() + 8 * 3600_000),
+      cancelado: status === "cancelada" || status === "adiada",
+    };
+  });
 }
 
 async function eventosAtendimentos(defensorId: number): Promise<EventoICS[]> {
