@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
+  AlertTriangle, CalendarClock, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
@@ -31,6 +31,9 @@ import { nomeVaraExibicao } from "@/lib/format/nome-vara";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
+import { parseAnotacaoAudiencia, type AnotacaoAudienciaParsed } from "@/lib/agenda/parse-anotacao-audiencia";
+import { EventoDetectadoBanner } from "./sheet/evento-detectado-banner";
+import { AguardandoNovaDataBadge } from "./aguardando-nova-data-badge";
 import { PessoaChip, PessoaSheet, BannerInteligencia } from "@/components/pessoas";
 import { usePessoaSignals } from "@/hooks/use-pessoa-signals";
 import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
@@ -230,6 +233,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
+  const [deteccaoPendente, setDeteccaoPendente] = useState<AnotacaoAudienciaParsed | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const audienciaIdNum = useMemo(() => {
@@ -264,6 +268,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const utils = trpc.useUtils();
   const setPatrocinio = trpc.processos.setPatrocinio.useMutation({
     onSuccess: () => {
+      if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Ajuste manual da pendência "aguardando nova data" (clique no badge).
+  const resolverPendencia = trpc.audiencias.update.useMutation({
+    onSuccess: () => {
+      toast.success("Pendência resolvida manualmente");
       if (audienciaIdNum) utils.audiencias.getAudienciaContext.invalidate({ audienciaId: audienciaIdNum });
     },
     onError: (e) => toast.error(e.message),
@@ -551,6 +564,26 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                           {format(dataHora, "HH:mm", { locale: ptBR })}
                         </span>
                       )}
+                      {(ctx as any)?.audiencia?.aguardandoNovaData && (
+                        <button
+                          type="button"
+                          title="Clique para resolver a pendência manualmente"
+                          className="cursor-pointer"
+                          disabled={resolverPendencia.isPending}
+                          onClick={() => {
+                            if (
+                              audienciaIdNum &&
+                              confirm("Limpar a pendência 'aguardando nova data' desta audiência?")
+                            ) {
+                              resolverPendencia.mutate({ id: audienciaIdNum, aguardandoNovaData: false });
+                            }
+                          }}
+                        >
+                          <AguardandoNovaDataBadge
+                            motivo={(ctx as any)?.audiencia?.motivoNaoRealizacao}
+                          />
+                        </button>
+                      )}
                     </div>
                     {(vara || evento.atribuicao) && (
                       <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-neutral-500 dark:text-neutral-400 flex-wrap">
@@ -685,6 +718,29 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                 count={anotacoesRapidas.length}
                 defaultOpen
               >
+                {deteccaoPendente && audienciaIdNum && (
+                  <div className="mb-2">
+                    <EventoDetectadoBanner
+                      deteccao={deteccaoPendente}
+                      isPending={actions.aplicarEvento.isPending}
+                      onDescartar={() => setDeteccaoPendente(null)}
+                      onAplicar={(d) =>
+                        actions.aplicarEvento.mutate(
+                          {
+                            audienciaId: audienciaIdNum,
+                            evento: d.evento,
+                            motivo: d.motivo,
+                            motivoDetalhe: d.motivoDetalhe,
+                            ...(d.novaData
+                              ? { novaData: d.novaData, novaHora: d.novaHora ?? "00:00" }
+                              : {}),
+                          },
+                          { onSuccess: () => setDeteccaoPendente(null) }
+                        )
+                      }
+                    />
+                  </div>
+                )}
                 {anotacoesRapidas.length === 0 ? (
                   <EmptyHint text="Nenhuma anotação ainda" />
                 ) : (
@@ -706,6 +762,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                             })}
                           </p>
                         </div>
+                        <button
+                          type="button"
+                          aria-label="Estruturar anotação"
+                          title="Detectar evento de audiência (redesignação/suspensão)"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
+                          onClick={() => {
+                            const d = parseAnotacaoAudiencia(n.texto);
+                            if (d) setDeteccaoPendente(d);
+                            else toast.info("Nenhum evento de audiência detectado nesta anotação");
+                          }}
+                        >
+                          <CalendarClock className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           aria-label="Apagar anotação"
@@ -1126,6 +1195,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           jaConcluida={jaConcluida}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
+          onDeteccao={setDeteccaoPendente}
         />
         <PessoaSheet
           pessoaId={pessoaSheetId}

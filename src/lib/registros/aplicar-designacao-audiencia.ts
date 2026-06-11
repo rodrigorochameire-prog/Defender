@@ -51,6 +51,18 @@ export async function aplicarDesignacaoAudiencia(
   const inicioDia = new Date(`${det.data}T00:00:00-03:00`);
   const fimDia = new Date(`${det.data}T23:59:59-03:00`);
 
+  // Nova designação resolve a pendência "aguardando nova data" do processo
+  // (redesignação sem data registrada via anotação rápida ou fluxo Concluir).
+  await tx
+    .update(audiencias)
+    .set({ aguardandoNovaData: false, updatedAt: new Date() })
+    .where(
+      and(
+        eq(audiencias.processoId, processoId),
+        eq(audiencias.aguardandoNovaData, true)
+      )
+    );
+
   let supersedidas: AudienciaSupersedida[] = [];
   if (det.redesignacao) {
     supersedidas = await tx

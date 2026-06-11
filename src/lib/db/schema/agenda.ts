@@ -52,6 +52,11 @@ export const audiencias = pgTable("audiencias", {
   googleCalendarEventId: text("google_calendar_event_id"),
   gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
   prazoGeradoId: integer("prazo_gerado_id"),
+  // Evento de não realização (redesignação/suspensão sem nova data) —
+  // spec docs/superpowers/specs/2026-06-11-eventos-audiencia-anotacoes-design.md
+  motivoNaoRealizacao: varchar("motivo_nao_realizacao", { length: 40 }),
+  motivoDetalhe: text("motivo_detalhe"),
+  aguardandoNovaData: boolean("aguardando_nova_data").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
