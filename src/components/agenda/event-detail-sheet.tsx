@@ -491,7 +491,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         className={cn(
           "p-0 flex flex-col gap-0 border-l-0 outline-none bg-white dark:bg-neutral-950 rounded-l-2xl sm:rounded-l-none shadow-2xl [&>button:first-of-type]:hidden",
           docaAutos
-            ? "w-full sm:w-[96vw] sm:max-w-none"
+            ? "w-full sm:w-screen sm:max-w-none"
             : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
         )}
       >
@@ -519,7 +519,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               />
             </div>
           )}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0" : "flex-1")}>
 
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 min-w-0">

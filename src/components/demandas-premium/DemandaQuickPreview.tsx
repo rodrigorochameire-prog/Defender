@@ -730,7 +730,7 @@ export function DemandaQuickPreview({
         className={cn(
           "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none shadow-2xl border-l-0 outline-none bg-[#f7f7f7] dark:bg-neutral-950",
           docaAutos
-            ? "w-full sm:w-[96vw] sm:max-w-none"
+            ? "w-full sm:w-screen sm:max-w-none"
             : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
         )}
         onPointerDownOutside={(e) => {
@@ -784,7 +784,7 @@ export function DemandaQuickPreview({
             </div>
           )}
           {/* ===== COLUNA DIREITA — conteúdo do sheet (preservado integralmente) ===== */}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[460px] sm:shrink-0" : "flex-1")}>
+          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0" : "flex-1")}>
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
