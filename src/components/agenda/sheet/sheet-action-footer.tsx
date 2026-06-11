@@ -110,12 +110,28 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
       <ConcluirDialog
         open={concluirOpen}
         onOpenChange={setConcluirOpen}
-        isPending={actions.concluir.isPending}
-        onConfirm={(resultado, observacao) => {
+        isPending={actions.concluir.isPending || actions.aplicarEvento.isPending}
+        onConfirm={(c) => {
           if (!audienciaId) return;
-          actions.concluir.mutate({ audienciaId, resultado, observacao }, {
-            onSuccess: () => setConcluirOpen(false),
-          });
+          if (c.realizada) {
+            actions.concluir.mutate(
+              { audienciaId, resultado: c.resultado, observacao: c.observacao },
+              { onSuccess: () => setConcluirOpen(false) }
+            );
+          } else {
+            actions.aplicarEvento.mutate(
+              {
+                audienciaId,
+                evento: "redesignada",
+                motivo: c.motivo,
+                motivoDetalhe: c.observacao || undefined,
+                ...(c.novaData
+                  ? { novaData: c.novaData, novaHora: c.novaHora ?? "00:00" }
+                  : {}),
+              },
+              { onSuccess: () => setConcluirOpen(false) }
+            );
+          }
         }}
       />
       <RedesignarDialog
