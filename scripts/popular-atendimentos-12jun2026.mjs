@@ -13,8 +13,8 @@ config({ path: ".env.local" });
 const AUTOR_ID = 1; // Rodrigo Rocha Meire
 const LOCAL = "9ª Defensoria Pública de Camaçari";
 
-// Horários em America/Bahia (UTC-3) gravados como instante UTC,
-// convenção vigente da coluna registros.data_registro.
+// Horários em America/Bahia (UTC-3) — registros.data_registro é timestamptz,
+// então basta passar o instante correto.
 const bahia = (hhmm) => new Date(`2026-06-12T${hhmm}:00-03:00`);
 
 const ATENDIMENTOS = [
@@ -217,7 +217,7 @@ async function main() {
   }
 
   const check = await db.query(
-    `SELECT r.id, r.numero_solar, to_char(r.data_registro AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia', 'DD/MM HH24:MI') AS hora_local,
+    `SELECT r.id, r.numero_solar, to_char(r.data_registro AT TIME ZONE 'America/Bahia', 'DD/MM HH24:MI') AS hora_local,
             r.subtipo, a.nome, r.processo_id
        FROM registros r JOIN assistidos a ON a.id = r.assistido_id
       WHERE r.data_registro >= '2026-06-12T00:00:00Z' AND r.data_registro < '2026-06-13T12:00:00Z'
