@@ -444,25 +444,41 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     }
   }, []);
 
-  // Arraste da alça (borda direita do modal = limite com o sheet). Atualiza ao
-  // vivo e grava no localStorage ao soltar.
+  const SHEET_W_KEY = "ombuds_autos_modal_split_v2";
+  const SHEET_W_MIN = 420;
+  const persistSheetW = (w: number) => { try { localStorage.setItem(SHEET_W_KEY, String(Math.round(w))); } catch {} };
+
+  // Arraste da alça na borda esquerda do sheet. Atualiza ao vivo e grava ao soltar.
   const startDividerDrag = (e: React.PointerEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDraggingDivider(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
     let last = sheetW;
     const onMove = (ev: PointerEvent) => {
-      last = Math.min(Math.max(window.innerWidth - ev.clientX, 360), window.innerWidth - 360);
+      last = Math.min(Math.max(window.innerWidth - ev.clientX, SHEET_W_MIN), window.innerWidth - 360);
       setSheetW(last);
     };
     const onUp = () => {
       setDraggingDivider(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      try { localStorage.setItem("ombuds_autos_modal_split_v2", String(Math.round(last))); } catch {}
+      persistSheetW(last);
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
   };
+
+  // Duplo-clique na alça: reseta para ~45% da tela.
+  const resetSheetW = () => {
+    const w = typeof window !== "undefined" ? Math.round(window.innerWidth * 0.45) : 700;
+    setSheetW(w);
+    persistSheetW(w);
+  };
+  const pctSheetW = typeof window !== "undefined" && window.innerWidth ? Math.round((sheetW / window.innerWidth) * 100) : 0;
 
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
@@ -547,15 +563,29 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               processoId={typeof processoId === "number" ? processoId : null}
               onClose={() => setAutosModalId(null)}
             />
-            {/* Alça de redimensionamento (borda direita = limite com o sheet) */}
-            <div
-              onPointerDown={startDividerDrag}
-              title="Arraste para ajustar a largura — fica salvo"
-              className={cn(
-                "absolute top-0 right-0 bottom-0 w-1.5 cursor-col-resize transition-colors",
-                draggingDivider ? "bg-emerald-500/60" : "bg-transparent hover:bg-emerald-400/40",
-              )}
-            />
+          </div>
+        )}
+
+        {/* Alça de largura — sempre na borda esquerda do sheet (vale p/ normal e modal).
+            Arraste para ajustar; duplo-clique reseta; o valor é salvo. */}
+        <div
+          onPointerDown={startDividerDrag}
+          onDoubleClick={resetSheetW}
+          title="Arraste para ajustar a largura · duplo-clique reseta · fica salvo"
+          className="hidden sm:flex absolute inset-y-0 left-0 -ml-1.5 w-3 z-[60] cursor-col-resize items-center justify-center group"
+        >
+          <div
+            className={cn(
+              "h-14 w-1 rounded-full transition-all",
+              draggingDivider
+                ? "bg-emerald-500 w-1.5"
+                : "bg-neutral-300/70 dark:bg-neutral-700 group-hover:bg-emerald-400 group-hover:h-20",
+            )}
+          />
+        </div>
+        {draggingDivider && (
+          <div className="hidden sm:block absolute top-3 left-3 z-[61] px-2 py-1 rounded-md bg-neutral-900 text-white text-[10px] font-semibold tabular-nums shadow-lg pointer-events-none">
+            {Math.round(sheetW)}px · {pctSheetW}%
           </div>
         )}
 
