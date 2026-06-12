@@ -10,7 +10,7 @@ import {
   type AudienciaSupersedida,
 } from "@/lib/registros/aplicar-designacao-audiencia";
 import { ATO_CIENCIA_DESIGNACAO, ATO_CIENCIA_REDESIGNACAO } from "@/lib/audiencia-parser";
-import { and, asc, desc, eq, gte, inArray, lt, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 import { getDefensoresVisiveis } from "../defensor-scope";
@@ -56,6 +56,42 @@ const TIPO_REGISTRO = z.enum([
   "transferencia",
 ]);
 
+// ─── Campos SOLAR do atendimento (spec 2026-06-11-atendimentos-modulo) ─────
+export const SUBTIPO_ATENDIMENTO = z.enum(["inicial", "retorno"]);
+export const AREA_ATENDIMENTO = z.enum([
+  "CRIMINAL",
+  "VIOLENCIA_DOMESTICA",
+  "JURI",
+  "EXECUCAO_PENAL",
+  "CIVEL",
+  "FAMILIA",
+  "OUTRA",
+]);
+export const historicoSolarSchema = z.array(
+  z.object({
+    data: z.string(),
+    numero: z.string().optional(),
+    texto: z.string(),
+  })
+);
+export const processosCitadosSchema = z.array(
+  z.object({
+    cnj: z.string(),
+    processoId: z.number().int().positive().optional(),
+    origem: z.enum(["vinculado_solar", "anotacao"]),
+  })
+);
+
+const camposAtendimentoSolar = {
+  numeroSolar: z.string().max(30).optional(),
+  subtipo: SUBTIPO_ATENDIMENTO.optional(),
+  area: AREA_ATENDIMENTO.optional(),
+  pedido: z.string().max(80).optional(),
+  anotacoesRecepcao: z.string().optional(),
+  historicoSolar: historicoSolarSchema.optional(),
+  processosCitados: processosCitadosSchema.optional(),
+};
+
 // ─── Schema exportado para testes unitários (Task 5) ───────────────────────
 export const updateRegistroInput = z.object({
   id: z.number().int().positive(),
@@ -63,6 +99,12 @@ export const updateRegistroInput = z.object({
   conteudo: z.string().optional(),
   tipo: TIPO_REGISTRO.optional(),
   status: z.enum(["agendado", "realizado", "cancelado"]).optional(),
+  // Edição/reagendamento de atendimentos
+  assunto: z.string().nullish(),
+  local: z.string().nullish(),
+  dataRegistro: z.union([z.string(), z.date()]).optional(),
+  processoId: z.number().int().positive().nullish(),
+  ...camposAtendimentoSolar,
 });
 
 // ─── Schema exportado para testes unitários (Task 3) ───────────────────────
@@ -75,7 +117,33 @@ export const agendarAtendimentoInput = z.object({
   processoId: z.number().int().positive().optional(),
   casoId: z.number().int().positive().optional(),
   demandaId: z.number().int().positive().optional(),
+  ...camposAtendimentoSolar,
 });
+
+/**
+ * Escopo de visibilidade por defensor: autor + parceiros de comarca.
+ * Visão global ("all") não adiciona condição.
+ */
+async function pushEscopoDefensor(
+  conditions: Array<ReturnType<typeof eq>>,
+  user: Parameters<typeof getDefensoresVisiveis>[0]
+) {
+  const visiveis = getDefensoresVisiveis(user);
+  if (visiveis === "all") return;
+  if (visiveis.length === 1) {
+    const userId = visiveis[0];
+    const parceiros = await getParceirosIds(userId);
+    if (parceiros.length > 0) {
+      conditions.push(inArray(registros.autorId, [userId, ...parceiros]));
+    } else {
+      conditions.push(eq(registros.autorId, userId));
+    }
+  } else if (visiveis.length > 1) {
+    conditions.push(inArray(registros.autorId, visiveis));
+  } else {
+    conditions.push(eq(registros.autorId, user.id));
+  }
+}
 
 export const registrosRouter = router({
   // ────────────────────────────────────────────────────────────────────
@@ -325,6 +393,13 @@ export const registrosRouter = router({
           assunto: input.assunto ?? null,
           local: input.local ?? null,
           dataRegistro: new Date(input.dataRegistro as string | Date),
+          numeroSolar: input.numeroSolar ?? null,
+          subtipo: input.subtipo ?? null,
+          area: input.area ?? null,
+          pedido: input.pedido ?? null,
+          anotacoesRecepcao: input.anotacoesRecepcao ?? null,
+          historicoSolar: input.historicoSolar ?? null,
+          processosCitados: input.processosCitados ?? null,
           autorId: ctx.user.id,
         })
         .returning();
@@ -346,6 +421,18 @@ export const registrosRouter = router({
       if (rest.conteudo !== undefined) data.conteudo = rest.conteudo;
       if (rest.tipo !== undefined) data.tipo = rest.tipo;
       if (rest.status !== undefined) data.status = rest.status;
+      if (rest.assunto !== undefined) data.assunto = rest.assunto;
+      if (rest.local !== undefined) data.local = rest.local;
+      if (rest.processoId !== undefined) data.processoId = rest.processoId;
+      if (rest.dataRegistro !== undefined)
+        data.dataRegistro = new Date(rest.dataRegistro as string | Date);
+      if (rest.numeroSolar !== undefined) data.numeroSolar = rest.numeroSolar;
+      if (rest.subtipo !== undefined) data.subtipo = rest.subtipo;
+      if (rest.area !== undefined) data.area = rest.area;
+      if (rest.pedido !== undefined) data.pedido = rest.pedido;
+      if (rest.anotacoesRecepcao !== undefined) data.anotacoesRecepcao = rest.anotacoesRecepcao;
+      if (rest.historicoSolar !== undefined) data.historicoSolar = rest.historicoSolar;
+      if (rest.processosCitados !== undefined) data.processosCitados = rest.processosCitados;
 
       const [updated] = await db
         .update(registros)
@@ -394,22 +481,7 @@ export const registrosRouter = router({
         gte(registros.dataRegistro, new Date(input.start)),
         lte(registros.dataRegistro, new Date(input.end)),
       ];
-      const visiveis = getDefensoresVisiveis(ctx.user);
-      if (visiveis !== "all") {
-        if (visiveis.length === 1) {
-          const userId = visiveis[0];
-          const parceiros = await getParceirosIds(userId);
-          if (parceiros.length > 0) {
-            conditions.push(inArray(registros.autorId, [userId, ...parceiros]));
-          } else {
-            conditions.push(eq(registros.autorId, userId));
-          }
-        } else if (visiveis.length > 1) {
-          conditions.push(inArray(registros.autorId, visiveis));
-        } else {
-          conditions.push(eq(registros.autorId, ctx.user.id));
-        }
-      }
+      await pushEscopoDefensor(conditions, ctx.user);
       const rows = await db
         .select({
           registro: registros,
@@ -432,6 +504,100 @@ export const registrosRouter = router({
         assistido: r.assistido?.id ? r.assistido : null,
       }));
     }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // listAtendimentos — lista rica para a página /admin/atendimentos
+  //                    (tipo='atendimento', joins e filtros de gestão)
+  // ────────────────────────────────────────────────────────────────────
+  listAtendimentos: protectedProcedure
+    .input(
+      z.object({
+        status: z.array(z.enum(["agendado", "realizado", "cancelado"])).optional(),
+        subtipo: SUBTIPO_ATENDIMENTO.optional(),
+        area: AREA_ATENDIMENTO.optional(),
+        search: z.string().optional(),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
+        limit: z.number().int().min(1).max(500).default(300),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const conditions = [eq(registros.tipo, "atendimento")];
+      if (input.status && input.status.length > 0) {
+        conditions.push(inArray(registros.status, input.status));
+      }
+      if (input.subtipo) conditions.push(eq(registros.subtipo, input.subtipo));
+      if (input.area) conditions.push(eq(registros.area, input.area));
+      if (input.dateFrom) conditions.push(gte(registros.dataRegistro, new Date(input.dateFrom)));
+      if (input.dateTo) conditions.push(lte(registros.dataRegistro, new Date(input.dateTo)));
+      if (input.search && input.search.trim().length > 0) {
+        const termo = `%${input.search.trim()}%`;
+        conditions.push(
+          or(
+            ilike(assistidos.nome, termo),
+            ilike(registros.numeroSolar, termo),
+            ilike(processos.numeroAutos, termo)
+          )!
+        );
+      }
+      await pushEscopoDefensor(conditions, ctx.user);
+
+      const rows = await db
+        .select({
+          registro: registros,
+          assistido: {
+            id: assistidos.id,
+            nome: assistidos.nome,
+            cpf: assistidos.cpf,
+            telefone: assistidos.telefone,
+          },
+          processo: {
+            id: processos.id,
+            numeroAutos: processos.numeroAutos,
+            area: processos.area,
+            atribuicao: processos.atribuicao,
+          },
+          autor: { id: users.id, name: users.name },
+        })
+        .from(registros)
+        .leftJoin(assistidos, eq(registros.assistidoId, assistidos.id))
+        .leftJoin(processos, eq(registros.processoId, processos.id))
+        .leftJoin(users, eq(registros.autorId, users.id))
+        .where(and(...conditions))
+        .orderBy(asc(registros.dataRegistro))
+        .limit(input.limit);
+
+      return rows.map((r) => ({
+        ...r.registro,
+        assistido: r.assistido?.id ? r.assistido : null,
+        processo: r.processo?.id ? r.processo : null,
+        autor: r.autor?.id ? r.autor : null,
+      }));
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // atendimentosKpis — contadores do header da página de atendimentos
+  //                    (datas no fuso America/Bahia)
+  // ────────────────────────────────────────────────────────────────────
+  atendimentosKpis: protectedProcedure.query(async ({ ctx }) => {
+    const conditions = [eq(registros.tipo, "atendimento")];
+    await pushEscopoDefensor(conditions, ctx.user);
+
+    const dataLocal = sql`(${registros.dataRegistro} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia')::date`;
+    const hojeLocal = sql`(now() AT TIME ZONE 'America/Bahia')::date`;
+
+    const [kpis] = await db
+      .select({
+        hoje: sql<number>`count(*) filter (where ${dataLocal} = ${hojeLocal} and ${registros.status} <> 'cancelado')::int`,
+        semana: sql<number>`count(*) filter (where ${dataLocal} >= ${hojeLocal} and ${dataLocal} < ${hojeLocal} + 7 and ${registros.status} = 'agendado')::int`,
+        agendados: sql<number>`count(*) filter (where ${registros.status} = 'agendado' and ${dataLocal} >= ${hojeLocal})::int`,
+        realizadosMes: sql<number>`count(*) filter (where ${registros.status} = 'realizado' and date_trunc('month', ${registros.dataRegistro} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia') = date_trunc('month', now() AT TIME ZONE 'America/Bahia'))::int`,
+      })
+      .from(registros)
+      .where(and(...conditions));
+
+    return kpis ?? { hoje: 0, semana: 0, agendados: 0, realizadosMes: 0 };
+  }),
 
   // ────────────────────────────────────────────────────────────────────
   // anexos — sub-router para gerenciar anexos de um registro

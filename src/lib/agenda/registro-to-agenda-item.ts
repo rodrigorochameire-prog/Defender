@@ -16,6 +16,7 @@ export interface RegistroAgendado {
   conteudo: string | null;
   local: string | null;
   status: string;
+  subtipo?: string | null;
   dataRegistro: string | Date;
   assistido: { id: number; nome: string } | null;
   processo: {
@@ -43,7 +44,10 @@ export function registroAgendadoToAgendaItem(r: RegistroAgendado): AgendaItem {
   return {
     id: `registro-${r.id}`,
     rawId: r.id,
-    titulo: r.titulo || "Atendimento",
+    titulo:
+      r.titulo ||
+      (r.subtipo ? `Atendimento ${r.subtipo}` : "Atendimento") +
+        (r.assistido?.nome ? ` — ${r.assistido.nome}` : ""),
     tipo: "atendimento",
     data: dataFormatada,
     horarioInicio: format(d, "HH:mm"),

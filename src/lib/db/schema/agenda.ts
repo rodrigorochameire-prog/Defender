@@ -164,6 +164,18 @@ export const registros = pgTable("registros", {
   acompanhantes: text("acompanhantes"),
   status: varchar("status", { length: 20 }).default("agendado"),
   interlocutor: varchar("interlocutor", { length: 30 }).default("assistido"),
+  // Atendimento (SOLAR) — só usados quando tipo='atendimento'
+  numeroSolar: varchar("numero_solar", { length: 30 }),
+  subtipo: varchar("subtipo", { length: 20 }),
+  area: varchar("area", { length: 40 }),
+  pedido: varchar("pedido", { length: 80 }),
+  anotacoesRecepcao: text("anotacoes_recepcao"),
+  historicoSolar: jsonb("historico_solar").$type<
+    { data: string; numero?: string; texto: string }[]
+  >(),
+  processosCitados: jsonb("processos_citados").$type<
+    { cnj: string; processoId?: number; origem: "vinculado_solar" | "anotacao" }[]
+  >(),
   // Audio/Plaud (preservados — só usados quando tipo='atendimento')
   audioUrl: text("audio_url"),
   audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
@@ -216,6 +228,7 @@ export const registros = pgTable("registros", {
   index("registros_enrichment_status_idx").on(table.enrichmentStatus),
   index("registros_plaud_recording_id_idx").on(table.plaudRecordingId),
   index("registros_transcricao_status_idx").on(table.transcricaoStatus),
+  index("registros_numero_solar_idx").on(table.numeroSolar),
 ]);
 
 export type Registro = typeof registros.$inferSelect;

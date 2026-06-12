@@ -72,6 +72,7 @@ const MAIN_NAV: AssignmentMenuItem[] = [
   { label: "Dashboard", path: "/admin", icon: "LayoutDashboard", exactMatch: true },
   { label: "Demandas", path: "/admin/demandas", icon: "ListTodo" },
   { label: "Agenda", path: "/admin/agenda", icon: "Calendar" },
+  { label: "Atendimentos", path: "/admin/atendimentos", icon: "Handshake" },
   { label: "Drive", path: "/admin/drive", icon: "FolderOpen" },
   { label: "WhatsApp", path: "/admin/whatsapp/chat", icon: "MessageCircle" },
 ];

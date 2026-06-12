@@ -1,0 +1,496 @@
+"use client";
+
+// Modal de criação/edição de atendimento — grava via registros.agendar /
+// registros.update. Autocomplete de assistido ao vivo (vincula por id, sem
+// duplicar) e CNJs citados como chips livres.
+
+import { useEffect, useRef, useState } from "react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Plus, X, Check } from "lucide-react";
+import {
+  AREA_OPTIONS,
+  SUBTIPO_OPTIONS,
+  type AtendimentoListItem,
+} from "./config";
+
+interface AtendimentoFormModalProps {
+  open: boolean;
+  onClose: () => void;
+  /** Quando presente, o modal edita em vez de criar. */
+  editing?: AtendimentoListItem | null;
+}
+
+interface FormState {
+  assistidoId: number | null;
+  assistidoNome: string;
+  data: string;
+  hora: string;
+  subtipo: string;
+  area: string;
+  pedido: string;
+  numeroSolar: string;
+  local: string;
+  assunto: string;
+  anotacoesRecepcao: string;
+  processoId: number | null;
+  cnjsCitados: string[];
+}
+
+const EMPTY_FORM: FormState = {
+  assistidoId: null,
+  assistidoNome: "",
+  data: "",
+  hora: "",
+  subtipo: "inicial",
+  area: "CRIMINAL",
+  pedido: "Consulta-Orientação",
+  numeroSolar: "",
+  local: "",
+  assunto: "",
+  anotacoesRecepcao: "",
+  processoId: null,
+  cnjsCitados: [],
+};
+
+export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoFormModalProps) {
+  const utils = trpc.useUtils();
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [cnjDraft, setCnjDraft] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editing) {
+      const dt = new Date(editing.dataRegistro);
+      setForm({
+        assistidoId: editing.assistidoId,
+        assistidoNome: editing.assistido?.nome ?? "",
+        data: format(dt, "yyyy-MM-dd"),
+        hora: format(dt, "HH:mm"),
+        subtipo: editing.subtipo ?? "inicial",
+        area: editing.area ?? "CRIMINAL",
+        pedido: editing.pedido ?? "",
+        numeroSolar: editing.numeroSolar ?? "",
+        local: editing.local ?? "",
+        assunto: editing.assunto ?? "",
+        anotacoesRecepcao: editing.anotacoesRecepcao ?? "",
+        processoId: editing.processoId,
+        cnjsCitados: (editing.processosCitados ?? []).map((p) => p.cnj),
+      });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+    setCnjDraft("");
+  }, [open, editing]);
+
+  const { data: processosAssistido = [] } = trpc.atendimentos.processosByAssistido.useQuery(
+    { assistidoId: form.assistidoId ?? 0 },
+    { enabled: open && !!form.assistidoId }
+  );
+
+  const invalidate = () => {
+    utils.registros.listAtendimentos.invalidate();
+    utils.registros.atendimentosKpis.invalidate();
+    utils.registros.listAgendados.invalidate();
+  };
+
+  const agendar = trpc.registros.agendar.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento agendado");
+      invalidate();
+      onClose();
+    },
+    onError: (e) => toast.error(`Erro ao agendar: ${e.message}`),
+  });
+
+  const atualizar = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      toast.success("Atendimento atualizado");
+      invalidate();
+      onClose();
+    },
+    onError: (e) => toast.error(`Erro ao atualizar: ${e.message}`),
+  });
+
+  const salvando = agendar.isPending || atualizar.isPending;
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  const addCnj = () => {
+    const cnj = cnjDraft.trim();
+    if (!cnj) return;
+    if (form.cnjsCitados.includes(cnj)) {
+      setCnjDraft("");
+      return;
+    }
+    set("cnjsCitados", [...form.cnjsCitados, cnj]);
+    setCnjDraft("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.assistidoId) {
+      toast.error("Selecione um assistido do cadastro");
+      return;
+    }
+    if (!form.data || !form.hora) {
+      toast.error("Informe data e horário");
+      return;
+    }
+    const dataRegistro = new Date(`${form.data}T${form.hora}:00`).toISOString();
+    const subtipoLabel = form.subtipo === "retorno" ? "retorno" : "inicial";
+    const payloadComum = {
+      dataRegistro,
+      subtipo: form.subtipo as "inicial" | "retorno",
+      area: form.area as
+        | "CRIMINAL" | "VIOLENCIA_DOMESTICA" | "JURI" | "EXECUCAO_PENAL"
+        | "CIVEL" | "FAMILIA" | "OUTRA",
+      pedido: form.pedido || undefined,
+      numeroSolar: form.numeroSolar || undefined,
+      anotacoesRecepcao: form.anotacoesRecepcao || undefined,
+      processosCitados: form.cnjsCitados.map((cnj) => ({
+        cnj,
+        origem: "anotacao" as const,
+      })),
+    };
+
+    if (editing) {
+      atualizar.mutate({
+        id: editing.id,
+        ...payloadComum,
+        assunto: form.assunto || null,
+        local: form.local || null,
+        processoId: form.processoId,
+      });
+    } else {
+      agendar.mutate({
+        assistidoId: form.assistidoId,
+        titulo: `Atendimento ${subtipoLabel} — ${form.assistidoNome}`,
+        ...payloadComum,
+        assunto: form.assunto || undefined,
+        local: form.local || undefined,
+        processoId: form.processoId ?? undefined,
+      });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{editing ? "Editar atendimento" : "Novo atendimento"}</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Assistido *</Label>
+            {editing ? (
+              <Input value={form.assistidoNome} disabled className="h-9 text-sm" />
+            ) : (
+              <AssistidoAutocomplete
+                value={form.assistidoNome}
+                valueId={form.assistidoId}
+                onSelect={(id, nome) =>
+                  setForm((f) => ({ ...f, assistidoId: id, assistidoNome: nome, processoId: null }))
+                }
+                onTextChange={(text) =>
+                  setForm((f) => ({ ...f, assistidoNome: text, assistidoId: null, processoId: null }))
+                }
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="atd-data">Data *</Label>
+              <Input
+                id="atd-data"
+                type="date"
+                value={form.data}
+                onChange={(e) => set("data", e.target.value)}
+                className="h-9 text-sm"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="atd-hora">Horário *</Label>
+              <Input
+                id="atd-hora"
+                type="time"
+                value={form.hora}
+                onChange={(e) => set("hora", e.target.value)}
+                className="h-9 text-sm"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Tipo</Label>
+              <Select value={form.subtipo} onValueChange={(v) => set("subtipo", v)}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUBTIPO_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Área</Label>
+              <Select value={form.area} onValueChange={(v) => set("area", v)}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AREA_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="atd-pedido">Pedido</Label>
+              <Input
+                id="atd-pedido"
+                value={form.pedido}
+                onChange={(e) => set("pedido", e.target.value)}
+                placeholder="Consulta-Orientação"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="atd-solar">Nº SOLAR</Label>
+              <Input
+                id="atd-solar"
+                value={form.numeroSolar}
+                onChange={(e) => set("numeroSolar", e.target.value)}
+                placeholder="260610.002.780"
+                className="h-9 text-sm font-mono"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="atd-local">Local</Label>
+              <Input
+                id="atd-local"
+                value={form.local}
+                onChange={(e) => set("local", e.target.value)}
+                placeholder="9ª DP de Camaçari"
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+
+          {form.assistidoId && processosAssistido.length > 0 && (
+            <div className="space-y-2">
+              <Label>Processo vinculado</Label>
+              <Select
+                value={form.processoId ? String(form.processoId) : "none"}
+                onValueChange={(v) => set("processoId", v === "none" ? null : Number(v))}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Sem vínculo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem vínculo</SelectItem>
+                  {processosAssistido.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      <span className="font-mono text-xs">{p.numeroAutos}</span>
+                      {p.area ? ` · ${p.area}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="atd-cnj">Processos citados (CNJ)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="atd-cnj"
+                value={cnjDraft}
+                onChange={(e) => setCnjDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addCnj();
+                  }
+                }}
+                placeholder="0000000-00.0000.8.05.0000"
+                className="h-9 text-sm font-mono"
+              />
+              <Button type="button" variant="outline" size="sm" className="h-9" onClick={addCnj}>
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            {form.cnjsCitados.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {form.cnjsCitados.map((cnj) => (
+                  <span
+                    key={cnj}
+                    className="inline-flex items-center gap-1 rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-mono text-neutral-700 dark:text-neutral-300"
+                  >
+                    {cnj}
+                    <button
+                      type="button"
+                      onClick={() => set("cnjsCitados", form.cnjsCitados.filter((c) => c !== cnj))}
+                      className="cursor-pointer text-neutral-400 hover:text-rose-500 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="atd-assunto">Assunto</Label>
+            <Input
+              id="atd-assunto"
+              value={form.assunto}
+              onChange={(e) => set("assunto", e.target.value)}
+              placeholder="Resumo do que será tratado"
+              className="h-9 text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="atd-anotacoes">Anotações da recepção</Label>
+            <Textarea
+              id="atd-anotacoes"
+              value={form.anotacoesRecepcao}
+              onChange={(e) => set("anotacoesRecepcao", e.target.value)}
+              placeholder="Anotação do agendamento (SOLAR/recepção)"
+              rows={3}
+              className="text-sm"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={salvando}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={salvando} className="gap-2">
+              {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {editing ? "Salvar alterações" : "Agendar"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Autocomplete de assistido (busca ao vivo, vínculo por id) ─────────────
+
+function AssistidoAutocomplete({
+  value,
+  valueId,
+  onSelect,
+  onTextChange,
+}: {
+  value: string;
+  valueId: number | null;
+  onSelect: (id: number, nome: string) => void;
+  onTextChange: (text: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [debounced, setDebounced] = useState(value);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value.trim()), 250);
+    return () => clearTimeout(t);
+  }, [value]);
+
+  const { data: results = [], isFetching } = trpc.atendimentos.searchAssistidos.useQuery(
+    { search: debounced },
+    { enabled: open && debounced.length >= 2 }
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const showDropdown = open && value.trim().length >= 2;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <div className="relative">
+        <Input
+          value={value}
+          onChange={(e) => {
+            onTextChange(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Digite o nome ou CPF — buscamos no cadastro"
+          autoComplete="off"
+          className="h-9 text-sm pr-8"
+        />
+        <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+          {isFetching ? (
+            <Loader2 className="w-3.5 h-3.5 text-neutral-400 animate-spin" />
+          ) : valueId ? (
+            <Check className="w-3.5 h-3.5 text-emerald-500" />
+          ) : null}
+        </div>
+      </div>
+      {showDropdown && (
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg max-h-56 overflow-y-auto">
+          {results.length === 0 && !isFetching ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground">
+              Nenhum assistido encontrado no cadastro.
+            </p>
+          ) : (
+            results.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => {
+                  onSelect(r.id, r.nome);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
+              >
+                <span className="font-medium">{r.nome}</span>
+                {r.cpf && (
+                  <span className="ml-2 text-[11px] font-mono text-muted-foreground">{r.cpf}</span>
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

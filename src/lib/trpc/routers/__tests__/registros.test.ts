@@ -215,3 +215,96 @@ describe("registrosRouter.delete input", () => {
     expect(parsed.success).toBe(true);
   });
 });
+
+// ─── atendimentos (SOLAR) — campos e procedures novos ────────────────────
+
+describe("registrosRouter.agendar — campos SOLAR", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.agendar);
+
+  const base = { assistidoId: 1, dataRegistro: "2026-06-12T13:00:00.000Z" };
+
+  it("aceita agendamento mínimo (sem campos SOLAR)", () => {
+    expect(schema.safeParse(base).success).toBe(true);
+  });
+
+  it("aceita todos os campos SOLAR", () => {
+    const parsed = schema.safeParse({
+      ...base,
+      numeroSolar: "260610.002.780",
+      subtipo: "retorno",
+      area: "CRIMINAL",
+      pedido: "Consulta-Orientação",
+      anotacoesRecepcao: "Mãe do assistido agendada para entrega de documentos",
+      historicoSolar: [
+        { data: "10/04/2026", numero: "260410.001.613", texto: "Atendimento inicial" },
+      ],
+      processosCitados: [
+        { cnj: "8005316-46.2025.8.05.0039", processoId: 259, origem: "vinculado_solar" },
+        { cnj: "8099430-91.2025.8.05.0001", origem: "anotacao" },
+      ],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejeita subtipo inválido", () => {
+    expect(schema.safeParse({ ...base, subtipo: "urgente" }).success).toBe(false);
+  });
+
+  it("rejeita área inválida", () => {
+    expect(schema.safeParse({ ...base, area: "TRABALHISTA" }).success).toBe(false);
+  });
+
+  it("rejeita origem inválida em processosCitados", () => {
+    const parsed = schema.safeParse({
+      ...base,
+      processosCitados: [{ cnj: "123", origem: "pje" }],
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("registrosRouter.update — edição de atendimento", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.update);
+
+  it("aceita reagendamento (dataRegistro)", () => {
+    expect(schema.safeParse({ id: 1, dataRegistro: "2026-06-13T13:00:00.000Z" }).success).toBe(true);
+  });
+
+  it("aceita limpar processoId (null)", () => {
+    expect(schema.safeParse({ id: 1, processoId: null }).success).toBe(true);
+  });
+
+  it("aceita campos SOLAR no update", () => {
+    const parsed = schema.safeParse({
+      id: 1,
+      numeroSolar: "260608.003.087",
+      subtipo: "inicial",
+      anotacoesRecepcao: "Usa tornozeleira eletrônica",
+    });
+    expect(parsed.success).toBe(true);
+  });
+});
+
+describe("registrosRouter.listAtendimentos input", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.listAtendimentos);
+
+  it("aceita filtros vazios", () => {
+    expect(schema.safeParse({}).success).toBe(true);
+  });
+
+  it("aceita combinação de filtros", () => {
+    const parsed = schema.safeParse({
+      status: ["agendado", "realizado"],
+      subtipo: "inicial",
+      area: "VIOLENCIA_DOMESTICA",
+      search: "Roberto",
+      dateFrom: "2026-06-12T00:00:00.000Z",
+      dateTo: "2026-06-13T00:00:00.000Z",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejeita status inválido", () => {
+    expect(schema.safeParse({ status: ["pendente"] }).success).toBe(false);
+  });
+});
