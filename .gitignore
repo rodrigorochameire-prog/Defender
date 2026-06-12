@@ -97,8 +97,29 @@ logs/
 .claude/settings.local.json
 .aiox/install-log.txt
 
-# Cowork skills (copied from Desktop, not tracked)
-.claude/skills-cowork/
+# Cowork skills: vendored Anthropic skills (docx/xlsx/pptx/pdf/skill-creator) and _archive
+# stay untracked; author-owned juridical skills ARE versioned so the daemon's boot-time
+# `git pull` syncs them across Macs (Mac principal ↔ Mac Mini).
+.claude/skills-cowork/*
+!.claude/skills-cowork/SKILL_ALIASES.json
+!.claude/skills-cowork/_shared/
+!.claude/skills-cowork/analise-audiencias/
+!.claude/skills-cowork/citacao-depoimentos/
+!.claude/skills-cowork/citacoes-seguras/
+!.claude/skills-cowork/criminal-comum/
+!.claude/skills-cowork/dpe-ba-pecas/
+!.claude/skills-cowork/estudo-dpe/
+!.claude/skills-cowork/execucao-penal/
+!.claude/skills-cowork/institucional/
+!.claude/skills-cowork/juri/
+!.claude/skills-cowork/linguagem-defensiva/
+!.claude/skills-cowork/noticias/
+!.claude/skills-cowork/numeracao-oficios/
+!.claude/skills-cowork/oficio-gratificacao/
+!.claude/skills-cowork/oficio-redacao/
+!.claude/skills-cowork/protocolar/
+!.claude/skills-cowork/schedule/
+!.claude/skills-cowork/vvd/
 *.docx
 
 # Scripts temporários de diagnóstico/investigação (convenção: prefixo `_`)
