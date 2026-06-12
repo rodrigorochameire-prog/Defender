@@ -525,7 +525,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       <SheetContent
         side="right"
         className={cn(
-          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl max-w-full",
+          "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl max-w-none sm:max-w-none",
           !draggingDivider && "transition-[width] duration-300 ease-out",
           // Com o modal aberto, a largura vem do sheetW (inline) para encaixar
           // exatamente com o modal; fechado, largura responsiva padrão.
