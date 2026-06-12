@@ -529,7 +529,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           !draggingDivider && "transition-[width] duration-300 ease-out",
           // Com o modal aberto, a largura vem do sheetW (inline) para encaixar
           // exatamente com o modal; fechado, largura responsiva padrão.
-          autosModalId ? "w-full" : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
+          autosModalId ? "w-full" : "w-full sm:w-[750px] md:w-[975px] lg:w-[1150px] xl:w-[1300px]",
         )}
         style={autosModalId ? { width: sheetW } : undefined}
       >
