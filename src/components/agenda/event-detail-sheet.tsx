@@ -433,11 +433,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
 
   // Largura preferida do sheet (com modal aberto) — persistida entre sessões.
+  // Sem preferência salva, usa ~45% da tela (um pouco menos que a metade).
   useEffect(() => {
     try {
-      const v = Number(localStorage.getItem("ombuds_autos_modal_split"));
-      if (Number.isFinite(v) && v >= 360) setSheetW(v);
+      const v = Number(localStorage.getItem("ombuds_autos_modal_split_v2"));
+      if (Number.isFinite(v) && v >= 360) { setSheetW(v); return; }
     } catch {}
+    if (typeof window !== "undefined") {
+      setSheetW(Math.min(Math.max(Math.round(window.innerWidth * 0.45), 360), window.innerWidth - 360));
+    }
   }, []);
 
   // Arraste da alça (borda direita do modal = limite com o sheet). Atualiza ao
@@ -454,7 +458,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       setDraggingDivider(false);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
-      try { localStorage.setItem("ombuds_autos_modal_split", String(Math.round(last))); } catch {}
+      try { localStorage.setItem("ombuds_autos_modal_split_v2", String(Math.round(last))); } catch {}
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
