@@ -1,0 +1,32 @@
+{
+  "_comment": "UI-facing skill aliases → actual skill directory in .claude/skills-cowork/. Loaded by scripts/claude-code-daemon.mjs at startup. Any skill name not listed here is tried directly as a directory name. Legacy aliases kept for backward compatibility.",
+
+  "analise-autos": "analise-audiencias",
+  "preparar-audiencia": "analise-audiencias",
+  "gerar-peca": "dpe-ba-pecas",
+  "analise-juri": "juri",
+  "feedback-estagiario": "analise-audiencias",
+
+  "analise-assistido": "analise-audiencias",
+  "analise-processo": "analise-audiencias",
+
+  "preparar-audiencia-juri": "juri",
+  "preparar-audiencia-vvd": "vvd",
+  "preparar-audiencia-ep": "execucao-penal",
+  "preparar-audiencia-criminal": "criminal-comum",
+
+  "peca-juri": "juri",
+  "peca-vvd": "vvd",
+  "peca-ep": "execucao-penal",
+  "peca-criminal": "criminal-comum",
+  "peca-institucional": "institucional",
+
+  "feedback-audiencia": "analise-audiencias",
+  "feedback-estagiario-juri": "juri",
+  "feedback-estagiario-vvd": "vvd",
+
+  "briefing-juri": "juri",
+  "briefing-vvd": "vvd",
+  "briefing-ep": "execucao-penal",
+  "briefing-criminal": "criminal-comum"
+}
