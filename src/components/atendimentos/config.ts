@@ -2,6 +2,28 @@
 // entre a página, o sheet de detalhe e o modal de criação/edição.
 // Spec: docs/superpowers/specs/2026-06-11-atendimentos-modulo-design.md
 
+export interface DossieAtendimento {
+  gerado_em?: string;
+  fonte?: "ombuds" | "skill";
+  objetivo?: string;
+  resumo?: string[];
+  situacao_processual?: Array<{
+    cnj: string;
+    area?: string | null;
+    fase?: string | null;
+    situacao?: string | null;
+    proximo_evento?: string | null;
+    observacao?: string | null;
+  }>;
+  alertas?: string[];
+  medidas_vigentes?: string[];
+  orientacoes?: string[];
+  perguntas?: string[];
+  documentos_solicitar?: string[];
+  providencias?: string[];
+  historico_relevante?: string[];
+}
+
 export interface AtendimentoListItem {
   id: number;
   assistidoId: number;
@@ -20,9 +42,21 @@ export interface AtendimentoListItem {
   anotacoesRecepcao: string | null;
   historicoSolar: { data: string; numero?: string; texto: string }[] | null;
   processosCitados: { cnj: string; processoId?: number; origem: string }[] | null;
-  assistido: { id: number; nome: string; cpf: string | null; telefone: string | null } | null;
+  dossieAtendimento: DossieAtendimento | null;
+  assistido: {
+    id: number;
+    nome: string;
+    cpf: string | null;
+    telefone: string | null;
+    driveFolderId: string | null;
+  } | null;
   processo: { id: number; numeroAutos: string | null; area: string | null; atribuicao: string | null } | null;
   autor: { id: number; name: string | null } | null;
+}
+
+/** Pasta do assistido no Google Drive. */
+export function driveFolderUrl(folderId: string): string {
+  return `https://drive.google.com/drive/folders/${folderId}`;
 }
 
 export const STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {

@@ -31,6 +31,7 @@ import {
   Link2,
   Plus,
   Search,
+  Sparkles,
 } from "lucide-react";
 import {
   AREA_CONFIG,
@@ -390,6 +391,12 @@ function AtendimentoCard({
             {a.historicoSolar && a.historicoSolar.length > 0 && (
               <span className="inline-flex items-center gap-1">
                 <History className="w-3 h-3" /> histórico
+              </span>
+            )}
+            {a.dossieAtendimento && (
+              <span className="inline-flex items-center gap-1 text-violet-500 dark:text-violet-400">
+                <Sparkles className="w-3 h-3" />
+                {a.dossieAtendimento.fonte === "skill" ? "dossiê" : "contexto"}
               </span>
             )}
             {a.pedido && <span className="truncate">{a.pedido}</span>}

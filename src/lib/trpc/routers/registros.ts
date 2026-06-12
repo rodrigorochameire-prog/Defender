@@ -2,6 +2,9 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db, withTransaction, registros, demandas, users, processos, assistidos, audiencias } from "@/lib/db";
 import { registroAnexos } from "@/lib/db/schema/agenda";
+import { assistidosProcessos } from "@/lib/db/schema/core";
+import { medidasMPU, processosVVD } from "@/lib/db/schema/vvd";
+import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { mirrorAnexoToDrive } from "@/lib/registros/mirror-anexo-to-drive";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
 import {
@@ -82,6 +85,32 @@ export const processosCitadosSchema = z.array(
   })
 );
 
+export const dossieAtendimentoSchema = z.object({
+  gerado_em: z.string().optional(),
+  fonte: z.enum(["ombuds", "skill"]).optional(),
+  objetivo: z.string().optional(),
+  resumo: z.array(z.string()).optional(),
+  situacao_processual: z
+    .array(
+      z.object({
+        cnj: z.string(),
+        area: z.string().nullish(),
+        fase: z.string().nullish(),
+        situacao: z.string().nullish(),
+        proximo_evento: z.string().nullish(),
+        observacao: z.string().nullish(),
+      })
+    )
+    .optional(),
+  alertas: z.array(z.string()).optional(),
+  medidas_vigentes: z.array(z.string()).optional(),
+  orientacoes: z.array(z.string()).optional(),
+  perguntas: z.array(z.string()).optional(),
+  documentos_solicitar: z.array(z.string()).optional(),
+  providencias: z.array(z.string()).optional(),
+  historico_relevante: z.array(z.string()).optional(),
+});
+
 const camposAtendimentoSolar = {
   numeroSolar: z.string().max(30).optional(),
   subtipo: SUBTIPO_ATENDIMENTO.optional(),
@@ -90,6 +119,7 @@ const camposAtendimentoSolar = {
   anotacoesRecepcao: z.string().optional(),
   historicoSolar: historicoSolarSchema.optional(),
   processosCitados: processosCitadosSchema.optional(),
+  dossieAtendimento: dossieAtendimentoSchema.nullish(),
 };
 
 // ─── Schema exportado para testes unitários (Task 5) ───────────────────────
@@ -117,6 +147,9 @@ export const agendarAtendimentoInput = z.object({
   processoId: z.number().int().positive().optional(),
   casoId: z.number().int().positive().optional(),
   demandaId: z.number().int().positive().optional(),
+  // Walk-in na sede: registra direto como realizado, com relato
+  status: z.enum(["agendado", "realizado"]).default("agendado"),
+  conteudo: z.string().optional(),
   ...camposAtendimentoSolar,
 });
 
@@ -388,7 +421,8 @@ export const registrosRouter = router({
           casoId: input.casoId ?? null,
           demandaId: input.demandaId ?? null,
           tipo: "atendimento",
-          status: "agendado",
+          status: input.status,
+          conteudo: input.conteudo ?? null,
           titulo: input.titulo ?? null,
           assunto: input.assunto ?? null,
           local: input.local ?? null,
@@ -400,6 +434,7 @@ export const registrosRouter = router({
           anotacoesRecepcao: input.anotacoesRecepcao ?? null,
           historicoSolar: input.historicoSolar ?? null,
           processosCitados: input.processosCitados ?? null,
+          dossieAtendimento: input.dossieAtendimento ?? null,
           autorId: ctx.user.id,
         })
         .returning();
@@ -433,6 +468,7 @@ export const registrosRouter = router({
       if (rest.anotacoesRecepcao !== undefined) data.anotacoesRecepcao = rest.anotacoesRecepcao;
       if (rest.historicoSolar !== undefined) data.historicoSolar = rest.historicoSolar;
       if (rest.processosCitados !== undefined) data.processosCitados = rest.processosCitados;
+      if (rest.dossieAtendimento !== undefined) data.dossieAtendimento = rest.dossieAtendimento;
 
       const [updated] = await db
         .update(registros)
@@ -550,6 +586,7 @@ export const registrosRouter = router({
             nome: assistidos.nome,
             cpf: assistidos.cpf,
             telefone: assistidos.telefone,
+            driveFolderId: assistidos.driveFolderId,
           },
           processo: {
             id: processos.id,
@@ -598,6 +635,389 @@ export const registrosRouter = router({
 
     return kpis ?? { hoje: 0, semana: 0, agendados: 0, realizadosMes: 0 };
   }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // prepararAtendimento — monta o dossiê de contexto (fonte "ombuds")
+  // a partir do que o OMBUDS já sabe: processos, audiências, demandas,
+  // medidas protetivas vigentes e histórico do assistido. A skill
+  // /preparar-atendimentos enriquece depois com scraping PJe (fonte "skill").
+  // ────────────────────────────────────────────────────────────────────
+  prepararAtendimento: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const [reg] = await db
+        .select()
+        .from(registros)
+        .where(eq(registros.id, input.id))
+        .limit(1);
+      if (!reg || reg.tipo !== "atendimento") {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Atendimento não encontrado" });
+      }
+
+      const [assistido] = await db
+        .select({
+          id: assistidos.id,
+          nome: assistidos.nome,
+          statusPrisional: assistidos.statusPrisional,
+        })
+        .from(assistidos)
+        .where(eq(assistidos.id, reg.assistidoId))
+        .limit(1);
+
+      const fmtData = (d: Date | string | null | undefined) =>
+        d
+          ? new Date(d).toLocaleDateString("pt-BR", { timeZone: "America/Bahia" })
+          : null;
+
+      // 1. Processos do assistido (titularidade direta + tabela de junção)
+      //    + processos citados nas anotações que existem no OMBUDS
+      const diretos = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+          fase: processos.fase,
+          situacao: processos.situacao,
+          vara: processos.vara,
+        })
+        .from(processos)
+        .where(eq(processos.assistidoId, reg.assistidoId));
+      const viaJuncao = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+          fase: processos.fase,
+          situacao: processos.situacao,
+          vara: processos.vara,
+        })
+        .from(assistidosProcessos)
+        .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
+        .where(eq(assistidosProcessos.assistidoId, reg.assistidoId));
+
+      const citadosIds = (reg.processosCitados ?? [])
+        .map((c) => c.processoId)
+        .filter((v): v is number => !!v);
+      const citadosRows = citadosIds.length
+        ? await db
+            .select({
+              id: processos.id,
+              numeroAutos: processos.numeroAutos,
+              area: processos.area,
+              fase: processos.fase,
+              situacao: processos.situacao,
+              vara: processos.vara,
+            })
+            .from(processos)
+            .where(inArray(processos.id, citadosIds))
+        : [];
+
+      const procMap = new Map<number, (typeof diretos)[number]>();
+      for (const p of [...diretos, ...viaJuncao, ...citadosRows]) procMap.set(p.id, p);
+      const procs = [...procMap.values()];
+      const procIds = procs.map((p) => p.id);
+      const cnjs = procs.map((p) => p.numeroAutos).filter((n): n is string => !!n);
+
+      // CNJs citados nas anotações que NÃO existem no OMBUDS (contexto)
+      const cnjsForaOmbuds = (reg.processosCitados ?? [])
+        .filter((c) => !c.processoId && !cnjs.includes(c.cnj))
+        .map((c) => c.cnj);
+
+      // 2. Audiências futuras (120d) e recentes (90d) dos processos/assistido
+      const agora = new Date();
+      const horizonte = new Date(agora.getTime() + 120 * 24 * 3600 * 1000);
+      const retro = new Date(agora.getTime() - 90 * 24 * 3600 * 1000);
+      const audRows = procIds.length
+        ? await db
+            .select({
+              processoId: audiencias.processoId,
+              dataAudiencia: audiencias.dataAudiencia,
+              tipo: audiencias.tipo,
+              status: audiencias.status,
+              horario: audiencias.horario,
+            })
+            .from(audiencias)
+            .where(
+              and(
+                or(
+                  inArray(audiencias.processoId, procIds),
+                  eq(audiencias.assistidoId, reg.assistidoId)
+                )!,
+                gte(audiencias.dataAudiencia, retro),
+                lte(audiencias.dataAudiencia, horizonte)
+              )
+            )
+            .orderBy(asc(audiencias.dataAudiencia))
+        : [];
+
+      // 3. Demandas abertas do assistido
+      const demandasAbertas = await db
+        .select({
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          status: demandas.status,
+          processoId: demandas.processoId,
+        })
+        .from(demandas)
+        .where(
+          and(
+            eq(demandas.assistidoId, reg.assistidoId),
+            sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`
+          )
+        );
+
+      // 4. Medidas protetivas vigentes (espelho VVD casado por CNJ)
+      const medidas = cnjs.length
+        ? await db
+            .select({
+              codigo: medidasMPU.codigo,
+              artigo: medidasMPU.artigo,
+              distanciaMetros: medidasMPU.distanciaMetros,
+              literal: medidasMPU.literal,
+              dataVencimento: medidasMPU.dataVencimento,
+              numeroAutos: processosVVD.numeroAutos,
+            })
+            .from(medidasMPU)
+            .innerJoin(processosVVD, eq(medidasMPU.processoVvdId, processosVVD.id))
+            .where(
+              and(
+                inArray(processosVVD.numeroAutos, cnjs),
+                eq(medidasMPU.status, "ativa")
+              )
+            )
+        : [];
+
+      // 5. Histórico: últimos registros do assistido (exceto o próprio)
+      const historicoRegistros = await db
+        .select({
+          id: registros.id,
+          dataRegistro: registros.dataRegistro,
+          tipo: registros.tipo,
+          titulo: registros.titulo,
+          conteudo: registros.conteudo,
+          status: registros.status,
+        })
+        .from(registros)
+        .where(
+          and(
+            eq(registros.assistidoId, reg.assistidoId),
+            sql`${registros.id} <> ${reg.id}`
+          )
+        )
+        .orderBy(desc(registros.dataRegistro))
+        .limit(6);
+
+      // ── Montagem do dossiê ────────────────────────────────────────────
+      const proximaAudPorProcesso = new Map<number, string>();
+      const alertas: string[] = [];
+      for (const a of audRows) {
+        const dt = new Date(a.dataAudiencia);
+        if (dt >= agora && a.status !== "cancelada") {
+          const rotulo = `${a.tipo ?? "Audiência"} em ${fmtData(dt)}${a.horario ? ` às ${a.horario}` : ""}`;
+          if (a.processoId && !proximaAudPorProcesso.has(a.processoId)) {
+            proximaAudPorProcesso.set(a.processoId, rotulo);
+          }
+          const dias = Math.ceil((dt.getTime() - agora.getTime()) / (24 * 3600 * 1000));
+          if (dias <= 30) {
+            const cnj = procs.find((p) => p.id === a.processoId)?.numeroAutos;
+            alertas.push(`${rotulo}${cnj ? ` (${cnj})` : ""} — em ${dias} dia${dias === 1 ? "" : "s"}`);
+          }
+        }
+      }
+
+      if (assistido?.statusPrisional && assistido.statusPrisional !== "SOLTO") {
+        alertas.unshift(`Status prisional: ${assistido.statusPrisional}`);
+      }
+      for (const d of demandasAbertas) {
+        if (!d.prazo) continue;
+        const dias = Math.ceil(
+          (new Date(`${d.prazo}T12:00:00`).getTime() - agora.getTime()) / (24 * 3600 * 1000)
+        );
+        if (dias <= 15) {
+          alertas.push(
+            `Demanda "${d.ato}" com prazo ${fmtData(d.prazo)}${dias < 0 ? " (VENCIDO)" : ` — em ${dias} dia${dias === 1 ? "" : "s"}`}`
+          );
+        }
+      }
+
+      const medidasVigentes = medidas.map((m) => {
+        const dist = m.distanciaMetros ? ` (${m.distanciaMetros}m)` : "";
+        const venc = m.dataVencimento ? ` — vence ${fmtData(m.dataVencimento)}` : "";
+        return `${m.codigo}${m.artigo ? ` · ${m.artigo}` : ""}${dist}${venc} [${m.numeroAutos}]`;
+      });
+      if (medidasVigentes.length > 0) {
+        alertas.push(`${medidasVigentes.length} medida(s) protetiva(s) vigente(s) — conferir restrições antes de orientar`);
+      }
+
+      const situacaoProcessual: Array<{
+        cnj: string;
+        area: string | null;
+        fase: string | null;
+        situacao: string | null;
+        proximo_evento: string | null;
+        observacao: string | null;
+      }> = procs.map((p) => ({
+        cnj: p.numeroAutos ?? `processo #${p.id}`,
+        area: p.area,
+        fase: p.fase,
+        situacao: p.situacao,
+        proximo_evento: proximaAudPorProcesso.get(p.id) ?? null,
+        observacao: p.vara ?? null,
+      }));
+      for (const cnj of cnjsForaOmbuds) {
+        situacaoProcessual.push({
+          cnj,
+          area: null,
+          fase: null,
+          situacao: "não cadastrado no OMBUDS",
+          proximo_evento: null,
+          observacao: "citado nas anotações da recepção — conferir no PJe",
+        });
+      }
+
+      const historicoRelevante = [
+        ...historicoRegistros.map((h) => {
+          const texto = h.titulo || (h.conteudo ? `${h.conteudo.slice(0, 120)}${h.conteudo.length > 120 ? "…" : ""}` : h.tipo);
+          return `${fmtData(h.dataRegistro)} [${h.tipo}${h.status === "cancelado" ? " cancelado" : ""}] ${texto}`;
+        }),
+        ...(reg.historicoSolar ?? []).map((h) => `${h.data} [SOLAR${h.numero ? ` ${h.numero}` : ""}] ${h.texto}`),
+      ];
+
+      const resumo = [
+        `${procs.length} processo(s) no OMBUDS${cnjsForaOmbuds.length ? ` + ${cnjsForaOmbuds.length} citado(s) fora do OMBUDS` : ""}`,
+        `${demandasAbertas.length} demanda(s) aberta(s)`,
+        `${audRows.filter((a) => new Date(a.dataAudiencia) >= agora && a.status !== "cancelada").length} audiência(s) futura(s)`,
+        ...(medidasVigentes.length ? [`${medidasVigentes.length} medida(s) protetiva(s) vigente(s)`] : []),
+      ];
+
+      const dossie = {
+        gerado_em: new Date().toISOString(),
+        fonte: "ombuds" as const,
+        objetivo: reg.assunto ?? reg.anotacoesRecepcao ?? undefined,
+        resumo,
+        situacao_processual: situacaoProcessual,
+        alertas,
+        medidas_vigentes: medidasVigentes,
+        historico_relevante: historicoRelevante,
+        // orientacoes/perguntas/documentos_solicitar/providencias ficam para a
+        // skill preparar-atendimentos (análise dos autos via PJe)
+      };
+
+      await db
+        .update(registros)
+        .set({ dossieAtendimento: dossie, updatedAt: new Date() })
+        .where(eq(registros.id, reg.id));
+
+      return dossie;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // prepararAtendimentoCompleto — enfileira o dossiê profundo (worker local
+  // roda a skill preparar-atendimentos: scraping PJe + leitura dos autos),
+  // mesmo mecanismo do "Preparar audiência" (claude_code_tasks + daemon).
+  // ────────────────────────────────────────────────────────────────────
+  prepararAtendimentoCompleto: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      const [reg] = await db
+        .select()
+        .from(registros)
+        .where(eq(registros.id, input.id))
+        .limit(1);
+      if (!reg || reg.tipo !== "atendimento") {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Atendimento não encontrado" });
+      }
+      const [assistido] = await db
+        .select({ id: assistidos.id, nome: assistidos.nome, cpf: assistidos.cpf })
+        .from(assistidos)
+        .where(eq(assistidos.id, reg.assistidoId))
+        .limit(1);
+      const [processoVinc] = reg.processoId
+        ? await db
+            .select({ numeroAutos: processos.numeroAutos, area: processos.area })
+            .from(processos)
+            .where(eq(processos.id, reg.processoId))
+            .limit(1)
+        : [];
+
+      // Dedup: uma tarefa pendente por registro (marcador no instrucaoAdicional)
+      const marcador = `registroId=${reg.id}`;
+      const [existing] = await db
+        .select({ id: claudeCodeTasks.id })
+        .from(claudeCodeTasks)
+        .where(
+          and(
+            eq(claudeCodeTasks.skill, "preparar-atendimentos"),
+            eq(claudeCodeTasks.instrucaoAdicional, marcador),
+            inArray(claudeCodeTasks.status, ["pending", "processing"])
+          )
+        )
+        .limit(1);
+      if (existing) {
+        return {
+          taskId: existing.id,
+          existing: true,
+          message: "Dossiê já em preparação para este atendimento.",
+        };
+      }
+
+      const dt = new Date(reg.dataRegistro).toLocaleString("pt-BR", {
+        timeZone: "America/Bahia",
+        dateStyle: "short",
+        timeStyle: "short",
+      });
+      const citados = (reg.processosCitados ?? [])
+        .map((c) => `- ${c.cnj}${c.processoId ? " (cadastrado no OMBUDS)" : " (NÃO cadastrado — alvo de scraping)"}`)
+        .join("\n");
+      const historico = (reg.historicoSolar ?? [])
+        .map((h) => `- ${h.data}${h.numero ? ` (${h.numero})` : ""}: ${h.texto}`)
+        .join("\n");
+
+      const prompt = [
+        `# Preparar atendimento — ${assistido?.nome ?? "Assistido"}`,
+        ``,
+        `Atendimento agendado para ${dt} (registro OMBUDS id ${reg.id}).`,
+        `Tipo: ${reg.subtipo ?? "?"} · Área: ${reg.area ?? "?"} · Pedido: ${reg.pedido ?? "?"}${reg.numeroSolar ? ` · SOLAR ${reg.numeroSolar}` : ""}`,
+        assistido?.cpf ? `CPF: ${assistido.cpf}` : "",
+        ``,
+        `## Objetivo (anotações da recepção)`,
+        reg.anotacoesRecepcao ?? reg.assunto ?? "(sem anotações — levantar pelo histórico)",
+        ``,
+        `## Processos`,
+        processoVinc?.numeroAutos
+          ? `- ${processoVinc.numeroAutos} (vinculado, ${processoVinc.area ?? "área ?"})`
+          : "- nenhum vinculado",
+        citados || "",
+        ``,
+        historico ? `## Histórico SOLAR\n${historico}\n` : "",
+        `## Instruções`,
+        `Seguir a skill preparar-atendimentos (passos 4 a 7): resolver os processos,`,
+        `scraping PJe quando necessário (CDP v2, sigilo VVD via rota Peticionar),`,
+        `leitura dirigida pela demanda do assistido e gravar o resultado em`,
+        `registros.dossie_atendimento (jsonb, fonte "skill") do registro ${reg.id}.`,
+      ]
+        .filter((l) => l !== "")
+        .join("\n");
+
+      const [task] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          assistidoId: reg.assistidoId,
+          processoId: reg.processoId ?? null,
+          skill: "preparar-atendimentos",
+          prompt,
+          instrucaoAdicional: marcador,
+          status: "pending",
+          createdBy: ctx.user.id,
+        })
+        .returning({ id: claudeCodeTasks.id });
+
+      return {
+        taskId: task!.id,
+        existing: false,
+        message: "Dossiê enfileirado — o worker local processa e o resultado aparece neste painel.",
+      };
+    }),
 
   // ────────────────────────────────────────────────────────────────────
   // anexos — sub-router para gerenciar anexos de um registro

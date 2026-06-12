@@ -1,8 +1,10 @@
 "use client";
 
-// Sheet de detalhe do atendimento — dados SOLAR completos, processos
-// (vinculado + citados, com link para a consulta pública do PJe), anotações
-// da recepção, histórico e ações de fluxo (realizar, cancelar, editar, excluir).
+// Sheet de detalhe do atendimento — dados SOLAR completos, dossiê de
+// preparação, processos (vinculado + citados, com link para a consulta
+// pública do PJe), anotações da recepção, histórico, anexos com espelho na
+// pasta do assistido no Drive e ações de fluxo (preparar, realizar,
+// cancelar, editar, excluir).
 
 import { useState } from "react";
 import { format } from "date-fns";
@@ -19,18 +21,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { AnexoDropzone } from "@/components/registros/anexos/anexo-dropzone";
+import { AnexoList } from "@/components/registros/anexos/anexo-list";
+import { useAnexoUpload } from "@/components/registros/anexos/use-anexo-upload";
 import {
   Calendar,
   CalendarCheck,
   ExternalLink,
   FileText,
+  FolderOpen,
   History,
   Loader2,
   MapPin,
+  Paperclip,
   Pencil,
   Phone,
   ScrollText,
+  Sparkles,
   Trash2,
+  Upload,
   User,
   XCircle,
 } from "lucide-react";
@@ -38,9 +47,11 @@ import {
   AREA_CONFIG,
   STATUS_CONFIG,
   SUBTIPO_CONFIG,
+  driveFolderUrl,
   pjeConsultaUrl,
   type AtendimentoListItem,
 } from "./config";
+import { DossieAtendimentoBlock } from "./dossie-atendimento-block";
 
 interface AtendimentoDetailSheetProps {
   atendimento: AtendimentoListItem | null;
@@ -74,6 +85,21 @@ export function AtendimentoDetailSheet({
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 
+  const preparar = trpc.registros.prepararAtendimento.useMutation({
+    onSuccess: () => {
+      toast.success("Dossiê de contexto gerado");
+      invalidate();
+    },
+    onError: (e) => toast.error(`Erro ao preparar: ${e.message}`),
+  });
+
+  const prepararCompleto = trpc.registros.prepararAtendimentoCompleto.useMutation({
+    onSuccess: (r) => {
+      toast[r.existing ? "info" : "success"](r.message);
+    },
+    onError: (e) => toast.error(`Erro ao enfileirar dossiê: ${e.message}`),
+  });
+
   const excluir = trpc.registros.delete.useMutation({
     onSuccess: () => {
       toast.success("Atendimento excluído");
@@ -81,6 +107,10 @@ export function AtendimentoDetailSheet({
       onClose();
     },
     onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const { items: uploads, upload, reset: resetUploads } = useAnexoUpload(() => {
+    if (atendimento) utils.registros.anexos.list.invalidate({ registroId: atendimento.id });
   });
 
   if (!atendimento) return null;
@@ -134,6 +164,16 @@ export function AtendimentoDetailSheet({
                 {area.label}
               </span>
             )}
+            {a.assistido?.driveFolderId && (
+              <a
+                href={driveFolderUrl(a.assistido.driveFolderId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/60 transition-colors cursor-pointer"
+              >
+                <FolderOpen className="w-3 h-3" /> Drive
+              </a>
+            )}
           </div>
         </SheetHeader>
 
@@ -174,6 +214,56 @@ export function AtendimentoDetailSheet({
               <p className="text-sm text-foreground/85">{a.assunto}</p>
             </div>
           )}
+
+          {/* Dossiê de preparação */}
+          <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> Preparação do atendimento
+              </h4>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => preparar.mutate({ id: a.id })}
+                  disabled={preparar.isPending}
+                  className="h-7 gap-1.5 text-[11px]"
+                >
+                  {preparar.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  {a.dossieAtendimento ? "Atualizar contexto" : "Preparar atendimento"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => prepararCompleto.mutate({ id: a.id })}
+                  disabled={prepararCompleto.isPending}
+                  className="h-7 gap-1.5 text-[11px] text-violet-600 dark:text-violet-400 border-violet-300/60 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                  title="Worker local lê os autos no PJe e grava o dossiê completo"
+                >
+                  {prepararCompleto.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <ScrollText className="w-3 h-3" />
+                  )}
+                  Dossiê dos autos
+                </Button>
+              </div>
+            </div>
+            {a.dossieAtendimento ? (
+              <DossieAtendimentoBlock dossie={a.dossieAtendimento} />
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Gere o contexto do assistido (processos, audiências, demandas, medidas
+                vigentes e histórico) antes do atendimento. Para o dossiê completo com
+                leitura dos autos, rode <span className="font-mono">/preparar-atendimentos</span> no
+                Claude Code.
+              </p>
+            )}
+          </div>
 
           {/* Processos */}
           {(a.processo || citados.length > 0) && (
@@ -249,6 +339,59 @@ export function AtendimentoDetailSheet({
               <p className="text-sm text-foreground/85 whitespace-pre-wrap">{a.conteudo}</p>
             </div>
           )}
+
+          {/* Anexos — documentos do assistido (espelhados na pasta do Drive) */}
+          <div>
+            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1">
+              <Paperclip className="w-3 h-3" /> Documentos do atendimento
+            </h4>
+            <AnexoDropzone
+              onFiles={(files) => {
+                resetUploads();
+                upload(a.id, files);
+              }}
+              className="rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 p-3"
+              dragHint="Solte para anexar"
+            >
+              <div className="space-y-2">
+                <AnexoList registroId={a.id} />
+                {uploads.map((u, i) => (
+                  <p key={i} className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                    {u.status === "erro" ? (
+                      <XCircle className="w-3 h-3 text-rose-500" />
+                    ) : u.status === "ok" ? (
+                      <CalendarCheck className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    )}
+                    {u.name}
+                    {u.error && <span className="text-rose-500">— {u.error}</span>}
+                  </p>
+                ))}
+                <label className="inline-flex items-center gap-1.5 text-[11px] text-sky-600 dark:text-sky-400 hover:underline cursor-pointer">
+                  <Upload className="w-3 h-3" />
+                  Anexar fotos ou documentos
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files ?? []);
+                      if (files.length) {
+                        resetUploads();
+                        upload(a.id, files);
+                      }
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <p className="text-[10px] text-muted-foreground">
+                  Espelhado automaticamente na pasta do assistido no Drive (subpasta Registros).
+                </p>
+              </div>
+            </AnexoDropzone>
+          </div>
 
           <Separator />
 

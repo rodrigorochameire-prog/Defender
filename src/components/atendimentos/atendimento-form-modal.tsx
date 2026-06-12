@@ -75,6 +75,9 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
   const utils = trpc.useUtils();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [cnjDraft, setCnjDraft] = useState("");
+  // Walk-in: assistido apareceu na sede sem agendamento — registra direto como realizado
+  const [registrarRealizado, setRegistrarRealizado] = useState(false);
+  const [relato, setRelato] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +102,8 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
       setForm(EMPTY_FORM);
     }
     setCnjDraft("");
+    setRegistrarRealizado(false);
+    setRelato("");
   }, [open, editing]);
 
   const { data: processosAssistido = [] } = trpc.atendimentos.processosByAssistido.useQuery(
@@ -189,6 +194,9 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
         assunto: form.assunto || undefined,
         local: form.local || undefined,
         processoId: form.processoId ?? undefined,
+        ...(registrarRealizado
+          ? { status: "realizado" as const, conteudo: relato.trim() || undefined }
+          : {}),
       });
     }
   };
@@ -390,13 +398,39 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
             />
           </div>
 
+          {!editing && (
+            <div className="rounded-lg border border-neutral-200/70 dark:border-neutral-800 p-3 space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={registrarRealizado}
+                  onChange={(e) => setRegistrarRealizado(e.target.checked)}
+                  className="accent-emerald-600 cursor-pointer"
+                />
+                <span className="font-medium">Registrar como realizado</span>
+                <span className="text-[11px] text-muted-foreground">
+                  (atendimento na sede, sem agendamento prévio)
+                </span>
+              </label>
+              {registrarRealizado && (
+                <Textarea
+                  value={relato}
+                  onChange={(e) => setRelato(e.target.value)}
+                  placeholder="Relato do atendimento — o que o assistido trouxe, orientações dadas, providências"
+                  rows={4}
+                  className="text-sm"
+                />
+              )}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={salvando}>
               Cancelar
             </Button>
             <Button type="submit" disabled={salvando} className="gap-2">
               {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {editing ? "Salvar alterações" : "Agendar"}
+              {editing ? "Salvar alterações" : registrarRealizado ? "Registrar atendimento" : "Agendar"}
             </Button>
           </div>
         </form>

@@ -176,6 +176,29 @@ export const registros = pgTable("registros", {
   processosCitados: jsonb("processos_citados").$type<
     { cnj: string; processoId?: number; origem: "vinculado_solar" | "anotacao" }[]
   >(),
+  // Dossiê de atendimento — contexto OMBUDS (fonte "ombuds") e/ou
+  // enriquecido pela skill preparar-atendimentos (fonte "skill")
+  dossieAtendimento: jsonb("dossie_atendimento").$type<{
+    gerado_em?: string;
+    fonte?: "ombuds" | "skill";
+    objetivo?: string;
+    resumo?: string[];
+    situacao_processual?: Array<{
+      cnj: string;
+      area?: string | null;
+      fase?: string | null;
+      situacao?: string | null;
+      proximo_evento?: string | null;
+      observacao?: string | null;
+    }>;
+    alertas?: string[];
+    medidas_vigentes?: string[];
+    orientacoes?: string[];
+    perguntas?: string[];
+    documentos_solicitar?: string[];
+    providencias?: string[];
+    historico_relevante?: string[];
+  }>(),
   // Audio/Plaud (preservados — só usados quando tipo='atendimento')
   audioUrl: text("audio_url"),
   audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),

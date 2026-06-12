@@ -308,3 +308,69 @@ describe("registrosRouter.listAtendimentos input", () => {
     expect(schema.safeParse({ status: ["pendente"] }).success).toBe(false);
   });
 });
+
+// ─── sprint 2 — dossiê, walk-in e prepararAtendimento ────────────────────
+
+describe("registrosRouter.agendar — walk-in (status/conteudo)", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.agendar);
+  const base = { assistidoId: 1, dataRegistro: "2026-06-12T13:00:00.000Z" };
+
+  it("default de status é agendado", () => {
+    const parsed = schema.safeParse(base);
+    expect(parsed.success).toBe(true);
+    expect(parsed.data.status).toBe("agendado");
+  });
+
+  it("aceita walk-in realizado com relato", () => {
+    const parsed = schema.safeParse({ ...base, status: "realizado", conteudo: "Relato do atendimento" });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("rejeita status cancelado na criação", () => {
+    expect(schema.safeParse({ ...base, status: "cancelado" }).success).toBe(false);
+  });
+});
+
+describe("registrosRouter.update — dossieAtendimento", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.update);
+
+  it("aceita dossiê completo", () => {
+    const parsed = schema.safeParse({
+      id: 1,
+      dossieAtendimento: {
+        gerado_em: "2026-06-11T20:00:00.000Z",
+        fonte: "skill",
+        objetivo: "Autorização para trabalhar em Dias d'Ávila",
+        resumo: ["1 processo citado fora do OMBUDS"],
+        situacao_processual: [
+          { cnj: "8008640-10.2026.8.05.0039", situacao: "não cadastrado no OMBUDS" },
+        ],
+        alertas: ["Usa tornozeleira eletrônica"],
+        orientacoes: ["Levar comprovante de vínculo de trabalho"],
+        perguntas: ["Qual o horário e local de trabalho?"],
+        documentos_solicitar: ["Carteira de trabalho ou contrato"],
+        providencias: ["Peticionar autorização ao juízo da execução"],
+      },
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("aceita limpar o dossiê (null)", () => {
+    expect(schema.safeParse({ id: 1, dossieAtendimento: null }).success).toBe(true);
+  });
+
+  it("rejeita fonte inválida", () => {
+    const parsed = schema.safeParse({ id: 1, dossieAtendimento: { fonte: "manual" } });
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("registrosRouter.prepararAtendimento input", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.prepararAtendimento);
+
+  it("requer id positivo", () => {
+    expect(schema.safeParse({}).success).toBe(false);
+    expect(schema.safeParse({ id: 0 }).success).toBe(false);
+    expect(schema.safeParse({ id: 480 }).success).toBe(true);
+  });
+});
