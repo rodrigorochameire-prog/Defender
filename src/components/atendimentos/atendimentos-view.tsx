@@ -89,13 +89,18 @@ export default function AtendimentosView() {
   const [detalhe, setDetalhe] = useState<AtendimentoListItem | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<AtendimentoListItem | null>(null);
+  // Deep-link vindo do dashboard: ?abrir=<id> abre o atendimento assim que carregar.
+  const [abrirId, setAbrirId] = useState<number | null>(null);
 
-  // ?novo=1 abre o modal de criação (rota /admin/atendimentos/novo redireciona pra cá)
+  // Deep-links: ?novo=1 (criar), ?pendentes=1 (filtro a registrar), ?abrir=<id> (sheet)
   useEffect(() => {
-    if (searchParams.get("novo") === "1") {
-      setModalAberto(true);
-      router.replace(pathname);
-    }
+    const novo = searchParams.get("novo") === "1";
+    const pendentes = searchParams.get("pendentes") === "1";
+    const abrir = searchParams.get("abrir");
+    if (novo) setModalAberto(true);
+    if (pendentes) setApenasPendentes(true);
+    if (abrir) setAbrirId(Number(abrir));
+    if (novo || pendentes || abrir) router.replace(pathname);
   }, [searchParams, router, pathname]);
 
   useEffect(() => {
@@ -135,6 +140,16 @@ export default function AtendimentosView() {
     const atualizado = (atendimentos as AtendimentoListItem[]).find((a) => a.id === detalhe.id);
     if (atualizado && atualizado !== detalhe) setDetalhe(atualizado);
   }, [atendimentos, detalhe]);
+
+  // Abre o atendimento do deep-link assim que ele aparecer na lista carregada.
+  useEffect(() => {
+    if (abrirId == null) return;
+    const alvo = (atendimentos as AtendimentoListItem[]).find((a) => a.id === abrirId);
+    if (alvo) {
+      setDetalhe(alvo);
+      setAbrirId(null);
+    }
+  }, [abrirId, atendimentos]);
 
   const abrirEdicao = (item: AtendimentoListItem) => {
     setEditando(item);

@@ -641,6 +641,40 @@ export const registrosRouter = router({
   }),
 
   // ────────────────────────────────────────────────────────────────────
+  // atendimentosPendentes — lista enxuta dos atendimentos que já aconteceram
+  //                         e seguem sem registro (para o card do dashboard).
+  // ────────────────────────────────────────────────────────────────────
+  atendimentosPendentes: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(50).default(8) }).optional())
+    .query(async ({ input, ctx }) => {
+      const conditions = [
+        eq(registros.tipo, "atendimento"),
+        eq(registros.status, "agendado"),
+        lt(registros.dataRegistro, new Date()),
+      ];
+      await pushEscopoDefensor(conditions, ctx.user);
+
+      const rows = await db
+        .select({
+          id: registros.id,
+          dataRegistro: registros.dataRegistro,
+          subtipo: registros.subtipo,
+          area: registros.area,
+          numeroSolar: registros.numeroSolar,
+          assistidoNome: assistidos.nome,
+          numeroAutos: processos.numeroAutos,
+        })
+        .from(registros)
+        .leftJoin(assistidos, eq(registros.assistidoId, assistidos.id))
+        .leftJoin(processos, eq(registros.processoId, processos.id))
+        .where(and(...conditions))
+        .orderBy(asc(registros.dataRegistro)) // mais antigos (mais atrasados) primeiro
+        .limit(input?.limit ?? 8);
+
+      return rows;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
   // prepararAtendimento — monta o dossiê de contexto (fonte "ombuds")
   // a partir do que o OMBUDS já sabe: processos, audiências, demandas,
   // medidas protetivas vigentes e histórico do assistido. A skill

@@ -374,3 +374,21 @@ describe("registrosRouter.prepararAtendimento input", () => {
     expect(schema.safeParse({ id: 480 }).success).toBe(true);
   });
 });
+
+// ─── atendimentosPendentes (card do dashboard) ───────────────────────────
+
+describe("registrosRouter.atendimentosPendentes input", () => {
+  const schema = getInputSchema((registrosRouter as any)._def.procedures.atendimentosPendentes);
+
+  it("aceita sem argumentos (input opcional)", () => {
+    expect(schema.safeParse(undefined).success).toBe(true);
+  });
+
+  it("aceita limit dentro do range", () => {
+    expect(schema.safeParse({ limit: 6 }).success).toBe(true);
+  });
+
+  it("rejeita limit acima de 50", () => {
+    expect(schema.safeParse({ limit: 80 }).success).toBe(false);
+  });
+});

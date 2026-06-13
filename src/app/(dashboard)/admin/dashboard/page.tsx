@@ -394,6 +394,12 @@ export default function DashboardJuriPage() {
   );
   const audiencias = audienciasData ?? [];
 
+  // Atendimentos que já aconteceram e seguem sem registro — pendência do dia.
+  const { data: atendimentosPendentes = [] } = trpc.registros.atendimentosPendentes.useQuery(
+    { limit: 6 },
+    { enabled: !!user, staleTime: 60_000 },
+  );
+
   // ==========================================
   // MODAL DE CRIAÇÃO DE DEMANDA
   // ==========================================
@@ -1576,6 +1582,54 @@ export default function DashboardJuriPage() {
                   </button>
                 </Link>
               </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ===== ATENDIMENTOS A REGISTRAR ===== */}
+        {atendimentosPendentes.length > 0 && (
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-amber-200/70 dark:border-amber-900/40 overflow-hidden">
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-amber-700 dark:text-amber-300 tracking-tight">
+                    {atendimentosPendentes.length} atendimento{atendimentosPendentes.length > 1 ? "s" : ""} a registrar
+                  </p>
+                  <p className="text-[11px] text-amber-600/80 dark:text-amber-400/80">
+                    Já aconteceram — registre o que foi tratado
+                  </p>
+                </div>
+              </div>
+              <Link href="/admin/atendimentos?pendentes=1">
+                <button className="h-8 px-3 rounded-xl bg-amber-600 text-white shadow-sm hover:bg-amber-700 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+                  Ver todos
+                </button>
+              </Link>
+            </div>
+            <div className="px-2 pb-2 space-y-1">
+              {atendimentosPendentes.map((at) => (
+                <Link
+                  key={at.id}
+                  href={`/admin/atendimentos?abrir=${at.id}`}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-amber-50/60 dark:hover:bg-amber-950/20 transition-colors cursor-pointer"
+                >
+                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground w-20 shrink-0">
+                    {format(new Date(at.dataRegistro), "dd/MM HH:mm", { locale: ptBR })}
+                  </span>
+                  <span className="text-[13px] font-medium text-foreground truncate flex-1 min-w-0">
+                    {at.assistidoNome ?? "Assistido"}
+                  </span>
+                  {at.numeroAutos && (
+                    <span className="hidden sm:inline font-mono text-[10px] text-muted-foreground truncate max-w-[160px]">
+                      {at.numeroAutos}
+                    </span>
+                  )}
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                </Link>
+              ))}
             </div>
           </Card>
         )}
