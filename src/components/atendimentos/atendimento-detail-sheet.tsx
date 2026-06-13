@@ -29,10 +29,12 @@ import { SOLID_COLOR_MAP, normalizeAreaToFilter } from "@/lib/config/atribuicoes
 import {
   Calendar,
   CalendarCheck,
+  CalendarPlus,
   Check,
   Copy,
   ExternalLink,
   FolderOpen,
+  ListPlus,
   Loader2,
   Pencil,
   Phone,
@@ -44,6 +46,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { GerarDemandaPopover } from "./gerar-demanda-popover";
 import {
   AREA_CONFIG,
   STATUS_CONFIG,
@@ -62,6 +65,8 @@ interface AtendimentoDetailSheetProps {
   open: boolean;
   onClose: () => void;
   onEdit: (item: AtendimentoListItem) => void;
+  /** Abre o modal de novo atendimento pré-preenchido como retorno deste. */
+  onAgendarRetorno: (item: AtendimentoListItem) => void;
 }
 
 export function AtendimentoDetailSheet({
@@ -69,6 +74,7 @@ export function AtendimentoDetailSheet({
   open,
   onClose,
   onEdit,
+  onAgendarRetorno,
 }: AtendimentoDetailSheetProps) {
   const utils = trpc.useUtils();
   const [relato, setRelato] = useState("");
@@ -314,6 +320,31 @@ export function AtendimentoDetailSheet({
           </div>
 
           <div className="px-3 py-3 space-y-2.5">
+            {/* Próximos passos — fecha o ciclo (agenda + Kanban) */}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onAgendarRetorno(a)}
+                className="flex-1 h-9 gap-1.5 text-[12px]"
+              >
+                <CalendarPlus className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                Agendar retorno
+              </Button>
+              {a.assistido && (
+                <GerarDemandaPopover
+                  assistido={{ id: a.assistido.id, nome: a.assistido.nome }}
+                  processo={a.processo ? { numeroAutos: a.processo.numeroAutos } : null}
+                  area={a.area}
+                >
+                  <Button size="sm" variant="outline" className="flex-1 h-9 gap-1.5 text-[12px]">
+                    <ListPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    Gerar demanda
+                  </Button>
+                </GerarDemandaPopover>
+              )}
+            </div>
+
             {/* Preparação */}
             <CollapsibleSection
               id="atd-preparacao"

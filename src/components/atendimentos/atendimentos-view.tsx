@@ -56,7 +56,7 @@ import {
   type AtendimentoListItem,
 } from "./config";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
-import { AtendimentoFormModal } from "./atendimento-form-modal";
+import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
 import {
   PERIODO_OPTIONS,
   agruparPorDia,
@@ -89,6 +89,7 @@ export default function AtendimentosView() {
   const [detalhe, setDetalhe] = useState<AtendimentoListItem | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<AtendimentoListItem | null>(null);
+  const [retornoPrefill, setRetornoPrefill] = useState<AtendimentoPrefill | null>(null);
   // Deep-link vindo do dashboard: ?abrir=<id> abre o atendimento assim que carregar.
   const [abrirId, setAbrirId] = useState<number | null>(null);
 
@@ -152,7 +153,21 @@ export default function AtendimentosView() {
   }, [abrirId, atendimentos]);
 
   const abrirEdicao = (item: AtendimentoListItem) => {
+    setRetornoPrefill(null);
     setEditando(item);
+    setModalAberto(true);
+  };
+
+  const agendarRetorno = (item: AtendimentoListItem) => {
+    setEditando(null);
+    setRetornoPrefill({
+      assistidoId: item.assistidoId,
+      assistidoNome: item.assistido?.nome ?? "",
+      processoId: item.processoId,
+      area: item.area,
+      subtipo: "retorno",
+      pedido: item.pedido,
+    });
     setModalAberto(true);
   };
 
@@ -350,6 +365,7 @@ export default function AtendimentosView() {
         open={!!detalhe}
         onClose={() => setDetalhe(null)}
         onEdit={abrirEdicao}
+        onAgendarRetorno={agendarRetorno}
       />
 
       <AtendimentoFormModal
@@ -357,8 +373,10 @@ export default function AtendimentosView() {
         onClose={() => {
           setModalAberto(false);
           setEditando(null);
+          setRetornoPrefill(null);
         }}
         editing={editando}
+        prefill={retornoPrefill}
       />
     </div>
   );

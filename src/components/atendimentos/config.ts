@@ -148,3 +148,32 @@ export const AREA_OPTIONS = Object.entries(AREA_CONFIG).map(([value, cfg]) => ({
 export function pjeConsultaUrl(cnj: string): string {
   return `https://pje.tjba.jus.br/pje/ConsultaPublica/listView.seam?numeroProcesso=${encodeURIComponent(cnj)}`;
 }
+
+/**
+ * Área do atendimento → enum de atribuição VÁLIDO para demandas.createFromForm
+ * (só estes 6 são aceitos; processo.atribuicao pode trazer enums fora dessa
+ * lista, então mapeamos sempre pela área, que é determinística).
+ */
+export const AREA_TO_ATRIBUICAO_ENUM: Record<string, string> = {
+  CRIMINAL: "SUBSTITUICAO",
+  VIOLENCIA_DOMESTICA: "VVD_CAMACARI",
+  JURI: "JURI_CAMACARI",
+  EXECUCAO_PENAL: "EXECUCAO_PENAL",
+  CIVEL: "SUBSTITUICAO_CIVEL",
+  FAMILIA: "SUBSTITUICAO_CIVEL",
+  OUTRA: "SUBSTITUICAO",
+};
+
+/**
+ * Área do atendimento → label do catálogo de atos (ATOS_POR_ATRIBUICAO).
+ * CIVEL/FAMILIA/OUTRA não têm catálogo próprio → "Criminal Geral" (ato é livre).
+ */
+export const AREA_TO_ATOS_LABEL: Record<string, string> = {
+  CRIMINAL: "Criminal Geral",
+  VIOLENCIA_DOMESTICA: "Violência Doméstica",
+  JURI: "Tribunal do Júri",
+  EXECUCAO_PENAL: "Execução Penal",
+  CIVEL: "Criminal Geral",
+  FAMILIA: "Criminal Geral",
+  OUTRA: "Criminal Geral",
+};

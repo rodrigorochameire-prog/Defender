@@ -32,11 +32,23 @@ import {
   type AtendimentoListItem,
 } from "./config";
 
+/** Pré-preenchimento para criar (ex.: agendar retorno a partir de outro atendimento). */
+export interface AtendimentoPrefill {
+  assistidoId: number;
+  assistidoNome: string;
+  processoId?: number | null;
+  area?: string | null;
+  subtipo?: "inicial" | "retorno";
+  pedido?: string | null;
+}
+
 interface AtendimentoFormModalProps {
   open: boolean;
   onClose: () => void;
   /** Quando presente, o modal edita em vez de criar. */
   editing?: AtendimentoListItem | null;
+  /** Cria já preenchido e com o assistido travado (ex.: retorno). */
+  prefill?: AtendimentoPrefill | null;
 }
 
 interface FormState {
@@ -71,13 +83,15 @@ const EMPTY_FORM: FormState = {
   cnjsCitados: [],
 };
 
-export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoFormModalProps) {
+export function AtendimentoFormModal({ open, onClose, editing, prefill }: AtendimentoFormModalProps) {
   const utils = trpc.useUtils();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [cnjDraft, setCnjDraft] = useState("");
   // Walk-in: assistido apareceu na sede sem agendamento — registra direto como realizado
   const [registrarRealizado, setRegistrarRealizado] = useState(false);
   const [relato, setRelato] = useState("");
+  // Assistido travado: na edição e no retorno pré-preenchido (vínculo já definido).
+  const assistidoTravado = !!editing || !!prefill;
 
   useEffect(() => {
     if (!open) return;
@@ -98,13 +112,23 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
         processoId: editing.processoId,
         cnjsCitados: (editing.processosCitados ?? []).map((p) => p.cnj),
       });
+    } else if (prefill) {
+      setForm({
+        ...EMPTY_FORM,
+        assistidoId: prefill.assistidoId,
+        assistidoNome: prefill.assistidoNome,
+        subtipo: prefill.subtipo ?? "retorno",
+        area: prefill.area ?? "CRIMINAL",
+        pedido: prefill.pedido ?? "",
+        processoId: prefill.processoId ?? null,
+      });
     } else {
       setForm(EMPTY_FORM);
     }
     setCnjDraft("");
     setRegistrarRealizado(false);
     setRelato("");
-  }, [open, editing]);
+  }, [open, editing, prefill]);
 
   const { data: processosAssistido = [] } = trpc.atendimentos.processosByAssistido.useQuery(
     { assistidoId: form.assistidoId ?? 0 },
@@ -205,13 +229,19 @@ export function AtendimentoFormModal({ open, onClose, editing }: AtendimentoForm
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "Editar atendimento" : "Novo atendimento"}</DialogTitle>
+          <DialogTitle>
+            {editing
+              ? "Editar atendimento"
+              : prefill?.subtipo === "retorno"
+                ? "Agendar retorno"
+                : "Novo atendimento"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Assistido *</Label>
-            {editing ? (
+            {assistidoTravado ? (
               <Input value={form.assistidoNome} disabled className="h-9 text-sm" />
             ) : (
               <AssistidoAutocomplete
