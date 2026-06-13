@@ -620,20 +620,24 @@ export const registrosRouter = router({
     const conditions = [eq(registros.tipo, "atendimento")];
     await pushEscopoDefensor(conditions, ctx.user);
 
-    const dataLocal = sql`(${registros.dataRegistro} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia')::date`;
+    // data_registro é timestamptz → uma única conversão para o fuso da Bahia.
+    // (a forma antiga `AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia'` fazia
+    //  dupla conversão e empurrava o dia para frente em atendimentos da noite.)
+    const dataLocal = sql`(${registros.dataRegistro} AT TIME ZONE 'America/Bahia')::date`;
     const hojeLocal = sql`(now() AT TIME ZONE 'America/Bahia')::date`;
 
     const [kpis] = await db
       .select({
+        // Aconteceram (passaram do horário) e seguem "agendado" — faltam registrar.
+        aRegistrar: sql<number>`count(*) filter (where ${registros.status} = 'agendado' and ${registros.dataRegistro} < now())::int`,
         hoje: sql<number>`count(*) filter (where ${dataLocal} = ${hojeLocal} and ${registros.status} <> 'cancelado')::int`,
-        semana: sql<number>`count(*) filter (where ${dataLocal} >= ${hojeLocal} and ${dataLocal} < ${hojeLocal} + 7 and ${registros.status} = 'agendado')::int`,
-        agendados: sql<number>`count(*) filter (where ${registros.status} = 'agendado' and ${dataLocal} >= ${hojeLocal})::int`,
-        realizadosMes: sql<number>`count(*) filter (where ${registros.status} = 'realizado' and date_trunc('month', ${registros.dataRegistro} AT TIME ZONE 'UTC' AT TIME ZONE 'America/Bahia') = date_trunc('month', now() AT TIME ZONE 'America/Bahia'))::int`,
+        semana: sql<number>`count(*) filter (where ${registros.status} = 'agendado' and ${registros.dataRegistro} >= now() and ${dataLocal} < ${hojeLocal} + 7)::int`,
+        realizadosMes: sql<number>`count(*) filter (where ${registros.status} = 'realizado' and date_trunc('month', ${registros.dataRegistro} AT TIME ZONE 'America/Bahia') = date_trunc('month', now() AT TIME ZONE 'America/Bahia'))::int`,
       })
       .from(registros)
       .where(and(...conditions));
 
-    return kpis ?? { hoje: 0, semana: 0, agendados: 0, realizadosMes: 0 };
+    return kpis ?? { aRegistrar: 0, hoje: 0, semana: 0, realizadosMes: 0 };
   }),
 
   // ────────────────────────────────────────────────────────────────────

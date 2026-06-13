@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertCircle,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
   ChevronRight,
+  Clock,
   FileText,
   Handshake,
   History,
@@ -33,6 +35,7 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   AREA_CONFIG,
   AREA_OPTIONS,
@@ -43,16 +46,14 @@ import {
 } from "./config";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal } from "./atendimento-form-modal";
-
-type PeriodoPreset = "proximos" | "hoje" | "semana" | "passados" | "todos";
-
-const PERIODO_OPTIONS: { value: PeriodoPreset; label: string }[] = [
-  { value: "proximos", label: "Próximos" },
-  { value: "hoje", label: "Hoje" },
-  { value: "semana", label: "Próximos 7 dias" },
-  { value: "passados", label: "Passados" },
-  { value: "todos", label: "Todos" },
-];
+import {
+  PERIODO_OPTIONS,
+  agruparPorDia,
+  isPendente,
+  rangeFromPreset,
+  rotuloDia,
+  type PeriodoPreset,
+} from "./agenda-helpers";
 
 const STATUS_FILTROS = [
   { value: "todos", label: "Todos" },
@@ -60,28 +61,6 @@ const STATUS_FILTROS = [
   { value: "realizado", label: "Realizados" },
   { value: "cancelado", label: "Cancelados" },
 ];
-
-function rangeFromPreset(preset: PeriodoPreset): { dateFrom?: string; dateTo?: string } {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const mais = (dias: number) => {
-    const d = new Date(hoje);
-    d.setDate(d.getDate() + dias);
-    return d;
-  };
-  switch (preset) {
-    case "proximos":
-      return { dateFrom: hoje.toISOString(), dateTo: mais(120).toISOString() };
-    case "hoje":
-      return { dateFrom: hoje.toISOString(), dateTo: mais(1).toISOString() };
-    case "semana":
-      return { dateFrom: hoje.toISOString(), dateTo: mais(7).toISOString() };
-    case "passados":
-      return { dateFrom: mais(-365).toISOString(), dateTo: hoje.toISOString() };
-    case "todos":
-      return {};
-  }
-}
 
 export default function AtendimentosView() {
   const searchParams = useSearchParams();
@@ -93,7 +72,9 @@ export default function AtendimentosView() {
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [subtipoFiltro, setSubtipoFiltro] = useState("todos");
   const [areaFiltro, setAreaFiltro] = useState("todas");
-  const [periodo, setPeriodo] = useState<PeriodoPreset>("proximos");
+  const [periodo, setPeriodo] = useState<PeriodoPreset>("recentes");
+  // Isola os atendimentos que já aconteceram e seguem sem registro (a registrar).
+  const [apenasPendentes, setApenasPendentes] = useState(false);
   const [detalhe, setDetalhe] = useState<AtendimentoListItem | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<AtendimentoListItem | null>(null);
@@ -113,7 +94,12 @@ export default function AtendimentosView() {
 
   const { data: kpis } = trpc.registros.atendimentosKpis.useQuery();
 
-  const range = useMemo(() => rangeFromPreset(periodo), [periodo]);
+  // Quando "a registrar" está ativo, a janela vira ampla (passado) para varrer
+  // todos os agendados vencidos — o filtro fino é client-side por horário.
+  const range = useMemo(
+    () => rangeFromPreset(apenasPendentes ? "passados" : periodo),
+    [periodo, apenasPendentes]
+  );
   const { data: atendimentos = [], isLoading } = trpc.registros.listAtendimentos.useQuery({
     ...(statusFiltro !== "todos" ? { status: [statusFiltro as "agendado" | "realizado" | "cancelado"] } : {}),
     ...(subtipoFiltro !== "todos" ? { subtipo: subtipoFiltro as "inicial" | "retorno" } : {}),
@@ -124,19 +110,13 @@ export default function AtendimentosView() {
     ...range,
   });
 
-  // Agrupa por dia (chave yyyy-MM-dd no fuso local do navegador)
-  const porDia = useMemo(() => {
-    const grupos = new Map<string, AtendimentoListItem[]>();
-    for (const a of atendimentos as AtendimentoListItem[]) {
-      const chave = format(new Date(a.dataRegistro), "yyyy-MM-dd");
-      const lista = grupos.get(chave) ?? [];
-      lista.push(a);
-      grupos.set(chave, lista);
-    }
-    return [...grupos.entries()].sort(([a], [b]) =>
-      periodo === "passados" ? b.localeCompare(a) : a.localeCompare(b)
-    );
-  }, [atendimentos, periodo]);
+  const visiveis = useMemo(() => {
+    const lista = atendimentos as AtendimentoListItem[];
+    return apenasPendentes ? lista.filter((a) => isPendente(a)) : lista;
+  }, [atendimentos, apenasPendentes]);
+
+  // Agrupa por dia, ordenação centrada em hoje (hoje → próximos → anteriores).
+  const porDia = useMemo(() => agruparPorDia(visiveis), [visiveis]);
 
   // Mantém o sheet em sincronia após mutações (lista re-busca → item atualizado)
   useEffect(() => {
@@ -151,10 +131,19 @@ export default function AtendimentosView() {
   };
 
   const kpiCards = [
-    { label: "Hoje", value: kpis?.hoje ?? 0, icon: CalendarDays, border: "border-l-rose-500", text: "text-rose-600 dark:text-rose-400" },
-    { label: "Próximos 7 dias", value: kpis?.semana ?? 0, icon: CalendarRange, border: "border-l-sky-500", text: "text-sky-600 dark:text-sky-400" },
-    { label: "Agendados", value: kpis?.agendados ?? 0, icon: Handshake, border: "border-l-violet-500", text: "text-violet-600 dark:text-violet-400" },
-    { label: "Realizados no mês", value: kpis?.realizadosMes ?? 0, icon: CalendarCheck, border: "border-l-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+    {
+      key: "aRegistrar",
+      label: "A registrar",
+      value: kpis?.aRegistrar ?? 0,
+      icon: AlertCircle,
+      border: "border-l-amber-500",
+      text: "text-amber-600 dark:text-amber-400",
+      action: () => setApenasPendentes((v) => !v),
+      active: apenasPendentes,
+    },
+    { key: "hoje", label: "Hoje", value: kpis?.hoje ?? 0, icon: CalendarDays, border: "border-l-rose-500", text: "text-rose-600 dark:text-rose-400" },
+    { key: "semana", label: "Próximos 7 dias", value: kpis?.semana ?? 0, icon: CalendarRange, border: "border-l-sky-500", text: "text-sky-600 dark:text-sky-400" },
+    { key: "mes", label: "Realizados no mês", value: kpis?.realizadosMes ?? 0, icon: CalendarCheck, border: "border-l-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
   ];
 
   return (
@@ -163,7 +152,7 @@ export default function AtendimentosView() {
         title="Atendimentos"
         icon={Handshake}
         collapsedStats={
-          <span className="text-[11px] text-white/60">{atendimentos.length} na lista</span>
+          <span className="text-[11px] text-white/60">{visiveis.length} na lista</span>
         }
         bottomRow={
           <div className="flex flex-wrap items-center gap-2">
@@ -238,20 +227,30 @@ export default function AtendimentosView() {
       </CollapsiblePageHeader>
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
-        {/* KPIs */}
+        {/* KPIs — "A registrar" é clicável e isola os pendentes */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {kpiCards.map((s) => {
             const Icon = s.icon;
+            const clicavel = !!s.action;
             return (
-              <Card key={s.label} className={`border-l-2 ${s.border}`}>
+              <Card
+                key={s.key}
+                onClick={s.action}
+                className={cn(
+                  "border-l-2 transition-all",
+                  s.border,
+                  clicavel && "cursor-pointer hover:shadow-md",
+                  s.active && "ring-2 ring-amber-400/60 shadow-md"
+                )}
+              >
                 <CardContent className="p-3 sm:p-4">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
                       <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.text}`} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className={`text-xl sm:text-2xl font-bold ${s.text}`}>{s.value}</p>
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.label}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -259,6 +258,21 @@ export default function AtendimentosView() {
             );
           })}
         </div>
+
+        {apenasPendentes && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300/70 dark:border-amber-800/60 bg-amber-50/70 dark:bg-amber-900/15 px-4 py-2.5">
+            <p className="text-[12px] text-amber-800 dark:text-amber-300 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              Mostrando só atendimentos que já aconteceram e seguem sem registro.
+            </p>
+            <button
+              onClick={() => setApenasPendentes(false)}
+              className="text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:underline cursor-pointer shrink-0"
+            >
+              Ver todos
+            </button>
+          </div>
+        )}
 
         {/* Lista agrupada por dia */}
         {isLoading ? (
@@ -274,29 +288,34 @@ export default function AtendimentosView() {
                 <Handshake className="w-7 h-7 text-neutral-400" />
               </div>
               <h3 className="text-base font-medium text-foreground/80 mb-1">
-                Nenhum atendimento no período
+                {apenasPendentes ? "Nada a registrar" : "Nenhum atendimento no período"}
               </h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Ajuste os filtros ou agende um novo atendimento.
+                {apenasPendentes
+                  ? "Todos os atendimentos que já aconteceram foram registrados. Bom trabalho."
+                  : "Ajuste os filtros ou agende um novo atendimento."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          porDia.map(([dia, itens]) => (
-            <section key={dia}>
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2 first-letter:uppercase">
-                {format(new Date(`${dia}T12:00:00`), "EEEE, d 'de' MMMM", { locale: ptBR })}
-                <span className="ml-2 font-normal normal-case">
-                  · {itens.length} atendimento{itens.length > 1 ? "s" : ""}
-                </span>
-              </h2>
-              <div className="space-y-1.5">
-                {itens.map((a) => (
-                  <AtendimentoCard key={a.id} atendimento={a} onClick={() => setDetalhe(a)} />
-                ))}
-              </div>
-            </section>
-          ))
+          porDia.map(({ dia, itens }) => {
+            const rotulo = rotuloDia(dia);
+            return (
+              <section key={dia}>
+                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                  {rotulo ?? format(new Date(`${dia}T12:00:00`), "EEEE, d 'de' MMMM", { locale: ptBR })}
+                  <span className="ml-2 font-normal normal-case">
+                    · {itens.length} atendimento{itens.length > 1 ? "s" : ""}
+                  </span>
+                </h2>
+                <div className="space-y-1.5">
+                  {itens.map((a) => (
+                    <AtendimentoCard key={a.id} atendimento={a} onClick={() => setDetalhe(a)} />
+                  ))}
+                </div>
+              </section>
+            );
+          })
         )}
       </div>
 
@@ -333,27 +352,34 @@ function AtendimentoCard({
   const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
   const area = a.area ? AREA_CONFIG[a.area] : null;
   const cancelado = a.status === "cancelado";
+  const pendente = isPendente(a);
   const citados = (a.processosCitados ?? []).length;
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 border-l-2 ${
-        area?.border ?? "border-l-neutral-300"
-      } px-3 py-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-150 cursor-pointer ${
-        cancelado ? "opacity-55" : ""
-      }`}
+      className={cn(
+        "w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 border-l-2 px-3 py-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-150 cursor-pointer",
+        pendente
+          ? "border-l-amber-500 bg-amber-50/40 dark:bg-amber-900/10"
+          : area?.border ?? "border-l-neutral-300",
+        cancelado && "opacity-55"
+      )}
     >
       <div className="flex items-center gap-3">
         <div className="shrink-0 w-14 text-center">
           <p className="font-mono text-sm font-semibold text-foreground/90">
             {format(dt, "HH:mm")}
           </p>
-          <span
-            className={`inline-block mt-0.5 rounded px-1.5 py-px text-[10px] font-medium ${status.badge}`}
-          >
-            {status.label}
-          </span>
+          {pendente ? (
+            <span className="inline-flex items-center gap-0.5 mt-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              <Clock className="w-2.5 h-2.5" /> registrar
+            </span>
+          ) : (
+            <span className={`inline-block mt-0.5 rounded px-1.5 py-px text-[10px] font-medium ${status.badge}`}>
+              {status.label}
+            </span>
+          )}
         </div>
 
         <div className="min-w-0 flex-1">
