@@ -9,9 +9,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -25,15 +33,18 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarRange,
+  Check,
   ChevronRight,
   Clock,
   FileText,
   Handshake,
   History,
   Link2,
+  Loader2,
   Plus,
   Search,
   Sparkles,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -352,14 +363,23 @@ function AtendimentoCard({
   const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
   const area = a.area ? AREA_CONFIG[a.area] : null;
   const cancelado = a.status === "cancelado";
+  const agendado = a.status === "agendado";
   const pendente = isPendente(a);
   const citados = (a.processosCitados ?? []).length;
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 border-l-2 px-3 py-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-150 cursor-pointer",
+        "group/card w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 border-l-2 px-3 py-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
         pendente
           ? "border-l-amber-500 bg-amber-50/40 dark:bg-amber-900/10"
           : area?.border ?? "border-l-neutral-300",
@@ -429,9 +449,111 @@ function AtendimentoCard({
           </div>
         </div>
 
+        {agendado && <QuickRegistrar atendimento={a} destaque={pendente} />}
         <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 shrink-0" />
       </div>
-    </button>
+    </div>
+  );
+}
+
+// ─── Ação rápida: registrar realização (ou cancelar) sem abrir o sheet ──────
+
+function QuickRegistrar({
+  atendimento: a,
+  destaque,
+}: {
+  atendimento: AtendimentoListItem;
+  destaque: boolean;
+}) {
+  const utils = trpc.useUtils();
+  const [open, setOpen] = useState(false);
+  const [relato, setRelato] = useState("");
+
+  const invalidate = () => {
+    utils.registros.listAtendimentos.invalidate();
+    utils.registros.atendimentosKpis.invalidate();
+    utils.registros.listAgendados.invalidate();
+  };
+
+  const atualizar = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      invalidate();
+      setOpen(false);
+      setRelato("");
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          title="Registrar realização"
+          className={cn(
+            "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
+            destaque
+              ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+              : "text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 opacity-0 group-hover/card:opacity-100 focus:opacity-100"
+          )}
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        onClick={(e) => e.stopPropagation()}
+        className="w-72 p-3 rounded-xl"
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          Registrar atendimento
+        </p>
+        <Textarea
+          value={relato}
+          onChange={(e) => setRelato(e.target.value)}
+          placeholder="Relato — o que foi tratado, orientações, providências (opcional)"
+          rows={3}
+          autoFocus
+          className="text-sm"
+        />
+        <div className="flex items-center gap-2 mt-2">
+          <Button
+            size="sm"
+            onClick={() =>
+              atualizar.mutate(
+                { id: a.id, status: "realizado", ...(relato.trim() ? { conteudo: relato.trim() } : {}) },
+                { onSuccess: () => toast.success("Atendimento registrado") }
+              )
+            }
+            disabled={atualizar.isPending}
+            className="flex-1 gap-1.5 bg-emerald-600 hover:bg-emerald-700 h-8 text-[12px]"
+          >
+            {atualizar.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <CalendarCheck className="w-3.5 h-3.5" />
+            )}
+            Realizado
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              atualizar.mutate(
+                { id: a.id, status: "cancelado" },
+                { onSuccess: () => toast.success("Atendimento cancelado") }
+              )
+            }
+            disabled={atualizar.isPending}
+            className="gap-1.5 h-8 text-[12px] text-neutral-500"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            Cancelar
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

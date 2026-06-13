@@ -244,6 +244,31 @@ export function AdminSidebar({ children, userName, userEmail, headerExtra }: Adm
 // COMPONENTE DE ITEM DE MENU - ESTILO PREMIUM
 // ==========================================
 
+/**
+ * Badge dinâmico do item "Atendimentos" — mostra quantos atendimentos já
+ * aconteceram e seguem sem registro (a registrar). Some quando zera.
+ */
+function AtendimentosNavBadge({ collapsed }: { collapsed: boolean }) {
+  const { data } = trpc.registros.atendimentosKpis.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const n = data?.aRegistrar ?? 0;
+  if (n === 0) return null;
+  if (collapsed) {
+    return (
+      <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+        {n > 9 ? "9+" : n}
+      </span>
+    );
+  }
+  return (
+    <span className="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full bg-amber-500/90 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+      {n}
+    </span>
+  );
+}
+
 function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
   item: AssignmentMenuItem;
   isActive: boolean;
@@ -277,6 +302,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
               "h-[18px] w-[18px] transition-colors duration-150",
               isActive ? "text-emerald-400" : ""
             )} strokeWidth={isActive ? 2.2 : 1.8} />
+            {item.path === "/admin/atendimentos" && <AtendimentosNavBadge collapsed />}
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -303,6 +329,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
             isActive ? "text-emerald-400" : "text-white/50 group-hover/item:text-white/70"
           )} strokeWidth={isActive ? 2.2 : 1.8} />
           <span className="text-[12px] font-medium truncate">{item.label}</span>
+          {item.path === "/admin/atendimentos" && <AtendimentosNavBadge collapsed={false} />}
           {item.isPremium && (
             <Sparkles className="h-3 w-3 text-emerald-400 ml-auto" />
           )}
