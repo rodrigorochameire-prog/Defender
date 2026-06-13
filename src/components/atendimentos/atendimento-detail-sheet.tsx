@@ -36,6 +36,7 @@ import {
   FolderOpen,
   ListPlus,
   Loader2,
+  MessageCircle,
   Pencil,
   Phone,
   Plus,
@@ -53,6 +54,7 @@ import {
   SUBTIPO_CONFIG,
   driveFolderUrl,
   pjeConsultaUrl,
+  whatsappUrl,
   type AtendimentoListItem,
 } from "./config";
 import { DossieAtendimentoBlock } from "./dossie-atendimento-block";
@@ -133,6 +135,11 @@ export function AtendimentoDetailSheet({
   const area = a.area ? AREA_CONFIG[a.area] : null;
   const citados = (a.processosCitados ?? []).filter((p) => p.cnj !== a.processo?.numeroAutos);
   const dossie = a.dossieAtendimento;
+  const primeiroNome = (a.assistido?.nome ?? "").split(" ")[0] || "";
+  const zap = whatsappUrl(
+    a.assistido?.telefone,
+    `Olá${primeiroNome ? `, ${primeiroNome}` : ""}. Aqui é da Defensoria Pública — 9ª DP de Camaçari.`
+  );
 
   // Cor de atribuição — mesma fonte de identidade visual do sheet da agenda.
   const filterKey = normalizeAreaToFilter(
@@ -268,6 +275,16 @@ export function AtendimentoDetailSheet({
                       className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/60 transition-colors cursor-pointer"
                     >
                       <FolderOpen className="w-3 h-3" /> Drive
+                    </a>
+                  )}
+                  {zap && (
+                    <a
+                      href={zap}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
+                    >
+                      <MessageCircle className="w-3 h-3" /> WhatsApp
                     </a>
                   )}
                 </div>

@@ -150,6 +150,20 @@ export function pjeConsultaUrl(cnj: string): string {
 }
 
 /**
+ * Link wa.me para o telefone do assistido. Normaliza dígitos e prefixa 55
+ * (Brasil) quando o número vem sem código de país. Retorna null se não houver
+ * um telefone discável (sem DDD).
+ */
+export function whatsappUrl(telefone: string | null | undefined, texto?: string): string | null {
+  if (!telefone) return null;
+  let digits = telefone.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  if (digits.length <= 11) digits = `55${digits}`;
+  const q = texto ? `?text=${encodeURIComponent(texto)}` : "";
+  return `https://wa.me/${digits}${q}`;
+}
+
+/**
  * Área do atendimento → enum de atribuição VÁLIDO para demandas.createFromForm
  * (só estes 6 são aceitos; processo.atribuicao pode trazer enums fora dessa
  * lista, então mapeamos sempre pela área, que é determinística).

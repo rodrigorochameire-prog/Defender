@@ -52,7 +52,7 @@ import {
 import { toast } from "sonner";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
-import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { agendaItemVisual, isAtendimentoPendente, COR_ATENDIMENTO_PENDENTE } from "@/lib/agenda/agenda-item-visual";
 import { extrairTipoEvento, isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { TIPOS_AUDIENCIA } from "@/lib/agenda/tipos-audiencia";
 
@@ -117,7 +117,12 @@ function EventoSemana({
   const colors = getAtribuicaoColors(evento.atribuicaoKey || evento.atribuicao);
   const solidColor = (colors as any).color || "#71717a";
   const eventoCancelado = isEventoCancelado(evento.status);
-  const displayColor = eventoCancelado ? COR_EVENTO_CANCELADO : solidColor;
+  const pendente = isAtendimentoPendente(evento);
+  const displayColor = eventoCancelado
+    ? COR_EVENTO_CANCELADO
+    : pendente
+      ? COR_ATENDIMENTO_PENDENTE
+      : solidColor;
   const hasRegistro = !!evento.registro;
   const visual = agendaItemVisual(evento);
 

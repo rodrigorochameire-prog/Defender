@@ -29,3 +29,21 @@ describe("AREA_TO_ATRIBUICAO_ENUM", () => {
     }
   });
 });
+
+import { whatsappUrl } from "../config";
+
+describe("whatsappUrl", () => {
+  it("prefixa 55 e remove formatação", () => {
+    expect(whatsappUrl("(71) 99999-8888")).toBe("https://wa.me/5571999998888");
+  });
+  it("mantém número que já tem código do país", () => {
+    expect(whatsappUrl("5571999998888")).toBe("https://wa.me/5571999998888");
+  });
+  it("anexa texto quando fornecido", () => {
+    expect(whatsappUrl("71999998888", "Oi")).toBe("https://wa.me/5571999998888?text=Oi");
+  });
+  it("retorna null sem telefone discável", () => {
+    expect(whatsappUrl(null)).toBeNull();
+    expect(whatsappUrl("123")).toBeNull();
+  });
+});

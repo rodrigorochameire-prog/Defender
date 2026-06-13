@@ -54,7 +54,7 @@ import {
 } from "@/lib/config/atribuicoes";
 import { extrairTipoEvento, isSessaoPlenario } from "./extrair-tipo";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
-import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { agendaItemVisual, isAtendimentoPendente, COR_ATENDIMENTO_PENDENTE } from "@/lib/agenda/agenda-item-visual";
 
 interface DayEventsSheetProps {
   isOpen: boolean;
@@ -342,7 +342,9 @@ export function DayEventsSheet({
                 );
                 const solidColor = cancelado
                   ? "#a1a1aa"
-                  : (colors as any).color || "#71717a";
+                  : isAtendimentoPendente(evento)
+                    ? COR_ATENDIMENTO_PENDENTE
+                    : (colors as any).color || "#71717a";
                 const visual = agendaItemVisual(evento);
                 const tipo = extrairTipoEvento(evento);
                 const assistidoNome = evento.assistido || "";
