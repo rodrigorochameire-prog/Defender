@@ -116,14 +116,22 @@ export function GerarDemandaPopover({
   );
 
   const criar = trpc.demandas.createFromForm.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.demandas.list.invalidate();
       setOpen(false);
+      // Deep-link para o Kanban já na atribuição da demanda (o Kanban mostra uma
+      // atribuição por vez) e destacando a recém-criada — senão ela "some" no
+      // filtro quando cai numa atribuição diferente da que está aberta.
+      const atrib = atribuicao;
+      const novaId = (data as { id?: number } | null)?.id;
       toast.success("Demanda criada", {
         action: {
           label: "Ver no Kanban",
           onClick: () => {
-            window.location.href = "/admin/demandas";
+            const params = new URLSearchParams();
+            params.set("atribuicao", atrib);
+            if (novaId) params.set("focus", String(novaId));
+            window.location.href = `/admin/demandas?${params.toString()}`;
           },
         },
       });
