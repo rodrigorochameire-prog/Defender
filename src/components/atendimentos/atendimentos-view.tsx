@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +43,9 @@ import {
   Link2,
   Loader2,
   Plus,
+  RotateCcw,
   Search,
+  SlidersHorizontal,
   Sparkles,
   XCircle,
 } from "lucide-react";
@@ -177,27 +180,65 @@ export default function AtendimentosView() {
       label: "A registrar",
       value: kpis?.aRegistrar ?? 0,
       icon: AlertCircle,
-      border: "border-l-amber-500",
-      text: "text-amber-600 dark:text-amber-400",
+      text: "text-amber-500",
       action: () => setApenasPendentes((v) => !v),
       active: apenasPendentes,
     },
-    { key: "hoje", label: "Hoje", value: kpis?.hoje ?? 0, icon: CalendarDays, border: "border-l-rose-500", text: "text-rose-600 dark:text-rose-400" },
-    { key: "semana", label: "Próximos 7 dias", value: kpis?.semana ?? 0, icon: CalendarRange, border: "border-l-sky-500", text: "text-sky-600 dark:text-sky-400" },
-    { key: "mes", label: "Realizados no mês", value: kpis?.realizadosMes ?? 0, icon: CalendarCheck, border: "border-l-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+    { key: "hoje", label: "Hoje", value: kpis?.hoje ?? 0, icon: CalendarDays, text: "text-rose-500" },
+    { key: "semana", label: "Próximos 7 dias", value: kpis?.semana ?? 0, icon: CalendarRange, text: "text-sky-500" },
+    { key: "mes", label: "Realizados no mês", value: kpis?.realizadosMes ?? 0, icon: CalendarCheck, text: "text-emerald-500" },
   ];
+
+  // Quantidade de filtros secundários ativos (subtipo/área) — alimenta o badge
+  // do botão "Filtros", que agrupa os selects e tira ruído do header.
+  const filtrosAtivos =
+    (subtipoFiltro !== "todos" ? 1 : 0) + (areaFiltro !== "todas" ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      {/* Título + contagem portados para a utility row (padrão Demandas) */}
+      <HeaderSlotTitle
+        icon={Handshake}
+        title="Atendimentos"
+        accentHex="#10b981"
+        stats={
+          <>
+            <span className="text-white/85 font-semibold">{visiveis.length}</span>
+            {(kpis?.aRegistrar ?? 0) > 0 && (
+              <span
+                className="flex items-center gap-1"
+                title={`${kpis?.aRegistrar} a registrar`}
+              >
+                <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+                <span className="font-medium text-amber-300/90">{kpis?.aRegistrar}</span>
+              </span>
+            )}
+          </>
+        }
+      />
+
       <CollapsiblePageHeader
         title="Atendimentos"
         icon={Handshake}
         collapsedStats={
-          <span className="text-[11px] text-white/60">{visiveis.length} na lista</span>
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
+            {visiveis.length} na lista
+          </span>
+        }
+        collapsedSearch={
+          <div className="relative w-[140px]">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar..."
+              className="w-full bg-[#3a3a3c] border border-[#505052] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none focus:ring-1 focus:ring-emerald-400/40"
+            />
+          </div>
         }
         bottomRow={
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0 max-w-sm">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
               <input
                 value={busca}
@@ -206,7 +247,7 @@ export default function AtendimentosView() {
                 className="w-full h-8 rounded-lg bg-white/10 border border-white/10 pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
               />
             </div>
-            <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5">
+            <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
               {STATUS_FILTROS.map((s) => (
                 <button
                   key={s.value}
@@ -221,81 +262,111 @@ export default function AtendimentosView() {
                 </button>
               ))}
             </div>
-            <FiltroSelect
-              value={subtipoFiltro}
-              onChange={setSubtipoFiltro}
-              options={[{ value: "todos", label: "Tipo: todos" }, ...SUBTIPO_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
-            />
-            <FiltroSelect
-              value={areaFiltro}
-              onChange={setAreaFiltro}
-              options={[{ value: "todas", label: "Área: todas" }, ...AREA_OPTIONS]}
-            />
-            <FiltroSelect
-              value={periodo}
-              onChange={(v) => setPeriodo(v as PeriodoPreset)}
-              options={PERIODO_OPTIONS}
-            />
+
+            {/* Filtros secundários agrupados num popover — tira ruído do header */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  title="Filtros"
+                  className={cn(
+                    "relative h-8 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer shrink-0",
+                    filtrosAtivos > 0
+                      ? "bg-white/20 border-white/20 text-white"
+                      : "bg-white/10 border-white/10 text-white/70 hover:text-white"
+                  )}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Filtros</span>
+                  {filtrosAtivos > 0 && (
+                    <span className="ml-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-semibold">
+                      {filtrosAtivos}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" sideOffset={6} className="w-60 p-3 rounded-xl space-y-2.5">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</p>
+                  <FiltroSelect
+                    variant="light"
+                    value={subtipoFiltro}
+                    onChange={setSubtipoFiltro}
+                    options={[{ value: "todos", label: "Todos" }, ...SUBTIPO_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Área</p>
+                  <FiltroSelect
+                    variant="light"
+                    value={areaFiltro}
+                    onChange={setAreaFiltro}
+                    options={[{ value: "todas", label: "Todas" }, ...AREA_OPTIONS]}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Período</p>
+                  <FiltroSelect
+                    variant="light"
+                    value={periodo}
+                    onChange={(v) => setPeriodo(v as PeriodoPreset)}
+                    options={PERIODO_OPTIONS}
+                  />
+                </div>
+                {filtrosAtivos > 0 && (
+                  <button
+                    onClick={() => {
+                      setSubtipoFiltro("todos");
+                      setAreaFiltro("todas");
+                    }}
+                    className="w-full h-7 rounded-lg text-[11px] font-medium text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
+              </PopoverContent>
+            </Popover>
+
+            <button
+              onClick={() => {
+                setEditando(null);
+                setModalAberto(true);
+              }}
+              title="Novo atendimento"
+              className="h-8 px-2.5 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-colors duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Novo</span>
+            </button>
           </div>
         }
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Handshake className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Atendimentos
-              </h1>
-              <p className="text-[10px] text-white/55">
-                Pauta de atendimentos aos assistidos — integrada à agenda
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditando(null);
-              setModalAberto(true);
-            }}
-            className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Novo Atendimento</span>
-            <span className="sm:hidden">Novo</span>
-          </button>
-        </div>
-      </CollapsiblePageHeader>
+        seamless
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
-        {/* KPIs — "A registrar" é clicável e isola os pendentes */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        {/* Stats — barra inline enxuta; "A registrar" alterna o filtro de pendentes */}
+        <div className="flex items-stretch rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-x divide-neutral-200/70 dark:divide-neutral-800 overflow-hidden shadow-sm">
           {kpiCards.map((s) => {
             const Icon = s.icon;
             const clicavel = !!s.action;
+            const Comp = clicavel ? "button" : "div";
             return (
-              <Card
+              <Comp
                 key={s.key}
                 onClick={s.action}
                 className={cn(
-                  "border-l-2 transition-all",
-                  s.border,
-                  clicavel && "cursor-pointer hover:shadow-md",
-                  s.active && "ring-2 ring-amber-400/60 shadow-md"
+                  "flex items-center gap-2.5 px-3.5 sm:px-4 py-2.5 flex-1 min-w-0 text-left transition-colors outline-none",
+                  clicavel && "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/40",
+                  s.active && "bg-amber-50/70 dark:bg-amber-900/15"
                 )}
               >
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-white dark:bg-muted shadow-sm">
-                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${s.text}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-xl sm:text-2xl font-bold ${s.text}`}>{s.value}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <Icon className={cn("w-4 h-4 shrink-0", s.text)} />
+                <span className="text-lg sm:text-xl font-semibold tabular-nums text-foreground leading-none">
+                  {s.value}
+                </span>
+                <span className="text-[11px] text-muted-foreground leading-tight truncate hidden xs:block sm:block">
+                  {s.label}
+                </span>
+              </Comp>
             );
           })}
         </div>
@@ -483,6 +554,7 @@ function AtendimentoCard({
         </div>
 
         {agendado && <QuickRegistrar atendimento={a} destaque={pendente} />}
+        {cancelado && <QuickReativar atendimento={a} />}
         <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 shrink-0" />
       </div>
     </div>
@@ -590,20 +662,65 @@ function QuickRegistrar({
   );
 }
 
+// ─── Ação rápida: reativar atendimento cancelado (volta a "agendado") ───────
+
+function QuickReativar({ atendimento: a }: { atendimento: AtendimentoListItem }) {
+  const utils = trpc.useUtils();
+
+  const atualizar = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      utils.registros.listAtendimentos.invalidate();
+      utils.registros.atendimentosKpis.invalidate();
+      utils.registros.listAgendados.invalidate();
+      toast.success("Atendimento reativado");
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        atualizar.mutate({ id: a.id, status: "agendado" });
+      }}
+      disabled={atualizar.isPending}
+      title="Reativar atendimento"
+      className="shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[11px] font-medium text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer opacity-0 group-hover/card:opacity-100 focus:opacity-100 focus-visible:ring-2 focus-visible:ring-sky-400/50 outline-none"
+    >
+      {atualizar.isPending ? (
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      ) : (
+        <RotateCcw className="w-3.5 h-3.5" />
+      )}
+      Reativar
+    </button>
+  );
+}
+
 // ─── Select compacto para a linha de filtros do header (charcoal) ──────────
 
 function FiltroSelect({
   value,
   onChange,
   options,
+  variant = "dark",
 }: {
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
+  /** "dark" para o header charcoal; "light" para dentro de popovers claros. */
+  variant?: "dark" | "light";
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-auto min-w-[110px] rounded-lg bg-white/10 border-white/10 text-[11px] text-white [&>svg]:text-white/50">
+      <SelectTrigger
+        className={cn(
+          "h-8 text-[11px] rounded-lg",
+          variant === "dark"
+            ? "w-auto min-w-[110px] bg-white/10 border-white/10 text-white [&>svg]:text-white/50"
+            : "w-full"
+        )}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

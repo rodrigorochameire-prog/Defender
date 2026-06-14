@@ -43,9 +43,44 @@ function Lista({
   );
 }
 
-export function DossieAtendimentoBlock({ dossie }: { dossie: DossieAtendimento }) {
+export type DossiePart =
+  | "header"
+  | "objetivo"
+  | "resumo"
+  | "alertas"
+  | "medidas"
+  | "situacao"
+  | "orientacoes"
+  | "perguntas"
+  | "documentos"
+  | "providencias"
+  | "historico";
+
+/** Partes do dossiê que compõem a seção "Preparação" (situação e histórico viram seções próprias). */
+export const DOSSIE_PARTS_PREPARACAO: DossiePart[] = [
+  "header",
+  "objetivo",
+  "resumo",
+  "alertas",
+  "medidas",
+  "orientacoes",
+  "perguntas",
+  "documentos",
+  "providencias",
+];
+
+export function DossieAtendimentoBlock({
+  dossie,
+  parts,
+}: {
+  dossie: DossieAtendimento;
+  /** Quando informado, renderiza só estas partes (default: todas). */
+  parts?: DossiePart[];
+}) {
+  const has = (p: DossiePart) => !parts || parts.includes(p);
   return (
     <div className="space-y-3">
+      {has("header") && (
       <div className="flex items-center justify-between">
         <span
           className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${
@@ -62,14 +97,15 @@ export function DossieAtendimentoBlock({ dossie }: { dossie: DossieAtendimento }
           </span>
         )}
       </div>
+      )}
 
-      {dossie.objetivo && (
+      {has("objetivo") && dossie.objetivo && (
         <blockquote className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 text-sm italic text-foreground/80">
           {dossie.objetivo}
         </blockquote>
       )}
 
-      {dossie.resumo && dossie.resumo.length > 0 && (
+      {has("resumo") && dossie.resumo && dossie.resumo.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {dossie.resumo.map((r, i) => (
             <span
@@ -82,10 +118,14 @@ export function DossieAtendimentoBlock({ dossie }: { dossie: DossieAtendimento }
         </div>
       )}
 
-      <Lista titulo="Alertas" itens={dossie.alertas} icone={AlertTriangle} tom="alerta" />
-      <Lista titulo="Medidas vigentes" itens={dossie.medidas_vigentes} icone={ShieldAlert} tom="alerta" />
+      {has("alertas") && (
+        <Lista titulo="Alertas" itens={dossie.alertas} icone={AlertTriangle} tom="alerta" />
+      )}
+      {has("medidas") && (
+        <Lista titulo="Medidas vigentes" itens={dossie.medidas_vigentes} icone={ShieldAlert} tom="alerta" />
+      )}
 
-      {dossie.situacao_processual && dossie.situacao_processual.length > 0 && (
+      {has("situacao") && dossie.situacao_processual && dossie.situacao_processual.length > 0 && (
         <div>
           <h5 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
             Situação processual
@@ -119,11 +159,21 @@ export function DossieAtendimentoBlock({ dossie }: { dossie: DossieAtendimento }
         </div>
       )}
 
-      <Lista titulo="Orientações ao assistido" itens={dossie.orientacoes} icone={ListChecks} />
-      <Lista titulo="Perguntas a fazer" itens={dossie.perguntas} icone={MessageCircleQuestion} />
-      <Lista titulo="Documentos a solicitar" itens={dossie.documentos_solicitar} icone={FileQuestion} />
-      <Lista titulo="Providências pós-atendimento" itens={dossie.providencias} icone={ListChecks} />
-      <Lista titulo="Histórico relevante" itens={dossie.historico_relevante} />
+      {has("orientacoes") && (
+        <Lista titulo="Orientações ao assistido" itens={dossie.orientacoes} icone={ListChecks} />
+      )}
+      {has("perguntas") && (
+        <Lista titulo="Perguntas a fazer" itens={dossie.perguntas} icone={MessageCircleQuestion} />
+      )}
+      {has("documentos") && (
+        <Lista titulo="Documentos a solicitar" itens={dossie.documentos_solicitar} icone={FileQuestion} />
+      )}
+      {has("providencias") && (
+        <Lista titulo="Providências pós-atendimento" itens={dossie.providencias} icone={ListChecks} />
+      )}
+      {has("historico") && (
+        <Lista titulo="Histórico relevante" itens={dossie.historico_relevante} />
+      )}
     </div>
   );
 }
