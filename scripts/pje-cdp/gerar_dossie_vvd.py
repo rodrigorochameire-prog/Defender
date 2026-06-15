@@ -134,7 +134,7 @@ def main():
     r = p.add_run(data.get("assistido", "")); r.font.size = Pt(14); r.font.name = 'Verdana'
     aud = data.get("audiencia", {})
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = p.add_run(f'{aud.get("tipo","")} — 11/06/2026 às {aud.get("horario","")} · Vara de Violência Doméstica de Camaçari')
+    r = p.add_run(f'{aud.get("tipo","")} — {aud.get("data","")} às {aud.get("horario","")} · Vara de Violência Doméstica de Camaçari')
     r.font.size = Pt(10); r.font.color.rgb = RGBColor.from_string(MUTED); r.font.name = 'Verdana'
 
     # KPIs (4 cards)
@@ -185,7 +185,12 @@ def main():
         for d in deps:
             row = t.add_row()
             jo = d.get("ja_ouvido")
-            jo_txt = f'SIM ({jo.get("data","")} {jo.get("peca","")})' if jo and jo.get("sim") else "NÃO"
+            if isinstance(jo, dict):
+                jo_txt = f'SIM ({jo.get("data","")} {jo.get("peca","")})' if jo.get("sim") else "NÃO"
+            elif isinstance(jo, str) and jo.strip():
+                jo_txt = f"SIM ({jo.strip()})"
+            else:
+                jo_txt = "NÃO"
             vals = [d.get("nome", ""), d.get("tipo", "").replace("_", " "),
                     d.get("intimacao", ""), d.get("motivo_nao_intimacao") or "—",
                     d.get("comparecimento", ""), jo_txt, d.get("forma", ""),

@@ -90,6 +90,7 @@ import { lugaresRouter } from "./lugares";
 import { cronologiaRouter } from "./cronologia";
 import { tipificacoesRouter } from "./tipificacoes";
 import { mpuRouter } from "./mpu";
+import { cautelaresRouter } from "./cautelares";
 
 
 export const appRouter = router({
@@ -429,6 +430,7 @@ export const appRouter = router({
   // MPU — PARSER DE MEDIDAS PROTETIVAS (DRY-RUN)
   // ==========================================
   mpu: mpuRouter,
+  cautelares: cautelaresRouter,
 });
 
 export type AppRouter = typeof appRouter;

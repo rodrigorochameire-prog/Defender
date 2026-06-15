@@ -36,6 +36,9 @@ for (const item of items) {
   const p = item.analise_cowork?.payload ?? {};
   const ra = item.registro_audiencia ?? {};
   const deps = p.depoentes ?? ra.depoentes ?? [];
+  const interrogando = deps.find(d => d.tipo === "interrogando") ?? null;
+  const ofendida = deps.find(d => d.tipo === "ofendida") ?? null;
+  const relatoAssistido = p.relato_assistido ?? ra.relato_assistido ?? null;
   const intimResumo = deps.map(d =>
     `${d.nome} (${(d.tipo ?? "").replace(/_/g, " ")}): ${(d.intimacao ?? "desconhecido")}${d.observacao ? " — " + d.observacao : ""}`).join(" · ");
 
@@ -67,6 +70,20 @@ for (const item of items) {
     })),
     orientacao_assistido: p.orientacao_assistido ?? ra.orientacao_assistido ?? null,
     medidas_protetivas_vigentes: p.medidas_mpu ?? [],
+    // Medidas estruturadas (parse art. 22) quando o dossiê as forneceu
+    medidas_protetivas: p.medidas_protetivas ?? ra.medidas_protetivas ?? null,
+    // Justificação (MPU): por que a audiência foi designada + relato da ofendida/representação
+    motivo_designacao: p.motivo_designacao ?? ra.motivo_designacao ?? null,
+    relato_vitima: p.relato_vitima ?? ra.relato_vitima ?? (ofendida?.depoimento_ip ?? null),
+    // Relato do assistido: atendimento (DPE) × interrogatório policial × judicial
+    relato_assistido: relatoAssistido ?? (interrogando ? {
+      atendimento: null,
+      interrogatorio_policial: interrogando.depoimento_ip ?? null,
+      interrogatorio_judicial: interrogando.depoimento_juizo ?? null,
+    } : null),
+    // Alimenta a seção "Relato do assistido" (reusa o slot versao_delegacia/juizo existente)
+    versao_delegacia: relatoAssistido?.interrogatorio_policial ?? interrogando?.depoimento_ip ?? null,
+    versao_juizo: relatoAssistido?.interrogatorio_judicial ?? interrogando?.depoimento_juizo ?? null,
     // Síntese processual (ato + data) p/ aferir adstrição/correlação na instrução
     cronologia: (p.cronologia ?? []).map(e => ({
       data: e.data ?? null, evento: e.evento ?? "", marcador: e.marcador ?? "⚪",
@@ -106,6 +123,32 @@ for (const item of items) {
     RETURNING id`;
   if (r.length) { console.log(`proc #${item.processo_id} (aud ${item.audiencia_id}) ✓`); ok++; }
   else console.warn(`proc #${item.processo_id} NÃO ENCONTRADO`);
+
+  // Cautelares estruturadas (prisão / diversas da prisão) → tabela cautelares_decisao.
+  // Idempotente: substitui apenas as linhas origem='claude' deste processo
+  // (preserva parser/manual). O painel "Cautelares" da audiência lê esta tabela.
+  const cautelares = p.cautelares ?? ra.cautelares ?? [];
+  if (Array.isArray(cautelares) && cautelares.length && r.length) {
+    await sql`DELETE FROM cautelares_decisao WHERE processo_id = ${item.processo_id} AND origem = 'claude'`;
+    for (const c of cautelares) {
+      if (!c?.codigo || !c?.especie) continue;
+      const params = {};
+      if (c.periodicidade) params.periodicidade = c.periodicidade;
+      if (c.valorFianca) params.valorFianca = c.valorFianca;
+      if (c.horario) params.horario = c.horario;
+      if (typeof c.distanciaMetros === "number") params.distanciaMetros = c.distanciaMetros;
+      if (Array.isArray(c.pessoas) && c.pessoas.length) params.pessoas = c.pessoas;
+      if (Array.isArray(c.lugares) && c.lugares.length) params.lugares = c.lugares;
+      const dataDec = /^\d{4}-\d{2}-\d{2}$/.test(c.data ?? "") ? c.data : null;
+      await sql`
+        INSERT INTO cautelares_decisao
+          (processo_id, codigo, especie, artigo, parametros, literal, data_decisao, status, origem)
+        VALUES (${item.processo_id}, ${c.codigo}, ${c.especie}, ${c.artigo ?? null},
+          ${Object.keys(params).length ? params : null}, ${c.literal ?? null}, ${dataDec},
+          ${c.status ?? "ativa"}, 'claude')`;
+    }
+    console.log(`  ↳ ${cautelares.length} cautelar(es) → cautelares_decisao`);
+  }
 
   // Patrocínio: se a análise detectou advogado constituído nos autos, sobe
   // DEFENSORIA → PARTICULAR (nunca rebaixa automaticamente; nome manual vence).

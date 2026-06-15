@@ -20,6 +20,7 @@ import { getDefensoresVisiveis } from "../defensor-scope";
 import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { buildDemandaSync, syncDemandaToSheets } from "@/lib/services/demanda-sync";
 import { aplicarMedidasMPU, type MedidaCriada } from "@/lib/mpu/aplicar-medidas-mpu";
+import { aplicarCautelares, type CautelarCriada } from "@/lib/cautelares/aplicar-cautelares";
 
 /**
  * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
@@ -370,11 +371,20 @@ export const registrosRouter = router({
         // 4. Side-effect de ciência: medidas protetivas no texto da decisão →
         //    persiste medidas estruturadas e move a esteira (dedupe por origem=parser).
         let medidasCriadas: MedidaCriada[] = [];
+        let cautelaresCriadas: CautelarCriada[] = [];
         if (input.tipo === "ciencia" && input.processoId) {
+          const dataDecisaoISO = input.dataRegistro.toISOString().slice(0, 10);
           medidasCriadas = await aplicarMedidasMPU(tx, {
             processoId: input.processoId,
             conteudo: input.conteudo,
-            dataDecisaoISO: input.dataRegistro.toISOString().slice(0, 10),
+            dataDecisaoISO,
+          });
+          // Cautelares pessoais (prisão / diversas da prisão, art. 319/320 CPP)
+          // no texto da decisão → persiste cautelares estruturadas (dedupe parser).
+          cautelaresCriadas = await aplicarCautelares(tx, {
+            processoId: input.processoId,
+            conteudo: input.conteudo,
+            dataDecisaoISO,
           });
         }
 
@@ -382,6 +392,7 @@ export const registrosRouter = router({
           registro,
           audienciaCriada,
           medidasCriadas,
+          cautelaresCriadas,
           atoAtualizado,
           audienciasSupersedidas,
         };
