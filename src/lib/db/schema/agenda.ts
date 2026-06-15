@@ -43,6 +43,21 @@ export const audiencias = pgTable("audiencias", {
   anotacoes: text("anotacoes"),
   anotacoesVersao: integer("anotacoes_versao").default(1),
   registroAudiencia: jsonb("registro_audiencia"),
+  // Links de gravação da audiência (Lifesize/PJe Mídias) parseados da ata —
+  // acesso direto no OMBUDS.
+  midias: jsonb("midias").$type<
+    Array<{ tipo: string; url: string; rotulo: string | null }>
+  >().default([]),
+  // Resultado estruturado parseado da ata de audiência.
+  ata: jsonb("ata").$type<{
+    resultado?: string;
+    data_realizada?: string | null;
+    hora_realizada?: string | null;
+    presencas?: Record<string, string | null>;
+    ouvidos?: Array<{ nome: string; papel: string | null }>;
+    ausencias?: Array<{ nome: string; papel: string | null; motivo: string | null }>;
+    parseado_em?: string;
+  }>(),
   anotacoesRapidas: jsonb("anotacoes_rapidas").$type<Array<{
     texto: string;
     timestamp: string;

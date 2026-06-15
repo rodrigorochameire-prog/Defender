@@ -24,6 +24,7 @@ import { aplicarCautelares, type CautelarCriada } from "@/lib/cautelares/aplicar
 import { aplicarPreventiva, revogarPreventiva } from "@/lib/cautelares/aplicar-preventiva";
 import { parseDecisaoCautelar } from "@/lib/cautelares/parse-decisao-cautelar";
 import { CAUTELAR } from "@/lib/cautelares/cautelares-taxonomia";
+import { aplicarAtaAudiencia } from "@/lib/registros/aplicar-ata-audiencia";
 
 /**
  * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
@@ -401,6 +402,12 @@ export const registrosRouter = router({
           } else if (decCaut.revogadas.includes(CAUTELAR.PRISAO_PREVENTIVA)) {
             await revogarPreventiva(tx, input.processoId);
           }
+          // Ata de audiência no texto → links de mídia (acesso direto) +
+          // resultado (ouvidos/ausentes/suspensão) na audiência correspondente.
+          await aplicarAtaAudiencia(tx, {
+            processoId: input.processoId,
+            conteudo: input.conteudo,
+          });
         }
 
         return {

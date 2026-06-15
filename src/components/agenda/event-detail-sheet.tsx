@@ -32,6 +32,7 @@ import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
+import { AtaAudienciaBlock } from "@/components/agenda/sheet/ata-audiencia-block";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -533,6 +534,18 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           <CautelaresPanel processoId={processoId} readOnly apenasEspecie="diversa" />
         </CollapsibleSection>
       ),
+    },
+    "ata": {
+      label: "Ata e gravações",
+      temDado: !!audienciaIdNum,
+      node: audienciaIdNum ? (
+        <CollapsibleSection id="ata" label="Ata e gravações" defaultOpen>
+          <AtaAudienciaBlock
+            audienciaId={audienciaIdNum}
+            processoId={typeof processoId === "number" ? processoId : null}
+          />
+        </CollapsibleSection>
+      ) : null,
     },
     "anotacoes-rapidas": {
       label: "Anotações rápidas",

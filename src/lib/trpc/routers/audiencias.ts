@@ -13,6 +13,8 @@ import { criarEventoAudiencia, updateCalendarEvent, deleteCalendarEvent } from "
 import { resolveCalendarId } from "@/lib/services/calendar-mapping";
 import { removeNotaByTimestamp } from "@/lib/agenda/anotacoes-rapidas";
 import { parseAnotacaoAudiencia } from "@/lib/agenda/parse-anotacao-audiencia";
+import { parseAtaAudiencia } from "@/lib/registros/parse-ata-audiencia";
+import { aplicarAtaAudiencia } from "@/lib/registros/aplicar-ata-audiencia";
 import {
   aplicarDesignacaoAudiencia,
   limparCalendarSupersedidas,
@@ -2495,5 +2497,43 @@ export const audienciasRouter = router({
       }
 
       return { ok: true };
+    }),
+
+  /** Mídias + resultado parseado da ata de uma audiência (lido pelo sheet). */
+  getAta: protectedProcedure
+    .input(z.object({ audienciaId: z.number() }))
+    .query(async ({ input }) => {
+      const [a] = await db
+        .select({ midias: audiencias.midias, ata: audiencias.ata })
+        .from(audiencias)
+        .where(eq(audiencias.id, input.audienciaId))
+        .limit(1);
+      return { midias: a?.midias ?? [], ata: a?.ata ?? null };
+    }),
+
+  /** Dry-run do parser de ata (preview no botão "Parsear ata" do sheet). */
+  parseAtaPreview: protectedProcedure
+    .input(z.object({ texto: z.string() }))
+    .query(({ input }) => parseAtaAudiencia(input.texto)),
+
+  /** Aplica a ata a UMA audiência (botão manual): grava mídias + resultado +
+   *  marca depoentes ouvidos/ausentes. */
+  aplicarAta: protectedProcedure
+    .input(z.object({ audienciaId: z.number(), processoId: z.number(), texto: z.string() }))
+    .mutation(async ({ input }) => {
+      const res = await withTransaction((tx) =>
+        aplicarAtaAudiencia(tx, {
+          processoId: input.processoId,
+          conteudo: input.texto,
+          audienciaId: input.audienciaId,
+        }),
+      );
+      if (!res) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Texto não reconhecido como ata de audiência (sem links nem marcadores de ata).",
+        });
+      }
+      return res;
     }),
 });

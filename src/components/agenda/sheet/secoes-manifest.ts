@@ -13,6 +13,7 @@ export type SecaoId =
   | "medidas"            // Medidas protetivas vigentes (unificada)
   | "preventiva"
   | "cautelares"
+  | "ata"                // Ata: gravações (links) + resultado realizado
   | "anotacoes-rapidas"
   | "analise-ia"
   | "imputacao"
@@ -41,6 +42,7 @@ export const SECOES_DEFAULT: SecaoId[] = [
   "medidas",
   "preventiva",
   "cautelares",
+  "ata",
   "anotacoes-rapidas",
   "analise-ia",
   "imputacao",
@@ -71,6 +73,7 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
   "versao",
   "dossie",
   "depoentes",
+  "ata",
   "anotacoes-rapidas",
   "documentos",
   "midia",
