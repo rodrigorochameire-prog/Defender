@@ -47,9 +47,11 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Volume2,
   X,
   XCircle,
 } from "lucide-react";
+import { AudioRecorder } from "@/components/atendimentos/audio-recorder";
 import { GerarDemandaPopover } from "./gerar-demanda-popover";
 import {
   AREA_CONFIG,
@@ -490,6 +492,39 @@ export function AtendimentoDetailSheet({
                 <RegistrosTimeline
                   assistidoId={a.assistidoId}
                   emptyHint="Sem registros para este assistido ainda — o que for colhido no atendimento entra aqui."
+                />
+              </div>
+            </CollapsibleSection>
+
+            {/* Áudio do atendimento — gravar e armazenar na pasta do Drive */}
+            <CollapsibleSection id="atd-audio" label="Áudio do atendimento" defaultOpen>
+              <div className="space-y-2">
+                {(() => {
+                  const aud = a as { audioUrl?: string | null; transcricaoStatus?: string | null };
+                  return aud.audioUrl ? (
+                    <div className="flex items-center gap-2 text-xs">
+                      <a
+                        href={aud.audioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 hover:underline"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" /> Áudio salvo no Drive
+                      </a>
+                      {aud.transcricaoStatus && (
+                        <span className="text-[10px] uppercase text-neutral-400">
+                          transcrição: {aud.transcricaoStatus}
+                        </span>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+                <AudioRecorder
+                  registroId={a.id}
+                  onUploaded={() => {
+                    invalidate();
+                    utils.registros.list.invalidate();
+                  }}
                 />
               </div>
             </CollapsibleSection>

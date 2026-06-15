@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AudioRecorder, uploadAudioAtendimento, type AudioGravado } from "@/components/atendimentos/audio-recorder";
 import {
   Select,
   SelectContent,
@@ -141,8 +142,19 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     utils.registros.listAgendados.invalidate();
   };
 
+  // Áudio gravado no modal (antes do registro existir) — sobe após criar.
+  const audioPendenteRef = useRef<AudioGravado | null>(null);
+
   const agendar = trpc.registros.agendar.useMutation({
-    onSuccess: () => {
+    onSuccess: async (registro) => {
+      const aud = audioPendenteRef.current;
+      if (aud && registro?.id) {
+        const r = await uploadAudioAtendimento(registro.id, aud);
+        toast[r.ok ? "success" : "error"](
+          r.ok ? "Áudio salvo no Drive. Transcrição enfileirada." : (r.error ?? "Falha ao salvar o áudio."),
+        );
+        audioPendenteRef.current = null;
+      }
       toast.success("Atendimento agendado");
       invalidate();
       onClose();
@@ -451,6 +463,13 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
                   className="text-sm"
                 />
               )}
+            </div>
+          )}
+
+          {!editing && (
+            <div className="space-y-1">
+              <Label className="text-xs">Áudio do atendimento (opcional)</Label>
+              <AudioRecorder onRecorded={(a) => { audioPendenteRef.current = a; }} />
             </div>
           )}
 
