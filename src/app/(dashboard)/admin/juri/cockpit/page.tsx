@@ -104,6 +104,7 @@ import { HistoricoPerguntas } from "@/components/juri/cockpit/historico-pergunta
 import { TimerSustentacao } from "@/components/juri/cockpit/timer-sustentacao";
 import { AvaliacaoInline, AvaliacaoLiveFeed } from "@/components/juri/cockpit/avaliacao-inline";
 import { EncerrarSessaoButton } from "@/components/juri/cockpit/encerrar-sessao";
+import { SessaoContexto } from "@/components/juri/cockpit/sessao-contexto";
 import { BriefingJuradoButton } from "@/components/juri/cockpit/briefing-jurado";
 
 // ============================================
@@ -1460,6 +1461,9 @@ function PlenarioCockpitContent() {
         </CollapsiblePageHeader>
 
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4 pb-24">
+          {/* Contexto da sessão (banco): defendido, processo, comarca, tese, depoentes — diferencia grupo do júri */}
+          <SessaoContexto sessaoJuriId={sessaoJuriId} isDarkMode={isDarkMode} />
+
           {/* Timer Sustentação - alertas visuais/vibração */}
           <TimerSustentacao
             isDarkMode={isDarkMode}

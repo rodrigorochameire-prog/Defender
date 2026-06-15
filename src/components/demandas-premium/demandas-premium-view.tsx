@@ -50,6 +50,7 @@ import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIO
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
+import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -656,6 +657,7 @@ function DemandaGridCard({
 }
 
 export default function Demandas() {
+  const urlSearchParams = useSearchParams();
   const { profissionalAtivo, isVisaoGeral } = useProfissional();
   // userId = users.id, que é o FK usado em demandas.defensorId
   const defensorUserId = profissionalAtivo.userId;
@@ -2558,6 +2560,32 @@ export default function Demandas() {
 
   // Quick-preview sheet
   const [previewDemandaId, setPreviewDemandaId] = useState<string | null>(null);
+
+  // Deep-link: ?atribuicao=<label|enum>&focus=<id>. Usado pelo "Gerar demanda"
+  // (ex.: a partir de um atendimento) para abrir o Kanban já na atribuição certa
+  // — o Kanban mostra uma atribuição por vez — e destacar a demanda recém-criada,
+  // evitando que ela pareça "sumida" por filtro de atribuição/prazo.
+  const urlDeepLinkApplied = useRef(false);
+  useEffect(() => {
+    if (urlDeepLinkApplied.current) return;
+    const atribParam = urlSearchParams?.get("atribuicao");
+    const focusParam = urlSearchParams?.get("focus");
+    if (!atribParam && !focusParam) return;
+    urlDeepLinkApplied.current = true;
+    if (atribParam) {
+      const label = ATRIBUICAO_ENUM_TO_LABEL[atribParam] ?? atribParam;
+      setDidInitFromUserAreas(true);
+      setSelectedAtribuicoes([label]);
+      try { localStorage.setItem(LS_DEFAULT_ATRIBUICAO, JSON.stringify([label])); } catch { /* ignore */ }
+      // Limpa filtros de prazo — demandas novas não têm prazo e sumiriam.
+      setPillFilters(new Set());
+      setSelectedPrazoFilter(null);
+    }
+    if (focusParam) {
+      // Abre o preview direto da demanda — visível independentemente de coluna/filtro.
+      setPreviewDemandaId(focusParam);
+    }
+  }, [urlSearchParams]);
   // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
   // o painel de novo registro abre junto. Resetado quando o sheet fecha.
   const [previewOpensWithRegistro, setPreviewOpensWithRegistro] = useState(false);

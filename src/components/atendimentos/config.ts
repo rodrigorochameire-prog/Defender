@@ -179,6 +179,21 @@ export const AREA_TO_ATRIBUICAO_ENUM: Record<string, string> = {
 };
 
 /**
+ * Atribuições válidas para criar demanda (demandas.createFromForm só aceita estes
+ * 6 enums). Usado pelo seletor do "Gerar demanda" — permite corrigir a atribuição
+ * quando a área do atendimento não bate com a coluna correta no Kanban.
+ * `atosLabel` aponta para o catálogo de atos (ATOS_POR_ATRIBUICAO) correspondente.
+ */
+export const ATRIBUICAO_DEMANDA_OPTIONS: { value: string; label: string; atosLabel: string }[] = [
+  { value: "SUBSTITUICAO", label: "Criminal (Substituição)", atosLabel: "Criminal Geral" },
+  { value: "JURI_CAMACARI", label: "Tribunal do Júri", atosLabel: "Tribunal do Júri" },
+  { value: "GRUPO_JURI", label: "Grupo Especial do Júri", atosLabel: "Tribunal do Júri" },
+  { value: "VVD_CAMACARI", label: "Violência Doméstica", atosLabel: "Violência Doméstica" },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal", atosLabel: "Execução Penal" },
+  { value: "SUBSTITUICAO_CIVEL", label: "Curadoria Especial", atosLabel: "Criminal Geral" },
+];
+
+/**
  * Área do atendimento → label do catálogo de atos (ATOS_POR_ATRIBUICAO).
  * CIVEL/FAMILIA/OUTRA não têm catálogo próprio → "Criminal Geral" (ato é livre).
  */

@@ -7,17 +7,19 @@
 // (RegistrosTimeline + RegistroEditor), anexos espelhados no Drive e footer
 // de ações. Simples, funcional, sofisticado.
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
+import { SheetToC, type ToCSection } from "@/components/agenda/sheet/sheet-toc";
 import { DocumentosBlock } from "@/components/agenda/sheet/documentos-block";
 import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
@@ -40,6 +42,7 @@ import {
   Pencil,
   Phone,
   Plus,
+  RotateCcw,
   ScrollText,
   Sparkles,
   Trash2,
@@ -57,10 +60,7 @@ import {
   whatsappUrl,
   type AtendimentoListItem,
 } from "./config";
-import { DossieAtendimentoBlock } from "./dossie-atendimento-block";
-
-/** Largura do sheet no desktop — o visualizador de autos encaixa à esquerda. */
-const SHEET_W = "min(100vw, 760px)";
+import { DossieAtendimentoBlock, DOSSIE_PARTS_PREPARACAO } from "./dossie-atendimento-block";
 
 interface AtendimentoDetailSheetProps {
   atendimento: AtendimentoListItem | null;
@@ -84,6 +84,63 @@ export function AtendimentoDetailSheet({
   const [novoRegistro, setNovoRegistro] = useState(false);
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Largura ajustável do sheet (alça de arraste à esquerda, persistida).
+  const { sheetW, dragging, startDrag, reset, pct } = useSheetWidthResize({
+    storageKey: "ombuds_atendimento_sheet_w",
+  });
+
+  // TOC lateral (padrão da agenda) — navegação por seções com scroll-spy.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState<string | undefined>();
+
+  const tocSections = useMemo<ToCSection[]>(() => {
+    if (!atendimento) return [];
+    const d = atendimento.dossieAtendimento;
+    const temProcessos =
+      !!atendimento.processo || (atendimento.processosCitados ?? []).length > 0;
+    const temRecepcao =
+      !!atendimento.anotacoesRecepcao ||
+      (atendimento.historicoSolar?.length ?? 0) > 0;
+    const s: ToCSection[] = [];
+    s.push({ id: "atd-registros", label: "Registros" });
+    s.push({ id: "atd-preparacao", label: "Preparação" });
+    if (d?.situacao_processual && d.situacao_processual.length > 0)
+      s.push({ id: "atd-situacao", label: "Situação", count: d.situacao_processual.length });
+    if (d?.historico_relevante && d.historico_relevante.length > 0)
+      s.push({ id: "atd-historico", label: "Histórico" });
+    if (temProcessos) s.push({ id: "atd-processos", label: "Processos" });
+    s.push({ id: "atd-documentos", label: "Docs" });
+    if (temRecepcao) s.push({ id: "atd-recepcao", label: "Recepção" });
+    if (atendimento.conteudo) s.push({ id: "atd-relato", label: "Relato" });
+    s.push({ id: "atd-anexos", label: "Anexos" });
+    return s;
+  }, [atendimento]);
+
+  useEffect(() => {
+    if (!open || !scrollRef.current) return;
+    const root = scrollRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0])
+          setActiveSection(visible[0].target.getAttribute("data-section-id") ?? undefined);
+      },
+      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+    const nodes = root.querySelectorAll("[data-section-id]");
+    nodes.forEach((n) => observer.observe(n));
+    return () => observer.disconnect();
+  }, [open, tocSections]);
+
+  const handleJump = (id: string) => {
+    const root = scrollRef.current;
+    if (!root) return;
+    const target = root.querySelector(`[data-section-id="${id}"]`) as HTMLElement | null;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const invalidate = () => {
     utils.registros.listAtendimentos.invalidate();
@@ -172,8 +229,11 @@ export function AtendimentoDetailSheet({
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
         side="right"
-        className="p-0 flex flex-col gap-0 w-full max-w-none sm:max-w-none border-l-0 bg-neutral-50 dark:bg-neutral-950 shadow-2xl [&>button:first-of-type]:hidden"
-        style={{ width: SHEET_W }}
+        className={cn(
+          "p-0 flex flex-col gap-0 w-full max-w-none sm:max-w-none border-l-0 bg-neutral-50 dark:bg-neutral-950 shadow-2xl [&>button:first-of-type]:hidden",
+          !dragging && "transition-[width] duration-300 ease-out"
+        )}
+        style={{ width: sheetW }}
       >
         <SheetTitle className="sr-only">Detalhes do atendimento</SheetTitle>
 
@@ -181,13 +241,35 @@ export function AtendimentoDetailSheet({
         {autosModalId && (
           <div
             className="hidden sm:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 shadow-2xl animate-in fade-in slide-in-from-left-6 duration-300 ease-out"
-            style={{ right: SHEET_W }}
+            style={{ right: sheetW }}
           >
             <AutosModalViewer
               driveFileId={autosModalId}
               processoId={a.processoId}
               onClose={() => setAutosModalId(null)}
             />
+          </div>
+        )}
+
+        {/* Alça de largura — borda esquerda. Arraste ajusta; duplo-clique reseta; fica salvo. */}
+        <div
+          onPointerDown={startDrag}
+          onDoubleClick={reset}
+          title="Arraste para ajustar a largura · duplo-clique reseta · fica salvo"
+          className="hidden sm:flex absolute inset-y-0 left-0 -ml-1.5 w-3 z-[60] cursor-col-resize items-center justify-center group"
+        >
+          <div
+            className={cn(
+              "h-14 w-1 rounded-full transition-all",
+              dragging
+                ? "bg-emerald-500 w-1.5"
+                : "bg-neutral-300/70 dark:bg-neutral-700 group-hover:bg-emerald-400 group-hover:h-20"
+            )}
+          />
+        </div>
+        {dragging && (
+          <div className="hidden sm:block absolute top-3 left-3 z-[61] px-2 py-1 rounded-md bg-neutral-900 text-white text-[10px] font-semibold tabular-nums shadow-lg pointer-events-none">
+            {Math.round(sheetW)}px · {pct}%
           </div>
         )}
 
@@ -208,7 +290,10 @@ export function AtendimentoDetailSheet({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+          {tocSections.length > 2 && (
+            <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
+          )}
           {/* Cartão de identidade */}
           <div className="mx-3 mt-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
             <div className="flex items-start gap-3.5">
@@ -287,6 +372,15 @@ export function AtendimentoDetailSheet({
                       <MessageCircle className="w-3 h-3" /> WhatsApp
                     </a>
                   )}
+                  {a.demandaId && (
+                    <Link
+                      href={`/admin/demandas/${a.demandaId}`}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+                      title="Demanda vinculada a este atendimento"
+                    >
+                      <ListPlus className="w-3 h-3" /> Demanda vinculada
+                    </Link>
+                  )}
                 </div>
                 {(a.pedido || a.local) && (
                   <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-1.5">
@@ -353,6 +447,8 @@ export function AtendimentoDetailSheet({
                   assistido={{ id: a.assistido.id, nome: a.assistido.nome }}
                   processo={a.processo ? { numeroAutos: a.processo.numeroAutos } : null}
                   area={a.area}
+                  contextoAtendimento={{ assunto: a.assunto, pedido: a.pedido, conteudo: a.conteudo }}
+                  atendimentoId={a.id}
                 >
                   <Button size="sm" variant="outline" className="flex-1 h-9 gap-1.5 text-[12px]">
                     <ListPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -362,6 +458,42 @@ export function AtendimentoDetailSheet({
               )}
             </div>
 
+            {/* Registros — hub de gestão do caso (destaque, no topo) */}
+            <CollapsibleSection
+              id="atd-registros"
+              label="Registros do caso"
+              defaultOpen
+              className="ring-1 ring-emerald-500/25 border-emerald-500/30 dark:border-emerald-500/20"
+            >
+              <div className="space-y-3">
+                {novoRegistro ? (
+                  <RegistroEditor
+                    assistidoId={a.assistidoId}
+                    processoId={a.processoId ?? undefined}
+                    tipoDefault="anotacao"
+                    tiposPrimarios={["anotacao", "providencia", "diligencia", "peticao"]}
+                    onSaved={() => {
+                      setNovoRegistro(false);
+                      utils.registros.list.invalidate();
+                    }}
+                    onCancel={() => setNovoRegistro(false)}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setNovoRegistro(true)}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-medium text-white transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-400/50 outline-none"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Registrar anotação, providência, diligência…
+                  </button>
+                )}
+                <RegistrosTimeline
+                  assistidoId={a.assistidoId}
+                  emptyHint="Sem registros para este assistido ainda — o que for colhido no atendimento entra aqui."
+                />
+              </div>
+            </CollapsibleSection>
+
             {/* Preparação */}
             <CollapsibleSection
               id="atd-preparacao"
@@ -370,7 +502,7 @@ export function AtendimentoDetailSheet({
               defaultOpen={!!dossie}
             >
               {dossie ? (
-                <DossieAtendimentoBlock dossie={dossie} />
+                <DossieAtendimentoBlock dossie={dossie} parts={DOSSIE_PARTS_PREPARACAO} />
               ) : (
                 <p className="text-xs text-muted-foreground">
                   Gere o contexto do assistido (processos, audiências, demandas, medidas
@@ -380,6 +512,29 @@ export function AtendimentoDetailSheet({
                 </p>
               )}
             </CollapsibleSection>
+
+            {/* Situação processual — seção própria (do dossiê) */}
+            {dossie?.situacao_processual && dossie.situacao_processual.length > 0 && (
+              <CollapsibleSection
+                id="atd-situacao"
+                label="Situação processual"
+                count={dossie.situacao_processual.length}
+                defaultOpen
+              >
+                <DossieAtendimentoBlock dossie={dossie} parts={["situacao"]} />
+              </CollapsibleSection>
+            )}
+
+            {/* Histórico relevante — seção própria (do dossiê) */}
+            {dossie?.historico_relevante && dossie.historico_relevante.length > 0 && (
+              <CollapsibleSection
+                id="atd-historico"
+                label="Histórico relevante"
+                count={dossie.historico_relevante.length}
+              >
+                <DossieAtendimentoBlock dossie={dossie} parts={["historico"]} />
+              </CollapsibleSection>
+            )}
 
             {/* Processos */}
             {(a.processo || citados.length > 0) && (
@@ -427,37 +582,6 @@ export function AtendimentoDetailSheet({
                 assistidoId={a.assistidoId}
                 onExpandLeft={(fileDriveId) => setAutosModalId(fileDriveId)}
               />
-            </CollapsibleSection>
-
-            {/* Registros — gestão do caso a partir do atendimento */}
-            <CollapsibleSection id="atd-registros" label="Registros" defaultOpen>
-              <div className="space-y-3">
-                {novoRegistro ? (
-                  <RegistroEditor
-                    assistidoId={a.assistidoId}
-                    processoId={a.processoId ?? undefined}
-                    tipoDefault="anotacao"
-                    tiposPrimarios={["anotacao", "providencia", "diligencia", "peticao"]}
-                    onSaved={() => {
-                      setNovoRegistro(false);
-                      utils.registros.list.invalidate();
-                    }}
-                    onCancel={() => setNovoRegistro(false)}
-                  />
-                ) : (
-                  <button
-                    onClick={() => setNovoRegistro(true)}
-                    className="w-full flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-3 py-2 text-xs text-neutral-500 dark:text-neutral-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Registrar anotação, providência, diligência…
-                  </button>
-                )}
-                <RegistrosTimeline
-                  assistidoId={a.assistidoId}
-                  emptyHint="Sem registros para este assistido ainda — o que for colhido no atendimento entra aqui."
-                />
-              </div>
             </CollapsibleSection>
 
             {/* Recepção & histórico SOLAR */}
@@ -610,6 +734,43 @@ export function AtendimentoDetailSheet({
                 Cancelar
               </Button>
             </>
+          )}
+          {a.status === "cancelado" && (
+            <Button
+              size="sm"
+              onClick={() =>
+                atualizar.mutate(
+                  { id: a.id, status: "agendado" },
+                  { onSuccess: () => toast.success("Atendimento reativado") }
+                )
+              }
+              disabled={atualizar.isPending}
+              className="h-8 gap-1.5 bg-sky-600 hover:bg-sky-700 text-[12px]"
+            >
+              {atualizar.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <RotateCcw className="w-3.5 h-3.5" />
+              )}
+              Reativar
+            </Button>
+          )}
+          {a.status === "realizado" && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() =>
+                atualizar.mutate(
+                  { id: a.id, status: "agendado" },
+                  { onSuccess: () => toast.success("Atendimento reaberto") }
+                )
+              }
+              disabled={atualizar.isPending}
+              className="h-8 gap-1.5 text-[12px] text-neutral-500"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reabrir
+            </Button>
           )}
           <div className="flex-1" />
           <Button size="sm" variant="ghost" onClick={() => onEdit(a)} className="h-8 gap-1.5 text-[12px] text-neutral-500">

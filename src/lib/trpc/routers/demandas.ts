@@ -497,6 +497,10 @@ export const demandasRouter = router({
         prazo: z.string().optional(),
         providencias: z.string().optional(), // ignorado — coluna foi migrada para tabela "registros"
         reuPreso: z.boolean().optional(),
+        // Quando a demanda nasce de um atendimento: id do registro de atendimento.
+        // Vincula o atendimento (e sua timeline) à demanda criada — rastreabilidade
+        // bidirecional atendimento ↔ demanda.
+        atendimentoId: z.number().int().positive().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -686,6 +690,20 @@ export const demandasRouter = router({
           });
         } catch (err) {
           console.error("Falha ao criar registro inicial da demanda", nova.id, err);
+        }
+      }
+
+      // Vincula o atendimento de origem à demanda: o registro do atendimento
+      // passa a apontar para a nova demanda, fazendo a timeline do atendimento
+      // aparecer na demanda e criando o vínculo bidirecional.
+      if (input.atendimentoId) {
+        try {
+          await db
+            .update(registros)
+            .set({ demandaId: nova.id })
+            .where(eq(registros.id, input.atendimentoId));
+        } catch (err) {
+          console.error("Falha ao vincular atendimento à demanda", input.atendimentoId, err);
         }
       }
 

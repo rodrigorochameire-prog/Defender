@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { toast } from "sonner";
 import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
 import { SheetToC, type ToCSection } from "./sheet/sheet-toc";
@@ -236,9 +237,15 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
   // Largura (px) que o sheet assume enquanto o modal está aberto. O modal ocupa
   // todo o espaço à esquerda até a borda do sheet (right = sheetW → encaixe perfeito).
-  // Ajustável pela alça de arraste e persistida no localStorage.
-  const [sheetW, setSheetW] = useState(700);
-  const [draggingDivider, setDraggingDivider] = useState(false);
+  // Ajustável pela alça de arraste e persistida — hook compartilhado com o sheet
+  // de Atendimentos (useSheetWidthResize).
+  const {
+    sheetW,
+    dragging: draggingDivider,
+    startDrag: startDividerDrag,
+    reset: resetSheetW,
+    pct: pctSheetW,
+  } = useSheetWidthResize({ storageKey: "ombuds_autos_modal_split_v2" });
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
@@ -439,54 +446,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
   // Fecha o modal de autos ao trocar de evento ou fechar o sheet.
   useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
-
-  // Largura preferida do sheet (com modal aberto) — persistida entre sessões.
-  // Sem preferência salva, usa ~45% da tela (um pouco menos que a metade).
-  useEffect(() => {
-    try {
-      const v = Number(localStorage.getItem("ombuds_autos_modal_split_v2"));
-      if (Number.isFinite(v) && v >= 360) { setSheetW(v); return; }
-    } catch {}
-    if (typeof window !== "undefined") {
-      setSheetW(Math.min(Math.max(Math.round(window.innerWidth * 0.45), 360), window.innerWidth - 360));
-    }
-  }, []);
-
-  const SHEET_W_KEY = "ombuds_autos_modal_split_v2";
-  const SHEET_W_MIN = 420;
-  const persistSheetW = (w: number) => { try { localStorage.setItem(SHEET_W_KEY, String(Math.round(w))); } catch {} };
-
-  // Arraste da alça na borda esquerda do sheet. Atualiza ao vivo e grava ao soltar.
-  const startDividerDrag = (e: React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDraggingDivider(true);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-    let last = sheetW;
-    const onMove = (ev: PointerEvent) => {
-      last = Math.min(Math.max(window.innerWidth - ev.clientX, SHEET_W_MIN), window.innerWidth - 360);
-      setSheetW(last);
-    };
-    const onUp = () => {
-      setDraggingDivider(false);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      persistSheetW(last);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-  };
-
-  // Duplo-clique na alça: reseta para ~45% da tela.
-  const resetSheetW = () => {
-    const w = typeof window !== "undefined" ? Math.round(window.innerWidth * 0.45) : 700;
-    setSheetW(w);
-    persistSheetW(w);
-  };
-  const pctSheetW = typeof window !== "undefined" && window.innerWidth ? Math.round((sheetW / window.innerWidth) * 100) : 0;
 
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
