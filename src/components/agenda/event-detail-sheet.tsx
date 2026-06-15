@@ -22,6 +22,7 @@ import { AutosModalViewer } from "./sheet/autos-modal-viewer";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
+import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -367,6 +368,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const testemunhasDB = ctx?.testemunhas ?? [];
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
+  // Campos por subtipo
+  const motivoDesignacao = extractString(ad, "motivo_designacao");
+  const relatoVitima = extractString(ad, "relato_vitima", "representacao_resumo");
+  const relatoAssistido = (ad as any)?.relato_assistido ?? null;
+  const relatoAtendimento = relatoAssistido?.atendimento ?? extractString(ad, "relato_atendimento");
+  const medidasProtetivas = extractArray(ad, "medidas_protetivas");
+  const medidasVigentesArr = extractArray(ad, "medidas_protetivas_vigentes");
 
   const depoentes = useMemo(() => {
     const all = [
@@ -493,8 +501,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     const s: ToCSection[] = [];
     if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
     if (fatos || fatosLiteral) s.push({ id: "fatos", label: "Fatos" });
+    if (motivoDesignacao) s.push({ id: "motivo-designacao", label: "Motivo" });
+    if (medidasProtetivas.length || medidasVigentesArr.length) s.push({ id: "medidas-deferidas", label: "Medidas" });
+    if (relatoVitima) s.push({ id: "relato-vitima", label: "Relato ofendida" });
     if (cronologia.length) s.push({ id: "sintese", label: "Síntese" });
-    if (versaoDelegacia || versaoJuizo) s.push({ id: "versao", label: "Versão" });
+    if (versaoDelegacia || versaoJuizo || relatoAtendimento) s.push({ id: "versao", label: "Relato assistido" });
     const nDep = depoentesDetalhe.length || depoentes.length;
     if (nDep) s.push({ id: "depoentes", label: "Depoentes", count: nDep });
     if (depoentes.length) s.push({ id: "depoimentos", label: "Depoimentos", count: depoentes.length });
@@ -506,7 +517,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     s.push({ id: "documentos", label: "Docs" });
     s.push({ id: "midia", label: "Mídia" });
     return s;
-  }, [imputacao, fatos, fatosLiteral, cronologia.length, versaoDelegacia, versaoJuizo, depoentes.length,
+  }, [imputacao, fatos, fatosLiteral, cronologia.length, versaoDelegacia, versaoJuizo, relatoAtendimento,
+      motivoDesignacao, relatoVitima, medidasProtetivas.length, medidasVigentesArr.length, depoentes.length,
       depoentesDetalhe.length, contradicoes.length,
       laudos.length, diligencias.length, pendencias.length, teses.length]);
 
@@ -807,7 +819,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             )}
 
             {!isLoading && dossieV2 && (
-              <CollapsibleSection id="dossie" label="Dossiê" defaultOpen>
+              <CollapsibleSection id="dossie" label="Roteiro da defesa" defaultOpen={false}>
                 <DossieV2Block dossie={dossieV2} />
               </CollapsibleSection>
             )}
@@ -815,6 +827,12 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             {typeof processoId === "number" && (
               <CollapsibleSection id="medidas" label="Medidas protetivas vigentes" defaultOpen>
                 <MedidasVigentesPanel processoId={processoId} readOnly />
+              </CollapsibleSection>
+            )}
+
+            {typeof processoId === "number" && (
+              <CollapsibleSection id="cautelares" label="Cautelares (prisão / diversas)" defaultOpen>
+                <CautelaresPanel processoId={processoId} readOnly />
               </CollapsibleSection>
             )}
 
@@ -906,7 +924,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
             {!isLoading && (
               <>
-                {!dossieV2 && (<>
+                {(<>
                 {!imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0 && (
                   <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
                     <div className="space-y-2">
@@ -979,28 +997,77 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   )}
                 </CollapsibleSection>
 
+                {motivoDesignacao && (
+                  <CollapsibleSection id="motivo-designacao" label="Motivo da designação" defaultOpen>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{motivoDesignacao}</p>
+                  </CollapsibleSection>
+                )}
+
+                {(medidasProtetivas.length > 0 || medidasVigentesArr.length > 0) && (
+                  <CollapsibleSection id="medidas-deferidas" label="Medidas protetivas (deferidas)" count={medidasProtetivas.length || medidasVigentesArr.length} defaultOpen>
+                    {medidasProtetivas.length > 0 ? (
+                      <ul className="space-y-1.5">
+                        {medidasProtetivas.map((m: any, i: number) => (
+                          <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 p-2 space-y-0.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{m.medida ?? m.texto ?? JSON.stringify(m)}</span>
+                              {m.status && (
+                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase flex-shrink-0",
+                                  /defer/i.test(m.status) ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                  : /revog|substit|indefer/i.test(m.status) ? "bg-neutral-100 text-neutral-500 dark:bg-neutral-800"
+                                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400")}>{m.status}</span>
+                              )}
+                            </div>
+                            {(m.inciso || m.id_fl) && (
+                              <p className="text-[10px] text-neutral-400">{[m.inciso, m.id_fl].filter(Boolean).join(" · ")}</p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <ul className="space-y-1 list-disc pl-4">
+                        {medidasVigentesArr.map((m: any, i: number) => (
+                          <li key={i} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{typeof m === "string" ? m : (m.medida ?? JSON.stringify(m))}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </CollapsibleSection>
+                )}
+
+                {relatoVitima && (
+                  <CollapsibleSection id="relato-vitima" label="Relato da ofendida / representação" defaultOpen>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{relatoVitima}</p>
+                  </CollapsibleSection>
+                )}
+
                 {cronologia.length > 0 && (
                   <CollapsibleSection id="sintese" label="Síntese Processual">
                     <SinteseProcessual eventos={cronologia} />
                   </CollapsibleSection>
                 )}
 
-                {(versaoDelegacia || versaoJuizo) && (
-                  <CollapsibleSection id="versao" label="Versão do Acusado">
+                {(versaoDelegacia || versaoJuizo || relatoAtendimento) && (
+                  <CollapsibleSection id="versao" label="Relato do assistido" defaultOpen>
                     {analyzedAt && (
                       <div className="flex justify-end mb-1">
                         <FreshnessBadge analyzedAt={analyzedAt} />
                       </div>
                     )}
+                    {relatoAtendimento && (
+                      <div className="mb-2">
+                        <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Atendimento (DPE)</div>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">{relatoAtendimento}</p>
+                      </div>
+                    )}
                     {versaoDelegacia && (
                       <div className="mb-2">
-                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Delegacia</div>
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório policial</div>
                         <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoDelegacia}</p>
                       </div>
                     )}
                     {versaoJuizo && (
                       <div>
-                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Em Juízo</div>
+                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório judicial</div>
                         <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoJuizo}</p>
                       </div>
                     )}
@@ -1075,7 +1142,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   )}
                 </CollapsibleSection>
 
-                {!dossieV2 && (<>
+                {(<>
                 {contradicoes.length > 0 && (
                   <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
                     {analyzedAt && (

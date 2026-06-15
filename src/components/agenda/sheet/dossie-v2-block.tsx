@@ -1,13 +1,4 @@
 import type { DossieV2 } from "@/lib/agenda/dossie-v2";
-import { nivelTeseClass } from "@/lib/agenda/dossie-v2";
-import { cn } from "@/lib/utils";
-
-const NIVEL_BADGE: Record<string, string> = {
-  alta: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  media: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  baixa: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
-  neutra: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
-};
 
 function Lista({ titulo, itens }: { titulo: string; itens?: string[] }) {
   if (!itens || itens.length === 0) return null;
@@ -24,12 +15,11 @@ function Lista({ titulo, itens }: { titulo: string; itens?: string[] }) {
 }
 
 export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
+  // Teses e fragilidades agora vivem nas seções granulares do painel
+  // (Teses / Contradições); aqui ficam só os complementos do dossiê.
   const temAlgo =
     !!dossie &&
-    ((dossie.resumo?.length ?? 0) > 0 ||
-      (dossie.teses?.length ?? 0) > 0 ||
-      (dossie.fragilidades?.length ?? 0) > 0 ||
-      (dossie.perguntas?.length ?? 0) > 0 ||
+    ((dossie.perguntas?.length ?? 0) > 0 ||
       (dossie.providencias?.length ?? 0) > 0 ||
       !!dossie.versao_defendido ||
       !!dossie.intimacao);
@@ -51,36 +41,10 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
         </div>
       )}
 
-      {/* Resumo NÃO é repetido aqui — vive na seção "Resumo Executivo" do painel,
-          evitando redundância. O Dossiê foca em teses/fragilidades/perguntas/providências. */}
+      {/* Resumo, teses e fragilidades NÃO são repetidos aqui — vivem nas seções
+          granulares do painel (Resumo Executivo / Teses / Contradições). Este
+          bloco complementa com perguntas, providências e a versão do defendido. */}
 
-      {dossie.teses && dossie.teses.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Teses</h4>
-          {dossie.teses.map((t, i) => (
-            <div key={t.nome ?? i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 p-2.5 space-y-1">
-              <div className="flex items-start justify-between gap-2">
-                {t.nome && (<p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 flex-1">{t.nome}</p>)}
-                {t.nivel && (
-                  <span
-                    className={cn(
-                      "text-[9px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap flex-shrink-0",
-                      NIVEL_BADGE[nivelTeseClass(t.nivel)],
-                    )}
-                  >
-                    {t.nivel}
-                  </span>
-                )}
-              </div>
-              {t.fundamento && (
-                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">{t.fundamento}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Lista titulo="Fragilidades da acusação" itens={dossie.fragilidades} />
       <Lista titulo="Perguntas / atos em audiência" itens={dossie.perguntas} />
       <Lista titulo="Providências da defesa" itens={dossie.providencias} />
 
