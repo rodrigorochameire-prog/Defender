@@ -150,7 +150,10 @@ function tryParseResult(stdout) {
 // --- Spawn claude -p and return { code, stdout, stderr } ---
 function runClaude(skillPath, prompt) {
   return new Promise((resolvePromise) => {
-    const args = ['-p', '--system-prompt-file', skillPath, '--permission-mode', 'auto', prompt]
+    // bypassPermissions: worker headless precisa rodar Bash autônomo (rclone,
+    // ffmpeg, whisper-cli, node) sem diálogo de aprovação. 'auto'/'acceptEdits'
+    // bloqueiam Bash e a skill de transcrição (entre outras) nunca conclui.
+    const args = ['-p', '--system-prompt-file', skillPath, '--permission-mode', 'bypassPermissions', prompt]
     const child = spawn(CLAUDE_BIN, args, {
       cwd: PROJECT_DIR,
       maxBuffer: 10 * 1024 * 1024,
