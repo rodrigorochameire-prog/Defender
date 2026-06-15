@@ -73,8 +73,12 @@ for (const item of items) {
     // Medidas estruturadas (parse art. 22) quando o dossiê as forneceu
     medidas_protetivas: p.medidas_protetivas ?? ra.medidas_protetivas ?? null,
     // Justificação (MPU): por que a audiência foi designada + relato da ofendida/representação
+    // motivo_designacao agora é objeto {origem, detalhe} (o sheet normaliza string legada também)
     motivo_designacao: p.motivo_designacao ?? ra.motivo_designacao ?? null,
     relato_vitima: p.relato_vitima ?? ra.relato_vitima ?? (ofendida?.depoimento_ip ?? null),
+    // Resumo geral situacional por subtipo + pretensão de mérito da defesa (justificação/MPU)
+    resumo_audiencia: p.resumo_audiencia ?? ra.resumo_audiencia ?? null,
+    requerimento_defesa: p.requerimento_defesa ?? ra.requerimento_defesa ?? null,
     // Relato do assistido: atendimento (DPE) × interrogatório policial × judicial
     relato_assistido: relatoAssistido ?? (interrogando ? {
       atendimento: null,
