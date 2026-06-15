@@ -181,7 +181,12 @@ export async function aplicarMedidasMPU(
   params: { processoId: number; conteudo: string; dataDecisaoISO: string | null },
 ): Promise<MedidaCriada[]> {
   const parsed = parseDecisaoMPU(params.conteudo);
-  if (parsed.medidas.length === 0 && parsed.medidasRevogadas.length === 0) return [];
+  if (
+    parsed.medidas.length === 0 &&
+    parsed.medidasRevogadas.length === 0 &&
+    !parsed.revogacaoTotal
+  )
+    return [];
 
   const [proc] = await tx
     .select({ numero: processos.numeroAutos })
@@ -290,11 +295,22 @@ export async function aplicarMedidasMPU(
       distanciaMetros: medida.distanciaMetros ?? null,
     });
   }
-  if (plano.revogarIds.length) {
+  // Revogação total ("revogo as medidas protetivas", sem nomear medida) →
+  // revoga TODAS as ativas origem=parser do processo. Senão, só as nomeadas.
+  const revogarIds = parsed.revogacaoTotal
+    ? existentes
+        .filter((e) => e.origem === "parser" && e.status !== "revogada")
+        .map((e) => e.id)
+    : plano.revogarIds;
+  if (revogarIds.length) {
     await tx
       .update(medidasMPU)
-      .set({ status: "revogada" })
-      .where(inArray(medidasMPU.id, plano.revogarIds));
+      .set({
+        status: "revogada",
+        motivoRevogacao: parsed.motivoRevogacao ?? parsed.motivoRevogacaoLiteral ?? "Revogação (motivo não classificado)",
+        dataRevogacao: params.dataDecisaoISO,
+      })
+      .where(inArray(medidasMPU.id, revogarIds));
   }
 
   // Esteira: recalculada sobre o conjunto VIGENTE pós-merge (não só o parse
@@ -327,12 +343,22 @@ export async function aplicarMedidasMPU(
   const partes: string[] = [];
   if (plano.inserir.length) partes.push(`${plano.inserir.length} concedida(s)`);
   if (plano.atualizar.length) partes.push(`${plano.atualizar.length} atualizada(s)`);
-  if (plano.revogarIds.length) partes.push(`${plano.revogarIds.length} revogada(s)`);
+  if (parsed.revogacaoTotal) {
+    partes.push(
+      `revogação total das MPU${revogarIds.length ? ` (${revogarIds.length} medida(s) marcada(s))` : ""}${parsed.motivoRevogacao ? ` — motivo: ${parsed.motivoRevogacao}` : ""}`,
+    );
+  } else if (revogarIds.length) {
+    partes.push(
+      `${revogarIds.length} revogada(s)${parsed.motivoRevogacao ? ` — motivo: ${parsed.motivoRevogacao}` : ""}`,
+    );
+  }
   if (modulacoes.length) partes.push(`modulação — ${modulacoes.join(" | ")}`);
   await tx.insert(historicoMPU).values({
     processoVVDId: pvvd.id,
     tipoEvento:
-      rows.length === 0 && plano.revogarIds.length ? "revogacao" : "concessao",
+      parsed.revogacaoTotal || (rows.length === 0 && revogarIds.length)
+        ? "revogacao"
+        : "concessao",
     dataEvento: params.dataDecisaoISO ?? new Date().toISOString().slice(0, 10),
     descricao: `Decisão aplicada pelo parser: ${partes.join(", ")}.`,
     medidasVigentes: rows.map((r) => r.codigo).join(", "),

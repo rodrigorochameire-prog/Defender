@@ -364,6 +364,10 @@ export const medidasMPU = pgTable("medidas_mpu", {
   dataDecisao: date("data_decisao"),
   dataVencimento: date("data_vencimento"),
   status: varchar("status", { length: 20 }).default("ativa"),
+  /** Motivo classificado da revogação (quando status=revogada). */
+  motivoRevogacao: text("motivo_revogacao"),
+  /** Data em que a medida foi revogada. */
+  dataRevogacao: date("data_revogacao"),
   origem: varchar("origem", { length: 20 }).default("parser"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

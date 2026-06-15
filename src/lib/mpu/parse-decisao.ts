@@ -27,6 +27,13 @@ export interface DecisaoMPUParsed {
   medidas: MedidaParsed[];
   /** Códigos cujas cláusulas vieram sob verbo de revogação (ajuste posterior). */
   medidasRevogadas: MedidaMpuCodigo[];
+  /** Revogação genérica de TODAS as MPU (ex.: "revogo as medidas protetivas"),
+   *  sem nomear medida específica — o aplicador revoga todas as ativas. */
+  revogacaoTotal: boolean;
+  /** Motivo classificado da revogação (quando detectável). */
+  motivoRevogacao: string | null;
+  /** Trecho da decisão que fundamenta a revogação (verbatim). */
+  motivoRevogacaoLiteral: string | null;
 }
 
 /**
@@ -49,6 +56,63 @@ const DEFERIMENTO =
  * chamador atualizar o status das medidas existentes.
  */
 const REVOGACAO = /\b(revogo|revogad\w*|revoga(?:-se)?|casso|cassad\w*|torno sem efeito)\b/;
+
+/** Revogação GENÉRICA de todas as MPU (não nomeia medida específica). */
+const REVOGACAO_TOTAL =
+  /\b(revog\w+|casso|cassad\w*|torno sem efeito)\b[^.;]{0,40}\bmedidas? protetiv/;
+
+/**
+ * Classifica o motivo da revogação a partir do texto normalizado.
+ * Ordem por especificidade. Retorna [rótulo, gatilho] ou null.
+ */
+const MOTIVOS_REVOGACAO: Array<{ rotulo: string; re: RegExp }> = [
+  {
+    rotulo: "Desistência da ofendida (ausência de interesse na manutenção)",
+    re: /desistenci|nao (tem|possui|ha) (mais )?interesse|ausencia de interesse|sem interesse na manutencao|perda (do )?interesse|nao tem interesse na manutencao/,
+  },
+  {
+    rotulo: "Reaproximação/reconciliação do casal",
+    re: /reaproximacao|reconciliacao|reatamento|retomada (da )?(uniao|convivencia)|restabelecimento da convivencia|retorno ao (lar|convivio)/,
+  },
+  {
+    rotulo: "Cessação do risco / ausência de risco atual",
+    re: /cessacao do risco|cessou o risco|ausencia de risco|nao (mais )?subsist\w*.{0,20}risco|risco (ja )?cessou|ausencia de (atual )?periculum/,
+  },
+  {
+    rotulo: "Decurso do prazo das medidas",
+    re: /decurso (do|de) prazo|prazo (ja )?(esgotad|expirad|escoad|exaurid)|expirou o prazo/,
+  },
+  {
+    rotulo: "Pedido da vítima",
+    re: /a pedido da (vitima|ofendida)|requerimento da (vitima|ofendida)|a rogo da (vitima|ofendida)/,
+  },
+  {
+    rotulo: "Improcedência / não comprovação dos requisitos",
+    re: /improcedent|nao (restou )?(comprovad|demonstrad).{0,25}(risco|requisitos|violencia)|ausencia de (lastro|prova|requisitos)/,
+  },
+];
+
+function classificarMotivoRevogacao(norm: string): string | null {
+  for (const m of MOTIVOS_REVOGACAO) if (m.re.test(norm)) return m.rotulo;
+  return null;
+}
+
+/** Frase verbatim que carrega o fundamento da revogação (para citar). */
+function extrairMotivoLiteral(textoOriginal: string): string | null {
+  const fs = textoOriginal
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.;])\s+(?=[A-ZÀ-Ý0-9"“(])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const alvo = fs.find((f) => {
+    const nf = normalizar(f);
+    return (
+      MOTIVOS_REVOGACAO.some((m) => m.re.test(nf)) ||
+      /revog\w+[^.;]{0,40}medidas? protetiv/.test(nf)
+    );
+  });
+  return alvo ? alvo.slice(0, 600) : null;
+}
 
 /**
  * Divide o texto em segmentos por alíneas (`a) b)…`) — incluindo alíneas inline
@@ -164,6 +228,9 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
       prazoDias: null,
       medidas: [],
       medidasRevogadas: [],
+      revogacaoTotal: false,
+      motivoRevogacao: null,
+      motivoRevogacaoLiteral: null,
     };
   }
   const normFull = normalizar(texto);
@@ -220,6 +287,14 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
   // (ex.: "revogo X; defiro X com nova distância" = modificação, não fim).
   for (const cod of porCodigo.keys()) revogadas.delete(cod);
 
+  // Revogação total: "revogo as medidas protetivas" (genérico) sem conceder
+  // nada de novo. Captura o motivo classificado + a frase verbatim.
+  const revogacaoTotal = REVOGACAO_TOTAL.test(normFull) && porCodigo.size === 0;
+  const motivoRevogacao =
+    revogacaoTotal || revogadas.size > 0 ? classificarMotivoRevogacao(normFull) : null;
+  const motivoRevogacaoLiteral =
+    revogacaoTotal || revogadas.size > 0 ? extrairMotivoLiteral(texto) : null;
+
   return {
     ofendida,
     agressor,
@@ -227,5 +302,8 @@ export function parseDecisaoMPU(texto: string): DecisaoMPUParsed {
     prazoDias: extrairPrazo(normFull),
     medidas: [...porCodigo.values()],
     medidasRevogadas: [...revogadas],
+    revogacaoTotal,
+    motivoRevogacao,
+    motivoRevogacaoLiteral,
   };
 }

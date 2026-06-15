@@ -92,6 +92,11 @@ export function MedidaMpuCard({
       {medida.dataVencimento && (
         <p className="mt-1 text-[11px] text-neutral-500">Vence em {medida.dataVencimento}</p>
       )}
+      {status === "revogada" && medida.motivoRevogacao && (
+        <p className="mt-1.5 rounded border-l-2 border-neutral-400 bg-neutral-100/60 px-2 py-1 text-[11px] text-neutral-600 dark:bg-neutral-800/40 dark:text-neutral-300">
+          Revogada{medida.dataRevogacao ? ` em ${formatarDataBR(medida.dataRevogacao)}` : ""} — {medida.motivoRevogacao}
+        </p>
+      )}
       {(medida.parametros?.alteracoes ?? []).map((alt, i) => (
         <p
           key={i}
