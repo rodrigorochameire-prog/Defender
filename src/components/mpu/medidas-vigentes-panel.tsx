@@ -16,6 +16,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MedidaMpuCard } from "./medida-mpu-card";
+import { useMedidasVigentes } from "./use-medidas-vigentes";
 import {
   MEDIDA_MPU,
   STATUS_MEDIDA,
@@ -30,13 +31,9 @@ type Props =
 
 export function MedidasVigentesPanel(props: Props) {
   const readOnly = props.readOnly ?? false;
-  const queryInput =
-    "processoVvdId" in props && props.processoVvdId != null
-      ? { processoVvdId: props.processoVvdId }
-      : { processoId: (props as { processoId: number }).processoId };
 
   const utils = trpc.useUtils();
-  const { data, isLoading } = trpc.mpu.listMedidas.useQuery(queryInput);
+  const { medidas, processoVvdId, isLoading } = useMedidasVigentes(props);
 
   const setStatus = trpc.mpu.setStatusMedida.useMutation({
     onSuccess: () => {
@@ -67,9 +64,6 @@ export function MedidasVigentesPanel(props: Props) {
       </div>
     );
   }
-
-  const medidas = data?.medidas ?? [];
-  const processoVvdId = data?.processoVvdId ?? null;
 
   const submitManual = () => {
     if (!processoVvdId || !novoCodigo) return;

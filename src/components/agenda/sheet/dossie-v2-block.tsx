@@ -14,7 +14,7 @@ function Lista({ titulo, itens }: { titulo: string; itens?: string[] }) {
   );
 }
 
-export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
+export function DossieV2Block({ dossie, ocultarIntimacao }: { dossie: DossieV2; ocultarIntimacao?: boolean }) {
   // Teses e fragilidades agora vivem nas seções granulares do painel
   // (Teses / Contradições); aqui ficam só os complementos do dossiê.
   const temAlgo =
@@ -22,7 +22,7 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
     ((dossie.perguntas?.length ?? 0) > 0 ||
       (dossie.providencias?.length ?? 0) > 0 ||
       !!dossie.versao_defendido ||
-      !!dossie.intimacao);
+      (!ocultarIntimacao && !!dossie.intimacao));
 
   if (!temAlgo) {
     return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">Dossiê sem conteúdo.</p>;
@@ -57,7 +57,7 @@ export function DossieV2Block({ dossie }: { dossie: DossieV2 }) {
         </div>
       )}
 
-      {dossie.intimacao && (
+      {!ocultarIntimacao && dossie.intimacao && (
         <div className="space-y-1">
           <h4 className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Intimação</h4>
           <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{dossie.intimacao}</p>

@@ -10,7 +10,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { resolverManifesto, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
+import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
+import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
+import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
+import { RequerimentoDefesaSecao } from "@/components/agenda/sheet/secoes/RequerimentoDefesaSecao";
+import { ResumoGeralSecao } from "@/components/agenda/sheet/secoes/ResumoGeralSecao";
+import { IntimacaoSecao } from "@/components/agenda/sheet/secoes/IntimacaoSecao";
+import { MedidasVigentesSecao } from "@/components/agenda/sheet/secoes/MedidasVigentesSecao";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { toast } from "sonner";
 import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
@@ -22,7 +30,6 @@ import { DocumentosBlock } from "./sheet/documentos-block";
 import { AutosModalViewer } from "./sheet/autos-modal-viewer";
 import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
-import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
 import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
@@ -377,12 +384,18 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const testemunhasAcusacao = extractArray(ad, "testemunhas_acusacao");
   const testemunhasDefesa = extractArray(ad, "testemunhas_defesa");
   // Campos por subtipo
-  const motivoDesignacao = extractString(ad, "motivo_designacao");
   const relatoVitima = extractString(ad, "relato_vitima", "representacao_resumo");
   const relatoAssistido = (ad as any)?.relato_assistido ?? null;
   const relatoAtendimento = relatoAssistido?.atendimento ?? extractString(ad, "relato_atendimento");
   const medidasProtetivas = extractArray(ad, "medidas_protetivas");
   const medidasVigentesArr = extractArray(ad, "medidas_protetivas_vigentes");
+  // Campos do manifesto por subtipo (Justificação e novas seções)
+  const motivo = normalizarMotivo((ad as any)?.motivo_designacao);
+  const resumoAudiencia = extractString(ad, "resumo_audiencia");
+  const requerimentoDefesa = extractString(ad, "requerimento_defesa");
+  const intimacaoTexto = dossieV2?.intimacao ?? null;
+  const { qtd: qtdMedidasBanco } = useMedidasVigentes({ processoId: typeof processoId === "number" ? processoId : null });
+  const medidasAnalysis = medidasProtetivas.length ? medidasProtetivas : medidasVigentesArr;
 
   const depoentes = useMemo(() => {
     const all = [
@@ -457,30 +470,654 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const pendencias = extractArray(ad, "pendencias_diligencia_pre_aij", "pendencias");
   const teses = extractArray(ad, "teses_defesa", "teses").filter(Boolean);
 
-  const tocSections: ToCSection[] = useMemo(() => {
-    const s: ToCSection[] = [];
-    if (imputacao) s.push({ id: "imputacao", label: "Imputação" });
-    if (fatos || fatosLiteral) s.push({ id: "fatos", label: "Fatos" });
-    if (motivoDesignacao) s.push({ id: "motivo-designacao", label: "Motivo" });
-    if (medidasProtetivas.length || medidasVigentesArr.length) s.push({ id: "medidas-deferidas", label: "Medidas" });
-    if (relatoVitima) s.push({ id: "relato-vitima", label: "Relato ofendida" });
-    if (cronologia.length) s.push({ id: "sintese", label: "Síntese" });
-    if (versaoDelegacia || versaoJuizo || relatoAtendimento) s.push({ id: "versao", label: "Relato assistido" });
-    const nDep = depoentesDetalhe.length || depoentes.length;
-    if (nDep) s.push({ id: "depoentes", label: "Depoentes", count: nDep });
-    if (depoentes.length) s.push({ id: "depoimentos", label: "Depoimentos", count: depoentes.length });
-    if (contradicoes.length) s.push({ id: "contradicoes", label: "Contradições" });
-    if (laudos.length) s.push({ id: "laudos", label: "Laudos" });
-    if (diligencias.length) s.push({ id: "investigacao", label: "Investigação" });
-    if (pendencias.length) s.push({ id: "pendencias", label: "Pendências" });
-    if (teses.length) s.push({ id: "teses", label: "Teses" });
-    s.push({ id: "documentos", label: "Docs" });
-    s.push({ id: "midia", label: "Mídia" });
-    return s;
-  }, [imputacao, fatos, fatosLiteral, cronologia.length, versaoDelegacia, versaoJuizo, relatoAtendimento,
-      motivoDesignacao, relatoVitima, medidasProtetivas.length, medidasVigentesArr.length, depoentes.length,
-      depoentesDetalhe.length, contradicoes.length,
-      laudos.length, diligencias.length, pendencias.length, teses.length]);
+  // Manifesto de seções por subtipo: a ordem/conjunto vem daqui (Justificação
+  // usa SECOES_JUSTIFICACAO; demais ritos = SECOES_DEFAULT). O corpo e o ToC
+  // iteram a MESMA fonte, garantindo paridade visual.
+  const manifesto = resolverManifesto(SUBTIPO_CONFIG[subtipo]);
+
+  const secoesMap: Record<SecaoId, { label: string; temDado: boolean; count?: number; node: ReactNode }> = {
+    "resumo": {
+      label: "Resumo Executivo",
+      temDado: !!resumoExecutivo,
+      node: (
+        <CollapsibleSection id="resumo" label="Resumo Executivo" defaultOpen>
+          <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{resumoExecutivo}</p>
+        </CollapsibleSection>
+      ),
+    },
+    "resumo-audiencia": {
+      label: "Resumo geral",
+      temDado: !!resumoAudiencia,
+      node: (
+        <CollapsibleSection id="resumo-audiencia" label="Resumo geral" defaultOpen>
+          <ResumoGeralSecao texto={resumoAudiencia!} />
+        </CollapsibleSection>
+      ),
+    },
+    "dossie": {
+      label: "Roteiro da defesa",
+      temDado: !!dossieV2,
+      node: (
+        <CollapsibleSection id="dossie" label="Roteiro da defesa" defaultOpen={false}>
+          <DossieV2Block dossie={dossieV2} ocultarIntimacao={manifesto.includes("intimacao")} />
+        </CollapsibleSection>
+      ),
+    },
+    "medidas": {
+      label: "Medidas protetivas vigentes",
+      temDado: typeof processoId === "number" || medidasAnalysis.length > 0,
+      node: (
+        <CollapsibleSection id="medidas" label="Medidas protetivas vigentes" defaultOpen>
+          <MedidasVigentesSecao
+            processoId={typeof processoId === "number" ? processoId : null}
+            qtdBanco={qtdMedidasBanco}
+            medidasAnalysis={medidasAnalysis}
+          />
+        </CollapsibleSection>
+      ),
+    },
+    "preventiva": {
+      label: "Prisão preventiva (art. 312)",
+      temDado: typeof processoId === "number",
+      node: (
+        <CollapsibleSection id="preventiva" label="Prisão preventiva (art. 312)" defaultOpen>
+          <PrisaoPreventivaPanel processoId={processoId} />
+        </CollapsibleSection>
+      ),
+    },
+    "cautelares": {
+      label: "Cautelares diversas da prisão",
+      temDado: typeof processoId === "number",
+      node: (
+        <CollapsibleSection id="cautelares" label="Cautelares diversas da prisão" defaultOpen>
+          <CautelaresPanel processoId={processoId} readOnly apenasEspecie="diversa" />
+        </CollapsibleSection>
+      ),
+    },
+    "anotacoes-rapidas": {
+      label: "Anotações rápidas",
+      temDado: true,
+      count: anotacoesRapidas.length,
+      node: (
+        <CollapsibleSection
+          id="anotacoes-rapidas"
+          label="Anotações rápidas"
+          count={anotacoesRapidas.length}
+          defaultOpen
+        >
+          {deteccaoPendente && audienciaIdNum && (
+            <div className="mb-2">
+              <EventoDetectadoBanner
+                deteccao={deteccaoPendente}
+                isPending={actions.aplicarEvento.isPending}
+                onDescartar={() => setDeteccaoPendente(null)}
+                onAplicar={(d) =>
+                  actions.aplicarEvento.mutate(
+                    {
+                      audienciaId: audienciaIdNum,
+                      evento: d.evento,
+                      motivo: d.motivo,
+                      motivoDetalhe: d.motivoDetalhe,
+                      ...(d.novaData
+                        ? { novaData: d.novaData, novaHora: d.novaHora ?? "00:00" }
+                        : {}),
+                    },
+                    { onSuccess: () => setDeteccaoPendente(null) }
+                  )
+                }
+              />
+            </div>
+          )}
+          {anotacoesRapidas.length === 0 ? (
+            <EmptyHint text="Nenhuma anotação ainda" />
+          ) : (
+            <ul className="space-y-2">
+              {anotacoesRapidas.map((n) => (
+                <li
+                  key={n.timestamp}
+                  className="group flex items-start gap-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-neutral-800 dark:text-neutral-100 whitespace-pre-wrap break-words">
+                      {n.texto}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-neutral-400">
+                      {autoresAnotacoes[n.autorId] ?? "—"} ·{" "}
+                      {formatDistanceToNow(new Date(n.timestamp), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Estruturar anotação"
+                    title="Detectar evento de audiência (redesignação/suspensão)"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
+                    onClick={() => {
+                      const d = parseAnotacaoAudiencia(n.texto);
+                      if (d) setDeteccaoPendente(d);
+                      else toast.info("Nenhum evento de audiência detectado nesta anotação");
+                    }}
+                  >
+                    <CalendarClock className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Apagar anotação"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 cursor-pointer p-1"
+                    disabled={actions.removeNote.isPending || !audienciaIdNum}
+                    onClick={() =>
+                      audienciaIdNum &&
+                      actions.removeNote.mutate({
+                        audienciaId: audienciaIdNum,
+                        timestamp: n.timestamp,
+                      })
+                    }
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "analise-ia": {
+      label: "Análise IA",
+      temDado: !imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0,
+      node: (
+        <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
+          <div className="space-y-2">
+            <EmptyHint text="Nenhuma análise IA executada ainda." />
+            <AnalyzeCTA
+              assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+              processoId={typeof processoId === "number" ? processoId : null}
+              analysisStatus={analysisStatus}
+            />
+          </div>
+        </CollapsibleSection>
+      ),
+    },
+    "imputacao": {
+      label: "Imputação",
+      temDado: true,
+      node: (
+        <CollapsibleSection id="imputacao" label="Imputação" defaultOpen>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          {imputacao ? (
+            <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{imputacao}</p>
+          ) : (
+            <div className="space-y-2">
+              <EmptyHint text="Imputação não extraída — rode a análise IA." />
+              <AnalyzeCTA
+                assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                processoId={typeof processoId === "number" ? processoId : null}
+                analysisStatus={analysisStatus}
+              />
+            </div>
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "fatos": {
+      label: "Fatos (Denúncia)",
+      temDado: true,
+      node: (
+        <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          {fatos || fatosLiteral ? (
+            <div className="space-y-2">
+              {fatosLiteral && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setVerFatosLiteral((v) => !v)}
+                    className="text-[10px] font-medium px-2 py-0.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  >
+                    {verFatosLiteral ? "ver resumo" : "ver trecho literal"}
+                  </button>
+                </div>
+              )}
+              {verFatosLiteral && fatosLiteral ? (
+                <blockquote className="text-[13px] text-neutral-700 dark:text-neutral-300 leading-relaxed border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 italic whitespace-pre-wrap">
+                  {fatosLiteral}
+                </blockquote>
+              ) : (
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos ?? fatosLiteral}</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <EmptyHint text="Narrativa da denúncia não disponível." />
+              <AnalyzeCTA
+                assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                processoId={typeof processoId === "number" ? processoId : null}
+                analysisStatus={analysisStatus}
+              />
+            </div>
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "motivo-designacao": {
+      label: "Motivo da designação",
+      temDado: !!motivo,
+      node: (
+        <CollapsibleSection id="motivo-designacao" label="Motivo da designação" defaultOpen>
+          <MotivoDesignacaoSecao motivo={motivo!} />
+        </CollapsibleSection>
+      ),
+    },
+    "requerimento-defesa": {
+      label: "Requerimento da defesa",
+      temDado: !!requerimentoDefesa,
+      node: (
+        <CollapsibleSection id="requerimento-defesa" label="Requerimento da defesa" defaultOpen>
+          <RequerimentoDefesaSecao texto={requerimentoDefesa!} vinculadoAoMotivo={motivo?.origem === "requerimento_defesa"} />
+        </CollapsibleSection>
+      ),
+    },
+    "intimacao": {
+      label: "Intimação",
+      temDado: !!intimacaoTexto,
+      node: (
+        <CollapsibleSection id="intimacao" label="Intimação" defaultOpen>
+          <IntimacaoSecao texto={intimacaoTexto!} />
+        </CollapsibleSection>
+      ),
+    },
+    "relato-vitima": {
+      label: "Relato da ofendida / representação",
+      temDado: !!relatoVitima,
+      node: (
+        <CollapsibleSection id="relato-vitima" label="Relato da ofendida / representação" defaultOpen>
+          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{relatoVitima}</p>
+        </CollapsibleSection>
+      ),
+    },
+    "sintese": {
+      label: "Síntese Processual",
+      temDado: cronologia.length > 0,
+      node: (
+        <CollapsibleSection id="sintese" label="Síntese Processual">
+          <SinteseProcessual eventos={cronologia} />
+        </CollapsibleSection>
+      ),
+    },
+    "versao": {
+      label: "Relato do assistido",
+      temDado: !!(versaoDelegacia || versaoJuizo || relatoAtendimento),
+      node: (
+        <CollapsibleSection id="versao" label="Relato do assistido" defaultOpen>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          {relatoAtendimento && (
+            <div className="mb-2">
+              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Atendimento (DPE)</div>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">{relatoAtendimento}</p>
+            </div>
+          )}
+          {versaoDelegacia && (
+            <div className="mb-2">
+              <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório policial</div>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoDelegacia}</p>
+            </div>
+          )}
+          {versaoJuizo && (
+            <div>
+              <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório judicial</div>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoJuizo}</p>
+            </div>
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "depoentes": {
+      label: "Depoentes",
+      temDado: !!(depoentesDetalhe.length || depoentes.length),
+      count: depoentesDetalhe.length || depoentes.length,
+      node: (
+        <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
+          {depoentesDetalhe.length > 0 ? (
+            <PainelDepoentesStatus depoentes={depoentesDetalhe} />
+          ) : (
+            <EmptyHint text="Status dos depoentes não disponível." />
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "depoimentos": {
+      label: "Depoimentos",
+      temDado: depoentes.length > 0,
+      count: depoentes.length,
+      node: (
+        <CollapsibleSection id="depoimentos" label="Depoimentos" count={depoentes.length} defaultOpen>
+          {depoentes.length > 0 ? (
+            <div className="space-y-2">
+              {depoentes.map((d: any, i: number) => {
+                const pessoaId = pessoaIdByTestemunhaId.get(d.id);
+                const signal = pessoaId ? getSignal(pessoaId) : null;
+                const dotLevel = signal ? computeDotLevel(signal) : "none";
+                return (
+                  <div key={d.id ?? `${i}-${d.nome}`} className="relative">
+                    <DepoenteCardV2
+                      depoente={{
+                        ...d,
+                        audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
+                      }}
+                      isOpen={openDepoenteIdx === i}
+                      onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
+                      variant="sheet"
+                      onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
+                      onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
+                      onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
+                      onAbrirAudio={() => {
+                        const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
+                        if (!audioId) {
+                          toast.info("Áudio não encontrado para este depoente");
+                          return;
+                        }
+                        const root = scrollContainerRef.current;
+                        const target = root?.querySelector('[data-section-id="midia"]');
+                        if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+                        toast.success("Rolando para o áudio…");
+                      }}
+                      assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                    />
+                    {pessoaId && dotLevel !== "none" && (
+                      <button
+                        type="button"
+                        onClick={() => setPessoaSheetId(pessoaId)}
+                        aria-label={`Abrir dossiê de ${d.nome}`}
+                        className="absolute top-2 right-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 hover:border-emerald-400 cursor-pointer"
+                      >
+                        <PessoaChip
+                          pessoaId={pessoaId}
+                          nome=""
+                          papel={signal?.papelPrimario ?? undefined}
+                          size="xs"
+                          clickable={false}
+                          dotLevel={dotLevel}
+                        />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyHint text="Sem síntese de depoimentos (IP/juízo) nos autos." />
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "contradicoes": {
+      label: "Contradições",
+      temDado: contradicoes.length > 0,
+      count: contradicoes.length,
+      node: (
+        <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <ul className="space-y-2">
+            {contradicoes.map((c: any, i: number) => {
+              if (typeof c === "string") {
+                return (
+                  <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                    <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                    <span>{c}</span>
+                  </li>
+                );
+              }
+              const ponto = c.ponto ?? c.descricao ?? c.contradicao ?? c.vulnerabilidade;
+              const impacto = c.impacto;
+              const vDeleg = c.versao_delegacia ?? c.versaoDelegacia;
+              const vJuizo = c.versao_juizo_hoje ?? c.versao_juizo ?? c.versaoJuizo;
+              if (!ponto && !impacto && !vDeleg && !vJuizo) {
+                return (
+                  <li key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(c)}</li>
+                );
+              }
+              const impactoClass =
+                typeof impacto === "string" && /essencial|alta|forte/i.test(impacto)
+                  ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                  : typeof impacto === "string" && /media|moderad/i.test(impacto)
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+              return (
+                <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{ponto}</p>
+                    {impacto && (
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", impactoClass)}>
+                        {impacto.split(/\s—\s/)[0]}
+                      </span>
+                    )}
+                  </div>
+                  {typeof impacto === "string" && impacto.includes("—") && (
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed pl-5">
+                      {impacto.split(/\s—\s/).slice(1).join(" — ")}
+                    </p>
+                  )}
+                  {(vDeleg || vJuizo) && (
+                    <div className="grid grid-cols-1 gap-1 pl-5 pt-1">
+                      {vDeleg && (
+                        <div className="text-[11px] leading-relaxed">
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">Delegacia:</span>{" "}
+                          <span className="text-neutral-600 dark:text-neutral-400">{vDeleg}</span>
+                        </div>
+                      )}
+                      {vJuizo && (
+                        <div className="text-[11px] leading-relaxed">
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">Em juízo:</span>{" "}
+                          <span className="text-neutral-600 dark:text-neutral-400">{vJuizo}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </CollapsibleSection>
+      ),
+    },
+    "laudos": {
+      label: "Laudos e Perícias",
+      temDado: laudos.length > 0,
+      count: laudos.length,
+      node: (
+        <CollapsibleSection id="laudos" label="Laudos e Perícias" count={laudos.length}>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <ul className="space-y-1">
+            {laudos.map((l: any, i: number) => (
+              <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
+              </li>
+            ))}
+          </ul>
+          {lacunas.length > 0 && (
+            <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
+              <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
+              <ul className="space-y-1">
+                {lacunas.map((l: any, i: number) => (
+                  <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
+                    • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CollapsibleSection>
+      ),
+    },
+    "investigacao": {
+      label: "Investigação Defensiva",
+      temDado: diligencias.length > 0,
+      count: diligencias.length,
+      node: (
+        <CollapsibleSection id="investigacao" label="Investigação Defensiva" count={diligencias.length}>
+          <ul className="space-y-2">
+            {diligencias.map((d: any) => (
+              <li key={d.id} className="text-xs text-neutral-700 dark:text-neutral-300">
+                <span className="font-medium">{d.titulo}</span>
+                {d.resultado && <p className="text-neutral-500 mt-0.5">{d.resultado}</p>}
+              </li>
+            ))}
+          </ul>
+        </CollapsibleSection>
+      ),
+    },
+    "pendencias": {
+      label: "Pendências",
+      temDado: pendencias.length > 0,
+      count: pendencias.length,
+      node: (
+        <CollapsibleSection id="pendencias" label="Pendências" count={pendencias.length}>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <ul className="space-y-1">
+            {pendencias.map((p: any, i: number) => {
+              const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? JSON.stringify(p);
+              return (
+                <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
+                  <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
+                  <span>{text}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </CollapsibleSection>
+      ),
+    },
+    "teses": {
+      label: "Teses",
+      temDado: teses.length > 0,
+      count: teses.length,
+      node: (
+        <CollapsibleSection id="teses" label="Teses" count={teses.length}>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <div className="space-y-2">
+            {teses.map((t: any, i: number) => {
+              if (typeof t === "string") {
+                return (
+                  <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
+                    <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{t}</p>
+                  </div>
+                );
+              }
+              const nome = t.nome ?? t.tese ?? t.titulo ?? t.descricao;
+              const forca = t.forca ?? t.força ?? t.viabilidade;
+              const baseLegal = t.base_legal ?? t.baseLegal;
+              const fundamentacao = t.fundamentacao ?? t.fundamentos ?? t.justificativa;
+              if (!nome && !forca && !baseLegal && !fundamentacao) {
+                return (
+                  <div key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(t)}</div>
+                );
+              }
+              const forcaClass =
+                typeof forca === "string" && /alta|forte/i.test(forca)
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : typeof forca === "string" && /media|moderad/i.test(forca)
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
+              return (
+                <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    {nome && <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{nome}</p>}
+                    {forca && (
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", forcaClass)}>
+                        {forca}
+                      </span>
+                    )}
+                  </div>
+                  {baseLegal && (
+                    <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                      {baseLegal}
+                    </p>
+                  )}
+                  {fundamentacao && (
+                    <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                      {fundamentacao}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CollapsibleSection>
+      ),
+    },
+    "documentos": {
+      label: "Documentos",
+      temDado: true,
+      node: (
+        <CollapsibleSection id="documentos" label="Documentos" defaultOpen>
+          <DocumentosBlock
+            processoId={typeof processoId === "number" ? processoId : null}
+            assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+            onExpandLeft={setAutosModalId}
+          />
+        </CollapsibleSection>
+      ),
+    },
+    "midia": {
+      label: "Mídia",
+      temDado: true,
+      node: (
+        <CollapsibleSection id="midia" label="Mídia">
+          <MidiaBlock
+            assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+            atendimentosComAudio={
+              ((ctx?.atendimentos as any[]) ?? [])
+                .filter((a: any) => !!a.audioDriveFileId)
+                .map((a: any) => ({
+                  id: a.id,
+                  data: a.dataAtendimento ?? a.data ?? new Date(),
+                  audioDriveFileId: a.audioDriveFileId,
+                  transcricaoResumo: a.transcricaoResumo,
+                }))
+            }
+          />
+        </CollapsibleSection>
+      ),
+    },
+  };
+
+  const secoesVisiveis = manifesto.filter((id) => secoesMap[id]?.temDado);
+  const tocSections: ToCSection[] = secoesVisiveis.map((id) => ({
+    id,
+    label: secoesMap[id]!.label,
+    ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
+  }));
 
   useEffect(() => {
     if (!open || !scrollContainerRef.current) return;
@@ -772,562 +1409,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </div>
             )}
 
-            {!isLoading && resumoExecutivo && (
-              <CollapsibleSection id="resumo" label="Resumo Executivo" defaultOpen>
-                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{resumoExecutivo}</p>
-              </CollapsibleSection>
-            )}
-
-            {!isLoading && dossieV2 && (
-              <CollapsibleSection id="dossie" label="Roteiro da defesa" defaultOpen={false}>
-                <DossieV2Block dossie={dossieV2} />
-              </CollapsibleSection>
-            )}
-
-            {typeof processoId === "number" && (
-              <CollapsibleSection id="medidas" label="Medidas protetivas vigentes" defaultOpen>
-                <MedidasVigentesPanel processoId={processoId} readOnly />
-              </CollapsibleSection>
-            )}
-
-            {typeof processoId === "number" && (
-              <CollapsibleSection id="preventiva" label="Prisão preventiva (art. 312)" defaultOpen>
-                <PrisaoPreventivaPanel processoId={processoId} />
-              </CollapsibleSection>
-            )}
-
-            {typeof processoId === "number" && (
-              <CollapsibleSection id="cautelares" label="Cautelares diversas da prisão" defaultOpen>
-                <CautelaresPanel processoId={processoId} readOnly apenasEspecie="diversa" />
-              </CollapsibleSection>
-            )}
-
-            {!isLoading && (
-              <CollapsibleSection
-                id="anotacoes-rapidas"
-                label="Anotações rápidas"
-                count={anotacoesRapidas.length}
-                defaultOpen
-              >
-                {deteccaoPendente && audienciaIdNum && (
-                  <div className="mb-2">
-                    <EventoDetectadoBanner
-                      deteccao={deteccaoPendente}
-                      isPending={actions.aplicarEvento.isPending}
-                      onDescartar={() => setDeteccaoPendente(null)}
-                      onAplicar={(d) =>
-                        actions.aplicarEvento.mutate(
-                          {
-                            audienciaId: audienciaIdNum,
-                            evento: d.evento,
-                            motivo: d.motivo,
-                            motivoDetalhe: d.motivoDetalhe,
-                            ...(d.novaData
-                              ? { novaData: d.novaData, novaHora: d.novaHora ?? "00:00" }
-                              : {}),
-                          },
-                          { onSuccess: () => setDeteccaoPendente(null) }
-                        )
-                      }
-                    />
-                  </div>
-                )}
-                {anotacoesRapidas.length === 0 ? (
-                  <EmptyHint text="Nenhuma anotação ainda" />
-                ) : (
-                  <ul className="space-y-2">
-                    {anotacoesRapidas.map((n) => (
-                      <li
-                        key={n.timestamp}
-                        className="group flex items-start gap-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-neutral-800 dark:text-neutral-100 whitespace-pre-wrap break-words">
-                            {n.texto}
-                          </p>
-                          <p className="mt-0.5 text-[10px] text-neutral-400">
-                            {autoresAnotacoes[n.autorId] ?? "—"} ·{" "}
-                            {formatDistanceToNow(new Date(n.timestamp), {
-                              addSuffix: true,
-                              locale: ptBR,
-                            })}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Estruturar anotação"
-                          title="Detectar evento de audiência (redesignação/suspensão)"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
-                          onClick={() => {
-                            const d = parseAnotacaoAudiencia(n.texto);
-                            if (d) setDeteccaoPendente(d);
-                            else toast.info("Nenhum evento de audiência detectado nesta anotação");
-                          }}
-                        >
-                          <CalendarClock className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Apagar anotação"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 cursor-pointer p-1"
-                          disabled={actions.removeNote.isPending || !audienciaIdNum}
-                          onClick={() =>
-                            audienciaIdNum &&
-                            actions.removeNote.mutate({
-                              audienciaId: audienciaIdNum,
-                              timestamp: n.timestamp,
-                            })
-                          }
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CollapsibleSection>
-            )}
-
-            {!isLoading && (
-              <>
-                {(<>
-                {!imputacao && !fatos && laudos.length === 0 && contradicoes.length === 0 && (
-                  <CollapsibleSection id="analise-ia" label="Análise IA" defaultOpen>
-                    <div className="space-y-2">
-                      <EmptyHint text="Nenhuma análise IA executada ainda." />
-                      <AnalyzeCTA
-                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                        processoId={typeof processoId === "number" ? processoId : null}
-                        analysisStatus={analysisStatus}
-                      />
-                    </div>
-                  </CollapsibleSection>
-                )}
-
-                <CollapsibleSection id="imputacao" label="Imputação" defaultOpen>
-                  {analyzedAt && (
-                    <div className="flex justify-end mb-1">
-                      <FreshnessBadge analyzedAt={analyzedAt} />
-                    </div>
-                  )}
-                  {imputacao ? (
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{imputacao}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <EmptyHint text="Imputação não extraída — rode a análise IA." />
-                      <AnalyzeCTA
-                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                        processoId={typeof processoId === "number" ? processoId : null}
-                        analysisStatus={analysisStatus}
-                      />
-                    </div>
-                  )}
-                </CollapsibleSection>
-
-                <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
-                  {analyzedAt && (
-                    <div className="flex justify-end mb-1">
-                      <FreshnessBadge analyzedAt={analyzedAt} />
-                    </div>
-                  )}
-                  {fatos || fatosLiteral ? (
-                    <div className="space-y-2">
-                      {fatosLiteral && (
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setVerFatosLiteral((v) => !v)}
-                            className="text-[10px] font-medium px-2 py-0.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                          >
-                            {verFatosLiteral ? "ver resumo" : "ver trecho literal"}
-                          </button>
-                        </div>
-                      )}
-                      {verFatosLiteral && fatosLiteral ? (
-                        <blockquote className="text-[13px] text-neutral-700 dark:text-neutral-300 leading-relaxed border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 italic whitespace-pre-wrap">
-                          {fatosLiteral}
-                        </blockquote>
-                      ) : (
-                        <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{fatos ?? fatosLiteral}</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <EmptyHint text="Narrativa da denúncia não disponível." />
-                      <AnalyzeCTA
-                        assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                        processoId={typeof processoId === "number" ? processoId : null}
-                        analysisStatus={analysisStatus}
-                      />
-                    </div>
-                  )}
-                </CollapsibleSection>
-
-                {motivoDesignacao && (
-                  <CollapsibleSection id="motivo-designacao" label="Motivo da designação" defaultOpen>
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{motivoDesignacao}</p>
-                  </CollapsibleSection>
-                )}
-
-                {(medidasProtetivas.length > 0 || medidasVigentesArr.length > 0) && (
-                  <CollapsibleSection id="medidas-deferidas" label="Medidas protetivas (deferidas)" count={medidasProtetivas.length || medidasVigentesArr.length} defaultOpen>
-                    {medidasProtetivas.length > 0 ? (
-                      <ul className="space-y-1.5">
-                        {medidasProtetivas.map((m: any, i: number) => (
-                          <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 p-2 space-y-0.5">
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{m.medida ?? m.texto ?? JSON.stringify(m)}</span>
-                              {m.status && (
-                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase flex-shrink-0",
-                                  /defer/i.test(m.status) ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                  : /revog|substit|indefer/i.test(m.status) ? "bg-neutral-100 text-neutral-500 dark:bg-neutral-800"
-                                  : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400")}>{m.status}</span>
-                              )}
-                            </div>
-                            {(m.inciso || m.id_fl) && (
-                              <p className="text-[10px] text-neutral-400">{[m.inciso, m.id_fl].filter(Boolean).join(" · ")}</p>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <ul className="space-y-1 list-disc pl-4">
-                        {medidasVigentesArr.map((m: any, i: number) => (
-                          <li key={i} className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">{typeof m === "string" ? m : (m.medida ?? JSON.stringify(m))}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </CollapsibleSection>
-                )}
-
-                {relatoVitima && (
-                  <CollapsibleSection id="relato-vitima" label="Relato da ofendida / representação" defaultOpen>
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{relatoVitima}</p>
-                  </CollapsibleSection>
-                )}
-
-                {cronologia.length > 0 && (
-                  <CollapsibleSection id="sintese" label="Síntese Processual">
-                    <SinteseProcessual eventos={cronologia} />
-                  </CollapsibleSection>
-                )}
-
-                {(versaoDelegacia || versaoJuizo || relatoAtendimento) && (
-                  <CollapsibleSection id="versao" label="Relato do assistido" defaultOpen>
-                    {analyzedAt && (
-                      <div className="flex justify-end mb-1">
-                        <FreshnessBadge analyzedAt={analyzedAt} />
-                      </div>
-                    )}
-                    {relatoAtendimento && (
-                      <div className="mb-2">
-                        <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Atendimento (DPE)</div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap">{relatoAtendimento}</p>
-                      </div>
-                    )}
-                    {versaoDelegacia && (
-                      <div className="mb-2">
-                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório policial</div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoDelegacia}</p>
-                      </div>
-                    )}
-                    {versaoJuizo && (
-                      <div>
-                        <div className="text-[10px] font-semibold text-neutral-500 mb-1">Interrogatório judicial</div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">{versaoJuizo}</p>
-                      </div>
-                    )}
-                  </CollapsibleSection>
-                )}
-                </>)}
-
-                <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
-                  {depoentesDetalhe.length > 0 ? (
-                    <PainelDepoentesStatus depoentes={depoentesDetalhe} />
-                  ) : (
-                    <EmptyHint text="Status dos depoentes não disponível." />
-                  )}
-                </CollapsibleSection>
-
-                <CollapsibleSection id="depoimentos" label="Depoimentos" count={depoentes.length} defaultOpen>
-                  {depoentes.length > 0 ? (
-                    <div className="space-y-2">
-                      {depoentes.map((d: any, i: number) => {
-                        const pessoaId = pessoaIdByTestemunhaId.get(d.id);
-                        const signal = pessoaId ? getSignal(pessoaId) : null;
-                        const dotLevel = signal ? computeDotLevel(signal) : "none";
-                        return (
-                          <div key={d.id ?? `${i}-${d.nome}`} className="relative">
-                            <DepoenteCardV2
-                              depoente={{
-                                ...d,
-                                audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
-                              }}
-                              isOpen={openDepoenteIdx === i}
-                              onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
-                              variant="sheet"
-                              onMarcarOuvido={(id, sintese) => actions.marcarOuvido.mutate({ depoenteId: id, sinteseJuizo: sintese })}
-                              onRedesignar={(id) => actions.redesignarDep.mutate({ depoenteId: id })}
-                              onAdicionarPergunta={() => toast.info("Em breve: abrir modal de perguntas")}
-                              onAbrirAudio={() => {
-                                const audioId = matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null);
-                                if (!audioId) {
-                                  toast.info("Áudio não encontrado para este depoente");
-                                  return;
-                                }
-                                const root = scrollContainerRef.current;
-                                const target = root?.querySelector('[data-section-id="midia"]');
-                                if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-                                toast.success("Rolando para o áudio…");
-                              }}
-                              assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                            />
-                            {pessoaId && dotLevel !== "none" && (
-                              <button
-                                type="button"
-                                onClick={() => setPessoaSheetId(pessoaId)}
-                                aria-label={`Abrir dossiê de ${d.nome}`}
-                                className="absolute top-2 right-2 rounded-md border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 hover:border-emerald-400 cursor-pointer"
-                              >
-                                <PessoaChip
-                                  pessoaId={pessoaId}
-                                  nome=""
-                                  papel={signal?.papelPrimario ?? undefined}
-                                  size="xs"
-                                  clickable={false}
-                                  dotLevel={dotLevel}
-                                />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <EmptyHint text="Sem síntese de depoimentos (IP/juízo) nos autos." />
-                  )}
-                </CollapsibleSection>
-
-                {(<>
-                {contradicoes.length > 0 && (
-                  <CollapsibleSection id="contradicoes" label="Contradições" count={contradicoes.length}>
-                    {analyzedAt && (
-                      <div className="flex justify-end mb-1">
-                        <FreshnessBadge analyzedAt={analyzedAt} />
-                      </div>
-                    )}
-                    <ul className="space-y-2">
-                      {contradicoes.map((c: any, i: number) => {
-                        if (typeof c === "string") {
-                          return (
-                            <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-                              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                              <span>{c}</span>
-                            </li>
-                          );
-                        }
-                        const ponto = c.ponto ?? c.descricao ?? c.contradicao ?? c.vulnerabilidade;
-                        const impacto = c.impacto;
-                        const vDeleg = c.versao_delegacia ?? c.versaoDelegacia;
-                        const vJuizo = c.versao_juizo_hoje ?? c.versao_juizo ?? c.versaoJuizo;
-                        if (!ponto && !impacto && !vDeleg && !vJuizo) {
-                          return (
-                            <li key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(c)}</li>
-                          );
-                        }
-                        const impactoClass =
-                          typeof impacto === "string" && /essencial|alta|forte/i.test(impacto)
-                            ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                            : typeof impacto === "string" && /media|moderad/i.test(impacto)
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
-                        return (
-                          <li key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{ponto}</p>
-                              {impacto && (
-                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", impactoClass)}>
-                                  {impacto.split(/\s—\s/)[0]}
-                                </span>
-                              )}
-                            </div>
-                            {typeof impacto === "string" && impacto.includes("—") && (
-                              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed pl-5">
-                                {impacto.split(/\s—\s/).slice(1).join(" — ")}
-                              </p>
-                            )}
-                            {(vDeleg || vJuizo) && (
-                              <div className="grid grid-cols-1 gap-1 pl-5 pt-1">
-                                {vDeleg && (
-                                  <div className="text-[11px] leading-relaxed">
-                                    <span className="font-semibold text-blue-600 dark:text-blue-400">Delegacia:</span>{" "}
-                                    <span className="text-neutral-600 dark:text-neutral-400">{vDeleg}</span>
-                                  </div>
-                                )}
-                                {vJuizo && (
-                                  <div className="text-[11px] leading-relaxed">
-                                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">Em juízo:</span>{" "}
-                                    <span className="text-neutral-600 dark:text-neutral-400">{vJuizo}</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </CollapsibleSection>
-                )}
-
-                {laudos.length > 0 && (
-                  <CollapsibleSection id="laudos" label="Laudos e Perícias" count={laudos.length}>
-                    {analyzedAt && (
-                      <div className="flex justify-end mb-1">
-                        <FreshnessBadge analyzedAt={analyzedAt} />
-                      </div>
-                    )}
-                    <ul className="space-y-1">
-                      {laudos.map((l: any, i: number) => (
-                        <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                          • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
-                        </li>
-                      ))}
-                    </ul>
-                    {lacunas.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-                        <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
-                        <ul className="space-y-1">
-                          {lacunas.map((l: any, i: number) => (
-                            <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                              • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </CollapsibleSection>
-                )}
-
-                {diligencias.length > 0 && (
-                  <CollapsibleSection id="investigacao" label="Investigação Defensiva" count={diligencias.length}>
-                    <ul className="space-y-2">
-                      {diligencias.map((d: any) => (
-                        <li key={d.id} className="text-xs text-neutral-700 dark:text-neutral-300">
-                          <span className="font-medium">{d.titulo}</span>
-                          {d.resultado && <p className="text-neutral-500 mt-0.5">{d.resultado}</p>}
-                        </li>
-                      ))}
-                    </ul>
-                  </CollapsibleSection>
-                )}
-
-                {pendencias.length > 0 && (
-                  <CollapsibleSection id="pendencias" label="Pendências" count={pendencias.length}>
-                    {analyzedAt && (
-                      <div className="flex justify-end mb-1">
-                        <FreshnessBadge analyzedAt={analyzedAt} />
-                      </div>
-                    )}
-                    <ul className="space-y-1">
-                      {pendencias.map((p: any, i: number) => {
-                        const text = typeof p === "string" ? p : p.descricao ?? p.pendencia ?? JSON.stringify(p);
-                        return (
-                          <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-                            <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/70" />
-                            <span>{text}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </CollapsibleSection>
-                )}
-
-                {teses.length > 0 && (
-                  <CollapsibleSection id="teses" label="Teses" count={teses.length}>
-                    {analyzedAt && (
-                      <div className="flex justify-end mb-1">
-                        <FreshnessBadge analyzedAt={analyzedAt} />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {teses.map((t: any, i: number) => {
-                        if (typeof t === "string") {
-                          return (
-                            <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5">
-                              <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200">{t}</p>
-                            </div>
-                          );
-                        }
-                        const nome = t.nome ?? t.tese ?? t.titulo ?? t.descricao;
-                        const forca = t.forca ?? t.força ?? t.viabilidade;
-                        const baseLegal = t.base_legal ?? t.baseLegal;
-                        const fundamentacao = t.fundamentacao ?? t.fundamentos ?? t.justificativa;
-                        if (!nome && !forca && !baseLegal && !fundamentacao) {
-                          return (
-                            <div key={i} className="text-xs text-neutral-500 italic">{JSON.stringify(t)}</div>
-                          );
-                        }
-                        const forcaClass =
-                          typeof forca === "string" && /alta|forte/i.test(forca)
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                            : typeof forca === "string" && /media|moderad/i.test(forca)
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                              : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400";
-                        return (
-                          <div key={i} className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-2.5 space-y-1.5">
-                            <div className="flex items-start gap-2">
-                              {nome && <p className="text-xs font-medium text-neutral-800 dark:text-neutral-200 leading-relaxed flex-1">{nome}</p>}
-                              {forca && (
-                                <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide flex-shrink-0", forcaClass)}>
-                                  {forca}
-                                </span>
-                              )}
-                            </div>
-                            {baseLegal && (
-                              <p className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                                {baseLegal}
-                              </p>
-                            )}
-                            {fundamentacao && (
-                              <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                                {fundamentacao}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CollapsibleSection>
-                )}
-                </>)}
-
-                <CollapsibleSection id="documentos" label="Documentos" defaultOpen>
-                  <DocumentosBlock
-                    processoId={typeof processoId === "number" ? processoId : null}
-                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                    onExpandLeft={setAutosModalId}
-                  />
-                </CollapsibleSection>
-
-                {/* Mídia */}
-                <CollapsibleSection id="midia" label="Mídia">
-                  <MidiaBlock
-                    assistidoId={typeof assistidoId === "number" ? assistidoId : null}
-                    atendimentosComAudio={
-                      ((ctx?.atendimentos as any[]) ?? [])
-                        .filter((a: any) => !!a.audioDriveFileId)
-                        .map((a: any) => ({
-                          id: a.id,
-                          data: a.dataAtendimento ?? a.data ?? new Date(),
-                          audioDriveFileId: a.audioDriveFileId,
-                          transcricaoResumo: a.transcricaoResumo,
-                        }))
-                    }
-                  />
-                </CollapsibleSection>
-              </>
-            )}
+            {!isLoading && secoesVisiveis.map((id) => (
+              <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
+            ))}
           </div>
         </div>
 

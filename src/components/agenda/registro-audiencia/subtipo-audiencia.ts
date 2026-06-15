@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Gavel, Scale, Shield, ShieldAlert, Users, HelpCircle, FileClock, Handshake, BookCheck } from "lucide-react";
 import { detectarSlug } from "@/lib/agenda/tipos-audiencia";
+import type { SecaoId } from "@/components/agenda/sheet/secoes-manifest";
+import { SECOES_JUSTIFICACAO } from "@/components/agenda/sheet/secoes-manifest";
 
 export type SubtipoAudiencia =
   | "justificacao"
@@ -38,6 +40,8 @@ export interface SubtipoConfig {
   instrucaoCompleta: boolean;
   /** Sessão do Júri → o painel deve direcionar para o Cockpit em vez da preparação padrão. */
   direcionaCockpit?: boolean;
+  /** Lista ordenada de seções deste rito no EventDetailSheet. Ausente → SECOES_DEFAULT. */
+  secoes?: SecaoId[];
 }
 
 export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
@@ -58,6 +62,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Em caso de reaproximação voluntária, art. 24-A pode ser atípico (STJ AgRg AREsp 2.330.912/DF, HC 521.622/SC).",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_JUSTIFICACAO,
   },
   oitiva_especial: {
     key: "oitiva_especial",
