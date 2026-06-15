@@ -21,6 +21,9 @@ import { getParceirosIds } from "@/lib/trpc/comarca-scope";
 import { buildDemandaSync, syncDemandaToSheets } from "@/lib/services/demanda-sync";
 import { aplicarMedidasMPU, type MedidaCriada } from "@/lib/mpu/aplicar-medidas-mpu";
 import { aplicarCautelares, type CautelarCriada } from "@/lib/cautelares/aplicar-cautelares";
+import { aplicarPreventiva, revogarPreventiva } from "@/lib/cautelares/aplicar-preventiva";
+import { parseDecisaoCautelar } from "@/lib/cautelares/parse-decisao-cautelar";
+import { CAUTELAR } from "@/lib/cautelares/cautelares-taxonomia";
 
 /**
  * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
@@ -386,6 +389,18 @@ export const registrosRouter = router({
             conteudo: input.conteudo,
             dataDecisaoISO,
           });
+          // Stack dedicada da preventiva: o parser de cautelares (máquina de
+          // polaridade) distingue decreto de revogação do mesmo código.
+          const decCaut = parseDecisaoCautelar(input.conteudo);
+          if (decCaut.cautelares.some((c) => c.codigo === CAUTELAR.PRISAO_PREVENTIVA)) {
+            await aplicarPreventiva(tx, {
+              processoId: input.processoId,
+              conteudo: input.conteudo,
+              dataDecisaoISO,
+            });
+          } else if (decCaut.revogadas.includes(CAUTELAR.PRISAO_PREVENTIVA)) {
+            await revogarPreventiva(tx, input.processoId);
+          }
         }
 
         return {

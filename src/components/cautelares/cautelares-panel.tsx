@@ -51,12 +51,22 @@ function detalhe(p: Parametros | null | undefined): string | null {
   return partes.length ? partes.join(" · ") : null;
 }
 
+function diasDesde(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const d = new Date(`${String(iso).slice(0, 10)}T00:00:00Z`);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
 export function CautelaresPanel({
   processoId,
   readOnly = false,
+  apenasEspecie,
 }: {
   processoId: number;
   readOnly?: boolean;
+  /** Filtra por espécie (ex.: "diversa" — a preventiva tem painel próprio). */
+  apenasEspecie?: "prisao" | "diversa";
 }) {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.cautelares.listCautelares.useQuery({ processoId });
@@ -76,7 +86,9 @@ export function CautelaresPanel({
     );
   }
 
-  const cautelares = data?.cautelares ?? [];
+  const cautelares = (data?.cautelares ?? []).filter(
+    (c) => !apenasEspecie || c.especie === apenasEspecie,
+  );
   if (cautelares.length === 0) {
     return (
       <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">
@@ -110,6 +122,10 @@ export function CautelaresPanel({
                   </p>
                   <p className="text-[10px] text-neutral-400">
                     {c.artigo ?? artigoCautelar(c.codigo)}
+                    {(() => {
+                      const dd = diasDesde(c.dataDecisao);
+                      return dd != null && c.status === "ativa" ? ` · vigente há ${dd} dias` : "";
+                    })()}
                     {c.origem === "manual" ? " · manual" : ""}
                     {det ? ` · ${det}` : ""}
                   </p>

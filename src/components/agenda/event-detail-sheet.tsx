@@ -24,6 +24,7 @@ import { MidiaBlock } from "./sheet/midia-block";
 import { DossieV2Block } from "./sheet/dossie-v2-block";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
 import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
+import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -790,8 +791,14 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             )}
 
             {typeof processoId === "number" && (
-              <CollapsibleSection id="cautelares" label="Cautelares (prisão / diversas)" defaultOpen>
-                <CautelaresPanel processoId={processoId} readOnly />
+              <CollapsibleSection id="preventiva" label="Prisão preventiva (art. 312)" defaultOpen>
+                <PrisaoPreventivaPanel processoId={processoId} />
+              </CollapsibleSection>
+            )}
+
+            {typeof processoId === "number" && (
+              <CollapsibleSection id="cautelares" label="Cautelares diversas da prisão" defaultOpen>
+                <CautelaresPanel processoId={processoId} readOnly apenasEspecie="diversa" />
               </CollapsibleSection>
             )}
 

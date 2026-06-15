@@ -150,6 +150,25 @@ for (const item of items) {
     console.log(`  ↳ ${cautelares.length} cautelar(es) → cautelares_decisao`);
   }
 
+  // Prisão preventiva — stack dedicada (requisitos art.312 + fundamentos verbatim,
+  // custódia, saúde, visitas, excesso de prazo). Idempotente por origem='claude'.
+  const pv = p.prisao_preventiva ?? ra.prisao_preventiva ?? null;
+  if (pv && typeof pv === "object" && r.length) {
+    await sql`DELETE FROM prisao_preventiva WHERE processo_id = ${item.processo_id} AND origem = 'claude'`;
+    const dataDec = /^\d{4}-\d{2}-\d{2}$/.test(pv.data_decreto ?? "") ? pv.data_decreto : null;
+    await sql`
+      INSERT INTO prisao_preventiva
+        (processo_id, orgao_decisor, data_decreto, requisitos, pressupostos, contemporaneidade,
+         local_custodia, historico_custodia, saude, seguranca, visitas, excesso_prazo,
+         situacao, status, origem)
+      VALUES (${item.processo_id}, ${pv.orgao_decisor ?? null}, ${dataDec},
+        ${pv.requisitos ?? null}, ${pv.pressupostos ?? null}, ${pv.contemporaneidade ?? null},
+        ${pv.local_custodia ?? null}, ${pv.historico_custodia ?? null}, ${pv.saude ?? null},
+        ${pv.seguranca ?? null}, ${pv.visitas ?? null}, ${pv.excesso_prazo ?? null},
+        ${pv.situacao ?? "preso"}, 'ativa', 'claude')`;
+    console.log(`  ↳ prisão preventiva (${(pv.requisitos ?? []).length} requisitos) → prisao_preventiva`);
+  }
+
   // Patrocínio: se a análise detectou advogado constituído nos autos, sobe
   // DEFENSORIA → PARTICULAR (nunca rebaixa automaticamente; nome manual vence).
   const advC = item.advogado_constituido ?? p.advogado_constituido ?? null;

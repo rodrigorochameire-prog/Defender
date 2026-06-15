@@ -3,7 +3,7 @@ import { eq, asc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { cautelaresDecisao } from "@/lib/db/schema/cautelares";
+import { cautelaresDecisao, prisaoPreventiva } from "@/lib/db/schema/cautelares";
 import { parseDecisaoCautelar } from "@/lib/cautelares/parse-decisao-cautelar";
 import { CAUTELAR, STATUS_CAUTELAR } from "@/lib/cautelares/cautelares-taxonomia";
 
@@ -26,6 +26,48 @@ export const cautelaresRouter = router({
         .where(eq(cautelaresDecisao.processoId, input.processoId))
         .orderBy(asc(cautelaresDecisao.id));
       return { processoId: input.processoId, cautelares: rows };
+    }),
+
+  /** Camada rica da prisão preventiva do processo (requisitos/fundamentos/custódia/saúde/visitas). */
+  getPreventiva: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [row] = await db
+        .select()
+        .from(prisaoPreventiva)
+        .where(eq(prisaoPreventiva.processoId, input.processoId))
+        .orderBy(asc(prisaoPreventiva.id))
+        .limit(1);
+      return row ?? null;
+    }),
+
+  /** Edição manual dos campos de monitoramento da preventiva (custódia/saúde/visitas/etc.). */
+  updatePreventiva: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        localCustodia: z.string().nullish(),
+        historicoCustodia: z.any().optional(),
+        saude: z.any().optional(),
+        seguranca: z.any().optional(),
+        visitas: z.any().optional(),
+        excessoPrazo: z.any().optional(),
+        situacao: z.enum(["preso", "domiciliar", "solto"]).optional(),
+        dataSoltura: z.string().nullish(),
+        status: z.enum(["ativa", "revogada", "substituida"]).optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { id, ...rest } = input;
+      const set: Record<string, unknown> = { origem: "manual", updatedAt: new Date() };
+      for (const [k, v] of Object.entries(rest)) if (v !== undefined) set[k] = v;
+      const [row] = await db
+        .update(prisaoPreventiva)
+        .set(set)
+        .where(eq(prisaoPreventiva.id, id))
+        .returning();
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Preventiva não encontrada." });
+      return row;
     }),
 
   /** Muda o status de uma cautelar; marca origem='manual' (blinda da reimportação). */
