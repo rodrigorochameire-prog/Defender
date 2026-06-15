@@ -128,7 +128,16 @@ export const TIPOS_AUDIENCIA: TipoAudiencia[] = [
     duracaoMin: 90,
     atribuicoes: ["JURI", "VVD", "CRIMINAL"],
     cor: "emerald",
-    detectar: [/INSTRU[CÇ][ÃA]O/, /\bAIJ\b/],
+    // Sinais do art. 400 CPP (interrogatório do acusado, continuação da
+    // instrução) — designações que não usam a palavra "instrução" mas descrevem
+    // o ato ("designo o dia X para o interrogatório do acusado"). flatten() tira
+    // espaços e mantém acentos, daí os padrões sem espaço e com acento.
+    detectar: [
+      /INSTRU[CÇ][ÃA]O/,
+      /\bAIJ\b/,
+      /INTERROGAT[OÓ]RIO/,
+      /CONTINUIDADEDAAUDI[EÊ]NCIA/,
+    ],
     classeCodigos: ["283", "10943"],
     aliases: ["Instrução e Julgamento", "Instrução", "INSTRUCAO", "AIJ", "Continuação de Instrução / Acareação"],
   },

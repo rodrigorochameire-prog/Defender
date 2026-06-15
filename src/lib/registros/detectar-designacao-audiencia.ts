@@ -41,7 +41,7 @@ export interface DesignacaoAudiencia {
 // designam "oitiva especializada" e "depoimento especial" sem usar a palavra
 // audiência (ex.: "designo oitiva especializada na modalidade presencial").
 const GATILHO =
-  /\b(?:(re)?designo|(re)?designa(?:r|da|-se)?|fica(?:m)?\s+(re)?designad[ao]s?|aprazo|aprazada)\b[\s\S]{0,80}?\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b|\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b[\s\S]{0,80}?\b(re)?designad[ao]\b/i;
+  /\b(?:(re)?designo|(re)?designa(?:r|da|-se)?|fica(?:m)?\s+(re)?designad[ao]s?|aprazo|aprazada)\b[\s\S]{0,80}?\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b|\b(?:audi[eê]ncia|oitiva|depoimento\s+especial)\b[\s\S]{0,80}?\b(re)?designad[ao]\b|\b(?:(re)?designo|(re)?designar|(re)?designei|aprazo|aprazada)\b[\s\S]{0,40}?\b(?:o\s+)?dia\s+\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}/i;
 
 const DATA_RE = /\bdia\s+(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/i;
 const DATA_FALLBACK_RE = /\bpara\s+(?:o\s+)?(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/i;
@@ -89,9 +89,12 @@ export function detectarDesignacaoAudiencia(
   const minuto = hm?.[2] ? Number(hm[2]) : 0;
   if (hora > 23 || minuto > 59) return null;
 
-  // Tipo resolvido pelo catálogo canônico (fonte única) — a janela de 200
-  // chars após o gatilho evita pegar tipos citados em outros trechos.
-  const tipo = tipoPorSlug(detectarSlug(aPartir.slice(0, 200))).descricao;
+  // Tipo resolvido pelo catálogo canônico (fonte única). Janela em torno do
+  // gatilho — inclui ~120 chars ANTES (ex.: "continuidade da audiência ...
+  // interrogatório do acusado, designo o dia ...") + 200 depois (movimento PJe,
+  // onde o tipo vem após o verbo). Evita pegar tipos de trechos distantes.
+  const janelaTipo = texto.slice(Math.max(0, gat.index - 120), gat.index + 200);
+  const tipo = tipoPorSlug(detectarSlug(janelaTipo)).descricao;
 
   const mod = MODALIDADE_RE.exec(aPartir.slice(0, 250));
   const loc = LOCAL_RE.exec(aPartir);

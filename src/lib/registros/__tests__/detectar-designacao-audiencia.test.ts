@@ -133,6 +133,22 @@ describe("detectarDesignacaoAudiencia", () => {
     expect(r!.tipo).toBe("Audiência Preliminar");
   });
 
+  it("detecta 'designo o dia DD/MM/AAAA' com a audiência citada ANTES do verbo (caso Bryan)", () => {
+    const r = detectarDesignacaoAudiencia(
+      "Para a continuidade da audiência, com a inquirição da referida testemunha e o posterior interrogatório do acusado Bryan Reino Soares Lima, designo o dia 28/07/2026, às 11h00min."
+    );
+    expect(r).not.toBeNull();
+    expect(r!.data).toBe("2026-07-28");
+    expect(r!.horario).toBe("11:00");
+    expect(r!.tipo).toBe("Audiência de Instrução e Julgamento");
+  });
+
+  it("'designo o prazo de N dias' não dispara (não é data de audiência)", () => {
+    expect(
+      detectarDesignacaoAudiencia("Designo o prazo de 5 dias para manifestação das partes.")
+    ).toBeNull();
+  });
+
   it("não dispara sem verbo de designação", () => {
     expect(
       detectarDesignacaoAudiencia(
