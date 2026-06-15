@@ -22,7 +22,7 @@ export function DossieV2Block({ dossie, ocultarIntimacao }: { dossie: DossieV2; 
     ((dossie.perguntas?.length ?? 0) > 0 ||
       (dossie.providencias?.length ?? 0) > 0 ||
       !!dossie.versao_defendido ||
-      !!dossie.intimacao);
+      (!ocultarIntimacao && !!dossie.intimacao));
 
   if (!temAlgo) {
     return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">Dossiê sem conteúdo.</p>;

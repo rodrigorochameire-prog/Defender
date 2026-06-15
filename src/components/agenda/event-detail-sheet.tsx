@@ -475,7 +475,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // iteram a MESMA fonte, garantindo paridade visual.
   const manifesto = resolverManifesto(SUBTIPO_CONFIG[subtipo]);
 
-  const secoesMap: Partial<Record<SecaoId, { label: string; temDado: boolean; count?: number; node: ReactNode }>> = {
+  const secoesMap: Record<SecaoId, { label: string; temDado: boolean; count?: number; node: ReactNode }> = {
     "resumo": {
       label: "Resumo Executivo",
       temDado: !!resumoExecutivo,
