@@ -1,39 +1,51 @@
 ---
 name: transcrever-atendimento
-description: Transcreve o áudio de um atendimento da Defensoria (gravado no OMBUDS e armazenado no Drive do assistido) e grava a transcrição + resumo de volta no registro. Acionada pelo daemon do Claude Code a partir de uma task claude_code_tasks (skill=transcrever-atendimento).
+description: Transcreve o áudio de um atendimento da Defensoria (gravado no OMBUDS e armazenado no Drive do assistido) e grava a transcrição + resumo de volta no registro. Acionada pelo daemon do Claude Code (claude_code_tasks, skill=transcrever-atendimento).
 ---
 
 # /transcrever-atendimento — Transcrição de áudio de atendimento
 
-Você recebe, no prompt, os dados de UM atendimento: **registro #N**, **audioDriveFileId** (arquivo de áudio no Google Drive, na pasta do assistido), **assistidoId** e, quando houver, **processoId**. Sua tarefa é transcrever o áudio em **pt-BR** e gravar o resultado de volta no banco.
+Você recebe no prompt: **registro #N**, **audioDriveFileId** (id do arquivo no Google Drive), **assistidoId** e, quando houver, **processoId**. Transcreva o áudio em **pt-BR** e grave o resultado de volta no banco.
+
+O daemon roda você via `claude -p --permission-mode auto` no diretório do projeto OMBUDS (`/Users/rodrigorochameire/Projetos/Defender`). Ferramentas disponíveis no ambiente: `rclone` (remote **`gdrive:`**), `ffmpeg`, `whisper-cli`, `node` + `postgres`.
 
 ## Passos
 
-1. **Baixar o áudio do Drive.** Use o `audioDriveFileId` informado. Caminhos possíveis (use o que estiver disponível no ambiente do worker, nesta ordem):
-   - `rclone copyid <remote>: <audioDriveFileId> /tmp/` (se houver remote rclone do Drive configurado);
-   - a API do Drive via `curl` com token (`https://www.googleapis.com/drive/v3/files/<id>?alt=media`);
-   - o `audio_url` (webViewLink) do registro como fallback de inspeção.
-   Salve em `/tmp/atendimento_<N>.<ext>`.
-
-2. **Transcrever.** Converta para wav 16k e rode whisper-cli (modelo medium, pt):
+1. **Baixar o áudio do Drive** pelo id (rclone, remote `gdrive:` já configurado). ⚠️ o comando é `rclone backend copyid` (não `rclone copyid`):
    ```bash
-   ffmpeg -y -i /tmp/atendimento_<N>.<ext> -ar 16000 -ac 1 /tmp/atendimento_<N>.wav
-   whisper-cli -m <modelo medium> -l pt -otxt -of /tmp/atendimento_<N> /tmp/atendimento_<N>.wav
+   mkdir -p /tmp/atd_<N> && rclone backend copyid gdrive: <audioDriveFileId> /tmp/atd_<N>/
    ```
-   (espelha `preparar-audiencias/scripts/transcrever_midias.py`). O resultado é `/tmp/atendimento_<N>.txt`.
+   O arquivo cai em `/tmp/atd_<N>/<nome-original>` (`ls /tmp/atd_<N>/`).
 
-3. **Resumir.** Produza um resumo curto (3-6 linhas) do atendimento a partir da transcrição: demanda do assistido, fatos relevantes, encaminhamentos. Linguagem neutra/defensiva.
-
-4. **Gravar de volta no registro `#N`** (use `DATABASE_URL` do `.env.local`/`.env.production.local`, pooler com `prepare:false ssl:require`; ou o Supabase MCP):
-   ```sql
-   UPDATE registros
-   SET transcricao = $1, transcricao_resumo = $2, transcricao_status = 'completed', updated_at = now()
-   WHERE id = $N;
+2. **Transcrever** (wav 16k mono + whisper medium pt). Modelo em **`~/whisper-models/ggml-medium.bin`** (`$HOME/whisper-models/ggml-medium.bin`):
+   ```bash
+   ffmpeg -y -i "/tmp/atd_<N>/<arquivo>" -ar 16000 -ac 1 /tmp/atd_<N>.wav
+   whisper-cli -m "$HOME/whisper-models/ggml-medium.bin" -l pt -otxt -of /tmp/atd_<N> /tmp/atd_<N>.wav
    ```
-   Se falhar a transcrição, marque `transcricao_status = 'failed'` e descreva o erro no campo de erro da task.
+   Resultado: `/tmp/atd_<N>.txt`.
+
+3. **Resumir**: 3-6 linhas — demanda do assistido, fatos relevantes, encaminhamentos. Linguagem defensiva (assistido = defendido/requerido; "ofendida"/"suposta vítima").
+
+4. **Gravar no registro `#N`** via DATABASE_URL do `.env.local` (pooler, `prepare:false, ssl:"require"`). Use um script node efêmero:
+   ```js
+   import fs from 'fs'; import postgres from 'postgres';
+   const url = fs.readFileSync('.env.local','utf8').split('\n').find(l=>l.startsWith('DATABASE_URL=')).slice(13).replace(/^"|"$/g,'').trim();
+   const sql = postgres(url,{prepare:false,ssl:'require'});
+   await sql`UPDATE registros SET transcricao=${TRANSC}, transcricao_resumo=${RESUMO}, transcricao_status='completed', updated_at=now() WHERE id=${N}`;
+   await sql.end();
+   ```
+
+## Saída (OBRIGATÓRIA — o daemon lê um JSON)
+Termine a resposta com UM bloco JSON em UMA linha (o daemon extrai `{...}` do stdout):
+```
+{"ok": true, "registro": N, "chars": <nº de caracteres da transcrição>, "transcricao_status": "completed"}
+```
+Em falha (não baixou / não transcreveu), grave `transcricao_status='failed'` no registro e termine com:
+```
+{"ok": false, "registro": N, "erro": "<motivo curto>"}
+```
 
 ## Regras
-- NUNCA inventar conteúdo: transcreva o que está no áudio. Trechos inaudíveis → `[inaudível]`.
-- Linguagem defensiva no resumo (assistido = defendido/requerido conforme a atribuição; "ofendida"/"suposta vítima").
-- Idempotência: se `transcricao_status` já é `completed` para o mesmo áudio, não retranscreva (apenas confirme).
-- Mensagem final: 3 linhas — registro, status, nº de caracteres da transcrição.
+- NUNCA inventar: transcreva o que está no áudio; inaudível → `[inaudível]`.
+- Idempotência: se `transcricao_status` já é `completed` para este registro, não retranscreva — confirme e retorne o JSON ok.
+- Não vaze segredos no stdout (não imprima a DATABASE_URL).
