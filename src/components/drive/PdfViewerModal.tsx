@@ -11,9 +11,16 @@ import { trpc } from "@/lib/trpc/client";
 const ReactPdfDocument = dynamic(
   () => import("react-pdf").then((mod) => {
     // Setup worker once when module loads.
-    // Self-hospedado em /public (copiado de pdfjs-dist 5.4.624 — casa com a versão
-    // empacotada pelo react-pdf). Evita a dependência do CDN unpkg, que quando
-    // bloqueado/lento deixava o <Document> travado em "Carregando PDF..." pra sempre.
+    // public/pdf.worker.min.mjs DEVE bater com a versão do pdfjs que o react-pdf
+    // usa (mod.pdfjs.version) — o pdfjs lança erro se API != Worker, e o PDF não
+    // carrega ("Não foi possível carregar o PDF"). Hoje react-pdf 10.4.1 → pdfjs
+    // 5.4.296 (nested), NÃO o pdfjs-dist 5.4.624 do topo. Ao atualizar react-pdf,
+    // regenerar o worker:
+    //   cp node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/
+    if (mod.pdfjs.version && !"/pdf.worker.min.mjs".includes(mod.pdfjs.version)) {
+      // sanity em dev: avisa se o worker self-hospedado pode estar defasado
+      console.debug(`[pdf] react-pdf usa pdfjs ${mod.pdfjs.version} — confira public/pdf.worker.min.mjs`);
+    }
     mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     return { default: mod.Document };
   }),
