@@ -3,6 +3,7 @@ import { router, protectedProcedure } from "../init";
 import { db, withTransaction } from "@/lib/db";
 import { demandas, processos, assistidos, users, registros } from "@/lib/db/schema";
 import { eq, ilike, or, desc, sql, lte, gte, and, inArray, isNull, isNotNull, not, asc, type SQL } from "drizzle-orm";
+import { resolverProcessoExistente } from "@/lib/processos/resolver-existente";
 import { TRPCError } from "@trpc/server";
 import { getDefensorResponsavel, getDefensoresVisiveis } from "../defensor-scope";
 import { logAudit, diffFields } from "@/lib/audit";
@@ -670,6 +671,14 @@ export const demandasRouter = router({
         if (at?.processoId) processoId = at.processoId;
       }
 
+      // (e) Reusa o processo que o assistido já tem (prefere CNJ real sobre stub)
+      //     antes de criar um stub novo — evita "SN-…" duplicados por assistido.
+      if (processoId === undefined) {
+        const existente = await resolverProcessoExistente(assistido.id);
+        if (existente) processoId = existente;
+      }
+
+      // (f) Só cria stub se o assistido não tem NENHUM processo.
       if (processoId === undefined) {
         const [novo] = await db
           .insert(processos)

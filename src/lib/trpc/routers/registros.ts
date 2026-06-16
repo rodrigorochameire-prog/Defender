@@ -13,7 +13,8 @@ import {
   type AudienciaSupersedida,
 } from "@/lib/registros/aplicar-designacao-audiencia";
 import { ATO_CIENCIA_DESIGNACAO, ATO_CIENCIA_REDESIGNACAO } from "@/lib/audiencia-parser";
-import { and, asc, desc, eq, gte, ilike, inArray, lt, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, lt, lte, or, sql } from "drizzle-orm";
+import { resolverProcessoExistente } from "@/lib/processos/resolver-existente";
 import { TRPCError } from "@trpc/server";
 import { getSupabaseAdmin } from "@/lib/supabase/client";
 import { getDefensoresVisiveis } from "../defensor-scope";
@@ -150,6 +151,10 @@ export const agendarAtendimentoInput = z.object({
   assunto: z.string().optional(),
   local: z.string().optional(),
   processoId: z.number().int().positive().optional(),
+  // CNJ para vincular/criar o processo real quando nenhum processoId foi escolhido.
+  numeroAutos: z.string().optional(),
+  // Atribuição a usar caso o processo seja criado a partir do CNJ.
+  atribuicao: z.string().optional(),
   casoId: z.number().int().positive().optional(),
   demandaId: z.number().int().positive().optional(),
   // Walk-in na sede: registra direto como realizado, com relato
@@ -446,11 +451,41 @@ export const registrosRouter = router({
   agendar: protectedProcedure
     .input(agendarAtendimentoInput)
     .mutation(async ({ input, ctx }) => {
+      // Resolve o processo do atendimento: id explícito → CNJ (find-or-create) →
+      // processo que o assistido já tem (reuso, prefere CNJ real sobre stub).
+      // Assim o atendimento nasce vinculado em vez de ficar sem processo.
+      let processoId: number | null = input.processoId ?? null;
+      const numAutos = (input.numeroAutos ?? "").trim();
+      if (!processoId && numAutos && input.area) {
+        const [ex] = await db
+          .select({ id: processos.id })
+          .from(processos)
+          .where(and(eq(processos.numeroAutos, numAutos), isNull(processos.deletedAt)))
+          .limit(1);
+        if (ex) {
+          processoId = ex.id;
+        } else {
+          const [novo] = await db
+            .insert(processos)
+            .values({
+              assistidoId: input.assistidoId,
+              numeroAutos: numAutos,
+              area: input.area as never,
+              atribuicao: (input.atribuicao ?? null) as never,
+            })
+            .returning({ id: processos.id });
+          processoId = novo.id;
+        }
+      }
+      if (!processoId) {
+        processoId = await resolverProcessoExistente(input.assistidoId);
+      }
+
       const [registro] = await db
         .insert(registros)
         .values({
           assistidoId: input.assistidoId,
-          processoId: input.processoId ?? null,
+          processoId,
           casoId: input.casoId ?? null,
           demandaId: input.demandaId ?? null,
           tipo: "atendimento",
