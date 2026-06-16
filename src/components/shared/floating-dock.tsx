@@ -6,16 +6,23 @@ import { cn } from "@/lib/utils";
 import { Calendar, ListTodo } from "lucide-react";
 import { AgendaQuickSheet } from "./floating-agenda";
 import { DemandasQuickSheet } from "./floating-demandas";
+import { useDialogOpen } from "@/hooks/use-dialog-open";
 
 type ActiveSheet = "agenda" | "demandas" | null;
 
 export function FloatingDock() {
   const [active, setActive] = useState<ActiveSheet>(null);
   const pathname = usePathname();
+  const dialogOpen = useDialogOpen();
 
   // Esconde itens específicos quando já está na página
   const hideAgenda = pathname === "/admin/agenda";
   const hideDemandas = pathname === "/admin/demandas";
+
+  // Esconde o dock enquanto um sheet/dialog está aberto (evita sobreposição com
+  // a barra de ação do painel lateral). Quando o dock abre o próprio quick-sheet,
+  // `active` mantém o painel montado mesmo com o dock oculto.
+  if (dialogOpen && !active) return null;
 
   // Se os dois estão escondidos, não renderiza o dock
   if (hideAgenda && hideDemandas) return null;
