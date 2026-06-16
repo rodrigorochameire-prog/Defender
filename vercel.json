@@ -31,6 +31,10 @@
     {
       "path": "/api/cron/atendimentos-pendentes",
       "schedule": "0 20 * * 1-5"
+    },
+    {
+      "path": "/api/cron/drive-auto-link",
+      "schedule": "0 4 * * *"
     }
   ],
   "headers": [
