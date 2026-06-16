@@ -62,6 +62,7 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { RegistroEditor } from "@/components/registros/registro-editor";
 import { RegistroComAutosDialog } from "@/components/registros/registro-com-autos-dialog";
+import { IdentificacaoSecao } from "./sheet/secoes/IdentificacaoSecao";
 import {
   DocumentPreviewDialog,
   type PreviewFile,
@@ -481,10 +482,6 @@ export function DemandaQuickPreview({
   useEffect(() => {
     if (open && initialNovoRegistro) setNovoRegistroOpen(true);
   }, [open, initialNovoRegistro]);
-  // Edição inline do nome do assistido. Abre quando o usuário clica na row;
-  // commit no Enter/blur, cancel no Esc.
-  const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
-  const [assistidoDraft, setAssistidoDraft] = useState("");
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
@@ -1240,164 +1237,14 @@ export function DemandaQuickPreview({
             </h3>
 
             {/* Bloco A — Identificação */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Assistido row — editável inline. Útil pra corrigir
-                  placeholders ("⚠ A identificar — <cnj>") gerados pelo
-                  importer quando o polo passivo veio em sigilo, e pra
-                  ajustar typos. Click → input → Enter/blur salva, Esc
-                  cancela. */}
-              {demanda.assistidoId && onAssistidoNomeChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Assistido</span>
-                  <div className="flex-1 flex items-center justify-end min-w-0">
-                    {editingAssistidoNome ? (
-                      <input
-                        autoFocus
-                        type="text"
-                        value={assistidoDraft}
-                        onChange={(e) => setAssistidoDraft(e.target.value)}
-                        onBlur={() => {
-                          const trimmed = assistidoDraft.trim();
-                          if (trimmed && trimmed !== demanda.assistido && demanda.assistidoId) {
-                            onAssistidoNomeChange(String(demanda.assistidoId), trimmed);
-                          }
-                          setEditingAssistidoNome(false);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          if (e.key === "Escape") {
-                            setAssistidoDraft(demanda.assistido || "");
-                            setEditingAssistidoNome(false);
-                          }
-                        }}
-                        className="text-xs text-right text-neutral-700 dark:text-neutral-200 bg-transparent border-b border-neutral-300 dark:border-neutral-700 focus:border-neutral-500 outline-none w-full px-1"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAssistidoDraft(demanda.assistido || "");
-                          setEditingAssistidoNome(true);
-                        }}
-                        className={cn(
-                          "text-xs hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors text-right truncate cursor-pointer",
-                          (demanda.assistido || "").startsWith("⚠")
-                            ? "text-amber-600 dark:text-amber-400 italic"
-                            : "text-neutral-700 dark:text-neutral-300"
-                        )}
-                        title="Clique para editar"
-                      >
-                        {demanda.assistido || "—"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Atribuição row — editável via dropdown. Migrou do header
-                  pra cá pra deixar a hero card mais limpa, mantendo a edição
-                  acessível e a área visível em metadata. */}
-              <div className="flex items-center px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
-                <div className="flex-1 flex items-center justify-end">
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-                        {demanda.atribuicao}
-                      </span>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
-
-              {/* Tipo do processo (AP/MPU/APF/...) — editável via
-                  dropdown. Útil pra corrigir importações que vieram com
-                  tipo errado (ex.: APF inserido como MPU pelo importer
-                  VVD legacy). Update vai direto no processo, não na
-                  demanda. */}
-              {processo && onTipoProcessoChange && demanda.processoId && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <FileText className="w-3 h-3 text-neutral-400" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                  <div className="flex-1 flex items-center justify-end">
-                    <InlineDropdown
-                      value={processo.tipo || ""}
-                      compact
-                      displayValue={
-                        <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-                          {processo.tipo || "—"}
-                        </span>
-                      }
-                      options={TIPO_PROCESSO_OPTIONS}
-                      onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
-                    />
-                  </div>
-                </div>
-              )}
-              {/* Fallback read-only se a view não passar o handler */}
-              {processo?.tipo && !onTipoProcessoChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <FileText className="w-3 h-3 text-neutral-400" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
-                </div>
-              )}
-
-              {/* Status prisional — editável via InlineDropdown.
-                  Atualiza assistidos.statusPrisional via mutation. */}
-              {demanda.assistidoId && onStatusPrisionalChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
-                  <div className="flex-1 flex items-center justify-end">
-                    <InlineDropdown
-                      value={demanda.estadoPrisional?.toUpperCase() || "SOLTO"}
-                      compact
-                      displayValue={
-                        <span className={cn(
-                          "text-xs font-medium px-1.5 py-0.5 rounded transition-colors",
-                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.bg,
-                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.color,
-                        )}>
-                          {STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.label || "Solto"}
-                        </span>
-                      }
-                      options={STATUS_PRISIONAL_OPTIONS}
-                      onChange={(v) => onStatusPrisionalChange(demanda.assistidoId!, v)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Vara/órgão julgador — novo */}
-              {processo?.vara && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Building2 className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Vara</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">
-                    {processo.vara}
-                  </span>
-                </div>
-              )}
-            </div>
+            <IdentificacaoSecao
+              demanda={demanda}
+              onAtribuicaoChange={onAtribuicaoChange}
+              onTipoProcessoChange={onTipoProcessoChange}
+              onAssistidoNomeChange={onAssistidoNomeChange}
+              onStatusPrisionalChange={onStatusPrisionalChange}
+              atribuicaoIcons={atribuicaoIcons}
+            />
 
             {/* Bloco B — Cronologia */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
