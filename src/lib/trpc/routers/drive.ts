@@ -427,14 +427,20 @@ export const driveRouter = router({
       createMissing: z.boolean().default(true),
     }))
     .mutation(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+      const { ATRIBUICAO_FOLDER_IDS, EXTRA_ATRIBUICAO_FOLDERS, normalizeName } =
+        await import("@/lib/utils/text-extraction");
 
-      // 1. SCAN: List all subfolders from all 5 atribuições in parallel
-      const atribuicaoKeys = Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+      // 1. SCAN: roots de cada atribuição + pastas extras (ex.: VVD (MPU)) — uma
+      // atribuição pode ter mais de uma pasta de processos no Drive.
+      const scanTargets: Array<{ key: string; folderId: string }> = [
+        ...(Object.entries(ATRIBUICAO_FOLDER_IDS) as Array<[string, string]>).map(
+          ([key, folderId]) => ({ key, folderId }),
+        ),
+        ...EXTRA_ATRIBUICAO_FOLDERS.map((e) => ({ key: e.key as string, folderId: e.folderId })),
+      ];
 
       const scanResults = await Promise.allSettled(
-        atribuicaoKeys.map(async (key) => {
-          const folderId = ATRIBUICAO_FOLDER_IDS[key];
+        scanTargets.map(async ({ key, folderId }) => {
           const items = await listAllItemsInFolder(folderId);
           const folders = items.filter(item => item.mimeType === "application/vnd.google-apps.folder");
           return { key, folders };
