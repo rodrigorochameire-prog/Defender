@@ -26,6 +26,12 @@ const ReactPdfPage = dynamic(
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { cn } from "@/lib/utils";
+
+// Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
+// disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
+// o PDF inteiro num GET único, em vez de range requests (que o proxy do Drive não
+// honra de forma consistente). Evita o erro "Não foi possível carregar o PDF".
+const PDF_LOAD_OPTIONS = { disableStream: true, disableRange: true } as const;
 import {
   X,
   ChevronLeft,
@@ -3460,6 +3466,7 @@ export function PdfViewerModal({
                 <div className="p-4" onClick={handlePageClick}>
                   <ReactPdfDocument
                     file={pdfUrl}
+                    options={PDF_LOAD_OPTIONS}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={
