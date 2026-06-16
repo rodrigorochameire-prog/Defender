@@ -20,7 +20,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { parsePJeIntimacoesCompleto, intimacaoToDemanda } from "@/lib/pje-parser";
+import { parsePJeIntimacoesCompleto, intimacaoToDemanda, ASSISTIDO_A_IDENTIFICAR } from "@/lib/pje-parser";
 import { importarDemandas, type ImportRow } from "@/lib/services/pje-import";
 import { db } from "@/lib/db";
 import { processos, demandas } from "@/lib/db/schema/core";
@@ -71,6 +71,7 @@ async function processarTexto(
       vara: int.vara,
       idDocumentoPje: int.idDocumento,
       atribuicaoDetectada: int.atribuicaoDetectada,
+      assistidoNaoIdentificado: int.assistidoNaoIdentificado || int.assistido === ASSISTIDO_A_IDENTIFICAR,
     };
   });
 

@@ -16,6 +16,7 @@ import {
   aplicarDesignacaoAudiencia,
   limparCalendarSupersedidas,
 } from "@/lib/registros/aplicar-designacao-audiencia";
+import { placeholderAutorDesconhecido } from "@/lib/autor-desconhecido";
 
 // ============================================================================
 // TIPOS
@@ -42,6 +43,7 @@ export interface ImportRow {
   vara?: string;
   idDocumentoPje?: string;
   atribuicaoDetectada?: string;
+  assistidoNaoIdentificado?: boolean;
 }
 
 export interface ImportResult {
@@ -217,7 +219,8 @@ export async function importarDemandas(
           });
           if (cand) {
             const { tipo } = classificarMatchNome(row.assistido.trim(), cand.nome);
-            if (tipo === "exact" || tipo === "similar") {
+            const isDesconhecidoReimport = !!row.assistidoNaoIdentificado && !!cand.autorNaoIdentificado;
+            if (isDesconhecidoReimport || tipo === "exact" || tipo === "similar") {
               assistido = cand;
               console.log(
                 `[pje-import] assistido reaproveitado por CNJ: ` +
@@ -229,7 +232,10 @@ export async function importarDemandas(
         }
       }
 
-      if (!assistido) {
+      // Autor não identificado NUNCA funde por nome — cada processo cria
+      // um registro próprio, nomeado pelo CNJ, para evitar colapso de
+      // múltiplos "Desconhecido" em um único assistido compartilhado.
+      if (!assistido && !row.assistidoNaoIdentificado) {
         assistido = await db.query.assistidos.findFirst({
           where: and(
             ilike(assistidos.nome, row.assistido.trim()),
@@ -272,10 +278,19 @@ export async function importarDemandas(
           ATRIBUICAO_TO_ENUM[row.atribuicao || row.atribuicaoDetectada || ""] || "JURI_CAMACARI"
         ) as any;
 
+        const ehDesconhecido = !!row.assistidoNaoIdentificado;
+        const nomeNovo = ehDesconhecido
+          ? placeholderAutorDesconhecido(row.processoNumero ?? row.assistido)
+          : row.assistido.trim();
+
         const [newAssistido] = await db.insert(assistidos).values({
-          nome: row.assistido.trim(),
+          nome: nomeNovo,
           statusPrisional: statusPrisional as any,
           atribuicaoPrimaria: targetAtribuicaoPrimaria,
+          autorNaoIdentificado: ehDesconhecido,
+          observacoes: ehDesconhecido
+            ? `Importado do PJe com autor não identificado. Processo ${row.processoNumero ?? "-"}.`
+            : null,
           defensorId,
         }).returning();
         assistido = newAssistido;

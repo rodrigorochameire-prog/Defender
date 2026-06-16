@@ -148,6 +148,7 @@ export const assistidos = pgTable("assistidos", {
   } | null>(),
   comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
   workspaceId: integer("workspace_id"),
+  autorNaoIdentificado: boolean("autor_nao_identificado").default(false).notNull(),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
