@@ -5,6 +5,7 @@ import { partesVVD, processosVVD, intimacoesVVD } from "@/lib/db/schema/vvd";
 import { eq, and, sql } from "drizzle-orm";
 import type { IntimacaoPJeSimples } from "@/lib/pje-parser";
 import { ASSISTIDO_A_IDENTIFICAR } from "@/lib/pje-parser";
+import { placeholderAutorDesconhecido, isAutorDesconhecido } from "@/lib/autor-desconhecido";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
 type NovaIntimacaoPayload = {
@@ -106,7 +107,7 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
       const atual = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, processo.assistidoId),
       });
-      const atualEhPlaceholder = atual?.nome.startsWith(ASSISTIDO_A_IDENTIFICAR);
+      const atualEhPlaceholder = isAutorDesconhecido(atual?.nome);
       if (atual && (!isAIdentificar ? !atualEhPlaceholder || atual : true)) {
         assistido = atual;
       }
@@ -125,7 +126,7 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
     if (!assistido) {
       // Processo inexistente OU assistido ainda não resolvido.
       const nomeAssistido = isAIdentificar
-        ? `${ASSISTIDO_A_IDENTIFICAR} — ${item.numeroProcesso}`
+        ? placeholderAutorDesconhecido(item.numeroProcesso)
         : item.assistido;
 
       assistido = await db.query.assistidos.findFirst({
@@ -140,6 +141,7 @@ async function handleNovaIntimacao(intimacoes: IntimacaoPJeSimples[]): Promise<n
             observacoes: isAIdentificar
               ? `Importado via PJe sem identificação do réu. Destinatário bruto: ${item.destinatarioOriginal ?? "desconhecido"}. Revisar e corrigir o nome.`
               : null,
+            ...(isAIdentificar ? { autorNaoIdentificado: true } : {}),
           })
           .returning();
         assistido = created;
