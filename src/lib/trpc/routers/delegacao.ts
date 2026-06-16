@@ -540,6 +540,9 @@ export const delegacaoRouter = router({
           delegacaoWorkStatus: null,
           dataDelegacao: null,
           motivoDelegacao: null,
+          // Ao retomar, vai para revisão (conferir o que o delegatário fez).
+          status: "2_ATENDER",
+          substatus: "2 - Revisar",
           updatedAt: new Date(),
         })
         .where(eq(demandas.id, input.demandaId))
