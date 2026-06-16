@@ -254,6 +254,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     startDrag: startDividerDrag,
     reset: resetSheetW,
     pct: pctSheetW,
+    isMobile: sheetIsMobile,
   } = useSheetWidthResize({ storageKey: "ombuds_autos_modal_split_v2" });
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
@@ -1165,11 +1166,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         className={cn(
           "p-0 flex flex-col gap-0 border-l-0 outline-none rounded-l-2xl sm:rounded-l-none [&>button:first-of-type]:hidden bg-white dark:bg-neutral-950 shadow-2xl max-w-none sm:max-w-none",
           !draggingDivider && "transition-[width] duration-300 ease-out",
-          // Com o modal aberto, a largura vem do sheetW (inline) para encaixar
-          // exatamente com o modal; fechado, largura responsiva padrão.
+          // Mobile (< sm): full-screen — a largura vem das classes (w-full +
+          // max-w-none + h-full/inset-y-0/right-0), sem o sheetW inline (que num
+          // celular geraria uma largura minúscula via clamp do leftGutter).
+          // Desktop: largura ajustável pela alça (sheetW inline).
           "w-full",
         )}
-        style={{ width: sheetW }}
+        style={sheetIsMobile ? undefined : { width: sheetW }}
       >
         <SheetTitle className="sr-only">Detalhes do evento</SheetTitle>
 
