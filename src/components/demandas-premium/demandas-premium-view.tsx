@@ -662,6 +662,7 @@ export default function Demandas() {
   // userId = users.id, que é o FK usado em demandas.defensorId
   const defensorUserId = profissionalAtivo.userId;
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false); // toggle da busca no formato responsivo menor (abaixo de md)
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
   const [sortStack, setSortStack] = useState<SortCriterion[]>([
@@ -2729,6 +2730,7 @@ export default function Demandas() {
         onToggle={handleAtribuicaoToggle}
         onClear={handleClearAtribuicoes}
         counts={atribuicaoCounts}
+        iconOnly
       />
       {(tipoProcessoCounts["MPU"] ?? 0) > 0 && (
         <>
@@ -2770,7 +2772,43 @@ export default function Demandas() {
 
   const headerToolbarRight = (
     <div className="flex items-center gap-1.5 shrink-0">
-      {/* Busca — esconde abaixo de md */}
+      {/* Busca responsiva (abaixo de md): botão com lupa que revela o input */}
+      <div className="flex md:hidden items-center shrink-0">
+        {searchOpen ? (
+          <div className="relative w-[150px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+            <input
+              autoFocus
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onBlur={() => { if (!searchTerm) setSearchOpen(false); }}
+              placeholder="Buscar..."
+              className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-7 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(""); setSearchOpen(false); }}
+              title="Fechar busca"
+              aria-label="Fechar busca"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 cursor-pointer"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            title="Buscar"
+            aria-label="Buscar"
+            className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+          >
+            <Search className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Busca — esconde abaixo de md (no responsivo menor usa o botão acima) */}
       <div className="hidden md:flex relative w-[140px] lg:w-[200px] shrink-0">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
         <input
