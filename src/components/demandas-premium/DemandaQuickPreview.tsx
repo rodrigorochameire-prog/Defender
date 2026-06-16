@@ -48,6 +48,7 @@ import {
   Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { iniciaisNome } from "@/lib/format/iniciais";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
@@ -854,13 +855,16 @@ export function DemandaQuickPreview({
         <div className="flex-1 flex min-h-0">
           {/* ===== CONTEÚDO DO SHEET (preservado integralmente) ===== */}
           <div className="flex flex-col min-h-0 min-w-0 flex-1">
-        {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
-        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+        {/* ===== NAV HEADER — claro + faixa fina da atribuição (idêntico ao
+            event-detail-sheet da agenda). O peso visual vira acento da paleta,
+            não bloco preto. ===== */}
+        <div className="h-1 w-full shrink-0 transition-colors duration-300" style={{ backgroundColor: atribuicaoColor }} aria-hidden />
+        <div className="bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight text-white truncate">
+            <SheetTitle className="text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
               {demanda.assistido ? (
                 <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-white/50 font-normal shrink-0">
+                  <span className="text-neutral-400 dark:text-neutral-500 font-normal shrink-0">
                     {demanda.ato || "Demanda"} ·
                   </span>
                   <span className="truncate">{demanda.assistido}</span>
@@ -875,19 +879,19 @@ export function DemandaQuickPreview({
               <>
                 <button
                   onClick={() => onNavigate("prev")}
-                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center"
                   title="Anterior (↑)"
                 >
                   <ChevronUp className="w-3.5 h-3.5" />
                 </button>
                 {currentIndex != null && totalCount != null && (
-                  <span className="text-[10px] font-mono text-white/60 tabular-nums min-w-[40px] text-center">
+                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 tabular-nums min-w-[40px] text-center">
                     {currentIndex + 1}/{totalCount}
                   </span>
                 )}
                 <button
                   onClick={() => onNavigate("next")}
-                  className="w-7 h-7 rounded-lg hover:bg-neutral-800 text-white/70 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center"
                   title="Próximo (↓)"
                 >
                   <ChevronDown className="w-3.5 h-3.5" />
@@ -896,7 +900,7 @@ export function DemandaQuickPreview({
             )}
             <button
               onClick={() => onOpenChange(false)}
-              className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer ml-1"
+              className="w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer ml-1 transition-colors"
               title="Fechar (Esc)"
             >
               <X className="w-3.5 h-3.5" />
@@ -919,7 +923,7 @@ export function DemandaQuickPreview({
                 }}
               >
                 <span className="text-sm font-semibold" style={{ color: atribuicaoColor }}>
-                  {(demanda.assistido || "").split(" ").filter(Boolean).slice(0, 2).map(n => n[0]).join("").toUpperCase()}
+                  {iniciaisNome(demanda.assistido || "")}
                 </span>
               </div>
               <div className="flex-1 min-w-0 pt-0.5">

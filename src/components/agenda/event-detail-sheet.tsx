@@ -41,6 +41,7 @@ import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
 import { nomeVaraExibicao } from "@/lib/format/nome-vara";
+import { iniciaisNome } from "@/lib/format/iniciais";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
@@ -53,20 +54,6 @@ import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
-}
-
-// Conectivos que não entram nas iniciais do avatar (evita "Amilton de…" → "AD").
-const CONECTIVOS_NOME = new Set(["de", "da", "do", "das", "dos", "e"]);
-
-/** Iniciais a partir do nome, ignorando conectivos (→ "Amilton de Souza" = "AS"). */
-function iniciaisNome(nome: string): string {
-  return nome
-    .split(/\s+/)
-    .filter((p) => p && !CONECTIVOS_NOME.has(p.toLowerCase()))
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
 }
 
 const INTIMACAO_TONE: Record<string, string> = {
