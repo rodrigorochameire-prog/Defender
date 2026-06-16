@@ -1109,12 +1109,26 @@ export const enrichmentRouter = router({
             if (proc.assunto) updateData.assunto = proc.assunto;
             if (proc.vara) updateData.vara = proc.vara;
             if (proc.comarca) updateData.comarca = proc.comarca;
+            if (Array.isArray(proc.partes)) {
+              const pc = proc.partes
+                .filter((p: any) => p.polo === "passivo")
+                .map((p: any) => p.nome)
+                .join("; ");
+              if (pc) updateData.parteContraria = pc;
+            }
 
             if (Object.keys(updateData).length > 0) {
               await db
                 .update(processos)
                 .set({ ...updateData, updatedAt: new Date() })
                 .where(eq(processos.id, input.processoId));
+            }
+
+            try {
+              const { enriquecerNomeAutorDesconhecido } = await import("@/lib/services/enriquecer-autor-desconhecido");
+              await enriquecerNomeAutorDesconhecido(input.processoId);
+            } catch (e) {
+              console.warn(`[enrich] autor-desconhecido falhou p/ processo ${input.processoId}:`, e);
             }
 
             results.scrape = { scraped: true, data: proc as unknown as Record<string, unknown> };
