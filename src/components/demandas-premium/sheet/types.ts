@@ -7,6 +7,7 @@ export interface Processo {
   tipo: string;
   numero: string;
   numeroAutos?: string;
+  vara?: string;
 }
 
 export interface Demanda {

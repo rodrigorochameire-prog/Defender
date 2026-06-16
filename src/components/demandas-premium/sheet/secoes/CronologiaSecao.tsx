@@ -37,6 +37,8 @@ export function CronologiaSecao({ demanda, onPrazoChange }: Props) {
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
 
   return (
+    // -mx-4 cancela o px-4 de conteúdo do CollapsibleSection p/ as rows ficarem
+    // flush nas bordas. Se aquele padding mudar, ajustar este valor aqui.
     <div className="-mx-4 divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
       {/* Expedição da intimação — data em que foi expedida no PJe.
           data_intimacao = expedicao + 10 dias (Lei 11.419/2006).

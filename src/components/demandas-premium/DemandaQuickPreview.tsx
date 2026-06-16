@@ -20,30 +20,17 @@ import {
   Pencil,
   ChevronUp,
   ChevronDown,
-  ChevronRight,
   Scale,
-  Calendar,
-  FileText,
   User,
-  Briefcase,
   Clock,
   X,
   Mail,
   ArrowRight,
   Sparkles,
   FolderOpen,
-  Loader2,
   Upload,
-  File,
-  Image,
-  FileSpreadsheet,
   History,
-  Mic,
-  Video,
-  FileSignature,
   Plus,
-  CheckSquare,
-  Building2,
   CalendarPlus,
   Eye,
 } from "lucide-react";
@@ -688,20 +675,27 @@ export function DemandaQuickPreview({
   useEffect(() => {
     const root = scrollRef.current;
     if (!root) return;
-    const els = root.querySelectorAll<HTMLElement>("[data-section-id]");
-    if (!els.length) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        const first = visible[0]?.target.getAttribute("data-section-id");
-        if (first) setActiveSecao(first);
-      },
-      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
-    );
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
+    let io: IntersectionObserver | null = null;
+    const attach = () => {
+      io?.disconnect();
+      const els = root.querySelectorAll<HTMLElement>("[data-section-id]");
+      if (!els.length) return;
+      io = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((e) => e.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          const first = visible[0]?.target.getAttribute("data-section-id");
+          if (first) setActiveSecao(first);
+        },
+        { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+      );
+      els.forEach((el) => io!.observe(el));
+    };
+    attach();
+    const mo = new MutationObserver(() => attach());
+    mo.observe(root, { childList: true, subtree: true });
+    return () => { io?.disconnect(); mo.disconnect(); };
   }, [open, demanda?.id]);
 
   // Handle file uploads to the demanda's Drive folder
@@ -894,7 +888,7 @@ export function DemandaQuickPreview({
     },
     autos: {
       label: "Autos & Documentos",
-      temDado: previewFiles.length > 0 || !!driveFolder,
+      temDado: previewFiles.length > 0 || !!demanda.processoId || !!demanda.assistidoId,
       count: previewFiles.length || undefined,
       node: (
         <AutosSecao
@@ -902,13 +896,10 @@ export function DemandaQuickPreview({
           assistidoId={demanda.assistidoId}
           primaryAutos={primaryAutos}
           previewFiles={previewFiles}
-          autosAgrupados={autosAgrupados}
           driveFolder={driveFolder}
           driveFolderLoading={driveFolderLoading}
           uploadingFiles={uploadingFiles}
-          docsOpen={openMap.autos}
           createDriveFolderPending={createDriveFolder.isPending}
-          onToggleDocs={() => setSecaoOpen("autos", !openMap.autos)}
           onOpenDoca={(fileId, page) => setDocaAutos({ fileId, page })}
           onOpenPreview={setPreviewFileId}
           onUploadFiles={handleFileUpload}

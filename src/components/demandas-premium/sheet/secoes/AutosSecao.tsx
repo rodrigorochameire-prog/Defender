@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   FileText,
   ArrowRight,
@@ -23,13 +23,10 @@ interface Props {
   assistidoId?: number | null;
   primaryAutos: PreviewFile | null;
   previewFiles: PreviewFile[];
-  autosAgrupados: any;
   driveFolder: any;
   driveFolderLoading: boolean;
   uploadingFiles: string[];
-  docsOpen: boolean;
   createDriveFolderPending?: boolean;
-  onToggleDocs: () => void;
   onOpenDoca: (fileId: string, page?: number) => void;
   onOpenPreview: (fileId: string) => void;
   onUploadFiles: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -63,15 +60,16 @@ export function AutosSecao(props: Props) {
     driveFolder,
     driveFolderLoading,
     uploadingFiles,
-    docsOpen,
     createDriveFolderPending,
-    onToggleDocs,
     onOpenDoca,
     onUploadFiles,
     onCreateDriveFolder,
   } = props;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Disclosure local da lista de Documentos (Drive). Independente do
+  // CollapsibleSection externo — abrir/fechar aqui não recolhe a seção Autos.
+  const [docsOpen, setDocsOpen] = useState(false);
 
   return (
     <div className="space-y-3">
@@ -131,7 +129,7 @@ export function AutosSecao(props: Props) {
       <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
         {/* Collapsible header */}
         <button
-          onClick={onToggleDocs}
+          onClick={() => setDocsOpen((v) => !v)}
           className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
         >
           <FolderOpen className="w-4 h-4 text-neutral-400 shrink-0" />
