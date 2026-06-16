@@ -1,9 +1,13 @@
+import { CitacaoText } from "../CitacaoText";
+
 export function RequerimentoDefesaSecao({ texto, vinculadoAoMotivo }: { texto: string; vinculadoAoMotivo?: boolean }) {
   return (
-    <div className="space-y-1">
-      <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{texto}</p>
+    <div className="space-y-2">
+      <CitacaoText texto={texto} />
       {vinculadoAoMotivo && (
-        <p className="text-[10px] text-blue-500">↔ vinculado ao Motivo da designação (origem: requerimento da defesa)</p>
+        <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+          ↔ vinculado ao Motivo da designação
+        </span>
       )}
     </div>
   );
