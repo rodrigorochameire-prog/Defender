@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useDialogOpen } from "@/hooks/use-dialog-open";
 import {
   MessageSquarePlus,
   X,
@@ -93,6 +94,7 @@ export function FeedbackFAB() {
   const [mensagem, setMensagem] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pathname = usePathname();
+  const dialogOpen = useDialogOpen();
 
   const createFeedback = trpc.feedbacks.create.useMutation({
     onSuccess: () => {
@@ -162,6 +164,9 @@ export function FeedbackFAB() {
 
   // Don't render on login page (must be after all hooks)
   if (pathname === "/login") return null;
+  // Esconde o FAB enquanto um sheet/dialog está aberto (evita sobrepor a barra
+  // de ação do painel lateral). O popover de feedback não é role="dialog".
+  if (dialogOpen && !isOpen) return null;
 
   const canSubmit = !!tipo && mensagem.trim().length > 0;
 
