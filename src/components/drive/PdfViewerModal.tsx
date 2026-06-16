@@ -10,8 +10,11 @@ import { trpc } from "@/lib/trpc/client";
 // We must lazy-load both the components and the worker setup.
 const ReactPdfDocument = dynamic(
   () => import("react-pdf").then((mod) => {
-    // Setup worker once when module loads
-    mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`;
+    // Setup worker once when module loads.
+    // Self-hospedado em /public (copiado de pdfjs-dist 5.4.624 — casa com a versão
+    // empacotada pelo react-pdf). Evita a dependência do CDN unpkg, que quando
+    // bloqueado/lento deixava o <Document> travado em "Carregando PDF..." pra sempre.
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     return { default: mod.Document };
   }),
   { ssr: false }
@@ -485,6 +488,9 @@ interface PdfViewerModalProps {
   pdfUrl: string; // Google Drive webContentLink or preview URL
   siblingFiles?: { id: number; name: string; pdfUrl: string }[];
   onFileChange?: (fileId: number) => void;
+  /** Embute o viewer dentro do container pai (preenche o espaço, sem o overlay
+   *  fullscreen escuro). Usado no painel encaixado à esquerda do sheet de evento. */
+  embedded?: boolean;
 }
 
 interface DocumentSection {
@@ -1965,6 +1971,7 @@ export function PdfViewerModal({
   pdfUrl,
   siblingFiles,
   onFileChange,
+  embedded = false,
 }: PdfViewerModalProps) {
   // State
   const { addJob, updateJob: updateQueueJob, completeJob, failJob } = useProcessingQueue();
@@ -2743,7 +2750,13 @@ export function PdfViewerModal({
   return (
     <TooltipProvider>
       <style dangerouslySetInnerHTML={{ __html: PDF_TEXT_LAYER_STYLES }} />
-      <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center">
+      <div
+        className={cn(
+          embedded
+            ? "absolute inset-0 flex bg-white dark:bg-neutral-900"
+            : "fixed inset-0 z-[60] bg-black/80 flex items-center justify-center",
+        )}
+      >
         <div
           ref={containerRef}
           className={cn(
