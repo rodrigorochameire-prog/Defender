@@ -66,6 +66,8 @@ interface FormState {
   assunto: string;
   anotacoesRecepcao: string;
   processoId: number | null;
+  /** CNJ do processo a vincular quando o assistido ainda não tem processo no sistema. */
+  numeroAutosNovo: string;
   cnjsCitados: string[];
 }
 
@@ -82,6 +84,7 @@ const EMPTY_FORM: FormState = {
   assunto: "",
   anotacoesRecepcao: "",
   processoId: null,
+  numeroAutosNovo: "",
   cnjsCitados: [],
 };
 
@@ -115,6 +118,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
         assunto: editing.assunto ?? "",
         anotacoesRecepcao: editing.anotacoesRecepcao ?? "",
         processoId: editing.processoId,
+        numeroAutosNovo: "",
         cnjsCitados: (editing.processosCitados ?? []).map((p) => p.cnj),
       });
     } else if (prefill) {
@@ -141,6 +145,18 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     { assistidoId: form.assistidoId ?? 0 },
     { enabled: open && !!form.assistidoId }
   );
+
+  // Default: quando o assistido tem exatamente um processo, já vincula a ele
+  // (em vez de "Sem vínculo"), para o atendimento nascer ligado ao processo.
+  const autoVinculouRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (editing) return;
+    if (!form.assistidoId || form.processoId != null) return;
+    if (processosAssistido.length === 1 && autoVinculouRef.current !== form.assistidoId) {
+      autoVinculouRef.current = form.assistidoId;
+      setForm((f) => ({ ...f, processoId: processosAssistido[0].id }));
+    }
+  }, [processosAssistido, form.assistidoId, form.processoId, editing]);
 
   const invalidate = () => {
     utils.registros.listAtendimentos.invalidate();
@@ -246,6 +262,14 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
         assunto: form.assunto || undefined,
         local: form.local || undefined,
         processoId: form.processoId ?? undefined,
+        // CNJ colado (assistido sem processo) → o servidor faz find-or-create do
+        // processo real e vincula o atendimento, em vez de cair em stub "SN-…".
+        ...(!form.processoId && form.numeroAutosNovo.trim()
+          ? {
+              numeroAutos: form.numeroAutosNovo.trim(),
+              atribuicao: AREA_TO_ATRIBUICAO_ENUM[form.area] ?? "SUBSTITUICAO",
+            }
+          : {}),
         ...(registrarRealizado
           ? { status: "realizado" as const, conteudo: relato.trim() || undefined }
           : {}),
@@ -386,26 +410,42 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
             </div>
           </div>
 
-          {form.assistidoId && processosAssistido.length > 0 && (
+          {form.assistidoId && (
             <div className="space-y-2">
               <Label>Processo vinculado</Label>
-              <Select
-                value={form.processoId ? String(form.processoId) : "none"}
-                onValueChange={(v) => set("processoId", v === "none" ? null : Number(v))}
-              >
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue placeholder="Sem vínculo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem vínculo</SelectItem>
-                  {processosAssistido.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      <span className="font-mono text-xs">{p.numeroAutos}</span>
-                      {p.area ? ` · ${p.area}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {processosAssistido.length > 0 && (
+                <Select
+                  value={form.processoId ? String(form.processoId) : "none"}
+                  onValueChange={(v) => set("processoId", v === "none" ? null : Number(v))}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Sem vínculo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem vínculo</SelectItem>
+                    {processosAssistido.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        <span className="font-mono text-xs">{p.numeroAutos}</span>
+                        {p.area ? ` · ${p.area}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {/* Sem processo selecionado: permite colar o CNJ real para vincular
+                  (find-or-create), evitando que o atendimento caia em stub "SN-…". */}
+              {form.processoId == null && (
+                <Input
+                  value={form.numeroAutosNovo}
+                  onChange={(e) => set("numeroAutosNovo", e.target.value)}
+                  placeholder={
+                    processosAssistido.length > 0
+                      ? "ou cole o nº do processo (CNJ) para vincular"
+                      : "nº do processo (CNJ) para vincular"
+                  }
+                  className="h-9 text-sm font-mono"
+                />
+              )}
             </div>
           )}
 
