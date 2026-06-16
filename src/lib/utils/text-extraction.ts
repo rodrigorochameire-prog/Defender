@@ -25,11 +25,24 @@ export interface AtribuicaoResult {
 // Mapeamento das atribuições para IDs de pasta no Drive
 export const ATRIBUICAO_FOLDER_IDS = {
   JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
-  VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
+  VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti", // Processos - VVD (Criminal)
   EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
   SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
   GRUPO_JURI: "1LUW4yauxm6iaJYCrjRgXAnSgTZIbel2j",
 } as const;
+
+/**
+ * Pastas-raiz adicionais varridas junto da atribuição indicada (mesmo `key`).
+ * Necessário porque uma atribuição pode ter mais de uma pasta de processos no
+ * Drive: VVD, por exemplo, separa `VVD (Criminal)` (acima) de `VVD (MPU)` — os
+ * requeridos de MPU ficam nesta segunda, que o root principal não cobre.
+ */
+export const EXTRA_ATRIBUICAO_FOLDERS: ReadonlyArray<{
+  key: keyof typeof ATRIBUICAO_FOLDER_IDS;
+  folderId: string;
+}> = [
+  { key: "VVD", folderId: "1D-tHrNqU0sAczQP4NAslm7ofthC73COe" }, // Processos - VVD (MPU)
+];
 
 // Pastas especiais
 export const SPECIAL_FOLDER_IDS = {
