@@ -30,6 +30,7 @@ import { Loader2, Plus, X, Check } from "lucide-react";
 import {
   AREA_OPTIONS,
   SUBTIPO_OPTIONS,
+  AREA_TO_ATRIBUICAO_ENUM,
   type AtendimentoListItem,
 } from "./config";
 
@@ -91,6 +92,9 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
   // Walk-in: assistido apareceu na sede sem agendamento — registra direto como realizado
   const [registrarRealizado, setRegistrarRealizado] = useState(false);
   const [relato, setRelato] = useState("");
+  // Desfecho: o "gerar demanda" agora é passo natural do atendimento.
+  const [desfecho, setDesfecho] = useState<"nenhuma" | "demanda" | "orientacao">("nenhuma");
+  const [desfechoAto, setDesfechoAto] = useState("");
   // Assistido travado: na edição e no retorno pré-preenchido (vínculo já definido).
   const assistidoTravado = !!editing || !!prefill;
 
@@ -129,6 +133,8 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     setCnjDraft("");
     setRegistrarRealizado(false);
     setRelato("");
+    setDesfecho("nenhuma");
+    setDesfechoAto("");
   }, [open, editing, prefill]);
 
   const { data: processosAssistido = [] } = trpc.atendimentos.processosByAssistido.useQuery(
@@ -171,6 +177,12 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     onError: (e) => toast.error(`Erro ao atualizar: ${e.message}`),
   });
 
+  // Demanda gerada do atendimento (desfecho) — encadeada após salvar o atendimento.
+  const criarDemanda = trpc.demandas.createFromForm.useMutation({
+    onSuccess: () => utils.demandas.list.invalidate(),
+    onError: (e) => toast.error(`Atendimento salvo, mas falhou ao gerar demanda: ${e.message}`),
+  });
+
   const salvando = agendar.isPending || atualizar.isPending;
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -187,7 +199,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     setCnjDraft("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.assistidoId) {
       toast.error("Selecione um assistido do cadastro");
@@ -195,6 +207,10 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
     }
     if (!form.data || !form.hora) {
       toast.error("Informe data e horário");
+      return;
+    }
+    if (!editing && desfecho === "demanda" && !desfechoAto.trim()) {
+      toast.error("Informe o ato a praticar da demanda");
       return;
     }
     const dataRegistro = new Date(`${form.data}T${form.hora}:00`).toISOString();
@@ -223,7 +239,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
         processoId: form.processoId,
       });
     } else {
-      agendar.mutate({
+      const registro = await agendar.mutateAsync({
         assistidoId: form.assistidoId,
         titulo: `Atendimento ${subtipoLabel} — ${form.assistidoNome}`,
         ...payloadComum,
@@ -234,6 +250,23 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
           ? { status: "realizado" as const, conteudo: relato.trim() || undefined }
           : {}),
       });
+      // Desfecho: gera a demanda encadeada (vínculo bidirecional + processo do atendimento).
+      if (desfecho !== "nenhuma" && registro?.id) {
+        await criarDemanda.mutateAsync({
+          assistidoNome: form.assistidoNome,
+          assistidoId: form.assistidoId,
+          ...(form.processoId ? { processoId: form.processoId } : {}),
+          atendimentoId: registro.id,
+          atribuicao: AREA_TO_ATRIBUICAO_ENUM[form.area] ?? "SUBSTITUICAO",
+          ato: desfecho === "demanda" ? desfechoAto.trim() : "Atendimento e orientação",
+          status: desfecho === "demanda" ? "triagem" : "sem_atuacao",
+        });
+        toast.success(
+          desfecho === "demanda"
+            ? "Demanda gerada do atendimento"
+            : "Registrado no cadastro (atendimento e orientação)",
+        );
+      }
     }
   };
 
@@ -470,6 +503,39 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
             <div className="space-y-1">
               <Label className="text-xs">Áudio do atendimento (opcional)</Label>
               <AudioRecorder onRecorded={(a) => { audioPendenteRef.current = a; }} />
+            </div>
+          )}
+
+          {!editing && (
+            <div className="rounded-lg border border-neutral-200/70 dark:border-neutral-800 p-3 space-y-2">
+              <Label className="text-xs font-medium">Desfecho do atendimento</Label>
+              <div className="space-y-1.5">
+                {([
+                  { v: "nenhuma", label: "Só atendimento", hint: "não gera demanda" },
+                  { v: "demanda", label: "Gerar demanda", hint: "há providência a fazer" },
+                  { v: "orientacao", label: "Atendimento e orientação", hint: "registra no cadastro, sem providência" },
+                ] as const).map((o) => (
+                  <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name="desfecho"
+                      checked={desfecho === o.v}
+                      onChange={() => setDesfecho(o.v)}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                    <span className="font-medium">{o.label}</span>
+                    <span className="text-[11px] text-muted-foreground">({o.hint})</span>
+                  </label>
+                ))}
+              </div>
+              {desfecho === "demanda" && (
+                <Input
+                  value={desfechoAto}
+                  onChange={(e) => setDesfechoAto(e.target.value)}
+                  placeholder="Ato a praticar — ex.: Elaborar petição de…"
+                  className="h-9 text-sm mt-1"
+                />
+              )}
             </div>
           )}
 
