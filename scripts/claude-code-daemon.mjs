@@ -282,22 +282,33 @@ A primeira caractere da resposta deve ser { e o último deve ser }.`
 }
 
 // --- Catch-up: process all pending tasks ---
-async function catchUp() {
-  console.log(`${LOG_PREFIX} Running catch-up...`)
-  const { data: tasks, error } = await supabase
-    .from('claude_code_tasks')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
+// Guarda contra execuções sobrepostas (o poll periódico pode disparar enquanto
+// o catch-up do SUBSCRIBED ainda roda). O lock otimista em processTask já evita
+// processar a mesma task duas vezes; isto só evita varreduras concorrentes.
+let catchUpRunning = false
+async function catchUp(reason = 'manual') {
+  if (catchUpRunning) return
+  catchUpRunning = true
+  try {
+    const { data: tasks, error } = await supabase
+      .from('claude_code_tasks')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
 
-  if (error) {
-    console.error(`${LOG_PREFIX} Catch-up query failed:`, error.message)
-    return
-  }
+    if (error) {
+      console.error(`${LOG_PREFIX} Catch-up query failed:`, error.message)
+      return
+    }
 
-  console.log(`${LOG_PREFIX} Found ${tasks.length} pending task(s).`)
-  for (const task of tasks) {
-    await processTask(task)
+    if (tasks.length > 0) {
+      console.log(`${LOG_PREFIX} Catch-up (${reason}): found ${tasks.length} pending task(s).`)
+    }
+    for (const task of tasks) {
+      await processTask(task)
+    }
+  } finally {
+    catchUpRunning = false
   }
 }
 
@@ -337,7 +348,7 @@ function subscribe() {
       console.log(`${LOG_PREFIX} Realtime status: ${status}`)
       if (status === 'SUBSCRIBED') {
         reconnectAttempts = 0
-        await catchUp()
+        await catchUp('subscribed')
       } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         scheduleReconnect(status)
       }
@@ -391,12 +402,19 @@ async function sendHeartbeat() {
 await sendHeartbeat()
 const heartbeatInterval = setInterval(sendHeartbeat, 30_000)
 
+// --- Periodic catch-up (safety net) ---
+// O Realtime é o caminho rápido, mas pode não entregar um INSERT (tabela fora da
+// publicação, blip de canal, etc.). Um poll periódico garante que nenhuma task
+// fique presa em 'pending' por mais que o intervalo. Barato: 1 SELECT indexado.
+const catchUpInterval = setInterval(() => catchUp('poll'), 60_000)
+
 // --- Graceful shutdown ---
 function shutdown() {
   console.log(`${LOG_PREFIX} Shutting down...`)
   shuttingDown = true
   if (reconnectTimer) clearTimeout(reconnectTimer)
   clearInterval(heartbeatInterval)
+  clearInterval(catchUpInterval)
   if (channel) supabase.removeChannel(channel)
   process.exit(0)
 }
