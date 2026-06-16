@@ -119,7 +119,11 @@ logs/
 !.claude/skills-cowork/oficio-redacao/
 !.claude/skills-cowork/protocolar/
 !.claude/skills-cowork/schedule/
+!.claude/skills-cowork/transcrever-atendimento/
 !.claude/skills-cowork/vvd/
+# Lixo dentro das skills versionadas (artefatos Finder, backups) segue ignorado
+.claude/skills-cowork/**/Icon?
+.claude/skills-cowork/**/*.bak
 *.docx
 
 # Scripts temporários de diagnóstico/investigação (convenção: prefixo `_`)
