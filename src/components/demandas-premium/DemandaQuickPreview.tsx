@@ -65,6 +65,8 @@ import { RegistroComAutosDialog } from "@/components/registros/registro-com-auto
 import { IdentificacaoSecao } from "./sheet/secoes/IdentificacaoSecao";
 import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
 import { AutosSecao } from "./sheet/secoes/AutosSecao";
+import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
+import { resolverManifesto, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
   type PreviewFile,
@@ -423,6 +425,8 @@ function StageSubstatusPopover({
 // COMPONENT
 // ============================================
 
+const DEMANDAS_SECOES_KEY = "demandas-sheet-sections-open";
+
 export function DemandaQuickPreview({
   demanda,
   open,
@@ -449,7 +453,30 @@ export function DemandaQuickPreview({
   currentIndex,
   totalCount,
 }: DemandaQuickPreviewProps) {
-  const [docsOpen, setDocsOpen] = useState(false);
+  const [openMap, setOpenMap] = useState<Record<SecaoId, boolean>>(() => {
+    let persisted: Record<string, boolean> = {};
+    try { persisted = JSON.parse(localStorage.getItem(DEMANDAS_SECOES_KEY) || "{}"); } catch { /* ignore */ }
+    const def = (id: SecaoId, fallback: boolean) =>
+      persisted[id] !== undefined ? persisted[id] : fallback;
+    return {
+      registros: def("registros", true),
+      "proxima-audiencia": def("proxima-audiencia", true),
+      identificacao: def("identificacao", false),
+      cronologia: def("cronologia", false),
+      oficio: def("oficio", false),
+      autos: def("autos", false),
+      recursos: def("recursos", false),
+    };
+  });
+
+  const setSecaoOpen = useCallback((id: SecaoId, open: boolean) => {
+    setOpenMap((prev) => {
+      const next = { ...prev, [id]: open };
+      try { localStorage.setItem(DEMANDAS_SECOES_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
 
@@ -471,7 +498,7 @@ export function DemandaQuickPreview({
     refetch: refetchDriveFolder,
   } = trpc.drive.getDemandaFolder.useQuery(
     { demandaId: demanda?.id ?? "" },
-    { enabled: docsOpen && !!demanda?.id, staleTime: 30_000 }
+    { enabled: openMap.autos && !!demanda?.id, staleTime: 30_000 }
   );
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
@@ -711,6 +738,171 @@ export function DemandaQuickPreview({
   const isProcStub = !processo?.numero || /^SN-/i.test(processo.numero);
   const currentStageIdx = getStageIndex(statusConfig.group);
   const oficioSugerido = sugerirOficio(demanda.ato, demanda.providencias);
+
+  // ============================================
+  // MANIFESTO — corpo do sheet dirigido por seções colapsáveis
+  // ============================================
+  const recursosCount = (midiasFlat?.length ?? 0) + (pdfFiles?.length ?? 0);
+
+  const secoesMap: SecoesMap = {
+    registros: {
+      label: "Registros",
+      temDado: true,
+      node: demanda.assistidoId ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
+            {!novoRegistroOpen && (
+              <button
+                type="button"
+                onClick={() => setNovoRegistroOpen(true)}
+                title="Adicionar registro (n)"
+                aria-label="Adicionar registro"
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Adicionar</span>
+              </button>
+            )}
+          </div>
+          {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
+          {novoRegistroOpen && previewFiles.length === 0 && (
+            <RegistroEditor
+              assistidoId={demanda.assistidoId}
+              processoId={demanda.processoId ?? undefined}
+              demandaId={Number(demanda.id)}
+              tipoDefault="ciencia"
+              tiposPrimarios={[
+                "ciencia",
+                "providencia",
+                "diligencia",
+                "atendimento",
+                "delegacao",
+                "anotacao",
+                "peticao",
+              ]}
+              onSaved={() => {
+                setNovoRegistroOpen(false);
+                refetchAudiencias();
+              }}
+              onCancel={() => setNovoRegistroOpen(false)}
+            />
+          )}
+          <RegistrosTimeline
+            assistidoId={demanda.assistidoId}
+            processoId={demanda.processoId ?? undefined}
+            demandaId={Number(demanda.id)}
+            emptyHint="Sem registros nesta demanda."
+          />
+        </div>
+      ) : (
+        <div className="text-[11px] text-muted-foreground italic">
+          Vincule um assistido para registrar providências e atendimentos.
+        </div>
+      ),
+    },
+    "proxima-audiencia": {
+      label: "Próxima audiência",
+      temDado: !!proximaAudiencia,
+      node: proximaAudiencia ? (
+        <ProximaAudienciaBlock
+          audiencia={proximaAudiencia}
+          onChanged={() => refetchAudiencias()}
+        />
+      ) : null,
+    },
+    identificacao: {
+      label: "Identificação",
+      temDado: true,
+      node: (
+        <IdentificacaoSecao
+          demanda={demanda}
+          onAtribuicaoChange={onAtribuicaoChange}
+          onTipoProcessoChange={onTipoProcessoChange}
+          onAssistidoNomeChange={onAssistidoNomeChange}
+          onStatusPrisionalChange={onStatusPrisionalChange}
+          atribuicaoIcons={atribuicaoIcons}
+        />
+      ),
+    },
+    cronologia: {
+      label: "Cronologia & Prazo",
+      temDado: true,
+      node: <CronologiaSecao demanda={demanda} onPrazoChange={onPrazoChange} />,
+    },
+    oficio: {
+      label: "Ofício sugerido",
+      temDado: !!oficioSugerido,
+      node: oficioSugerido ? (
+        <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
+                Ofício sugerido
+              </span>
+              <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
+                {oficioSugerido.tipoLabel}
+              </span>
+            </div>
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 ml-7 mb-2.5">
+              Com base no ato &ldquo;{demanda.ato}&rdquo;
+            </p>
+            <Link
+              href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
+              className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
+            >
+              <Sparkles className="w-3 h-3" />
+              Gerar Ofício
+              <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
+            </Link>
+          </div>
+        </div>
+      ) : null,
+    },
+    autos: {
+      label: "Autos & Documentos",
+      temDado: previewFiles.length > 0 || !!driveFolder,
+      count: previewFiles.length || undefined,
+      node: (
+        <AutosSecao
+          processoId={demanda.processoId}
+          assistidoId={demanda.assistidoId}
+          primaryAutos={primaryAutos}
+          previewFiles={previewFiles}
+          autosAgrupados={autosAgrupados}
+          driveFolder={driveFolder}
+          driveFolderLoading={driveFolderLoading}
+          uploadingFiles={uploadingFiles}
+          docsOpen={openMap.autos}
+          createDriveFolderPending={createDriveFolder.isPending}
+          onToggleDocs={() => setSecaoOpen("autos", !openMap.autos)}
+          onOpenDoca={(fileId, page) => setDocaAutos({ fileId, page })}
+          onOpenPreview={setPreviewFileId}
+          onUploadFiles={handleFileUpload}
+          onCreateDriveFolder={() => createDriveFolder.mutate({ demandaId: demanda.id })}
+        />
+      ),
+    },
+    recursos: {
+      label: "Recursos",
+      temDado: recursosCount > 0,
+      count: recursosCount || undefined,
+      node: (
+        <RecursosSecao
+          midiasFlat={midiasFlat}
+          pdfFiles={pdfFiles}
+          driveFolderUrl={driveFolderUrl}
+          onOpenPreview={(fileId) => setDocaAutos({ fileId })}
+        />
+      ),
+    },
+  };
+
+  const manifesto = resolverManifesto();
+  const visibleSections = manifesto.filter((id) => secoesMap[id].temDado);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -1129,85 +1321,23 @@ export function DemandaQuickPreview({
             )}
           </div>
 
-          {/* ===== CARD SECTIONS ===== */}
+          {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
-            {/* Card 1: Registros (Task 6 — registros tipados) */}
-            {demanda.assistidoId ? (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
-                <div className="px-4 py-3 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
-                    {!novoRegistroOpen && (
-                      <button
-                        type="button"
-                        onClick={() => setNovoRegistroOpen(true)}
-                        title="Adicionar registro (n)"
-                        aria-label="Adicionar registro"
-                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">Adicionar</span>
-                      </button>
-                    )}
-                  </div>
-                  {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
-                  {novoRegistroOpen && previewFiles.length === 0 && (
-                    <RegistroEditor
-                      assistidoId={demanda.assistidoId}
-                      processoId={demanda.processoId ?? undefined}
-                      demandaId={Number(demanda.id)}
-                      tipoDefault="ciencia"
-                      tiposPrimarios={[
-                        "ciencia",
-                        "providencia",
-                        "diligencia",
-                        "atendimento",
-                        "delegacao",
-                        "anotacao",
-                        "peticao",
-                      ]}
-                      onSaved={() => {
-                        setNovoRegistroOpen(false);
-                        refetchAudiencias();
-                      }}
-                      onCancel={() => setNovoRegistroOpen(false)}
-                    />
-                  )}
-                  <RegistrosTimeline
-                    assistidoId={demanda.assistidoId}
-                    processoId={demanda.processoId ?? undefined}
-                    demandaId={Number(demanda.id)}
-                    emptyHint="Sem registros nesta demanda."
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-                <div className="px-4 py-3 text-[11px] text-muted-foreground italic">
-                  Vincule um assistido para registrar providências e atendimentos.
-                </div>
-              </div>
-            )}
+            {visibleSections.map((id) => (
+              <CollapsibleSection
+                key={id}
+                id={id}
+                label={secoesMap[id].label}
+                count={secoesMap[id].count}
+                storageKey={DEMANDAS_SECOES_KEY}
+                open={openMap[id]}
+                onOpenChange={(o) => setSecaoOpen(id, o)}
+              >
+                {secoesMap[id].node}
+              </CollapsibleSection>
+            ))}
 
-            {/* ===== DETALHES — 3 BLOCOS ===== */}
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-              Detalhes
-            </h3>
-
-            {/* Bloco A — Identificação */}
-            <IdentificacaoSecao
-              demanda={demanda}
-              onAtribuicaoChange={onAtribuicaoChange}
-              onTipoProcessoChange={onTipoProcessoChange}
-              onAssistidoNomeChange={onAssistidoNomeChange}
-              onStatusPrisionalChange={onStatusPrisionalChange}
-              atribuicaoIcons={atribuicaoIcons}
-            />
-
-            {/* Bloco B — Cronologia */}
-            <CronologiaSecao demanda={demanda} onPrazoChange={onPrazoChange} />
-
-            {/* Bloco C — Ações rápidas */}
+            {/* ===== AÇÕES RÁPIDAS (fixo — não colapsável) ===== */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
               <div className="flex divide-x divide-neutral-200/40 dark:divide-neutral-800/40">
                 {onAgendarAudiencia && (
@@ -1267,82 +1397,8 @@ export function DemandaQuickPreview({
                 )}
               </div>
             </div>
-
-            {/* ===== OFÍCIO SUGERIDO ===== */}
-            {oficioSugerido && (
-              <>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-                  Ofício
-                </h3>
-
-                <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
-                  <div className="px-4 py-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                        <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
-                        Ofício sugerido
-                      </span>
-                      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
-                        {oficioSugerido.tipoLabel}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 ml-7 mb-2.5">
-                      Com base no ato &ldquo;{demanda.ato}&rdquo;
-                    </p>
-                    <Link
-                      href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
-                      className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Gerar Ofício
-                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
-                    </Link>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ===== AUTOS + ATOS + DOCUMENTOS ===== */}
-            <AutosSecao
-              processoId={demanda.processoId}
-              assistidoId={demanda.assistidoId}
-              primaryAutos={primaryAutos}
-              previewFiles={previewFiles}
-              autosAgrupados={autosAgrupados}
-              driveFolder={driveFolder}
-              driveFolderLoading={driveFolderLoading}
-              uploadingFiles={uploadingFiles}
-              docsOpen={docsOpen}
-              createDriveFolderPending={createDriveFolder.isPending}
-              onToggleDocs={() => setDocsOpen((v) => !v)}
-              onOpenDoca={(fileId, page) => setDocaAutos({ fileId, page })}
-              onOpenPreview={setPreviewFileId}
-              onUploadFiles={handleFileUpload}
-              onCreateDriveFolder={() => createDriveFolder.mutate({ demandaId: demanda.id })}
-            />
-
-            {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive (compact) ===== */}
-            {demanda.assistidoId && (
-              <RecursosSecao
-                midiasFlat={midiasFlat}
-                pdfFiles={pdfFiles}
-                driveFolderUrl={driveFolderUrl}
-                onOpenPreview={(fileId) => setDocaAutos({ fileId })}
-              />
-            )}
-
           </div>
         </div>
-
-        {/* ===== PRÓXIMA AUDIÊNCIA ===== */}
-        {proximaAudiencia && (
-          <ProximaAudienciaBlock
-            audiencia={proximaAudiencia}
-            onChanged={() => refetchAudiencias()}
-          />
-        )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
         <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
