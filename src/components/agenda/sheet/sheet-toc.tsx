@@ -19,9 +19,19 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
   return (
     <nav
       aria-label="Navegação do sheet"
-      className="sticky top-0 z-[5] bg-neutral-100/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200/40 dark:border-neutral-800/60 px-3 py-1.5"
+      className="sticky top-0 z-[5] bg-neutral-50/95 dark:bg-neutral-900/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-3 py-1.5"
     >
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+      {/* scrollbar-none (utilitário real do projeto) + máscara nas bordas para
+          sinalizar que há mais abas roláveis, sem expor a barra de rolagem. */}
+      <div
+        className="flex gap-1.5 overflow-x-auto scrollbar-none"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)",
+        }}
+      >
         {sections.map((s) => {
           const active = s.id === activeId;
           return (
@@ -32,7 +42,7 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
               className={cn(
                 "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150 cursor-pointer flex items-center gap-1.5 motion-reduce:transition-none",
                 active
-                  ? "bg-foreground text-background border-foreground"
+                  ? "bg-neutral-800 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-800 dark:border-neutral-100"
                   : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
               )}
             >

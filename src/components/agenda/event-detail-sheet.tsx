@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  AlertTriangle, CalendarClock, Check, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
+  AlertTriangle, CalendarClock, Check, ChevronDown, Copy, Edit3, Loader2, Scale, Trash2, X, ArrowUpRight, Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
@@ -53,6 +53,20 @@ import { computeDotLevel } from "@/lib/pessoas/compute-dot-level";
 
 function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
+}
+
+// Conectivos que não entram nas iniciais do avatar (evita "Amilton de…" → "AD").
+const CONECTIVOS_NOME = new Set(["de", "da", "do", "das", "dos", "e"]);
+
+/** Iniciais a partir do nome, ignorando conectivos (→ "Amilton de Souza" = "AS"). */
+function iniciaisNome(nome: string): string {
+  return nome
+    .split(/\s+/)
+    .filter((p) => p && !CONECTIVOS_NOME.has(p.toLowerCase()))
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase();
 }
 
 const INTIMACAO_TONE: Record<string, string> = {
@@ -171,7 +185,10 @@ function SubtipoBanner({ subtipo, processoNum }: { subtipo: ReturnType<typeof de
           <p className="text-[11px] text-neutral-600 dark:text-neutral-400 leading-snug mt-0.5">{cfg.foco}</p>
         </div>
         {cfg.lembretes.length > 0 && (
-          <span className="text-[9px] text-neutral-400 shrink-0 mt-0.5">{open ? "menos" : "lembretes"}</span>
+          <span className={cn("flex items-center gap-0.5 text-[9px] font-medium shrink-0 mt-0.5 tabular-nums transition-colors", open ? cores.text : "text-neutral-400")}>
+            {cfg.lembretes.length} lembrete{cfg.lembretes.length > 1 ? "s" : ""}
+            <ChevronDown className={cn("w-2.5 h-2.5 transition-transform", open && "rotate-180")} />
+          </span>
         )}
       </button>
       {open && cfg.lembretes.length > 0 && (
@@ -357,6 +374,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const assistidoNome = ctx?.assistido?.nome ?? evento?.assistido ?? null;
   const varaRaw = (ctx?.processo as any)?.vara ?? evento?.local ?? null;
   const vara = nomeVaraExibicao(varaRaw);
+
+  // Cor sólida da atribuição — fonte única de identidade visual (avatar, faixa
+  // do header, rótulo). Calculada aqui para o header e o card compartilharem.
+  const atribFilterKey = normalizeAreaToFilter(evento?.atribuicaoKey || evento?.atribuicao || "");
+  const atribColor = SOLID_COLOR_MAP[atribFilterKey] || "#a1a1aa";
 
   const ad = ctx?.analysisData;
   const dossieV2 = hasDossieV2(ad) ? (ad as any).dossie : null;
@@ -1218,24 +1240,25 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         <div className="flex-1 flex min-h-0">
           <div className="flex flex-col min-h-0 min-w-0 flex-1">
 
-        <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm">
+        {/* Faixa fina da atribuição — substitui o header preto sólido por um
+            acento leve, alinhado à cor do avatar/rótulo (paleta por atribuição). */}
+        <div className="h-1 w-full shrink-0 transition-colors duration-300" style={{ backgroundColor: atribColor }} aria-hidden />
+        <div className="bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <SheetHeader className="p-0">
-              <SheetTitle className="text-[13px] font-semibold tracking-tight text-white">Evento</SheetTitle>
+              <SheetTitle className="text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">Evento</SheetTitle>
             </SheetHeader>
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg hover:bg-neutral-800 flex items-center justify-center cursor-pointer shrink-0"
+            className="w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
             title="Fechar"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-          <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
-        </div>
+        <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
 
         <div className="px-3 pt-2">
           <BannerInteligencia
@@ -1248,11 +1271,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         </div>
 
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-          {(() => {
-            const filterKey = normalizeAreaToFilter(evento.atribuicaoKey || evento.atribuicao || "");
-            const atribColor = SOLID_COLOR_MAP[filterKey] || "#a1a1aa";
-            return (
-              <div className="mx-3 mt-3 mb-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
+          <div className="mx-3 mt-3 mb-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
                 <div className="flex items-start gap-3.5">
                   {/* Avatar colorido — única fonte de identidade visual da atribuição. */}
                   <div
@@ -1266,13 +1285,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                       className="text-sm font-semibold"
                       style={{ color: atribColor }}
                     >
-                      {(assistidoNome || evento.titulo || "")
-                        .split(" ")
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((n: string) => n[0])
-                        .join("")
-                        .toUpperCase()}
+                      {iniciaisNome(assistidoNome || evento.titulo || "")}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
@@ -1322,11 +1335,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                       <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-neutral-500 dark:text-neutral-400 flex-wrap">
                         {vara && <span>{vara}</span>}
                         {vara && evento.atribuicao && (
-                          <span
-                            className="inline-block w-1 h-1 rounded-full shrink-0"
-                            style={{ backgroundColor: atribColor }}
-                            aria-hidden
-                          />
+                          <span className="text-neutral-300 dark:text-neutral-600 shrink-0" aria-hidden>·</span>
                         )}
                         {evento.atribuicao && (
                           <span style={{ color: atribColor }} className="font-medium">
@@ -1413,9 +1422,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     )}
                   </div>
                 </div>
-              </div>
-            );
-          })()}
+          </div>
 
           <div className="px-3 pb-4 space-y-3">
             {!isLoading && <SubtipoBanner subtipo={subtipo} processoNum={processoNum} />}
