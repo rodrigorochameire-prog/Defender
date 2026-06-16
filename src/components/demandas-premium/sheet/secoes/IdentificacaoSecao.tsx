@@ -59,7 +59,7 @@ export function IdentificacaoSecao({
   const processo = demanda.processos?.[0];
 
   return (
-    <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+    <div className="-mx-4 divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
       {/* Assistido row — editável inline. Útil pra corrigir
           placeholders ("⚠ A identificar — <cnj>") gerados pelo
           importer quando o polo passivo veio em sigilo, e pra

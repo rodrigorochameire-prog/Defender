@@ -37,7 +37,7 @@ export function CronologiaSecao({ demanda, onPrazoChange }: Props) {
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
 
   return (
-    <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
+    <div className="-mx-4 divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
       {/* Expedição da intimação — data em que foi expedida no PJe.
           data_intimacao = expedicao + 10 dias (Lei 11.419/2006).
           Mostra formato relativo ("há 3 dias") com tooltip da data exata. */}

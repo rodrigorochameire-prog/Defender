@@ -74,7 +74,7 @@ export function AutosSecao(props: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <>
+    <div className="space-y-3">
       {/* ===== AUTOS EM DESTAQUE — visualização inline (sem sair da plataforma) ===== */}
       {primaryAutos && (
         <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
@@ -220,39 +220,63 @@ export function AutosSecao(props: Props) {
                   </div>
                 ) : (
                   <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
-                    {driveFolder.files.map((f) => (
-                      <div
-                        key={f.id}
-                        className="flex items-center gap-2 px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file"
-                      >
-                        <DriveFileIcon
-                          mimeType={f.mimeType}
-                          className="w-3.5 h-3.5 text-neutral-400 shrink-0"
-                        />
-                        <span
-                          className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate"
-                          title={f.name}
+                    {driveFolder.files.map((f) => {
+                      // PDFs abrem na doca (leitor sofisticado) — f.id é o Drive
+                      // fileId, exatamente o que o AutosPreviewPane consome.
+                      const isPdf = f.mimeType === "application/pdf";
+                      return (
+                        <div
+                          key={f.id}
+                          className="flex items-center gap-2 px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file"
                         >
-                          {f.name}
-                        </span>
-                        {f.size !== null && (
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
-                            {formatBytes(f.size)}
-                          </span>
-                        )}
-                        {f.webViewLink && (
-                          <a
-                            href={f.webViewLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="opacity-0 group-hover/file:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                            title="Abrir no Drive"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </div>
-                    ))}
+                          {isPdf ? (
+                            <button
+                              type="button"
+                              onClick={() => onOpenDoca(f.id)}
+                              className="flex items-center gap-2 flex-1 min-w-0 text-left cursor-pointer"
+                              title={`${f.name} — abrir no leitor`}
+                            >
+                              <DriveFileIcon
+                                mimeType={f.mimeType}
+                                className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0"
+                              />
+                              <span className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate group-hover/file:text-sky-700 dark:group-hover/file:text-sky-300 transition-colors">
+                                {f.name}
+                              </span>
+                            </button>
+                          ) : (
+                            <>
+                              <DriveFileIcon
+                                mimeType={f.mimeType}
+                                className="w-3.5 h-3.5 text-neutral-400 shrink-0"
+                              />
+                              <span
+                                className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate"
+                                title={f.name}
+                              >
+                                {f.name}
+                              </span>
+                            </>
+                          )}
+                          {f.size !== null && (
+                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
+                              {formatBytes(f.size)}
+                            </span>
+                          )}
+                          {f.webViewLink && (
+                            <a
+                              href={f.webViewLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="opacity-0 group-hover/file:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                              title="Abrir no Drive"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -290,6 +314,6 @@ export function AutosSecao(props: Props) {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

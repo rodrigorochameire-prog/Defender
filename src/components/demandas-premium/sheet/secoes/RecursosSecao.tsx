@@ -15,12 +15,7 @@ export function RecursosSecao({ midiasFlat, pdfFiles, driveFolderUrl, onOpenPrev
   if (midiasFlat.length === 0 && pdfFiles.length === 0) return null;
 
   return (
-    <>
-      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-        Recursos
-      </h3>
-
-      <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5 space-y-2">
+      <div className="space-y-2">
         {/* Mídias strip — áudios e vídeos */}
         {midiasFlat.length > 0 && (
           <div>
@@ -149,6 +144,5 @@ export function RecursosSecao({ midiasFlat, pdfFiles, driveFolderUrl, onOpenPrev
           </div>
         )}
       </div>
-    </>
   );
 }

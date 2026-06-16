@@ -72,7 +72,7 @@ import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
-import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
+import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
 import { RecursosSecao } from "./sheet/secoes/RecursosSecao";
 import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
@@ -786,9 +786,8 @@ export function DemandaQuickPreview({
       temDado: true,
       node: demanda.assistidoId ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
-            {!novoRegistroOpen && (
+          {!novoRegistroOpen && (
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => setNovoRegistroOpen(true)}
@@ -799,8 +798,8 @@ export function DemandaQuickPreview({
                 <Plus className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Adicionar</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
           {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
           {novoRegistroOpen && previewFiles.length === 0 && (
             <RegistroEditor
@@ -870,31 +869,26 @@ export function DemandaQuickPreview({
       label: "Ofício sugerido",
       temDado: !!oficioSugerido,
       node: oficioSugerido ? (
-        <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
-                Ofício sugerido
-              </span>
-              <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
-                {oficioSugerido.tipoLabel}
-              </span>
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+              <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 ml-7 mb-2.5">
+            <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
               Com base no ato &ldquo;{demanda.ato}&rdquo;
-            </p>
-            <Link
-              href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
-              className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3" />
-              Gerar Ofício
-              <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
-            </Link>
+            </span>
+            <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
+              {oficioSugerido.tipoLabel}
+            </span>
           </div>
+          <Link
+            href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
+            className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3" />
+            Gerar Ofício
+            <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
+          </Link>
         </div>
       ) : null,
     },
@@ -989,22 +983,14 @@ export function DemandaQuickPreview({
             className="hidden sm:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-2xl animate-in fade-in slide-in-from-left-6 duration-300 ease-out"
             style={{ right: sheetIsMobile ? 0 : sheetW }}
           >
-            <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
-              <span className="text-[11px] font-medium text-neutral-500">Autos</span>
-              <button
-                type="button"
-                onClick={() => setDocaAutos(null)}
-                className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              >
-                Recolher ⇥
-              </button>
-            </div>
-            <AutosPreviewPane
-              files={[{ driveFileId: docaAutos.fileId }]}
-              initialId={docaAutos.fileId}
-              initialPage={docaAutos.page}
-              className="flex-1 min-h-0"
-              bodyClassName="flex-1 min-h-0"
+            {/* Leitor rico (PdfViewerModal embedded) — grifos/sublinhados/notas
+                persistidos por defensor, índice de atos e navegação entre PDFs.
+                Mesmo componente usado pelo sheet da Agenda. O próprio viewer traz
+                o header e o botão de fechar (onClose recolhe a doca). */}
+            <AutosModalViewer
+              driveFileId={docaAutos.fileId}
+              processoId={typeof demanda.processoId === "number" ? demanda.processoId : null}
+              onClose={() => setDocaAutos(null)}
             />
           </div>
         )}
@@ -1567,10 +1553,8 @@ function ProximaAudienciaBlock({
     "w-full bg-neutral-50 dark:bg-neutral-800/40 rounded-md text-xs px-2 py-1.5 outline-none border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700 text-neutral-700 dark:text-neutral-300";
 
   return (
-    <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5 group">
+    <div className="group">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-        <span className="text-[10px] text-neutral-400 tracking-wider font-medium">Próxima Audiência</span>
         <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity">
           <button
             type="button"
