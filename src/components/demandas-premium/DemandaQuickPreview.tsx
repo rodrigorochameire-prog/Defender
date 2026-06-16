@@ -66,7 +66,8 @@ import { IdentificacaoSecao } from "./sheet/secoes/IdentificacaoSecao";
 import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
 import { AutosSecao } from "./sheet/secoes/AutosSecao";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
-import { resolverManifesto, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
+import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
+import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
   type PreviewFile,
@@ -477,6 +478,18 @@ export function DemandaQuickPreview({
     });
   }, []);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeSecao, setActiveSecao] = useState<string | undefined>();
+
+  const handleJump = useCallback((id: string) => {
+    setSecaoOpen(id as SecaoId, true);
+    requestAnimationFrame(() => {
+      scrollRef.current
+        ?.querySelector(`[data-section-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [setSecaoOpen]);
+
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
 
@@ -667,6 +680,29 @@ export function DemandaQuickPreview({
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, demanda, novoRegistroOpen]);
+
+  // Scroll-spy — destaca na ToC a seção visível mais ao topo do scroll.
+  // Reanexa o observer quando o sheet (re)abre ou a demanda muda (as seções
+  // [data-section-id] mudam junto). Consulta o DOM ao vivo, então pega as
+  // CollapsibleSections renderizadas pelo manifesto.
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    const els = root.querySelectorAll<HTMLElement>("[data-section-id]");
+    if (!els.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const first = visible[0]?.target.getAttribute("data-section-id");
+        if (first) setActiveSecao(first);
+      },
+      { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [open, demanda?.id]);
 
   // Handle file uploads to the demanda's Drive folder
   const handleFileUpload = useCallback(
@@ -903,6 +939,7 @@ export function DemandaQuickPreview({
 
   const manifesto = resolverManifesto();
   const visibleSections = manifesto.filter((id) => secoesMap[id].temDado);
+  const tocSections = toToCSections(manifesto, secoesMap);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -1056,7 +1093,7 @@ export function DemandaQuickPreview({
         </div>
 
         {/* ===== SCROLLABLE CONTENT ===== */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {/* ===== HERO CARD — ring neutro + shadow sutil. Identidade da
               atribuição vive no avatar colorido (substitui o border-l). ===== */}
           <div className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
@@ -1320,6 +1357,10 @@ export function DemandaQuickPreview({
               />
             )}
           </div>
+
+          {/* ===== ToC STICKY — gruda no topo do scroll quando hero+pipeline
+              passam; scroll-spy destaca a seção visível, clique pula-e-abre. ===== */}
+          <SheetToC sections={tocSections} activeId={activeSecao} onJump={handleJump} />
 
           {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
