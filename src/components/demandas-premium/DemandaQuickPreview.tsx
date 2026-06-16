@@ -52,6 +52,8 @@ import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-tim
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from "@/config/demanda-status";
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { InlineAutocomplete } from "@/components/shared/inline-autocomplete";
+import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
@@ -114,6 +116,17 @@ interface DemandaQuickPreviewProps {
   /** Edita tipo de processo (badge AP/MPU/APF/...). Chamado direto no
    *  processo (não na demanda) — passa processoId resolvido pela view. */
   onTipoProcessoChange?: (id: string, tipo: string) => void;
+  /** Edita o número do processo (texto livre — cola o CNJ real). Substitui o
+   *  stub "SN-<timestamp>" que o importador grava quando o CNJ não veio. */
+  onProcessoNumeroChange?: (id: string, numero: string) => void;
+  /** Vincula a demanda a um processo já existente no banco (pelo seletor). */
+  onVincularProcesso?: (id: string, processoId: number, numero: string) => void;
+  /** Busca pura (sem setState) de processos para o autocomplete de vínculo. */
+  searchProcessosFn?: (query: string) => { id: number; label: string; sublabel?: string }[];
+  /** Dispara a query de busca de processos (debounced no pai). */
+  onProcessoQueryChange?: (query: string) => void;
+  /** Loading da busca de processos. */
+  loadingProcessoSearch?: boolean;
   /** Edita nome do assistido vinculado. Útil pra corrigir placeholders
    *  ("⚠ A identificar...") e typos. Chamado direto no assistido. */
   onAssistidoNomeChange?: (id: string, nome: string) => void;
@@ -441,6 +454,11 @@ export function DemandaQuickPreview({
   onPrazoChange,
   onAtribuicaoChange,
   onTipoProcessoChange,
+  onProcessoNumeroChange,
+  onVincularProcesso,
+  searchProcessosFn,
+  onProcessoQueryChange,
+  loadingProcessoSearch,
   onAssistidoNomeChange,
   onStatusPrisionalChange,
   onAgendarAudiencia,
@@ -581,6 +599,17 @@ export function DemandaQuickPreview({
   const [previewFileId, setPreviewFileId] = useState<string | null>(null);
   // Doca à esquerda: PDF dos autos ancorado ao lado do conteúdo (sheet segue ativo).
   const [docaAutos, setDocaAutos] = useState<{ fileId: string; page?: number } | null>(null);
+  // Largura ajustável do sheet enquanto a doca de autos está aberta — alça de
+  // arraste na borda esquerda, persistida, duplo-clique reseta. Mesmo hook do
+  // sheet da Agenda (evita o full-screen que "desregulava" a largura).
+  const {
+    sheetW,
+    dragging: draggingDivider,
+    startDrag: startDividerDrag,
+    reset: resetSheetW,
+    pct: pctSheetW,
+    isMobile: sheetIsMobile,
+  } = useSheetWidthResize({ storageKey: "ombuds_demanda_doca_split_v1", defaultRatio: 0.42 });
   const previewSelected = useMemo(
     () => previewFiles.find((f) => f.driveFileId === previewFileId) ?? null,
     [previewFiles, previewFileId],
@@ -720,6 +749,9 @@ export function DemandaQuickPreview({
   const atoOptions = getAtoOptionsAgrupados(demanda.atribuicao);
 
   const processo = demanda.processos?.[0];
+  // Stub do importador (SN-<timestamp>) ou vazio: tratamos como "sem número"
+  // — escondemos o stub e oferecemos adicionar/colar o CNJ ou vincular.
+  const isProcStub = !processo?.numero || /^SN-/i.test(processo.numero);
   const prazoBadge = calcularPrazoBadge(demanda.prazo);
   const currentStageIdx = getStageIndex(statusConfig.group);
   const oficioSugerido = sugerirOficio(demanda.ato, demanda.providencias);
@@ -728,13 +760,15 @@ export function DemandaQuickPreview({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         className={cn(
-          "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none border-l-0 outline-none",
-          // Docado: container transparente em tela cheia; o sheet visível é a coluna
-          // de conteúdo (1040px à direita) e o PDF é a coluna à esquerda.
+          "max-w-full p-0 flex flex-col [&>button:first-of-type]:hidden rounded-l-2xl sm:rounded-l-none border-l-0 outline-none shadow-2xl bg-[#f7f7f7] dark:bg-neutral-950",
+          // Docado: o sheet vira a coluna de conteúdo com largura ajustável (sheetW
+          // inline) e o PDF dos autos ancora à esquerda até a borda do sheet.
+          // sm:max-w-none anula o sm:max-w-sm da variante (senão clampa em 384px).
           docaAutos
-            ? "w-full sm:w-screen sm:max-w-none bg-transparent shadow-none"
-            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] shadow-2xl bg-[#f7f7f7] dark:bg-neutral-950",
+            ? cn("w-full max-w-none sm:max-w-none", !draggingDivider && "transition-[width] duration-300 ease-out")
+            : "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px]",
         )}
+        style={docaAutos && !sheetIsMobile ? { width: sheetW } : undefined}
         onPointerDownOutside={(e) => {
           const target = (e as any).detail?.originalEvent?.target as HTMLElement ?? e.target as HTMLElement;
           if (
@@ -762,31 +796,64 @@ export function DemandaQuickPreview({
           }
         }}
       >
-        <div className="flex-1 flex min-h-0">
-          {/* ===== DOCA À ESQUERDA — PDF dos autos ancorado; o sheet segue ativo ===== */}
-          {docaAutos && (
-            <div className="hidden sm:flex flex-col min-w-0 flex-1 border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-              <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
-                <span className="text-[11px] font-medium text-neutral-500">Autos</span>
-                <button
-                  type="button"
-                  onClick={() => setDocaAutos(null)}
-                  className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  Recolher ⇥
-                </button>
-              </div>
-              <AutosPreviewPane
-                files={[{ driveFileId: docaAutos.fileId }]}
-                initialId={docaAutos.fileId}
-                initialPage={docaAutos.page}
-                className="flex-1 min-h-0"
-                bodyClassName="flex-1 min-h-0"
+        {/* ===== DOCA À ESQUERDA — PDF dos autos ancorado da borda esquerda até o
+            sheet (right: sheetW). O sheet mantém sua largura (ajustável) e segue
+            ativo. Padrão idêntico ao sheet da Agenda. ===== */}
+        {docaAutos && (
+          <div
+            className="hidden sm:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-2xl animate-in fade-in slide-in-from-left-6 duration-300 ease-out"
+            style={{ right: sheetIsMobile ? 0 : sheetW }}
+          >
+            <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
+              <span className="text-[11px] font-medium text-neutral-500">Autos</span>
+              <button
+                type="button"
+                onClick={() => setDocaAutos(null)}
+                className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                Recolher ⇥
+              </button>
+            </div>
+            <AutosPreviewPane
+              files={[{ driveFileId: docaAutos.fileId }]}
+              initialId={docaAutos.fileId}
+              initialPage={docaAutos.page}
+              className="flex-1 min-h-0"
+              bodyClassName="flex-1 min-h-0"
+            />
+          </div>
+        )}
+
+        {/* Alça de largura — borda esquerda do sheet. Arraste p/ ajustar, duplo-
+            clique reseta, o valor fica salvo. Só aparece no modo doca. */}
+        {docaAutos && (
+          <>
+            <div
+              onPointerDown={startDividerDrag}
+              onDoubleClick={resetSheetW}
+              title="Arraste para ajustar a largura · duplo-clique reseta · fica salvo"
+              className="hidden sm:flex absolute inset-y-0 left-0 -ml-1.5 w-3 z-[60] cursor-col-resize items-center justify-center group/resize"
+            >
+              <div
+                className={cn(
+                  "h-14 w-1 rounded-full transition-all",
+                  draggingDivider
+                    ? "bg-emerald-500 w-1.5"
+                    : "bg-neutral-300/70 dark:bg-neutral-700 group-hover/resize:bg-emerald-400 group-hover/resize:h-20",
+                )}
               />
             </div>
-          )}
-          {/* ===== COLUNA DIREITA — conteúdo do sheet (preservado integralmente) ===== */}
-          <div className={cn("flex flex-col min-h-0 min-w-0", docaAutos ? "w-full sm:w-[600px] md:w-[780px] lg:w-[920px] xl:w-[1040px] sm:shrink-0 bg-[#f7f7f7] dark:bg-neutral-950 shadow-2xl" : "flex-1")}>
+            {draggingDivider && (
+              <div className="hidden sm:block absolute top-3 left-3 z-[61] px-2 py-1 rounded-md bg-neutral-900 text-white text-[10px] font-semibold tabular-nums shadow-lg pointer-events-none">
+                {Math.round(sheetW)}px · {pctSheetW}%
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="flex-1 flex min-h-0">
+          {/* ===== CONTEÚDO DO SHEET (preservado integralmente) ===== */}
+          <div className="flex flex-col min-h-0 min-w-0 flex-1">
         {/* ===== NAV HEADER — Padrão charcoal (idêntico ao event-detail-sheet) ===== */}
         <div className="bg-neutral-900 dark:bg-neutral-950 text-white backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
@@ -916,28 +983,55 @@ export function DemandaQuickPreview({
                   />
                 </div>
 
-                {/* Linha 3 — processo (chip de cópia) discreto, sem destaque
-                    visual competindo com pills. Tipo (AP/MPU/IP/etc) como
-                    label cinza inline antes do número. */}
-                {processo && (
-                  <div className="flex items-center mt-2 flex-wrap">
-                    <button
-                      className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        copyToClipboard(processo.numero, "Processo copiado!");
-                      }}
-                      title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
-                    >
-                      {processo.tipo && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                          {processo.tipo}
-                        </span>
-                      )}
-                      <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                      <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
-                    </button>
+                {/* Linha 3 — processo. Número real = chip copiável (tipo cinza +
+                    CNJ). Stub do importador (SN-...) = escondido; no lugar, um
+                    chip "Adicionar nº do processo" que abre o editor inline
+                    (texto livre p/ colar o CNJ, ou buscar e vincular a um
+                    processo existente). */}
+                {(processo || (onProcessoNumeroChange && searchProcessosFn)) && (
+                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                    {!isProcStub && processo && (
+                      <button
+                        className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          copyToClipboard(processo.numero, "Processo copiado!");
+                        }}
+                        title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
+                      >
+                        {processo.tipo && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                            {processo.tipo}
+                          </span>
+                        )}
+                        <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                        <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
+                      </button>
+                    )}
+                    {onProcessoNumeroChange && searchProcessosFn ? (
+                      <InlineAutocomplete
+                        value=""
+                        valueId={demanda.processoId ?? undefined}
+                        placeholder={isProcStub ? "Adicionar nº do processo" : "Editar / vincular"}
+                        searchFn={searchProcessosFn}
+                        onQueryChange={onProcessoQueryChange}
+                        isLoading={loadingProcessoSearch}
+                        onSelect={(pid, numero) => onVincularProcesso?.(demanda.id, pid, numero)}
+                        onTextChange={(t) => onProcessoNumeroChange(demanda.id, t)}
+                        icon="briefcase"
+                        className={cn(
+                          "cursor-pointer rounded-md px-1.5 py-0.5 -ml-1 inline-flex items-center gap-1 transition-colors text-[11px]",
+                          isProcStub
+                            ? "border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                            : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/60",
+                        )}
+                      />
+                    ) : (
+                      isProcStub && (
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">sem número</span>
+                      )
+                    )}
                   </div>
                 )}
               </div>

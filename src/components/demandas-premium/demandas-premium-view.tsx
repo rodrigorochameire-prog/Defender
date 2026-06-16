@@ -4126,6 +4126,11 @@ export default function Demandas() {
         onPrazoChange={handlePrazoChange}
         onAtribuicaoChange={handleAtribuicaoChange}
         onTipoProcessoChange={handleTipoProcessoChange}
+        onProcessoNumeroChange={handleProcessoChange}
+        onVincularProcesso={handleProcessoLink}
+        searchProcessosFn={searchProcessosFn}
+        onProcessoQueryChange={setProcessoSearchQuery}
+        loadingProcessoSearch={loadingProcessoSearch}
         onAssistidoNomeChange={handleAssistidoNomeChange}
         onStatusPrisionalChange={handleStatusPrisionalChange}
         onAgendarAudiencia={handleAgendarAudiencia}
