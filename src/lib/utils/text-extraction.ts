@@ -42,6 +42,8 @@ export const EXTRA_ATRIBUICAO_FOLDERS: ReadonlyArray<{
   folderId: string;
 }> = [
   { key: "VVD", folderId: "1D-tHrNqU0sAczQP4NAslm7ofthC73COe" }, // Processos - VVD (MPU)
+  { key: "SUBSTITUICAO", folderId: "1ym7x4l3w3I8ox_FCpZo3I-miDJSZ3E46" }, // Processos - Substituição cível
+  { key: "GRUPO_JURI", folderId: "1sET3k_-5c2Mo8D7xF-cJCKzxgI_yh4dW" }, // Processos - Grupo do Juri (3 - Casos)
 ];
 
 // Pastas especiais
