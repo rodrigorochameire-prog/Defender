@@ -88,6 +88,26 @@ export function GerarDemandaPopover({
   const [reuPreso, setReuPreso] = useState(false);
   const [urgente, setUrgente] = useState(false);
   const [registro, setRegistro] = useState("");
+  // Processo selecionado (id como string p/ o Select; "" = nenhum → cria provisório).
+  const [processoId, setProcessoId] = useState("");
+
+  // Processos já existentes do assistido — para escolher em vez de digitar CNJ.
+  const processosQuery = trpc.processos.listByAssistido.useQuery(
+    { assistidoId: assistido.id },
+    { enabled: open },
+  );
+  const processosAssistido = processosQuery.data ?? [];
+
+  // Default do processo ao abrir/carregar: o processo do atendimento, senão o mais recente.
+  useEffect(() => {
+    if (!open) return;
+    if (processosAssistido.length === 0) { setProcessoId(""); return; }
+    const doAtendimento = processo?.numeroAutos
+      ? processosAssistido.find((p) => p.numeroAutos === processo.numeroAutos)
+      : undefined;
+    setProcessoId(String((doAtendimento ?? processosAssistido[0]).id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, processosQuery.dataUpdatedAt]);
 
   // Reseta o formulário toda vez que abre — e pré-preenche o registro com o
   // contexto do atendimento (o usuário edita à vontade).
@@ -159,6 +179,29 @@ export function GerarDemandaPopover({
           <p className="text-[13px] font-medium text-foreground/90 truncate">
             {assistido.nome}
           </p>
+        </div>
+
+        {/* Processo — seletor dos processos do assistido (evita CNJ errado/duplicado) */}
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">Processo</Label>
+          <Select value={processoId} onValueChange={setProcessoId} disabled={processosQuery.isLoading}>
+            <SelectTrigger className="h-9 text-sm">
+              <SelectValue placeholder={processosQuery.isLoading ? "Carregando processos…" : "Sem processo — cria provisório"} />
+            </SelectTrigger>
+            <SelectContent>
+              {processosAssistido.map((p) => (
+                <SelectItem key={p.id} value={String(p.id)} className="text-sm">
+                  <span className="font-mono text-xs">{p.numeroAutos}</span>
+                  {p.assunto ? <span className="text-muted-foreground"> · {p.assunto}</span> : null}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!processosQuery.isLoading && processosAssistido.length === 0 && (
+            <p className="text-[10.5px] text-muted-foreground">
+              Assistido sem processo cadastrado — a demanda nasce com um processo provisório.
+            </p>
+          )}
         </div>
 
         {/* Atribuição — corrigível (default pela área do atendimento) */}
@@ -297,7 +340,9 @@ export function GerarDemandaPopover({
               criar.mutate({
                 assistidoNome: assistido.nome,
                 assistidoId: assistido.id,
-                numeroAutos: processo?.numeroAutos ?? undefined,
+                ...(processoId
+                  ? { processoId: Number(processoId) }
+                  : { numeroAutos: processo?.numeroAutos ?? undefined }),
                 atribuicao,
                 ato: ato.trim(),
                 status: urgente ? "urgente" : "triagem",

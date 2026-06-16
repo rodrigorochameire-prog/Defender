@@ -501,6 +501,8 @@ export const demandasRouter = router({
         // Vincula o atendimento (e sua timeline) à demanda criada — rastreabilidade
         // bidirecional atendimento ↔ demanda.
         atendimentoId: z.number().int().positive().optional(),
+        // Processo escolhido no seletor (popover de atendimento) — vincula direto, sem find-or-create por CNJ.
+        processoId: z.number().int().positive().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -615,11 +617,28 @@ export const demandasRouter = router({
         assistido = novo;
       }
 
-      // 5. Find-or-create processo — por numeroAutos se fornecido, senão cria
-      // um stub "SN-<timestamp>" vinculado ao assistido (paridade com importFromSheets).
+      // 5. Resolver o processo. Prioridade:
+      //   (a) processoId selecionado no seletor — vincula direto;
+      //   (b) numeroAutos (CNJ) — find-or-create;
+      //   (c) processo do atendimento de origem, se houver (não cria stub à toa);
+      //   (d) fallback: stub "SN-<timestamp>" vinculado ao assistido.
+      let processoId: number | undefined;
+
+      if (input.processoId) {
+        const [existe] = await db
+          .select({ id: processos.id })
+          .from(processos)
+          .where(and(
+            eq(processos.id, input.processoId),
+            eq(processos.assistidoId, assistido.id),
+            isNull(processos.deletedAt),
+          ))
+          .limit(1);
+        if (existe) processoId = existe.id;
+      }
+
       const numAutos = (input.numeroAutos ?? "").trim();
-      let processoId: number;
-      if (numAutos) {
+      if (processoId === undefined && numAutos) {
         const [existente] = await db
           .select({ id: processos.id })
           .from(processos)
@@ -639,7 +658,19 @@ export const demandasRouter = router({
             .returning({ id: processos.id });
           processoId = novo.id;
         }
-      } else {
+      }
+
+      // Herda o processo do atendimento de origem quando nada foi informado.
+      if (processoId === undefined && input.atendimentoId) {
+        const [at] = await db
+          .select({ processoId: registros.processoId })
+          .from(registros)
+          .where(eq(registros.id, input.atendimentoId))
+          .limit(1);
+        if (at?.processoId) processoId = at.processoId;
+      }
+
+      if (processoId === undefined) {
         const [novo] = await db
           .insert(processos)
           .values({
