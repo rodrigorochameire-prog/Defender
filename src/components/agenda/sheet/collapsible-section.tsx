@@ -5,22 +5,22 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "agenda-sheet-sections-open";
+const DEFAULT_STORAGE_KEY = "agenda-sheet-sections-open";
 
-function readState(): Record<string, boolean> {
+function readState(storageKey: string): Record<string, boolean> {
   if (typeof window === "undefined") return {};
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+    return JSON.parse(localStorage.getItem(storageKey) ?? "{}");
   } catch {
     return {};
   }
 }
 
-function writeState(id: string, open: boolean) {
+function writeState(storageKey: string, id: string, open: boolean) {
   if (typeof window === "undefined") return;
-  const current = readState();
+  const current = readState(storageKey);
   current[id] = open;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  localStorage.setItem(storageKey, JSON.stringify(current));
 }
 
 interface Props {
@@ -30,24 +30,38 @@ interface Props {
   defaultOpen?: boolean;
   children: React.ReactNode;
   className?: string;
+  /** Namespace de persistência. Default = chave da Agenda (retrocompatível). */
+  storageKey?: string;
+  /** Modo controlado: quando definido, o parent é dono do estado e da persistência. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function CollapsibleSection({
   id, label, count, defaultOpen = false, children, className,
+  storageKey = DEFAULT_STORAGE_KEY, open: openProp, onOpenChange,
 }: Props) {
-  const [open, setOpen] = useState(() => {
-    const persisted = readState()[id];
+  const controlled = openProp !== undefined;
+  const [internalOpen, setInternalOpen] = useState(() => {
+    const persisted = readState(storageKey)[id];
     return persisted !== undefined ? persisted : defaultOpen;
   });
+  const open = controlled ? (openProp as boolean) : internalOpen;
 
   useEffect(() => {
-    writeState(id, open);
-  }, [id, open]);
+    if (controlled) return; // no modo controlado a persistência é do parent
+    writeState(storageKey, id, internalOpen);
+  }, [storageKey, id, internalOpen, controlled]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (controlled) onOpenChange?.(next);
+    else setInternalOpen(next);
+  };
 
   return (
     <Collapsible.Root
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       data-section-id={id}
       className={cn(
         "rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden transition-shadow duration-200",
