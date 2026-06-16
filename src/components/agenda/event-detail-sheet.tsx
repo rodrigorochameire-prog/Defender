@@ -19,6 +19,7 @@ import { RequerimentoDefesaSecao } from "@/components/agenda/sheet/secoes/Requer
 import { ResumoGeralSecao } from "@/components/agenda/sheet/secoes/ResumoGeralSecao";
 import { IntimacaoSecao } from "@/components/agenda/sheet/secoes/IntimacaoSecao";
 import { MedidasVigentesSecao } from "@/components/agenda/sheet/secoes/MedidasVigentesSecao";
+import { CitacaoText } from "@/components/agenda/sheet/CitacaoText";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { toast } from "sonner";
 import { normalizeAreaToFilter, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
@@ -755,7 +756,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       temDado: !!relatoVitima,
       node: (
         <CollapsibleSection id="relato-vitima" label="Relato da ofendida / representação" defaultOpen>
-          <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">{relatoVitima}</p>
+          <CitacaoText texto={relatoVitima!} />
         </CollapsibleSection>
       ),
     },
