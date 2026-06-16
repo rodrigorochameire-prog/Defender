@@ -15,6 +15,8 @@
  * (acentos, "de/da/dos", inversões de sobrenome, typos no primeiro nome).
  */
 
+import { isAutorDesconhecido } from "./autor-desconhecido";
+
 export type MatchTipo = "exact" | "similar" | "new";
 
 export function normalizarNome(nome: string): string {
@@ -61,6 +63,10 @@ export function classificarMatchNome(
   nomeImport: string,
   nomeExistente: string
 ): { tipo: MatchTipo; similarity: number } {
+  if (isAutorDesconhecido(nomeImport) || isAutorDesconhecido(nomeExistente)) {
+    return { tipo: "new", similarity: 0 };
+  }
+
   const a = normalizarNome(nomeImport);
   const b = normalizarNome(nomeExistente);
   const sim = calcularSimilaridade(a, b);

@@ -40,4 +40,10 @@ describe("classificarMatchNome", () => {
   it("primeiro nome igual mas sobrenome totalmente diferente → new", () => {
     expect(classificarMatchNome("Joao Pereira Lima", "Joao Costa Andrade").tipo).toBe("new");
   });
+
+  it("autor desconhecido NUNCA casa (nem com outro desconhecido)", () => {
+    expect(classificarMatchNome("Desconhecido — 8013994-84.2024.8.05.0039", "Não Identificado").tipo).toBe("new");
+    expect(classificarMatchNome("Não Identificado", "Não Identificado").tipo).toBe("new");
+    expect(classificarMatchNome("⚠ A identificar — X", "Maria Silva").tipo).toBe("new");
+  });
 });
