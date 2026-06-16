@@ -66,7 +66,7 @@ import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
-import { AutosPreviewPane } from "@/components/pdf/autos-preview-pane";
+import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
 import { SectionsViewer } from "@/components/drive/SectionsViewer";
 import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
@@ -805,22 +805,14 @@ export function DemandaQuickPreview({
             className="hidden sm:flex flex-col fixed inset-y-0 left-0 z-50 overflow-hidden border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-2xl animate-in fade-in slide-in-from-left-6 duration-300 ease-out"
             style={{ right: sheetIsMobile ? 0 : sheetW }}
           >
-            <div className="flex items-center justify-between px-2 py-1 border-b border-neutral-200 dark:border-neutral-800">
-              <span className="text-[11px] font-medium text-neutral-500">Autos</span>
-              <button
-                type="button"
-                onClick={() => setDocaAutos(null)}
-                className="text-[11px] text-neutral-500 hover:text-foreground cursor-pointer px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              >
-                Recolher ⇥
-              </button>
-            </div>
-            <AutosPreviewPane
-              files={[{ driveFileId: docaAutos.fileId }]}
-              initialId={docaAutos.fileId}
-              initialPage={docaAutos.page}
-              className="flex-1 min-h-0"
-              bodyClassName="flex-1 min-h-0"
+            {/* Leitor rico (PdfViewerModal embedded) — grifos/sublinhados/notas
+                persistidos por defensor, índice de atos e navegação entre PDFs.
+                Mesmo componente usado pelo sheet da Agenda. O próprio viewer traz
+                o header e o botão de fechar (onClose recolhe a doca). */}
+            <AutosModalViewer
+              driveFileId={docaAutos.fileId}
+              processoId={typeof demanda.processoId === "number" ? demanda.processoId : null}
+              onClose={() => setDocaAutos(null)}
             />
           </div>
         )}
