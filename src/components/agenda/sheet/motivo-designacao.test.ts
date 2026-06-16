@@ -32,4 +32,32 @@ describe("normalizarMotivo", () => {
     expect(LABEL_ORIGEM.requerimento_defesa).toBe("Requerimento da defesa");
     expect(Object.keys(LABEL_ORIGEM)).toHaveLength(6);
   });
+
+  it("string com token no início extrai origem + detalhe limpo", () => {
+    expect(normalizarMotivo("pedido_revogacao_ofendida — ela compareceu e pediu revogação")).toEqual({
+      origem: "pedido_revogacao_ofendida",
+      detalhe: "ela compareceu e pediu revogação",
+    });
+  });
+
+  it("alias 'primeiro_contato' (string) mapeia para reavaliacao_juizo, preservando parênteses", () => {
+    expect(normalizarMotivo("primeiro_contato (designada de ofício): apos a soltura")).toEqual({
+      origem: "reavaliacao_juizo",
+      detalhe: "(designada de ofício): apos a soltura",
+    });
+  });
+
+  it("alias 'primeiro_contato' também no objeto tipado", () => {
+    expect(normalizarMotivo({ origem: "primeiro_contato", detalhe: "1º contato" })).toEqual({
+      origem: "reavaliacao_juizo",
+      detalhe: "1º contato",
+    });
+  });
+
+  it("string sem token conhecido permanece como detalhe puro", () => {
+    expect(normalizarMotivo("juiz remarcou para reavaliar")).toEqual({
+      origem: null,
+      detalhe: "juiz remarcou para reavaliar",
+    });
+  });
 });
