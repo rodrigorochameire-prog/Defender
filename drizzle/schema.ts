@@ -3472,6 +3472,7 @@ export const assistidos = pgTable("assistidos", {
 	duplicataSugerida: jsonb("duplicata_sugerida"),
 	comarcaId: integer("comarca_id").default(1).notNull(),
 	casoId: integer("caso_id"),
+	autorNaoIdentificado: boolean("autor_nao_identificado").default(false).notNull(),
 }, (table) => {
 	return {
 		analysisStatusIdx: index("assistidos_analysis_status_idx").using("btree", table.analysisStatus.asc().nullsLast().op("text_ops")),
