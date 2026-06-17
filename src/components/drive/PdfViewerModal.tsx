@@ -3817,9 +3817,9 @@ export function PdfViewerModal({
                       )}
                     </div>
                   )}
-                    </div>{/* Close [data-page] wrapper */}
+                    </div>
                     ))}
-                    </div>{/* Close column wrapper */}
+                    </div>
                   </ReactPdfDocument>
                 </div>
               )}
