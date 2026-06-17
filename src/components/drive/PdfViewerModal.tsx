@@ -58,6 +58,7 @@ import {
   Scale,
   Users,
   ScrollText,
+  Rows3,
   FileCheck,
   Microscope,
   Shield,
@@ -2054,11 +2055,13 @@ export function PdfViewerModal({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showCaptureDialog, setShowCaptureDialog] = useState(false);
 
-  // Modo de leitura: "paginada" (1 página por vez) ou "rolagem" (todas em coluna).
-  // Persistido em localStorage para abrir sempre na preferência do defensor.
-  const [readMode, setReadMode] = useState<"paginada" | "rolagem">(() => {
+  // Modo de leitura: "paginada" (1 página por vez), "rolagem" (todas em coluna,
+  // scroll livre) ou "snap" (todas em coluna, mas o scroll encaixa uma página
+  // por vez). Persistido em localStorage.
+  type ReadMode = "paginada" | "rolagem" | "snap";
+  const [readMode, setReadMode] = useState<ReadMode>(() => {
     if (typeof window === "undefined") return "paginada";
-    return (localStorage.getItem("pdf_read_mode") as "paginada" | "rolagem") || "paginada";
+    return (localStorage.getItem("pdf_read_mode") as ReadMode) || "paginada";
   });
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("pdf_read_mode", readMode);
@@ -2577,8 +2580,8 @@ export function PdfViewerModal({
     (page: number) => {
       const target = Math.max(1, Math.min(page, numPages || 1));
       setCurrentPage(target);
-      if (readModeRef.current === "rolagem") {
-        // Rola até a página alvo na coluna contínua.
+      if (readModeRef.current !== "paginada") {
+        // Rola até a página alvo na coluna (contínua ou com snap).
         pageElsRef.current.get(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
         // Página única: volta ao topo ao trocar de página.
@@ -2914,7 +2917,7 @@ export function PdfViewerModal({
 
   // Sincroniza a página atual com o scroll no modo rolagem (página mais visível).
   useEffect(() => {
-    if (!isOpen || readMode !== "rolagem" || !numPages) return;
+    if (!isOpen || readMode === "paginada" || !numPages) return;
     const root = pageContainerRef.current;
     if (!root) return;
     const obs = new IntersectionObserver(
@@ -3078,20 +3081,26 @@ export function PdfViewerModal({
 
             <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
-            {/* Modo de leitura (página a página ↔ rolagem contínua) + Busca */}
+            {/* Modo de leitura: página a página → rolagem contínua → scroll-paginado */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={cn("h-8 w-8", readMode === "rolagem" && "text-emerald-500")}
-                  onClick={() => setReadMode((m) => (m === "paginada" ? "rolagem" : "paginada"))}
+                  className={cn("h-8 w-8", readMode !== "paginada" && "text-emerald-500")}
+                  onClick={() => setReadMode((m) => (m === "paginada" ? "rolagem" : m === "rolagem" ? "snap" : "paginada"))}
                 >
-                  {readMode === "paginada" ? <ScrollText className="h-4.5 w-4.5" /> : <FileText className="h-4.5 w-4.5" />}
+                  {readMode === "paginada" ? <FileText className="h-4.5 w-4.5" /> : readMode === "rolagem" ? <ScrollText className="h-4.5 w-4.5" /> : <Rows3 className="h-4.5 w-4.5" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p className="text-xs">{readMode === "paginada" ? "Rolagem contínua" : "Página a página"}</p>
+                <p className="text-xs">
+                  {readMode === "paginada"
+                    ? "Página a página · clique p/ rolagem contínua"
+                    : readMode === "rolagem"
+                      ? "Rolagem contínua · clique p/ scroll-paginado"
+                      : "Scroll-paginado (encaixa) · clique p/ página a página"}
+                </p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -3656,6 +3665,7 @@ export function PdfViewerModal({
                 "relative flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
                 annotationMode === "note" && "cursor-crosshair"
               )}
+              style={readMode === "snap" ? { scrollSnapType: "y mandatory" } : undefined}
               onMouseUp={annotationMode === "highlight" || annotationMode === "underline" ? handleTextSelection : undefined}
             >
               {/* Barra de busca de texto (Ctrl/Cmd+F) */}
@@ -3720,11 +3730,11 @@ export function PdfViewerModal({
                       </div>
                     }
                   >
-                    {/* Coluna de páginas: só a atual (paginada) ou todas (rolagem).
+                    {/* Coluna de páginas: só a atual (paginada) ou todas (rolagem/snap).
                         Cada página num wrapper [data-page] — base p/ overlays,
                         seleção ciente de página e scroll-to. */}
-                    <div className={cn(readMode === "rolagem" && "flex flex-col items-center gap-4")}>
-                    {(readMode === "rolagem" && numPages > 0
+                    <div className={cn(readMode !== "paginada" && "flex flex-col items-center gap-4")}>
+                    {(readMode !== "paginada" && numPages > 0
                       ? Array.from({ length: numPages }, (_, i) => i + 1)
                       : [currentPage]
                     ).map((pn) => (
@@ -3733,6 +3743,7 @@ export function PdfViewerModal({
                       data-page={pn}
                       ref={(el) => { const m = pageElsRef.current; if (el) m.set(pn, el); else m.delete(pn); }}
                       className="relative inline-block"
+                      style={readMode === "snap" ? { scrollSnapAlign: "center", scrollMarginTop: "8px" } : undefined}
                     >
                     <ReactPdfPage
                       pageNumber={pn}
