@@ -36,6 +36,7 @@ import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva
 import { AtaAudienciaBlock } from "@/components/agenda/sheet/ata-audiencia-block";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
 import { derivarStatusOitiva } from "@/lib/agenda/depoente-status";
+import { extrairNumPje } from "@/lib/agenda/extrair-num-pje";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
@@ -76,7 +77,7 @@ const TIPO_DEP_LABEL: Record<string, string> = {
 };
 
 /** Painel de status dos depoentes — quem será ouvido, intimação e motivo. */
-function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
+function PainelDepoentesStatus({ depoentes, onAbrirDepoimento }: { depoentes: any[]; onAbrirDepoimento?: (d: any) => void }) {
   if (!depoentes?.length) return null;
   const stats = depoentes.map(derivarStatusOitiva);
   const ouvidosJuizo = stats.filter((s) => s.ouvidoJuizo).length;
@@ -95,11 +96,21 @@ function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
       <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
         {depoentes.map((d, i) => {
           const st = stats[i];
+          const temPonto = !!(onAbrirDepoimento && (d.depoimento_ip || d.depoimento_juizo));
           return (
-            <div key={`${i}-${d.nome}`} className="flex items-start gap-2 px-2.5 py-1.5">
+            <div
+              key={`${i}-${d.nome}`}
+              onClick={temPonto ? () => onAbrirDepoimento!(d) : undefined}
+              title={temPonto ? "Abrir o depoimento no PDF dos autos" : undefined}
+              className={cn(
+                "flex items-start gap-2 px-2.5 py-1.5",
+                temPonto && "cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors",
+              )}
+            >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-200 truncate">{d.nome}</span>
+                  {temPonto && <span className="text-[9px] text-emerald-500" aria-hidden>↗</span>}
                   {TIPO_DEP_LABEL[d.tipo] && (
                     <span className="text-[9px] text-neutral-400">{TIPO_DEP_LABEL[d.tipo]}</span>
                   )}
@@ -260,6 +271,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const [copied, setCopied] = useState(false);
   // Modal de autos encaixado à esquerda do sheet (não altera a largura do sheet).
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
+  // Termo de busca ao abrir a doca (deep-link de um depoimento ao seu ponto).
+  const [docaSearch, setDocaSearch] = useState<string | null>(null);
   // Largura (px) que o sheet assume enquanto o modal está aberto. O modal ocupa
   // todo o espaço à esquerda até a borda do sheet (right = sheetW → encaixe perfeito).
   // Ajustável pela alça de arraste e persistida — hook compartilhado com o sheet
@@ -385,6 +398,26 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const caso = ctx?.caso;
   const assistidoId = (ctx?.assistido as any)?.id ?? evento?.assistidoId ?? null;
   const processoId = (ctx?.processo as any)?.id ?? evento?.processoId ?? null;
+
+  // Autos do processo (p/ o deep-link do depoente abrir a doca no ponto).
+  const autosDeeplinkQuery = trpc.drive.autosDoProcesso.useQuery(
+    { processoId: typeof processoId === "number" ? processoId : 0, assistidoId: typeof assistidoId === "number" ? assistidoId : undefined },
+    { enabled: typeof processoId === "number" && open },
+  );
+  const primaryAutosDriveId = useMemo(() => {
+    const d = autosDeeplinkQuery.data as any;
+    const cand = [...(d?.desteProcesso ?? []), ...((d?.correlacionados ?? []).flatMap((g: any) => g.files ?? []))];
+    return cand.find((f: any) => f?.driveFileId && f?.mimeType === "application/pdf")?.driveFileId
+      ?? cand.find((f: any) => f?.driveFileId)?.driveFileId ?? null;
+  }, [autosDeeplinkQuery.data]);
+
+  // Abre a doca do PDF buscando o "Num. X" do depoimento (cai no ponto do documento).
+  const abrirDepoimentoNoPonto = (d: any) => {
+    if (!primaryAutosDriveId) return;
+    const num = extrairNumPje(d?.depoimento_ip || d?.depoimento_juizo);
+    setAutosModalId(primaryAutosDriveId);
+    setDocaSearch(num ? `Num. ${num}` : null);
+  };
   const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
   const analysisStatus = (ctx?.processo as any)?.analysisStatus ?? null;
   const analyzedAt = (ctx?.processo as any)?.analyzedAt ?? null;
@@ -495,7 +528,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   }, [audienciaIdNum, depoentes.length]);
 
   // Fecha o modal de autos ao trocar de evento ou fechar o sheet.
-  useEffect(() => { setAutosModalId(null); }, [audienciaIdNum, open]);
+  useEffect(() => { setAutosModalId(null); setDocaSearch(null); }, [audienciaIdNum, open]);
 
   useEffect(() => {
     setAdvogadoDraft(advogadoParticular ?? "");
@@ -840,7 +873,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       node: (
         <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
           {depoentesDetalhe.length > 0 ? (
-            <PainelDepoentesStatus depoentes={depoentesDetalhe} />
+            <PainelDepoentesStatus depoentes={depoentesDetalhe} onAbrirDepoimento={abrirDepoimentoNoPonto} />
           ) : (
             <EmptyHint text="Status dos depoentes não disponível." />
           )}
@@ -1221,7 +1254,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             <AutosModalViewer
               driveFileId={autosModalId}
               processoId={typeof processoId === "number" ? processoId : null}
-              onClose={() => setAutosModalId(null)}
+              initialSearch={docaSearch}
+              onClose={() => { setAutosModalId(null); setDocaSearch(null); }}
             />
           </div>
         )}

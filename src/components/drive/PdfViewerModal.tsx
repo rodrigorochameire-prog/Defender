@@ -512,6 +512,9 @@ interface PdfViewerModalProps {
   /** Embute o viewer dentro do container pai (preenche o espaço, sem o overlay
    *  fullscreen escuro). Usado no painel encaixado à esquerda do sheet de evento. */
   embedded?: boolean;
+  /** Termo a buscar ao abrir (ex.: "Num. X" de um depoimento) — abre a busca já
+   *  posicionada no ponto do documento. */
+  initialSearch?: string | null;
 }
 
 interface DocumentSection {
@@ -2036,6 +2039,7 @@ export function PdfViewerModal({
   siblingFiles,
   onFileChange,
   embedded = false,
+  initialSearch,
 }: PdfViewerModalProps) {
   // State
   const { addJob, updateJob: updateQueueJob, completeJob, failJob } = useProcessingQueue();
@@ -2994,6 +2998,18 @@ export function PdfViewerModal({
       return i;
     });
   }, [searchMatches, goToPage]);
+
+  // Deep-link: ao abrir com initialSearch (ex.: "Num. X" de um depoimento),
+  // assim que o PDF carrega (numPages > 0), abre a busca já posicionada no ponto.
+  const initialSearchDoneRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen || !initialSearch || !numPages) return;
+    if (initialSearchDoneRef.current === initialSearch) return;
+    initialSearchDoneRef.current = initialSearch;
+    setSearchOpen(true);
+    setSearchQuery(initialSearch);
+    runSearch(initialSearch);
+  }, [isOpen, initialSearch, numPages, runSearch]);
 
   // Atalho Cmd/Ctrl+F abre a busca; Esc fecha (sem fechar o modal).
   useEffect(() => {
