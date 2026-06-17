@@ -87,7 +87,11 @@ export async function GET(request: NextRequest) {
       "Content-Type": contentType,
       "Content-Length": String(buffer.byteLength),
       "Cache-Control": "private, max-age=3600",
-      "Accept-Ranges": "bytes",
+      // NÃO anunciar Accept-Ranges aqui: o modo buffered devolve o arquivo
+      // inteiro (200) e não honra Range. Anunciá-lo fazia o pdfjs (react-pdf)
+      // pedir ranges que caíam no ramo de streaming e voltavam inconsistentes,
+      // quebrando a renderização ("Não foi possível carregar o PDF"). Sem o
+      // header, o pdfjs faz um GET único — igual ao iframe nativo.
       "Access-Control-Allow-Origin": "*",
     };
     // download=1 força salvar; senão renderiza inline (iframe/embed)
