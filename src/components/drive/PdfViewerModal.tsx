@@ -1250,8 +1250,37 @@ function AnnotationsPanel({
     );
   }
 
+  const exportarCitacoes = () => {
+    const ord = [...annotations]
+      .filter((a) => (a.tipo === "highlight" || a.tipo === "underline") && a.textoSelecionado)
+      .sort((a, b) => a.pagina - b.pagina);
+    if (ord.length === 0) {
+      toast.info("Nenhum grifo com texto para exportar");
+      return;
+    }
+    const texto = ord
+      .map((a) => `• Pág. ${a.pagina}: "${String(a.textoSelecionado).trim()}"`)
+      .join("\n");
+    navigator.clipboard.writeText(texto);
+    toast.success(`${ord.length} citação(ões) copiada(s)`);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+          {annotations.length} anota{annotations.length === 1 ? "ção" : "ções"}
+        </span>
+        <button
+          type="button"
+          onClick={exportarCitacoes}
+          title="Copiar grifos como lista de citações (Pág. N)"
+          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+        >
+          <FileDown className="w-3 h-3" />
+          Exportar grifos
+        </button>
+      </div>
       {grouped.map(([page, items]) => (
         <div key={page}>
           <div className="px-3 py-1.5 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20 border-b border-neutral-100 dark:border-neutral-800 sticky top-0 z-10 backdrop-blur-sm">
