@@ -54,6 +54,7 @@ import {
   Stamp,
 } from "lucide-react";
 import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
+import { CopiarRevisaoButton } from "@/components/demandas/copiar-revisao-button";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -184,6 +185,11 @@ function DelegacaoCard({
               {statusConfig.icon}
               {statusConfig.label}
             </Badge>
+            {delegacao.observacoes && delegacao.observacoes.trim().length > 0 && (
+              <Badge className="gap-1 bg-emerald-100 text-[10px] font-medium text-emerald-700">
+                Revisão disponível
+              </Badge>
+            )}
           </div>
           <span className="text-[10px] text-neutral-500">{dataFormatada}</span>
         </div>
@@ -861,11 +867,17 @@ delegações
 
               {/* Observações (se houver) */}
               {delegacaoDetalhes.observacoes && (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    Observações
-                  </p>
-                  <p className="text-sm text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-emerald-900">
+                      O que o Defensor validou e ajustou
+                    </span>
+                    <CopiarRevisaoButton
+                      consideracoes={delegacaoDetalhes.observacoes}
+                      destinatarioNome={delegacaoDetalhes.delegadoPara?.name ?? ""}
+                    />
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm text-neutral-700">
                     {delegacaoDetalhes.observacoes}
                   </p>
                 </div>
