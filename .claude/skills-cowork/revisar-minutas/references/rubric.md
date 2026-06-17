@@ -51,6 +51,18 @@ de modalizador) · **Ajustar** (ideia certa, execução fraca) · **Substituir**
 - Prosa integrada, não listas; sem subdivisões A.1/B.2 em excesso.
 - Sem barroquismo/hedging/auto-comentário/paralelismos perfeitos (rodar a
   verificação operacional do estilo-pecas).
+- **Títulos de seção sóbrios, em substantivo** ("II – DA INSUFICIÊNCIA
+  PROBATÓRIA", "Do superior interesse..."), **nunca frase-tese** com verbo/predicado
+  ("...REVELAM QUEM AGIU") — frase no título é assinatura de IA. Modelo: as peças
+  protocoladas do Defensor.
+
+## 8b. Contextualização visual (prints dos autos)
+- Embutir, no ponto pertinente, **print do trecho-chave dos autos** que ancora o
+  argumento (sentença contraditória, denúncia sem valor, alegação do MP, BO).
+  Helper `scripts/print_autos.py` (`recortar(pdf, busca, out_png, linhas_abaixo=N)`):
+  acha a frase no PDF e recorta o parágrafo. Embutir centralizado, com legenda em
+  itálico 10pt + `keep_with_next` na legenda (não separar da imagem na quebra).
+  Largura ~5,9in. Só de trechos COM texto pesquisável (laudo escaneado pode falhar).
 
 ## 8. Linguagem defensiva  (âncora: linguagem-defensiva)
 - Modalizadores presentes; presunção de inocência na redação; "fato imputado".
