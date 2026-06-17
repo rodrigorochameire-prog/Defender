@@ -479,6 +479,9 @@ export function DemandaQuickPreview({
 
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
+  // Modal "ler os autos lado a lado" — agora é OPT-IN explícito (não abre mais
+  // junto do "Adicionar registro", que é o editor enxuto inline).
+  const [registroComAutosOpen, setRegistroComAutosOpen] = useState(false);
 
   // Quando o preview é aberto pelo atalho "Adicionar registro" no card,
   // expande o painel de registro automaticamente.
@@ -781,7 +784,20 @@ export function DemandaQuickPreview({
       node: demanda.assistidoId ? (
         <div className="space-y-3">
           {!novoRegistroOpen && (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-1">
+              {/* Opt-in: registrar lendo os autos lado a lado (modal). Só quando há PDFs. */}
+              {previewFiles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setRegistroComAutosOpen(true)}
+                  title="Registrar lendo os autos lado a lado"
+                  aria-label="Registrar com autos"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer p-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Com autos</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setNovoRegistroOpen(true)}
@@ -794,8 +810,9 @@ export function DemandaQuickPreview({
               </button>
             </div>
           )}
-          {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
-          {novoRegistroOpen && previewFiles.length === 0 && (
+          {/* "Adicionar" abre o editor enxuto inline (sem PDF). Ler os autos lado a
+              lado é opt-in pelo botão "Com autos" → RegistroComAutosDialog abaixo. */}
+          {novoRegistroOpen && (
             <RegistroEditor
               assistidoId={demanda.assistidoId}
               processoId={demanda.processoId ?? undefined}
@@ -1462,11 +1479,11 @@ export function DemandaQuickPreview({
           onClose={() => setPreviewFileId(null)}
         />
 
-        {/* Novo registro lendo os autos (split view) — quando há PDFs no caso */}
+        {/* Registro lendo os autos (split view) — OPT-IN pelo botão "Com autos". */}
         {demanda.assistidoId && previewFiles.length > 0 && (
           <RegistroComAutosDialog
-            open={novoRegistroOpen}
-            onOpenChange={setNovoRegistroOpen}
+            open={registroComAutosOpen}
+            onOpenChange={setRegistroComAutosOpen}
             assistidoId={demanda.assistidoId}
             processoId={demanda.processoId ?? undefined}
             demandaId={Number(demanda.id)}
