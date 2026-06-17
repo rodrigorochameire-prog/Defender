@@ -35,7 +35,16 @@ de modalizador) · **Ajustar** (ideia certa, execução fraca) · **Substituir**
 
 ## 6. Pedidos
 - Pedidos claros, corretos para o ato, completos (principal + subsidiários na
-  ordem certa); requerimentos finais em bullets (única lista permitida).
+  ordem certa). Formato: **alíneas `a) b) c)`** (letra em negrito), recuo de bloco,
+  **nunca bolinha (•)** — bolinha foge do padrão do Defensor. Lead em prosa
+  ("requer o conhecimento e provimento... para:") seguido das alíneas.
+
+## 6b. Desenvolvimento (não enxugar demais)
+- A peça revisada deve ser **bem desenvolvida**, no padrão das peças protocoladas
+  do Defensor (prosa argumentada por parágrafos, cláusula condicionante da própria
+  sentença virada a favor, precedentes verificados). Não encurtar a fundamentação
+  só porque o mérito é fraco: o recurso é direito do assistido. Concisão é cortar
+  barroquismo (dim. 7), não cortar argumento.
 
 ## 7. Estilo anti-IA-look  (âncora: estilo-pecas)
 - Travessão longo (—) no corpo: 0 (conferir por contagem).
