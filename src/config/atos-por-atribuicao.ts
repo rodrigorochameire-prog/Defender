@@ -61,6 +61,7 @@ export const ATOS_POR_ATRIBUICAO: Record<string, string[]> = {
     "Ciência de MPU",
     "Revogação de MPU",
     "Modulação de MPU",
+    "Agravo de Instrumento",
     "Revogação da prisão",
     "Relaxamento da prisão",
     "Revogação e relaxamento de prisão",
@@ -307,6 +308,7 @@ export const ATO_PRIORITY: Record<string, number> = {
   "Embargos de Declaração": 14,
   "Contrarrazões de ED": 15,
   "Agravo em Execução": 16,
+  "Agravo de Instrumento": 16,
   // Prisão e liberdade
   "Revogação da prisão": 20,
   "Relaxamento da prisão": 21,
@@ -418,7 +420,7 @@ export function categorizarAto(ato: string): string {
   ) return "Ciências";
   if (
     a.includes("apelação") || a.includes("apelacao") || a.includes("rese") ||
-    a.includes("embargos") || a.includes("habeas") ||
+    a.includes("embargos") || a.includes("habeas") || a.includes("agravo") ||
     a.startsWith("razões") || a.startsWith("razoes") ||
     a.startsWith("contrarrazões") || a.startsWith("contrarrazoes")
   ) return "Recursos";
@@ -479,7 +481,7 @@ export function atoValidoParaAtribuicao(ato: string, atribuicao: string): boolea
 // Estatísticas
 export const ESTATISTICAS_ATOS = {
   "Tribunal do Júri": 32,
-  "Violência Doméstica": 51,
+  "Violência Doméstica": 52,
   "Execução Penal": 22,
   "Substituição Criminal": 31,
   "Curadoria": 15,
