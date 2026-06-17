@@ -52,13 +52,22 @@ export function PessoaSheet({ pessoaId, open, onOpenChange }: Props) {
           )}
           {!isLoading && pessoa && (
             <>
-              <div className="px-4 pt-4 pb-2">
-                <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-                  {pessoa.nome}
-                </h2>
-                {pessoa.categoriaPrimaria && (
-                  <p className="text-xs text-neutral-500 mt-0.5">{pessoa.categoriaPrimaria}</p>
+              <div className="px-4 pt-4 pb-2 flex items-center gap-3">
+                {(pessoa as any).avatarDataUrl && (
+                  <img
+                    src={(pessoa as any).avatarDataUrl}
+                    alt={pessoa.nome}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white dark:ring-neutral-800 shadow-sm shrink-0"
+                  />
                 )}
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200 truncate">
+                    {pessoa.nome}
+                  </h2>
+                  {pessoa.categoriaPrimaria && (
+                    <p className="text-xs text-neutral-500 mt-0.5">{pessoa.categoriaPrimaria}</p>
+                  )}
+                </div>
               </div>
 
               <div role="tablist" className="flex border-b border-neutral-200 dark:border-neutral-800 px-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,7 +21,15 @@ interface ImageCaptureDialogProps {
   pagina?: number | null;
 }
 
-// Papéis para rotular o recorte (default herda o papel da pessoa no processo).
+// Tipo do recorte — Rosto é a regra (vira avatar da pessoa/réu).
+const TIPO_OPTIONS = [
+  { value: "rosto", label: "Rosto (vira avatar)" },
+  { value: "assinatura", label: "Assinatura" },
+  { value: "laudo", label: "Trecho de laudo" },
+  { value: "peticao", label: "Trecho de petição" },
+  { value: "outro", label: "Outro" },
+];
+
 const PAPEL_OPTIONS = [
   { value: "REU", label: "Réu" },
   { value: "CORREU", label: "Corréu" },
@@ -32,8 +40,7 @@ const PAPEL_OPTIONS = [
   { value: "OUTRO", label: "Outro" },
 ];
 
-// Mapa do papel do diálogo (UPPERCASE) → valor válido de participação
-// (minúsculo, PAPEIS_VALIDOS) usado ao criar pessoa nova + vínculo no processo.
+// Papel do diálogo (UPPERCASE) → valor válido de participação (PAPEIS_VALIDOS).
 const PAPEL_PARTICIPACAO: Record<string, string> = {
   REU: "reu",
   CORREU: "co-reu",
@@ -49,53 +56,74 @@ const PAPEL_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * Vincula um recorte de imagem do PDF a uma pessoa + papel do processo
- * (réu, suposta vítima, testemunha A/B…). O recorte aparece depois na
- * galeria da pessoa (PessoaSheet → Mídias).
+ * Vincula um recorte do PDF a uma parte do processo (réu, vítima, testemunha…).
+ * Rosto vira o avatar da pessoa/réu e aparece nos chips/cards. Réu, testemunhas
+ * e vítima já vêm no seletor (das fontes do OMBUDS) — sem precisar digitar.
  */
 export function ImageCaptureDialog({
   isOpen,
   onClose,
   imageDataUrl,
   processoId,
+  assistidoId,
   driveFileId,
   pagina,
 }: ImageCaptureDialogProps) {
   const [modo, setModo] = useState<"existente" | "nova">("existente");
-  const [pessoaId, setPessoaId] = useState<number | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string>("");
   const [nomeLivre, setNomeLivre] = useState("");
+  const [tipo, setTipo] = useState<string>("rosto");
   const [papel, setPapel] = useState<string>("REU");
   const [rotulo, setRotulo] = useState("");
   const [saving, setSaving] = useState(false);
 
   const utils = trpc.useUtils();
-  const { data: pessoas, isLoading: loadingPessoas } =
-    trpc.pessoas.getPessoasDoProcesso.useQuery(
-      { processoId: processoId ?? 0 },
-      { enabled: isOpen && !!processoId },
+  const { data: partes, isLoading: loadingPartes } =
+    trpc.pessoas.getPartesDoProcesso.useQuery(
+      { processoId: processoId ?? null, assistidoId: assistidoId ?? null },
+      { enabled: isOpen && (!!processoId || !!assistidoId) },
     );
   const salvar = trpc.pessoas.salvarRecorte.useMutation();
   const criarPessoa = trpc.pessoas.create.useMutation();
   const addParticipacao = trpc.pessoas.addParticipacao.useMutation();
 
-  // Ao escolher a pessoa, herda o papel dela como sugestão.
-  useEffect(() => {
-    if (pessoaId == null) return;
-    const sel = pessoas?.find((p) => p.pessoaId === pessoaId);
-    if (sel?.papel) setPapel(sel.papel.toUpperCase());
-  }, [pessoaId, pessoas]);
+  const selParte = useMemo(
+    () => (partes ?? []).find((p) => p.key === selectedKey) ?? null,
+    [partes, selectedKey],
+  );
 
-  const semPessoas = !loadingPessoas && (!pessoas || pessoas.length === 0);
-  // Sem pessoas no processo → só faz sentido "nova".
-  const modoEfetivo: "existente" | "nova" = semPessoas ? "nova" : modo;
+  // Ao escolher a parte, herda o papel dela como sugestão.
+  useEffect(() => {
+    if (selParte?.papel) setPapel(selParte.papel.toUpperCase());
+  }, [selParte]);
+
+  const semPartes = !loadingPartes && (!partes || partes.length === 0);
+  const modoEfetivo: "existente" | "nova" = semPartes ? "nova" : modo;
   const estimatedSize = imageDataUrl
     ? Math.round((imageDataUrl.split(",")[1]?.length || 0) * 0.75 / 1024)
     : 0;
 
+  async function criarPessoaComVinculo(nome: string): Promise<number> {
+    const nova = await criarPessoa.mutateAsync({ nome: nome.trim(), fonteCriacao: "manual" } as any);
+    if (processoId) {
+      try {
+        await addParticipacao.mutateAsync({
+          pessoaId: nova.id,
+          processoId,
+          papel: (PAPEL_PARTICIPACAO[papel] ?? "outro") as any,
+        } as any);
+      } catch (e) {
+        console.warn("[ImageCaptureDialog] addParticipacao falhou (não-fatal):", e);
+      }
+    }
+    return nova.id;
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
-      let alvoPessoaId = pessoaId;
+      let alvoPessoaId: number | null = null;
+      let alvoAssistidoId: number | null = null;
 
       if (modoEfetivo === "nova") {
         if (!nomeLivre.trim()) {
@@ -103,41 +131,40 @@ export function ImageCaptureDialog({
           setSaving(false);
           return;
         }
-        // Cria a pessoa e vincula ao processo (papel mapeado p/ o enum válido).
-        const nova = await criarPessoa.mutateAsync({
-          nome: nomeLivre.trim(),
-          fonteCriacao: "manual",
-        } as any);
-        alvoPessoaId = nova.id;
-        if (processoId) {
-          try {
-            await addParticipacao.mutateAsync({
-              pessoaId: nova.id,
-              processoId,
-              papel: (PAPEL_PARTICIPACAO[papel] ?? "outro") as any,
-            } as any);
-          } catch (e) {
-            console.warn("[ImageCaptureDialog] addParticipacao falhou (não-fatal):", e);
-          }
+        alvoPessoaId = await criarPessoaComVinculo(nomeLivre);
+      } else {
+        if (!selParte) {
+          toast.error("Selecione a pessoa");
+          setSaving(false);
+          return;
         }
-      } else if (!alvoPessoaId) {
-        toast.error("Selecione a pessoa");
-        setSaving(false);
-        return;
+        if (selParte.assistidoId) {
+          alvoAssistidoId = selParte.assistidoId;
+        } else if (selParte.pessoaId) {
+          alvoPessoaId = selParte.pessoaId;
+        } else {
+          // Testemunha ainda não está no grafo → cria a pessoa + vínculo.
+          alvoPessoaId = await criarPessoaComVinculo(selParte.nome);
+        }
       }
 
       await salvar.mutateAsync({
-        pessoaId: alvoPessoaId!,
+        pessoaId: alvoPessoaId,
+        assistidoId: alvoAssistidoId,
         processoId: processoId ?? null,
         driveFileId: driveFileId ?? null,
+        tipo,
         papel,
         rotulo: rotulo.trim() || null,
         imagem: imageDataUrl,
         pagina: pagina ?? null,
       });
-      utils.pessoas.getRecortesByPessoa.invalidate({ pessoaId: alvoPessoaId! });
+
+      if (alvoPessoaId) utils.pessoas.getRecortesByPessoa.invalidate({ pessoaId: alvoPessoaId });
+      utils.pessoas.getPartesDoProcesso.invalidate();
       utils.pessoas.getPessoasDoProcesso.invalidate({ processoId: processoId ?? 0 });
-      toast.success("Recorte vinculado à pessoa!");
+      utils.assistidos.list.invalidate();
+      toast.success(tipo === "rosto" ? "Rosto vinculado — virou avatar!" : "Recorte vinculado!");
       onClose();
     } catch (err) {
       console.error("[ImageCaptureDialog] erro:", err);
@@ -156,7 +183,7 @@ export function ImageCaptureDialog({
             Vincular recorte
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-500">
-            Atribua este recorte a uma pessoa do processo (réu, vítima, testemunha…).
+            Rosto, assinatura ou trecho — vincule a uma parte do processo.
           </DialogDescription>
         </DialogHeader>
 
@@ -173,8 +200,25 @@ export function ImageCaptureDialog({
             </span>
           </div>
 
-          {/* Alternar: pessoa do processo × nova pessoa (toggle só quando há pessoas) */}
-          {!semPessoas && (
+          {/* Tipo do recorte (Rosto é a regra) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPO_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Alternar: do processo × nova pessoa */}
+          {!semPartes && (
             <div className="flex gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 p-0.5">
               <button
                 type="button"
@@ -206,17 +250,13 @@ export function ImageCaptureDialog({
           {modoEfetivo === "existente" ? (
             <div className="space-y-1.5">
               <Label className="text-xs">Pessoa</Label>
-              <Select
-                value={pessoaId?.toString() || ""}
-                onValueChange={(v) => setPessoaId(Number(v))}
-                disabled={loadingPessoas}
-              >
+              <Select value={selectedKey} onValueChange={setSelectedKey} disabled={loadingPartes}>
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder={loadingPessoas ? "Carregando…" : "Selecione…"} />
+                  <SelectValue placeholder={loadingPartes ? "Carregando…" : "Selecione…"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(pessoas ?? []).map((p) => (
-                    <SelectItem key={p.pessoaId} value={p.pessoaId.toString()} className="text-xs">
+                  {(partes ?? []).map((p) => (
+                    <SelectItem key={p.key} value={p.key} className="text-xs">
                       {p.nome}
                       {p.papel ? ` · ${PAPEL_LABEL[p.papel.toUpperCase()] ?? p.papel}` : ""}
                     </SelectItem>
@@ -259,7 +299,7 @@ export function ImageCaptureDialog({
             <Input
               value={rotulo}
               onChange={(e) => setRotulo(e.target.value)}
-              placeholder="Ex.: assinatura, foto do RG, trecho do depoimento…"
+              placeholder="Ex.: foto do RG, assinatura, trecho do depoimento…"
               className="h-8 text-xs"
             />
           </div>
@@ -272,7 +312,7 @@ export function ImageCaptureDialog({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={saving || (modoEfetivo === "existente" && !pessoaId) || (modoEfetivo === "nova" && !nomeLivre.trim())}
+            disabled={saving || (modoEfetivo === "existente" && !selectedKey) || (modoEfetivo === "nova" && !nomeLivre.trim())}
             className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
