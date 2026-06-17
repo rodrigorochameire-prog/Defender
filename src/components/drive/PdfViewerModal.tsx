@@ -1203,10 +1203,12 @@ function AnnotationsPanel({
   annotations,
   onNavigate,
   onDelete,
+  onSaveAsRegistro,
 }: {
   annotations: any[];
   onNavigate: (page: number) => void;
   onDelete: (id: number) => void;
+  onSaveAsRegistro?: (a: any) => void;
 }) {
   const grouped = useMemo(() => {
     const map = new Map<number, typeof annotations>();
@@ -1349,6 +1351,18 @@ function AnnotationsPanel({
                     )}
                   </div>
                 </div>
+                {onSaveAsRegistro && (a.texto || a.textoSelecionado) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSaveAsRegistro(a);
+                    }}
+                    title="Salvar como registro no OMBUDS"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200"
+                  >
+                    <BookOpen className="w-3 h-3 text-emerald-500" />
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -2408,6 +2422,30 @@ export function PdfViewerModal({
   const handleDeleteAnnotation = useCallback((id: number) => {
     deleteAnnotation.mutate({ id });
   }, [deleteAnnotation]);
+
+  // Salvar uma anotação (nota/grifo) como registro do OMBUDS, ancorado no
+  // processo + página/documento. Vai pra timeline de registros do assistido.
+  const criarRegistro = trpc.registros.create.useMutation({
+    onSuccess: () => toast.success("Registro criado no OMBUDS"),
+    onError: (e) => toast.error(e.message || "Erro ao criar registro"),
+  });
+  const handleSaveAnnotationAsRegistro = useCallback((a: any) => {
+    const assistidoId = (fileMetadata as any)?.assistidoId;
+    if (!assistidoId) {
+      toast.error("Arquivo sem assistido vinculado");
+      return;
+    }
+    const texto = a.texto || a.textoSelecionado || "";
+    const tipoLabel = a.tipo === "note" ? "Nota" : a.tipo === "underline" ? "Sublinhado" : "Grifo";
+    const ref = `${fileName}${a.pagina ? ` · Pág. ${a.pagina}` : ""}`;
+    criarRegistro.mutate({
+      assistidoId,
+      processoId: (fileMetadata as any)?.processoId ?? undefined,
+      tipo: "anotacao",
+      titulo: `${tipoLabel} dos autos${a.pagina ? ` — Pág. ${a.pagina}` : ""}`.slice(0, 120),
+      conteudo: `${texto}\n\n— ${ref}`,
+    } as any);
+  }, [fileMetadata, fileName, criarRegistro]);
 
   // File navigation within siblings
   const currentFileIndex = useMemo(() => {
@@ -3682,6 +3720,7 @@ export function PdfViewerModal({
                     annotations={(annotations || []).filter((a: any) => a.tipo !== "bookmark")}
                     onNavigate={goToPage}
                     onDelete={(id) => deleteAnnotation.mutate({ id })}
+                    onSaveAsRegistro={handleSaveAnnotationAsRegistro}
                   />
                 ) : sidebarTab === "bookmarks" ? (
                   <BookmarksPanel
