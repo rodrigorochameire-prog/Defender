@@ -35,6 +35,7 @@ import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
 import { AtaAudienciaBlock } from "@/components/agenda/sheet/ata-audiencia-block";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
+import { derivarStatusOitiva } from "@/lib/agenda/depoente-status";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
@@ -67,13 +68,7 @@ const INTIMACAO_LABEL: Record<string, string> = {
   intimado: "intimado", dispensada: "dispensada", pendente: "pendente",
   nao_intimado: "não intimado", desconhecido: "intimação a verificar",
 };
-const MOTIVO_LABEL: Record<string, string> = {
-  nao_localizado: "não localizado", mandado_nao_cumprido: "mandado não cumprido",
-  endereco_invalido: "endereço inválido", em_diligencia: "em diligência",
-  recusa_recebimento: "recusou ciência", precatoria_devolvida: "precatória devolvida",
-  precatoria_pendente: "precatória pendente", mandado_nao_emitido: "mandado não expedido",
-  falta_de_informacoes: "sem informação nos autos",
-};
+// MOTIVO_LABEL foi para @/lib/agenda/depoente-status (fonte única, testada).
 const TIPO_DEP_LABEL: Record<string, string> = {
   ofendida: "ofendida", testemunha_acusacao: "test. acusação",
   testemunha_defesa: "test. defesa", informante: "informante",
@@ -83,21 +78,23 @@ const TIPO_DEP_LABEL: Record<string, string> = {
 /** Painel de status dos depoentes — quem será ouvido, intimação e motivo. */
 function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
   if (!depoentes?.length) return null;
-  const jaOuvidos = depoentes.filter((d) => d.ja_ouvido?.sim || d.comparecimento === "ouvido_anteriormente").length;
-  const naoIntimados = depoentes.filter((d) => d.intimacao === "nao_intimado").length;
-  const aVerificar = depoentes.filter((d) => d.intimacao === "desconhecido").length;
+  const stats = depoentes.map(derivarStatusOitiva);
+  const ouvidosJuizo = stats.filter((s) => s.ouvidoJuizo).length;
+  const faltamJuizo = stats.filter((s) => s.faltaJuizo).length;
+  const naoIntimados = stats.filter((s) => s.faltaJuizo && s.intimacao === "nao_intimado").length;
+  const aVerificar = stats.filter((s) => s.faltaJuizo && s.intimacao === "desconhecido").length;
   return (
     <div className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden mb-2">
       <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-900/60 text-[10px] font-medium text-neutral-500 flex-wrap">
-        <span>{depoentes.length} a ouvir</span>
-        {jaOuvidos > 0 && <span className="text-emerald-600 dark:text-emerald-400">· {jaOuvidos} já ouvido(s)</span>}
+        <span>{depoentes.length} depoentes</span>
+        {ouvidosJuizo > 0 && <span className="text-emerald-600 dark:text-emerald-400">· {ouvidosJuizo} ouvido(s) em juízo</span>}
+        {faltamJuizo > 0 && <span>· {faltamJuizo} a ouvir</span>}
         {naoIntimados > 0 && <span className="text-rose-600 dark:text-rose-400">· {naoIntimados} não intimado(s)</span>}
         {aVerificar > 0 && <span className="text-amber-600 dark:text-amber-400">· {aVerificar} a verificar</span>}
       </div>
       <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
         {depoentes.map((d, i) => {
-          const intim = (d.intimacao ?? "desconhecido") as string;
-          const jo = d.ja_ouvido?.sim || d.comparecimento === "ouvido_anteriormente";
+          const st = stats[i];
           return (
             <div key={`${i}-${d.nome}`} className="flex items-start gap-2 px-2.5 py-1.5">
               <div className="flex-1 min-w-0">
@@ -107,19 +104,33 @@ function PainelDepoentesStatus({ depoentes }: { depoentes: any[] }) {
                     <span className="text-[9px] text-neutral-400">{TIPO_DEP_LABEL[d.tipo]}</span>
                   )}
                 </div>
-                {(d.motivo_nao_intimacao || d.observacao) && (
+                {(st.motivoLabel || d.observacao) && (
                   <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-snug mt-0.5">
-                    {d.motivo_nao_intimacao ? (MOTIVO_LABEL[d.motivo_nao_intimacao] ?? d.motivo_nao_intimacao) : d.observacao}
+                    {st.motivoLabel ?? d.observacao}
                   </p>
                 )}
               </div>
               <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <span className={cn("text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap", INTIMACAO_TONE[intim] ?? INTIMACAO_TONE.desconhecido)}>
-                  {INTIMACAO_LABEL[intim] ?? intim}
+                {/* Delegacia */}
+                <span className={cn(
+                  "text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
+                  st.ouvidoDelegacia
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : "bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500",
+                )}>
+                  Delegacia {st.ouvidoDelegacia ? "✓" : "—"}
                 </span>
-                {jo && (
+                {/* Juízo: ouvido, ou status de intimação */}
+                {st.ouvidoJuizo ? (
                   <span className="text-[8.5px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap">
-                    já ouvido{d.ja_ouvido?.data ? ` ${d.ja_ouvido.data}` : ""}
+                    Juízo ✓{d.ja_ouvido?.data ? ` ${d.ja_ouvido.data}` : ""}
+                  </span>
+                ) : (
+                  <span className={cn(
+                    "text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
+                    INTIMACAO_TONE[st.intimacao] ?? INTIMACAO_TONE.desconhecido,
+                  )}>
+                    Juízo: {INTIMACAO_LABEL[st.intimacao] ?? st.intimacao}
                   </span>
                 )}
               </div>
