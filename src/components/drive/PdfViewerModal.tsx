@@ -3437,67 +3437,68 @@ export function PdfViewerModal({
                 {/* Divider */}
                 <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
 
-                {/* Color picker — soft pastel dots matching actual highlight colors */}
-                <div className="flex items-center gap-1">
-                  {resolvedColors.map((c) => (
-                    <Tooltip key={c.color}>
-                      <TooltipTrigger asChild>
+                {/* Cor do grifo — popover discreto (substitui a barra de bolinhas
+                    sempre visível): swatch da cor atual abre a paleta + config. */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      title="Cor do grifo"
+                      className="inline-flex items-center gap-2 h-8 px-2.5 rounded-lg ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                    >
+                      <span
+                        className="w-4 h-4 rounded-md shrink-0"
+                        style={{
+                          backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
+                          border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
+                        }}
+                      />
+                      <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 max-w-[90px] truncate">
+                        {getAnnotationColor(selectedColor, customColorLabels).label}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" sideOffset={6} className="w-auto p-2">
+                    <div className="flex items-center gap-1.5">
+                      {resolvedColors.map((c) => (
                         <button
+                          key={c.color}
+                          type="button"
                           onClick={() => setSelectedColor(c.color)}
-                          className="relative group p-0.5"
+                          title={c.label}
+                          className="relative p-0.5 cursor-pointer"
                         >
-                          <div
+                          <span
                             className={cn(
-                              "w-5 h-5 rounded-md transition-all duration-150",
+                              "block w-6 h-6 rounded-md transition-transform",
                               selectedColor === c.color
-                                ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900 shadow-sm"
-                                : "hover:scale-110"
+                                ? "ring-2 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900"
+                                : "hover:scale-110",
                             )}
                             style={{
                               backgroundColor: c.hexLight,
                               border: `1.5px solid ${c.hexMid}`,
-                              ...(selectedColor === c.color ? { ringColor: c.hexMid } : {}),
+                              ...(selectedColor === c.color ? { ["--tw-ring-color" as any]: c.hexMid } : {}),
                             }}
                           />
                           {selectedColor === c.color && (
-                            <Check className="absolute inset-0 m-auto w-2.5 h-2.5 drop-shadow-sm" style={{ color: c.hex }} />
+                            <Check className="absolute inset-0 m-auto w-3 h-3 drop-shadow-sm" style={{ color: c.hex }} />
                           )}
                         </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-[10px] py-1 px-2.5 font-medium">
-                        {c.label}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-
-                {/* Divider */}
-                <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
-
-                {/* Active color label + settings */}
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className="w-3.5 h-3.5 rounded shadow-sm"
-                    style={{
-                      backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
-                      border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
-                    }}
-                  />
-                  <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-                    {getAnnotationColor(selectedColor, customColorLabels).label}
-                  </span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                      ))}
+                      <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-1" />
                       <button
+                        type="button"
                         onClick={() => setShowColorSettings(true)}
-                        className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                        title="Editar categorias"
+                        className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                       >
-                        <Settings2 className="w-3.5 h-3.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
+                        <Settings2 className="w-3.5 h-3.5 text-neutral-400" />
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-[10px]">Editar categorias</TooltipContent>
-                  </Tooltip>
-                </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
 
                 {/* Spacer */}
                 <div className="flex-1" />
