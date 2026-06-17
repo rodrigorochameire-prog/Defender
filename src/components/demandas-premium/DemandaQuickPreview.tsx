@@ -33,6 +33,7 @@ import {
   Plus,
   CalendarPlus,
   Eye,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { iniciaisNome } from "@/lib/format/iniciais";
