@@ -469,6 +469,13 @@ const PDF_TEXT_LAYER_STYLES = `
   .react-pdf__Page__textContent.textLayer span {
     color: transparent !important;
   }
+  /* Realce da busca de texto (Ctrl/Cmd+F) — mark injetado pelo customTextRenderer */
+  .react-pdf__Page__textContent.textLayer mark {
+    color: transparent !important;
+    background: rgba(250, 204, 21, 0.45);
+    border-radius: 2px;
+    padding: 0;
+  }
   .react-pdf__Page__textContent.textLayer span::selection {
     background: rgba(52, 211, 153, 0.35);
     color: transparent !important;
@@ -2018,6 +2025,30 @@ export function PdfViewerModal({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showCaptureDialog, setShowCaptureDialog] = useState(false);
 
+  // Modo de leitura: "paginada" (1 página por vez) ou "rolagem" (todas em coluna).
+  // Persistido em localStorage para abrir sempre na preferência do defensor.
+  const [readMode, setReadMode] = useState<"paginada" | "rolagem">(() => {
+    if (typeof window === "undefined") return "paginada";
+    return (localStorage.getItem("pdf_read_mode") as "paginada" | "rolagem") || "paginada";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("pdf_read_mode", readMode);
+  }, [readMode]);
+  const readModeRef = useRef(readMode);
+  useEffect(() => { readModeRef.current = readMode; }, [readMode]);
+
+  // Busca de texto no PDF (Ctrl/Cmd+F)
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMatches, setSearchMatches] = useState<number[]>([]); // página de cada ocorrência
+  const [searchActiveIdx, setSearchActiveIdx] = useState(-1);
+  const [searching, setSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Proxy do PDF (pdfjs) para extrair texto na busca; elementos das páginas p/ scroll.
+  const pdfProxyRef = useRef<any>(null);
+  const pageElsRef = useRef<Map<number, HTMLElement>>(new Map());
+
   // Reset state when fileId changes (file navigation)
   const prevFileIdRef = useRef(fileId);
   useEffect(() => {
@@ -2030,6 +2061,11 @@ export function PdfViewerModal({
       setIndexSearch("");
       setAnnotationMode("none");
       setScale(1.0);
+      setSearchQuery("");
+      setSearchMatches([]);
+      setSearchActiveIdx(-1);
+      pdfProxyRef.current = null;
+      pageElsRef.current.clear();
     }
   }, [fileId]);
 
@@ -2494,8 +2530,9 @@ export function PdfViewerModal({
 
   // PDF load handlers
   const onDocumentLoadSuccess = useCallback(
-    ({ numPages: n }: { numPages: number }) => {
-      setNumPages(n);
+    (pdf: { numPages: number } & Record<string, any>) => {
+      setNumPages(pdf.numPages);
+      pdfProxyRef.current = pdf;
       setPdfError(null);
     },
     []
@@ -2509,10 +2546,15 @@ export function PdfViewerModal({
   // Navigation
   const goToPage = useCallback(
     (page: number) => {
-      const target = Math.max(1, Math.min(page, numPages));
+      const target = Math.max(1, Math.min(page, numPages || 1));
       setCurrentPage(target);
-      // Scroll the page container to top when navigating
-      pageContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      if (readModeRef.current === "rolagem") {
+        // Rola até a página alvo na coluna contínua.
+        pageElsRef.current.get(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        // Página única: volta ao topo ao trocar de página.
+        pageContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
     },
     [numPages]
   );
@@ -2667,9 +2709,14 @@ export function PdfViewerModal({
   const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (annotationMode !== "note") return;
 
+    // Página alvo: a do wrapper [data-page] clicado (modo rolagem); senão a atual.
+    const wrapper = (e.target as HTMLElement)?.closest?.("[data-page]") as HTMLElement | null;
+    const pagina = (wrapper && parseInt(wrapper.dataset.page || "", 10)) || currentPage;
     // Calculate position relative to the PDF page canvas (not the container)
-    const pageEl = pageContainerRef.current?.querySelector(".react-pdf__Page__canvas") as HTMLCanvasElement
-      || pageContainerRef.current?.querySelector(".react-pdf__Page");
+    const pageEl = (wrapper?.querySelector(".react-pdf__Page__canvas")
+      || wrapper?.querySelector(".react-pdf__Page")
+      || pageContainerRef.current?.querySelector(".react-pdf__Page__canvas")
+      || pageContainerRef.current?.querySelector(".react-pdf__Page")) as HTMLElement | null;
     if (!pageEl) return;
     const rect = pageEl.getBoundingClientRect();
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -2681,7 +2728,7 @@ export function PdfViewerModal({
     createAnnotation.mutate({
       driveFileId: fileId,
       tipo: "note",
-      pagina: currentPage,
+      pagina,
       cor: selectedColor as AnnotationColorName,
       texto: noteText.trim(),
       posicao: { x, y, width: 0.02, height: 0.02 },
@@ -2713,12 +2760,22 @@ export function PdfViewerModal({
     // Capture per-line rects for precise multi-rect overlay
     // Coordinates are relative to the .react-pdf__Page canvas element
     let posicao: { rects: Rect[] } | undefined;
+    let paginaSel = currentPage;
     try {
       const range = selection.getRangeAt(0);
       const clientRects = range.getClientRects();
+      // Página da seleção: wrapper [data-page] que contém o texto selecionado
+      // (modo rolagem). Cai para a página atual se não encontrar.
+      const anchorEl = (range.commonAncestorContainer.nodeType === 1
+        ? (range.commonAncestorContainer as HTMLElement)
+        : range.commonAncestorContainer.parentElement);
+      const wrapper = anchorEl?.closest?.("[data-page]") as HTMLElement | null;
+      if (wrapper) paginaSel = parseInt(wrapper.dataset.page || "", 10) || currentPage;
       // Find the actual page canvas — overlays are positioned relative to this element's parent wrapper
-      const pageEl = pageContainerRef.current?.querySelector(".react-pdf__Page__canvas") as HTMLCanvasElement
-        || pageContainerRef.current?.querySelector(".react-pdf__Page");
+      const pageEl = (wrapper?.querySelector(".react-pdf__Page__canvas")
+        || wrapper?.querySelector(".react-pdf__Page")
+        || pageContainerRef.current?.querySelector(".react-pdf__Page__canvas")
+        || pageContainerRef.current?.querySelector(".react-pdf__Page")) as HTMLElement | null;
       if (pageEl && clientRects.length > 0) {
         const pageRect = pageEl.getBoundingClientRect();
         const rawRects: Rect[] = [];
@@ -2749,7 +2806,7 @@ export function PdfViewerModal({
     createAnnotation.mutate({
       driveFileId: fileId,
       tipo: annotationMode, // "highlight" or "underline"
-      pagina: currentPage,
+      pagina: paginaSel,
       cor: selectedColor as AnnotationColorName,
       textoSelecionado: selectedText,
       posicao,
@@ -2757,6 +2814,93 @@ export function PdfViewerModal({
 
     selection.removeAllRanges();
   }, [annotationMode, fileId, currentPage, selectedColor, createAnnotation]);
+
+  // ── Busca de texto no PDF (Ctrl/Cmd+F) ───────────────────────────
+  // customTextRenderer envolve as ocorrências em <mark> na própria camada de
+  // texto do pdfjs (realce alinhado ao PDF, em ambos os modos de leitura).
+  const textRenderer = useCallback(
+    (textItem: { str: string }) => {
+      const q = searchQuery.trim();
+      if (!q) return textItem.str;
+      const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      try {
+        return textItem.str.replace(new RegExp(safe, "gi"), (m) => `<mark>${m}</mark>`);
+      } catch {
+        return textItem.str;
+      }
+    },
+    [searchQuery],
+  );
+
+  // Varre todas as páginas (getTextContent) e registra a página de cada match.
+  const runSearch = useCallback(async (q: string) => {
+    const pdf = pdfProxyRef.current;
+    const needle = q.trim().toLowerCase();
+    if (!pdf || needle.length < 2) { setSearchMatches([]); setSearchActiveIdx(-1); return; }
+    setSearching(true);
+    try {
+      const pages: number[] = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const tc = await page.getTextContent();
+        const text = tc.items.map((it: any) => ("str" in it ? it.str : "")).join(" ").toLowerCase();
+        let idx = text.indexOf(needle);
+        while (idx !== -1) { pages.push(p); idx = text.indexOf(needle, idx + needle.length); }
+      }
+      setSearchMatches(pages);
+      setSearchActiveIdx(pages.length ? 0 : -1);
+      if (pages.length) goToPage(pages[0]);
+    } finally {
+      setSearching(false);
+    }
+  }, [goToPage]);
+
+  const gotoMatch = useCallback((dir: 1 | -1) => {
+    setSearchActiveIdx((prev) => {
+      if (!searchMatches.length) return -1;
+      let i = prev + dir;
+      if (i < 0) i = searchMatches.length - 1;
+      if (i >= searchMatches.length) i = 0;
+      goToPage(searchMatches[i]);
+      return i;
+    });
+  }, [searchMatches, goToPage]);
+
+  // Atalho Cmd/Ctrl+F abre a busca; Esc fecha (sem fechar o modal).
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setSearchOpen(true);
+        setTimeout(() => searchInputRef.current?.focus(), 0);
+      } else if (e.key === "Escape" && searchOpen) {
+        e.stopPropagation();
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [isOpen, searchOpen]);
+
+  // Sincroniza a página atual com o scroll no modo rolagem (página mais visível).
+  useEffect(() => {
+    if (!isOpen || readMode !== "rolagem" || !numPages) return;
+    const root = pageContainerRef.current;
+    if (!root) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const top = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]?.target as HTMLElement | undefined;
+        const p = top?.dataset.page ? parseInt(top.dataset.page, 10) : 0;
+        if (p) setCurrentPage((cp) => (p !== cp ? p : cp));
+      },
+      { root, threshold: [0.25, 0.5, 0.75] },
+    );
+    pageElsRef.current.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [isOpen, readMode, numPages]);
 
   if (!isOpen) return null;
 
@@ -2901,6 +3045,38 @@ export function PdfViewerModal({
                 <TooltipContent side="bottom"><p className="text-xs">Ultima pagina (End)</p></TooltipContent>
               </Tooltip>
             </div>
+
+            <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+
+            {/* Modo de leitura (página a página ↔ rolagem contínua) + Busca */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("h-8 w-8", readMode === "rolagem" && "text-emerald-500")}
+                  onClick={() => setReadMode((m) => (m === "paginada" ? "rolagem" : "paginada"))}
+                >
+                  {readMode === "paginada" ? <ScrollText className="h-4.5 w-4.5" /> : <FileText className="h-4.5 w-4.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-xs">{readMode === "paginada" ? "Rolagem contínua" : "Página a página"}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn("h-8 w-8", searchOpen && "text-emerald-500")}
+                  onClick={() => { setSearchOpen((v) => !v); setTimeout(() => searchInputRef.current?.focus(), 0); }}
+                >
+                  <Search className="h-4.5 w-4.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Buscar no PDF (Ctrl/Cmd+F)</p></TooltipContent>
+            </Tooltip>
 
             <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
@@ -3447,11 +3623,40 @@ export function PdfViewerModal({
             <div
               ref={pageContainerRef}
               className={cn(
-                "flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
+                "relative flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
                 annotationMode === "note" && "cursor-crosshair"
               )}
               onMouseUp={annotationMode === "highlight" || annotationMode === "underline" ? handleTextSelection : undefined}
             >
+              {/* Barra de busca de texto (Ctrl/Cmd+F) */}
+              {searchOpen && (
+                <div className="absolute top-3 right-3 z-30 flex items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white/95 dark:bg-neutral-900/95 backdrop-blur px-2 py-1.5 shadow-lg">
+                  <Search className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                  <input
+                    ref={searchInputRef}
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setSearchMatches([]); setSearchActiveIdx(-1); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (searchMatches.length) gotoMatch(e.shiftKey ? -1 : 1);
+                        else runSearch(searchQuery);
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        setSearchOpen(false);
+                      }
+                    }}
+                    placeholder="Buscar nos autos…"
+                    className="w-44 bg-transparent text-xs outline-none text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400"
+                  />
+                  <span className="text-[10px] tabular-nums text-neutral-400 min-w-[40px] text-center">
+                    {searching ? "…" : searchMatches.length ? `${searchActiveIdx + 1}/${searchMatches.length}` : (searchQuery.trim().length >= 2 ? "0" : "")}
+                  </span>
+                  <button type="button" onClick={() => gotoMatch(-1)} disabled={!searchMatches.length} title="Anterior (Shift+Enter)" className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"><ChevronUp className="h-3.5 w-3.5" /></button>
+                  <button type="button" onClick={() => gotoMatch(1)} disabled={!searchMatches.length} title="Próximo (Enter)" className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 cursor-pointer"><ChevronDown className="h-3.5 w-3.5" /></button>
+                  <button type="button" onClick={() => setSearchOpen(false)} title="Fechar (Esc)" className="h-6 w-6 inline-flex items-center justify-center rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              )}
               {pdfError || !pdfUrl ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-8">
                   <AlertCircle className="w-10 h-10 text-neutral-300 dark:text-neutral-600" />
@@ -3485,14 +3690,27 @@ export function PdfViewerModal({
                       </div>
                     }
                   >
-                    {/* Wrapper relative ao redor da página para posicionar overlays corretamente */}
-                    <div className="relative inline-block">
+                    {/* Coluna de páginas: só a atual (paginada) ou todas (rolagem).
+                        Cada página num wrapper [data-page] — base p/ overlays,
+                        seleção ciente de página e scroll-to. */}
+                    <div className={cn(readMode === "rolagem" && "flex flex-col items-center gap-4")}>
+                    {(readMode === "rolagem" && numPages > 0
+                      ? Array.from({ length: numPages }, (_, i) => i + 1)
+                      : [currentPage]
+                    ).map((pn) => (
+                    <div
+                      key={pn}
+                      data-page={pn}
+                      ref={(el) => { const m = pageElsRef.current; if (el) m.set(pn, el); else m.delete(pn); }}
+                      className="relative inline-block"
+                    >
                     <ReactPdfPage
-                      pageNumber={currentPage}
+                      pageNumber={pn}
                       scale={effectiveScale}
                       className="shadow-lg"
                       renderTextLayer={true}
                       renderAnnotationLayer={false}
+                      customTextRenderer={searchQuery.trim() ? textRenderer : undefined}
                       loading={
                         <div className="flex items-center justify-center h-96">
                           <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
@@ -3502,7 +3720,7 @@ export function PdfViewerModal({
 
                   {/* Highlight + Underline overlays for current page — memoized */}
                   {annotations
-                    ?.filter((a) => a.pagina === currentPage && (a.tipo === "highlight" || a.tipo === "underline") && a.posicao)
+                    ?.filter((a) => a.pagina === pn && (a.tipo === "highlight" || a.tipo === "underline") && a.posicao)
                     .map((hl) => (
                       <HighlightOverlay
                         key={`hl-overlay-${hl.id}`}
@@ -3516,7 +3734,7 @@ export function PdfViewerModal({
                     ))}
 
                   {/* Note indicators for current page — memoized */}
-                  {annotations?.filter((a) => a.pagina === currentPage && a.tipo === "note").map((note) => (
+                  {annotations?.filter((a) => a.pagina === pn && a.tipo === "note").map((note) => (
                     <NoteIndicator
                       key={note.id}
                       note={note}
@@ -3525,8 +3743,8 @@ export function PdfViewerModal({
                     />
                   ))}
 
-                  {/* Image capture overlay */}
-                  {isCaptureMode && (
+                  {/* Image capture overlay — apenas no modo paginado */}
+                  {readMode === "paginada" && isCaptureMode && pn === currentPage && (
                     <div
                       className="absolute inset-0 z-50"
                       style={{ cursor: "crosshair" }}
@@ -3599,7 +3817,9 @@ export function PdfViewerModal({
                       )}
                     </div>
                   )}
-                    </div>{/* Close relative wrapper around page + overlays */}
+                    </div>{/* Close [data-page] wrapper */}
+                    ))}
+                    </div>{/* Close column wrapper */}
                   </ReactPdfDocument>
                 </div>
               )}
