@@ -2134,7 +2134,15 @@ export function PdfViewerModal({
   // File metadata for linking
   const { data: fileMetadata } = trpc.drive.getFileById.useQuery(
     { id: fileId },
-    { enabled: isOpen && fileId > 0 }
+    {
+      enabled: isOpen && fileId > 0,
+      // Smart Extract é assíncrono (inngest): enquanto "processing", faz polling
+      // até o job gravar "completed"/"failed".
+      refetchInterval: (query: any) => {
+        const data = query.state?.data ?? query.data;
+        return (data as any)?.enrichmentStatus === "processing" ? 4000 : false;
+      },
+    }
   );
 
   // Custom color labels from user settings
@@ -2232,19 +2240,19 @@ export function PdfViewerModal({
 
   // ─── Processing: Simple Mode (< 5MB) ─────────────────────────
   const classifyJobId = `classify-${fileId}`;
+  // Marca que há uma classificação ativa nesta sessão — evita que o polling
+  // dispare "concluído" em arquivos que já estavam classificados de antes.
+  const classifyActiveRef = useRef(false);
   const triggerClassification = trpc.documentSections.triggerClassification.useMutation({
     onMutate: () => {
+      classifyActiveRef.current = true;
       addJob({ id: classifyJobId, type: "classification", label: fileName, status: "running", progress: -1, detail: "Classificando seções..." });
       showProgressToast({ id: classifyJobId, type: "classification", label: fileName, progress: -1, detail: "Classificando seções..." });
     },
-    onSuccess: (data) => {
-      setIsProcessing(false);
-      const count = data && "sectionsFound" in data ? (data as { sectionsFound?: number }).sectionsFound : 0;
-      const summary = `${count || 0} seções encontradas`;
-      completeJob(classifyJobId, summary);
-      completeProgressToast(classifyJobId, `${fileName} — ${summary}`);
-      utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
-      setSidebarTab("sections");
+    onSuccess: () => {
+      // Async (inngest): só enfileirou. Mantém o toast "Classificando…" rodando;
+      // a conclusão vem pelo polling do enrichmentStatus (effect abaixo).
+      utils.drive.getFileById.invalidate({ id: fileId });
     },
     onError: (err) => {
       setIsProcessing(false);
@@ -2258,6 +2266,27 @@ export function PdfViewerModal({
       }
     },
   });
+
+  // Conclusão do Smart Extract assíncrono: o inngest grava enrichmentStatus
+  // ("completed"/"failed"); o polling do getFileById detecta e finaliza o toast.
+  useEffect(() => {
+    if (!classifyActiveRef.current) return;
+    const st = (fileMetadata as any)?.enrichmentStatus;
+    if (st === "completed") {
+      classifyActiveRef.current = false;
+      setIsProcessing(false);
+      completeJob(classifyJobId, "Seções classificadas");
+      completeProgressToast(classifyJobId, `${fileName} — seções classificadas`);
+      utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
+      setSidebarTab("sections");
+    } else if (st === "failed") {
+      classifyActiveRef.current = false;
+      setIsProcessing(false);
+      failJob(classifyJobId, "Falha na classificação");
+      failProgressToast(classifyJobId, `${fileName} — falha ao classificar`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileMetadata, fileId, classifyJobId, fileName]);
 
   // ─── Processing: Deep Mode (> 5MB, multi-step) ─────────────
   const startDeepProcessing = trpc.documentSections.startDeepProcessing.useMutation();

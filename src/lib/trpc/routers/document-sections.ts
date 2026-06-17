@@ -454,96 +454,33 @@ export const documentSectionsRouter = router({
         .delete(driveDocumentSections)
         .where(eq(driveDocumentSections.driveFileId, input.driveFileId));
 
+      // Enfileira o pipeline ASSÍNCRONO (inngest) em vez de processar no request.
+      // A função pdf/extract-and-classify faz download → extrai → classifica →
+      // salva e marca enrichmentStatus ("completed"/"failed"), com fallback OCR.
+      // Não bloqueia a UI nem arrisca timeout em autos grandes. A UI faz polling
+      // do enrichmentStatus até concluir.
       try {
-        // Step 1: Download PDF from Drive
-        console.log(`[triggerClassification] Step 1: Downloading file ${file.driveFileId}...`);
-        const { downloadFileContent } = await import("@/lib/services/google-drive");
-        const content = await downloadFileContent(file.driveFileId);
-        if (!content) throw new Error("Falha no download do arquivo");
-        console.log(`[triggerClassification] Step 1 OK: Downloaded ${content.byteLength} bytes`);
-
-        // Step 2: Extract text
-        console.log(`[triggerClassification] Step 2: Extracting text...`);
-        const { extractTextFromPdf, chunkPages } = await import("@/lib/services/pdf-extractor");
-        const extraction = await extractTextFromPdf(Buffer.from(content));
-        if (!extraction.success || extraction.pages.length === 0) {
-          throw new Error(extraction.error || "Nenhum texto extraído");
-        }
-        console.log(`[triggerClassification] Step 2 OK: ${extraction.totalPages} pages, ${extraction.fullText.length} chars`);
-
-        // Step 3: Classify sections with Claude Sonnet 4
-        const { classifyFullDocument, isClassifierConfigured } = await import("@/lib/services/pdf-classifier");
-        if (!isClassifierConfigured()) {
-          throw new Error("Nenhuma API de IA configurada (ANTHROPIC_API_KEY ou GEMINI_API_KEY)");
-        }
-        const chunks = chunkPages(extraction.pages, 20);
-        console.log(`[triggerClassification] Step 3: Classifying ${chunks.length} chunks with Claude Sonnet 4...`);
-        const classification = await classifyFullDocument(chunks);
-        console.log(`[triggerClassification] Step 3 result: success=${classification.success}, sections=${classification.sections.length}, error=${classification.error}`);
-
-        if (!classification.success) {
-          throw new Error(classification.error || "Falha na classificação");
-        }
-
-        // Step 4: Store sections (pode ser 0 para PDFs sem peças processuais)
-        let insertedCount = 0;
-        if (classification.sections.length > 0) {
-          const values = classification.sections.map((s) => ({
+        const { inngest } = await import("@/lib/inngest/client");
+        await inngest.send({
+          name: "pdf/extract-and-classify",
+          data: {
             driveFileId: input.driveFileId,
-            tipo: s.tipo,
-            titulo: s.titulo,
-            paginaInicio: s.paginaInicio,
-            paginaFim: s.paginaFim,
-            resumo: s.resumo,
-            textoExtraido: extraction.pages
-              .filter((p) => p.pageNumber >= s.paginaInicio && p.pageNumber <= s.paginaFim)
-              .map((p) => p.text)
-              .join("\n\n"),
-            confianca: s.confianca,
-            metadata: s.metadata,
-          }));
-
-          const inserted = await db
-            .insert(driveDocumentSections)
-            .values(values)
-            .returning({ id: driveDocumentSections.id });
-          insertedCount = inserted.length;
-        }
-
-        // Mark file as completed
-        await db
-          .update(driveFiles)
-          .set({
-            enrichmentStatus: "completed",
-            enrichmentError: null,
-            enrichedAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(driveFiles.id, input.driveFileId));
-
-        return {
-          success: true,
-          sectionsFound: classification.sections.length,
-          sectionsStored: insertedCount,
-          totalPages: extraction.totalPages,
-        };
+            driveGoogleId: file.driveFileId,
+          },
+        });
       } catch (error) {
-        // Mark as failed
-        const errorMsg = error instanceof Error ? error.message : "Erro desconhecido";
+        const errorMsg = error instanceof Error ? error.message : "Erro ao enfileirar";
         await db
           .update(driveFiles)
-          .set({
-            enrichmentStatus: "failed",
-            enrichmentError: errorMsg,
-            updatedAt: new Date(),
-          })
+          .set({ enrichmentStatus: "failed", enrichmentError: errorMsg, updatedAt: new Date() })
           .where(eq(driveFiles.id, input.driveFileId));
-
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Classificação falhou: ${errorMsg}`,
+          message: `Falha ao iniciar a classificação: ${errorMsg}`,
         });
       }
+
+      return { triggered: true, queued: true as const };
     }),
 
   // ═══════════════════════════════════════════════
