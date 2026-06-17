@@ -2060,8 +2060,8 @@ export function PdfViewerModal({
   // por vez). Persistido em localStorage.
   type ReadMode = "paginada" | "rolagem" | "snap";
   const [readMode, setReadMode] = useState<ReadMode>(() => {
-    if (typeof window === "undefined") return "paginada";
-    return (localStorage.getItem("pdf_read_mode") as ReadMode) || "paginada";
+    if (typeof window === "undefined") return "rolagem";
+    return (localStorage.getItem("pdf_read_mode") as ReadMode) || "rolagem";
   });
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("pdf_read_mode", readMode);
@@ -2120,6 +2120,24 @@ export function PdfViewerModal({
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isCaptureMode]);
+
+  // A captura de imagem é por página (o overlay só renderiza no modo paginado).
+  // Ao entrar em captura, força paginado (guardando o modo anterior); ao sair,
+  // restaura. Cobre todos os caminhos (botão, Esc), inclusive com rolagem/snap
+  // como padrão — senão a captura "não funcionava" fora do paginado.
+  const prevReadModeRef = useRef<ReadMode | null>(null);
+  useEffect(() => {
+    if (isCaptureMode) {
+      if (readModeRef.current !== "paginada") {
+        prevReadModeRef.current = readModeRef.current;
+        setReadMode("paginada");
+      }
+    } else if (prevReadModeRef.current) {
+      setReadMode(prevReadModeRef.current);
+      prevReadModeRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCaptureMode]);
 
   // Section filter: hide burocracia by default
@@ -2636,22 +2654,34 @@ export function PdfViewerModal({
   // Effective scale (respects fit-to-width mode)
   const effectiveScale = viewMode === "fit-width" ? fitWidthScale : scale;
 
-  // Calculate fit-to-width scale when container or sidebar changes
+  // Calculate fit-to-width scale when container or sidebar changes.
+  // rAF-throttle + thresholds evitam o "tremor": durante a animação de abertura
+  // e quando a barra de rolagem aparece/some, o clientWidth muda alguns px e
+  // recalcular a cada tick fazia a página redimensionar continuamente.
   useEffect(() => {
     if (!isOpen || viewMode !== "fit-width") return;
-    const calculateFitWidth = () => {
+    let raf = 0;
+    let lastWidth = 0;
+    const pdfDefaultWidth = 612; // largura padrão da página (US Letter, pontos)
+    const calc = () => {
       const container = pageContainerRef.current;
       if (!container) return;
-      // PDF default width is ~612px (US Letter). Subtract padding (32px each side)
-      const availableWidth = container.clientWidth - 64;
-      const pdfDefaultWidth = 612; // standard PDF page width in points
+      const w = container.clientWidth;
+      if (Math.abs(w - lastWidth) < 4) return; // ignora micro-variações (anim/scrollbar)
+      lastWidth = w;
+      // -64 padding + ~16 reserva da barra de rolagem (estabiliza o cálculo)
+      const availableWidth = w - 64 - 16;
       const newScale = Math.max(0.5, Math.min(2.5, availableWidth / pdfDefaultWidth));
-      setFitWidthScale(newScale);
+      setFitWidthScale((prev) => (Math.abs(prev - newScale) > 0.01 ? newScale : prev));
     };
-    calculateFitWidth();
-    const observer = new ResizeObserver(calculateFitWidth);
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(calc);
+    };
+    calc();
+    const observer = new ResizeObserver(schedule);
     if (pageContainerRef.current) observer.observe(pageContainerRef.current);
-    return () => observer.disconnect();
+    return () => { cancelAnimationFrame(raf); observer.disconnect(); };
   }, [isOpen, viewMode, showIndex]);
 
   // Fullscreen
@@ -3551,21 +3581,6 @@ export function PdfViewerModal({
                 </Button>
               </div>
 
-              {/* Instruction hint bar */}
-              <div className={cn(
-                "px-4 py-1 text-[10px] text-center border-b font-medium",
-                annotationMode === "highlight"
-                  ? "bg-amber-50/60 dark:bg-amber-950/20 text-amber-600/80 dark:text-amber-400/70 border-amber-100 dark:border-amber-900/20"
-                  : annotationMode === "underline"
-                    ? "bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-600/80 dark:text-emerald-400/70 border-emerald-100 dark:border-emerald-900/20"
-                    : "bg-blue-50/60 dark:bg-blue-950/20 text-blue-600/80 dark:text-blue-400/70 border-blue-100 dark:border-blue-900/20"
-              )}>
-                {annotationMode === "highlight"
-                  ? "Selecione texto na pagina para criar um grifo"
-                  : annotationMode === "underline"
-                    ? "Selecione texto na pagina para sublinhar"
-                    : "Clique na pagina para adicionar uma nota"}
-              </div>
             </div>
           )}
 
