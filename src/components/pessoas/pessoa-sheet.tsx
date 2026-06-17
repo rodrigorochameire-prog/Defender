@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { X, Trash2, ImageOff } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { PessoaChip } from "./pessoa-chip";
@@ -114,9 +115,7 @@ export function PessoaSheet({ pessoaId, open, onOpenChange }: Props) {
                   </div>
                 )}
 
-                {tab === "midias" && (
-                  <p className="text-xs text-neutral-400 italic">Nenhuma mídia vinculada.</p>
-                )}
+                {tab === "midias" && <RecortesGaleria pessoaId={pessoa.id} />}
 
                 {tab === "proveniencia" && (
                   <div className="space-y-3 text-xs">
@@ -140,5 +139,101 @@ export function PessoaSheet({ pessoaId, open, onOpenChange }: Props) {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+const PAPEL_LABEL: Record<string, string> = {
+  REU: "Réu", CORREU: "Corréu", VITIMA: "Vítima", TESTEMUNHA: "Testemunha",
+  INFORMANTE: "Informante", PERITO: "Perito", OUTRO: "Outro",
+};
+
+/** Galeria de recortes do PDF vinculados à pessoa (capturador do leitor). */
+function RecortesGaleria({ pessoaId }: { pessoaId: number }) {
+  const [zoom, setZoom] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+  const { data: recortes, isLoading } = trpc.pessoas.getRecortesByPessoa.useQuery(
+    { pessoaId },
+    { enabled: !!pessoaId },
+  );
+  const del = trpc.pessoas.deleteRecorte.useMutation({
+    onMutate: async ({ id }) => {
+      await utils.pessoas.getRecortesByPessoa.cancel({ pessoaId });
+      const prev = utils.pessoas.getRecortesByPessoa.getData({ pessoaId });
+      utils.pessoas.getRecortesByPessoa.setData({ pessoaId }, (old: any) =>
+        (old ?? []).filter((r: any) => r.id !== id),
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx: any) => {
+      if (ctx?.prev) utils.pessoas.getRecortesByPessoa.setData({ pessoaId }, ctx.prev);
+      toast.error("Erro ao apagar recorte");
+    },
+    onSettled: () => utils.pessoas.getRecortesByPessoa.invalidate({ pessoaId }),
+  });
+
+  if (isLoading) return <p className="text-xs text-neutral-400">Carregando…</p>;
+  if (!recortes || recortes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+        <ImageOff className="w-7 h-7 text-neutral-300 dark:text-neutral-600" />
+        <p className="text-xs text-neutral-400 italic">Nenhum recorte vinculado.</p>
+        <p className="text-[10px] text-neutral-400 max-w-[240px]">
+          Use o capturador no leitor de autos (recorte do PDF) para vincular fotos,
+          assinaturas e trechos a esta pessoa.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        {recortes.map((r: any) => (
+          <div
+            key={r.id}
+            className="group/recorte relative rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+          >
+            <button
+              type="button"
+              onClick={() => setZoom(r.imagem)}
+              className="block w-full cursor-zoom-in"
+              title="Ampliar"
+            >
+              <img src={r.imagem} alt={r.rotulo ?? "Recorte"} className="w-full h-28 object-cover" />
+            </button>
+            <div className="px-2 py-1.5">
+              {r.papel && (
+                <span className="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">
+                  {PAPEL_LABEL[String(r.papel).toUpperCase()] ?? r.papel}
+                </span>
+              )}
+              {r.rotulo && (
+                <p className="text-[10px] text-neutral-600 dark:text-neutral-300 truncate" title={r.rotulo}>
+                  {r.rotulo}
+                </p>
+              )}
+              {r.pagina && <p className="text-[9px] text-neutral-400">pág. {r.pagina}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={() => del.mutate({ id: r.id })}
+              aria-label="Apagar recorte"
+              className="absolute top-1 right-1 opacity-0 group-hover/recorte:opacity-100 transition-opacity w-6 h-6 rounded-md bg-white/90 dark:bg-neutral-900/90 flex items-center justify-center text-neutral-400 hover:text-red-500 cursor-pointer shadow-sm"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {zoom && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/80 flex items-center justify-center p-6 cursor-zoom-out"
+          onClick={() => setZoom(null)}
+        >
+          <img src={zoom} alt="Recorte" className="max-w-full max-h-full rounded-lg shadow-2xl" />
+        </div>
+      )}
+    </>
   );
 }

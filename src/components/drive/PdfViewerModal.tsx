@@ -3906,6 +3906,8 @@ export function PdfViewerModal({
           imageDataUrl={capturedImage}
           processoId={fileMetadata?.processoId}
           assistidoId={fileMetadata?.assistidoId}
+          driveFileId={fileId}
+          pagina={currentPage}
         />
       )}
     </TooltipProvider>

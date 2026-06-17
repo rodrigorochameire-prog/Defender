@@ -102,7 +102,37 @@ export const pessoasDistinctsConfirmed = pgTable(
   }),
 );
 
+// Recortes de imagem capturados do PDF dos autos, vinculados a uma pessoa +
+// papel no processo (réu, suposta vítima, testemunha A/B…). Alimentam a
+// galeria por pessoa (PessoaSheet → Mídias).
+export const pessoaRecortes = pgTable(
+  "pessoa_recortes",
+  {
+    id: serial("id").primaryKey(),
+    pessoaId: integer("pessoa_id")
+      .notNull()
+      .references(() => pessoas.id, { onDelete: "cascade" }),
+    processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
+    // id em drive_files do PDF de origem (sem FK p/ evitar import circular).
+    driveFileId: integer("drive_file_id"),
+    papel: varchar("papel", { length: 30 }),
+    rotulo: text("rotulo"),
+    // data URL base64 do recorte (JPEG pequeno, <~133KB — capado na captura).
+    imagem: text("imagem").notNull(),
+    pagina: integer("pagina"),
+    posicao: jsonb("posicao").$type<{ x: number; y: number; w: number; h: number }>(),
+    criadoPor: integer("criado_por").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    pessoaIdx: index("pessoa_recortes_pessoa_idx").on(t.pessoaId),
+    processoIdx: index("pessoa_recortes_processo_idx").on(t.processoId),
+  }),
+);
+
 export type Pessoa = typeof pessoas.$inferSelect;
 export type NovaPessoa = typeof pessoas.$inferInsert;
 export type ParticipacaoProcesso = typeof participacoesProcesso.$inferSelect;
 export type NovaParticipacaoProcesso = typeof participacoesProcesso.$inferInsert;
+export type PessoaRecorte = typeof pessoaRecortes.$inferSelect;
+export type NovoPessoaRecorte = typeof pessoaRecortes.$inferInsert;

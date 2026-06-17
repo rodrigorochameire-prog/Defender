@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos } from "@/lib/db/schema";
+import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos, pessoaRecortes } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
@@ -266,6 +266,23 @@ export const pessoasRouter = router({
         .orderBy(asc(participacoesProcesso.papel));
     }),
 
+  // Pessoas do processo COM nome — para o picker do capturador de recortes.
+  getPessoasDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      return db
+        .select({
+          pessoaId: pessoas.id,
+          nome: pessoas.nome,
+          papel: participacoesProcesso.papel,
+          lado: participacoesProcesso.lado,
+        })
+        .from(participacoesProcesso)
+        .innerJoin(pessoas, eq(participacoesProcesso.pessoaId, pessoas.id))
+        .where(eq(participacoesProcesso.processoId, input.processoId))
+        .orderBy(asc(participacoesProcesso.papel));
+    }),
+
   // === MERGE / DEDUP ===
   suggestMerges: protectedProcedure
     .input(z.object({
@@ -437,5 +454,58 @@ export const pessoasRouter = router({
         consistenciasDetectadas: r.consistencias_detectadas,
         highValueFlag: r.high_value_flag,
       }));
+    }),
+
+  // ── Recortes de imagem do PDF vinculados a pessoa + papel ──────────
+  salvarRecorte: protectedProcedure
+    .input(
+      z.object({
+        pessoaId: z.number(),
+        processoId: z.number().nullish(),
+        driveFileId: z.number().nullish(),
+        papel: z.string().max(30).nullish(),
+        rotulo: z.string().max(200).nullish(),
+        imagem: z.string().min(10), // data URL base64
+        pagina: z.number().nullish(),
+        posicao: z
+          .object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() })
+          .nullish(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const [row] = await db
+        .insert(pessoaRecortes)
+        .values({
+          pessoaId: input.pessoaId,
+          processoId: input.processoId ?? null,
+          driveFileId: input.driveFileId ?? null,
+          papel: input.papel ?? null,
+          rotulo: input.rotulo ?? null,
+          imagem: input.imagem,
+          pagina: input.pagina ?? null,
+          posicao: input.posicao ?? null,
+          criadoPor: ctx.user?.id ?? null,
+        } as any)
+        .returning();
+      return row;
+    }),
+
+  getRecortesByPessoa: protectedProcedure
+    .input(z.object({ pessoaId: z.number(), processoId: z.number().nullish() }))
+    .query(async ({ input }) => {
+      const conds = [eq(pessoaRecortes.pessoaId, input.pessoaId)];
+      if (input.processoId) conds.push(eq(pessoaRecortes.processoId, input.processoId));
+      return db
+        .select()
+        .from(pessoaRecortes)
+        .where(and(...conds))
+        .orderBy(desc(pessoaRecortes.createdAt));
+    }),
+
+  deleteRecorte: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.delete(pessoaRecortes).where(eq(pessoaRecortes.id, input.id));
+      return { ok: true };
     }),
 });
