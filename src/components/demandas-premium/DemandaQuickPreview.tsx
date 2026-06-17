@@ -20,30 +20,17 @@ import {
   Pencil,
   ChevronUp,
   ChevronDown,
-  ChevronRight,
   Scale,
-  Calendar,
-  FileText,
   User,
-  Briefcase,
   Clock,
   X,
   Mail,
   ArrowRight,
   Sparkles,
   FolderOpen,
-  Loader2,
   Upload,
-  File,
-  Image,
-  FileSpreadsheet,
   History,
-  Mic,
-  Video,
-  FileSignature,
   Plus,
-  CheckSquare,
-  Building2,
   CalendarPlus,
   Eye,
 } from "lucide-react";
@@ -62,12 +49,18 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { RegistroEditor } from "@/components/registros/registro-editor";
 import { RegistroComAutosDialog } from "@/components/registros/registro-com-autos-dialog";
+import { IdentificacaoSecao } from "./sheet/secoes/IdentificacaoSecao";
+import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
+import { AutosSecao } from "./sheet/secoes/AutosSecao";
+import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
+import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
+import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
 import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
-import { SectionsViewer } from "@/components/drive/SectionsViewer";
+import { RecursosSecao } from "./sheet/secoes/RecursosSecao";
 import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -204,32 +197,6 @@ function getStageIndex(group: StatusGroup): number {
 // ============================================
 // AVATAR (uses shared AssistidoAvatar)
 // ============================================
-
-// ============================================
-// PRAZO BADGE
-// ============================================
-
-function calcularPrazoBadge(prazoStr: string): { texto: string; cor: "red" | "amber" | "green" | "gray" | "none" } | null {
-  if (!prazoStr) return null;
-  try {
-    const parts = prazoStr.split("/").map(Number);
-    if (parts.length < 3) return null;
-    const [dia, mes, ano] = parts;
-    const fullYear = ano < 100 ? 2000 + ano : ano;
-    const prazo = new Date(fullYear, mes - 1, dia);
-    prazo.setHours(0, 0, 0, 0);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return { texto: `${Math.abs(diff)}d vencido`, cor: "red" };
-    if (diff === 0) return { texto: "Hoje", cor: "red" };
-    if (diff <= 3) return { texto: `${diff}d`, cor: "amber" };
-    if (diff <= 7) return { texto: `${diff}d`, cor: "green" };
-    return { texto: `${diff}d`, cor: "gray" };
-  } catch {
-    return null;
-  }
-}
 
 // ============================================
 // OFÍCIO SUGERIDO — CLIENT-SIDE MAPPING
@@ -446,6 +413,8 @@ function StageSubstatusPopover({
 // COMPONENT
 // ============================================
 
+const DEMANDAS_SECOES_KEY = "demandas-sheet-sections-open";
+
 export function DemandaQuickPreview({
   demanda,
   open,
@@ -472,7 +441,42 @@ export function DemandaQuickPreview({
   currentIndex,
   totalCount,
 }: DemandaQuickPreviewProps) {
-  const [docsOpen, setDocsOpen] = useState(false);
+  const [openMap, setOpenMap] = useState<Record<SecaoId, boolean>>(() => {
+    let persisted: Record<string, boolean> = {};
+    try { persisted = JSON.parse(localStorage.getItem(DEMANDAS_SECOES_KEY) || "{}"); } catch { /* ignore */ }
+    const def = (id: SecaoId, fallback: boolean) =>
+      persisted[id] !== undefined ? persisted[id] : fallback;
+    return {
+      registros: def("registros", true),
+      "proxima-audiencia": def("proxima-audiencia", true),
+      identificacao: def("identificacao", false),
+      cronologia: def("cronologia", false),
+      oficio: def("oficio", false),
+      autos: def("autos", false),
+      recursos: def("recursos", false),
+    };
+  });
+
+  const setSecaoOpen = useCallback((id: SecaoId, open: boolean) => {
+    setOpenMap((prev) => {
+      const next = { ...prev, [id]: open };
+      try { localStorage.setItem(DEMANDAS_SECOES_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeSecao, setActiveSecao] = useState<string | undefined>();
+
+  const handleJump = useCallback((id: string) => {
+    setSecaoOpen(id as SecaoId, true);
+    requestAnimationFrame(() => {
+      scrollRef.current
+        ?.querySelector(`[data-section-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [setSecaoOpen]);
+
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
 
@@ -481,14 +485,9 @@ export function DemandaQuickPreview({
   useEffect(() => {
     if (open && initialNovoRegistro) setNovoRegistroOpen(true);
   }, [open, initialNovoRegistro]);
-  // Edição inline do nome do assistido. Abre quando o usuário clica na row;
-  // commit no Enter/blur, cancel no Esc.
-  const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
-  const [assistidoDraft, setAssistidoDraft] = useState("");
   const [activeStagePopover, setActiveStagePopover] = useState<number | null>(null);
   const stageRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [stageRect, setStageRect] = useState<DOMRect | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const uploadFile = trpc.drive.uploadFile.useMutation();
 
@@ -499,7 +498,7 @@ export function DemandaQuickPreview({
     refetch: refetchDriveFolder,
   } = trpc.drive.getDemandaFolder.useQuery(
     { demandaId: demanda?.id ?? "" },
-    { enabled: docsOpen && !!demanda?.id, staleTime: 30_000 }
+    { enabled: openMap.autos && !!demanda?.id, staleTime: 30_000 }
   );
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
@@ -669,6 +668,36 @@ export function DemandaQuickPreview({
     return () => window.removeEventListener("keydown", handler);
   }, [open, demanda, novoRegistroOpen]);
 
+  // Scroll-spy — destaca na ToC a seção visível mais ao topo do scroll.
+  // Reanexa o observer quando o sheet (re)abre ou a demanda muda (as seções
+  // [data-section-id] mudam junto). Consulta o DOM ao vivo, então pega as
+  // CollapsibleSections renderizadas pelo manifesto.
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root) return;
+    let io: IntersectionObserver | null = null;
+    const attach = () => {
+      io?.disconnect();
+      const els = root.querySelectorAll<HTMLElement>("[data-section-id]");
+      if (!els.length) return;
+      io = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((e) => e.isIntersecting)
+            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+          const first = visible[0]?.target.getAttribute("data-section-id");
+          if (first) setActiveSecao(first);
+        },
+        { root, rootMargin: "-10% 0px -70% 0px", threshold: 0 }
+      );
+      els.forEach((el) => io!.observe(el));
+    };
+    attach();
+    const mo = new MutationObserver(() => attach());
+    mo.observe(root, { childList: true, subtree: true });
+    return () => { io?.disconnect(); mo.disconnect(); };
+  }, [open, demanda?.id]);
+
   // Handle file uploads to the demanda's Drive folder
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -715,22 +744,6 @@ export function DemandaQuickPreview({
 
   if (!demanda) return null;
 
-  // Helper: icon component based on MIME type
-  function DriveFileIcon({ mimeType, className }: { mimeType: string; className?: string }) {
-    if (mimeType.startsWith("image/")) return <Image className={className} />;
-    if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
-      return <FileSpreadsheet className={className} />;
-    return <File className={className} />;
-  }
-
-  // Helper: human-readable file size
-  function formatBytes(bytes: number | null): string {
-    if (!bytes) return "";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
   const statusConfig = getStatusConfig(demanda.status);
   const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
   const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
@@ -753,9 +766,165 @@ export function DemandaQuickPreview({
   // Stub do importador (SN-<timestamp>) ou vazio: tratamos como "sem número"
   // — escondemos o stub e oferecemos adicionar/colar o CNJ ou vincular.
   const isProcStub = !processo?.numero || /^SN-/i.test(processo.numero);
-  const prazoBadge = calcularPrazoBadge(demanda.prazo);
   const currentStageIdx = getStageIndex(statusConfig.group);
   const oficioSugerido = sugerirOficio(demanda.ato, demanda.providencias);
+
+  // ============================================
+  // MANIFESTO — corpo do sheet dirigido por seções colapsáveis
+  // ============================================
+  const recursosCount = (midiasFlat?.length ?? 0) + (pdfFiles?.length ?? 0);
+
+  const secoesMap: SecoesMap = {
+    registros: {
+      label: "Registros",
+      temDado: true,
+      node: demanda.assistidoId ? (
+        <div className="space-y-3">
+          {!novoRegistroOpen && (
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setNovoRegistroOpen(true)}
+                title="Adicionar registro (n)"
+                aria-label="Adicionar registro"
+                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Adicionar</span>
+              </button>
+            </div>
+          )}
+          {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
+          {novoRegistroOpen && previewFiles.length === 0 && (
+            <RegistroEditor
+              assistidoId={demanda.assistidoId}
+              processoId={demanda.processoId ?? undefined}
+              demandaId={Number(demanda.id)}
+              tipoDefault="ciencia"
+              tiposPrimarios={[
+                "ciencia",
+                "providencia",
+                "diligencia",
+                "atendimento",
+                "delegacao",
+                "anotacao",
+                "peticao",
+              ]}
+              onSaved={() => {
+                setNovoRegistroOpen(false);
+                refetchAudiencias();
+              }}
+              onCancel={() => setNovoRegistroOpen(false)}
+            />
+          )}
+          <RegistrosTimeline
+            assistidoId={demanda.assistidoId}
+            processoId={demanda.processoId ?? undefined}
+            demandaId={Number(demanda.id)}
+            emptyHint="Sem registros nesta demanda."
+          />
+        </div>
+      ) : (
+        <div className="text-[11px] text-muted-foreground italic">
+          Vincule um assistido para registrar providências e atendimentos.
+        </div>
+      ),
+    },
+    "proxima-audiencia": {
+      label: "Próxima audiência",
+      temDado: !!proximaAudiencia,
+      node: proximaAudiencia ? (
+        <ProximaAudienciaBlock
+          audiencia={proximaAudiencia}
+          onChanged={() => refetchAudiencias()}
+        />
+      ) : null,
+    },
+    identificacao: {
+      label: "Identificação",
+      temDado: true,
+      node: (
+        <IdentificacaoSecao
+          demanda={demanda}
+          onAtribuicaoChange={onAtribuicaoChange}
+          onTipoProcessoChange={onTipoProcessoChange}
+          onAssistidoNomeChange={onAssistidoNomeChange}
+          onStatusPrisionalChange={onStatusPrisionalChange}
+          atribuicaoIcons={atribuicaoIcons}
+        />
+      ),
+    },
+    cronologia: {
+      label: "Cronologia & Prazo",
+      temDado: true,
+      node: <CronologiaSecao demanda={demanda} onPrazoChange={onPrazoChange} />,
+    },
+    oficio: {
+      label: "Ofício sugerido",
+      temDado: !!oficioSugerido,
+      node: oficioSugerido ? (
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+              <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+              Com base no ato &ldquo;{demanda.ato}&rdquo;
+            </span>
+            <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
+              {oficioSugerido.tipoLabel}
+            </span>
+          </div>
+          <Link
+            href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
+            className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3" />
+            Gerar Ofício
+            <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
+          </Link>
+        </div>
+      ) : null,
+    },
+    autos: {
+      label: "Autos & Documentos",
+      temDado: previewFiles.length > 0 || !!demanda.processoId || !!demanda.assistidoId,
+      count: previewFiles.length || undefined,
+      node: (
+        <AutosSecao
+          processoId={demanda.processoId}
+          assistidoId={demanda.assistidoId}
+          primaryAutos={primaryAutos}
+          previewFiles={previewFiles}
+          driveFolder={driveFolder}
+          driveFolderLoading={driveFolderLoading}
+          uploadingFiles={uploadingFiles}
+          createDriveFolderPending={createDriveFolder.isPending}
+          onOpenDoca={(fileId, page) => setDocaAutos({ fileId, page })}
+          onOpenPreview={setPreviewFileId}
+          onUploadFiles={handleFileUpload}
+          onCreateDriveFolder={() => createDriveFolder.mutate({ demandaId: demanda.id })}
+        />
+      ),
+    },
+    recursos: {
+      label: "Recursos",
+      temDado: recursosCount > 0,
+      count: recursosCount || undefined,
+      node: (
+        <RecursosSecao
+          midiasFlat={midiasFlat}
+          pdfFiles={pdfFiles}
+          driveFolderUrl={driveFolderUrl}
+          onOpenPreview={(fileId) => setDocaAutos({ fileId })}
+        />
+      ),
+    },
+  };
+
+  const manifesto = resolverManifesto();
+  const visibleSections = manifesto.filter((id) => secoesMap[id].temDado);
+  const tocSections = toToCSections(manifesto, secoesMap);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -901,7 +1070,7 @@ export function DemandaQuickPreview({
         </div>
 
         {/* ===== SCROLLABLE CONTENT ===== */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
           {/* ===== HERO CARD — ring neutro + shadow sutil. Identidade da
               atribuição vive no avatar colorido (substitui o border-l). ===== */}
           <div className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
@@ -1166,365 +1335,27 @@ export function DemandaQuickPreview({
             )}
           </div>
 
-          {/* ===== CARD SECTIONS ===== */}
+          {/* ===== ToC STICKY — gruda no topo do scroll quando hero+pipeline
+              passam; scroll-spy destaca a seção visível, clique pula-e-abre. ===== */}
+          <SheetToC sections={tocSections} activeId={activeSecao} onJump={handleJump} />
+
+          {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
-            {/* Card 1: Registros (Task 6 — registros tipados) */}
-            {demanda.assistidoId ? (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
-                <div className="px-4 py-3 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] text-neutral-700 dark:text-neutral-300 font-medium">Registros</span>
-                    {!novoRegistroOpen && (
-                      <button
-                        type="button"
-                        onClick={() => setNovoRegistroOpen(true)}
-                        title="Adicionar registro (n)"
-                        aria-label="Adicionar registro"
-                        className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">Adicionar</span>
-                      </button>
-                    )}
-                  </div>
-                  {/* Sem PDFs: editor inline. Com PDFs: modal split-view (autos | editor), abaixo. */}
-                  {novoRegistroOpen && previewFiles.length === 0 && (
-                    <RegistroEditor
-                      assistidoId={demanda.assistidoId}
-                      processoId={demanda.processoId ?? undefined}
-                      demandaId={Number(demanda.id)}
-                      tipoDefault="ciencia"
-                      tiposPrimarios={[
-                        "ciencia",
-                        "providencia",
-                        "diligencia",
-                        "atendimento",
-                        "delegacao",
-                        "anotacao",
-                        "peticao",
-                      ]}
-                      onSaved={() => {
-                        setNovoRegistroOpen(false);
-                        refetchAudiencias();
-                      }}
-                      onCancel={() => setNovoRegistroOpen(false)}
-                    />
-                  )}
-                  <RegistrosTimeline
-                    assistidoId={demanda.assistidoId}
-                    processoId={demanda.processoId ?? undefined}
-                    demandaId={Number(demanda.id)}
-                    emptyHint="Sem registros nesta demanda."
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
-                <div className="px-4 py-3 text-[11px] text-muted-foreground italic">
-                  Vincule um assistido para registrar providências e atendimentos.
-                </div>
-              </div>
-            )}
+            {visibleSections.map((id) => (
+              <CollapsibleSection
+                key={id}
+                id={id}
+                label={secoesMap[id].label}
+                count={secoesMap[id].count}
+                storageKey={DEMANDAS_SECOES_KEY}
+                open={openMap[id]}
+                onOpenChange={(o) => setSecaoOpen(id, o)}
+              >
+                {secoesMap[id].node}
+              </CollapsibleSection>
+            ))}
 
-            {/* ===== DETALHES — 3 BLOCOS ===== */}
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-              Detalhes
-            </h3>
-
-            {/* Bloco A — Identificação */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Assistido row — editável inline. Útil pra corrigir
-                  placeholders ("⚠ A identificar — <cnj>") gerados pelo
-                  importer quando o polo passivo veio em sigilo, e pra
-                  ajustar typos. Click → input → Enter/blur salva, Esc
-                  cancela. */}
-              {demanda.assistidoId && onAssistidoNomeChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <User className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Assistido</span>
-                  <div className="flex-1 flex items-center justify-end min-w-0">
-                    {editingAssistidoNome ? (
-                      <input
-                        autoFocus
-                        type="text"
-                        value={assistidoDraft}
-                        onChange={(e) => setAssistidoDraft(e.target.value)}
-                        onBlur={() => {
-                          const trimmed = assistidoDraft.trim();
-                          if (trimmed && trimmed !== demanda.assistido && demanda.assistidoId) {
-                            onAssistidoNomeChange(String(demanda.assistidoId), trimmed);
-                          }
-                          setEditingAssistidoNome(false);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          if (e.key === "Escape") {
-                            setAssistidoDraft(demanda.assistido || "");
-                            setEditingAssistidoNome(false);
-                          }
-                        }}
-                        className="text-xs text-right text-neutral-700 dark:text-neutral-200 bg-transparent border-b border-neutral-300 dark:border-neutral-700 focus:border-neutral-500 outline-none w-full px-1"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAssistidoDraft(demanda.assistido || "");
-                          setEditingAssistidoNome(true);
-                        }}
-                        className={cn(
-                          "text-xs hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors text-right truncate cursor-pointer",
-                          (demanda.assistido || "").startsWith("⚠")
-                            ? "text-amber-600 dark:text-amber-400 italic"
-                            : "text-neutral-700 dark:text-neutral-300"
-                        )}
-                        title="Clique para editar"
-                      >
-                        {demanda.assistido || "—"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Atribuição row — editável via dropdown. Migrou do header
-                  pra cá pra deixar a hero card mais limpa, mantendo a edição
-                  acessível e a área visível em metadata. */}
-              <div className="flex items-center px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <AtribuicaoIcon className="w-3 h-3" style={{ color: atribuicaoColor }} />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atribuição</span>
-                <div className="flex-1 flex items-center justify-end">
-                  <InlineDropdown
-                    value={demanda.atribuicao}
-                    compact
-                    displayValue={
-                      <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-                        {demanda.atribuicao}
-                      </span>
-                    }
-                    options={ATRIBUICAO_OPTIONS}
-                    onChange={(v) => onAtribuicaoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
-
-              {/* Tipo do processo (AP/MPU/APF/...) — editável via
-                  dropdown. Útil pra corrigir importações que vieram com
-                  tipo errado (ex.: APF inserido como MPU pelo importer
-                  VVD legacy). Update vai direto no processo, não na
-                  demanda. */}
-              {processo && onTipoProcessoChange && demanda.processoId && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <FileText className="w-3 h-3 text-neutral-400" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                  <div className="flex-1 flex items-center justify-end">
-                    <InlineDropdown
-                      value={processo.tipo || ""}
-                      compact
-                      displayValue={
-                        <span className="text-xs text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-                          {processo.tipo || "—"}
-                        </span>
-                      }
-                      options={TIPO_PROCESSO_OPTIONS}
-                      onChange={(v) => onTipoProcessoChange(String(demanda.processoId), v)}
-                    />
-                  </div>
-                </div>
-              )}
-              {/* Fallback read-only se a view não passar o handler */}
-              {processo?.tipo && !onTipoProcessoChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <FileText className="w-3 h-3 text-neutral-400" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Tipo</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">{processo.tipo}</span>
-                </div>
-              )}
-
-              {/* Status prisional — editável via InlineDropdown.
-                  Atualiza assistidos.statusPrisional via mutation. */}
-              {demanda.assistidoId && onStatusPrisionalChange && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Lock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prisional</span>
-                  <div className="flex-1 flex items-center justify-end">
-                    <InlineDropdown
-                      value={demanda.estadoPrisional?.toUpperCase() || "SOLTO"}
-                      compact
-                      displayValue={
-                        <span className={cn(
-                          "text-xs font-medium px-1.5 py-0.5 rounded transition-colors",
-                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.bg,
-                          STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.color,
-                        )}>
-                          {STATUS_PRISIONAL_CONFIG[(demanda.estadoPrisional?.toUpperCase() || "SOLTO") as StatusPrisional]?.label || "Solto"}
-                        </span>
-                      }
-                      options={STATUS_PRISIONAL_OPTIONS}
-                      onChange={(v) => onStatusPrisionalChange(demanda.assistidoId!, v)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Vara/órgão julgador — novo */}
-              {processo?.vara && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Building2 className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Vara</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400">
-                    {processo.vara}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Bloco B — Cronologia */}
-            <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden divide-y divide-neutral-200/40 dark:divide-neutral-800/40">
-              {/* Expedição da intimação — data em que foi expedida no PJe.
-                  data_intimacao = expedicao + 10 dias (Lei 11.419/2006).
-                  Mostra formato relativo ("há 3 dias") com tooltip da data exata. */}
-              {demanda.data && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Expedição</span>
-                  <span
-                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
-                    title={demanda.data}
-                  >
-                    {(() => {
-                      try {
-                        const [d, m, y] = demanda.data.split("/").map(Number);
-                        const date = new Date(y, m - 1, d);
-                        if (isNaN(date.getTime())) return demanda.data;
-                        const diff = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
-                        if (diff === 0) return "Hoje";
-                        if (diff === 1) return "Ontem";
-                        if (diff < 30) return `há ${diff} dias`;
-                        if (diff < 365) return `há ${Math.floor(diff / 30)} mes${Math.floor(diff / 30) > 1 ? "es" : ""}`;
-                        return `há ${Math.floor(diff / 365)} ano${Math.floor(diff / 365) > 1 ? "s" : ""}`;
-                      } catch {
-                        return demanda.data;
-                      }
-                    })()}
-                  </span>
-                </div>
-              )}
-
-              {/* Prazo row — editável + badge calculado */}
-              <div className="flex items-center px-4 py-2.5 gap-3">
-                <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Prazo</span>
-                <div className="flex-1 flex items-center justify-end gap-2" data-prazo-trigger={demanda.id}>
-                  {prazoBadge && prazoBadge.cor !== "none" && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tabular-nums",
-                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
-                      )}
-                    >
-                      {prazoBadge.texto}
-                    </span>
-                  )}
-                  <InlineDatePicker
-                    value={demanda.prazo}
-                    onChange={(v) => onPrazoChange(demanda.id, v)}
-                  />
-                </div>
-              </div>
-
-              {/* Importado — quando a demanda entrou no banco */}
-              {demanda.dataInclusao && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <Calendar className="w-3 h-3 text-neutral-400" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Importado</span>
-                  <span
-                    className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums cursor-help"
-                    title={(() => {
-                      try {
-                        const d = new Date(demanda.dataInclusao);
-                        if (isNaN(d.getTime())) return demanda.dataInclusao;
-                        return d.toLocaleString("pt-BR");
-                      } catch {
-                        return demanda.dataInclusao;
-                      }
-                    })()}
-                  >
-                    {(() => {
-                      try {
-                        const d = new Date(demanda.dataInclusao);
-                        if (isNaN(d.getTime())) return demanda.dataInclusao;
-                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-                          + " · " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                      } catch {
-                        return demanda.dataInclusao;
-                      }
-                    })()}
-                  </span>
-                </div>
-              )}
-
-              {/* Atualizado — quando foi a última modificação */}
-              {demanda.updatedAt && (
-                <div className="flex items-center px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                    <History className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Atualizado</span>
-                  <span className="flex-1 text-right text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                    {(() => {
-                      try {
-                        const d = new Date(demanda.updatedAt);
-                        const hoje = new Date();
-                        const diffDays = Math.floor((hoje.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-                        if (diffDays === 0) return `Hoje · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-                        if (diffDays === 1) return `Ontem · ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
-                        if (diffDays < 7) return `${diffDays} dias atrás`;
-                        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
-                      } catch {
-                        return "—";
-                      }
-                    })()}
-                  </span>
-                </div>
-              )}
-
-              {/* Providências preview — o que tem que ser feito (se houver) */}
-              {demanda.providencias && (
-                <div className="flex items-start px-4 py-2.5 gap-3">
-                  <div className="w-5 h-5 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 mt-0.5">
-                    <CheckSquare className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0 mt-0.5">Providências</span>
-                  <p className="flex-1 text-right text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed line-clamp-2" title={demanda.providencias}>
-                    {demanda.providencias}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Bloco C — Ações rápidas */}
+            {/* ===== AÇÕES RÁPIDAS (fixo — não colapsável) ===== */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
               <div className="flex divide-x divide-neutral-200/40 dark:divide-neutral-800/40">
                 {onAgendarAudiencia && (
@@ -1584,386 +1415,8 @@ export function DemandaQuickPreview({
                 )}
               </div>
             </div>
-
-            {/* ===== OFÍCIO SUGERIDO ===== */}
-            {oficioSugerido && (
-              <>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-                  Ofício
-                </h3>
-
-                <div className="rounded-xl bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-200/40 dark:border-emerald-800/20 overflow-hidden">
-                  <div className="px-4 py-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                        <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200">
-                        Ofício sugerido
-                      </span>
-                      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
-                        {oficioSugerido.tipoLabel}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 ml-7 mb-2.5">
-                      Com base no ato &ldquo;{demanda.ato}&rdquo;
-                    </p>
-                    <Link
-                      href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
-                      className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Gerar Ofício
-                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
-                    </Link>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ===== AUTOS EM DESTAQUE — visualização inline (sem sair da plataforma) ===== */}
-            {primaryAutos && (
-              <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setDocaAutos({ fileId: primaryAutos.driveFileId })}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer text-left group/autos"
-                >
-                  <span className="shrink-0 w-9 h-9 rounded-lg bg-sky-50 dark:bg-sky-950/40 flex items-center justify-center ring-1 ring-sky-100 dark:ring-sky-900/40">
-                    <FileText className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[12px] font-semibold text-foreground">Ver autos</span>
-                    <span className="block text-[11px] text-neutral-500 dark:text-neutral-400 truncate" title={primaryAutos.name ?? undefined}>
-                      {primaryAutos.name ?? "Documento do processo"}
-                      {previewFiles.length > 1 && (
-                        <span className="text-neutral-400"> · +{previewFiles.length - 1} doc{previewFiles.length - 1 > 1 ? "s" : ""}</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-sky-600 dark:text-sky-400 opacity-0 group-hover/autos:opacity-100 transition-opacity">
-                    Abrir <ArrowRight className="w-3.5 h-3.5" />
-                  </span>
-                </button>
-              </div>
-            )}
-
-            {/* ===== ATOS — seções dos autos por tipo (clique doca o PDF na página) ===== */}
-            {demanda.processoId && (
-              <>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-                  Atos
-                </h3>
-                <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5">
-                  <SectionsViewer
-                    processoId={demanda.processoId}
-                    assistidoId={demanda.assistidoId ?? 0}
-                    onOpenSection={(s) => {
-                      if (s.fileDriveId) setDocaAutos({ fileId: s.fileDriveId, page: s.paginaInicio });
-                    }}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ===== RECURSOS DO ASSISTIDO — mídias + PDFs do Drive (compact) ===== */}
-            {demanda.assistidoId && (midiasFlat.length > 0 || pdfFiles.length > 0) && (
-              <>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-1 pt-1">
-                  Recursos
-                </h3>
-
-                <div className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 px-3.5 py-2.5 space-y-2">
-                  {/* Mídias strip — áudios e vídeos */}
-                  {midiasFlat.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
-                          Mídias
-                          <span className="ml-1.5 text-neutral-400 font-normal normal-case">{midiasFlat.length}</span>
-                        </span>
-                        {driveFolderUrl && (
-                          <a
-                            href={driveFolderUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
-                          >
-                            Drive →
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {midiasFlat.slice(0, 8).map((m: any) => {
-                          const isAudio = (m.mimeType || "").startsWith("audio/");
-                          const Icon = isAudio ? Mic : Video;
-                          return (
-                            <a
-                              key={m.id}
-                              href={m.webViewLink || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 max-w-[160px] transition-colors"
-                              title={m.name || (isAudio ? "Áudio" : "Vídeo")}
-                            >
-                              <Icon className={`w-3 h-3 shrink-0 ${isAudio ? "text-amber-600 dark:text-amber-400" : "text-purple-600 dark:text-purple-400"}`} />
-                              <span className="text-[10px] text-neutral-700 dark:text-neutral-300 truncate">
-                                {m.name || (isAudio ? "Áudio" : "Vídeo")}
-                              </span>
-                              {m.hasAnalysis && (
-                                <span className="shrink-0 w-1 h-1 rounded-full bg-emerald-500" title="Analisado" />
-                              )}
-                            </a>
-                          );
-                        })}
-                        {midiasFlat.length > 8 && driveFolderUrl && (
-                          <a
-                            href={driveFolderUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 text-[10px] text-neutral-500 transition-colors"
-                          >
-                            +{midiasFlat.length - 8}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* PDFs strip — wrap chips compactos com fallback se sem nome */}
-                  {pdfFiles.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
-                          PDFs
-                          <span className="ml-1.5 text-neutral-400 font-normal normal-case">{pdfFiles.length}</span>
-                        </span>
-                        {driveFolderUrl && (
-                          <a
-                            href={driveFolderUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[10px] text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400"
-                          >
-                            Drive →
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {pdfFiles.slice(0, 8).map((f: any, idx: number) => {
-                          const nameLower = (f.name || "").toLowerCase();
-                          const isAnalise =
-                            nameLower.includes("análise") ||
-                            nameLower.includes("analise") ||
-                            nameLower.includes("relatório") ||
-                            nameLower.includes("relatorio");
-                          const Icon = isAnalise ? FileSignature : FileText;
-                          const displayName = f.name || `PDF ${idx + 1}`;
-                          const canPreview = !!f.driveFileId;
-                          return (
-                            <button
-                              key={f.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (canPreview) setDocaAutos({ fileId: f.driveFileId });
-                                else if (f.webViewLink) window.open(f.webViewLink, "_blank");
-                              }}
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md max-w-[160px] transition-colors cursor-pointer ${
-                                isAnalise
-                                  ? "bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 dark:hover:bg-sky-900/30"
-                                  : "bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                              }`}
-                              title={`${displayName} — abrir aqui`}
-                            >
-                              <Icon className={`w-3 h-3 shrink-0 ${isAnalise ? "text-sky-600 dark:text-sky-400" : "text-neutral-400"}`} />
-                              <span className={`text-[10px] truncate ${isAnalise ? "text-sky-700 dark:text-sky-300 font-medium" : "text-neutral-700 dark:text-neutral-300"}`}>
-                                {displayName}
-                              </span>
-                            </button>
-                          );
-                        })}
-                        {pdfFiles.length > 8 && driveFolderUrl && (
-                          <a
-                            href={driveFolderUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 text-[10px] text-neutral-500 transition-colors"
-                          >
-                            +{pdfFiles.length - 8}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* ===== DOCUMENTOS (Drive) ===== */}
-            <div className="rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 overflow-hidden">
-              {/* Collapsible header */}
-              <button
-                onClick={() => setDocsOpen((v) => !v)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer"
-              >
-                <FolderOpen className="w-4 h-4 text-neutral-400 shrink-0" />
-                <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Documentos</span>
-                {driveFolder?.files && driveFolder.files.length > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border border-neutral-200/60 dark:border-neutral-700/40">
-                    {driveFolder.files.length}
-                  </span>
-                )}
-                {driveFolder?.folderUrl && (
-                  <a
-                    href={driveFolder.folderUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="ml-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
-                    title="Abrir pasta no Drive"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-                <div className="ml-auto">
-                  {docsOpen ? (
-                    <ChevronDown className="w-3 h-3 text-neutral-400" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3 text-neutral-400" />
-                  )}
-                </div>
-              </button>
-
-              {/* Expanded content */}
-              {docsOpen && (
-                <div className="border-t border-neutral-200/40 dark:border-neutral-700/30">
-                  {/* Loading state */}
-                  {driveFolderLoading && (
-                    <div className="flex items-center justify-center gap-2 py-5 text-neutral-400">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-xs">Carregando...</span>
-                    </div>
-                  )}
-
-                  {/* Drive not configured */}
-                  {!driveFolderLoading && driveFolder && !driveFolder.configured && (
-                    <div className="px-4 py-4 text-center">
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">Google Drive não configurado</p>
-                      <a
-                        href="/admin/settings/drive"
-                        className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
-                      >
-                        Configurar Drive
-                      </a>
-                    </div>
-                  )}
-
-                  {/* No folder exists yet */}
-                  {!driveFolderLoading && driveFolder?.configured && !driveFolder.folderId && (
-                    <div className="px-4 py-4 text-center">
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
-                        Nenhuma pasta vinculada a esta demanda
-                      </p>
-                      <button
-                        onClick={() => createDriveFolder.mutate({ demandaId: demanda.id })}
-                        disabled={createDriveFolder.isPending}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        {createDriveFolder.isPending ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <FolderOpen className="w-3.5 h-3.5" />
-                        )}
-                        Criar pasta no Drive
-                      </button>
-                    </div>
-                  )}
-
-                  {/* File list */}
-                  {!driveFolderLoading && driveFolder?.configured && driveFolder.folderId && (
-                    <>
-                      {driveFolder.files.length === 0 ? (
-                        <div className="px-4 py-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
-                          Nenhum arquivo na pasta
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
-                          {driveFolder.files.map((f) => (
-                            <div key={f.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/file">
-                              <DriveFileIcon mimeType={f.mimeType} className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                              <span className="text-xs text-neutral-700 dark:text-neutral-300 flex-1 truncate" title={f.name}>
-                                {f.name}
-                              </span>
-                              {f.size !== null && (
-                                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
-                                  {formatBytes(f.size)}
-                                </span>
-                              )}
-                              {f.webViewLink && (
-                                <a
-                                  href={f.webViewLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="opacity-0 group-hover/file:opacity-100 transition-opacity text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                                  title="Abrir no Drive"
-                                >
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Upload area */}
-                      <div className="px-4 py-2.5 border-t border-neutral-100 dark:border-neutral-800/60">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          multiple
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.heic,.webp"
-                          className="hidden"
-                          onChange={handleFileUpload}
-                        />
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingFiles.length > 0}
-                          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-600 text-xs text-neutral-500 dark:text-neutral-400 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {uploadingFiles.length > 0 ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              Enviando {uploadingFiles.length} arquivo{uploadingFiles.length > 1 ? "s" : ""}...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-3.5 h-3.5" />
-                              Enviar documento
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
         </div>
-
-        {/* ===== PRÓXIMA AUDIÊNCIA ===== */}
-        {proximaAudiencia && (
-          <ProximaAudienciaBlock
-            audiencia={proximaAudiencia}
-            onChanged={() => refetchAudiencias()}
-          />
-        )}
 
         {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
         <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
@@ -2091,10 +1544,8 @@ function ProximaAudienciaBlock({
     "w-full bg-neutral-50 dark:bg-neutral-800/40 rounded-md text-xs px-2 py-1.5 outline-none border border-transparent focus:border-neutral-300 dark:focus:border-neutral-700 text-neutral-700 dark:text-neutral-300";
 
   return (
-    <div className="mx-4 mb-3 rounded-xl border border-neutral-200/60 dark:border-neutral-700/40 px-3.5 py-2.5 group">
+    <div className="group">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-        <span className="text-[10px] text-neutral-400 tracking-wider font-medium">Próxima Audiência</span>
         <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity">
           <button
             type="button"
