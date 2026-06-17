@@ -1828,12 +1828,12 @@ const HighlightOverlay = memo(function HighlightOverlay({
                 borderRadius: "1px",
               } : {
                 left: `${rect.x * 100}%`,
-                top: `${rect.y * 100}%`,
+                top: `${(rect.y - 0.002) * 100}%`,
                 width: `${rect.width * 100}%`,
-                height: `${rect.height * 100}%`,
+                height: `${(rect.height + 0.004) * 100}%`,
                 backgroundColor: hlColor.hexLight,
-                opacity: 0.55,
-                borderRadius: "2px",
+                opacity: 0.5,
+                borderRadius: "3px",
                 mixBlendMode: "multiply" as const,
               }}
             />
@@ -3016,16 +3016,17 @@ export function PdfViewerModal({
               >
                 <ChevronLeft className="h-4.5 w-4.5" />
               </Button>
-              <div className="flex items-center gap-1">
+              {/* Passador: pill segmentado coeso — input borderless + /N inline. */}
+              <div className="flex items-center h-8 pl-1 pr-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/50 focus-within:ring-emerald-400/70 transition-shadow">
                 <Input
                   type="number"
                   min={1}
                   max={numPages}
                   value={currentPage}
                   onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
-                  className="w-14 h-8 text-sm text-center bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-9 h-7 px-0 text-sm text-center tabular-nums bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-sm text-neutral-400 font-mono">/ {numPages}</span>
+                <span className="text-sm text-neutral-400 tabular-nums select-none">/ {numPages}</span>
               </div>
               <Button
                 variant="ghost"
