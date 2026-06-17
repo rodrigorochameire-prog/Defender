@@ -351,6 +351,17 @@ export const pessoasRouter = router({
       });
     }),
 
+  // Avatares (rostos) por pessoaId — para os cards de depoentes do sheet.
+  getAvatares: protectedProcedure
+    .input(z.object({ pessoaIds: z.array(z.number()) }))
+    .query(async ({ input }) => {
+      if (!input.pessoaIds.length) return [] as { pessoaId: number; avatarDataUrl: string | null }[];
+      return db
+        .select({ pessoaId: pessoas.id, avatarDataUrl: pessoas.avatarDataUrl })
+        .from(pessoas)
+        .where(inArray(pessoas.id, input.pessoaIds));
+    }),
+
   // === MERGE / DEDUP ===
   suggestMerges: protectedProcedure
     .input(z.object({

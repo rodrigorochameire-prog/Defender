@@ -448,6 +448,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
 
   const { getSignal } = usePessoaSignals(pessoaIdsDoProcesso);
 
+  // Avatares (rostos) das pessoas do processo → para os cards de depoentes.
+  const avataresQuery = trpc.pessoas.getAvatares.useQuery(
+    { pessoaIds: pessoaIdsDoProcesso },
+    { enabled: pessoaIdsDoProcesso.length > 0 && open },
+  );
+  const avatarByPessoaId = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const a of (avataresQuery.data ?? [])) {
+      if (a.avatarDataUrl) m.set(a.pessoaId, a.avatarDataUrl);
+    }
+    return m;
+  }, [avataresQuery.data]);
+
   const signalsComNome = useMemo(() => {
     return pessoaIdsDoProcesso
       .map((id: number) => getSignal(id))
@@ -842,6 +855,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         ...d,
                         audioDriveFileId: matchDepoenteAudio(d.nome ?? "", allMediaCandidates, (d as any).audioDriveFileId ?? null),
                       }}
+                      avatarUrl={pessoaId ? avatarByPessoaId.get(pessoaId) ?? null : null}
                       isOpen={openDepoenteIdx === i}
                       onToggle={() => setOpenDepoenteIdx(openDepoenteIdx === i ? null : i)}
                       variant="sheet"
