@@ -3496,7 +3496,7 @@ export function mapAtribuicaoToFolderKey(
  * @returns Pasta criada ou existente
  */
 export async function createOrFindAssistidoFolder(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL",
   nomeAssistido: string
 ): Promise<DriveFolder | null> {
   const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
@@ -3778,7 +3778,7 @@ export async function distributeFileToPasta(
  */
 export async function distributeFileComplete(
   fileId: string,
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL",
   nomeAssistido: string,
   numeroProcesso: string
 ): Promise<{
@@ -4117,7 +4117,7 @@ export async function createOrFindProcessoFolderHierarchical(
  */
 export async function distributeFileIntelligent(
   fileId: string,
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL",
   nomeAssistido: string,
   numeroProcesso: string,
   tipoProcesso: TipoProcesso,

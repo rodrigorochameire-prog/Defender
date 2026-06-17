@@ -29,6 +29,7 @@ export const ATRIBUICAO_FOLDER_IDS = {
   EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
   SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
   GRUPO_JURI: "1LUW4yauxm6iaJYCrjRgXAnSgTZIbel2j",
+  CRIMINAL: "1xMwqXkBgEc3bsJkO3ioPt4u50D4lpJ5u", // Processos (geral) — criminal comum
 } as const;
 
 /**
@@ -392,7 +393,7 @@ export function identificarAtribuicao(
  * Retorna o ID da pasta do Drive para uma atribuição
  */
 export function getFolderIdForAtribuicao(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
+  atribuicao: keyof typeof ATRIBUICAO_FOLDER_IDS
 ): string {
   return ATRIBUICAO_FOLDER_IDS[atribuicao];
 }
