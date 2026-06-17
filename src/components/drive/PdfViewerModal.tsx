@@ -3578,7 +3578,7 @@ export function PdfViewerModal({
                 <div className="flex border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0">
                   {([
                     { key: "files" as const, icon: FolderOpen, label: "Arquivos", activeColor: "emerald", count: siblingFiles?.length },
-                    { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: undefined },
+                    { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: sections?.length },
                     { key: "annotations" as const, icon: Highlighter, label: "Notas", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo !== "bookmark").length },
                     { key: "bookmarks" as const, icon: Bookmark, label: "Marcadores", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo === "bookmark").length },
                     { key: "caso" as const, icon: Sparkles, label: "Caso", activeColor: "violet", count: reviewProgress && reviewProgress.total > 0 ? reviewProgress.approved : undefined },
@@ -3608,7 +3608,11 @@ export function PdfViewerModal({
                               <span className={cn(
                                 "min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold rounded-full leading-none",
                                 isActive
-                                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                                  ? {
+                                      emerald: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+                                      amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                                      violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400",
+                                    }[tab.activeColor as "emerald" | "amber" | "violet"]
                                   : "bg-neutral-200 dark:bg-neutral-700 text-neutral-500"
                               )}>
                                 {tab.count}
