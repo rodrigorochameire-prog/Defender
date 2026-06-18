@@ -33,6 +33,7 @@ const ReactPdfPage = dynamic(
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { cn } from "@/lib/utils";
+import { PerguntarAoAutoPanel } from "./PerguntarAoAutoPanel";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -108,6 +109,7 @@ import {
   RotateCw,
   RotateCcw,
   Images,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -2144,7 +2146,7 @@ export function PdfViewerModal({
   const [selectedSection, setSelectedSection] = useState<ReactPdfDocumentSection | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso" | "paginas">("files");
+  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso" | "paginas" | "perguntar">("files");
   const [viewMode, setViewMode] = useState<"custom" | "fit-width">("fit-width");
   const [fitWidthScale, setFitWidthScale] = useState(1.0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -3858,6 +3860,7 @@ export function PdfViewerModal({
                     { key: "annotations" as const, icon: Highlighter, label: "Notas", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo !== "bookmark").length },
                     { key: "bookmarks" as const, icon: Bookmark, label: "Marcadores", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo === "bookmark").length },
                     { key: "caso" as const, icon: Sparkles, label: "Caso", activeColor: "violet", count: reviewProgress && reviewProgress.total > 0 ? reviewProgress.approved : undefined },
+                    { key: "perguntar" as const, icon: MessageCircleQuestion, label: "Perguntar", activeColor: "emerald", count: undefined },
                   ]).map((tab) => {
                     const Icon = tab.icon;
                     const isActive = sidebarTab === tab.key;
@@ -3911,6 +3914,18 @@ export function PdfViewerModal({
                     files={siblingFiles || []}
                     currentFileId={fileId}
                     onSelectFile={(id) => onFileChange?.(id)}
+                  />
+                ) : sidebarTab === "perguntar" ? (
+                  <PerguntarAoAutoPanel
+                    fileId={fileId}
+                    onJumpTo={(pagina, trecho) => {
+                      goToPage(pagina);
+                      if (trecho && trecho.trim()) {
+                        // realça o trecho citado via busca de texto
+                        setSearchQuery(trecho.trim().slice(0, 80));
+                        setSearchOpen(true);
+                      }
+                    }}
                   />
                 ) : sidebarTab === "paginas" ? (
                   <div className="flex-1 overflow-y-auto p-2">
