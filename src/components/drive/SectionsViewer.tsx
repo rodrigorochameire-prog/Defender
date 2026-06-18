@@ -82,6 +82,16 @@ export function SectionsViewer({ assistidoId, processoId, onOpenSection }: Secti
     return { groups, outros };
   }, [filtered, groupByDepoente]);
 
+  // Agrupamento por criticidade (default) — dá estrutura ao invés de lista plana.
+  const groupedByTier = useMemo(() => {
+    const groups: Record<string, typeof filtered> = {};
+    for (const s of filtered) {
+      const t = TIPO_TO_TIER[s.tipo] || "baixo";
+      (groups[t] ||= []).push(s);
+    }
+    return groups;
+  }, [filtered]);
+
   const handleOpenSection = (section: any) => {
     if (onOpenSection) {
       onOpenSection({ fileDriveId: section.fileDriveId, paginaInicio: section.paginaInicio, titulo: section.titulo, tipo: section.tipo });
@@ -207,11 +217,36 @@ export function SectionsViewer({ assistidoId, processoId, onOpenSection }: Secti
             </div>
           )}
         </div>
-      ) : (
+      ) : selectedTier ? (
+        // Um tier focado → lista plana (o divisor seria redundante).
         <div className="space-y-1.5">
           {filtered.map(s => (
             <SectionCard key={s.id} section={s} onClick={() => handleOpenSection(s)} />
           ))}
+        </div>
+      ) : (
+        // Default → agrupado por criticidade, com divisores discretos.
+        <div className="space-y-3">
+          {TIER_ORDER.map(tier => {
+            const secs = groupedByTier[tier];
+            if (!secs || secs.length === 0) return null;
+            const config = TIER_CONFIG[tier];
+            return (
+              <div key={tier}>
+                <div className="flex items-center gap-2 px-1 mb-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.rail}`} />
+                  <h4 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">{config.label}</h4>
+                  <span className="text-[10px] text-neutral-300 dark:text-neutral-600 tabular-nums">{secs.length}</span>
+                  <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+                </div>
+                <div className="space-y-1.5">
+                  {secs.map(s => (
+                    <SectionCard key={s.id} section={s} onClick={() => handleOpenSection(s)} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
