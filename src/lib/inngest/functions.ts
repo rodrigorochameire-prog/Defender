@@ -1345,6 +1345,12 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
       // If both failed, finalPages stays as original pdfjs extraction
     }
 
+    // Sanitiza byte NUL (0x00) do texto extraido: o Postgres o rejeita em colunas
+    // text/jsonb ("invalid byte sequence for encoding UTF8: 0x00"), o que deixava a
+    // classificacao presa em enrichment_status='processing' (UI girando para sempre).
+    finalPages = finalPages.map((p) => ({ ...p, text: (p.text || "").replace(/\u0000/g, "") }));
+    if (doclingMarkdown) doclingMarkdown = doclingMarkdown.replace(/\u0000/g, "");
+
     // Step 3: Mark as processing
     await step.run("mark-processing", async () => {
       const { driveFiles } = await import("@/lib/db/schema");
