@@ -105,6 +105,9 @@ import {
   Download,
   Printer,
   MoreHorizontal,
+  RotateCw,
+  RotateCcw,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -467,6 +470,84 @@ function normalizeAnnotationRects(posicao: any): Rect[] {
   if (posicao.rects && Array.isArray(posicao.rects)) return posicao.rects;
   if (typeof posicao.x === "number") return [posicao];
   return [];
+}
+
+// ─── Thumbnail de página ────────────────────────────────────────────
+// Renderiza UMA página em miniatura a partir do proxy pdfjs já carregado
+// (sem segundo download do PDF). Render só quando entra no viewport.
+const THUMB_WIDTH = 116;
+
+function PdfThumbnail({
+  pdf, pageNumber, rotation, active, onClick,
+}: {
+  pdf: any;
+  pageNumber: number;
+  rotation: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const wrapRef = useRef<HTMLButtonElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) { setVisible(true); io.disconnect(); } },
+      { rootMargin: "300px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible || !pdf) return;
+    let cancelled = false;
+    let task: any = null;
+    setRendered(false);
+    (async () => {
+      try {
+        const page = await pdf.getPage(pageNumber);
+        if (cancelled) return;
+        const base = page.getViewport({ scale: 1, rotation });
+        const vp = page.getViewport({ scale: THUMB_WIDTH / base.width, rotation });
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx) return;
+        canvas.width = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        task = page.render({ canvasContext: ctx, viewport: vp });
+        await task.promise;
+        if (!cancelled) setRendered(true);
+      } catch { /* cancel/render race — ignora */ }
+    })();
+    return () => { cancelled = true; try { task?.cancel(); } catch { /* noop */ } };
+  }, [visible, pdf, pageNumber, rotation]);
+
+  return (
+    <button
+      ref={wrapRef}
+      onClick={onClick}
+      className={cn(
+        "group flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors cursor-pointer",
+        active ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-400/60" : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
+      )}
+    >
+      <div className="relative" style={{ width: THUMB_WIDTH, aspectRatio: "1 / 1.414" }}>
+        {!rendered && <div className="absolute inset-0 rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse" />}
+        <canvas
+          ref={canvasRef}
+          className={cn("block rounded shadow-sm ring-1 ring-black/[0.06] max-w-full h-auto transition-opacity", !rendered && "opacity-0")}
+          style={{ width: THUMB_WIDTH }}
+        />
+      </div>
+      <span className={cn("text-[10px] tabular-nums", active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400")}>
+        {pageNumber}
+      </span>
+    </button>
+  );
 }
 
 // ─── PDF Text Layer Styles ──────────────────────────────────────────
@@ -2063,7 +2144,7 @@ export function PdfViewerModal({
   const [selectedSection, setSelectedSection] = useState<ReactPdfDocumentSection | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso">("files");
+  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso" | "paginas">("files");
   const [viewMode, setViewMode] = useState<"custom" | "fit-width">("fit-width");
   const [fitWidthScale, setFitWidthScale] = useState(1.0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -2080,6 +2161,13 @@ export function PdfViewerModal({
 
   // Tema de leitura — normal | sepia | dark (filtro só no canvas do PDF)
   const [readingTheme, setReadingTheme] = useState<"normal" | "sepia" | "dark">("normal");
+
+  // Rotação (0/90/180/270). Enquanto != 0, grifos/recorte ficam desabilitados
+  // (o sistema de coordenadas dos overlays é relativo ao canvas não-rotacionado).
+  const [rotation, setRotation] = useState(0);
+  const rotatePage = useCallback((dir: 1 | -1) => {
+    setRotation((r) => (r + dir * 90 + 360) % 360);
+  }, []);
 
   // Image capture mode
   const [isCaptureMode, setIsCaptureMode] = useState(false);
@@ -3519,6 +3607,7 @@ export function PdfViewerModal({
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={rotation !== 0}
                     className={cn(
                       "h-8 w-8",
                       isCaptureMode && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
@@ -3529,7 +3618,7 @@ export function PdfViewerModal({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p className="text-xs">{isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
+                  <p className="text-xs">{rotation !== 0 ? "Indisponível enquanto girado" : isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -3556,6 +3645,24 @@ export function PdfViewerModal({
                     <Printer className="h-4 w-4 mr-2 text-neutral-500" />
                     Imprimir
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
+                    Girar {rotation !== 0 && <span className="text-neutral-500 normal-case">· {rotation}°</span>}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); rotatePage(1); }}>
+                    <RotateCw className="h-4 w-4 mr-2 text-neutral-500" />
+                    Girar à direita
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); rotatePage(-1); }}>
+                    <RotateCcw className="h-4 w-4 mr-2 text-neutral-500" />
+                    Girar à esquerda
+                  </DropdownMenuItem>
+                  {rotation !== 0 && (
+                    <DropdownMenuItem onClick={() => setRotation(0)}>
+                      <span className="w-4 mr-2" />
+                      Restaurar (0°)
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
                     Tema de leitura
@@ -3746,6 +3853,7 @@ export function PdfViewerModal({
                 <div className="flex border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0">
                   {([
                     { key: "files" as const, icon: FolderOpen, label: "Arquivos", activeColor: "emerald", count: siblingFiles?.length },
+                    { key: "paginas" as const, icon: Images, label: "Páginas", activeColor: "emerald", count: numPages || undefined },
                     { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: sections?.length },
                     { key: "annotations" as const, icon: Highlighter, label: "Notas", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo !== "bookmark").length },
                     { key: "bookmarks" as const, icon: Bookmark, label: "Marcadores", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo === "bookmark").length },
@@ -3804,6 +3912,28 @@ export function PdfViewerModal({
                     currentFileId={fileId}
                     onSelectFile={(id) => onFileChange?.(id)}
                   />
+                ) : sidebarTab === "paginas" ? (
+                  <div className="flex-1 overflow-y-auto p-2">
+                    {numPages > 0 && pdfProxyRef.current ? (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {Array.from({ length: numPages }, (_, i) => i + 1).map((pn) => (
+                          <PdfThumbnail
+                            key={pn}
+                            pdf={pdfProxyRef.current}
+                            pageNumber={pn}
+                            rotation={rotation}
+                            active={pn === currentPage}
+                            onClick={() => goToPage(pn)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 py-10 text-xs text-neutral-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Carregando páginas…
+                      </div>
+                    )}
+                  </div>
                 ) : sidebarTab === "sections" ? (
                   <SectionIndexPanel
                     sections={(sections as DocumentSection[]) || []}
@@ -3968,10 +4098,11 @@ export function PdfViewerModal({
                     <ReactPdfPage
                       pageNumber={pn}
                       scale={effectiveScale}
+                      rotate={rotation}
                       className="shadow-lg"
-                      renderTextLayer={true}
+                      renderTextLayer={rotation === 0}
                       renderAnnotationLayer={false}
-                      customTextRenderer={searchQuery.trim() ? textRenderer : undefined}
+                      customTextRenderer={rotation === 0 && searchQuery.trim() ? textRenderer : undefined}
                       loading={
                         <div className="flex items-center justify-center h-96">
                           <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
@@ -3979,8 +4110,8 @@ export function PdfViewerModal({
                       }
                     />
 
-                  {/* Highlight + Underline overlays for current page — memoized */}
-                  {annotations
+                  {/* Overlays só com rotação 0 — coords são relativas ao canvas não-rotacionado */}
+                  {rotation === 0 && annotations
                     ?.filter((a) => a.pagina === pn && (a.tipo === "highlight" || a.tipo === "underline") && a.posicao)
                     .map((hl) => (
                       <HighlightOverlay
@@ -3995,7 +4126,7 @@ export function PdfViewerModal({
                     ))}
 
                   {/* Note indicators for current page — memoized */}
-                  {annotations?.filter((a) => a.pagina === pn && a.tipo === "note").map((note) => (
+                  {rotation === 0 && annotations?.filter((a) => a.pagina === pn && a.tipo === "note").map((note) => (
                     <NoteIndicator
                       key={note.id}
                       note={note}
@@ -4004,8 +4135,8 @@ export function PdfViewerModal({
                     />
                   ))}
 
-                  {/* Image capture overlay — apenas no modo paginado */}
-                  {readMode === "paginada" && isCaptureMode && pn === currentPage && (
+                  {/* Image capture overlay — apenas no modo paginado e sem rotação */}
+                  {rotation === 0 && readMode === "paginada" && isCaptureMode && pn === currentPage && (
                     <div
                       className="absolute inset-0 z-50"
                       style={{ cursor: "crosshair" }}
