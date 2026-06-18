@@ -20,7 +20,13 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin/dashboard
 
 ## Reinicialização Limpa (receita padrão)
 
-**IMPORTANTE**: NÃO usar `npm run dev` — ele usa `--turbopack` que TRAVA na compilação. Usar `npx next dev` diretamente.
+**IMPORTANTE — USAR TURBOPACK** (`next dev --turbopack`, que é o `npm run dev` do projeto).
+
+Em Next 15.5.9 o Turbopack **não trava mais** (sobe em ~2s) e é o modo correto. O modo
+**webpack** (`npx next dev` puro) força `eval-source-map`, que **quebra o react-pdf**:
+`Object.defineProperty called on non-object` no `PdfViewerModal` (o `eval` corrompe o
+objeto `page` do pdfjs-dist 5.x, e o react-pdf chama `Object.defineProperty(page)` em
+`makePageCallback`). Ref: react-pdf #2031/#1813, pdf.js #20478. Portanto: **dev = turbopack**.
 
 ```bash
 # Matar TODOS os processos next dev e node na porta 3000/3002
@@ -32,12 +38,15 @@ sleep 1
 # Verificar AUTH_SECRET
 grep "^AUTH_SECRET" .env.local || echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env.local
 
-# Subir SEM TURBOPACK em background
-npx next dev --port 3000 > /tmp/defender-dev.log 2>&1 &
+# Subir COM TURBOPACK em background (modo correto)
+npx next dev --turbopack --port 3000 > /tmp/defender-dev.log 2>&1 &
 
 # Aguardar e confirmar
-sleep 4 && tail -15 /tmp/defender-dev.log
+sleep 6 && tail -15 /tmp/defender-dev.log
 ```
+
+> Só cair para `npx next dev` (webpack) se o Turbopack realmente travar — e, nesse caso,
+> o leitor de PDF (`PdfViewerModal`) vai quebrar; é um trade-off conhecido.
 
 Confirmar que a saída mostra `✓ Ready` e `localhost:3000` (não 3002).
 
@@ -68,7 +77,7 @@ open -a "Google Chrome" "http://localhost:3000/admin/dashboard"
 | Página em branco | Cache do browser | Cmd+Shift+R no Chrome |
 | "Cannot find module" no log | .next corrompido | `rm -rf .next && npm run dev` |
 | Erro de hidratação | Server/Client mismatch no código | Verificar console do browser |
-| Trava ao carregar | `--turbopack` no npm run dev | Usar `npx next dev` sem turbopack |
+| `Object.defineProperty called on non-object` no PDF | Rodando em **webpack** (`eval-source-map`) | Subir com **`--turbopack`** |
 | "Configuração de autenticação" | AUTH_SECRET faltando no .env.local | `echo "AUTH_SECRET=$(openssl rand -base64 32)" >> .env.local` |
 
 ## Comportamento proativo

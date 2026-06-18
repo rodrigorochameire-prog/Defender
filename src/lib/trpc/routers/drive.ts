@@ -54,7 +54,7 @@ import {
 } from "@/lib/services/google-drive";
 import { inngest } from "@/lib/inngest/client";
 import { getFolderIdForAtribuicao, mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
-import { processos, assistidos, casos, demandas, registros as atendimentos, audiencias, driveDocumentSections, driveFileContents } from "@/lib/db/schema";
+import { processos, assistidos, casos, demandas, registros as atendimentos, audiencias, driveDocumentSections, driveFileContents, claudeCodeTasks } from "@/lib/db/schema";
 import {
   enrichmentClient,
   type TranscribeOutput,
@@ -6013,5 +6013,85 @@ export const driveRouter = router({
         linkStrategy: String(r.link_strategy),
         linkConfidence: r.link_confidence ? Number(r.link_confidence) : null,
       }));
+    }),
+
+  /**
+   * perguntarAoAuto (#4) — Q&A sobre um PDF do auto, na assinatura Max via daemon.
+   * Monta o contexto a partir das SEÇÕES classificadas (com páginas, p/ citar a
+   * evidência); cai para contentText se não houver seções. Enfileira uma
+   * claude_code_task (skill pergunte-ao-auto) e devolve o taskId. O front faz poll
+   * em analise.getTaskStatus e renderiza resposta + citações (clique → pula à página).
+   */
+  perguntarAoAuto: protectedProcedure
+    .input(z.object({ fileId: z.number(), pergunta: z.string().min(3).max(2000) }))
+    .mutation(async ({ ctx, input }) => {
+      const [file] = await db
+        .select({
+          id: driveFiles.id,
+          name: driveFiles.name,
+          processoId: driveFiles.processoId,
+          assistidoId: driveFiles.assistidoId,
+        })
+        .from(driveFiles)
+        .where(eq(driveFiles.id, input.fileId))
+        .limit(1);
+      if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "Arquivo não encontrado" });
+
+      const secs = await db
+        .select({
+          tipo: driveDocumentSections.tipo,
+          titulo: driveDocumentSections.titulo,
+          paginaInicio: driveDocumentSections.paginaInicio,
+          paginaFim: driveDocumentSections.paginaFim,
+          resumo: driveDocumentSections.resumo,
+          textoExtraido: driveDocumentSections.textoExtraido,
+        })
+        .from(driveDocumentSections)
+        .where(eq(driveDocumentSections.driveFileId, input.fileId))
+        .orderBy(asc(driveDocumentSections.paginaInicio));
+
+      const MAX = 380_000; // teto de contexto (~contexto grande, mas sob o limite do modelo)
+      let contexto = "";
+      let fonte: "secoes" | "texto" = "secoes";
+      if (secs.length > 0) {
+        for (const s of secs) {
+          const range = s.paginaInicio === s.paginaFim ? `p. ${s.paginaInicio}` : `pp. ${s.paginaInicio}-${s.paginaFim}`;
+          const corpo = (s.textoExtraido || s.resumo || "").trim();
+          const bloco = `\n\n[${range} | ${s.tipo}] ${s.titulo}\n${corpo}`;
+          if (contexto.length + bloco.length > MAX) break;
+          contexto += bloco;
+        }
+      } else {
+        fonte = "texto";
+        const [content] = await db
+          .select({ contentText: driveFileContents.contentText })
+          .from(driveFileContents)
+          .where(eq(driveFileContents.driveFileId, input.fileId))
+          .limit(1);
+        contexto = (content?.contentText || "").slice(0, MAX);
+      }
+
+      if (!contexto.trim()) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Sem texto disponível. Rode o Smart Extract neste PDF antes de perguntar.",
+        });
+      }
+
+      const prompt = `# PERGUNTA\n${input.pergunta}\n\n# DOCUMENTO (${file.name ?? "auto"}) — seções com páginas\n${contexto}`;
+
+      const [task] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          assistidoId: file.assistidoId ?? null,
+          processoId: file.processoId ?? null,
+          skill: "pergunte-ao-auto",
+          prompt,
+          status: "pending",
+          createdBy: ctx.user.id,
+        })
+        .returning({ id: claudeCodeTasks.id });
+
+      return { taskId: task.id, fonte };
     }),
 });
