@@ -169,6 +169,34 @@ function runClaude(skillPath, prompt) {
   })
 }
 
+// --- Ingestão de classificação (#4): skill classify-document ---
+// Ao concluir, manda as seções p/ o app salvar (assinatura Max, sem API metered).
+// fileId/startPage/endPage vêm em instrucao_adicional (JSON) — metadados de sistema,
+// que NÃO são anexados ao prompt p/ essa skill (ver basePrompt abaixo).
+const INGEST_URL = ENV.CLASSIFICATION_INGEST_URL
+const INGEST_SECRET = ENV.CLASSIFICATION_INGEST_SECRET
+
+async function ingestClassification(task, resultado) {
+  if (!INGEST_URL || !INGEST_SECRET) {
+    console.warn(`${LOG_PREFIX} classify ingest: CLASSIFICATION_INGEST_URL/SECRET ausentes — pulando POST (task ${task.id})`)
+    return
+  }
+  let meta = {}
+  try { meta = task.instrucao_adicional ? JSON.parse(task.instrucao_adicional) : {} } catch { /* sem metadata */ }
+  const sections = resultado?.sections ?? resultado
+  try {
+    const res = await fetch(INGEST_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ingest-secret': INGEST_SECRET },
+      body: JSON.stringify({ fileId: meta.fileId, startPage: meta.startPage, endPage: meta.endPage, sections }),
+    })
+    const txt = await res.text()
+    console.log(`${LOG_PREFIX} classify ingest task ${task.id}: ${res.status} ${txt.slice(0, 160)}`)
+  } catch (err) {
+    console.error(`${LOG_PREFIX} classify ingest task ${task.id} POST falhou: ${err.message}`)
+  }
+}
+
 // --- Process a single task ---
 async function processTask(task) {
   console.log(`${LOG_PREFIX} Processing task ${task.id} (skill: ${task.skill})`)
@@ -202,8 +230,10 @@ async function processTask(task) {
     return
   }
 
-  // Build prompt
-  const basePrompt = task.instrucao_adicional
+  // Build prompt. Para classify-document, instrucao_adicional carrega metadados de
+  // sistema (fileId/páginas) — NÃO é instrução p/ o modelo, então não anexa.
+  const isClassify = task.skill === 'classify-document'
+  const basePrompt = (task.instrucao_adicional && !isClassify)
     ? `${task.prompt}\n\nInstrução adicional: ${task.instrucao_adicional}`
     : task.prompt
 
@@ -276,6 +306,11 @@ A primeira caractere da resposta deve ser { e o último deve ser }.`
     console.log(
       `${LOG_PREFIX} Task ${task.id} ${parsed.ok ? 'completed' : 'needs_review (both attempts failed to parse)'}.`,
     )
+
+    // #4: ingestão das seções classificadas (skill-gated, não-bloqueante)
+    if (isClassify && parsed.ok) {
+      await ingestClassification(task, parsed.value)
+    }
   } finally {
     clearInterval(etapaInterval)
   }
