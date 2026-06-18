@@ -1355,6 +1355,46 @@ export const pdfExtractAndClassifyFn = inngest.createFunction(
         .where(eq(driveFiles.id, driveFileId));
     });
 
+    // Step 4 (alternativo, #4): classificar na assinatura Max via daemon.
+    // Em vez de classificar inline (bloqueado pelo claude-api-guard), enfileira
+    // claude_code_tasks (uma por chunk SEM overlap). O daemon classifica e faz
+    // POST das seções p/ /api/classification/ingest. Gated por CLASSIFY_VIA_DAEMON
+    // (default off → caminho atual intocado).
+    if (process.env.CLASSIFY_VIA_DAEMON === "true") {
+      const enqueued = await step.run("enqueue-classification-daemon", async () => {
+        const { chunkPages } = await import("@/lib/services/pdf-extractor");
+        const { claudeCodeTasks, driveFiles, users } = await import("@/lib/db/schema");
+        const { eq, asc } = await import("drizzle-orm");
+
+        // createdBy é FK notNull — usa o usuário mais antigo como "sistema".
+        const sys = await db.select({ id: users.id }).from(users).orderBy(asc(users.id)).limit(1);
+        const createdBy = sys[0]?.id;
+        if (!createdBy) return { enqueued: 0, error: "no user for createdBy" };
+
+        const chunks = chunkPages(finalPages, 30, 0); // sem overlap → sem dedup cross-chunk
+        const rows = chunks.map((c) => ({
+          skill: "classify-document",
+          prompt: `## TEXTO DO PROCESSO (paginas ${c.startPage} a ${c.endPage})\n\n${c.text}`,
+          instrucaoAdicional: JSON.stringify({ fileId: driveFileId, startPage: c.startPage, endPage: c.endPage }),
+          status: "pending",
+          createdBy,
+        }));
+        if (rows.length) await db.insert(claudeCodeTasks).values(rows);
+        await db
+          .update(driveFiles)
+          .set({ enrichmentStatus: "classifying", updatedAt: new Date() })
+          .where(eq(driveFiles.id, driveFileId));
+        return { enqueued: rows.length };
+      });
+      return {
+        success: true,
+        mode: "daemon",
+        driveFileId,
+        enqueued: enqueued.enqueued,
+        pagesExtracted: extraction.totalPages,
+      };
+    }
+
     // Step 4: Classify sections with Gemini (in chunks of 20 pages)
     const classification = await step.run("classify-sections", async () => {
       const { chunkPages } = await import("@/lib/services/pdf-extractor");
