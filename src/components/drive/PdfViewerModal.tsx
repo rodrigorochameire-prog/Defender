@@ -102,6 +102,9 @@ import {
   UserCheck,
   Crosshair,
   ScanFace,
+  Download,
+  Printer,
+  MoreHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -133,6 +136,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { FileLinkDialog } from "./FileLinkDialog";
@@ -496,6 +501,13 @@ const PDF_TEXT_LAYER_STYLES = `
   }
   .pdf-underline-mode .react-pdf__Page__textContent.textLayer span::-moz-selection {
     background: rgba(52, 211, 153, 0.35);
+  }
+  /* Temas de leitura — filtro só no canvas (grifos/texto/UI intactos) */
+  [data-reading-theme="sepia"] .react-pdf__Page__canvas {
+    filter: sepia(0.38) brightness(0.97) contrast(0.96) saturate(0.92);
+  }
+  [data-reading-theme="dark"] .react-pdf__Page__canvas {
+    filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(0.95);
   }
 `;
 
@@ -2066,6 +2078,9 @@ export function PdfViewerModal({
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const selectionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Tema de leitura — normal | sepia | dark (filtro só no canvas do PDF)
+  const [readingTheme, setReadingTheme] = useState<"normal" | "sepia" | "dark">("normal");
+
   // Image capture mode
   const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [captureStart, setCaptureStart] = useState<{ x: number; y: number } | null>(null);
@@ -2737,6 +2752,42 @@ export function PdfViewerModal({
     }
   }, []);
 
+  // Baixar o PDF (blob → anchor; fallback abre em nova aba).
+  const handleDownload = useCallback(async () => {
+    if (!pdfUrl) return;
+    try {
+      const res = await fetch(pdfUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || "documento.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(pdfUrl, "_blank");
+    }
+  }, [pdfUrl, fileName]);
+
+  // Imprimir via iframe oculto (fallback abre em nova aba se cross-origin barrar).
+  const handlePrint = useCallback(() => {
+    if (!pdfUrl) return;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    iframe.src = pdfUrl;
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        window.open(pdfUrl, "_blank");
+      }
+    };
+    document.body.appendChild(iframe);
+  }, [pdfUrl]);
+
   // Keyboard shortcuts
   useEffect(() => {
     if (!isOpen) return;
@@ -3161,17 +3212,19 @@ export function PdfViewerModal({
               >
                 <ChevronLeft className="h-4.5 w-4.5" />
               </Button>
-              {/* Passador: pill segmentado coeso — input borderless + /N inline. */}
-              <div className="flex items-center h-8 pl-1 pr-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/50 focus-within:ring-emerald-400/70 transition-shadow">
+              {/* Passador: pill segmentado coeso — input borderless + /N inline.
+                  input e span travados no MESMO tamanho (!text-sm) e baseline
+                  (leading-none) p/ não desencaixar o "/N" do número. */}
+              <div className="flex items-center h-8 px-2 gap-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/50 focus-within:ring-emerald-400/70 transition-shadow">
                 <Input
                   type="number"
                   min={1}
                   max={numPages}
                   value={currentPage}
                   onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
-                  className="w-9 h-7 px-0 text-sm text-center tabular-nums bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-10 h-6 p-0 !text-sm leading-none text-center tabular-nums bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-sm text-neutral-400 tabular-nums select-none">/ {numPages}</span>
+                <span className="text-sm leading-none text-neutral-400 tabular-nums select-none">/&nbsp;{numPages}</span>
               </div>
               <Button
                 variant="ghost"
@@ -3479,6 +3532,52 @@ export function PdfViewerModal({
                   <p className="text-xs">{isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
                 </TooltipContent>
               </Tooltip>
+
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+
+              {/* Ações secundárias recolhidas — evita clipping no modo embutido */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4 text-neutral-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom"><p className="text-xs">Mais ações</p></TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={handleDownload} disabled={!pdfUrl}>
+                    <Download className="h-4 w-4 mr-2 text-neutral-500" />
+                    Baixar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePrint} disabled={!pdfUrl}>
+                    <Printer className="h-4 w-4 mr-2 text-neutral-500" />
+                    Imprimir
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
+                    Tema de leitura
+                  </DropdownMenuLabel>
+                  {([
+                    { key: "normal", label: "Normal", swatch: "bg-white border border-neutral-300" },
+                    { key: "sepia", label: "Sépia", swatch: "bg-[#e7d8b5] border border-[#d8c49a]" },
+                    { key: "dark", label: "Escuro", swatch: "bg-neutral-800 border border-neutral-600" },
+                  ] as const).map((t) => (
+                    <DropdownMenuItem
+                      key={t.key}
+                      onClick={() => setReadingTheme(t.key)}
+                      className="gap-2"
+                    >
+                      <span className={cn("w-3.5 h-3.5 rounded-sm shrink-0", t.swatch)} />
+                      <span className="flex-1">{t.label}</span>
+                      {readingTheme === t.key && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -3765,8 +3864,12 @@ export function PdfViewerModal({
             {/* PDF Viewer (center) */}
             <div
               ref={pageContainerRef}
+              data-reading-theme={readingTheme}
               className={cn(
-                "relative flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
+                "relative flex-1 overflow-auto flex justify-center transition-colors",
+                readingTheme === "sepia" ? "bg-[#f1e7d0] dark:bg-[#2a2316]"
+                  : readingTheme === "dark" ? "bg-neutral-900"
+                  : "bg-neutral-100 dark:bg-neutral-950",
                 annotationMode === "note" && "cursor-crosshair"
               )}
               style={readMode === "snap" ? { scrollSnapType: "y mandatory" } : undefined}
@@ -3826,10 +3929,23 @@ export function PdfViewerModal({
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={
-                      <div className="flex items-center justify-center h-96 gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
-                        <span className="text-sm text-neutral-400">
-                          Carregando PDF...
+                      <div className="flex flex-col items-center gap-3 py-8">
+                        {/* Skeleton de página — esqueleto de folha A4 com pulso */}
+                        <div className="w-[min(620px,80vw)] aspect-[1/1.414] rounded-md bg-white dark:bg-neutral-800/60 shadow-lg ring-1 ring-neutral-200/70 dark:ring-neutral-700/50 overflow-hidden">
+                          <div className="h-full w-full animate-pulse p-8 space-y-3">
+                            <div className="h-5 w-2/3 rounded bg-neutral-200/80 dark:bg-neutral-700/60" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-11/12 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-4/5 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40 mt-6" />
+                            <div className="h-3 w-10/12 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-2 text-xs text-neutral-400">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Carregando PDF…
                         </span>
                       </div>
                     }
