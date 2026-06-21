@@ -39,6 +39,7 @@ import { InkCanvas } from "./InkCanvas";
 import { toSvgPath, type NormPoint } from "./ink-geometry";
 import { buildCitationGroups, citationsToText, filterCitations, type CitationCategory } from "./citation-export";
 import { createOptimisticIdFactory } from "./optimistic-id";
+import { buildMinutaPrompt } from "./minuta-prompt";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -1309,12 +1310,16 @@ function AnnotationsPanel({
   onNavigate,
   onDelete,
   onSaveAsRegistro,
+  onGerarMinuta,
+  gerandoMinuta,
 }: {
   annotations: any[];
   categories?: CitationCategory[];
   onNavigate: (page: number) => void;
   onDelete: (id: number) => void;
   onSaveAsRegistro?: (a: any) => void;
+  onGerarMinuta?: () => void;
+  gerandoMinuta?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const visible = useMemo(() => filterCitations(annotations, query), [annotations, query]);
@@ -1381,15 +1386,29 @@ function AnnotationsPanel({
           <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
             {query ? `${visible.length}/${annotations.length}` : annotations.length} anota{annotations.length === 1 ? "ção" : "ções"}
           </span>
-          <button
-            type="button"
-            onClick={exportarCitacoes}
-            title="Copiar grifos agrupados por categoria (Fatos, Teses, Provas…)"
-            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-          >
-            <FileDown className="w-3 h-3" />
-            Exportar por categoria
-          </button>
+          <div className="flex items-center gap-1">
+            {onGerarMinuta && (
+              <button
+                type="button"
+                onClick={onGerarMinuta}
+                disabled={gerandoMinuta}
+                title="Gerar rascunho de peça a partir dos grifos (via daemon)"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200 dark:ring-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Wand2 className="w-3 h-3" />
+                {gerandoMinuta ? "Enviando…" : "Gerar minuta"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={exportarCitacoes}
+              title="Copiar grifos agrupados por categoria (Fatos, Teses, Provas…)"
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+            >
+              <FileDown className="w-3 h-3" />
+              Exportar
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 px-2 h-7">
           <Search className="w-3 h-3 text-neutral-400 shrink-0" />
@@ -2573,6 +2592,41 @@ export function PdfViewerModal({
   const handleDeleteAnnotation = useCallback((id: number) => {
     deleteAnnotation.mutate({ id });
   }, [deleteAnnotation]);
+
+  // ── Da leitura à peça: gera rascunho de minuta a partir dos grifos (via daemon) ──
+  // Ver docs/specs/leitura-para-peca.md.
+  const criarMinutaTask = trpc.analise.criarTask.useMutation({
+    onSuccess: (r: any) =>
+      toast.success(
+        r?.existing ? "Já há uma análise em andamento para este assistido" : "Minuta solicitada",
+        { description: "O daemon vai redigir o rascunho a partir dos seus grifos — acompanhe em Análises." },
+      ),
+    onError: (e: any) => toast.error("Falha ao solicitar minuta", { description: e.message }),
+  });
+  const gerarMinuta = useCallback(() => {
+    const assistidoId = (fileMetadata as any)?.assistidoId;
+    if (!assistidoId) {
+      toast.error("Vincule o arquivo a um assistido antes de gerar a minuta");
+      return;
+    }
+    const cats = resolvedColors.map((c) => ({ color: c.color, label: c.label }));
+    const groups = buildCitationGroups(
+      (annotations ?? []).filter((a: any) => a.tipo !== "bookmark"),
+      cats,
+    );
+    const total = groups.reduce((n, g) => n + g.items.length, 0);
+    if (total === 0) {
+      toast.info("Grife trechos dos autos (grifo/sublinhado) antes de gerar a minuta");
+      return;
+    }
+    const prompt = buildMinutaPrompt(groups, { assistido: (fileMetadata as any)?.assistidoNome });
+    criarMinutaTask.mutate({
+      assistidoId,
+      processoId: (fileMetadata as any)?.processoId ?? undefined,
+      skill: "gerar-peca",
+      instrucaoAdicional: prompt,
+    });
+  }, [fileMetadata, resolvedColors, annotations, criarMinutaTask]);
 
   // Salvar uma anotação (nota/grifo) como registro do OMBUDS, ancorado no
   // processo + página/documento. Vai pra timeline de registros do assistido.
@@ -4129,6 +4183,8 @@ export function PdfViewerModal({
                     onNavigate={goToPage}
                     onDelete={(id) => deleteAnnotation.mutate({ id })}
                     onSaveAsRegistro={handleSaveAnnotationAsRegistro}
+                    onGerarMinuta={gerarMinuta}
+                    gerandoMinuta={criarMinutaTask.isPending}
                   />
                 ) : sidebarTab === "bookmarks" ? (
                   <BookmarksPanel
