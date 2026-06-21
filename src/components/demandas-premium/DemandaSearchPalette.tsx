@@ -2,42 +2,44 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Search, CornerDownLeft } from "lucide-react";
+import { Search, CornerDownLeft, User, Briefcase, FolderOpen, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { searchDemandas, type DemandaSearchable } from "./demanda-search";
+import { searchEntities, type SearchEntity, type EntityKind } from "@/lib/search/entity-search";
 
-interface PaletteDemanda extends DemandaSearchable {
-  id: string;
-}
+const KIND_META: Record<EntityKind, { label: string; icon: typeof User; tone: string }> = {
+  assistido: { label: "Assistido", icon: User, tone: "text-blue-600 dark:text-blue-400" },
+  processo: { label: "Processo", icon: Briefcase, tone: "text-amber-600 dark:text-amber-400" },
+  caso: { label: "Caso", icon: FolderOpen, tone: "text-emerald-600 dark:text-emerald-400" },
+  demanda: { label: "Demanda", icon: FileText, tone: "text-neutral-500 dark:text-neutral-400" },
+  audiencia: { label: "Audiência", icon: FileText, tone: "text-purple-600 dark:text-purple-400" },
+};
 
 /**
- * Paleta de busca global (cmd+K / "/"): busca em TODAS as demandas, ranqueia e abre
- * o sheet da escolhida. Não altera os filtros do board. Lógica em demanda-search.ts.
- * Ver docs/specs/busca-global.md.
+ * Paleta de busca global cross-entity (cmd+K / "/"): busca em demandas, assistidos e
+ * casos; ao escolher, navega para a entidade. Ranking em entity-search.ts (testado).
+ * Ver docs/specs/busca-cross-entity.md.
  */
 export function DemandaSearchPalette({
   open,
-  demandas,
+  entities,
   onClose,
   onSelect,
 }: {
   open: boolean;
-  demandas: PaletteDemanda[];
+  entities: SearchEntity[];
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect: (entity: SearchEntity) => void;
 }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const results = useMemo(() => searchDemandas(demandas, query, 20), [demandas, query]);
+  const results = useMemo(() => searchEntities(entities, query, 24), [entities, query]);
 
-  // Reabriu: limpa e foca.
   useEffect(() => {
     if (open) {
       setQuery("");
       setActive(0);
-      // foco no próximo frame (após o portal montar)
       const t = setTimeout(() => inputRef.current?.focus(), 0);
       return () => clearTimeout(t);
     }
@@ -49,7 +51,7 @@ export function DemandaSearchPalette({
 
   const choose = (i: number) => {
     const hit = results[i];
-    if (hit) onSelect(String(hit.demanda.id));
+    if (hit) onSelect(hit.entity);
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -84,7 +86,7 @@ export function DemandaSearchPalette({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Buscar por assistido, número do processo ou ato…"
+            placeholder="Buscar assistido, processo ou demanda…"
             className="flex-1 bg-transparent text-sm outline-none text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400"
           />
           <kbd className="text-[10px] text-neutral-400 border border-neutral-200 dark:border-neutral-700 rounded px-1.5 py-0.5">Esc</kbd>
@@ -93,15 +95,16 @@ export function DemandaSearchPalette({
         <div className="max-h-[50vh] overflow-y-auto py-1">
           {query.trim() && results.length === 0 && (
             <div className="px-4 py-6 text-center text-xs text-neutral-400">
-              Nenhuma demanda para “{query}”.
+              Nada encontrado para “{query}”.
             </div>
           )}
           {results.map((hit, i) => {
-            const d = hit.demanda;
-            const numero = d.processos?.[0]?.numero ?? "";
+            const e = hit.entity;
+            const meta = KIND_META[e.kind];
+            const Icon = meta.icon;
             return (
               <button
-                key={d.id}
+                key={`${e.kind}-${e.id}`}
                 type="button"
                 onMouseEnter={() => setActive(i)}
                 onClick={() => choose(i)}
@@ -110,12 +113,13 @@ export function DemandaSearchPalette({
                   i === active ? "bg-emerald-50 dark:bg-emerald-950/30" : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50",
                 )}
               >
+                <Icon className={cn("w-4 h-4 shrink-0", meta.tone)} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-neutral-800 dark:text-neutral-100 truncate">
-                    {d.assistido || "—"}
+                    {e.label || "—"}
                   </div>
                   <div className="text-[11px] text-neutral-400 truncate">
-                    {[numero, d.ato].filter(Boolean).join(" · ")}
+                    {[meta.label, e.numero, e.sublabel].filter(Boolean).join(" · ")}
                   </div>
                 </div>
                 {i === active && <CornerDownLeft className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}

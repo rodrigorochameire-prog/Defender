@@ -50,7 +50,8 @@ import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIO
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import type { SearchEntity } from "@/lib/search/entity-search";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -890,6 +891,24 @@ export default function Demandas() {
     { search: debouncedProcessoQuery },
     { enabled: debouncedProcessoQuery.length >= 2 }
   );
+
+  // Busca global cross-entity (cmd+K v2): indexa as demandas e os assistidos
+  // (derivados das demandas, sem query nova) — ambos com rota válida. Casos ficam
+  // de fora até existir uma rota top-level de caso. Ver docs/specs/busca-cross-entity.md.
+  const router = useRouter();
+  const searchEntityList = useMemo<SearchEntity[]>(() => {
+    const out: SearchEntity[] = [];
+    const assistidosVistos = new Set<number>();
+    for (const d of demandas) {
+      const numero = d.processos?.[0]?.numero ?? undefined;
+      out.push({ id: d.id, kind: "demanda", label: d.assistido, sublabel: d.ato, numero });
+      if (d.assistidoId && !assistidosVistos.has(d.assistidoId)) {
+        assistidosVistos.add(d.assistidoId);
+        out.push({ id: d.assistidoId, kind: "assistido", label: d.assistido });
+      }
+    }
+    return out;
+  }, [demandas]);
 
   // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
   const demandaIdsForEventos = useMemo(() => {
@@ -4157,11 +4176,12 @@ export default function Demandas() {
       {/* Paleta de busca global (cmd+K / "/") */}
       <DemandaSearchPalette
         open={searchPaletteOpen}
-        demandas={demandas as any}
+        entities={searchEntityList}
         onClose={() => setSearchPaletteOpen(false)}
-        onSelect={(id) => {
+        onSelect={(entity) => {
           setSearchPaletteOpen(false);
-          setPreviewDemandaId(id);
+          if (entity.kind === "demanda") setPreviewDemandaId(String(entity.id));
+          else if (entity.kind === "assistido") router.push(`/admin/assistidos/${entity.id}`);
         }}
       />
 

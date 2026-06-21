@@ -1430,13 +1430,19 @@ export function DemandaQuickPreview({
               <FolderOpen className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
               {casoVinculado ? (
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <a
-                    href={`/admin/casos/${casoVinculado.id}`}
-                    className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline truncate"
-                    title={casoLabel(casoVinculado)}
-                  >
-                    {casoLabel(casoVinculado)}
-                  </a>
+                  {demanda?.assistidoId ? (
+                    <a
+                      href={`/admin/assistidos/${demanda.assistidoId}/caso/${casoVinculado.id}`}
+                      className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline truncate"
+                      title={casoLabel(casoVinculado)}
+                    >
+                      {casoLabel(casoVinculado)}
+                    </a>
+                  ) : (
+                    <span className="font-medium text-emerald-700 dark:text-emerald-400 truncate" title={casoLabel(casoVinculado)}>
+                      {casoLabel(casoVinculado)}
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => setCaso(null)}
