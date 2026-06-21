@@ -58,6 +58,7 @@ import { useDefensor } from "@/contexts/defensor-context";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
+import { PrazoCockpitBar } from "./PrazoCockpitBar";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -3284,6 +3285,14 @@ export default function Demandas() {
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
         {activeTab === "planilha" ? (
         <>
+        {/* Cockpit de prazos — leitura imediata do que exige ação (Track F) */}
+        {!showArchived && (
+          <PrazoCockpitBar
+            counts={pillCounts}
+            activeFilters={pillFilters}
+            onToggle={(key) => togglePill(key)}
+          />
+        )}
 
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-neutral-900">
