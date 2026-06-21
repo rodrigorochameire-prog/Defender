@@ -34,6 +34,8 @@ import {
   CalendarPlus,
   Eye,
   FileText,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { iniciaisNome } from "@/lib/format/iniciais";
@@ -55,6 +57,7 @@ import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
 import { AutosSecao } from "./sheet/secoes/AutosSecao";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
+import { setAllSections, areAllOpen, nextToggleAll } from "./sheet-sections";
 import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
@@ -461,6 +464,16 @@ export function DemandaQuickPreview({
   const setSecaoOpen = useCallback((id: SecaoId, open: boolean) => {
     setOpenMap((prev) => {
       const next = { ...prev, [id]: open };
+      try { localStorage.setItem(DEMANDAS_SECOES_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  // Recolher/expandir todas as seções de uma vez (Track H). Ver sheet-sections.ts.
+  const todasAbertas = areAllOpen(openMap);
+  const toggleTodasSecoes = useCallback(() => {
+    setOpenMap((prev) => {
+      const next = setAllSections(prev, nextToggleAll(prev));
       try { localStorage.setItem(DEMANDAS_SECOES_KEY, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
@@ -1370,6 +1383,17 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={toggleTodasSecoes}
+                title={todasAbertas ? "Recolher todas as seções" : "Expandir todas as seções"}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                {todasAbertas ? <ChevronsDownUp className="w-3.5 h-3.5" /> : <ChevronsUpDown className="w-3.5 h-3.5" />}
+                {todasAbertas ? "Recolher tudo" : "Expandir tudo"}
+              </button>
+            </div>
             {visibleSections.map((id) => (
               <CollapsibleSection
                 key={id}
