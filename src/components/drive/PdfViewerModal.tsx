@@ -38,6 +38,7 @@ import { showFullToolbar, showCompactPalette, reconcileCollapsed } from "./annot
 import { InkCanvas } from "./InkCanvas";
 import { toSvgPath, type NormPoint } from "./ink-geometry";
 import { buildCitationGroups, citationsToText, filterCitations, type CitationCategory } from "./citation-export";
+import { createOptimisticIdFactory } from "./optimistic-id";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -2345,8 +2346,8 @@ export function PdfViewerModal({
 
   // Id temporário (negativo, monotônico) para o item otimista. Date.now() colidia
   // quando dois traços de caneta terminavam no mesmo milissegundo → React key
-  // duplicada. Um contador decrescente garante unicidade enquanto a mutation voa.
-  const nextTempId = useRef(-1);
+  // duplicada. A fábrica garante unicidade enquanto a mutation voa (optimistic-id.ts).
+  const nextTempId = useRef(createOptimisticIdFactory());
 
   // Create annotation mutation — optimistic update
   const createAnnotation = trpc.annotations.create.useMutation({
@@ -2357,7 +2358,7 @@ export function PdfViewerModal({
         if (!old) return old;
         return [...old, {
           ...newAnnotation,
-          id: nextTempId.current--,
+          id: nextTempId.current(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }];
