@@ -1105,6 +1105,7 @@ export default function Demandas() {
       assistidoId: d.assistido?.id || d.assistidoId || null,
       processoId: d.processo?.id || d.processoId || null,
       casoId: (d as any).casoId ?? null,
+      notaPrivada: (d as any).notaPrivada ?? null,
       // Usar substatus granular quando disponível, senão mapear do status coarse do DB
       status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "triagem", // "triagem" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",

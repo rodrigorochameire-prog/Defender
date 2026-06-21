@@ -133,6 +133,7 @@ export const demandasRouter = router({
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           casoId: demandas.casoId,
+          notaPrivada: demandas.notaPrivada,
           defensorId: demandas.defensorId,
           delegadoParaId: demandas.delegadoParaId,
           delegadoPara: users.name,
@@ -302,6 +303,7 @@ export const demandasRouter = router({
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           casoId: demandas.casoId,
+          notaPrivada: demandas.notaPrivada,
           defensorId: demandas.defensorId,
           delegadoParaId: demandas.delegadoParaId,
           dataDelegacao: demandas.dataDelegacao,
@@ -896,6 +898,8 @@ export const demandasRouter = router({
         // Vincular/desvincular a demanda de um Caso/dossiê (null = desvincular).
         // Flui via ...data para demandas.casoId (coluna já existente).
         casoId: z.number().nullable().optional(),
+        // Nota interna privada do defensor (flui via ...data para demandas.notaPrivada).
+        notaPrivada: z.string().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

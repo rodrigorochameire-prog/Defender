@@ -85,6 +85,7 @@ interface Demanda {
   assistidoId?: number | null;
   processoId?: number | null;
   casoId?: number | null;
+  notaPrivada?: string | null;
   status: string;
   substatus?: string;
   prazo: string;
@@ -541,6 +542,23 @@ export function DemandaQuickPreview({
     if (demanda) vincularCasoMut.mutate({ id: Number(demanda.id), casoId: id });
     toast.success(id ? `Caso vinculado${label ? `: ${label}` : ""}` : "Caso desvinculado");
   }, [demanda, vincularCasoMut]);
+
+  // ── Nota interna privada (follow-up) — salva no blur, não reescreve se igual ──
+  const [nota, setNota] = useState(demanda?.notaPrivada ?? "");
+  const notaSalvaRef = useRef(demanda?.notaPrivada ?? "");
+  useEffect(() => {
+    const v = demanda?.notaPrivada ?? "";
+    setNota(v);
+    notaSalvaRef.current = v;
+  }, [demanda?.id, demanda?.notaPrivada]);
+  const salvarNotaMut = trpc.demandas.update.useMutation({
+    onError: (e) => toast.error("Falha ao salvar nota", { description: e.message }),
+  });
+  const salvarNota = useCallback(() => {
+    if (!demanda || nota === notaSalvaRef.current) return;
+    notaSalvaRef.current = nota;
+    salvarNotaMut.mutate({ id: Number(demanda.id), notaPrivada: nota || null });
+  }, [demanda, nota, salvarNotaMut]);
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
     onSuccess: () => {
@@ -1463,6 +1481,26 @@ export function DemandaQuickPreview({
                 </button>
               )}
             </div>
+
+            {/* Nota interna privada (follow-up) — só o defensor vê; não entra em ofício */}
+            <div className="rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <FileText className="w-3 h-3 text-neutral-400" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+                  Nota privada
+                </span>
+                <span className="text-[9px] text-neutral-400 ml-auto">só você vê · não entra em ofício</span>
+              </div>
+              <textarea
+                value={nota}
+                onChange={(e) => setNota(e.target.value)}
+                onBlur={salvarNota}
+                rows={2}
+                placeholder="Anotações privadas sobre a demanda…"
+                className="w-full resize-y bg-transparent text-[12px] leading-relaxed outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
+              />
+            </div>
+
             <div className="flex justify-end">
               <button
                 type="button"
