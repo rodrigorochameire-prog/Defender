@@ -56,6 +56,8 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { useDefensor } from "@/contexts/defensor-context";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useDebounce } from "@/hooks/use-debounce";
+import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -853,18 +855,22 @@ export default function Demandas() {
 
   const utils = trpc.useUtils();
 
-  // Search queries para autocomplete de vinculação
+  // Search queries para autocomplete de vinculação.
+  // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
+  // pausa de digitar. Ver docs/specs/demandas-cnj-ux.md.
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [processoSearchQuery, setProcessoSearchQuery] = useState("");
+  const debouncedAssistidoQuery = useDebounce(assistidoSearchQuery, 250);
+  const debouncedProcessoQuery = useDebounce(processoSearchQuery, 250);
 
   const { data: assistidoSearchResults = [], isLoading: loadingAssistidoSearch } = trpc.demandas.searchAssistidos.useQuery(
-    { search: assistidoSearchQuery },
-    { enabled: assistidoSearchQuery.length >= 2 }
+    { search: debouncedAssistidoQuery },
+    { enabled: debouncedAssistidoQuery.length >= 2 }
   );
 
   const { data: processoSearchResults = [], isLoading: loadingProcessoSearch } = trpc.demandas.searchProcessos.useQuery(
-    { search: processoSearchQuery },
-    { enabled: processoSearchQuery.length >= 2 }
+    { search: debouncedProcessoQuery },
+    { enabled: debouncedProcessoQuery.length >= 2 }
   );
 
   // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
@@ -1407,21 +1413,31 @@ export default function Demandas() {
   };
 
   const handleProcessoChange = (demandaId: string, numero: string) => {
+    // Normaliza para a máscara CNJ quando há 20 dígitos; senão preserva o texto
+    // (o defensor pode registrar um número provisório/incompleto).
+    const digits = onlyDigits(numero);
+    const numeroNormalizado = digits.length === 20 ? formatCnj(digits) : numero;
+
     // Optimistic update local
     setDemandas((prev) =>
       prev.map((d) =>
         d.id === demandaId
-          ? { ...d, processos: d.processos?.length ? [{ ...d.processos[0], numero }] : [{ tipo: "", numero }] }
+          ? { ...d, processos: d.processos?.length ? [{ ...d.processos[0], numero: numeroNormalizado }] : [{ tipo: "", numero: numeroNormalizado }] }
           : d
       )
     );
 
     const numericId = parseInt(demandaId, 10);
     if (!isNaN(numericId)) {
-      updateDemandaMutation.mutate({ id: numericId, processoNumero: numero });
+      updateDemandaMutation.mutate({ id: numericId, processoNumero: numeroNormalizado });
     }
 
-    toast.success("Numero do processo atualizado!");
+    // DV não confere → avisa, mas NÃO bloqueia (número pode ser provisório).
+    if (digits.length === 20 && !isValidCnj(digits)) {
+      toast.warning("DV do CNJ não confere — confira o número do processo.");
+    } else {
+      toast.success("Numero do processo atualizado!");
+    }
   };
 
   // Vincular demanda a um assistido existente (via autocomplete)

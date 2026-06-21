@@ -34,6 +34,9 @@ import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { cn } from "@/lib/utils";
 import { PerguntarAoAutoPanel } from "./PerguntarAoAutoPanel";
+import { showFullToolbar, showCompactPalette, reconcileCollapsed } from "./annotation-toolbar";
+import { InkCanvas } from "./InkCanvas";
+import { toSvgPath, type NormPoint } from "./ink-geometry";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -84,6 +87,7 @@ import {
   StickyNote,
   Trash2,
   Underline,
+  Minus,
   Bookmark,
   Settings2,
   Pencil,
@@ -2267,7 +2271,15 @@ export function PdfViewerModal({
   const [hideBurocracia, setHideBurocracia] = useState(true);
 
   // Annotation mode
-  const [annotationMode, setAnnotationMode] = useState<"none" | "highlight" | "underline" | "note">("none");
+  const [annotationMode, setAnnotationMode] = useState<"none" | "highlight" | "underline" | "note" | "ink">("none");
+  // Toolbar colapsável (GoodNotes): minimiza a barra para uma pílula flutuante sem
+  // perder o modo de grifo. `reconcileCollapsed` garante que sair da anotação expande.
+  // Ver docs/specs/grifador-premium.md.
+  const [toolbarCollapsed, setToolbarCollapsed] = useState(false);
+  const annotationCollapsed = reconcileCollapsed(annotationMode, toolbarCollapsed);
+  useEffect(() => {
+    if (annotationMode === "none" && toolbarCollapsed) setToolbarCollapsed(false);
+  }, [annotationMode, toolbarCollapsed]);
   const [selectedColor, setSelectedColor] = useState<string>("yellow");
   const [showColorSettings, setShowColorSettings] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -2307,6 +2319,11 @@ export function PdfViewerModal({
     { enabled: isOpen }
   );
 
+  // Id temporário (negativo, monotônico) para o item otimista. Date.now() colidia
+  // quando dois traços de caneta terminavam no mesmo milissegundo → React key
+  // duplicada. Um contador decrescente garante unicidade enquanto a mutation voa.
+  const nextTempId = useRef(-1);
+
   // Create annotation mutation — optimistic update
   const createAnnotation = trpc.annotations.create.useMutation({
     onMutate: async (newAnnotation) => {
@@ -2316,7 +2333,7 @@ export function PdfViewerModal({
         if (!old) return old;
         return [...old, {
           ...newAnnotation,
-          id: -(Date.now()),
+          id: nextTempId.current--,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }];
@@ -3711,7 +3728,7 @@ export function PdfViewerModal({
           </div>
 
           {/* ── Floating Annotation Toolbar ── */}
-          {annotationMode !== "none" && (
+          {showFullToolbar(annotationMode, annotationCollapsed) && (
             <div className="flex flex-col flex-shrink-0">
               {/* Main toolbar — redesigned larger */}
               <div className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-200/80 dark:border-neutral-700/80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md">
@@ -3752,6 +3769,18 @@ export function PdfViewerModal({
                   >
                     <StickyNote className="w-4 h-4" />
                     Nota
+                  </button>
+                  <button
+                    onClick={() => setAnnotationMode("ink")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
+                      annotationMode === "ink"
+                        ? "bg-white dark:bg-neutral-700 text-rose-600 dark:text-rose-400 shadow-md"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                    )}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Caneta
                   </button>
                 </div>
 
@@ -3832,10 +3861,22 @@ export function PdfViewerModal({
                   </div>
                 )}
 
+                {/* Minimizar — colapsa para a pílula flutuante (grifo segue ativo) */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Minimizar barra (continuar grifando)"
+                  className="h-8 w-8 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
+                  onClick={() => setToolbarCollapsed(true)}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+
                 {/* Close annotation mode */}
                 <Button
                   variant="ghost"
                   size="icon"
+                  title="Fechar anotação"
                   className="h-8 w-8 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
                   onClick={() => setAnnotationMode("none")}
                 >
@@ -3843,6 +3884,87 @@ export function PdfViewerModal({
                 </Button>
               </div>
 
+            </div>
+          )}
+
+          {/* ── Pílula flutuante (barra colapsada) ── */}
+          {/* Posição absoluta: NÃO empurra o conteúdo — leitura em altura cheia.
+              O modo de grifo permanece ativo; selecionar texto continua criando grifos. */}
+          {showCompactPalette(annotationMode, annotationCollapsed) && (
+            <div className="absolute bottom-5 right-5 z-30 flex items-center gap-1.5 rounded-full border border-neutral-200/80 dark:border-neutral-700/80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md shadow-lg px-2 py-1.5">
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold",
+                  annotationMode === "highlight" && "text-amber-600 dark:text-amber-400",
+                  annotationMode === "underline" && "text-emerald-600 dark:text-emerald-400",
+                  annotationMode === "note" && "text-blue-600 dark:text-blue-400",
+                  annotationMode === "ink" && "text-rose-600 dark:text-rose-400",
+                )}
+              >
+                {annotationMode === "highlight" && <Highlighter className="w-4 h-4" />}
+                {annotationMode === "underline" && <Underline className="w-4 h-4" />}
+                {annotationMode === "note" && <StickyNote className="w-4 h-4" />}
+                {annotationMode === "ink" && <Pencil className="w-4 h-4" />}
+                {annotationMode === "highlight" ? "Grifo" : annotationMode === "underline" ? "Sublinhado" : annotationMode === "ink" ? "Caneta" : "Nota"}
+              </span>
+
+              {/* Swatch de cor — abre a paleta sem expandir a barra */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title="Cor do grifo"
+                    className="w-5 h-5 rounded-md shrink-0 cursor-pointer"
+                    style={{
+                      backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
+                      border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
+                    }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent align="end" side="top" sideOffset={8} className="w-auto p-2">
+                  <div className="flex items-center gap-1.5">
+                    {resolvedColors.map((c) => (
+                      <button
+                        key={c.color}
+                        type="button"
+                        onClick={() => setSelectedColor(c.color)}
+                        title={c.label}
+                        className="relative p-0.5 cursor-pointer"
+                      >
+                        <span
+                          className={cn(
+                            "block w-6 h-6 rounded-md transition-transform",
+                            selectedColor === c.color
+                              ? "ring-2 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900"
+                              : "hover:scale-110",
+                          )}
+                          style={{
+                            backgroundColor: c.hexLight,
+                            border: `1.5px solid ${c.hexMid}`,
+                            ...(selectedColor === c.color ? { ["--tw-ring-color" as any]: c.hexMid } : {}),
+                          }}
+                        />
+                        {selectedColor === c.color && (
+                          <Check className="absolute inset-0 m-auto w-3 h-3 drop-shadow-sm" style={{ color: c.hex }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700" />
+
+              {/* Expandir de volta a barra cheia */}
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Expandir barra"
+                className="h-7 w-7 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
+                onClick={() => setToolbarCollapsed(false)}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
             </div>
           )}
 
@@ -4149,6 +4271,50 @@ export function PdfViewerModal({
                       onDelete={handleDeleteAnnotation}
                     />
                   ))}
+
+                  {/* Traços de caneta livre (ink) salvos — SVG em coords normalizadas
+                      [0..1] via viewBox; non-scaling-stroke mantém a espessura em px. */}
+                  {rotation === 0 && annotations?.filter((a) => a.pagina === pn && a.tipo === "ink" && a.posicao).map((ann) => {
+                    const pos = ann.posicao as unknown as { paths?: NormPoint[][]; strokeWidth?: number };
+                    const colorHex = getAnnotationColor(ann.cor, customColorLabels).hex;
+                    return (
+                      <svg
+                        key={`ink-${ann.id}`}
+                        className="absolute inset-0 w-full h-full pointer-events-none"
+                        viewBox="0 0 1 1"
+                        preserveAspectRatio="none"
+                      >
+                        {(pos.paths ?? []).map((stroke, i) => (
+                          <path
+                            key={i}
+                            d={toSvgPath(stroke.map(([x, y]) => ({ x, y })))}
+                            fill="none"
+                            stroke={colorHex}
+                            strokeWidth={pos.strokeWidth ?? 2.5}
+                            vectorEffect="non-scaling-stroke"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        ))}
+                      </svg>
+                    );
+                  })}
+
+                  {/* Captura de caneta livre — overlay ativo no modo "ink" (sem rotação) */}
+                  {rotation === 0 && annotationMode === "ink" && (
+                    <InkCanvas
+                      colorHex={getAnnotationColor(selectedColor, customColorLabels).hex}
+                      onStrokeComplete={(stroke, sw) => {
+                        createAnnotation.mutate({
+                          driveFileId: fileId,
+                          tipo: "ink",
+                          pagina: pn,
+                          cor: selectedColor as AnnotationColorName,
+                          posicao: { paths: [stroke], strokeWidth: sw } as any,
+                        });
+                      }}
+                    />
+                  )}
 
                   {/* Image capture overlay — apenas no modo paginado e sem rotação */}
                   {rotation === 0 && readMode === "paginada" && isCaptureMode && pn === currentPage && (

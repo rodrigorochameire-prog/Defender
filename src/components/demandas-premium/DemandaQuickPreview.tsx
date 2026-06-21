@@ -506,7 +506,18 @@ export function DemandaQuickPreview({
   );
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
-    onSuccess: () => { void refetchDriveFolder(); },
+    onSuccess: () => {
+      toast.success("Pasta criada no Drive");
+      void refetchDriveFolder();
+    },
+    // Sem isto, uma falha (Drive offline, sem permissão, cota) era silenciosa: o
+    // spinner parava e o botão "Criar pasta" reaparecia sem explicar nada.
+    onError: (err) => {
+      toast.error("Falha ao criar pasta no Drive", {
+        description: err.message,
+        action: { label: "Tentar de novo", onClick: () => createDriveFolder.mutate({ demandaId: demanda.id }) },
+      });
+    },
   });
 
   // Próxima audiência do processo — query dedicada que ignora canceladas e
