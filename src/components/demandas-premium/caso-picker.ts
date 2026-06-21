@@ -4,7 +4,10 @@
  *
  * Spec: docs/specs/vincular-caso.md
  */
-import { foldText } from "./demanda-search";
+/** Minúsculas + sem acento. */
+function foldText(s: string): string {
+  return (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 
 export interface CasoOption {
   id: number;

@@ -50,8 +50,7 @@ import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIO
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { copyToClipboard } from "@/lib/clipboard";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import type { SearchEntity } from "@/lib/search/entity-search";
+import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -60,7 +59,6 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
-import { DemandaSearchPalette } from "./DemandaSearchPalette";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -668,22 +666,6 @@ export default function Demandas() {
   const defensorUserId = profissionalAtivo.userId;
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false); // toggle da busca no formato responsivo menor (abaixo de md)
-  // Paleta de busca global (cmd+K / "/") — salta direto para a demanda (Track G).
-  const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const cmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
-      const el = e.target as HTMLElement | null;
-      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-      const slash = e.key === "/" && !typing;
-      if (cmdK || slash) {
-        e.preventDefault();
-        setSearchPaletteOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
   const [sortStack, setSortStack] = useState<SortCriterion[]>([
@@ -892,23 +874,6 @@ export default function Demandas() {
     { enabled: debouncedProcessoQuery.length >= 2 }
   );
 
-  // Busca global cross-entity (cmd+K v2): indexa as demandas e os assistidos
-  // (derivados das demandas, sem query nova) — ambos com rota válida. Casos ficam
-  // de fora até existir uma rota top-level de caso. Ver docs/specs/busca-cross-entity.md.
-  const router = useRouter();
-  const searchEntityList = useMemo<SearchEntity[]>(() => {
-    const out: SearchEntity[] = [];
-    const assistidosVistos = new Set<number>();
-    for (const d of demandas) {
-      const numero = d.processos?.[0]?.numero ?? undefined;
-      out.push({ id: d.id, kind: "demanda", label: d.assistido, sublabel: d.ato, numero });
-      if (d.assistidoId && !assistidosVistos.has(d.assistidoId)) {
-        assistidosVistos.add(d.assistidoId);
-        out.push({ id: d.assistidoId, kind: "assistido", label: d.assistido });
-      }
-    }
-    return out;
-  }, [demandas]);
 
   // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
   const demandaIdsForEventos = useMemo(() => {
@@ -4172,18 +4137,6 @@ export default function Demandas() {
           initialDestinatarioId={colegaDropContext.destinatarioId}
         />
       )}
-
-      {/* Paleta de busca global (cmd+K / "/") */}
-      <DemandaSearchPalette
-        open={searchPaletteOpen}
-        entities={searchEntityList}
-        onClose={() => setSearchPaletteOpen(false)}
-        onSelect={(entity) => {
-          setSearchPaletteOpen(false);
-          if (entity.kind === "demanda") setPreviewDemandaId(String(entity.id));
-          else if (entity.kind === "assistido") router.push(`/admin/assistidos/${entity.id}`);
-        }}
-      />
 
       {/* Quick-preview Sheet lateral */}
       <DemandaQuickPreview
