@@ -59,6 +59,7 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
+import { DemandaSearchPalette } from "./DemandaSearchPalette";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -666,6 +667,22 @@ export default function Demandas() {
   const defensorUserId = profissionalAtivo.userId;
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false); // toggle da busca no formato responsivo menor (abaixo de md)
+  // Paleta de busca global (cmd+K / "/") — salta direto para a demanda (Track G).
+  const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const cmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      const slash = e.key === "/" && !typing;
+      if (cmdK || slash) {
+        e.preventDefault();
+        setSearchPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
   const [sortStack, setSortStack] = useState<SortCriterion[]>([
@@ -4134,6 +4151,17 @@ export default function Demandas() {
           initialDestinatarioId={colegaDropContext.destinatarioId}
         />
       )}
+
+      {/* Paleta de busca global (cmd+K / "/") */}
+      <DemandaSearchPalette
+        open={searchPaletteOpen}
+        demandas={demandas as any}
+        onClose={() => setSearchPaletteOpen(false)}
+        onSelect={(id) => {
+          setSearchPaletteOpen(false);
+          setPreviewDemandaId(id);
+        }}
+      />
 
       {/* Quick-preview Sheet lateral */}
       <DemandaQuickPreview
