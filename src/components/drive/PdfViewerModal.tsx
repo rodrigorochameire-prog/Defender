@@ -37,6 +37,7 @@ import { PerguntarAoAutoPanel } from "./PerguntarAoAutoPanel";
 import { showFullToolbar, showCompactPalette, reconcileCollapsed } from "./annotation-toolbar";
 import { InkCanvas } from "./InkCanvas";
 import { toSvgPath, type NormPoint } from "./ink-geometry";
+import { buildCitationGroups, citationsToText, filterCitations, type CitationCategory } from "./citation-export";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -1303,24 +1304,28 @@ function FilesPanel({
 
 function AnnotationsPanel({
   annotations,
+  categories = [],
   onNavigate,
   onDelete,
   onSaveAsRegistro,
 }: {
   annotations: any[];
+  categories?: CitationCategory[];
   onNavigate: (page: number) => void;
   onDelete: (id: number) => void;
   onSaveAsRegistro?: (a: any) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const visible = useMemo(() => filterCitations(annotations, query), [annotations, query]);
   const grouped = useMemo(() => {
     const map = new Map<number, typeof annotations>();
-    for (const a of annotations) {
+    for (const a of visible) {
       const page = a.pagina;
       if (!map.has(page)) map.set(page, []);
       map.get(page)!.push(a);
     }
     return Array.from(map.entries()).sort(([a], [b]) => a - b);
-  }, [annotations]);
+  }, [visible]);
 
   // Use centralized ANNOTATION_COLORS for all color lookups
 
@@ -1356,36 +1361,55 @@ function AnnotationsPanel({
   }
 
   const exportarCitacoes = () => {
-    const ord = [...annotations]
-      .filter((a) => (a.tipo === "highlight" || a.tipo === "underline") && a.textoSelecionado)
-      .sort((a, b) => a.pagina - b.pagina);
-    if (ord.length === 0) {
+    // Agrupa por categoria semântica da cor (Fatos/Teses/Provas…) — o esqueleto da
+    // peça. Respeita o filtro de busca ativo. Ver docs/specs/caderno-citacoes.md.
+    const groups = buildCitationGroups(visible, categories);
+    const total = groups.reduce((n, g) => n + g.items.length, 0);
+    if (total === 0) {
       toast.info("Nenhum grifo com texto para exportar");
       return;
     }
-    const texto = ord
-      .map((a) => `• Pág. ${a.pagina}: "${String(a.textoSelecionado).trim()}"`)
-      .join("\n");
-    navigator.clipboard.writeText(texto);
-    toast.success(`${ord.length} citação(ões) copiada(s)`);
+    navigator.clipboard.writeText(citationsToText(groups));
+    toast.success(`${total} citação(ões) em ${groups.length} categoria(s) copiada(s)`);
   };
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-          {annotations.length} anota{annotations.length === 1 ? "ção" : "ções"}
-        </span>
-        <button
-          type="button"
-          onClick={exportarCitacoes}
-          title="Copiar grifos como lista de citações (Pág. N)"
-          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-        >
-          <FileDown className="w-3 h-3" />
-          Exportar grifos
-        </button>
+      <div className="flex flex-col gap-2 px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            {query ? `${visible.length}/${annotations.length}` : annotations.length} anota{annotations.length === 1 ? "ção" : "ções"}
+          </span>
+          <button
+            type="button"
+            onClick={exportarCitacoes}
+            title="Copiar grifos agrupados por categoria (Fatos, Teses, Provas…)"
+            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            <FileDown className="w-3 h-3" />
+            Exportar por categoria
+          </button>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 px-2 h-7">
+          <Search className="w-3 h-3 text-neutral-400 shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar nos grifos…"
+            className="flex-1 bg-transparent text-[11px] outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery("")} title="Limpar" className="text-neutral-400 hover:text-neutral-600 cursor-pointer">
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
+      {grouped.length === 0 && (
+        <div className="px-3 py-6 text-center text-[11px] text-neutral-400">
+          Nenhum grifo corresponde a “{query}”.
+        </div>
+      )}
       {grouped.map(([page, items]) => (
         <div key={page}>
           <div className="px-3 py-1.5 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20 border-b border-neutral-100 dark:border-neutral-800 sticky top-0 z-10 backdrop-blur-sm">
@@ -4100,6 +4124,7 @@ export function PdfViewerModal({
                 ) : sidebarTab === "annotations" ? (
                   <AnnotationsPanel
                     annotations={(annotations || []).filter((a: any) => a.tipo !== "bookmark")}
+                    categories={resolvedColors.map((c) => ({ color: c.color, label: c.label }))}
                     onNavigate={goToPage}
                     onDelete={(id) => deleteAnnotation.mutate({ id })}
                     onSaveAsRegistro={handleSaveAnnotationAsRegistro}
