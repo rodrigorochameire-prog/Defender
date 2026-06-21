@@ -58,6 +58,7 @@ import { AutosSecao } from "./sheet/secoes/AutosSecao";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
 import { setAllSections, areAllOpen, nextToggleAll } from "./sheet-sections";
+import { searchCasos, casoLabel } from "./caso-picker";
 import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
@@ -83,6 +84,7 @@ interface Demanda {
   assistido: string;
   assistidoId?: number | null;
   processoId?: number | null;
+  casoId?: number | null;
   status: string;
   substatus?: string;
   prazo: string;
@@ -517,6 +519,28 @@ export function DemandaQuickPreview({
     { demandaId: demanda?.id ?? "" },
     { enabled: openMap.autos && !!demanda?.id, staleTime: 30_000 }
   );
+
+  // ── Vincular a Caso/dossiê (follow-up) — self-contained no sheet ──
+  const [casoQuery, setCasoQuery] = useState("");
+  const [casoBuscaAberta, setCasoBuscaAberta] = useState(false);
+  const { data: casosList } = trpc.casos.list.useQuery({ limit: 100 }, { enabled: open });
+  const [casoIdLocal, setCasoIdLocal] = useState<number | null>(demanda?.casoId ?? null);
+  useEffect(() => { setCasoIdLocal(demanda?.casoId ?? null); }, [demanda?.id, demanda?.casoId]);
+  const casoVinculado = useMemo(
+    () => (casosList ?? []).find((c) => c.id === casoIdLocal) ?? null,
+    [casosList, casoIdLocal],
+  );
+  const casoOptions = useMemo(() => searchCasos(casosList ?? [], casoQuery, 8), [casosList, casoQuery]);
+  const vincularCasoMut = trpc.demandas.update.useMutation({
+    onError: (e) => toast.error("Falha ao atualizar caso", { description: e.message }),
+  });
+  const setCaso = useCallback((id: number | null, label?: string) => {
+    setCasoIdLocal(id);
+    setCasoQuery("");
+    setCasoBuscaAberta(false);
+    if (demanda) vincularCasoMut.mutate({ id: Number(demanda.id), casoId: id });
+    toast.success(id ? `Caso vinculado${label ? `: ${label}` : ""}` : "Caso desvinculado");
+  }, [demanda, vincularCasoMut]);
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
     onSuccess: () => {
@@ -1383,6 +1407,62 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
+            {/* Vínculo a Caso/dossiê (follow-up) */}
+            <div className="flex items-center gap-2 text-[11px]">
+              <FolderOpen className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+              {casoVinculado ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <a
+                    href={`/admin/casos/${casoVinculado.id}`}
+                    className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline truncate"
+                    title={casoLabel(casoVinculado)}
+                  >
+                    {casoLabel(casoVinculado)}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setCaso(null)}
+                    title="Desvincular do caso"
+                    className="text-neutral-400 hover:text-red-500 cursor-pointer shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : casoBuscaAberta ? (
+                <div className="relative flex-1 min-w-0">
+                  <input
+                    autoFocus
+                    value={casoQuery}
+                    onChange={(e) => setCasoQuery(e.target.value)}
+                    onBlur={() => setTimeout(() => setCasoBuscaAberta(false), 150)}
+                    placeholder="Buscar caso por título ou código…"
+                    className="w-full bg-transparent ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 rounded-md px-2 py-1 text-[11px] outline-none focus:ring-emerald-400"
+                  />
+                  {casoOptions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg max-h-56 overflow-y-auto">
+                      {casoOptions.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); setCaso(c.id, casoLabel(c)); }}
+                          className="w-full text-left px-2.5 py-1.5 text-[11px] hover:bg-neutral-50 dark:hover:bg-neutral-800/60 cursor-pointer truncate"
+                        >
+                          {casoLabel(c)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCasoBuscaAberta(true)}
+                  className="text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
+                >
+                  Vincular a um caso…
+                </button>
+              )}
+            </div>
             <div className="flex justify-end">
               <button
                 type="button"
