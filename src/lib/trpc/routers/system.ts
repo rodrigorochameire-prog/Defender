@@ -9,12 +9,30 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { systemHeartbeat } from "@/lib/db/schema/system";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
-import { eq, gte, and, sql } from "drizzle-orm";
+import { eq, gte, and, inArray, sql } from "drizzle-orm";
 
 const DAEMON_NAME = "claude-code-daemon";
-// Considered alive if heartbeat is newer than this. Daemon upserts every 30s,
+const BROWSER_DAEMON_NAME = "browser-broker";
+// Considered alive if heartbeat is newer than this. Daemons upsert every 30s,
 // so 120s gives headroom for brief slowdowns without false alarms.
 const ALIVE_THRESHOLD_MS = 120_000;
+
+/** Normaliza uma linha de heartbeat em status de liveness para a UI. */
+function heartbeatStatus(
+  name: string,
+  hb: { lastSeen: Date | string; metadata: unknown } | undefined,
+  now: number,
+) {
+  const lastSeenMs = hb ? new Date(hb.lastSeen).getTime() : null;
+  return {
+    name,
+    alive: lastSeenMs !== null && now - lastSeenMs < ALIVE_THRESHOLD_MS,
+    lastSeen: hb?.lastSeen ?? null,
+    secondsSinceHeartbeat:
+      lastSeenMs !== null ? Math.floor((now - lastSeenMs) / 1000) : null,
+    metadata: (hb?.metadata ?? null) as Record<string, unknown> | null,
+  };
+}
 
 export const systemRouter = router({
   /**
@@ -22,37 +40,39 @@ export const systemRouter = router({
    * Safe to poll from the /admin/daemon page every few seconds.
    */
   daemonStatus: protectedProcedure.query(async () => {
-    // 1. Heartbeat row
-    const [hb] = await db
+    // 1. Heartbeat rows — both daemons (lane 'ai' e lane 'browser')
+    const hbRows = await db
       .select()
       .from(systemHeartbeat)
-      .where(eq(systemHeartbeat.name, DAEMON_NAME))
-      .limit(1);
+      .where(inArray(systemHeartbeat.name, [DAEMON_NAME, BROWSER_DAEMON_NAME]));
 
     const now = Date.now();
-    const lastSeenMs = hb ? new Date(hb.lastSeen).getTime() : null;
-    const alive =
-      lastSeenMs !== null && now - lastSeenMs < ALIVE_THRESHOLD_MS;
-    const secondsSinceHeartbeat =
-      lastSeenMs !== null ? Math.floor((now - lastSeenMs) / 1000) : null;
+    const aiHb = hbRows.find((r) => r.name === DAEMON_NAME);
+    const browserHb = hbRows.find((r) => r.name === BROWSER_DAEMON_NAME);
 
-    // 2. Queue counts by status
+    // 2. Queue counts por status (totais) e por lane×status (split)
     const counts = await db
       .select({
+        lane: claudeCodeTasks.lane,
         status: claudeCodeTasks.status,
         count: sql<number>`count(*)::int`,
       })
       .from(claudeCodeTasks)
-      .groupBy(claudeCodeTasks.status);
+      .groupBy(claudeCodeTasks.lane, claudeCodeTasks.status);
 
     const byStatus: Record<string, number> = {};
-    for (const row of counts) byStatus[row.status] = row.count;
+    const lanes: Record<string, Record<string, number>> = {};
+    for (const row of counts) {
+      byStatus[row.status] = (byStatus[row.status] ?? 0) + row.count;
+      (lanes[row.lane] ??= {})[row.status] = row.count;
+    }
 
     // 3. Recent tasks (last 20, newest first)
     const recent = await db
       .select({
         id: claudeCodeTasks.id,
         skill: claudeCodeTasks.skill,
+        lane: claudeCodeTasks.lane,
         status: claudeCodeTasks.status,
         etapa: claudeCodeTasks.etapa,
         erro: claudeCodeTasks.erro,
@@ -79,13 +99,8 @@ export const systemRouter = router({
       );
 
     return {
-      daemon: {
-        name: DAEMON_NAME,
-        alive,
-        lastSeen: hb?.lastSeen ?? null,
-        secondsSinceHeartbeat,
-        metadata: (hb?.metadata ?? null) as Record<string, unknown> | null,
-      },
+      daemon: heartbeatStatus(DAEMON_NAME, aiHb, now),
+      browserDaemon: heartbeatStatus(BROWSER_DAEMON_NAME, browserHb, now),
       queue: {
         byStatus,
         pending: byStatus.pending ?? 0,
@@ -95,6 +110,7 @@ export const systemRouter = router({
         needsReview: byStatus.needs_review ?? 0,
         failedLast24h: failed24h.length,
       },
+      lanes,
       recent,
     };
   }),

@@ -24,6 +24,7 @@ import { readFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { selectZombieIds } from '../src/lib/daemon/task-lifecycle.mjs'
+import { resolveChromiumBin, BrowserSession } from '../src/lib/daemon/browser-session.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_DIR = resolve(__dirname, '..')
@@ -74,6 +75,22 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 // Interpretador Python com Patchright. O scraper de triagem usa
 // `from patchright.async_api import ...`, que vive no venv da enrichment-engine.
 const VENV_PYTHON = ENV.BROWSER_VENV_PYTHON || resolve(PROJECT_DIR, 'enrichment-engine/.venv/bin/python')
+
+// --- Sessão Chromium quente (Fase 2) ---
+// Mantém UM Chromium vivo na porta CDP (:9222 por padrão, que os scrapers
+// `--modo cdp` já usam) com perfil persistente — sessão Keycloak não esfria.
+// adopt-or-launch: convive com um Chromium aberto na mão. Ver browser-session.mjs.
+const HOME = process.env.HOME || ''
+const CDP_PORT = Number(ENV.BROWSER_CDP_PORT || process.env.BROWSER_CDP_PORT || 9222)
+const PROFILE_DIR = ENV.BROWSER_PROFILE_DIR || process.env.BROWSER_PROFILE_DIR || resolve(HOME || PROJECT_DIR, '.ombuds-browser-profile')
+const HEADLESS = (ENV.BROWSER_HEADLESS || process.env.BROWSER_HEADLESS) === 'true'
+const session = new BrowserSession({
+  chromiumBin: resolveChromiumBin(ENV, HOME),
+  profileDir: PROFILE_DIR,
+  port: CDP_PORT,
+  headless: HEADLESS,
+  log: (m) => console.log(`${LOG_PREFIX} [browser] ${m}`),
+})
 
 // --- Registry: skill → como montar o worker (interpreter + argv + timeout) ---
 // Cada `build(meta)` recebe os metadados parseados de instrucao_adicional (JSON)
@@ -358,8 +375,10 @@ console.log(`${LOG_PREFIX} Starting browser broker...`)
 console.log(`${LOG_PREFIX} Project: ${PROJECT_DIR}`)
 console.log(`${LOG_PREFIX} Python: ${VENV_PYTHON}${existsSync(VENV_PYTHON) ? '' : ' (NÃO ENCONTRADO — só __selftest funcionará)'}`)
 console.log(`${LOG_PREFIX} Skills: ${Object.keys(SKILL_REGISTRY).join(', ')}`)
+console.log(`${LOG_PREFIX} CDP port: ${CDP_PORT} | profile: ${PROFILE_DIR} | headless: ${HEADLESS}`)
 
 await reapZombies('startup')
+await session.start()
 subscribe()
 
 // --- Heartbeat (separado do claude daemon) ---
@@ -370,7 +389,13 @@ async function sendHeartbeat() {
       {
         name: HEARTBEAT_NAME,
         last_seen: new Date().toISOString(),
-        metadata: { pid: process.pid, node: process.version, lane: LANE, skills: Object.keys(SKILL_REGISTRY).length },
+        metadata: {
+          pid: process.pid,
+          node: process.version,
+          lane: LANE,
+          skills: Object.keys(SKILL_REGISTRY).length,
+          browser: session.state, // { up, adopted, managed, port } — p/ o dashboard
+        },
       },
       { onConflict: 'name' },
     )
@@ -382,6 +407,10 @@ const heartbeatInterval = setInterval(sendHeartbeat, 30_000)
 const catchUpInterval = setInterval(() => catchUp('poll'), 60_000)
 const reaperInterval = setInterval(() => reapZombies('periodic'), 5 * 60_000)
 
+// --- Health loop do Chromium: probe CDP a cada 30s; relança se o gerenciado caiu ---
+await session.refreshHealth()
+const healthInterval = setInterval(() => session.refreshHealth(), 30_000)
+
 // --- Graceful shutdown ---
 function shutdown() {
   console.log(`${LOG_PREFIX} Shutting down...`)
@@ -390,6 +419,8 @@ function shutdown() {
   clearInterval(heartbeatInterval)
   clearInterval(catchUpInterval)
   clearInterval(reaperInterval)
+  clearInterval(healthInterval)
+  session.stop() // mata só o Chromium que NÓS lançamos (não derruba um adotado)
   if (activeChild) {
     try { activeChild.kill('SIGTERM') } catch {}
     activeChild = null

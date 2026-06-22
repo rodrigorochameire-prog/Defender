@@ -1,7 +1,7 @@
 # Plano: Daemon de Duas Lanes + Browser Broker (CDP + Patchright + Chromium)
 
 ## Data: 2026-06-21
-## Status: Fases 0 e 1 implementadas (2026-06-21) — pendente deploy no Mac Mini. Próxima: Fase 2 (browser broker com Chromium quente)
+## Status: Fases 0, 1 e 2-core implementadas (2026-06-21) — pendente deploy no Mac Mini. Próxima: Fase 3 (Solar write-back) + refinos da Fase 2 (needs-login, contextos isolados)
 
 ---
 
@@ -107,7 +107,7 @@ lane: text("lane").notNull().default("ai"),   // 'ai' | 'browser'
 |------|---------|---------|-----------|
 | **0. Lane na fila** ✅ | coluna `lane` + guard em `processTask` + `daemon-ai` filtra `lane='ai'` (lock, catch-up, reaper, Realtime) — **feito 2026-06-21** | ~1 dia | — |
 | **1. daemon-browser básico** ✅ | `scripts/browser-broker-daemon.mjs` — consumidor `lane='browser'` que faz spawn dos scrapers Python via registry de skills (`varredura-triagem` + `__selftest`); heartbeat `browser-broker`; reaper com timeout 35min; plist própria. **feito 2026-06-21** (deploy no Mac Mini pendente) | ~1–2 dias | depende de 0 |
-| **2. Browser broker** | Chromium quente gerenciado (Patchright, perfil persistente, CDP :9222, launchd KeepAlive) + session-health no `/admin/daemon` + estado `needs-login` | ~2–3 dias | depende de 1 |
+| **2. Browser broker** 🟡 | **core feito 2026-06-21**: `src/lib/daemon/browser-session.mjs` (adopt-or-launch Chromium, CDP :9222, perfil persistente, health loop, relaunch-on-crash) + estado no heartbeat + card no `/admin/daemon` (sessão up/down, adotado/gerenciado, fila da lane). **Pendente**: `needs-login` real (probe de login PJe/Solar) e contextos PJe/Solar isolados — feitos junto da Fase 3 | ~2–3 dias | depende de 1 |
 | **3. Solar write-back** | enfileira `solar-write` ao criar anotação → broker roda `solar_write_service.py` → marca `solarSyncedAt`. **Fecha o loop.** Requer discovery de formulários (Fase 0 do plano 2026-02-24) | ~2–3 dias | depende de 2 + discovery |
 | **4. Agendamento** | cron enfileira `pje-intimacoes` + `varredura-triagem` à noite → triagem pré-classificada antes do defensor abrir o app | ~1 dia | depende de 1 |
 
