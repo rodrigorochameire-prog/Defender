@@ -71,7 +71,10 @@ Blocos do mapa-mestre: Título Executivo · Cronologia Executiva · Comportament
 - tRPC `execucao` router: `listComAlertas` (flag computado por execução), `getById`, `upsert`, `addEvento`. Escopo por workspace via `processos.workspaceId`.
 - Página `/admin/execucao-penal` com cards de alerta calibrados (amber/red) + filtro "só com alerta". Item no admin-sidebar (ícone Gavel).
 - **Schema aplicado em produção** (Supabase, migração `fase9_execucao_penal_nucleo`, aditiva).
-- Futuro: timeline executiva (reusa `ProcessoTimeline`), geração automática de demanda com prazo.
+- Futuro: timeline executiva (reusa `ProcessoTimeline`).
+
+### Geração automática de demanda `[✅ 2026-06-22]`
+`src/lib/execucao/demandas-auto.ts` (`montarDemandasDeExecucao`, pura, 5 testes) traduz flags → demandas candidatas com `tipoAto` estável (`exec:prescricao|regressao|saida|livramento`). Mutation `execucao.sincronizarDemandas` é idempotente (dedup por processoId×tipoAto entre demandas abertas; só com assistido vinculado). Botão "Gerar demandas dos alertas" no dashboard. Prescrição red → URGENTE com prazo na data da prescrição; benefícios → 2_ATENDER.
 
 ### Flags de benefício/risco `[✅ 2026-06-22]`
 `src/lib/execucao/flags-beneficios.ts` (3 detectores puros, 15 testes) + agregador `avaliarBeneficiosExecucao` no reader (2 testes):

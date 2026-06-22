@@ -6,8 +6,8 @@ import {
   execucaoEventos,
   execucaoBeneficios,
 } from "@/lib/db/schema/execucao";
-import { processos, assistidos } from "@/lib/db/schema/core";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { processos, assistidos, demandas } from "@/lib/db/schema/core";
+import { eq, and, desc, inArray, isNull, notInArray } from "drizzle-orm";
 import {
   avaliarPrescricaoExecucao,
   avaliarBeneficiosExecucao,
@@ -15,6 +15,7 @@ import {
   type ExecucaoParaBeneficios,
   type EventoParaBeneficios,
 } from "@/lib/execucao/reader";
+import { montarDemandasDeExecucao } from "@/lib/execucao/demandas-auto";
 
 async function assertProcessoInWorkspace(processoId: number, workspaceId: number) {
   const [row] = await db
@@ -154,6 +155,91 @@ export const execucaoRouter = router({
         ? result.filter((r) => r.prescricao || r.beneficios.some((b) => b.nivel !== "emerald"))
         : result;
     }),
+
+  /**
+   * Gera demandas no kanban a partir dos alertas da execução (idempotente).
+   * Dedup por (processoId, tipoAto) entre demandas abertas — rodar de novo não
+   * duplica. Só cria para execuções com assistido vinculado.
+   */
+  sincronizarDemandas: protectedProcedure.mutation(async ({ ctx }) => {
+    const workspaceId = ctx.user.workspaceId ?? 1;
+
+    const rows = await db
+      .select({ execucao: execucoesPenais })
+      .from(execucoesPenais)
+      .innerJoin(processos, eq(processos.id, execucoesPenais.processoId))
+      .where(eq(processos.workspaceId, workspaceId));
+
+    const ids = rows.map((r) => r.execucao.id);
+    const eventos = ids.length
+      ? await db.select().from(execucaoEventos).where(inArray(execucaoEventos.execucaoId, ids))
+      : [];
+    const eventosPorExec = new Map<
+      number,
+      { tipo: string; data: string; dados: { dias?: number; grauFalta?: string } | null }[]
+    >();
+    for (const ev of eventos) {
+      const arr = eventosPorExec.get(ev.execucaoId) ?? [];
+      arr.push({ tipo: ev.tipo, data: ev.data, dados: ev.dados });
+      eventosPorExec.set(ev.execucaoId, arr);
+    }
+
+    const candidatos: Array<{
+      processoId: number;
+      assistidoId: number;
+      tipoAto: string;
+      ato: string;
+      prazo: string | null;
+      status: "URGENTE" | "2_ATENDER";
+      prioridade: "URGENTE" | "ALTA" | "NORMAL";
+      reuPreso: boolean;
+    }> = [];
+    for (const r of rows) {
+      const e = r.execucao;
+      if (e.assistidoId == null) continue;
+      const evs = eventosPorExec.get(e.id) ?? [];
+      const prescricao = avaliarPrescricaoExecucao(toParaPrescricao(e), evs);
+      const beneficios = avaliarBeneficiosExecucao(toParaBeneficios(e), toEventosBeneficios(evs));
+      for (const c of montarDemandasDeExecucao({ situacao: e.situacao, prescricao, beneficios })) {
+        candidatos.push({ ...c, processoId: e.processoId, assistidoId: e.assistidoId });
+      }
+    }
+
+    if (candidatos.length === 0) return { criadas: 0, jaExistentes: 0 };
+
+    const processoIds = [...new Set(candidatos.map((c) => c.processoId))];
+    const existentes = await db
+      .select({ processoId: demandas.processoId, tipoAto: demandas.tipoAto })
+      .from(demandas)
+      .where(
+        and(
+          inArray(demandas.processoId, processoIds),
+          isNull(demandas.deletedAt),
+          notInArray(demandas.status, ["CONCLUIDO", "ARQUIVADO"]),
+        ),
+      );
+    const chaveExistente = new Set(existentes.map((e) => `${e.processoId}:${e.tipoAto}`));
+
+    const novos = candidatos.filter((c) => !chaveExistente.has(`${c.processoId}:${c.tipoAto}`));
+    if (novos.length > 0) {
+      await db.insert(demandas).values(
+        novos.map((c) => ({
+          processoId: c.processoId,
+          assistidoId: c.assistidoId,
+          ato: c.ato,
+          tipoAto: c.tipoAto,
+          prazo: c.prazo,
+          status: c.status,
+          prioridade: c.prioridade,
+          reuPreso: c.reuPreso,
+          defensorId: ctx.user.id,
+          workspaceId,
+        })),
+      );
+    }
+
+    return { criadas: novos.length, jaExistentes: candidatos.length - novos.length };
+  }),
 
   /** Detalhe de uma execução com eventos, benefícios e flag de prescrição. */
   getById: protectedProcedure
