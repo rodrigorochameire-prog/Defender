@@ -70,4 +70,5 @@ Blocos do mapa-mestre: Título Executivo · Cronologia Executiva · Comportament
 Dashboard `/admin/execucao-penal`, timeline executiva (reusa `ProcessoTimeline`), cards de alerta ordenados por urgência, geração de demanda automática com prazo.
 
 ## Log
-- 2026-06-22: design criado; Fatia 1 (função pura PPE) em implementação TDD.
+- 2026-06-22: design criado; Fatia 1 (função pura PPE) implementada e mergeada (PR #163).
+- 2026-06-22: Fatia 2 schema escrito (`src/lib/db/schema/execucao.ts`, 4 tabelas + 6 enums, aditivo) e registrado no index. Preview SQL em `2026-06-22-fase9-fatia2-migracao-preview.sql`. **Migração NÃO aplicada** — repo usa `db:push` (snapshots de migração defasados); aplicar requer autorização explícita do defensor (`npm run db:push`).
