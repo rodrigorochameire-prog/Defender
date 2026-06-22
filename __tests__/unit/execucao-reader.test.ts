@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   montarInputPrescricao,
   avaliarPrescricaoExecucao,
+  avaliarBeneficiosExecucao,
   type ExecucaoParaPrescricao,
   type EventoParaPrescricao,
+  type ExecucaoParaBeneficios,
 } from "@/lib/execucao/reader";
 
 const HOJE = new Date("2026-06-22T12:00:00");
@@ -93,5 +95,32 @@ describe("avaliarPrescricaoExecucao (reader + cálculo)", () => {
       HOJE,
     );
     expect(flag).toBeNull();
+  });
+});
+
+describe("avaliarBeneficiosExecucao", () => {
+  const baseBenef: ExecucaoParaBeneficios = {
+    ...baseExec,
+    hediondo: false,
+    regimeAtual: "semiaberto",
+    dataUltimaConfirmacaoCadastral: null,
+  };
+
+  it("acumula saída temporária (semiaberto + fração) e risco cadastral", () => {
+    // pena 8a=2920d; início 2000d atrás → cumprido ~0,68 → > 1/6
+    const flags = avaliarBeneficiosExecucao(baseBenef, [], HOJE);
+    const tipos = flags.map((f) => f.tipo);
+    expect(tipos).toContain("saida-temporaria");
+    expect(tipos).toContain("risco-regressao-cadastral"); // semiaberto + cadastro nulo
+  });
+
+  it("falta grave grave recente suprime saída temporária e livramento", () => {
+    const flags = avaliarBeneficiosExecucao(
+      { ...baseBenef, dataUltimaConfirmacaoCadastral: diasAtras(10) },
+      [{ tipo: "falta", data: diasAtras(100), dados: { grauFalta: "grave" } }],
+      HOJE,
+    );
+    expect(flags.map((f) => f.tipo)).not.toContain("saida-temporaria");
+    expect(flags.map((f) => f.tipo)).not.toContain("livramento-condicional");
   });
 });

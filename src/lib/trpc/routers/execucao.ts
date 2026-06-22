@@ -10,8 +10,10 @@ import { processos, assistidos } from "@/lib/db/schema/core";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import {
   avaliarPrescricaoExecucao,
+  avaliarBeneficiosExecucao,
   type ExecucaoParaPrescricao,
-  type EventoParaPrescricao,
+  type ExecucaoParaBeneficios,
+  type EventoParaBeneficios,
 } from "@/lib/execucao/reader";
 
 async function assertProcessoInWorkspace(processoId: number, workspaceId: number) {
@@ -47,6 +49,22 @@ function toParaPrescricao(e: typeof execucoesPenais.$inferSelect): ExecucaoParaP
     transitoJulgadoData: e.transitoJulgadoData,
     situacao: e.situacao,
   };
+}
+
+/** Estende para os detectores de benefício/risco (precisa de hediondo, regime e cadastro). */
+function toParaBeneficios(e: typeof execucoesPenais.$inferSelect): ExecucaoParaBeneficios {
+  return {
+    ...toParaPrescricao(e),
+    hediondo: e.hediondo,
+    regimeAtual: e.regimeAtual,
+    dataUltimaConfirmacaoCadastral: e.dataUltimaConfirmacaoCadastral,
+  };
+}
+
+function toEventosBeneficios(
+  eventos: { tipo: string; data: string; dados: { dias?: number; grauFalta?: string } | null }[],
+): EventoParaBeneficios[] {
+  return eventos.map((e) => ({ tipo: e.tipo, data: e.data, dados: e.dados }));
 }
 
 const upsertInput = z.object({
@@ -108,27 +126,33 @@ export const execucaoRouter = router({
             .where(inArray(execucaoEventos.execucaoId, ids))
         : [];
 
-      const eventosPorExec = new Map<number, EventoParaPrescricao[]>();
+      const eventosPorExec = new Map<
+        number,
+        { tipo: string; data: string; dados: { dias?: number; grauFalta?: string } | null }[]
+      >();
       for (const ev of eventos) {
         const arr = eventosPorExec.get(ev.execucaoId) ?? [];
-        arr.push({ tipo: ev.tipo, dados: ev.dados });
+        arr.push({ tipo: ev.tipo, data: ev.data, dados: ev.dados });
         eventosPorExec.set(ev.execucaoId, arr);
       }
 
-      const result = rows.map((r) => ({
-        id: r.execucao.id,
-        processoId: r.execucao.processoId,
-        processoNumero: r.processoNumero,
-        assistidoNome: r.assistidoNome,
-        situacao: r.execucao.situacao,
-        regimeAtual: r.execucao.regimeAtual,
-        prescricao: avaliarPrescricaoExecucao(
-          toParaPrescricao(r.execucao),
-          eventosPorExec.get(r.execucao.id) ?? [],
-        ),
-      }));
+      const result = rows.map((r) => {
+        const evs = eventosPorExec.get(r.execucao.id) ?? [];
+        return {
+          id: r.execucao.id,
+          processoId: r.execucao.processoId,
+          processoNumero: r.processoNumero,
+          assistidoNome: r.assistidoNome,
+          situacao: r.execucao.situacao,
+          regimeAtual: r.execucao.regimeAtual,
+          prescricao: avaliarPrescricaoExecucao(toParaPrescricao(r.execucao), evs),
+          beneficios: avaliarBeneficiosExecucao(toParaBeneficios(r.execucao), toEventosBeneficios(evs)),
+        };
+      });
 
-      return apenasComAlerta ? result.filter((r) => r.prescricao) : result;
+      return apenasComAlerta
+        ? result.filter((r) => r.prescricao || r.beneficios.some((b) => b.nivel !== "emerald"))
+        : result;
     }),
 
   /** Detalhe de uma execução com eventos, benefícios e flag de prescrição. */
@@ -161,8 +185,12 @@ export const execucaoRouter = router({
         toParaPrescricao(execucao),
         eventos.map((e) => ({ tipo: e.tipo, dados: e.dados })),
       );
+      const alertasBeneficios = avaliarBeneficiosExecucao(
+        toParaBeneficios(execucao),
+        toEventosBeneficios(eventos),
+      );
 
-      return { execucao, eventos, beneficios, prescricao };
+      return { execucao, eventos, beneficios, prescricao, alertasBeneficios };
     }),
 
   /** Cria ou atualiza o título executivo. */
