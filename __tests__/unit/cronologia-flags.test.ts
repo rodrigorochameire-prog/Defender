@@ -53,6 +53,73 @@ describe("detectExcessoPrazoPreventiva", () => {
   });
 });
 
+describe("detectExcessoPrazoPreventiva — consciência de fase", () => {
+  const diasAtras = (n: number) =>
+    new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+
+  it("flag na INSTRUÇÃO quando preso há mais que o limite, mesmo com denúncia", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(160), dataFim: null, situacao: "ativa" }],
+      [{ tipo: "recebimento-denuncia", data: diasAtras(120) }],
+    );
+    expect(flag).toBeTruthy();
+    expect(flag!.fase).toBe("instrucao");
+    expect(flag!.limiteDias).toBe(150);
+    expect(flag!.diasExcedidos).toBeGreaterThanOrEqual(8);
+  });
+
+  it("não flag na instrução quando ainda dentro do limite (120d < 150d)", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(120), dataFim: null, situacao: "ativa" }],
+      [{ tipo: "denuncia", data: diasAtras(90) }],
+    );
+    expect(flag).toBeNull();
+  });
+
+  it("fase pós-sentença usa limite maior e ainda detecta excesso", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(600), dataFim: null, situacao: "ativa" }],
+      [{ tipo: "sentenca", data: diasAtras(120) }],
+    );
+    expect(flag).toBeTruthy();
+    expect(flag!.fase).toBe("pos-sentenca");
+    expect(flag!.limiteDias).toBe(540);
+  });
+
+  it("não flag pós-sentença dentro do limite (200d < 540d)", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(200), dataFim: null, situacao: "ativa" }],
+      [{ tipo: "sentenca", data: diasAtras(150) }],
+    );
+    expect(flag).toBeNull();
+  });
+
+  it("severidade: pré-denúncia escala para 'red' acima de 20d de excesso", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(120), dataFim: null, situacao: "ativa" }],
+      [],
+    );
+    expect(flag!.fase).toBe("pre-denuncia");
+    expect(flag!.nivel).toBe("red");
+  });
+
+  it("severidade: excesso pequeno fica 'amber'", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "preventiva", dataInicio: diasAtras(90), dataFim: null, situacao: "ativa" }],
+      [],
+    );
+    expect(flag!.nivel).toBe("amber");
+  });
+
+  it("ignora prisão não-preventiva ativa (só flagrante)", () => {
+    const flag = detectExcessoPrazoPreventiva(
+      [{ tipo: "flagrante", dataInicio: diasAtras(200), dataFim: null, situacao: "ativa" }],
+      [],
+    );
+    expect(flag).toBeNull();
+  });
+});
+
 describe("detectFlagranteSemCustodia", () => {
   it("flag quando flagrante há ≥1 dia sem audiência custódia", () => {
     const ontem = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);

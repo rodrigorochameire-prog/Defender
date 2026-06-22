@@ -28,7 +28,7 @@ TDD exige um gate verde para existir. Hoje o build esconde erros (`ignoreBuildEr
 
 Pré-requisito de tudo. Reativa type-safety, deixa a suíte verde e trava o gate no CI.
 
-### F.0 · Suíte verde + gate honesto  `[em progresso]`
+### F.0 · Suíte verde + gate honesto  `[✅ concluído 2026-06-22 · commit a5fdf4cd]`
 **Problema:** 15 testes vermelhos e 57 erros de tipo ocultos. Sem isso TDD é teatro.
 **AC:**
 1. `npx vitest run` → 0 falhas.
@@ -39,9 +39,13 @@ Pré-requisito de tudo. Reativa type-safety, deixa a suíte verde e trava o gate
 **Teste/verificação:** o próprio gate (build falha se algo quebrar).
 **Débitos cobertos:** TD.2/SYS-001, parte de TD.7/SYS-003.
 
-### F.1 · Cinto de segurança (CORS, webhook, segredos)
-Débitos: TD.5 (CORS `*` enrichment), TD.6 (webhook Drive fail-open), TD.3 (credenciais hardcoded no client), TD.1 (rotação senha + limpeza histórico — requer @devops/ação humana), TD.4 (config.toml).
-Cada um vira micro-story com teste de regressão (ex.: webhook rejeita assinatura inválida).
+### F.1 · Cinto de segurança (CORS, webhook, segredos)  `[✅ código já corrigido ad-hoc · verificado 2026-06-22]`
+Auditado: a maioria já estava resolvida no código, stories só ficaram desatualizadas.
+- TD.5 (CORS): ✅ `enrichment-engine/main.py` lê `ALLOWED_ORIGINS` (default localhost), não `*`.
+- TD.6 (webhook Drive): ✅ `api/webhooks/drive/route.ts` é fail-closed — valida `x-goog-channel-token` com `timingSafeEqual`, rejeita secret ausente, exige canal registrado+ativo.
+- TD.3 (credenciais hardcoded): ✅ nenhum JWT/segredo hardcoded em `src/`.
+- TD.4 (config.toml): ✅ `project_id` bate com o projeto real.
+- **TD.1 (rotação senha + limpeza histórico): ⚠️ ABERTO — operacional.** Rotacionar no painel Supabase + rewrite de histórico (irreversível, `@devops`/humano). `.env.local` não está versionado, mas a senha deve ser rotacionada. **Não automatizável com segurança.**
 
 ### F.2 · RLS (faseado)
 TD.9 (habilitar RLS nas tabelas restantes) → TD.13 (role dedicada, policies reais) → TD.14 (multi-tenant por comarca). Alto esforço; faseado e testado por policy.
@@ -55,8 +59,8 @@ TD.9 (habilitar RLS nas tabelas restantes) → TD.13 (role dedicada, policies re
 Onde mora o valor. Cada flag é uma função pura testável (entrada estruturada → veredito + confidence) + apresentação calibrada. TDD natural: a regra do flag é teste primeiro.
 
 Prioridade por valor/urgência:
-1. **Prescrição executória iminente** (Fase IX) — pode extinguir pena. Função pura `prazo_109_cp × reincidência × idade`.
-2. **Excesso de prazo — preventiva** (Fase IV) — dias preso × padrão STJ.
+1. **Prescrição executória iminente** (Fase IX) — pode extinguir pena. Função pura `prazo_109_cp × reincidência × idade`. *(Bloqueada: Fase IX não tem schema de execução ainda.)*
+2. **Excesso de prazo — preventiva** (Fase IV) — `[✅ I.2 concluído 2026-06-22]` evoluído de cego-pós-denúncia para **consciente de fase** (pré-denúncia 80d / instrução 150d / pós-sentença 540d) + severidade amber/red calibrada. Função pura `detectExcessoPrazoPreventiva` em `src/lib/cronologia/flags.ts`, 14 testes; UI `situacao-atual-block` agora pinta por `nivel`. Dados já existiam (`prisoes` + `marcos_processuais`).
 3. **ANPP cabível não oferecido** (Fase X) — argumento recursal.
 4. **Uso instrumental da LMP** (Fase VII) — score ≥3 indicadores; copy ultra-cuidadosa.
 

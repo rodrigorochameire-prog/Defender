@@ -32,7 +32,13 @@ export function SituacaoAtualBlock({ casoId }: Props) {
         </div>
       )}
       {excesso && (
-        <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+        <div
+          className={`text-xs font-medium ${
+            excesso.nivel === "red"
+              ? "text-rose-600 dark:text-rose-400"
+              : "text-amber-600 dark:text-amber-400"
+          }`}
+        >
           Excesso de prazo: {excesso.motivo}
         </div>
       )}
