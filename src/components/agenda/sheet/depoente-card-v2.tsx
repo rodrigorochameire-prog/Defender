@@ -32,6 +32,8 @@ interface Props {
   onAdicionarPergunta: (id: number) => void;
   onAbrirAudio?: (id: number) => void;
   assistidoId?: number | null;
+  /** Rosto capturado da pessoa (data URL) — vira avatar do depoente. */
+  avatarUrl?: string | null;
 }
 
 function ladoOf(d: DepoenteV2): "acusacao" | "defesa" | "neutro" {
@@ -60,7 +62,7 @@ function qualidadeLabel(d: DepoenteV2): string | null {
   return null;
 }
 
-export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onRedesignar, onAdicionarPergunta, onAbrirAudio, assistidoId }: Props) {
+export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onRedesignar, onAdicionarPergunta, onAbrirAudio, assistidoId, avatarUrl }: Props) {
   const lado = ladoOf(depoente);
   const status = statusLabel(depoente.status);
   const ladoBorder = {
@@ -87,6 +89,23 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
         onClick={onToggle}
         className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
       >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={depoente.nome}
+            className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-[10px] font-semibold text-neutral-400">
+            {(depoente.nome || "")
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 truncate">
             {depoente.nome}

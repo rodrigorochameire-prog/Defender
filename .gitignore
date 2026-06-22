@@ -1,7 +1,6 @@
 # Dependencies
 node_modules/
 .pnpm-store/
-pnpm-lock.yaml
 
 # Python
 __pycache__/
@@ -106,6 +105,7 @@ logs/
 !.claude/skills-cowork/analise-audiencias/
 !.claude/skills-cowork/citacao-depoimentos/
 !.claude/skills-cowork/citacoes-seguras/
+!.claude/skills-cowork/classify-document/
 !.claude/skills-cowork/criminal-comum/
 !.claude/skills-cowork/dpe-ba-pecas/
 !.claude/skills-cowork/estudo-dpe/
@@ -117,6 +117,7 @@ logs/
 !.claude/skills-cowork/numeracao-oficios/
 !.claude/skills-cowork/oficio-gratificacao/
 !.claude/skills-cowork/oficio-redacao/
+!.claude/skills-cowork/pergunte-ao-auto/
 !.claude/skills-cowork/protocolar/
 !.claude/skills-cowork/schedule/
 !.claude/skills-cowork/transcrever-atendimento/

@@ -20,6 +20,7 @@ import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, statSy
 import { resolve, dirname, join } from 'path'
 import { tmpdir } from 'os'
 import { fileURLToPath } from 'url'
+import { selectZombieIds, ZOMBIE_TIMEOUT_MS } from '../src/lib/daemon/task-lifecycle.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_DIR = resolve(__dirname, '..')
@@ -147,6 +148,10 @@ function tryParseResult(stdout) {
   }
 }
 
+// Child `claude` em execução (no máximo 1 — processamento é serial). Rastreado para
+// poder ser morto no shutdown, evitando processo órfão após SIGTERM/SIGINT.
+let activeChild = null
+
 // --- Spawn claude -p and return { code, stdout, stderr } ---
 function runClaude(skillPath, prompt) {
   return new Promise((resolvePromise) => {
@@ -160,13 +165,46 @@ function runClaude(skillPath, prompt) {
       timeout: 600_000,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
+    activeChild = child
     let stdout = ''
     let stderr = ''
+    const done = (payload) => {
+      if (activeChild === child) activeChild = null
+      resolvePromise(payload)
+    }
     child.stdout.on('data', (chunk) => { stdout += chunk.toString() })
     child.stderr.on('data', (chunk) => { stderr += chunk.toString() })
-    child.on('close', (code) => resolvePromise({ code, stdout, stderr }))
-    child.on('error', (err) => resolvePromise({ code: -1, stdout: '', stderr: err.message }))
+    child.on('close', (code) => done({ code, stdout, stderr }))
+    child.on('error', (err) => done({ code: -1, stdout: '', stderr: err.message }))
   })
+}
+
+// --- Ingestão de classificação (#4): skill classify-document ---
+// Ao concluir, manda as seções p/ o app salvar (assinatura Max, sem API metered).
+// fileId/startPage/endPage vêm em instrucao_adicional (JSON) — metadados de sistema,
+// que NÃO são anexados ao prompt p/ essa skill (ver basePrompt abaixo).
+const INGEST_URL = ENV.CLASSIFICATION_INGEST_URL
+const INGEST_SECRET = ENV.CLASSIFICATION_INGEST_SECRET
+
+async function ingestClassification(task, resultado) {
+  if (!INGEST_URL || !INGEST_SECRET) {
+    console.warn(`${LOG_PREFIX} classify ingest: CLASSIFICATION_INGEST_URL/SECRET ausentes — pulando POST (task ${task.id})`)
+    return
+  }
+  let meta = {}
+  try { meta = task.instrucao_adicional ? JSON.parse(task.instrucao_adicional) : {} } catch { /* sem metadata */ }
+  const sections = resultado?.sections ?? resultado
+  try {
+    const res = await fetch(INGEST_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-ingest-secret': INGEST_SECRET },
+      body: JSON.stringify({ fileId: meta.fileId, startPage: meta.startPage, endPage: meta.endPage, sections }),
+    })
+    const txt = await res.text()
+    console.log(`${LOG_PREFIX} classify ingest task ${task.id}: ${res.status} ${txt.slice(0, 160)}`)
+  } catch (err) {
+    console.error(`${LOG_PREFIX} classify ingest task ${task.id} POST falhou: ${err.message}`)
+  }
 }
 
 // --- Process a single task ---
@@ -202,17 +240,25 @@ async function processTask(task) {
     return
   }
 
-  // Build prompt
-  const basePrompt = task.instrucao_adicional
+  // Build prompt. Para classify-document, instrucao_adicional carrega metadados de
+  // sistema (fileId/páginas) — NÃO é instrução p/ o modelo, então não anexa.
+  const isClassify = task.skill === 'classify-document'
+  const basePrompt = (task.instrucao_adicional && !isClassify)
     ? `${task.prompt}\n\nInstrução adicional: ${task.instrucao_adicional}`
     : task.prompt
 
-  // Periodic etapa updates every 30s — refreshed per run (shared across attempts)
+  // Periodic etapa updates every 30s — refreshed per run (shared across attempts).
+  // Erros aqui são não-fatais (só afetam o texto de progresso na UI), mas antes
+  // falhavam em silêncio — agora são logados para não mascarar quebra do Realtime.
+  const updateEtapa = async (etapa) => {
+    const { error } = await supabase.from('claude_code_tasks').update({ etapa }).eq('id', task.id)
+    if (error) console.warn(`${LOG_PREFIX} Task ${task.id} etapa update falhou: ${error.message}`)
+  }
   let etapaIdx = 0
-  await supabase.from('claude_code_tasks').update({ etapa: 'Iniciando análise...' }).eq('id', task.id)
-  const etapaInterval = setInterval(async () => {
+  await updateEtapa('Iniciando análise...')
+  const etapaInterval = setInterval(() => {
     etapaIdx = Math.min(etapaIdx + 1, ETAPAS.length - 1)
-    await supabase.from('claude_code_tasks').update({ etapa: ETAPAS[etapaIdx] }).eq('id', task.id)
+    updateEtapa(ETAPAS[etapaIdx])
   }, 30_000)
 
   try {
@@ -239,7 +285,7 @@ async function processTask(task) {
     // JSON in prose or added a preamble.
     if (!parsed.ok) {
       console.warn(`${LOG_PREFIX} Task ${task.id} attempt 1 failed to parse: ${parsed.error}. Retrying...`)
-      await supabase.from('claude_code_tasks').update({ etapa: 'Retry — corrigindo JSON...' }).eq('id', task.id)
+      await updateEtapa('Retry — corrigindo JSON...')
 
       const retryPrompt = `${basePrompt}
 
@@ -276,6 +322,11 @@ A primeira caractere da resposta deve ser { e o último deve ser }.`
     console.log(
       `${LOG_PREFIX} Task ${task.id} ${parsed.ok ? 'completed' : 'needs_review (both attempts failed to parse)'}.`,
     )
+
+    // #4: ingestão das seções classificadas (skill-gated, não-bloqueante)
+    if (isClassify && parsed.ok) {
+      await ingestClassification(task, parsed.value)
+    }
   } finally {
     clearInterval(etapaInterval)
   }
@@ -310,6 +361,44 @@ async function catchUp(reason = 'manual') {
   } finally {
     catchUpRunning = false
   }
+}
+
+// --- Reaper: recupera tarefas zumbi (presas em 'processing') ---
+// Se o daemon morre/reinicia ou o CLI estoura o timeout, a tarefa fica em
+// 'processing' para sempre — travando o assistido no dedup e poluindo a fila.
+// Marca como 'failed' tudo que passou de ZOMBIE_TIMEOUT_MS. Roda no startup
+// (recupera de crash/reboot) e periodicamente. Ver docs/specs/daemon-reliability.md.
+async function reapZombies(reason = 'periodic') {
+  const { data: tasks, error } = await supabase
+    .from('claude_code_tasks')
+    .select('id, status, started_at, created_at')
+    .eq('status', 'processing')
+
+  if (error) {
+    console.error(`${LOG_PREFIX} Reaper query failed:`, error.message)
+    return
+  }
+
+  const rows = (tasks ?? []).map((t) => ({
+    id: t.id,
+    status: t.status,
+    startedAt: t.started_at,
+    createdAt: t.created_at,
+  }))
+  const zombieIds = selectZombieIds(rows, Date.now())
+  if (zombieIds.length === 0) return
+
+  console.warn(`${LOG_PREFIX} Reaper (${reason}): recuperando ${zombieIds.length} tarefa(s) zumbi: ${zombieIds.join(', ')}`)
+  const { error: updErr } = await supabase
+    .from('claude_code_tasks')
+    .update({
+      status: 'failed',
+      erro: `Timeout — tarefa zumbi recuperada (>${Math.round(ZOMBIE_TIMEOUT_MS / 60000)}min em processing)`,
+      etapa: 'Recuperado',
+      completed_at: new Date().toISOString(),
+    })
+    .in('id', zombieIds)
+  if (updErr) console.error(`${LOG_PREFIX} Reaper update failed:`, updErr.message)
 }
 
 // --- Realtime subscription (auto-reconnect) ---
@@ -377,6 +466,10 @@ try {
   console.warn(`${LOG_PREFIX} git pull failed (non-fatal): ${err.message.split('\n')[0]}`)
 }
 
+// Recupera tarefas zumbi deixadas por uma execução anterior (crash/reboot/timeout)
+// antes de abrir a inscrição — assim o catch-up já encontra a fila limpa.
+await reapZombies('startup')
+
 subscribe()
 
 // --- Heartbeat: upsert into system_heartbeat every 30s ---
@@ -408,6 +501,9 @@ const heartbeatInterval = setInterval(sendHeartbeat, 30_000)
 // fique presa em 'pending' por mais que o intervalo. Barato: 1 SELECT indexado.
 const catchUpInterval = setInterval(() => catchUp('poll'), 60_000)
 
+// --- Periodic zombie reaper (a cada 5 min) ---
+const reaperInterval = setInterval(() => reapZombies('periodic'), 5 * 60_000)
+
 // --- Graceful shutdown ---
 function shutdown() {
   console.log(`${LOG_PREFIX} Shutting down...`)
@@ -415,6 +511,12 @@ function shutdown() {
   if (reconnectTimer) clearTimeout(reconnectTimer)
   clearInterval(heartbeatInterval)
   clearInterval(catchUpInterval)
+  clearInterval(reaperInterval)
+  // Mata o `claude` em execução para não deixar processo órfão após o exit.
+  if (activeChild) {
+    try { activeChild.kill('SIGTERM') } catch {}
+    activeChild = null
+  }
   if (channel) supabase.removeChannel(channel)
   process.exit(0)
 }

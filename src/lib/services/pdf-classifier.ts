@@ -595,7 +595,20 @@ function parseAndMapSections(
   }
 
   const parsed = JSON.parse(jsonStr);
-  return (parsed.sections || []).map(
+  return mapClassifiedSections(parsed.sections, startPage, endPage);
+}
+
+/**
+ * Mapeia o array bruto de secoes (JSON do modelo) para ClassifiedSection[].
+ * Exportado para reuso pelo consumidor do daemon (assinatura Max), que recebe
+ * `resultado.sections` ja parseado em vez de texto bruto.
+ */
+export function mapClassifiedSections(
+  rawSections: unknown,
+  startPage: number,
+  endPage: number
+): ClassifiedSection[] {
+  return (Array.isArray(rawSections) ? rawSections : []).map(
     (s: Record<string, unknown>) => {
       const tipo = SECTION_TIPOS.includes(s.tipo as SectionTipo)
         ? (s.tipo as SectionTipo)

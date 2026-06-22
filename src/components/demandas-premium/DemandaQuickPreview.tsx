@@ -33,6 +33,9 @@ import {
   Plus,
   CalendarPlus,
   Eye,
+  FileText,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { iniciaisNome } from "@/lib/format/iniciais";
@@ -54,6 +57,8 @@ import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
 import { AutosSecao } from "./sheet/secoes/AutosSecao";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
+import { setAllSections, areAllOpen, nextToggleAll } from "./sheet-sections";
+import { searchCasos, casoLabel } from "./caso-picker";
 import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
 import {
   DocumentPreviewDialog,
@@ -79,6 +84,8 @@ interface Demanda {
   assistido: string;
   assistidoId?: number | null;
   processoId?: number | null;
+  casoId?: number | null;
+  notaPrivada?: string | null;
   status: string;
   substatus?: string;
   prazo: string;
@@ -465,6 +472,16 @@ export function DemandaQuickPreview({
     });
   }, []);
 
+  // Recolher/expandir todas as seções de uma vez (Track H). Ver sheet-sections.ts.
+  const todasAbertas = areAllOpen(openMap);
+  const toggleTodasSecoes = useCallback(() => {
+    setOpenMap((prev) => {
+      const next = setAllSections(prev, nextToggleAll(prev));
+      try { localStorage.setItem(DEMANDAS_SECOES_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSecao, setActiveSecao] = useState<string | undefined>();
 
@@ -504,8 +521,58 @@ export function DemandaQuickPreview({
     { enabled: openMap.autos && !!demanda?.id, staleTime: 30_000 }
   );
 
+  // ── Vincular a Caso/dossiê (follow-up) — self-contained no sheet ──
+  const [casoQuery, setCasoQuery] = useState("");
+  const [casoBuscaAberta, setCasoBuscaAberta] = useState(false);
+  const { data: casosList } = trpc.casos.list.useQuery({ limit: 100 }, { enabled: open });
+  const [casoIdLocal, setCasoIdLocal] = useState<number | null>(demanda?.casoId ?? null);
+  useEffect(() => { setCasoIdLocal(demanda?.casoId ?? null); }, [demanda?.id, demanda?.casoId]);
+  const casoVinculado = useMemo(
+    () => (casosList ?? []).find((c) => c.id === casoIdLocal) ?? null,
+    [casosList, casoIdLocal],
+  );
+  const casoOptions = useMemo(() => searchCasos(casosList ?? [], casoQuery, 8), [casosList, casoQuery]);
+  const vincularCasoMut = trpc.demandas.update.useMutation({
+    onError: (e) => toast.error("Falha ao atualizar caso", { description: e.message }),
+  });
+  const setCaso = useCallback((id: number | null, label?: string) => {
+    setCasoIdLocal(id);
+    setCasoQuery("");
+    setCasoBuscaAberta(false);
+    if (demanda) vincularCasoMut.mutate({ id: Number(demanda.id), casoId: id });
+    toast.success(id ? `Caso vinculado${label ? `: ${label}` : ""}` : "Caso desvinculado");
+  }, [demanda, vincularCasoMut]);
+
+  // ── Nota interna privada (follow-up) — salva no blur, não reescreve se igual ──
+  const [nota, setNota] = useState(demanda?.notaPrivada ?? "");
+  const notaSalvaRef = useRef(demanda?.notaPrivada ?? "");
+  useEffect(() => {
+    const v = demanda?.notaPrivada ?? "";
+    setNota(v);
+    notaSalvaRef.current = v;
+  }, [demanda?.id, demanda?.notaPrivada]);
+  const salvarNotaMut = trpc.demandas.update.useMutation({
+    onError: (e) => toast.error("Falha ao salvar nota", { description: e.message }),
+  });
+  const salvarNota = useCallback(() => {
+    if (!demanda || nota === notaSalvaRef.current) return;
+    notaSalvaRef.current = nota;
+    salvarNotaMut.mutate({ id: Number(demanda.id), notaPrivada: nota || null });
+  }, [demanda, nota, salvarNotaMut]);
+
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
-    onSuccess: () => { void refetchDriveFolder(); },
+    onSuccess: () => {
+      toast.success("Pasta criada no Drive");
+      void refetchDriveFolder();
+    },
+    // Sem isto, uma falha (Drive offline, sem permissão, cota) era silenciosa: o
+    // spinner parava e o botão "Criar pasta" reaparecia sem explicar nada.
+    onError: (err) => {
+      toast.error("Falha ao criar pasta no Drive", {
+        description: err.message,
+        action: { label: "Tentar de novo", onClick: () => createDriveFolder.mutate({ demandaId: demanda.id }) },
+      });
+    },
   });
 
   // Próxima audiência do processo — query dedicada que ignora canceladas e
@@ -1358,6 +1425,93 @@ export function DemandaQuickPreview({
 
           {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
+            {/* Vínculo a Caso/dossiê (follow-up) */}
+            <div className="flex items-center gap-2 text-[11px]">
+              <FolderOpen className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+              {casoVinculado ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <a
+                    href={`/admin/casos/${casoVinculado.id}`}
+                    className="font-medium text-emerald-700 dark:text-emerald-400 hover:underline truncate"
+                    title={casoLabel(casoVinculado)}
+                  >
+                    {casoLabel(casoVinculado)}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setCaso(null)}
+                    title="Desvincular do caso"
+                    className="text-neutral-400 hover:text-red-500 cursor-pointer shrink-0"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : casoBuscaAberta ? (
+                <div className="relative flex-1 min-w-0">
+                  <input
+                    autoFocus
+                    value={casoQuery}
+                    onChange={(e) => setCasoQuery(e.target.value)}
+                    onBlur={() => setTimeout(() => setCasoBuscaAberta(false), 150)}
+                    placeholder="Buscar caso por título ou código…"
+                    className="w-full bg-transparent ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 rounded-md px-2 py-1 text-[11px] outline-none focus:ring-emerald-400"
+                  />
+                  {casoOptions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg max-h-56 overflow-y-auto">
+                      {casoOptions.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); setCaso(c.id, casoLabel(c)); }}
+                          className="w-full text-left px-2.5 py-1.5 text-[11px] hover:bg-neutral-50 dark:hover:bg-neutral-800/60 cursor-pointer truncate"
+                        >
+                          {casoLabel(c)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCasoBuscaAberta(true)}
+                  className="text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
+                >
+                  Vincular a um caso…
+                </button>
+              )}
+            </div>
+
+            {/* Nota interna privada (follow-up) — só o defensor vê; não entra em ofício */}
+            <div className="rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <FileText className="w-3 h-3 text-neutral-400" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+                  Nota privada
+                </span>
+                <span className="text-[9px] text-neutral-400 ml-auto">só você vê · não entra em ofício</span>
+              </div>
+              <textarea
+                value={nota}
+                onChange={(e) => setNota(e.target.value)}
+                onBlur={salvarNota}
+                rows={2}
+                placeholder="Anotações privadas sobre a demanda…"
+                className="w-full resize-y bg-transparent text-[12px] leading-relaxed outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={toggleTodasSecoes}
+                title={todasAbertas ? "Recolher todas as seções" : "Expandir todas as seções"}
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                {todasAbertas ? <ChevronsDownUp className="w-3.5 h-3.5" /> : <ChevronsUpDown className="w-3.5 h-3.5" />}
+                {todasAbertas ? "Recolher tudo" : "Expandir tudo"}
+              </button>
+            </div>
             {visibleSections.map((id) => (
               <CollapsibleSection
                 key={id}

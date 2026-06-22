@@ -1,14 +1,13 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { FileText, CheckCircle, Scissors } from "lucide-react";
+import { CheckCircle, Users, AlertTriangle } from "lucide-react";
 
-const TIER_CONFIG: Record<string, { label: string; color: string }> = {
-  critico: { label: "Crítico", color: "bg-red-100 text-red-700 border-red-200" },
-  alto: { label: "Alto", color: "bg-orange-100 text-orange-700 border-orange-200" },
-  medio: { label: "Médio", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  baixo: { label: "Baixo", color: "bg-zinc-100 text-zinc-500 border-zinc-200" },
-  oculto: { label: "Burocracia", color: "bg-zinc-50 text-zinc-400 border-zinc-100" },
+const TIER_CONFIG: Record<string, { label: string; color: string; rail: string }> = {
+  critico: { label: "Crítico", color: "bg-red-100 text-red-700 border-red-200", rail: "bg-red-500" },
+  alto: { label: "Alto", color: "bg-orange-100 text-orange-700 border-orange-200", rail: "bg-orange-500" },
+  medio: { label: "Médio", color: "bg-blue-100 text-blue-700 border-blue-200", rail: "bg-blue-500" },
+  baixo: { label: "Baixo", color: "bg-zinc-100 text-zinc-500 border-zinc-200", rail: "bg-zinc-400" },
+  oculto: { label: "Burocracia", color: "bg-zinc-50 text-zinc-400 border-zinc-100", rail: "bg-zinc-300" },
 };
 
 const TIPO_TO_TIER: Record<string, string> = {
@@ -84,51 +83,72 @@ export function SectionCard({ section, onClick }: SectionCardProps) {
 
   const pessoas = (section.metadata as any)?.pessoas as Array<{ nome: string; papel: string }> | undefined;
   const fase = (section.metadata as any)?.fase as string | undefined;
+  const faseLabel = fase === "inquerito" ? "Inquérito" : fase === "instrucao" ? "Instrução" : fase === "plenario" ? "Plenário" : null;
+  const pessoasStr = pessoas && pessoas.length > 0 ? pessoas.map((p) => p.nome).join(", ") : null;
+  // Confiança só vira sinal quando baixa (alta é o esperado — não polui o card).
+  const lowConf = section.confianca !== null && section.confianca < 70;
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-3 rounded-lg border border-zinc-200 dark:border-neutral-800 hover:border-zinc-300 dark:hover:border-neutral-700 hover:bg-zinc-50/50 dark:hover:bg-neutral-800/40 transition-all group"
+      className="group w-full text-left flex items-stretch rounded-lg bg-neutral-50/50 dark:bg-neutral-800/20 border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-white dark:hover:bg-neutral-800/40 hover:shadow-sm transition-all duration-150 overflow-hidden cursor-pointer"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Badge variant="outline" className={`text-[10px] shrink-0 ${tierConfig.color}`}>
+      {/* Barra lateral — tier (único elemento cromático do card) */}
+      <div className={`w-1 shrink-0 ${tierConfig.rail}`} />
+      <div className="flex-1 min-w-0 px-3 py-2">
+        {/* Linha 1: tipo · fase … páginas */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400 truncate">
             {tipoLabel}
-          </Badge>
-          {fase && (
-            <Badge variant="outline" className="text-[10px] shrink-0 bg-violet-50 text-violet-600 border-violet-200">
-              {fase === "inquerito" ? "Inquérito" : fase === "instrucao" ? "Instrução" : "Plenário"}
-            </Badge>
+          </span>
+          {faseLabel && (
+            <>
+              <span className="text-[10px] text-neutral-300 dark:text-neutral-600">·</span>
+              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">{faseLabel}</span>
+            </>
           )}
+          <span className="ml-auto shrink-0 text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500">
+            {pageRange}
+          </span>
         </div>
-        <span className="text-[10px] text-zinc-400 dark:text-neutral-500 font-mono shrink-0">{pageRange}</span>
-      </div>
-      <p className="text-sm font-medium text-zinc-800 dark:text-neutral-100 mt-1.5 line-clamp-1">{section.titulo}</p>
-      {section.resumo && (
-        <p className="text-xs text-zinc-500 dark:text-neutral-400 mt-1 line-clamp-2">{section.resumo}</p>
-      )}
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-1.5">
-          {pessoas && pessoas.length > 0 && (
-            <span className="text-[10px] text-zinc-400 dark:text-neutral-500">
-              {pessoas.map(p => p.nome).join(", ")}
+
+        {/* Linha 2: título — dominante */}
+        <p className="text-[13px] font-semibold text-foreground leading-snug mt-0.5 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+          {section.titulo}
+        </p>
+
+        {/* Linha 3: resumo */}
+        {section.resumo && (
+          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5 line-clamp-2">
+            {section.resumo}
+          </p>
+        )}
+
+        {/* Linha 4: pessoas + status (só renderiza se houver algo) */}
+        {(pessoasStr || section.reviewStatus === "approved" || lowConf) && (
+          <div className="flex items-center gap-2 mt-1.5">
+            {pessoasStr && (
+              <span className="inline-flex items-center gap-1 min-w-0 text-[10px] text-neutral-400 dark:text-neutral-500">
+                <Users className="w-2.5 h-2.5 shrink-0" />
+                <span className="truncate">{pessoasStr}</span>
+              </span>
+            )}
+            <span className="ml-auto inline-flex items-center gap-2 shrink-0">
+              {lowConf && (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-500"
+                  title={`Confiança ${section.confianca}% — revisar`}
+                >
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  revisar
+                </span>
+              )}
+              {section.reviewStatus === "approved" && (
+                <CheckCircle className="w-3 h-3 text-emerald-500" />
+              )}
             </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {section.reviewStatus === "approved" && (
-            <CheckCircle className="w-3 h-3 text-emerald-500" />
-          )}
-          {section.confianca !== null && (
-            <span className={`text-[10px] font-mono ${
-              section.confianca >= 90 ? "text-emerald-600" :
-              section.confianca >= 70 ? "text-amber-600" : "text-red-500"
-            }`}>
-              {section.confianca}%
-            </span>
-          )}
-          <FileText className="w-3 h-3 text-zinc-300 dark:text-neutral-600" />
-        </div>
+          </div>
+        )}
       </div>
     </button>
   );
