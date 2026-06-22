@@ -56,6 +56,10 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { useDefensor } from "@/contexts/defensor-context";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
+import { useDebounce } from "@/hooks/use-debounce";
+import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
+import { PrazoCockpitBar } from "./PrazoCockpitBar";
+import { DemandaSearchPalette } from "./DemandaSearchPalette";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -663,6 +667,22 @@ export default function Demandas() {
   const defensorUserId = profissionalAtivo.userId;
   const [searchTerm, setSearchTerm] = useState("");
   const [searchOpen, setSearchOpen] = useState(false); // toggle da busca no formato responsivo menor (abaixo de md)
+  // Paleta de busca global (cmd+K / "/") — salta direto para a demanda (Track G).
+  const [searchPaletteOpen, setSearchPaletteOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const cmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      const slash = e.key === "/" && !typing;
+      if (cmdK || slash) {
+        e.preventDefault();
+        setSearchPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // Ordenação multi-coluna empilhada (click-to-stack)
   type SortCriterion = { column: string; direction: "asc" | "desc" };
   const [sortStack, setSortStack] = useState<SortCriterion[]>([
@@ -853,18 +873,22 @@ export default function Demandas() {
 
   const utils = trpc.useUtils();
 
-  // Search queries para autocomplete de vinculação
+  // Search queries para autocomplete de vinculação.
+  // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
+  // pausa de digitar. Ver docs/specs/demandas-cnj-ux.md.
   const [assistidoSearchQuery, setAssistidoSearchQuery] = useState("");
   const [processoSearchQuery, setProcessoSearchQuery] = useState("");
+  const debouncedAssistidoQuery = useDebounce(assistidoSearchQuery, 250);
+  const debouncedProcessoQuery = useDebounce(processoSearchQuery, 250);
 
   const { data: assistidoSearchResults = [], isLoading: loadingAssistidoSearch } = trpc.demandas.searchAssistidos.useQuery(
-    { search: assistidoSearchQuery },
-    { enabled: assistidoSearchQuery.length >= 2 }
+    { search: debouncedAssistidoQuery },
+    { enabled: debouncedAssistidoQuery.length >= 2 }
   );
 
   const { data: processoSearchResults = [], isLoading: loadingProcessoSearch } = trpc.demandas.searchProcessos.useQuery(
-    { search: processoSearchQuery },
-    { enabled: processoSearchQuery.length >= 2 }
+    { search: debouncedProcessoQuery },
+    { enabled: debouncedProcessoQuery.length >= 2 }
   );
 
   // Batch fetch — eventos por demanda (última atividade + pendência) para Kanban cards
@@ -1080,6 +1104,8 @@ export default function Demandas() {
       assistido: d.assistido?.nome || d.titulo || "Sem assistido",
       assistidoId: d.assistido?.id || d.assistidoId || null,
       processoId: d.processo?.id || d.processoId || null,
+      casoId: (d as any).casoId ?? null,
+      notaPrivada: (d as any).notaPrivada ?? null,
       // Usar substatus granular quando disponível, senão mapear do status coarse do DB
       status: d.substatus || DB_STATUS_TO_UI[d.status] || d.status?.toLowerCase().replace(/_/g, " ") || "triagem", // "triagem" is a valid substatus key in DEMANDA_STATUS
       prazo: d.prazo ? new Date(d.prazo + "T12:00:00").toLocaleDateString("pt-BR") : "",
@@ -1407,21 +1433,31 @@ export default function Demandas() {
   };
 
   const handleProcessoChange = (demandaId: string, numero: string) => {
+    // Normaliza para a máscara CNJ quando há 20 dígitos; senão preserva o texto
+    // (o defensor pode registrar um número provisório/incompleto).
+    const digits = onlyDigits(numero);
+    const numeroNormalizado = digits.length === 20 ? formatCnj(digits) : numero;
+
     // Optimistic update local
     setDemandas((prev) =>
       prev.map((d) =>
         d.id === demandaId
-          ? { ...d, processos: d.processos?.length ? [{ ...d.processos[0], numero }] : [{ tipo: "", numero }] }
+          ? { ...d, processos: d.processos?.length ? [{ ...d.processos[0], numero: numeroNormalizado }] : [{ tipo: "", numero: numeroNormalizado }] }
           : d
       )
     );
 
     const numericId = parseInt(demandaId, 10);
     if (!isNaN(numericId)) {
-      updateDemandaMutation.mutate({ id: numericId, processoNumero: numero });
+      updateDemandaMutation.mutate({ id: numericId, processoNumero: numeroNormalizado });
     }
 
-    toast.success("Numero do processo atualizado!");
+    // DV não confere → avisa, mas NÃO bloqueia (número pode ser provisório).
+    if (digits.length === 20 && !isValidCnj(digits)) {
+      toast.warning("DV do CNJ não confere — confira o número do processo.");
+    } else {
+      toast.success("Numero do processo atualizado!");
+    }
   };
 
   // Vincular demanda a um assistido existente (via autocomplete)
@@ -3268,6 +3304,14 @@ export default function Demandas() {
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
         {activeTab === "planilha" ? (
         <>
+        {/* Cockpit de prazos — leitura imediata do que exige ação (Track F) */}
+        {!showArchived && (
+          <PrazoCockpitBar
+            counts={pillCounts}
+            activeFilters={pillFilters}
+            onToggle={(key) => togglePill(key)}
+          />
+        )}
 
         {/* Lista de Demandas */}
         <div className="group/card relative bg-white dark:bg-neutral-900">
@@ -4109,6 +4153,17 @@ export default function Demandas() {
           initialDestinatarioId={colegaDropContext.destinatarioId}
         />
       )}
+
+      {/* Paleta de busca global (cmd+K / "/") */}
+      <DemandaSearchPalette
+        open={searchPaletteOpen}
+        demandas={demandas as any}
+        onClose={() => setSearchPaletteOpen(false)}
+        onSelect={(id) => {
+          setSearchPaletteOpen(false);
+          setPreviewDemandaId(id);
+        }}
+      />
 
       {/* Quick-preview Sheet lateral */}
       <DemandaQuickPreview

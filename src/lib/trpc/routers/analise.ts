@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
 import { processos, assistidos } from "@/lib/db/schema/core";
 import { eq, and, or, isNull, inArray } from "drizzle-orm";
+import { activeBlockers } from "@/lib/daemon/task-lifecycle.mjs";
 
 // ==========================================
 // ANALISE ROUTER
@@ -51,11 +52,21 @@ export const analiseRouter = router({
         existingConditions.push(isNull(claudeCodeTasks.casoId));
       }
 
-      const [existing] = await db
-        .select({ id: claudeCodeTasks.id })
+      const candidates = await db
+        .select({
+          id: claudeCodeTasks.id,
+          status: claudeCodeTasks.status,
+          startedAt: claudeCodeTasks.startedAt,
+          createdAt: claudeCodeTasks.createdAt,
+        })
         .from(claudeCodeTasks)
-        .where(and(...existingConditions))
-        .limit(1);
+        .where(and(...existingConditions));
+
+      // Tarefas presas em `processing` (daemon morto/CLI travado) viram zumbis e
+      // NÃO devem bloquear novas análises — senão o assistido fica travado para
+      // sempre. O reaper do daemon as marca como `failed` depois. Ver
+      // docs/specs/daemon-reliability.md.
+      const [existing] = activeBlockers(candidates, Date.now());
 
       if (existing) {
         return {

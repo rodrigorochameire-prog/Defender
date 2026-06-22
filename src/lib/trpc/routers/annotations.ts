@@ -10,14 +10,20 @@ const annotationCorEnum = z.enum([
   "pink", "teal", "indigo", "orange", "cyan",
 ]);
 
-// Annotation types: highlight, note, underline, bookmark
-const annotationTipoEnum = z.enum(["highlight", "note", "underline", "bookmark"]);
+// Annotation types: highlight, note, underline, bookmark, ink (caneta livre)
+const annotationTipoEnum = z.enum(["highlight", "note", "underline", "bookmark", "ink"]);
 
-// Position schema: supports both legacy single-rect and new multi-rect
+// Position schema: single-rect (legacy), multi-rect, ou ink (traços à mão livre).
+// Ink guarda paths normalizados [0..1]: paths[traço][ponto] = [x, y].
 const singleRectSchema = z.object({ x: z.number(), y: z.number(), width: z.number(), height: z.number() });
+const inkSchema = z.object({
+  paths: z.array(z.array(z.tuple([z.number(), z.number()]))),
+  strokeWidth: z.number().optional(),
+});
 const posicaoSchema = z.union([
   singleRectSchema,
   z.object({ rects: z.array(singleRectSchema) }),
+  inkSchema,
 ]).optional();
 
 export const annotationsRouter = router({

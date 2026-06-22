@@ -62,6 +62,7 @@ import { toast } from "sonner";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 import { rotuloDelegacaoChip } from "./delegacao-chip";
+import { wipHealth, WIP_LIMITS } from "./kanban-wip";
 
 // Context para edição do ato direto no card do kanban. Evita threadar
 // onAtoChange por todos os níveis (colunas, listas, agrupamentos) — o
@@ -1081,6 +1082,21 @@ function ColumnHeader({
   const Icon = config.icon;
   const color = config.color;
 
+  // Consciência de WIP: avisa quando a coluna passa do limite saudável (kanban-wip.ts).
+  const health = wipHealth(count, WIP_LIMITS[group]);
+  const healthStyle =
+    health === "danger"
+      ? { backgroundColor: "#ef444420", color: "#dc2626" }
+      : health === "warn"
+        ? { backgroundColor: "#f59e0b20", color: "#d97706" }
+        : { backgroundColor: `${color}15`, color };
+  const healthTitle =
+    health === "danger"
+      ? `${count} em andamento — acima do limite saudável (${WIP_LIMITS[group]?.danger}). Considere concluir ou delegar.`
+      : health === "warn"
+        ? `${count} em andamento — atenção ao acúmulo (WIP ≥ ${WIP_LIMITS[group]?.warn}).`
+        : undefined;
+
   return (
     <div
       className={`
@@ -1102,11 +1118,14 @@ function ColumnHeader({
         {config.label}
       </span>
       <span
-        className="ml-auto text-[10px] font-mono font-bold tabular-nums px-1.5 py-0.5 rounded-md"
-        style={{
-          backgroundColor: `${color}15`,
-          color,
-        }}
+        className={cn(
+          "ml-auto text-[10px] font-mono font-bold tabular-nums px-1.5 py-0.5 rounded-md",
+          health !== "ok" && "ring-1 ring-inset",
+          health === "danger" && "ring-red-300 dark:ring-red-800",
+          health === "warn" && "ring-amber-300 dark:ring-amber-800",
+        )}
+        style={healthStyle}
+        title={healthTitle}
       >
         {count}
       </span>
