@@ -3,6 +3,7 @@ import {
   computePrisaoStatus,
   detectExcessoPrazoPreventiva,
   detectFlagranteSemCustodia,
+  detectTempoFatoDenunciaExcessivo,
 } from "@/lib/cronologia/flags";
 
 describe("computePrisaoStatus", () => {
@@ -117,6 +118,63 @@ describe("detectExcessoPrazoPreventiva — consciência de fase", () => {
       [],
     );
     expect(flag).toBeNull();
+  });
+});
+
+describe("detectTempoFatoDenunciaExcessivo", () => {
+  const diasAtras = (n: number) =>
+    new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+
+  it("flag quando fato antigo e ainda SEM denúncia (mede fato→hoje)", () => {
+    const flag = detectTempoFatoDenunciaExcessivo([
+      { tipo: "fato", data: diasAtras(1200) },
+    ]);
+    expect(flag).toBeTruthy();
+    expect(flag!.marcoFinal).toBe("hoje");
+    expect(flag!.diasFatoDenuncia).toBeGreaterThanOrEqual(1190);
+    expect(flag!.nivel).toBe("amber"); // 1200 < 1460
+  });
+
+  it("flag 'red' com gap fato→denúncia muito grande", () => {
+    const flag = detectTempoFatoDenunciaExcessivo([
+      { tipo: "fato", data: diasAtras(1600) },
+      { tipo: "denuncia", data: diasAtras(100) }, // gap = 1500d
+    ]);
+    expect(flag).toBeTruthy();
+    expect(flag!.marcoFinal).toBe("denuncia");
+    expect(flag!.diasFatoDenuncia).toBeGreaterThanOrEqual(1490);
+    expect(flag!.nivel).toBe("red");
+  });
+
+  it("não flag quando gap fato→denúncia é curto, mesmo com fato antigo", () => {
+    const flag = detectTempoFatoDenunciaExcessivo([
+      { tipo: "fato", data: diasAtras(1200) },
+      { tipo: "denuncia", data: diasAtras(1100) }, // gap = 100d
+    ]);
+    expect(flag).toBeNull();
+  });
+
+  it("não flag quando fato recente sem denúncia (400d < limite)", () => {
+    const flag = detectTempoFatoDenunciaExcessivo([
+      { tipo: "fato", data: diasAtras(400) },
+    ]);
+    expect(flag).toBeNull();
+  });
+
+  it("aceita recebimento-denuncia como marco final", () => {
+    const flag = detectTempoFatoDenunciaExcessivo([
+      { tipo: "fato", data: diasAtras(1300) },
+      { tipo: "recebimento-denuncia", data: diasAtras(50) }, // gap = 1250d
+    ]);
+    expect(flag).toBeTruthy();
+    expect(flag!.diasFatoDenuncia).toBeGreaterThanOrEqual(1240);
+  });
+
+  it("retorna null sem marco de fato", () => {
+    expect(detectTempoFatoDenunciaExcessivo([])).toBeNull();
+    expect(
+      detectTempoFatoDenunciaExcessivo([{ tipo: "denuncia", data: diasAtras(10) }]),
+    ).toBeNull();
   });
 });
 

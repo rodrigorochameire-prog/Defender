@@ -60,6 +60,12 @@ Onde mora o valor. Cada flag é uma função pura testável (entrada estruturada
 
 Prioridade por valor/urgência:
 1. **Prescrição executória iminente** (Fase IX) — pode extinguir pena. Função pura `prazo_109_cp × reincidência × idade`. *(Bloqueada: Fase IX não tem schema de execução ainda.)*
+0. **Tempo fato→denúncia excessivo** (Fase IV) — `[✅ I.2b concluído 2026-06-22]` `detectTempoFatoDenunciaExcessivo` em `flags.ts` (limites tunáveis 3a/4a, amber/red, sinal de prescrição da pretensão punitiva — não afirma, manda checar). 6 testes; UI no `situacao-atual-block` com container temático (rose=custódia, amber=só timeline).
+
+> **Bloqueadas por falta de schema/dado (não implementáveis sem inventar — "threshold rigoroso"):**
+> - Cautelar descumprida *sem incidente*: não há marco `incidente` no enum.
+> - **I.3 ANPP cabível não oferecido**: só existe `delitos.cabeAnpp` (catálogo), falta o par per-processo cabível∧não-oferecido. → precede schema ANPP (Fase X).
+> - **I.4 uso instrumental da LMP**: MPU só tem `tiposViolencia`; falta bloco `contexto_civel` (divórcio/guarda). → precede Fase VII.
 2. **Excesso de prazo — preventiva** (Fase IV) — `[✅ I.2 concluído 2026-06-22]` evoluído de cego-pós-denúncia para **consciente de fase** (pré-denúncia 80d / instrução 150d / pós-sentença 540d) + severidade amber/red calibrada. Função pura `detectExcessoPrazoPreventiva` em `src/lib/cronologia/flags.ts`, 14 testes; UI `situacao-atual-block` agora pinta por `nivel`. Dados já existiam (`prisoes` + `marcos_processuais`).
 3. **ANPP cabível não oferecido** (Fase X) — argumento recursal.
 4. **Uso instrumental da LMP** (Fase VII) — score ≥3 indicadores; copy ultra-cuidadosa.

@@ -121,6 +121,58 @@ export function detectExcessoPrazoPreventiva(
   };
 }
 
+/**
+ * Limites para o intervalo fato → denúncia (em dias), sinal de risco de
+ * prescrição da pretensão punitiva. Heurística conservadora e tunável: o
+ * patamar mínimo do art. 109 CP é 3 anos; sinalizamos para o defensor checar
+ * a prescrição concreta (que depende da pena), não afirmamos prescrição.
+ */
+export const LIMITE_FATO_DENUNCIA_DIAS = 1095; // ~3 anos
+const LIMITE_FATO_DENUNCIA_RED_DIAS = 1460; // ~4 anos
+
+export interface TempoFatoDenunciaFlag {
+  diasFatoDenuncia: number;
+  /** "denuncia" = medido até a denúncia/recebimento; "hoje" = ainda sem denúncia. */
+  marcoFinal: "denuncia" | "hoje";
+  nivel: "amber" | "red";
+  motivo: string;
+}
+
+export function detectTempoFatoDenunciaExcessivo(
+  marcos: MarcoMin[],
+): TempoFatoDenunciaFlag | null {
+  const fatos = marcos
+    .filter((m) => m.tipo === "fato")
+    .map((m) => new Date(m.data))
+    .filter((d) => !isNaN(d.getTime()))
+    .sort((a, b) => a.getTime() - b.getTime());
+  const fato = fatos[0];
+  if (!fato) return null;
+
+  const denuncias = marcos
+    .filter((m) => m.tipo === "denuncia" || m.tipo === "recebimento-denuncia")
+    .map((m) => new Date(m.data))
+    .filter((d) => !isNaN(d.getTime()) && d.getTime() >= fato.getTime())
+    .sort((a, b) => a.getTime() - b.getTime());
+  const denuncia = denuncias[0];
+
+  const fim = denuncia ?? new Date();
+  const marcoFinal: "denuncia" | "hoje" = denuncia ? "denuncia" : "hoje";
+  const diasFatoDenuncia = Math.max(0, differenceInDays(fim, fato));
+  if (diasFatoDenuncia <= LIMITE_FATO_DENUNCIA_DIAS) return null;
+
+  const nivel: "amber" | "red" =
+    diasFatoDenuncia > LIMITE_FATO_DENUNCIA_RED_DIAS ? "red" : "amber";
+  const sufixo =
+    marcoFinal === "hoje" ? "e ainda sem denúncia" : "até a denúncia";
+  return {
+    diasFatoDenuncia,
+    marcoFinal,
+    nivel,
+    motivo: `${diasFatoDenuncia} dias entre o fato ${sufixo} — verificar prescrição da pretensão punitiva`,
+  };
+}
+
 export interface FlagranteSemCustodiaFlag {
   diasDesdeFlagrante: number;
 }
