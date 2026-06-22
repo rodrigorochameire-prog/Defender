@@ -3,7 +3,7 @@
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, XCircle, Clock, AlertTriangle, Activity, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, AlertTriangle, Activity, RefreshCw, Globe } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -22,7 +22,10 @@ export default function DaemonPage() {
     );
   }
 
-  const { daemon, queue, recent } = data;
+  const { daemon, browserDaemon, queue, lanes, recent } = data;
+  const browserMeta = (browserDaemon.metadata?.browser ?? null) as
+    | { up?: boolean; adopted?: boolean; managed?: boolean; port?: number }
+    | null;
 
   return (
     <div className="p-6 space-y-6 max-w-6xl">
@@ -104,6 +107,102 @@ export default function DaemonPage() {
         </CardContent>
       </Card>
 
+      {/* Browser Broker (lane scraping) */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Browser Broker — lane scraping (PJe / Solar)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div
+              className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-full",
+                browserDaemon.alive ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-rose-100 dark:bg-rose-900/30",
+              )}
+            >
+              <Globe
+                className={cn(
+                  "h-6 w-6",
+                  browserDaemon.alive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
+                )}
+              />
+            </div>
+            <div>
+              <p className="font-medium">
+                {browserDaemon.alive ? (
+                  <span className="text-emerald-600 dark:text-emerald-400">Ativo</span>
+                ) : (
+                  <span className="text-rose-600 dark:text-rose-400">Parado</span>
+                )}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {browserDaemon.lastSeen
+                  ? `Último heartbeat: ${formatDistanceToNow(new Date(browserDaemon.lastSeen), { locale: ptBR, addSuffix: true })}`
+                  : "Nunca visto — broker não deployado"}
+                {browserDaemon.secondsSinceHeartbeat !== null && ` (${browserDaemon.secondsSinceHeartbeat}s)`}
+              </p>
+            </div>
+          </div>
+
+          {/* Sessão Chromium (CDP) */}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Chromium:</span>
+            {browserMeta ? (
+              <>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded px-1.5 py-0.5 font-medium",
+                    browserMeta.up
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                      : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+                  )}
+                >
+                  {browserMeta.up ? "sessão ativa" : "sem sessão"}
+                </span>
+                <span className="text-muted-foreground font-mono">
+                  CDP :{browserMeta.port ?? "?"} · {browserMeta.adopted ? "adotado" : browserMeta.managed ? "gerenciado" : "—"}
+                </span>
+              </>
+            ) : (
+              <span className="text-muted-foreground">sem dados de sessão</span>
+            )}
+          </div>
+
+          {browserMeta && !browserMeta.up && (
+            <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <p className="font-medium">Chromium sem sessão.</p>
+              <p className="mt-1">
+                Abra um Chromium logado no PJe/Solar com{" "}
+                <code className="font-mono">--remote-debugging-port={browserMeta.port ?? 9222}</code> (o broker adota),
+                ou aguarde o broker lançar o gerenciado.
+              </p>
+            </div>
+          )}
+
+          {!browserDaemon.alive && (
+            <div className="mt-3 rounded border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-200">
+              <p className="font-medium">Browser broker parado.</p>
+              <p className="mt-1">
+                No M4 Pro:{" "}
+                <code className="font-mono">launchctl load ~/Library/LaunchAgents/com.ombuds.browser-broker.plist</code>
+              </p>
+            </div>
+          )}
+
+          {/* Fila da lane browser */}
+          {lanes.browser && (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              {Object.entries(lanes.browser).map(([status, n]) => (
+                <span key={status} className="inline-flex items-center gap-1 rounded border px-2 py-1">
+                  <StatusBadge status={status} />
+                  <span className="font-mono">{n}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Queue stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <StatCard label="Pendentes" value={queue.pending} icon={Clock} tone="default" />
@@ -152,7 +251,12 @@ export default function DaemonPage() {
                     return (
                       <tr key={t.id} className="border-b last:border-0">
                         <td className="py-2 pr-3 font-mono">{t.id}</td>
-                        <td className="py-2 pr-3">{t.skill}</td>
+                        <td className="py-2 pr-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <LaneBadge lane={t.lane} />
+                            {t.skill}
+                          </span>
+                        </td>
                         <td className="py-2 pr-3">
                           <StatusBadge status={t.status} />
                         </td>
@@ -210,6 +314,23 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function LaneBadge({ lane }: { lane: string }) {
+  const isBrowser = lane === "browser";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium uppercase tracking-wide",
+        isBrowser
+          ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+          : "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+      )}
+      title={isBrowser ? "lane browser (scraping)" : "lane ai (claude -p)"}
+    >
+      {isBrowser ? "web" : "ai"}
+    </span>
   );
 }
 

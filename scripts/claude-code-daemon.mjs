@@ -209,14 +209,22 @@ async function ingestClassification(task, resultado) {
 
 // --- Process a single task ---
 async function processTask(task) {
+  // Lane guard: este daemon só processa a lane 'ai'. Tarefas 'browser' são do
+  // browser-broker (ver docs/plans/2026-06-21-daemon-browser-lane-design.md).
+  // `lane` tem default 'ai' NOT NULL, então tarefas legadas/sem-lane caem aqui.
+  if (task.lane && task.lane !== 'ai') {
+    return
+  }
+
   console.log(`${LOG_PREFIX} Processing task ${task.id} (skill: ${task.skill})`)
 
-  // Optimistic lock
+  // Optimistic lock (também trava a lane p/ não competir com o broker)
   const { data, error: lockErr } = await supabase
     .from('claude_code_tasks')
     .update({ status: 'processing', started_at: new Date().toISOString() })
     .eq('id', task.id)
     .eq('status', 'pending')
+    .eq('lane', 'ai')
     .select()
 
   if (lockErr || !data?.length) {
@@ -345,6 +353,7 @@ async function catchUp(reason = 'manual') {
       .from('claude_code_tasks')
       .select('*')
       .eq('status', 'pending')
+      .eq('lane', 'ai')
       .order('created_at', { ascending: true })
 
     if (error) {
@@ -373,6 +382,7 @@ async function reapZombies(reason = 'periodic') {
     .from('claude_code_tasks')
     .select('id, status, started_at, created_at')
     .eq('status', 'processing')
+    .eq('lane', 'ai')
 
   if (error) {
     console.error(`${LOG_PREFIX} Reaper query failed:`, error.message)
@@ -430,6 +440,9 @@ function subscribe() {
   channel = supabase
     .channel('claude-code-tasks')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'claude_code_tasks' }, (payload) => {
+      // Ignora tarefas de outra lane no caminho rápido (o guard em processTask
+      // também cobre, mas isto evita log/ruído p/ tarefas do browser-broker).
+      if (payload.new.lane && payload.new.lane !== 'ai') return
       console.log(`${LOG_PREFIX} New task received: ${payload.new.id}`)
       processTask(payload.new)
     })

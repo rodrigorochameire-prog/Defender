@@ -433,6 +433,10 @@ export const claudeCodeTasks = pgTable("claude_code_tasks", {
   processoId: integer("processo_id").references(() => processos.id),
   casoId: integer("caso_id").references(() => casos.id),
   skill: text("skill").notNull(),
+  // Execution lane: 'ai' (claude -p, default) | 'browser' (CDP+Patchright worker).
+  // Default 'ai' keeps every existing insert path and row on the current daemon.
+  // See docs/plans/2026-06-21-daemon-browser-lane-design.md
+  lane: text("lane").notNull().default("ai"),
   prompt: text("prompt").notNull(),
   instrucaoAdicional: text("instrucao_adicional"),
   status: text("status").notNull().default("pending"),
@@ -447,6 +451,7 @@ export const claudeCodeTasks = pgTable("claude_code_tasks", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("claude_code_tasks_status_idx").on(table.status),
+  index("claude_code_tasks_lane_status_idx").on(table.lane, table.status),
   index("claude_code_tasks_assistido_id_idx").on(table.assistidoId),
   index("claude_code_tasks_caso_id_idx").on(table.casoId),
 ]);
