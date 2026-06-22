@@ -33,6 +33,13 @@ const ReactPdfPage = dynamic(
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { cn } from "@/lib/utils";
+import { PerguntarAoAutoPanel } from "./PerguntarAoAutoPanel";
+import { showFullToolbar, showCompactPalette, reconcileCollapsed } from "./annotation-toolbar";
+import { InkCanvas } from "./InkCanvas";
+import { toSvgPath, type NormPoint } from "./ink-geometry";
+import { buildCitationGroups, citationsToText, filterCitations, type CitationCategory } from "./citation-export";
+import { createOptimisticIdFactory } from "./optimistic-id";
+import { buildMinutaPrompt } from "./minuta-prompt";
 
 // Opções de carregamento do react-pdf — referência ESTÁVEL (módulo-level) p/ não
 // disparar reload a cada render. disableStream/disableRange forçam o pdfjs a baixar
@@ -58,6 +65,7 @@ import {
   Scale,
   Users,
   ScrollText,
+  Rows3,
   FileCheck,
   Microscope,
   Shield,
@@ -82,6 +90,7 @@ import {
   StickyNote,
   Trash2,
   Underline,
+  Minus,
   Bookmark,
   Settings2,
   Pencil,
@@ -101,6 +110,13 @@ import {
   UserCheck,
   Crosshair,
   ScanFace,
+  Download,
+  Printer,
+  MoreHorizontal,
+  RotateCw,
+  RotateCcw,
+  Images,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useProcessingQueue } from "@/contexts/processing-queue";
@@ -132,6 +148,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { FileLinkDialog } from "./FileLinkDialog";
@@ -463,6 +481,84 @@ function normalizeAnnotationRects(posicao: any): Rect[] {
   return [];
 }
 
+// ─── Thumbnail de página ────────────────────────────────────────────
+// Renderiza UMA página em miniatura a partir do proxy pdfjs já carregado
+// (sem segundo download do PDF). Render só quando entra no viewport.
+const THUMB_WIDTH = 116;
+
+function PdfThumbnail({
+  pdf, pageNumber, rotation, active, onClick,
+}: {
+  pdf: any;
+  pageNumber: number;
+  rotation: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const wrapRef = useRef<HTMLButtonElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) { setVisible(true); io.disconnect(); } },
+      { rootMargin: "300px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible || !pdf) return;
+    let cancelled = false;
+    let task: any = null;
+    setRendered(false);
+    (async () => {
+      try {
+        const page = await pdf.getPage(pageNumber);
+        if (cancelled) return;
+        const base = page.getViewport({ scale: 1, rotation });
+        const vp = page.getViewport({ scale: THUMB_WIDTH / base.width, rotation });
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext("2d");
+        if (!canvas || !ctx) return;
+        canvas.width = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        task = page.render({ canvasContext: ctx, viewport: vp });
+        await task.promise;
+        if (!cancelled) setRendered(true);
+      } catch { /* cancel/render race — ignora */ }
+    })();
+    return () => { cancelled = true; try { task?.cancel(); } catch { /* noop */ } };
+  }, [visible, pdf, pageNumber, rotation]);
+
+  return (
+    <button
+      ref={wrapRef}
+      onClick={onClick}
+      className={cn(
+        "group flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors cursor-pointer",
+        active ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-400/60" : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
+      )}
+    >
+      <div className="relative" style={{ width: THUMB_WIDTH, aspectRatio: "1 / 1.414" }}>
+        {!rendered && <div className="absolute inset-0 rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse" />}
+        <canvas
+          ref={canvasRef}
+          className={cn("block rounded shadow-sm ring-1 ring-black/[0.06] max-w-full h-auto transition-opacity", !rendered && "opacity-0")}
+          style={{ width: THUMB_WIDTH }}
+        />
+      </div>
+      <span className={cn("text-[10px] tabular-nums", active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400")}>
+        {pageNumber}
+      </span>
+    </button>
+  );
+}
+
 // ─── PDF Text Layer Styles ──────────────────────────────────────────
 
 const PDF_TEXT_LAYER_STYLES = `
@@ -496,6 +592,13 @@ const PDF_TEXT_LAYER_STYLES = `
   .pdf-underline-mode .react-pdf__Page__textContent.textLayer span::-moz-selection {
     background: rgba(52, 211, 153, 0.35);
   }
+  /* Temas de leitura — filtro só no canvas (grifos/texto/UI intactos) */
+  [data-reading-theme="sepia"] .react-pdf__Page__canvas {
+    filter: sepia(0.38) brightness(0.97) contrast(0.96) saturate(0.92);
+  }
+  [data-reading-theme="dark"] .react-pdf__Page__canvas {
+    filter: invert(0.92) hue-rotate(180deg) brightness(0.95) contrast(0.95);
+  }
 `;
 
 // ─── Types ─────────────────────────────────────────────────────────
@@ -511,6 +614,9 @@ interface PdfViewerModalProps {
   /** Embute o viewer dentro do container pai (preenche o espaço, sem o overlay
    *  fullscreen escuro). Usado no painel encaixado à esquerda do sheet de evento. */
   embedded?: boolean;
+  /** Termo a buscar ao abrir (ex.: "Num. X" de um depoimento) — abre a busca já
+   *  posicionada no ponto do documento. */
+  initialSearch?: string | null;
 }
 
 interface DocumentSection {
@@ -1200,22 +1306,32 @@ function FilesPanel({
 
 function AnnotationsPanel({
   annotations,
+  categories = [],
   onNavigate,
   onDelete,
+  onSaveAsRegistro,
+  onGerarMinuta,
+  gerandoMinuta,
 }: {
   annotations: any[];
+  categories?: CitationCategory[];
   onNavigate: (page: number) => void;
   onDelete: (id: number) => void;
+  onSaveAsRegistro?: (a: any) => void;
+  onGerarMinuta?: () => void;
+  gerandoMinuta?: boolean;
 }) {
+  const [query, setQuery] = useState("");
+  const visible = useMemo(() => filterCitations(annotations, query), [annotations, query]);
   const grouped = useMemo(() => {
     const map = new Map<number, typeof annotations>();
-    for (const a of annotations) {
+    for (const a of visible) {
       const page = a.pagina;
       if (!map.has(page)) map.set(page, []);
       map.get(page)!.push(a);
     }
     return Array.from(map.entries()).sort(([a], [b]) => a - b);
-  }, [annotations]);
+  }, [visible]);
 
   // Use centralized ANNOTATION_COLORS for all color lookups
 
@@ -1250,8 +1366,70 @@ function AnnotationsPanel({
     );
   }
 
+  const exportarCitacoes = () => {
+    // Agrupa por categoria semântica da cor (Fatos/Teses/Provas…) — o esqueleto da
+    // peça. Respeita o filtro de busca ativo. Ver docs/specs/caderno-citacoes.md.
+    const groups = buildCitationGroups(visible, categories);
+    const total = groups.reduce((n, g) => n + g.items.length, 0);
+    if (total === 0) {
+      toast.info("Nenhum grifo com texto para exportar");
+      return;
+    }
+    navigator.clipboard.writeText(citationsToText(groups));
+    toast.success(`${total} citação(ões) em ${groups.length} categoria(s) copiada(s)`);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
+      <div className="flex flex-col gap-2 px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+            {query ? `${visible.length}/${annotations.length}` : annotations.length} anota{annotations.length === 1 ? "ção" : "ções"}
+          </span>
+          <div className="flex items-center gap-1">
+            {onGerarMinuta && (
+              <button
+                type="button"
+                onClick={onGerarMinuta}
+                disabled={gerandoMinuta}
+                title="Gerar rascunho de peça a partir dos grifos (via daemon)"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200 dark:ring-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Wand2 className="w-3 h-3" />
+                {gerandoMinuta ? "Enviando…" : "Gerar minuta"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={exportarCitacoes}
+              title="Copiar grifos agrupados por categoria (Fatos, Teses, Provas…)"
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+            >
+              <FileDown className="w-3 h-3" />
+              Exportar
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-md ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 px-2 h-7">
+          <Search className="w-3 h-3 text-neutral-400 shrink-0" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar nos grifos…"
+            className="flex-1 bg-transparent text-[11px] outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery("")} title="Limpar" className="text-neutral-400 hover:text-neutral-600 cursor-pointer">
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      {grouped.length === 0 && (
+        <div className="px-3 py-6 text-center text-[11px] text-neutral-400">
+          Nenhum grifo corresponde a “{query}”.
+        </div>
+      )}
       {grouped.map(([page, items]) => (
         <div key={page}>
           <div className="px-3 py-1.5 bg-gradient-to-r from-neutral-50 to-neutral-100/50 dark:from-neutral-800/40 dark:to-neutral-800/20 border-b border-neutral-100 dark:border-neutral-800 sticky top-0 z-10 backdrop-blur-sm">
@@ -1319,6 +1497,18 @@ function AnnotationsPanel({
                     )}
                   </div>
                 </div>
+                {onSaveAsRegistro && (a.texto || a.textoSelecionado) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSaveAsRegistro(a);
+                    }}
+                    title="Salvar como registro no OMBUDS"
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200"
+                  >
+                    <BookOpen className="w-3 h-3 text-emerald-500" />
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1828,12 +2018,12 @@ const HighlightOverlay = memo(function HighlightOverlay({
                 borderRadius: "1px",
               } : {
                 left: `${rect.x * 100}%`,
-                top: `${rect.y * 100}%`,
+                top: `${(rect.y - 0.002) * 100}%`,
                 width: `${rect.width * 100}%`,
-                height: `${rect.height * 100}%`,
+                height: `${(rect.height + 0.004) * 100}%`,
                 backgroundColor: hlColor.hexLight,
-                opacity: 0.55,
-                borderRadius: "2px",
+                opacity: 0.5,
+                borderRadius: "3px",
                 mixBlendMode: "multiply" as const,
               }}
             />
@@ -1992,6 +2182,7 @@ export function PdfViewerModal({
   siblingFiles,
   onFileChange,
   embedded = false,
+  initialSearch,
 }: PdfViewerModalProps) {
   // State
   const { addJob, updateJob: updateQueueJob, completeJob, failJob } = useProcessingQueue();
@@ -2003,7 +2194,7 @@ export function PdfViewerModal({
   const [selectedSection, setSelectedSection] = useState<ReactPdfDocumentSection | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso">("files");
+  const [sidebarTab, setSidebarTab] = useState<"sections" | "files" | "annotations" | "bookmarks" | "caso" | "paginas" | "perguntar">("files");
   const [viewMode, setViewMode] = useState<"custom" | "fit-width">("fit-width");
   const [fitWidthScale, setFitWidthScale] = useState(1.0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -2018,6 +2209,16 @@ export function PdfViewerModal({
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const selectionDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Tema de leitura — normal | sepia | dark (filtro só no canvas do PDF)
+  const [readingTheme, setReadingTheme] = useState<"normal" | "sepia" | "dark">("normal");
+
+  // Rotação (0/90/180/270). Enquanto != 0, grifos/recorte ficam desabilitados
+  // (o sistema de coordenadas dos overlays é relativo ao canvas não-rotacionado).
+  const [rotation, setRotation] = useState(0);
+  const rotatePage = useCallback((dir: 1 | -1) => {
+    setRotation((r) => (r + dir * 90 + 360) % 360);
+  }, []);
+
   // Image capture mode
   const [isCaptureMode, setIsCaptureMode] = useState(false);
   const [captureStart, setCaptureStart] = useState<{ x: number; y: number } | null>(null);
@@ -2025,11 +2226,13 @@ export function PdfViewerModal({
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showCaptureDialog, setShowCaptureDialog] = useState(false);
 
-  // Modo de leitura: "paginada" (1 página por vez) ou "rolagem" (todas em coluna).
-  // Persistido em localStorage para abrir sempre na preferência do defensor.
-  const [readMode, setReadMode] = useState<"paginada" | "rolagem">(() => {
-    if (typeof window === "undefined") return "paginada";
-    return (localStorage.getItem("pdf_read_mode") as "paginada" | "rolagem") || "paginada";
+  // Modo de leitura: "paginada" (1 página por vez), "rolagem" (todas em coluna,
+  // scroll livre) ou "snap" (todas em coluna, mas o scroll encaixa uma página
+  // por vez). Persistido em localStorage.
+  type ReadMode = "paginada" | "rolagem" | "snap";
+  const [readMode, setReadMode] = useState<ReadMode>(() => {
+    if (typeof window === "undefined") return "rolagem";
+    return (localStorage.getItem("pdf_read_mode") as ReadMode) || "rolagem";
   });
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("pdf_read_mode", readMode);
@@ -2090,11 +2293,37 @@ export function PdfViewerModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isCaptureMode]);
 
+  // A captura de imagem é por página (o overlay só renderiza no modo paginado).
+  // Ao entrar em captura, força paginado (guardando o modo anterior); ao sair,
+  // restaura. Cobre todos os caminhos (botão, Esc), inclusive com rolagem/snap
+  // como padrão — senão a captura "não funcionava" fora do paginado.
+  const prevReadModeRef = useRef<ReadMode | null>(null);
+  useEffect(() => {
+    if (isCaptureMode) {
+      if (readModeRef.current !== "paginada") {
+        prevReadModeRef.current = readModeRef.current;
+        setReadMode("paginada");
+      }
+    } else if (prevReadModeRef.current) {
+      setReadMode(prevReadModeRef.current);
+      prevReadModeRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCaptureMode]);
+
   // Section filter: hide burocracia by default
   const [hideBurocracia, setHideBurocracia] = useState(true);
 
   // Annotation mode
-  const [annotationMode, setAnnotationMode] = useState<"none" | "highlight" | "underline" | "note">("none");
+  const [annotationMode, setAnnotationMode] = useState<"none" | "highlight" | "underline" | "note" | "ink">("none");
+  // Toolbar colapsável (GoodNotes): minimiza a barra para uma pílula flutuante sem
+  // perder o modo de grifo. `reconcileCollapsed` garante que sair da anotação expande.
+  // Ver docs/specs/grifador-premium.md.
+  const [toolbarCollapsed, setToolbarCollapsed] = useState(false);
+  const annotationCollapsed = reconcileCollapsed(annotationMode, toolbarCollapsed);
+  useEffect(() => {
+    if (annotationMode === "none" && toolbarCollapsed) setToolbarCollapsed(false);
+  }, [annotationMode, toolbarCollapsed]);
   const [selectedColor, setSelectedColor] = useState<string>("yellow");
   const [showColorSettings, setShowColorSettings] = useState(false);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
@@ -2102,7 +2331,15 @@ export function PdfViewerModal({
   // File metadata for linking
   const { data: fileMetadata } = trpc.drive.getFileById.useQuery(
     { id: fileId },
-    { enabled: isOpen && fileId > 0 }
+    {
+      enabled: isOpen && fileId > 0,
+      // Smart Extract é assíncrono (inngest): enquanto "processing", faz polling
+      // até o job gravar "completed"/"failed".
+      refetchInterval: (query: any) => {
+        const data = query.state?.data ?? query.data;
+        return (data as any)?.enrichmentStatus === "processing" ? 4000 : false;
+      },
+    }
   );
 
   // Custom color labels from user settings
@@ -2126,6 +2363,11 @@ export function PdfViewerModal({
     { enabled: isOpen }
   );
 
+  // Id temporário (negativo, monotônico) para o item otimista. Date.now() colidia
+  // quando dois traços de caneta terminavam no mesmo milissegundo → React key
+  // duplicada. A fábrica garante unicidade enquanto a mutation voa (optimistic-id.ts).
+  const nextTempId = useRef(createOptimisticIdFactory());
+
   // Create annotation mutation — optimistic update
   const createAnnotation = trpc.annotations.create.useMutation({
     onMutate: async (newAnnotation) => {
@@ -2135,7 +2377,7 @@ export function PdfViewerModal({
         if (!old) return old;
         return [...old, {
           ...newAnnotation,
-          id: -(Date.now()),
+          id: nextTempId.current(),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }];
@@ -2200,19 +2442,19 @@ export function PdfViewerModal({
 
   // ─── Processing: Simple Mode (< 5MB) ─────────────────────────
   const classifyJobId = `classify-${fileId}`;
+  // Marca que há uma classificação ativa nesta sessão — evita que o polling
+  // dispare "concluído" em arquivos que já estavam classificados de antes.
+  const classifyActiveRef = useRef(false);
   const triggerClassification = trpc.documentSections.triggerClassification.useMutation({
     onMutate: () => {
+      classifyActiveRef.current = true;
       addJob({ id: classifyJobId, type: "classification", label: fileName, status: "running", progress: -1, detail: "Classificando seções..." });
       showProgressToast({ id: classifyJobId, type: "classification", label: fileName, progress: -1, detail: "Classificando seções..." });
     },
-    onSuccess: (data) => {
-      setIsProcessing(false);
-      const count = data && "sectionsFound" in data ? (data as { sectionsFound?: number }).sectionsFound : 0;
-      const summary = `${count || 0} seções encontradas`;
-      completeJob(classifyJobId, summary);
-      completeProgressToast(classifyJobId, `${fileName} — ${summary}`);
-      utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
-      setSidebarTab("sections");
+    onSuccess: () => {
+      // Async (inngest): só enfileirou. Mantém o toast "Classificando…" rodando;
+      // a conclusão vem pelo polling do enrichmentStatus (effect abaixo).
+      utils.drive.getFileById.invalidate({ id: fileId });
     },
     onError: (err) => {
       setIsProcessing(false);
@@ -2226,6 +2468,27 @@ export function PdfViewerModal({
       }
     },
   });
+
+  // Conclusão do Smart Extract assíncrono: o inngest grava enrichmentStatus
+  // ("completed"/"failed"); o polling do getFileById detecta e finaliza o toast.
+  useEffect(() => {
+    if (!classifyActiveRef.current) return;
+    const st = (fileMetadata as any)?.enrichmentStatus;
+    if (st === "completed") {
+      classifyActiveRef.current = false;
+      setIsProcessing(false);
+      completeJob(classifyJobId, "Seções classificadas");
+      completeProgressToast(classifyJobId, `${fileName} — seções classificadas`);
+      utils.documentSections.listByFile.invalidate({ driveFileId: fileId });
+      setSidebarTab("sections");
+    } else if (st === "failed") {
+      classifyActiveRef.current = false;
+      setIsProcessing(false);
+      failJob(classifyJobId, "Falha na classificação");
+      failProgressToast(classifyJobId, `${fileName} — falha ao classificar`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileMetadata, fileId, classifyJobId, fileName]);
 
   // ─── Processing: Deep Mode (> 5MB, multi-step) ─────────────
   const startDeepProcessing = trpc.documentSections.startDeepProcessing.useMutation();
@@ -2329,6 +2592,65 @@ export function PdfViewerModal({
   const handleDeleteAnnotation = useCallback((id: number) => {
     deleteAnnotation.mutate({ id });
   }, [deleteAnnotation]);
+
+  // ── Da leitura à peça: gera rascunho de minuta a partir dos grifos (via daemon) ──
+  // Ver docs/specs/leitura-para-peca.md.
+  const criarMinutaTask = trpc.analise.criarTask.useMutation({
+    onSuccess: (r: any) =>
+      toast.success(
+        r?.existing ? "Já há uma análise em andamento para este assistido" : "Minuta solicitada",
+        { description: "O daemon vai redigir o rascunho a partir dos seus grifos — acompanhe em Análises." },
+      ),
+    onError: (e: any) => toast.error("Falha ao solicitar minuta", { description: e.message }),
+  });
+  const gerarMinuta = useCallback(() => {
+    const assistidoId = (fileMetadata as any)?.assistidoId;
+    if (!assistidoId) {
+      toast.error("Vincule o arquivo a um assistido antes de gerar a minuta");
+      return;
+    }
+    const cats = resolvedColors.map((c) => ({ color: c.color, label: c.label }));
+    const groups = buildCitationGroups(
+      (annotations ?? []).filter((a: any) => a.tipo !== "bookmark"),
+      cats,
+    );
+    const total = groups.reduce((n, g) => n + g.items.length, 0);
+    if (total === 0) {
+      toast.info("Grife trechos dos autos (grifo/sublinhado) antes de gerar a minuta");
+      return;
+    }
+    const prompt = buildMinutaPrompt(groups, { assistido: (fileMetadata as any)?.assistidoNome });
+    criarMinutaTask.mutate({
+      assistidoId,
+      processoId: (fileMetadata as any)?.processoId ?? undefined,
+      skill: "gerar-peca",
+      instrucaoAdicional: prompt,
+    });
+  }, [fileMetadata, resolvedColors, annotations, criarMinutaTask]);
+
+  // Salvar uma anotação (nota/grifo) como registro do OMBUDS, ancorado no
+  // processo + página/documento. Vai pra timeline de registros do assistido.
+  const criarRegistro = trpc.registros.create.useMutation({
+    onSuccess: () => toast.success("Registro criado no OMBUDS"),
+    onError: (e) => toast.error(e.message || "Erro ao criar registro"),
+  });
+  const handleSaveAnnotationAsRegistro = useCallback((a: any) => {
+    const assistidoId = (fileMetadata as any)?.assistidoId;
+    if (!assistidoId) {
+      toast.error("Arquivo sem assistido vinculado");
+      return;
+    }
+    const texto = a.texto || a.textoSelecionado || "";
+    const tipoLabel = a.tipo === "note" ? "Nota" : a.tipo === "underline" ? "Sublinhado" : "Grifo";
+    const ref = `${fileName}${a.pagina ? ` · Pág. ${a.pagina}` : ""}`;
+    criarRegistro.mutate({
+      assistidoId,
+      processoId: (fileMetadata as any)?.processoId ?? undefined,
+      tipo: "anotacao",
+      titulo: `${tipoLabel} dos autos${a.pagina ? ` — Pág. ${a.pagina}` : ""}`.slice(0, 120),
+      conteudo: `${texto}\n\n— ${ref}`,
+    } as any);
+  }, [fileMetadata, fileName, criarRegistro]);
 
   // File navigation within siblings
   const currentFileIndex = useMemo(() => {
@@ -2548,8 +2870,8 @@ export function PdfViewerModal({
     (page: number) => {
       const target = Math.max(1, Math.min(page, numPages || 1));
       setCurrentPage(target);
-      if (readModeRef.current === "rolagem") {
-        // Rola até a página alvo na coluna contínua.
+      if (readModeRef.current !== "paginada") {
+        // Rola até a página alvo na coluna (contínua ou com snap).
         pageElsRef.current.get(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
         // Página única: volta ao topo ao trocar de página.
@@ -2575,22 +2897,34 @@ export function PdfViewerModal({
   // Effective scale (respects fit-to-width mode)
   const effectiveScale = viewMode === "fit-width" ? fitWidthScale : scale;
 
-  // Calculate fit-to-width scale when container or sidebar changes
+  // Calculate fit-to-width scale when container or sidebar changes.
+  // rAF-throttle + thresholds evitam o "tremor": durante a animação de abertura
+  // e quando a barra de rolagem aparece/some, o clientWidth muda alguns px e
+  // recalcular a cada tick fazia a página redimensionar continuamente.
   useEffect(() => {
     if (!isOpen || viewMode !== "fit-width") return;
-    const calculateFitWidth = () => {
+    let raf = 0;
+    let lastWidth = 0;
+    const pdfDefaultWidth = 612; // largura padrão da página (US Letter, pontos)
+    const calc = () => {
       const container = pageContainerRef.current;
       if (!container) return;
-      // PDF default width is ~612px (US Letter). Subtract padding (32px each side)
-      const availableWidth = container.clientWidth - 64;
-      const pdfDefaultWidth = 612; // standard PDF page width in points
+      const w = container.clientWidth;
+      if (Math.abs(w - lastWidth) < 4) return; // ignora micro-variações (anim/scrollbar)
+      lastWidth = w;
+      // -64 padding + ~16 reserva da barra de rolagem (estabiliza o cálculo)
+      const availableWidth = w - 64 - 16;
       const newScale = Math.max(0.5, Math.min(2.5, availableWidth / pdfDefaultWidth));
-      setFitWidthScale(newScale);
+      setFitWidthScale((prev) => (Math.abs(prev - newScale) > 0.01 ? newScale : prev));
     };
-    calculateFitWidth();
-    const observer = new ResizeObserver(calculateFitWidth);
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(calc);
+    };
+    calc();
+    const observer = new ResizeObserver(schedule);
     if (pageContainerRef.current) observer.observe(pageContainerRef.current);
-    return () => observer.disconnect();
+    return () => { cancelAnimationFrame(raf); observer.disconnect(); };
   }, [isOpen, viewMode, showIndex]);
 
   // Fullscreen
@@ -2603,6 +2937,42 @@ export function PdfViewerModal({
       setIsFullscreen(false);
     }
   }, []);
+
+  // Baixar o PDF (blob → anchor; fallback abre em nova aba).
+  const handleDownload = useCallback(async () => {
+    if (!pdfUrl) return;
+    try {
+      const res = await fetch(pdfUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || "documento.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(pdfUrl, "_blank");
+    }
+  }, [pdfUrl, fileName]);
+
+  // Imprimir via iframe oculto (fallback abre em nova aba se cross-origin barrar).
+  const handlePrint = useCallback(() => {
+    if (!pdfUrl) return;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    iframe.src = pdfUrl;
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch {
+        window.open(pdfUrl, "_blank");
+      }
+    };
+    document.body.appendChild(iframe);
+  }, [pdfUrl]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -2866,6 +3236,18 @@ export function PdfViewerModal({
     });
   }, [searchMatches, goToPage]);
 
+  // Deep-link: ao abrir com initialSearch (ex.: "Num. X" de um depoimento),
+  // assim que o PDF carrega (numPages > 0), abre a busca já posicionada no ponto.
+  const initialSearchDoneRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isOpen || !initialSearch || !numPages) return;
+    if (initialSearchDoneRef.current === initialSearch) return;
+    initialSearchDoneRef.current = initialSearch;
+    setSearchOpen(true);
+    setSearchQuery(initialSearch);
+    runSearch(initialSearch);
+  }, [isOpen, initialSearch, numPages, runSearch]);
+
   // Atalho Cmd/Ctrl+F abre a busca; Esc fecha (sem fechar o modal).
   useEffect(() => {
     if (!isOpen) return;
@@ -2885,7 +3267,7 @@ export function PdfViewerModal({
 
   // Sincroniza a página atual com o scroll no modo rolagem (página mais visível).
   useEffect(() => {
-    if (!isOpen || readMode !== "rolagem" || !numPages) return;
+    if (!isOpen || readMode === "paginada" || !numPages) return;
     const root = pageContainerRef.current;
     if (!root) return;
     const obs = new IntersectionObserver(
@@ -3016,16 +3398,19 @@ export function PdfViewerModal({
               >
                 <ChevronLeft className="h-4.5 w-4.5" />
               </Button>
-              <div className="flex items-center gap-1">
+              {/* Passador: pill segmentado coeso — input borderless + /N inline.
+                  input e span travados no MESMO tamanho (!text-sm) e baseline
+                  (leading-none) p/ não desencaixar o "/N" do número. */}
+              <div className="flex items-center h-8 px-2 gap-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800/60 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/50 focus-within:ring-emerald-400/70 transition-shadow">
                 <Input
                   type="number"
                   min={1}
                   max={numPages}
                   value={currentPage}
                   onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
-                  className="w-14 h-8 text-sm text-center bg-white dark:bg-neutral-800 border-neutral-300 dark:border-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-10 h-6 p-0 !text-sm leading-none text-center tabular-nums bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-sm text-neutral-400 font-mono">/ {numPages}</span>
+                <span className="text-sm leading-none text-neutral-400 tabular-nums select-none">/&nbsp;{numPages}</span>
               </div>
               <Button
                 variant="ghost"
@@ -3048,20 +3433,26 @@ export function PdfViewerModal({
 
             <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
 
-            {/* Modo de leitura (página a página ↔ rolagem contínua) + Busca */}
+            {/* Modo de leitura: página a página → rolagem contínua → scroll-paginado */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={cn("h-8 w-8", readMode === "rolagem" && "text-emerald-500")}
-                  onClick={() => setReadMode((m) => (m === "paginada" ? "rolagem" : "paginada"))}
+                  className={cn("h-8 w-8", readMode !== "paginada" && "text-emerald-500")}
+                  onClick={() => setReadMode((m) => (m === "paginada" ? "rolagem" : m === "rolagem" ? "snap" : "paginada"))}
                 >
-                  {readMode === "paginada" ? <ScrollText className="h-4.5 w-4.5" /> : <FileText className="h-4.5 w-4.5" />}
+                  {readMode === "paginada" ? <FileText className="h-4.5 w-4.5" /> : readMode === "rolagem" ? <ScrollText className="h-4.5 w-4.5" /> : <Rows3 className="h-4.5 w-4.5" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <p className="text-xs">{readMode === "paginada" ? "Rolagem contínua" : "Página a página"}</p>
+                <p className="text-xs">
+                  {readMode === "paginada"
+                    ? "Página a página · clique p/ rolagem contínua"
+                    : readMode === "rolagem"
+                      ? "Rolagem contínua · clique p/ scroll-paginado"
+                      : "Scroll-paginado (encaixa) · clique p/ página a página"}
+                </p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -3314,6 +3705,7 @@ export function PdfViewerModal({
                   <Button
                     variant="ghost"
                     size="icon"
+                    disabled={rotation !== 0}
                     className={cn(
                       "h-8 w-8",
                       isCaptureMode && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
@@ -3324,9 +3716,73 @@ export function PdfViewerModal({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  <p className="text-xs">{isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
+                  <p className="text-xs">{rotation !== 0 ? "Indisponível enquanto girado" : isCaptureMode ? "Cancelar captura" : "Capturar imagem"}</p>
                 </TooltipContent>
               </Tooltip>
+
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+
+              {/* Ações secundárias recolhidas — evita clipping no modo embutido */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4 text-neutral-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom"><p className="text-xs">Mais ações</p></TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={handleDownload} disabled={!pdfUrl}>
+                    <Download className="h-4 w-4 mr-2 text-neutral-500" />
+                    Baixar PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePrint} disabled={!pdfUrl}>
+                    <Printer className="h-4 w-4 mr-2 text-neutral-500" />
+                    Imprimir
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
+                    Girar {rotation !== 0 && <span className="text-neutral-500 normal-case">· {rotation}°</span>}
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); rotatePage(1); }}>
+                    <RotateCw className="h-4 w-4 mr-2 text-neutral-500" />
+                    Girar à direita
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); rotatePage(-1); }}>
+                    <RotateCcw className="h-4 w-4 mr-2 text-neutral-500" />
+                    Girar à esquerda
+                  </DropdownMenuItem>
+                  {rotation !== 0 && (
+                    <DropdownMenuItem onClick={() => setRotation(0)}>
+                      <span className="w-4 mr-2" />
+                      Restaurar (0°)
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
+                    Tema de leitura
+                  </DropdownMenuLabel>
+                  {([
+                    { key: "normal", label: "Normal", swatch: "bg-white border border-neutral-300" },
+                    { key: "sepia", label: "Sépia", swatch: "bg-[#e7d8b5] border border-[#d8c49a]" },
+                    { key: "dark", label: "Escuro", swatch: "bg-neutral-800 border border-neutral-600" },
+                  ] as const).map((t) => (
+                    <DropdownMenuItem
+                      key={t.key}
+                      onClick={() => setReadingTheme(t.key)}
+                      className="gap-2"
+                    >
+                      <span className={cn("w-3.5 h-3.5 rounded-sm shrink-0", t.swatch)} />
+                      <span className="flex-1">{t.label}</span>
+                      {readingTheme === t.key && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -3351,7 +3807,7 @@ export function PdfViewerModal({
           </div>
 
           {/* ── Floating Annotation Toolbar ── */}
-          {annotationMode !== "none" && (
+          {showFullToolbar(annotationMode, annotationCollapsed) && (
             <div className="flex flex-col flex-shrink-0">
               {/* Main toolbar — redesigned larger */}
               <div className="flex items-center gap-3 px-4 py-2.5 border-b border-neutral-200/80 dark:border-neutral-700/80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md">
@@ -3393,72 +3849,85 @@ export function PdfViewerModal({
                     <StickyNote className="w-4 h-4" />
                     Nota
                   </button>
+                  <button
+                    onClick={() => setAnnotationMode("ink")}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
+                      annotationMode === "ink"
+                        ? "bg-white dark:bg-neutral-700 text-rose-600 dark:text-rose-400 shadow-md"
+                        : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                    )}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Caneta
+                  </button>
                 </div>
 
                 {/* Divider */}
                 <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
 
-                {/* Color picker — soft pastel dots matching actual highlight colors */}
-                <div className="flex items-center gap-1">
-                  {resolvedColors.map((c) => (
-                    <Tooltip key={c.color}>
-                      <TooltipTrigger asChild>
+                {/* Cor do grifo — popover discreto (substitui a barra de bolinhas
+                    sempre visível): swatch da cor atual abre a paleta + config. */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      title="Cor do grifo"
+                      className="inline-flex items-center gap-2 h-8 px-2.5 rounded-lg ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                    >
+                      <span
+                        className="w-4 h-4 rounded-md shrink-0"
+                        style={{
+                          backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
+                          border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
+                        }}
+                      />
+                      <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 max-w-[90px] truncate">
+                        {getAnnotationColor(selectedColor, customColorLabels).label}
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" sideOffset={6} className="w-auto p-2">
+                    <div className="flex items-center gap-1.5">
+                      {resolvedColors.map((c) => (
                         <button
+                          key={c.color}
+                          type="button"
                           onClick={() => setSelectedColor(c.color)}
-                          className="relative group p-0.5"
+                          title={c.label}
+                          className="relative p-0.5 cursor-pointer"
                         >
-                          <div
+                          <span
                             className={cn(
-                              "w-5 h-5 rounded-md transition-all duration-150",
+                              "block w-6 h-6 rounded-md transition-transform",
                               selectedColor === c.color
-                                ? "ring-1.5 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900 shadow-sm"
-                                : "hover:scale-110"
+                                ? "ring-2 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900"
+                                : "hover:scale-110",
                             )}
                             style={{
                               backgroundColor: c.hexLight,
                               border: `1.5px solid ${c.hexMid}`,
-                              ...(selectedColor === c.color ? { ringColor: c.hexMid } : {}),
+                              ...(selectedColor === c.color ? { ["--tw-ring-color" as any]: c.hexMid } : {}),
                             }}
                           />
                           {selectedColor === c.color && (
-                            <Check className="absolute inset-0 m-auto w-2.5 h-2.5 drop-shadow-sm" style={{ color: c.hex }} />
+                            <Check className="absolute inset-0 m-auto w-3 h-3 drop-shadow-sm" style={{ color: c.hex }} />
                           )}
                         </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-[10px] py-1 px-2.5 font-medium">
-                        {c.label}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-
-                {/* Divider */}
-                <div className="w-px h-8 bg-neutral-200 dark:bg-neutral-700" />
-
-                {/* Active color label + settings */}
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className="w-3.5 h-3.5 rounded shadow-sm"
-                    style={{
-                      backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
-                      border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
-                    }}
-                  />
-                  <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
-                    {getAnnotationColor(selectedColor, customColorLabels).label}
-                  </span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                      ))}
+                      <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-1" />
                       <button
+                        type="button"
                         onClick={() => setShowColorSettings(true)}
-                        className="p-1 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                        title="Editar categorias"
+                        className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                       >
-                        <Settings2 className="w-3.5 h-3.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
+                        <Settings2 className="w-3.5 h-3.5 text-neutral-400" />
                       </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-[10px]">Editar categorias</TooltipContent>
-                  </Tooltip>
-                </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
 
                 {/* Spacer */}
                 <div className="flex-1" />
@@ -3471,10 +3940,22 @@ export function PdfViewerModal({
                   </div>
                 )}
 
+                {/* Minimizar — colapsa para a pílula flutuante (grifo segue ativo) */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Minimizar barra (continuar grifando)"
+                  className="h-8 w-8 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
+                  onClick={() => setToolbarCollapsed(true)}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+
                 {/* Close annotation mode */}
                 <Button
                   variant="ghost"
                   size="icon"
+                  title="Fechar anotação"
                   className="h-8 w-8 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
                   onClick={() => setAnnotationMode("none")}
                 >
@@ -3482,21 +3963,87 @@ export function PdfViewerModal({
                 </Button>
               </div>
 
-              {/* Instruction hint bar */}
-              <div className={cn(
-                "px-4 py-1 text-[10px] text-center border-b font-medium",
-                annotationMode === "highlight"
-                  ? "bg-amber-50/60 dark:bg-amber-950/20 text-amber-600/80 dark:text-amber-400/70 border-amber-100 dark:border-amber-900/20"
-                  : annotationMode === "underline"
-                    ? "bg-emerald-50/60 dark:bg-emerald-950/20 text-emerald-600/80 dark:text-emerald-400/70 border-emerald-100 dark:border-emerald-900/20"
-                    : "bg-blue-50/60 dark:bg-blue-950/20 text-blue-600/80 dark:text-blue-400/70 border-blue-100 dark:border-blue-900/20"
-              )}>
-                {annotationMode === "highlight"
-                  ? "Selecione texto na pagina para criar um grifo"
-                  : annotationMode === "underline"
-                    ? "Selecione texto na pagina para sublinhar"
-                    : "Clique na pagina para adicionar uma nota"}
-              </div>
+            </div>
+          )}
+
+          {/* ── Pílula flutuante (barra colapsada) ── */}
+          {/* Posição absoluta: NÃO empurra o conteúdo — leitura em altura cheia.
+              O modo de grifo permanece ativo; selecionar texto continua criando grifos. */}
+          {showCompactPalette(annotationMode, annotationCollapsed) && (
+            <div className="absolute bottom-5 right-5 z-30 flex items-center gap-1.5 rounded-full border border-neutral-200/80 dark:border-neutral-700/80 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md shadow-lg px-2 py-1.5">
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold",
+                  annotationMode === "highlight" && "text-amber-600 dark:text-amber-400",
+                  annotationMode === "underline" && "text-emerald-600 dark:text-emerald-400",
+                  annotationMode === "note" && "text-blue-600 dark:text-blue-400",
+                  annotationMode === "ink" && "text-rose-600 dark:text-rose-400",
+                )}
+              >
+                {annotationMode === "highlight" && <Highlighter className="w-4 h-4" />}
+                {annotationMode === "underline" && <Underline className="w-4 h-4" />}
+                {annotationMode === "note" && <StickyNote className="w-4 h-4" />}
+                {annotationMode === "ink" && <Pencil className="w-4 h-4" />}
+                {annotationMode === "highlight" ? "Grifo" : annotationMode === "underline" ? "Sublinhado" : annotationMode === "ink" ? "Caneta" : "Nota"}
+              </span>
+
+              {/* Swatch de cor — abre a paleta sem expandir a barra */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title="Cor do grifo"
+                    className="w-5 h-5 rounded-md shrink-0 cursor-pointer"
+                    style={{
+                      backgroundColor: getAnnotationColor(selectedColor, customColorLabels).hexLight,
+                      border: `1.5px solid ${getAnnotationColor(selectedColor, customColorLabels).hexMid}`,
+                    }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent align="end" side="top" sideOffset={8} className="w-auto p-2">
+                  <div className="flex items-center gap-1.5">
+                    {resolvedColors.map((c) => (
+                      <button
+                        key={c.color}
+                        type="button"
+                        onClick={() => setSelectedColor(c.color)}
+                        title={c.label}
+                        className="relative p-0.5 cursor-pointer"
+                      >
+                        <span
+                          className={cn(
+                            "block w-6 h-6 rounded-md transition-transform",
+                            selectedColor === c.color
+                              ? "ring-2 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900"
+                              : "hover:scale-110",
+                          )}
+                          style={{
+                            backgroundColor: c.hexLight,
+                            border: `1.5px solid ${c.hexMid}`,
+                            ...(selectedColor === c.color ? { ["--tw-ring-color" as any]: c.hexMid } : {}),
+                          }}
+                        />
+                        {selectedColor === c.color && (
+                          <Check className="absolute inset-0 m-auto w-3 h-3 drop-shadow-sm" style={{ color: c.hex }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-700" />
+
+              {/* Expandir de volta a barra cheia */}
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Expandir barra"
+                className="h-7 w-7 rounded-full text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50"
+                onClick={() => setToolbarCollapsed(false)}
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
             </div>
           )}
 
@@ -3509,10 +4056,12 @@ export function PdfViewerModal({
                 <div className="flex border-b border-neutral-200 dark:border-neutral-700 flex-shrink-0">
                   {([
                     { key: "files" as const, icon: FolderOpen, label: "Arquivos", activeColor: "emerald", count: siblingFiles?.length },
-                    { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: undefined },
+                    { key: "paginas" as const, icon: Images, label: "Páginas", activeColor: "emerald", count: numPages || undefined },
+                    { key: "sections" as const, icon: BookMarked, label: "Seções", activeColor: "emerald", count: sections?.length },
                     { key: "annotations" as const, icon: Highlighter, label: "Notas", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo !== "bookmark").length },
                     { key: "bookmarks" as const, icon: Bookmark, label: "Marcadores", activeColor: "amber", count: annotations?.filter((a: any) => a.tipo === "bookmark").length },
                     { key: "caso" as const, icon: Sparkles, label: "Caso", activeColor: "violet", count: reviewProgress && reviewProgress.total > 0 ? reviewProgress.approved : undefined },
+                    { key: "perguntar" as const, icon: MessageCircleQuestion, label: "Perguntar", activeColor: "emerald", count: undefined },
                   ]).map((tab) => {
                     const Icon = tab.icon;
                     const isActive = sidebarTab === tab.key;
@@ -3539,7 +4088,11 @@ export function PdfViewerModal({
                               <span className={cn(
                                 "min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-bold rounded-full leading-none",
                                 isActive
-                                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                                  ? {
+                                      emerald: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+                                      amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                                      violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400",
+                                    }[tab.activeColor as "emerald" | "amber" | "violet"]
                                   : "bg-neutral-200 dark:bg-neutral-700 text-neutral-500"
                               )}>
                                 {tab.count}
@@ -3563,6 +4116,40 @@ export function PdfViewerModal({
                     currentFileId={fileId}
                     onSelectFile={(id) => onFileChange?.(id)}
                   />
+                ) : sidebarTab === "perguntar" ? (
+                  <PerguntarAoAutoPanel
+                    fileId={fileId}
+                    onJumpTo={(pagina, trecho) => {
+                      goToPage(pagina);
+                      if (trecho && trecho.trim()) {
+                        // realça o trecho citado via busca de texto
+                        setSearchQuery(trecho.trim().slice(0, 80));
+                        setSearchOpen(true);
+                      }
+                    }}
+                  />
+                ) : sidebarTab === "paginas" ? (
+                  <div className="flex-1 overflow-y-auto p-2">
+                    {numPages > 0 && pdfProxyRef.current ? (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {Array.from({ length: numPages }, (_, i) => i + 1).map((pn) => (
+                          <PdfThumbnail
+                            key={pn}
+                            pdf={pdfProxyRef.current}
+                            pageNumber={pn}
+                            rotation={rotation}
+                            active={pn === currentPage}
+                            onClick={() => goToPage(pn)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 py-10 text-xs text-neutral-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Carregando páginas…
+                      </div>
+                    )}
+                  </div>
                 ) : sidebarTab === "sections" ? (
                   <SectionIndexPanel
                     sections={(sections as DocumentSection[]) || []}
@@ -3592,8 +4179,12 @@ export function PdfViewerModal({
                 ) : sidebarTab === "annotations" ? (
                   <AnnotationsPanel
                     annotations={(annotations || []).filter((a: any) => a.tipo !== "bookmark")}
+                    categories={resolvedColors.map((c) => ({ color: c.color, label: c.label }))}
                     onNavigate={goToPage}
                     onDelete={(id) => deleteAnnotation.mutate({ id })}
+                    onSaveAsRegistro={handleSaveAnnotationAsRegistro}
+                    onGerarMinuta={gerarMinuta}
+                    gerandoMinuta={criarMinutaTask.isPending}
                   />
                 ) : sidebarTab === "bookmarks" ? (
                   <BookmarksPanel
@@ -3622,10 +4213,15 @@ export function PdfViewerModal({
             {/* PDF Viewer (center) */}
             <div
               ref={pageContainerRef}
+              data-reading-theme={readingTheme}
               className={cn(
-                "relative flex-1 overflow-auto bg-neutral-100 dark:bg-neutral-950 flex justify-center",
+                "relative flex-1 overflow-auto flex justify-center transition-colors",
+                readingTheme === "sepia" ? "bg-[#f1e7d0] dark:bg-[#2a2316]"
+                  : readingTheme === "dark" ? "bg-neutral-900"
+                  : "bg-neutral-100 dark:bg-neutral-950",
                 annotationMode === "note" && "cursor-crosshair"
               )}
+              style={readMode === "snap" ? { scrollSnapType: "y mandatory" } : undefined}
               onMouseUp={annotationMode === "highlight" || annotationMode === "underline" ? handleTextSelection : undefined}
             >
               {/* Barra de busca de texto (Ctrl/Cmd+F) */}
@@ -3682,19 +4278,32 @@ export function PdfViewerModal({
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={
-                      <div className="flex items-center justify-center h-96 gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
-                        <span className="text-sm text-neutral-400">
-                          Carregando PDF...
+                      <div className="flex flex-col items-center gap-3 py-8">
+                        {/* Skeleton de página — esqueleto de folha A4 com pulso */}
+                        <div className="w-[min(620px,80vw)] aspect-[1/1.414] rounded-md bg-white dark:bg-neutral-800/60 shadow-lg ring-1 ring-neutral-200/70 dark:ring-neutral-700/50 overflow-hidden">
+                          <div className="h-full w-full animate-pulse p-8 space-y-3">
+                            <div className="h-5 w-2/3 rounded bg-neutral-200/80 dark:bg-neutral-700/60" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-11/12 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-4/5 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40 mt-6" />
+                            <div className="h-3 w-10/12 rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                            <div className="h-3 w-full rounded bg-neutral-200/60 dark:bg-neutral-700/40" />
+                          </div>
+                        </div>
+                        <span className="inline-flex items-center gap-2 text-xs text-neutral-400">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Carregando PDF…
                         </span>
                       </div>
                     }
                   >
-                    {/* Coluna de páginas: só a atual (paginada) ou todas (rolagem).
+                    {/* Coluna de páginas: só a atual (paginada) ou todas (rolagem/snap).
                         Cada página num wrapper [data-page] — base p/ overlays,
                         seleção ciente de página e scroll-to. */}
-                    <div className={cn(readMode === "rolagem" && "flex flex-col items-center gap-4")}>
-                    {(readMode === "rolagem" && numPages > 0
+                    <div className={cn(readMode !== "paginada" && "flex flex-col items-center gap-4")}>
+                    {(readMode !== "paginada" && numPages > 0
                       ? Array.from({ length: numPages }, (_, i) => i + 1)
                       : [currentPage]
                     ).map((pn) => (
@@ -3703,14 +4312,16 @@ export function PdfViewerModal({
                       data-page={pn}
                       ref={(el) => { const m = pageElsRef.current; if (el) m.set(pn, el); else m.delete(pn); }}
                       className="relative inline-block"
+                      style={readMode === "snap" ? { scrollSnapAlign: "center", scrollMarginTop: "8px" } : undefined}
                     >
                     <ReactPdfPage
                       pageNumber={pn}
                       scale={effectiveScale}
+                      rotate={rotation}
                       className="shadow-lg"
-                      renderTextLayer={true}
+                      renderTextLayer={rotation === 0}
                       renderAnnotationLayer={false}
-                      customTextRenderer={searchQuery.trim() ? textRenderer : undefined}
+                      customTextRenderer={rotation === 0 && searchQuery.trim() ? textRenderer : undefined}
                       loading={
                         <div className="flex items-center justify-center h-96">
                           <Loader2 className="w-5 h-5 animate-spin text-neutral-300" />
@@ -3718,8 +4329,8 @@ export function PdfViewerModal({
                       }
                     />
 
-                  {/* Highlight + Underline overlays for current page — memoized */}
-                  {annotations
+                  {/* Overlays só com rotação 0 — coords são relativas ao canvas não-rotacionado */}
+                  {rotation === 0 && annotations
                     ?.filter((a) => a.pagina === pn && (a.tipo === "highlight" || a.tipo === "underline") && a.posicao)
                     .map((hl) => (
                       <HighlightOverlay
@@ -3734,7 +4345,7 @@ export function PdfViewerModal({
                     ))}
 
                   {/* Note indicators for current page — memoized */}
-                  {annotations?.filter((a) => a.pagina === pn && a.tipo === "note").map((note) => (
+                  {rotation === 0 && annotations?.filter((a) => a.pagina === pn && a.tipo === "note").map((note) => (
                     <NoteIndicator
                       key={note.id}
                       note={note}
@@ -3743,8 +4354,52 @@ export function PdfViewerModal({
                     />
                   ))}
 
-                  {/* Image capture overlay — apenas no modo paginado */}
-                  {readMode === "paginada" && isCaptureMode && pn === currentPage && (
+                  {/* Traços de caneta livre (ink) salvos — SVG em coords normalizadas
+                      [0..1] via viewBox; non-scaling-stroke mantém a espessura em px. */}
+                  {rotation === 0 && annotations?.filter((a) => a.pagina === pn && a.tipo === "ink" && a.posicao).map((ann) => {
+                    const pos = ann.posicao as unknown as { paths?: NormPoint[][]; strokeWidth?: number };
+                    const colorHex = getAnnotationColor(ann.cor, customColorLabels).hex;
+                    return (
+                      <svg
+                        key={`ink-${ann.id}`}
+                        className="absolute inset-0 w-full h-full pointer-events-none"
+                        viewBox="0 0 1 1"
+                        preserveAspectRatio="none"
+                      >
+                        {(pos.paths ?? []).map((stroke, i) => (
+                          <path
+                            key={i}
+                            d={toSvgPath(stroke.map(([x, y]) => ({ x, y })))}
+                            fill="none"
+                            stroke={colorHex}
+                            strokeWidth={pos.strokeWidth ?? 2.5}
+                            vectorEffect="non-scaling-stroke"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        ))}
+                      </svg>
+                    );
+                  })}
+
+                  {/* Captura de caneta livre — overlay ativo no modo "ink" (sem rotação) */}
+                  {rotation === 0 && annotationMode === "ink" && (
+                    <InkCanvas
+                      colorHex={getAnnotationColor(selectedColor, customColorLabels).hex}
+                      onStrokeComplete={(stroke, sw) => {
+                        createAnnotation.mutate({
+                          driveFileId: fileId,
+                          tipo: "ink",
+                          pagina: pn,
+                          cor: selectedColor as AnnotationColorName,
+                          posicao: { paths: [stroke], strokeWidth: sw } as any,
+                        });
+                      }}
+                    />
+                  )}
+
+                  {/* Image capture overlay — apenas no modo paginado e sem rotação */}
+                  {rotation === 0 && readMode === "paginada" && isCaptureMode && pn === currentPage && (
                     <div
                       className="absolute inset-0 z-50"
                       style={{ cursor: "crosshair" }}

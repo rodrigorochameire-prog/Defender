@@ -285,6 +285,8 @@ export const demandas = pgTable("demandas", {
   reuPreso: boolean("reu_preso").default(false),
   googleCalendarEventId: text("google_calendar_event_id"),
   casoId: integer("caso_id"),
+  // Nota interna privada do defensor — NÃO entra em ofício/exportação.
+  notaPrivada: text("nota_privada"),
   ordemManual: integer("ordem_manual"),
   importBatchId: text("import_batch_id"),
   ordemOriginal: integer("ordem_original"),

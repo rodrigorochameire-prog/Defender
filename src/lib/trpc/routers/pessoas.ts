@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos, pessoaRecortes } from "@/lib/db/schema";
+import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos, pessoaRecortes, assistidos, testemunhas } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
@@ -283,6 +283,85 @@ export const pessoasRouter = router({
         .orderBy(asc(participacoesProcesso.papel));
     }),
 
+  // Partes do processo p/ o capturador: réu (assistido) + testemunhas + pessoas
+  // já no grafo, num único seletor. Entradas sem pessoaId são criadas ao salvar.
+  getPartesDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number().nullish(), assistidoId: z.number().nullish() }))
+    .query(async ({ input }) => {
+      type Parte = {
+        key: string;
+        kind: "assistido" | "testemunha" | "pessoa";
+        nome: string;
+        papel: string;
+        pessoaId: number | null;
+        assistidoId: number | null;
+      };
+      const out: Parte[] = [];
+
+      // 1) Réu = assistido (do input ou resolvido pelo processo)
+      let assistidoId = input.assistidoId ?? null;
+      if (!assistidoId && input.processoId) {
+        const [proc] = await db
+          .select({ assistidoId: processos.assistidoId })
+          .from(processos)
+          .where(eq(processos.id, input.processoId))
+          .limit(1);
+        assistidoId = proc?.assistidoId ?? null;
+      }
+      if (assistidoId) {
+        const [a] = await db
+          .select({ id: assistidos.id, nome: assistidos.nome })
+          .from(assistidos)
+          .where(eq(assistidos.id, assistidoId))
+          .limit(1);
+        if (a) out.push({ key: `assistido:${a.id}`, kind: "assistido", nome: a.nome, papel: "REU", pessoaId: null, assistidoId: a.id });
+      }
+
+      if (input.processoId) {
+        // 2) Testemunhas / vítima / informantes / peritos
+        const tt = await db
+          .select({ id: testemunhas.id, nome: testemunhas.nome, tipo: testemunhas.tipo })
+          .from(testemunhas)
+          .where(eq(testemunhas.processoId, input.processoId));
+        for (const t of tt) {
+          if (!t.nome) continue;
+          const papel =
+            t.tipo === "VITIMA" ? "VITIMA" : t.tipo === "INFORMANTE" ? "INFORMANTE" : t.tipo === "PERITO" ? "PERITO" : "TESTEMUNHA";
+          out.push({ key: `testemunha:${t.id}`, kind: "testemunha", nome: t.nome, papel, pessoaId: null, assistidoId: null });
+        }
+
+        // 3) Pessoas já no grafo do processo
+        const pp = await db
+          .select({ pessoaId: pessoas.id, nome: pessoas.nome, papel: participacoesProcesso.papel })
+          .from(participacoesProcesso)
+          .innerJoin(pessoas, eq(participacoesProcesso.pessoaId, pessoas.id))
+          .where(eq(participacoesProcesso.processoId, input.processoId));
+        for (const p of pp) {
+          out.push({ key: `pessoa:${p.pessoaId}`, kind: "pessoa", nome: p.nome, papel: (p.papel ?? "outro").toUpperCase(), pessoaId: p.pessoaId, assistidoId: null });
+        }
+      }
+
+      // Dedup por nome (a pessoa que também é testemunha aparece uma vez só).
+      const seen = new Set<string>();
+      return out.filter((o) => {
+        const k = o.nome.toLowerCase().trim();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }),
+
+  // Avatares (rostos) por pessoaId — para os cards de depoentes do sheet.
+  getAvatares: protectedProcedure
+    .input(z.object({ pessoaIds: z.array(z.number()) }))
+    .query(async ({ input }) => {
+      if (!input.pessoaIds.length) return [] as { pessoaId: number; avatarDataUrl: string | null }[];
+      return db
+        .select({ pessoaId: pessoas.id, avatarDataUrl: pessoas.avatarDataUrl })
+        .from(pessoas)
+        .where(inArray(pessoas.id, input.pessoaIds));
+    }),
+
   // === MERGE / DEDUP ===
   suggestMerges: protectedProcedure
     .input(z.object({
@@ -460,9 +539,11 @@ export const pessoasRouter = router({
   salvarRecorte: protectedProcedure
     .input(
       z.object({
-        pessoaId: z.number(),
+        pessoaId: z.number().nullish(),
+        assistidoId: z.number().nullish(),
         processoId: z.number().nullish(),
         driveFileId: z.number().nullish(),
+        tipo: z.string().max(20).nullish(), // rosto | assinatura | laudo | peticao | outro
         papel: z.string().max(30).nullish(),
         rotulo: z.string().max(200).nullish(),
         imagem: z.string().min(10), // data URL base64
@@ -473,12 +554,18 @@ export const pessoasRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      if (!input.pessoaId && !input.assistidoId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Informe pessoaId ou assistidoId" });
+      }
+      const tipo = input.tipo ?? "rosto";
       const [row] = await db
         .insert(pessoaRecortes)
         .values({
-          pessoaId: input.pessoaId,
+          pessoaId: input.pessoaId ?? null,
+          assistidoId: input.assistidoId ?? null,
           processoId: input.processoId ?? null,
           driveFileId: input.driveFileId ?? null,
+          tipo,
           papel: input.papel ?? null,
           rotulo: input.rotulo ?? null,
           imagem: input.imagem,
@@ -487,6 +574,15 @@ export const pessoasRouter = router({
           criadoPor: ctx.user?.id ?? null,
         } as any)
         .returning();
+
+      // Rosto vira avatar: foto do assistido (réu) ou avatar da pessoa.
+      if (tipo === "rosto") {
+        if (input.assistidoId) {
+          await db.update(assistidos).set({ photoUrl: input.imagem }).where(eq(assistidos.id, input.assistidoId));
+        } else if (input.pessoaId) {
+          await db.update(pessoas).set({ avatarDataUrl: input.imagem }).where(eq(pessoas.id, input.pessoaId));
+        }
+      }
       return row;
     }),
 

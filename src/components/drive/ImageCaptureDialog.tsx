@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ScanFace, Save, X, Loader2 } from "lucide-react";
 
@@ -20,7 +21,15 @@ interface ImageCaptureDialogProps {
   pagina?: number | null;
 }
 
-// Papéis para rotular o recorte (default herda o papel da pessoa no processo).
+// Tipo do recorte — Rosto é a regra (vira avatar da pessoa/réu).
+const TIPO_OPTIONS = [
+  { value: "rosto", label: "Rosto (vira avatar)" },
+  { value: "assinatura", label: "Assinatura" },
+  { value: "laudo", label: "Trecho de laudo" },
+  { value: "peticao", label: "Trecho de petição" },
+  { value: "outro", label: "Outro" },
+];
+
 const PAPEL_OPTIONS = [
   { value: "REU", label: "Réu" },
   { value: "CORREU", label: "Corréu" },
@@ -31,66 +40,131 @@ const PAPEL_OPTIONS = [
   { value: "OUTRO", label: "Outro" },
 ];
 
+// Papel do diálogo (UPPERCASE) → valor válido de participação (PAPEIS_VALIDOS).
+const PAPEL_PARTICIPACAO: Record<string, string> = {
+  REU: "reu",
+  CORREU: "co-reu",
+  VITIMA: "vitima",
+  TESTEMUNHA: "testemunha",
+  INFORMANTE: "informante",
+  PERITO: "perito-criminal",
+  OUTRO: "outro",
+};
+
 const PAPEL_LABEL: Record<string, string> = Object.fromEntries(
   PAPEL_OPTIONS.map((o) => [o.value, o.label]),
 );
 
 /**
- * Vincula um recorte de imagem do PDF a uma pessoa + papel do processo
- * (réu, suposta vítima, testemunha A/B…). O recorte aparece depois na
- * galeria da pessoa (PessoaSheet → Mídias).
+ * Vincula um recorte do PDF a uma parte do processo (réu, vítima, testemunha…).
+ * Rosto vira o avatar da pessoa/réu e aparece nos chips/cards. Réu, testemunhas
+ * e vítima já vêm no seletor (das fontes do OMBUDS) — sem precisar digitar.
  */
 export function ImageCaptureDialog({
   isOpen,
   onClose,
   imageDataUrl,
   processoId,
+  assistidoId,
   driveFileId,
   pagina,
 }: ImageCaptureDialogProps) {
-  const [pessoaId, setPessoaId] = useState<number | null>(null);
+  const [modo, setModo] = useState<"existente" | "nova">("existente");
+  const [selectedKey, setSelectedKey] = useState<string>("");
+  const [nomeLivre, setNomeLivre] = useState("");
+  const [tipo, setTipo] = useState<string>("rosto");
   const [papel, setPapel] = useState<string>("REU");
   const [rotulo, setRotulo] = useState("");
   const [saving, setSaving] = useState(false);
 
   const utils = trpc.useUtils();
-  const { data: pessoas, isLoading: loadingPessoas } =
-    trpc.pessoas.getPessoasDoProcesso.useQuery(
-      { processoId: processoId ?? 0 },
-      { enabled: isOpen && !!processoId },
+  const { data: partes, isLoading: loadingPartes } =
+    trpc.pessoas.getPartesDoProcesso.useQuery(
+      { processoId: processoId ?? null, assistidoId: assistidoId ?? null },
+      { enabled: isOpen && (!!processoId || !!assistidoId) },
     );
   const salvar = trpc.pessoas.salvarRecorte.useMutation();
+  const criarPessoa = trpc.pessoas.create.useMutation();
+  const addParticipacao = trpc.pessoas.addParticipacao.useMutation();
 
-  // Ao escolher a pessoa, herda o papel dela como sugestão.
+  const selParte = useMemo(
+    () => (partes ?? []).find((p) => p.key === selectedKey) ?? null,
+    [partes, selectedKey],
+  );
+
+  // Ao escolher a parte, herda o papel dela como sugestão.
   useEffect(() => {
-    if (pessoaId == null) return;
-    const sel = pessoas?.find((p) => p.pessoaId === pessoaId);
-    if (sel?.papel) setPapel(sel.papel.toUpperCase());
-  }, [pessoaId, pessoas]);
+    if (selParte?.papel) setPapel(selParte.papel.toUpperCase());
+  }, [selParte]);
 
-  const semPessoas = !loadingPessoas && (!pessoas || pessoas.length === 0);
+  const semPartes = !loadingPartes && (!partes || partes.length === 0);
+  const modoEfetivo: "existente" | "nova" = semPartes ? "nova" : modo;
   const estimatedSize = imageDataUrl
     ? Math.round((imageDataUrl.split(",")[1]?.length || 0) * 0.75 / 1024)
     : 0;
 
-  async function handleSave() {
-    if (!pessoaId) {
-      toast.error("Selecione a pessoa");
-      return;
+  async function criarPessoaComVinculo(nome: string): Promise<number> {
+    const nova = await criarPessoa.mutateAsync({ nome: nome.trim(), fonteCriacao: "manual" } as any);
+    if (processoId) {
+      try {
+        await addParticipacao.mutateAsync({
+          pessoaId: nova.id,
+          processoId,
+          papel: (PAPEL_PARTICIPACAO[papel] ?? "outro") as any,
+        } as any);
+      } catch (e) {
+        console.warn("[ImageCaptureDialog] addParticipacao falhou (não-fatal):", e);
+      }
     }
+    return nova.id;
+  }
+
+  async function handleSave() {
     setSaving(true);
     try {
+      let alvoPessoaId: number | null = null;
+      let alvoAssistidoId: number | null = null;
+
+      if (modoEfetivo === "nova") {
+        if (!nomeLivre.trim()) {
+          toast.error("Informe o nome da pessoa");
+          setSaving(false);
+          return;
+        }
+        alvoPessoaId = await criarPessoaComVinculo(nomeLivre);
+      } else {
+        if (!selParte) {
+          toast.error("Selecione a pessoa");
+          setSaving(false);
+          return;
+        }
+        if (selParte.assistidoId) {
+          alvoAssistidoId = selParte.assistidoId;
+        } else if (selParte.pessoaId) {
+          alvoPessoaId = selParte.pessoaId;
+        } else {
+          // Testemunha ainda não está no grafo → cria a pessoa + vínculo.
+          alvoPessoaId = await criarPessoaComVinculo(selParte.nome);
+        }
+      }
+
       await salvar.mutateAsync({
-        pessoaId,
+        pessoaId: alvoPessoaId,
+        assistidoId: alvoAssistidoId,
         processoId: processoId ?? null,
         driveFileId: driveFileId ?? null,
+        tipo,
         papel,
         rotulo: rotulo.trim() || null,
         imagem: imageDataUrl,
         pagina: pagina ?? null,
       });
-      utils.pessoas.getRecortesByPessoa.invalidate({ pessoaId });
-      toast.success("Recorte vinculado à pessoa!");
+
+      if (alvoPessoaId) utils.pessoas.getRecortesByPessoa.invalidate({ pessoaId: alvoPessoaId });
+      utils.pessoas.getPartesDoProcesso.invalidate();
+      utils.pessoas.getPessoasDoProcesso.invalidate({ processoId: processoId ?? 0 });
+      utils.assistidos.list.invalidate();
+      toast.success(tipo === "rosto" ? "Rosto vinculado — virou avatar!" : "Recorte vinculado!");
       onClose();
     } catch (err) {
       console.error("[ImageCaptureDialog] erro:", err);
@@ -109,7 +183,7 @@ export function ImageCaptureDialog({
             Vincular recorte
           </DialogTitle>
           <DialogDescription className="text-xs text-neutral-500">
-            Atribua este recorte a uma pessoa do processo (réu, vítima, testemunha…).
+            Rosto, assinatura ou trecho — vincule a uma parte do processo.
           </DialogDescription>
         </DialogHeader>
 
@@ -126,64 +200,109 @@ export function ImageCaptureDialog({
             </span>
           </div>
 
-          {semPessoas ? (
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-900 rounded-lg px-3 py-2.5 leading-relaxed">
-              Nenhuma pessoa vinculada a este processo ainda. Adicione o réu, a
-              vítima e as testemunhas (na aba Pessoas) para classificar recortes.
-            </p>
-          ) : (
-            <>
-              {/* Pessoa do processo */}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Pessoa</Label>
-                <Select
-                  value={pessoaId?.toString() || ""}
-                  onValueChange={(v) => setPessoaId(Number(v))}
-                  disabled={loadingPessoas}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder={loadingPessoas ? "Carregando…" : "Selecione…"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(pessoas ?? []).map((p) => (
-                      <SelectItem key={p.pessoaId} value={p.pessoaId.toString()} className="text-xs">
-                        {p.nome}
-                        {p.papel ? ` · ${PAPEL_LABEL[p.papel.toUpperCase()] ?? p.papel}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Tipo do recorte (Rosto é a regra) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPO_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Papel (sugerido pela pessoa, editável) */}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Papel no recorte</Label>
-                <Select value={papel} onValueChange={setPapel}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAPEL_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Rótulo livre */}
-              <div className="space-y-1.5">
-                <Label className="text-xs">Rótulo (opcional)</Label>
-                <Input
-                  value={rotulo}
-                  onChange={(e) => setRotulo(e.target.value)}
-                  placeholder="Ex.: assinatura, foto do RG, trecho do depoimento…"
-                  className="h-8 text-xs"
-                />
-              </div>
-            </>
+          {/* Alternar: do processo × nova pessoa */}
+          {!semPartes && (
+            <div className="flex gap-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 p-0.5">
+              <button
+                type="button"
+                onClick={() => setModo("existente")}
+                className={cn(
+                  "flex-1 text-[11px] font-medium py-1.5 rounded-md transition-colors cursor-pointer",
+                  modoEfetivo === "existente"
+                    ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-100"
+                    : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
+                )}
+              >
+                Do processo
+              </button>
+              <button
+                type="button"
+                onClick={() => setModo("nova")}
+                className={cn(
+                  "flex-1 text-[11px] font-medium py-1.5 rounded-md transition-colors cursor-pointer",
+                  modoEfetivo === "nova"
+                    ? "bg-white dark:bg-neutral-700 shadow-sm text-neutral-800 dark:text-neutral-100"
+                    : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
+                )}
+              >
+                Nova pessoa
+              </button>
+            </div>
           )}
+
+          {modoEfetivo === "existente" ? (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Pessoa</Label>
+              <Select value={selectedKey} onValueChange={setSelectedKey} disabled={loadingPartes}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder={loadingPartes ? "Carregando…" : "Selecione…"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(partes ?? []).map((p) => (
+                    <SelectItem key={p.key} value={p.key} className="text-xs">
+                      {p.nome}
+                      {p.papel ? ` · ${PAPEL_LABEL[p.papel.toUpperCase()] ?? p.papel}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome da pessoa</Label>
+              <Input
+                value={nomeLivre}
+                onChange={(e) => setNomeLivre(e.target.value)}
+                placeholder="Nome completo…"
+                className="h-8 text-xs"
+              />
+            </div>
+          )}
+
+          {/* Papel */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Papel</Label>
+            <Select value={papel} onValueChange={setPapel}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAPEL_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Rótulo livre */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Rótulo (opcional)</Label>
+            <Input
+              value={rotulo}
+              onChange={(e) => setRotulo(e.target.value)}
+              placeholder="Ex.: foto do RG, assinatura, trecho do depoimento…"
+              className="h-8 text-xs"
+            />
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
@@ -193,7 +312,7 @@ export function ImageCaptureDialog({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={saving || semPessoas || !pessoaId}
+            disabled={saving || (modoEfetivo === "existente" && !selectedKey) || (modoEfetivo === "nova" && !nomeLivre.trim())}
             className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}

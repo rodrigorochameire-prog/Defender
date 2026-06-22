@@ -32,6 +32,8 @@ export const pessoas = pgTable(
     telefone: text("telefone"),
     endereco: text("endereco"),
     fotoDriveFileId: varchar("foto_drive_file_id", { length: 100 }),
+    // Avatar (rosto) capturado do PDF — data URL base64, exibido nos chips/cards.
+    avatarDataUrl: text("avatar_data_url"),
     observacoes: text("observacoes"),
     categoriaPrimaria: varchar("categoria_primaria", { length: 30 }),
     fonteCriacao: varchar("fonte_criacao", { length: 40 }).notNull(),
@@ -109,12 +111,14 @@ export const pessoaRecortes = pgTable(
   "pessoa_recortes",
   {
     id: serial("id").primaryKey(),
-    pessoaId: integer("pessoa_id")
-      .notNull()
-      .references(() => pessoas.id, { onDelete: "cascade" }),
+    // Vincula a uma pessoa OU diretamente ao assistido (réu) — um dos dois.
+    pessoaId: integer("pessoa_id").references(() => pessoas.id, { onDelete: "cascade" }),
+    assistidoId: integer("assistido_id"),
     processoId: integer("processo_id").references(() => processos.id, { onDelete: "set null" }),
     // id em drive_files do PDF de origem (sem FK p/ evitar import circular).
     driveFileId: integer("drive_file_id"),
+    // rosto | assinatura | laudo | peticao | outro (rosto vira avatar).
+    tipo: varchar("tipo", { length: 20 }).default("rosto"),
     papel: varchar("papel", { length: 30 }),
     rotulo: text("rotulo"),
     // data URL base64 do recorte (JPEG pequeno, <~133KB — capado na captura).

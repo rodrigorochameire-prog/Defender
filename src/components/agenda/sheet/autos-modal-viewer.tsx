@@ -9,6 +9,8 @@ interface Props {
   driveFileId: string;
   processoId: number | null;
   onClose: () => void;
+  /** Termo a buscar ao abrir (deep-link a um ponto do documento). */
+  initialSearch?: string | null;
 }
 
 type ArquivoLite = { id: number; name: string; driveFileId: string };
@@ -22,7 +24,7 @@ type ArquivoLite = { id: number; name: string; driveFileId: string };
  * Tudo é carregado pelo próprio viewer a partir do `fileId` (metadados, seções e
  * anotações), bastando resolver o id interno do arquivo e montar a lista de irmãos.
  */
-export function AutosModalViewer({ driveFileId, processoId, onClose }: Props) {
+export function AutosModalViewer({ driveFileId, processoId, onClose, initialSearch }: Props) {
   // Resolve o id interno + nome do arquivo expandido (necessário p/ grifos/seções).
   const fileRef = trpc.drive.resolveByDriveId.useQuery(
     { driveFileId },
@@ -93,6 +95,7 @@ export function AutosModalViewer({ driveFileId, processoId, onClose }: Props) {
       pdfUrl={`/api/drive/proxy?fileId=${atual.driveFileId}`}
       siblingFiles={siblingFiles}
       onFileChange={setCurrentFileId}
+      initialSearch={initialSearch}
     />
   );
 }
