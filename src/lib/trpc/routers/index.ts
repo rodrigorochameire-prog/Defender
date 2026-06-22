@@ -91,6 +91,7 @@ import { cronologiaRouter } from "./cronologia";
 import { tipificacoesRouter } from "./tipificacoes";
 import { mpuRouter } from "./mpu";
 import { cautelaresRouter } from "./cautelares";
+import { execucaoRouter } from "./execucao";
 
 
 export const appRouter = router({
@@ -420,6 +421,7 @@ export const appRouter = router({
   // CRONOLOGIA (FASE IV-A — MARCOS, PRISÕES, CAUTELARES)
   // ==========================================
   cronologia: cronologiaRouter,
+  execucao: execucaoRouter,
 
   // ==========================================
   // TIPIFICACOES (FASE III-A — CATÁLOGO + VÍNCULO AO PROCESSO)

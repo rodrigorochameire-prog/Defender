@@ -84,6 +84,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Lugares", path: "/admin/lugares", icon: "MapPin" },
   { label: "Delitos", path: "/admin/delitos", icon: "Scale" },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
+  { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Gavel" },
   { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
