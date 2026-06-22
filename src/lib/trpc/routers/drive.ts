@@ -325,6 +325,16 @@ export const driveRouter = router({
       EXECUCAO_PENAL: "EP",
       SUBSTITUICAO: "SUBSTITUICAO",
       SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+
+      CRIMINAL_CAMACARI: "CRIMINAL",
+
+      CRIMINAL_SIMOES_FILHO: "CRIMINAL",
+
+      CRIMINAL_LAURO_DE_FREITAS: "CRIMINAL",
+
+      CRIMINAL_CANDEIAS: "CRIMINAL",
+
+      CRIMINAL_ITAPARICA: "CRIMINAL",
     };
 
     for (const assistido of assistidosSemPasta) {
@@ -487,6 +497,16 @@ export const driveRouter = router({
         EXECUCAO_PENAL: "EP",
         SUBSTITUICAO: "SUBSTITUICAO",
         SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+
+        CRIMINAL_CAMACARI: "CRIMINAL",
+
+        CRIMINAL_SIMOES_FILHO: "CRIMINAL",
+
+        CRIMINAL_LAURO_DE_FREITAS: "CRIMINAL",
+
+        CRIMINAL_CANDEIAS: "CRIMINAL",
+
+        CRIMINAL_ITAPARICA: "CRIMINAL",
       };
 
       type SyncAction = {
@@ -666,6 +686,16 @@ export const driveRouter = router({
       EXECUCAO_PENAL: "EP",
       SUBSTITUICAO: "SUBSTITUICAO",
       SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+
+      CRIMINAL_CAMACARI: "CRIMINAL",
+
+      CRIMINAL_SIMOES_FILHO: "CRIMINAL",
+
+      CRIMINAL_LAURO_DE_FREITAS: "CRIMINAL",
+
+      CRIMINAL_CANDEIAS: "CRIMINAL",
+
+      CRIMINAL_ITAPARICA: "CRIMINAL",
     };
 
     const atribLabels: Record<string, string> = {
@@ -761,6 +791,16 @@ export const driveRouter = router({
         EXECUCAO_PENAL: "EP",
         SUBSTITUICAO: "SUBSTITUICAO",
         SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+
+        CRIMINAL_CAMACARI: "CRIMINAL",
+
+        CRIMINAL_SIMOES_FILHO: "CRIMINAL",
+
+        CRIMINAL_LAURO_DE_FREITAS: "CRIMINAL",
+
+        CRIMINAL_CANDEIAS: "CRIMINAL",
+
+        CRIMINAL_ITAPARICA: "CRIMINAL",
       };
 
       // 1. SCAN Drive folders
@@ -4747,13 +4787,23 @@ export const driveRouter = router({
         if (!assistido) throw new Error("Assistido não encontrado");
         if (!isGoogleDriveConfigured()) throw new Error("Google Drive não configurado");
 
-        const atribMap: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"> = {
+        const atribMap: Record<string, "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL"> = {
           JURI_CAMACARI: "JURI",
           GRUPO_JURI: "GRUPO_JURI",
           VVD_CAMACARI: "VVD",
           EXECUCAO_PENAL: "EP",
           SUBSTITUICAO: "SUBSTITUICAO",
           SUBSTITUICAO_CIVEL: "SUBSTITUICAO",
+
+          CRIMINAL_CAMACARI: "CRIMINAL",
+
+          CRIMINAL_SIMOES_FILHO: "CRIMINAL",
+
+          CRIMINAL_LAURO_DE_FREITAS: "CRIMINAL",
+
+          CRIMINAL_CANDEIAS: "CRIMINAL",
+
+          CRIMINAL_ITAPARICA: "CRIMINAL",
         };
 
         // Garantir que o assistido tem uma pasta
