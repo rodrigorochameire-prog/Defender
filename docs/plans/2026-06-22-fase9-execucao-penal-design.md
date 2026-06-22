@@ -71,7 +71,15 @@ Blocos do mapa-mestre: Título Executivo · Cronologia Executiva · Comportament
 - tRPC `execucao` router: `listComAlertas` (flag computado por execução), `getById`, `upsert`, `addEvento`. Escopo por workspace via `processos.workspaceId`.
 - Página `/admin/execucao-penal` com cards de alerta calibrados (amber/red) + filtro "só com alerta". Item no admin-sidebar (ícone Gavel).
 - **Schema aplicado em produção** (Supabase, migração `fase9_execucao_penal_nucleo`, aditiva).
-- Futuro: timeline executiva (reusa `ProcessoTimeline`), geração automática de demanda com prazo, demais flags (saída temporária, livramento, risco de regressão cadastral — dado já modelado).
+- Futuro: timeline executiva (reusa `ProcessoTimeline`), geração automática de demanda com prazo.
+
+### Flags de benefício/risco `[✅ 2026-06-22]`
+`src/lib/execucao/flags-beneficios.ts` (3 detectores puros, 15 testes) + agregador `avaliarBeneficiosExecucao` no reader (2 testes):
+- **Risco de regressão por desatualização cadastral** (art. cadastro): na comunidade + última confirmação > 60d (amber) / > 120d (red).
+- **Saída temporária possível** (art. 122 LEP): semiaberto, 1/6 (primário) / 1/4 (reincidente), sem falta grave recente, não hediondo (conservador).
+- **Livramento condicional possível** (art. 83 CP): 1/3 / 1/2 (reincidente) / 2/3 (hediondo); hediondo+reincidente suprimido (possível vedação art. 83 V); sem falta grave recente.
+- Coluna `hediondo` adicionada a `execucoes_penais` (migração aditiva `fase9_execucao_add_hediondo`).
+- Surfacados em `listComAlertas`/`getById` e no dashboard (emerald=oportunidade, amber/red=risco).
 
 ## Log
 - 2026-06-22: design criado; Fatia 1 (função pura PPE) implementada e mergeada (PR #163).

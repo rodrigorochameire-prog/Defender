@@ -122,7 +122,8 @@ export const execucoesPenais = pgTable(
     regimeInicial: regimeInicialEnum("regime_inicial"),
     regimeAtual: regimeInicialEnum("regime_atual"),
 
-    // Insumos da prescrição executória (art. 110/113/115 CP)
+    // Insumos da prescrição executória (art. 110/113/115 CP) e benefícios
+    hediondo: boolean("hediondo").default(false).notNull(),
     reincidente: boolean("reincidente").default(false).notNull(),
     menor21NoFato: boolean("menor_21_no_fato").default(false).notNull(),
     maior70NaSentenca: boolean("maior_70_na_sentenca").default(false).notNull(),

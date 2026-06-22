@@ -3,7 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
-import { AlertTriangle, Scale, Clock } from "lucide-react";
+import { AlertTriangle, Scale, Clock, Sparkles } from "lucide-react";
+
+const NIVEL_TEXT: Record<string, string> = {
+  red: "text-rose-600 dark:text-rose-400",
+  amber: "text-amber-600 dark:text-amber-400",
+  emerald: "text-emerald-600 dark:text-emerald-400",
+};
 
 const SITUACAO_LABEL: Record<string, string> = {
   preso: "Preso",
@@ -62,11 +68,15 @@ export default function ExecucaoPenalPage() {
       <div className="space-y-2">
         {data.map((e) => {
           const p = e.prescricao;
-          const corBorda =
-            p?.nivel === "red"
-              ? "border-rose-300 dark:border-rose-900/50"
-              : p?.nivel === "amber"
-                ? "border-amber-300 dark:border-amber-900/50"
+          const beneficios = e.beneficios ?? [];
+          const temRed = p?.nivel === "red" || beneficios.some((b) => b.nivel === "red");
+          const temAmber = p?.nivel === "amber" || beneficios.some((b) => b.nivel === "amber");
+          const corBorda = temRed
+            ? "border-rose-300 dark:border-rose-900/50"
+            : temAmber
+              ? "border-amber-300 dark:border-amber-900/50"
+              : beneficios.some((b) => b.nivel === "emerald")
+                ? "border-emerald-300 dark:border-emerald-900/50"
                 : "border-neutral-200 dark:border-neutral-800";
           return (
             <Link
@@ -89,17 +99,25 @@ export default function ExecucaoPenalPage() {
               </div>
 
               {p && (
-                <div
-                  className={`mt-2 flex items-start gap-1.5 text-xs font-medium ${
-                    p.nivel === "red"
-                      ? "text-rose-600 dark:text-rose-400"
-                      : "text-amber-600 dark:text-amber-400"
-                  }`}
-                >
+                <div className={`mt-2 flex items-start gap-1.5 text-xs font-medium ${NIVEL_TEXT[p.nivel]}`}>
                   <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>{p.motivo}</span>
                 </div>
               )}
+
+              {beneficios.map((b) => (
+                <div
+                  key={b.tipo}
+                  className={`mt-1.5 flex items-start gap-1.5 text-xs font-medium ${NIVEL_TEXT[b.nivel]}`}
+                >
+                  {b.nivel === "emerald" ? (
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  )}
+                  <span>{b.motivo}</span>
+                </div>
+              ))}
             </Link>
           );
         })}
