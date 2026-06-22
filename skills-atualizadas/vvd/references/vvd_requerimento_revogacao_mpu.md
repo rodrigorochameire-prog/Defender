@@ -196,3 +196,27 @@ Ao descrever quem residia no imóvel, evitar afirmações exclusivas sem evidên
 - Rq revogac...to Versoza
 - Rq revogac...iro Barros
 - Rq revogac...IJ - Verci
+
+---
+
+## CASO-REFERÊNCIA 2 — Revisão de MPU por fato novo + imóvel fora do escopo (Sandro, MPU 8015695-51.2022.8.05.0039, VVD Camaçari, 09/06/2026)
+
+> **Quando aplicar**: assistido = requerido de MPU que veda frequentar um endereço; a ofendida deixou o imóvel (ou nunca residia ali); o imóvel é do assistido (ou cuja titularidade ele disputa) e/ou há outro imóvel dele fora do alcance da medida.
+
+**Lições reaproveitáveis:**
+
+1. **Ler a DECISÃO concessiva antes de redigir — não confiar no resumo do atendimento.** Neste caso o assistido dizia "afastamento do lar", mas o juízo havia **indeferido** o afastamento; as medidas reais eram (a) aproximação mín. 100 m da ofendida, (b) proibição de contato, (c) proibição de frequentar o endereço. Redigir sobre a premissa errada quase comprometeu a peça. Extrair sempre do PJe as alíneas exatas, a data e o ID da decisão.
+
+2. **Revisão por fato novo (art. 19, §§ 2º e 3º; rebus sic stantibus).** Quando a proibição territorial se ancora na residência da ofendida e ela sai do imóvel, o substrato protetivo desaparece naquele ponto. Pedir a revisão **só do item territorial**, mantendo íntegras a aproximação e o contato (a proteção à pessoa permanece). Modulação cirúrgica é mais forte e defensável que revogação total.
+
+3. **Prova de não-residência por documento de processo diverso e insuspeito.** Certidão de oficial de justiça (citação infrutífera: "fechado, sem morador") lavrada em ação cível é prova idônea — e neutraliza o receio do assistido de ser acusado de "perseguição" ou de "como obteve o endereço": não é diligência particular, é ato oficial. **Colar a imagem da certidão na peça** (com moldura) deixa o argumento visualmente concreto. Pedir, ainda, nova diligência/constatação ao juízo da MPU (e inspeção judicial, art. 481 CPC): a decisão deve recair sobre fato verificado, não sobre relatos unilaterais de parte com interesse patrimonial.
+
+4. **Imóvel fora do escopo da medida.** Se o assistido tem OUTRO imóvel não nominado no item de proibição e fora do raio de aproximação (provar com mapa de rota anexo/embutido), pedir o **reconhecimento expresso** de que o acesso a ele não viola a MPU — segurança jurídica contra prisão por interpretação equivocada. Pode zelar desse bem desde já.
+
+5. **Função social e dever de conservar** (imóvel abandonado/deteriorando): CF art. 5º, XXII e XXIII, e art. 182, § 2º; Estatuto da Cidade (Lei 10.257/2001); CC arts. 1.228 (função social), 1.276 (consequências do abandono) e 1.314 (conservação por condômino). Não se impõe ao titular assistir à ruína do próprio bem sob pretexto genérico de medida cujo substrato sumiu.
+
+6. **NÃO conceder titularidade contra a vontade do assistido.** Se o assistido entende o imóvel como exclusivamente seu, **não afirmar "bem comum / partilhável 50%"**, ainda que haja sentença de família ou forte possibilidade de meação. Tratar titularidade/partilha como matéria de **outro juízo** (cível/família). Usar o art. 1.314 (condomínio) só em hipótese ("ainda que se cogite de copropriedade, como pretende a outra parte"). Coerência com as skills coerencia-defensiva e linguagem-defensiva.
+
+7. **Anexos seletivos (economia probatória documental).** Não juntar voluntariamente documento (ou página) que sustente a tese contrária. Ex.: ao anexar o contrato de compra e venda (assistido como único comprador), **excluir a página da declaração de união estável** que diz "bens da convivência são comuns" (sustenta a meação contra o assistido). Mas juntar a **devolução completa do mandado**, porque a folha do mandado mostra que foi a **própria requerente** quem declarou aquele endereço como residência.
+
+8. **Estilo**: corpo único integrando fato + fundamentação jurídica logo após cada fato (não separar "Dos Fatos" e "Do Direito"); endereçar a vara de VVD de Camaçari como **"Vara da Justiça pela Paz em Casa"**; peça e anexos finalizados vão para `1 - Protocolar/`.
