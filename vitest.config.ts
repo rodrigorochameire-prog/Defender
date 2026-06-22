@@ -2,17 +2,26 @@ import { defineConfig, configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// Testes vermelhos pré-existentes na `main`, quarentenados APENAS no CI para não
-// bloquear PRs. Continuam rodando localmente (`npm test`) para que sejam corrigidos.
-// Rastreamento: https://github.com/rodrigorochameire-prog/Defender/issues/156
+// Testes quarentenados APENAS no CI (process.env.CI) para não bloquear PRs.
+// Continuam rodando localmente (`npm test`). Rastreamento e remoção: issue #156.
 const CI_QUARANTINE = [
+  // (a) Testes de integração tRPC/API que exigem Postgres — o CI não provê banco
+  // (DATABASE_URL ausente). Voltam a rodar quando o workflow tiver um serviço de DB.
+  "__tests__/trpc/lugares-router.test.ts",
+  "__tests__/trpc/pessoas-router.test.ts",
+  "__tests__/trpc/casos-router.test.ts",
+  "__tests__/trpc/cronologia-router.test.ts",
+  "__tests__/trpc/encaminhamentos.test.ts",
+  "__tests__/trpc/audiencias-mutations.test.ts",
+  "__tests__/api/triagem-atendimento.test.ts",
+  "__tests__/api/triagem-promover.test.ts",
+  // (b) Testes de componente vermelhos pré-existentes na `main` (a corrigir)
   "__tests__/components/event-detail-sheet.test.tsx",
   "__tests__/components/documentos-block.test.tsx",
   "__tests__/components/dossie-v2-block.test.tsx",
   "__tests__/components/sheet-toc.test.tsx",
   "__tests__/sync-engine.test.ts",
   "__tests__/unit/registro-to-agenda-item.test.ts",
-  "__tests__/trpc/lugares-router.test.ts", // integração — exige banco (sem DB no CI)
 ];
 
 export default defineConfig({
