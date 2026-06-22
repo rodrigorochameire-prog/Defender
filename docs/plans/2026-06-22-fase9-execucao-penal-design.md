@@ -66,8 +66,12 @@ Sinal para **provocar a extinção** (petição de prescrição), não opinião 
 ## Fatia 2 · Schema (futuro — requer migração, checkpoint)
 Blocos do mapa-mestre: Título Executivo · Cronologia Executiva · Comportamento/Faltas · Endereço/Contato do Executado · Benefícios Pleiteados. Entidades de catálogo: `unidades_prisionais`, `locais_cumprimento_alternativo`.
 
-## Fatia 3 · Apresentação (futuro)
-Dashboard `/admin/execucao-penal`, timeline executiva (reusa `ProcessoTimeline`), cards de alerta ordenados por urgência, geração de demanda automática com prazo.
+## Fatia 3 · Apresentação `[✅ 2026-06-22]`
+- Reader `src/lib/execucao/reader.ts` (`montarInputPrescricao`/`avaliarPrescricaoExecucao`) converte o título+eventos no input da função pura. 7 testes.
+- tRPC `execucao` router: `listComAlertas` (flag computado por execução), `getById`, `upsert`, `addEvento`. Escopo por workspace via `processos.workspaceId`.
+- Página `/admin/execucao-penal` com cards de alerta calibrados (amber/red) + filtro "só com alerta". Item no admin-sidebar (ícone Gavel).
+- **Schema aplicado em produção** (Supabase, migração `fase9_execucao_penal_nucleo`, aditiva).
+- Futuro: timeline executiva (reusa `ProcessoTimeline`), geração automática de demanda com prazo, demais flags (saída temporária, livramento, risco de regressão cadastral — dado já modelado).
 
 ## Log
 - 2026-06-22: design criado; Fatia 1 (função pura PPE) implementada e mergeada (PR #163).
