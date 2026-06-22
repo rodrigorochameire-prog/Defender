@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { processos, assistidos, users, registros } from "@/lib/db/schema";
-import { eq, and, isNull, ilike } from "drizzle-orm";
+import { eq, and, isNull, ilike, inArray, asc } from "drizzle-orm";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 import { resolveDemanda } from "@/lib/services/demandas-resolver";
 import { parseProvidenciasCell, PROVIDENCIAS_MARKER } from "@/lib/services/registros-summary";
@@ -175,12 +175,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         ? body.reuPreso
         : body.reuPreso === "true" || body.reuPreso === "Preso";
 
+    const statusInfo = normalizarStatus(body.status ?? "");
+
     const result = await resolveDemanda({
       processoId,
       assistidoId,
       ato: ato.trim(),
       origem: "planilha_apps_script",
-      status: normalizarStatus(body.status ?? "") || "5_TRIAGEM",
+      status: statusInfo.status || "5_TRIAGEM",
+      substatus: statusInfo.substatus,
       prazo: parseDateValue(body.prazo ?? ""),
       dataEntrada: parseDateValue(body.dataEntrada ?? ""),
       reuPreso: reuPresoTyped,

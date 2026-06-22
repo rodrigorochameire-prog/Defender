@@ -42,7 +42,7 @@ export const instanciaSuperiorRouter = router({
       }).optional()
     )
     .query(async ({ ctx, input }) => {
-      const filters = input ?? {};
+      const filters: Exclude<typeof input, undefined> = input ?? { limit: 50, offset: 0 };
       const conditions = [];
       const isAdmin = ctx.user.role === "admin";
 
@@ -340,7 +340,7 @@ export const instanciaSuperiorRouter = router({
         votos: z.array(z.object({
           desembargadorId: z.number(),
           nome: z.string(),
-          voto: z.string(),
+          voto: z.enum(["ACOMPANHA_RELATOR", "DIVERGENTE", "IMPEDIDO", "AUSENTE"]),
           observacao: z.string().optional(),
         })).optional(),
         analiseIa: z.any().optional(),
@@ -412,7 +412,7 @@ export const instanciaSuperiorRouter = router({
       }).optional()
     )
     .query(async ({ input }) => {
-      const filters = input ?? {};
+      const filters: Exclude<typeof input, undefined> = input ?? { limit: 50 };
       const conditions = [eq(defensoresBa.ativo, true)];
 
       if (filters.area) conditions.push(eq(defensoresBa.area, filters.area));

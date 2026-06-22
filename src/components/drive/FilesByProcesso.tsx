@@ -352,20 +352,20 @@ export function FilesByProcesso({
 
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
-                        {file.name}
+                        {file.fileName}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-neutral-500">
-                          {formatFileSize(file.fileSize)}
+                          {formatFileSize(file.sizeBytes)}
                         </span>
-                        {file.lastModifiedTime && (
+                        {file.modifiedTime && (
                           <>
                             <span className="text-neutral-300 dark:text-neutral-700">
                               •
                             </span>
                             <span className="text-xs text-neutral-500">
                               {formatDistanceToNow(
-                                new Date(file.lastModifiedTime),
+                                new Date(file.modifiedTime),
                                 { addSuffix: true, locale: ptBR }
                               )}
                             </span>
@@ -381,10 +381,10 @@ export function FilesByProcesso({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {file.webViewLink && (
+                        {file.driveFileId && (
                           <DropdownMenuItem asChild>
                             <a
-                              href={file.webViewLink}
+                              href={`https://drive.google.com/file/d/${file.driveFileId}/view`}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
@@ -393,10 +393,10 @@ export function FilesByProcesso({
                             </a>
                           </DropdownMenuItem>
                         )}
-                        {file.webContentLink && (
+                        {file.driveFileId && (
                           <DropdownMenuItem asChild>
                             <a
-                              href={file.webContentLink}
+                              href={`https://drive.google.com/uc?export=download&id=${file.driveFileId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                             >

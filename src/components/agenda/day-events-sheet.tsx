@@ -408,11 +408,12 @@ export function DayEventsSheet({
                             {tipo}
                           </span>
                           {visual.dashed && !cancelado && (
-                            <Users
-                              className="w-3 h-3 shrink-0 opacity-70"
-                              style={{ color: solidColor }}
-                              title="Atendimento"
-                            />
+                            <span title="Atendimento" className="inline-flex shrink-0">
+                              <Users
+                                className="w-3 h-3 opacity-70"
+                                style={{ color: solidColor }}
+                              />
+                            </span>
                           )}
                           {temAdv && !cancelado && (
                             <span

@@ -27,9 +27,12 @@ describe("registroAgendadoToAgendaItem", () => {
     expect(item.fonte).toBe("registros");
     expect(item.tipo).toBe("atendimento");
   });
-  it("usa o titulo quando presente e cai em 'Atendimento' quando ausente", () => {
+  it("usa o titulo quando presente e cai em 'Atendimento — <assistido>' quando ausente", () => {
     expect(registroAgendadoToAgendaItem(base).titulo).toBe("Orientação sobre recurso");
-    expect(registroAgendadoToAgendaItem({ ...base, titulo: null }).titulo).toBe("Atendimento");
+    // Sem título, o fallback é "Atendimento" acrescido do nome do assistido vinculado.
+    expect(registroAgendadoToAgendaItem({ ...base, titulo: null }).titulo).toBe("Atendimento — Maria Souza");
+    // Sem título e sem assistido, fica apenas "Atendimento".
+    expect(registroAgendadoToAgendaItem({ ...base, titulo: null, assistido: null }).titulo).toBe("Atendimento");
   });
   it("extrai data e horário de dataRegistro", () => {
     const item = registroAgendadoToAgendaItem(base);

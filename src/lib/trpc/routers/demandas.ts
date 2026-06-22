@@ -1683,7 +1683,7 @@ export const demandasRouter = router({
             entityType: "demanda",
             entityId: insertedDemanda.id,
             action: "import",
-            metadata: { importBatchId: row.importBatchId, ato: row.ato, assistido: row.nomeAssistido },
+            metadata: { importBatchId: row.importBatchId, ato: row.ato, assistido: row.assistido },
           });
 
           // 7. Criar audiência quando a intimação designa audiência.

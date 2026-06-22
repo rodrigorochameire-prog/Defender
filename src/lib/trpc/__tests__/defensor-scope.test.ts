@@ -14,7 +14,6 @@ function makeUser(
     name: "Test User",
     email: "test@example.com",
     passwordHash: null,
-    role: "defensor",
     phone: null,
     oab: null,
     comarca: null,

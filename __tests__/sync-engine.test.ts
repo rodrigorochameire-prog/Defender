@@ -60,12 +60,14 @@ describe("classifySync", () => {
     expect(classifySync("delegadoPara")).toBe("BIDIRECTIONAL");
     expect(classifySync("prazo")).toBe("BIDIRECTIONAL");
     expect(classifySync("reuPreso")).toBe("BIDIRECTIONAL");
+    // `ato` é bidirecional: o defensor define na planilha o ato processual real
+    // a praticar e a edição grava no banco (ver BIDIRECTIONAL_FIELDS no engine).
+    expect(classifySync("ato")).toBe("BIDIRECTIONAL");
   });
 
   it("classifica campos unidirecionais", () => {
     expect(classifySync("assistidoNome")).toBe("BANCO_TO_SHEET");
     expect(classifySync("numeroAutos")).toBe("BANCO_TO_SHEET");
-    expect(classifySync("ato")).toBe("BANCO_TO_SHEET");
     expect(classifySync("dataEntrada")).toBe("BANCO_TO_SHEET");
   });
 });

@@ -34,7 +34,9 @@ describe("SheetToC", () => {
   it("destaca chip ativo", () => {
     render(<SheetToC sections={sections} activeId="depoentes" onJump={() => {}} />);
     const chip = screen.getByRole("button", { name: /depoentes/i });
-    expect(chip.className).toMatch(/bg-foreground/);
+    // Chip ativo recebe fundo sólido (neutral-800 / dark:neutral-100); inativos usam bg-white.
+    expect(chip.className).toMatch(/bg-neutral-800/);
+    expect(chip.className).toMatch(/dark:bg-neutral-100/);
   });
 
   it("não renderiza nada quando sections está vazio", () => {
