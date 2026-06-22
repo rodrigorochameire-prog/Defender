@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { db } from "@/lib/db";
 import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed } from "@/lib/db/schema";
 import { users } from "@/lib/db/schema/core";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { createCallerFactory } from "@/lib/trpc/init";
 import { appRouter } from "@/lib/trpc/routers";
 import { _setGeocoderForTests } from "@/lib/lugares/geocoder-instance";
@@ -169,20 +169,50 @@ describe("lugares participações + busca", { timeout: 30000 }, () => {
 describe("lugares merge-queue", { timeout: 30000 }, () => {
   it("listDuplicates detecta mesmo normalizado", async () => {
     const user = await makeUser();
+    let a: Awaited<ReturnType<typeof createCaller>["lugares"]["create"]> | undefined;
+    let b: typeof a;
     try {
       const caller = createCaller(mkCtx(user));
-      const a = await caller.lugares.create({ logradouro: "R. X", numero: "10", fonte: "manual" });
-      const b = await caller.lugares.create({ logradouro: "Rua X", numero: "10", fonte: "manual" });
-      const dupes = await caller.lugares.listDuplicates({ limit: 20, offset: 0 });
+      a = await caller.lugares.create({ logradouro: "R. X", numero: "10", fonte: "manual" });
+      b = await caller.lugares.create({ logradouro: "Rua X", numero: "10", fonte: "manual" });
+      // "R. X, 10" e "Rua X, 10" normalizam para a mesma chave — é isso que
+      // listDuplicates usa para emparelhar (JOIN em endereco_normalizado).
+      const gotA = await caller.lugares.getById({ id: a.id });
+      const gotB = await caller.lugares.getById({ id: b.id });
+      expect(gotA?.enderecoNormalizado).toBe(gotB?.enderecoNormalizado);
+      expect(gotA?.enderecoNormalizado).toBeTruthy();
+      // listDuplicates ordena por id asc e pagina; o par recém-criado tem os
+      // maiores ids do workspace, então fica na última página. Buscamos a
+      // página final via offset baseado na contagem real de pares duplicados.
+      const countRes = await db.execute(sql`
+        SELECT COUNT(*)::int AS cnt
+        FROM lugares la JOIN lugares lb
+          ON la.endereco_normalizado = lb.endereco_normalizado
+         AND la.id < lb.id
+         AND la.merged_into IS NULL AND lb.merged_into IS NULL
+         AND la.workspace_id = 1 AND lb.workspace_id = 1
+         AND NOT EXISTS (
+           SELECT 1 FROM lugares_distincts_confirmed d
+           WHERE d.lugar_a_id = la.id AND d.lugar_b_id = lb.id
+         )
+      `);
+      const countRows = ((countRes as any).rows ?? countRes) as Array<{ cnt: number }>;
+      const totalPairs = Number(countRows[0].cnt);
+      const dupes = await caller.lugares.listDuplicates({
+        limit: 50,
+        offset: Math.max(0, totalPairs - 50),
+      });
       const found = dupes.items.find((p: any) =>
         (p.aId === a.id && p.bId === b.id) || (p.aId === b.id && p.bId === a.id)
       );
       expect(found).toBeTruthy();
-      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, a.id));
-      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, b.id));
-      await db.delete(lugares).where(eq(lugares.id, a.id));
-      await db.delete(lugares).where(eq(lugares.id, b.id));
+      expect(found?.tipo).toBe("mesmo-normalizado");
     } finally {
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, a?.id ?? -1));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.lugarId, b?.id ?? -1));
+      await db.delete(lugaresAccessLog).where(eq(lugaresAccessLog.userId, user.id));
+      if (a) await db.delete(lugares).where(eq(lugares.id, a.id));
+      if (b) await db.delete(lugares).where(eq(lugares.id, b.id));
       await db.delete(users).where(eq(users.id, user.id));
     }
   });

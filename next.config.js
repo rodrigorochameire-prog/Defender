@@ -18,13 +18,13 @@ const nextConfig = {
       },
     ],
   },
-  // Ignorar erros TS no build (erros pré-existentes em routers legados)
+  // Gate verde (F.0): type-safety reativada — build falha se `tsc` quebrar.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  // Ignorar erros ESLint no build (warnings continuam aparecendo, mas não bloqueiam deploy)
+  // ESLint bloqueia o build em caso de Error (warnings continuam só avisando).
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Configurações otimizadas para Vercel
   experimental: {

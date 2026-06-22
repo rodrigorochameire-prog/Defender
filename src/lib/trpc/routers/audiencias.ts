@@ -934,11 +934,11 @@ export const audienciasRouter = router({
       aguardandoNovaData: z.boolean().optional(),
     }))
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
+      const { id, dataAudiencia, ...data } = input;
       const updateData: Partial<typeof audiencias.$inferInsert> = { ...data };
 
-      if (data.dataAudiencia) {
-        updateData.dataAudiencia = new Date(data.dataAudiencia);
+      if (dataAudiencia) {
+        updateData.dataAudiencia = new Date(dataAudiencia);
       }
 
       const [audiencia] = await db
@@ -948,7 +948,7 @@ export const audienciasRouter = router({
         .returning();
 
       // Sincronizar Calendar — só se algo relevante mudou
-      const dataChanged = !!data.dataAudiencia;
+      const dataChanged = !!dataAudiencia;
       const tipoChanged = !!data.tipo;
       const localChanged = data.local !== undefined;
 

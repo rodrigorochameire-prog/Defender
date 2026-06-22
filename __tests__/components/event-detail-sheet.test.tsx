@@ -12,8 +12,13 @@ vi.mock("@/components/ui/sheet", () => ({
   SheetTitle: ({ children }: any) => <div>{children}</div>,
 }));
 
-vi.mock("@/lib/trpc/client", () => ({
-  trpc: {
+// O EventDetailSheet renderiza uma árvore profunda (audiências, drive, mídia,
+// pessoas, cautelares, mpu, …). Em vez de enumerar cada procedure, o mock usa
+// Proxies: procedures com dados relevantes para as asserções são declaradas em
+// `overrides`; qualquer outra cai em stubs genéricos (useQuery/useMutation),
+// evitando "Cannot read properties of undefined" a cada procedure nova.
+vi.mock("@/lib/trpc/client", () => {
+  const overrides: Record<string, Record<string, any>> = {
     audiencias: {
       getAudienciaContext: {
         useQuery: () => ({
@@ -29,38 +34,44 @@ vi.mock("@/lib/trpc/client", () => ({
           isLoading: false,
         }),
       },
-      marcarConcluida: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      redesignarAudiencia: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      marcarDepoenteOuvido: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      redesignarDepoente: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      addQuickNote: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      vincularAudioDepoente: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-    },
-    analise: {
-      criarTask: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
     drive: {
-      filesByProcesso: { useQuery: () => ({ data: [], isLoading: false }) },
-      filesByAssistido: { useQuery: () => ({ data: [], isLoading: false }) },
-      getDriveStatusForProcesso: { useQuery: () => ({ data: null, isLoading: false }) },
-      getDriveStatusForAssistido: { useQuery: () => ({ data: null, isLoading: false }) },
-      uploadWithLink: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+      autosDoProcesso: { useQuery: () => ({ data: { desteProcesso: [], correlacionados: [], outros: [] }, isLoading: false }) },
       midiasByAssistido: { useQuery: () => ({ data: { processos: [], ungrouped: [], stats: { total: 0, transcribed: 0, analyzed: 0 } }, isLoading: false }) },
     },
-    pessoas: {
-      getParticipacoesDoProcesso: { useQuery: () => ({ data: [], isLoading: false }) },
-      getBatchSignals: { useQuery: () => ({ data: [], isLoading: false }) },
-      getById: { useQuery: () => ({ data: null, isLoading: false }) },
-    },
-    useUtils: () => ({
-      audiencias: { getAudienciaContext: { invalidate: vi.fn() } },
-      drive: {
-        filesByProcesso: { invalidate: vi.fn() },
-        filesByAssistido: { invalidate: vi.fn() },
+  };
+
+  // Stub padrão para qualquer procedure: expõe useQuery e useMutation.
+  const defaultProcedure = {
+    useQuery: () => ({ data: undefined, isLoading: false }),
+    useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+    useInfiniteQuery: () => ({ data: undefined, isLoading: false, fetchNextPage: vi.fn() }),
+  };
+
+  const makeRouterProxy = (routerName: string) => {
+    const routerOverrides = overrides[routerName] ?? {};
+    return new Proxy(
+      {},
+      { get: (_t, procedure: string) => routerOverrides[procedure] ?? defaultProcedure },
+    );
+  };
+
+  const trpcProxy = new Proxy(
+    {},
+    {
+      get: (_t, router: string) => {
+        if (router === "useUtils") {
+          // utils.<router>.<procedure>.invalidate() — proxy aninhado, sempre no-op.
+          return () =>
+            new Proxy({}, { get: () => new Proxy({}, { get: () => ({ invalidate: vi.fn(), refetch: vi.fn() }) }) });
+        }
+        return makeRouterProxy(router);
       },
-    }),
-  },
-}));
+    },
+  );
+
+  return { trpc: trpcProxy };
+});
 
 // Mock config module used in sheet
 vi.mock("@/lib/config/atribuicoes", () => ({
@@ -97,14 +108,15 @@ describe("EventDetailSheet", () => {
 
   it("renderiza bloco Documentos (novo, com tabs Autos/Assistido)", () => {
     const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    // Verify Docs section exists in the ToC
+    // Verify Documentos section exists in the ToC (o chip usa o label completo "Documentos")
     const docsToCButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.toUpperCase().trim() === "DOCS"
+      (btn) => btn.textContent?.toUpperCase().trim() === "DOCUMENTOS"
     );
     expect(docsToCButton).toBeDefined();
-    // Verify that DocumentosBlock section exists (data-section-id="documentos")
+    // Verify that DocumentosBlock section exists (data-section-id="documentos").
+    // querySelector retorna null quando ausente, então toBeTruthy é a checagem correta.
     const documentosSection = container.querySelector('[data-section-id="documentos"]');
-    expect(documentosSection).toBeDefined();
+    expect(documentosSection).toBeTruthy();
   });
 
   it("renderiza bloco Mídia (empty state quando sem mídia)", () => {

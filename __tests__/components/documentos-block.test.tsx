@@ -13,19 +13,31 @@ const assistidoFiles = [
   { driveFileId: "b1", name: "Procuracao.pdf", mimeType: "application/pdf", lastModifiedTime: new Date("2026-03-10") },
 ];
 
+// autosDoProcesso agora retorna grupos { desteProcesso, correlacionados, outros }.
+const autosGrupos = {
+  desteProcesso: autosFiles,
+  correlacionados: [] as { cnj: string; classe?: string | null; files: typeof autosFiles }[],
+  outros: [] as typeof autosFiles,
+};
+
 vi.mock("@/lib/trpc/client", () => ({
   trpc: {
     drive: {
-      filesByProcesso: { useQuery: vi.fn(() => ({ data: autosFiles, isLoading: false })) },
+      autosDoProcesso: { useQuery: vi.fn(() => ({ data: autosGrupos, isLoading: false })) },
       filesByAssistido: { useQuery: vi.fn(() => ({ data: assistidoFiles, isLoading: false })) },
+      sectionsByProcesso: { useQuery: vi.fn(() => ({ data: [], isLoading: false })) },
       getDriveStatusForProcesso: { useQuery: vi.fn(() => ({ data: { linked: true, folderId: "folderP" }, isLoading: false })) },
       getDriveStatusForAssistido: { useQuery: vi.fn(() => ({ data: { linked: true, folderId: "folderA" }, isLoading: false })) },
       uploadWithLink: { useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })) },
     },
+    documentSections: {
+      triggerClassification: { useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })) },
+    },
     useUtils: () => ({
       drive: {
-        filesByProcesso: { invalidate: vi.fn() },
+        autosDoProcesso: { invalidate: vi.fn() },
         filesByAssistido: { invalidate: vi.fn() },
+        sectionsByProcesso: { invalidate: vi.fn() },
       },
     }),
   },

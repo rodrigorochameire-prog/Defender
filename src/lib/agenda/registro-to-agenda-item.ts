@@ -15,7 +15,7 @@ export interface RegistroAgendado {
   assunto: string | null;
   conteudo: string | null;
   local: string | null;
-  status: string;
+  status: string | null;
   subtipo?: string | null;
   dataRegistro: string | Date;
   assistido: { id: number; nome: string } | null;

@@ -322,7 +322,9 @@ function EventoCompacto({
                 </span>
               )}
               {visual.dashed && !eventoCancelado && (
-                <Users className="w-3 h-3 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+                <span title="Atendimento" className="inline-flex shrink-0">
+                  <Users className="w-3 h-3 opacity-70" style={{ color: displayColor }} />
+                </span>
               )}
               {temAdvogado && !eventoCancelado && (
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400/80" title="Advogado constituído" />

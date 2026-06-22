@@ -572,6 +572,11 @@ export const vvdRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Processo já foi promovido ao sistema geral" });
       }
 
+      const numeroAutosVVD = processoVVD.processo.numeroAutos;
+      if (!numeroAutosVVD) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Processo VVD sem número de autos" });
+      }
+
       const requerido = processoVVD.requerido;
       if (!requerido) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Processo sem requerido vinculado" });
@@ -617,7 +622,7 @@ export const vvdRouter = router({
         .insert(processos)
         .values({
           assistidoId: assistidoId!,
-          numeroAutos: processoVVD.processo.numeroAutos,
+          numeroAutos: numeroAutosVVD,
           comarca: processoVVD.processo.comarca || "Camaçari",
           vara: processoVVD.processo.vara || "Vara de Violência Doméstica",
           assunto: processoVVD.processo.crime || undefined,
@@ -991,11 +996,15 @@ export const vvdRouter = router({
       // 3. Garantir que processoVVD tem processoId (auto-promoção se necessário)
       let processoId = dados.processo.processoId;
       if (!processoId) {
+        const numeroAutosVVD = dados.processo.numeroAutos;
+        if (!numeroAutosVVD) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Processo VVD sem número de autos" });
+        }
         const [novoProcesso] = await db
           .insert(processos)
           .values({
             assistidoId,
-            numeroAutos: dados.processo.numeroAutos,
+            numeroAutos: numeroAutosVVD,
             comarca: dados.processo.comarca || "Camaçari",
             vara: dados.processo.vara || "Vara de Violência Doméstica",
             assunto: dados.processo.crime || undefined,
@@ -1130,11 +1139,15 @@ export const vvdRouter = router({
       // 3. Garantir que processoVVD tem processoId (auto-promoção se necessário)
       let processoId = dados.processo.processoId;
       if (!processoId) {
+        const numeroAutosVVD = dados.processo.numeroAutos;
+        if (!numeroAutosVVD) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Processo VVD sem número de autos" });
+        }
         const [novoProcesso] = await db
           .insert(processos)
           .values({
             assistidoId,
-            numeroAutos: dados.processo.numeroAutos,
+            numeroAutos: numeroAutosVVD,
             comarca: dados.processo.comarca || "Camaçari",
             vara: dados.processo.vara || "Vara de Violência Doméstica",
             assunto: dados.processo.crime || undefined,

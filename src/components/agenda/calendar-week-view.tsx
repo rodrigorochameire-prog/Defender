@@ -177,7 +177,9 @@ function EventoSemana({
 
               {/* Indicadores */}
               {visual.dashed && !eventoCancelado && (
-                <Users className="w-2.5 h-2.5 shrink-0 opacity-70" style={{ color: displayColor }} title="Atendimento" />
+                <span title="Atendimento" className="inline-flex shrink-0">
+                  <Users className="w-2.5 h-2.5 opacity-70" style={{ color: displayColor }} />
+                </span>
               )}
               {temAdvogado && !eventoCancelado && (
                 <Scale className="w-2.5 h-2.5 text-rose-500 shrink-0" />

@@ -1963,20 +1963,6 @@ export const driveRouter = router({
   /**
    * Lista arquivos vinculados a um processo
    */
-  filesByProcesso: protectedProcedure
-    .input(z.object({ processoId: z.number() }))
-    .query(async ({ input }) => {
-      return safeAsync(async () => {
-        const files = await db
-          .select()
-          .from(driveFiles)
-          .where(eq(driveFiles.processoId, input.processoId))
-          .orderBy(desc(driveFiles.lastModifiedTime));
-
-        return files;
-      }, "Erro ao listar arquivos do processo");
-    }),
-
   /**
    * Lista arquivos do assistido classificados em 3 grupos:
    * - desteProcesso: CNJ idêntico ou já vinculado ao processo
@@ -2054,20 +2040,6 @@ export const driveRouter = router({
   /**
    * Lista arquivos vinculados a um assistido
    */
-  filesByAssistido: protectedProcedure
-    .input(z.object({ assistidoId: z.number() }))
-    .query(async ({ input }) => {
-      return safeAsync(async () => {
-        const files = await db
-          .select()
-          .from(driveFiles)
-          .where(eq(driveFiles.assistidoId, input.assistidoId))
-          .orderBy(desc(driveFiles.lastModifiedTime));
-
-        return files;
-      }, "Erro ao listar arquivos do assistido");
-    }),
-
   sectionsByAssistido: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ input }) => {
@@ -5439,7 +5411,7 @@ export const driveRouter = router({
       let errors = 0;
 
       for (const sf of syncFolders) {
-        const atribuicaoLabel = sf.atribuicao || sf.label || "desconhecida";
+        const atribuicaoLabel = sf.name || "desconhecida";
         console.log(`[DriveIndex] Walking sync folder: ${atribuicaoLabel} (${sf.driveFolderId})`);
 
         try {
@@ -5928,7 +5900,6 @@ export const driveRouter = router({
             }
 
             // 4. Get user's OAuth token (owner of files — SA can't move files it doesn't own)
-            const { tryRefreshOAuth } = await import("@/lib/services/google-drive");
             let userToken = token; // SA token as fallback
             try {
               const oauthClientId = process.env.GOOGLE_CLIENT_ID;

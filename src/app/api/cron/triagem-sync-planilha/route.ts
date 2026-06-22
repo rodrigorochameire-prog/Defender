@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
-import { GoogleAuth } from "google-auth-library";
 import { montarEscalaMes } from "@/lib/services/triagem-escala";
 
 async function getSheetsClient() {
@@ -12,7 +11,9 @@ async function getSheetsClient() {
   } catch {
     credentials = JSON.parse(Buffer.from(raw, "base64").toString("utf-8"));
   }
-  const auth = new GoogleAuth({
+  // google.auth.GoogleAuth (do próprio googleapis) garante que o tipo do auth
+  // casa com google.sheets() independente da versão de google-auth-library.
+  const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });

@@ -36,10 +36,10 @@ export const atendimentosRouter = router({
       return await db
         .select({
           id: atendimentos.id,
-          dataAtendimento: atendimentos.dataAtendimento,
+          dataAtendimento: atendimentos.dataRegistro,
           tipo: atendimentos.tipo,
           assunto: atendimentos.assunto,
-          resumo: atendimentos.resumo,
+          resumo: atendimentos.conteudo,
           status: atendimentos.status,
           local: atendimentos.local,
           duracao: atendimentos.duracao,
@@ -47,7 +47,7 @@ export const atendimentosRouter = router({
         })
         .from(atendimentos)
         .where(eq(atendimentos.casoId, input.casoId))
-        .orderBy(desc(atendimentos.dataAtendimento));
+        .orderBy(desc(atendimentos.dataRegistro));
     }),
 
   // ==========================================
