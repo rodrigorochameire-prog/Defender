@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { AlertTriangle, Scale, Clock, Sparkles } from "lucide-react";
+import { AlertTriangle, Scale, Clock, Sparkles, ListPlus, Loader2 } from "lucide-react";
 
 const NIVEL_TEXT: Record<string, string> = {
   red: "text-rose-600 dark:text-rose-400",
@@ -22,7 +23,20 @@ const SITUACAO_LABEL: Record<string, string> = {
 
 export default function ExecucaoPenalPage() {
   const [apenasComAlerta, setApenasComAlerta] = useState(false);
+  const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.execucao.listComAlertas.useQuery({ apenasComAlerta });
+
+  const sincronizar = trpc.execucao.sincronizarDemandas.useMutation({
+    onSuccess: (r) => {
+      toast.success(
+        r.criadas > 0
+          ? `${r.criadas} demanda${r.criadas !== 1 ? "s" : ""} criada${r.criadas !== 1 ? "s" : ""} (${r.jaExistentes} já existiam)`
+          : `Nenhuma demanda nova — ${r.jaExistentes} já estavam no kanban`,
+      );
+      utils.demandas.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const comAlerta = data.filter((e) => e.prescricao);
 
@@ -33,15 +47,30 @@ export default function ExecucaoPenalPage() {
           <Scale className="h-5 w-5 text-neutral-500" />
           <h1 className="text-lg font-semibold">Execução penal ({data.length})</h1>
         </div>
-        <label className="flex items-center gap-2 text-xs text-neutral-500 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={apenasComAlerta}
-            onChange={(e) => setApenasComAlerta(e.target.checked)}
-            className="cursor-pointer"
-          />
-          Só com alerta de prescrição
-        </label>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-xs text-neutral-500 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={apenasComAlerta}
+              onChange={(e) => setApenasComAlerta(e.target.checked)}
+              className="cursor-pointer"
+            />
+            Só com alerta
+          </label>
+          <button
+            type="button"
+            onClick={() => sincronizar.mutate()}
+            disabled={sincronizar.isPending}
+            className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm cursor-pointer transition-colors hover:border-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {sincronizar.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ListPlus className="h-4 w-4" />
+            )}
+            Gerar demandas dos alertas
+          </button>
+        </div>
       </div>
 
       {comAlerta.length > 0 && (
