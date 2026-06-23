@@ -30,6 +30,29 @@ describe("AREA_TO_ATRIBUICAO_ENUM", () => {
   });
 });
 
+// Cores de área unificadas com a atribuição central (decisão do usuário):
+// Criminal→rose, Cível/Família→orange, demais batendo com a paleta do app.
+describe("AREA_CONFIG · cores da atribuição central", () => {
+  const HUE: Record<string, string> = {
+    CRIMINAL: "rose",
+    VIOLENCIA_DOMESTICA: "amber",
+    JURI: "emerald",
+    EXECUCAO_PENAL: "blue",
+    CIVEL: "orange",
+    FAMILIA: "orange",
+  };
+  for (const [area, hue] of Object.entries(HUE)) {
+    it(`${area} usa ${hue}`, () => {
+      expect(AREA_CONFIG[area].border).toBe(`border-l-${hue}-500`);
+      expect(AREA_CONFIG[area].badge).toContain(`${hue}-`);
+    });
+  }
+  it("preserva rótulos próprios do atendimento", () => {
+    expect(AREA_CONFIG.CRIMINAL.label).toBe("Criminal");
+    expect(AREA_CONFIG.EXECUCAO_PENAL.shortLabel).toBe("EP");
+  });
+});
+
 import { whatsappUrl } from "../config";
 
 describe("whatsappUrl", () => {
