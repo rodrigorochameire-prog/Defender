@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { ProcessosVinculadosList } from "@/components/processo/processos-vinculados-list";
 
 export default function ProcessoPage() {
   const params = useParams();
@@ -43,6 +44,10 @@ export default function ProcessoPage() {
       {!raw && !processo.casoId && (
         <p className="text-xs italic text-amber-600">Processo sem caso vinculado — vista standalone.</p>
       )}
+      <section className="pt-2">
+        <h2 className="text-base font-semibold mb-2">Processos vinculados</h2>
+        <ProcessosVinculadosList processoId={id} currentId={id} showCreateButton />
+      </section>
       <section className="pt-2">
         <h2 className="text-base font-semibold mb-2">Registros</h2>
         <RegistrosTimeline
