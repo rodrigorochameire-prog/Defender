@@ -10,14 +10,12 @@ describe("mapearTipoLugar", () => {
     expect(mapearTipoLugar("RESIDENCIA_DEFENDIDO")).toBe("endereco-assistido");
   });
 
-  it("RESIDENCIA_VITIMA → residencia-agressor (vítima/agressor é o outro lado)", () => {
-    // No domínio (VVD), a "residência da vítima" / "residência do agressor" mapeia
-    // ao enum residencia-agressor (único slot de residência de terceiro).
-    expect(mapearTipoLugar("RESIDENCIA_VITIMA")).toBe("residencia-agressor");
+  it("RESIDENCIA_VITIMA → residencia-vitima (NUNCA conflar com agressor)", () => {
+    expect(mapearTipoLugar("RESIDENCIA_VITIMA")).toBe("residencia-vitima");
   });
 
-  it("RESIDENCIA_TESTEMUNHA → residencia-agressor (residência de terceiro)", () => {
-    expect(mapearTipoLugar("RESIDENCIA_TESTEMUNHA")).toBe("residencia-agressor");
+  it("RESIDENCIA_TESTEMUNHA → residencia-testemunha", () => {
+    expect(mapearTipoLugar("RESIDENCIA_TESTEMUNHA")).toBe("residencia-testemunha");
   });
 
   it("LOCAL_TRABALHO → trabalho-agressor", () => {
@@ -36,18 +34,15 @@ describe("mapearTipoLugar", () => {
     expect(mapearTipoLugar("  fato ")).toBe("local-do-fato");
   });
 
-  it("OUTRO → radar-noticia (fallback genérico)", () => {
-    expect(mapearTipoLugar("OUTRO")).toBe("radar-noticia");
+  it("OUTRO/CAMERA/ROTA/desconhecido → outro (fallback honesto)", () => {
+    expect(mapearTipoLugar("OUTRO")).toBe("outro");
+    expect(mapearTipoLugar("CAMERA")).toBe("outro");
+    expect(mapearTipoLugar("ROTA")).toBe("outro");
+    expect(mapearTipoLugar("xpto-invalido")).toBe("outro");
   });
 
-  it("tipo desconhecido → radar-noticia (fallback)", () => {
-    expect(mapearTipoLugar("CAMERA")).toBe("radar-noticia");
-    expect(mapearTipoLugar("ROTA")).toBe("radar-noticia");
-    expect(mapearTipoLugar("xpto-invalido")).toBe("radar-noticia");
-  });
-
-  it("string vazia/undefined → radar-noticia", () => {
-    expect(mapearTipoLugar("")).toBe("radar-noticia");
-    expect(mapearTipoLugar(undefined)).toBe("radar-noticia");
+  it("string vazia/undefined → outro", () => {
+    expect(mapearTipoLugar("")).toBe("outro");
+    expect(mapearTipoLugar(undefined)).toBe("outro");
   });
 });

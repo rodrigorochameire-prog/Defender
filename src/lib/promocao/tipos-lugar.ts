@@ -33,7 +33,10 @@ export type LugarTipoParticipacao =
   | "residencia-agressor"
   | "trabalho-agressor"
   | "local-atendimento"
-  | "radar-noticia";
+  | "radar-noticia"
+  | "residencia-vitima"
+  | "residencia-testemunha"
+  | "outro";
 
 /** Lugar já existente no workspace (pool de dedup por endereço normalizado). */
 export interface LugarExistente {
