@@ -23,6 +23,7 @@ export * from "./vvd";
 export * from "./mpu";
 export * from "./cautelares";
 export * from "./execucao";
+export * from "./promocao";
 export * from "./documentos";
 export * from "./drive";
 export * from "./comunicacao";
