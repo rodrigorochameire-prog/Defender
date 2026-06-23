@@ -67,11 +67,14 @@ export type RecursoResultado =
   | "PARCIALMENTE_CONCEDIDO" // HC
   | "DENEGADO";           // HC
 
+export type RecursoTribunal = "TJBA" | "STJ" | "STF";
+
 export const recursos = pgTable("recursos", {
   id: serial("id").primaryKey(),
 
   // Tipo e número
   tipo: varchar("tipo", { length: 30 }).notNull(),    // RecursoTipo
+  tribunal: varchar("tribunal", { length: 10 }).default("TJBA").notNull(), // RecursoTribunal: TJBA (2º grau), STJ, STF
   numeroRecurso: varchar("numero_recurso", { length: 30 }), // Número no TJBA (pode ser diferente do 1º grau)
 
   // Vínculos
@@ -110,6 +113,7 @@ export const recursos = pgTable("recursos", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
   index("recursos_tipo_idx").on(table.tipo),
+  index("recursos_tribunal_idx").on(table.tribunal),
   index("recursos_status_idx").on(table.status),
   index("recursos_resultado_idx").on(table.resultado),
   index("recursos_processo_origem_idx").on(table.processoOrigemId),

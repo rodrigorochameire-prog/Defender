@@ -16,10 +16,22 @@ import {
 } from "@/lib/db/schema";
 import { processos, assistidos } from "@/lib/db/schema/core";
 import { eq, and, desc, asc, sql, count, isNull, inArray, ilike, or } from "drizzle-orm";
+import { buildRecursoScope } from "../instancia-superior-scope";
 
 // ==========================================
 // INSTANCIA SUPERIOR ROUTER
 // ==========================================
+
+/** Recorte de escopo compartilhado por listRecursos / stats / agregações */
+const escopoInput = z
+  .object({
+    modo: z.enum(["meus", "institucional", "todos"]).optional(),
+    dimensao: z
+      .enum(["comarca", "unidade", "especialidade", "area", "localizacao"])
+      .optional(),
+    valor: z.string().optional(),
+  })
+  .optional();
 
 export const instanciaSuperiorRouter = router({
   // ==========================================
@@ -30,13 +42,14 @@ export const instanciaSuperiorRouter = router({
   listRecursos: protectedProcedure
     .input(
       z.object({
+        escopo: escopoInput,
         tipo: z.string().optional(),
+        tribunal: z.string().optional(),
         status: z.string().optional(),
         resultado: z.string().optional(),
         camara: z.string().optional(),
         defensorDestinoId: z.number().optional(),
         assistidoId: z.number().optional(),
-        verTodos: z.boolean().optional(),
         limit: z.number().default(50),
         offset: z.number().default(0),
       }).optional()
@@ -44,26 +57,13 @@ export const instanciaSuperiorRouter = router({
     .query(async ({ ctx, input }) => {
       const filters: Exclude<typeof input, undefined> = input ?? { limit: 50, offset: 0 };
       const conditions = [];
-      const isAdmin = ctx.user.role === "admin";
 
-      // Escopo automático: admin com verTodos=true vê tudo;
-      // defensor vê recursos onde é origem ou destino;
-      // sem ponte (defensorBaId null) e sem verTodos → lista vazia
-      if (isAdmin && input?.verTodos === true) {
-        // sem filtro de escopo
-      } else if (ctx.user.defensorBaId) {
-        conditions.push(
-          or(
-            eq(recursos.defensorOrigemId, ctx.user.defensorBaId),
-            eq(recursos.defensorDestinoId, ctx.user.defensorBaId)
-          )!
-        );
-      } else {
-        // sem ponte e não é admin verTodos → retorno defensivo vazio
-        return { rows: [], total: 0 };
-      }
+      // Escopo (meus / institucional / todos) compartilhado com stats e agregações
+      const scope = buildRecursoScope(ctx.user, filters.escopo);
+      if (scope) conditions.push(scope);
 
       if (filters.tipo) conditions.push(eq(recursos.tipo, filters.tipo));
+      if (filters.tribunal) conditions.push(eq(recursos.tribunal, filters.tribunal));
       if (filters.status) conditions.push(eq(recursos.status, filters.status));
       if (filters.resultado) conditions.push(eq(recursos.resultado, filters.resultado));
       if (filters.camara) conditions.push(eq(recursos.camara, filters.camara));
@@ -75,11 +75,14 @@ export const instanciaSuperiorRouter = router({
           .select({
             id: recursos.id,
             tipo: recursos.tipo,
+            tribunal: recursos.tribunal,
             numeroRecurso: recursos.numeroRecurso,
             camara: recursos.camara,
             status: recursos.status,
             resultado: recursos.resultado,
             dataInterposicao: recursos.dataInterposicao,
+            dataDistribuicao: recursos.dataDistribuicao,
+            dataPauta: recursos.dataPauta,
             dataJulgamento: recursos.dataJulgamento,
             resumo: recursos.resumo,
             tesesInvocadas: recursos.tesesInvocadas,
@@ -148,6 +151,7 @@ export const instanciaSuperiorRouter = router({
     .input(
       z.object({
         tipo: z.string(),
+        tribunal: z.enum(["TJBA", "STJ", "STF"]).optional(),
         numeroRecurso: z.string().optional(),
         processoOrigemId: z.number().optional(),
         assistidoId: z.number().optional(),
@@ -161,15 +165,19 @@ export const instanciaSuperiorRouter = router({
         resumo: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // Vincula ao defensor logado (ponte defensores_ba) quando não informado,
+      // para que o recurso apareça no escopo "meus".
+      const baId = ctx.user.defensorBaId ?? null;
       const [created] = await db
         .insert(recursos)
         .values({
           tipo: input.tipo,
+          tribunal: input.tribunal ?? "TJBA",
           numeroRecurso: input.numeroRecurso,
           processoOrigemId: input.processoOrigemId,
           assistidoId: input.assistidoId,
-          defensorOrigemId: input.defensorOrigemId,
+          defensorOrigemId: input.defensorOrigemId ?? baId,
           defensorDestinoId: input.defensorDestinoId,
           camara: input.camara,
           relatorId: input.relatorId,
@@ -177,6 +185,7 @@ export const instanciaSuperiorRouter = router({
           tesesInvocadas: input.tesesInvocadas ?? [],
           tiposPenais: input.tiposPenais ?? [],
           resumo: input.resumo,
+          criadoPorId: baId,
         })
         .returning();
 
@@ -202,7 +211,8 @@ export const instanciaSuperiorRouter = router({
         relatorNome: z.string().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      const baId = ctx.user.defensorBaId ?? null;
       // 1. Checar duplicata: mesmo processoOrigem + tipo (qualquer status)
       const [existente] = await db
         .select({ id: recursos.id, numero: recursos.numeroRecurso })
@@ -251,6 +261,8 @@ export const instanciaSuperiorRouter = router({
           relatorId,
           tesesInvocadas: [],
           tiposPenais: [],
+          defensorOrigemId: baId,
+          criadoPorId: baId,
         })
         .returning();
 
@@ -434,51 +446,185 @@ export const instanciaSuperiorRouter = router({
   // INTELIGÊNCIA / ESTATÍSTICAS
   // ==========================================
 
-  /** Estatísticas gerais da instância superior */
-  stats: protectedProcedure.query(async () => {
-    const [
-      totalRecursos,
-      porTipo,
-      porResultado,
-      porCamara,
-      pendentes,
-    ] = await Promise.all([
-      db.select({ total: count() }).from(recursos),
+  /** Estatísticas gerais da instância superior (respeita o escopo) */
+  stats: protectedProcedure
+    .input(z.object({ escopo: escopoInput }).optional())
+    .query(async ({ ctx, input }) => {
+      const scope = buildRecursoScope(ctx.user, input?.escopo);
+      const w = (extra?: any) => and(scope, extra);
 
-      db
-        .select({ tipo: recursos.tipo, total: count() })
+      const [
+        totalRecursos,
+        porTipo,
+        porResultado,
+        porCamara,
+        porTribunal,
+        porStatus,
+        pendentes,
+        emPauta,
+        julgados,
+      ] = await Promise.all([
+        db.select({ total: count() }).from(recursos).where(w()),
+
+        db
+          .select({ tipo: recursos.tipo, total: count() })
+          .from(recursos)
+          .where(w())
+          .groupBy(recursos.tipo)
+          .orderBy(desc(count())),
+
+        db
+          .select({ resultado: recursos.resultado, total: count() })
+          .from(recursos)
+          .where(w(sql`${recursos.resultado} != 'PENDENTE'`))
+          .groupBy(recursos.resultado)
+          .orderBy(desc(count())),
+
+        db
+          .select({ camara: recursos.camara, total: count() })
+          .from(recursos)
+          .where(w(sql`${recursos.camara} IS NOT NULL`))
+          .groupBy(recursos.camara)
+          .orderBy(desc(count())),
+
+        db
+          .select({ tribunal: recursos.tribunal, total: count() })
+          .from(recursos)
+          .where(w())
+          .groupBy(recursos.tribunal)
+          .orderBy(desc(count())),
+
+        db
+          .select({ status: recursos.status, total: count() })
+          .from(recursos)
+          .where(w())
+          .groupBy(recursos.status),
+
+        db
+          .select({ total: count() })
+          .from(recursos)
+          .where(w(eq(recursos.resultado, "PENDENTE"))),
+
+        db
+          .select({ total: count() })
+          .from(recursos)
+          .where(w(sql`${recursos.status} IN ('DISTRIBUIDO','CONCLUSO','PAUTADO')`)),
+
+        db
+          .select({ total: count() })
+          .from(recursos)
+          .where(w(sql`${recursos.status} IN ('JULGADO','TRANSITADO')`)),
+      ]);
+
+      const totalJulgados = porResultado.reduce((s, r) => s + Number(r.total), 0);
+      const providos = porResultado
+        .filter((r) => ["PROVIDO", "CONCEDIDO", "PARCIALMENTE_PROVIDO", "PARCIALMENTE_CONCEDIDO"].includes(r.resultado))
+        .reduce((s, r) => s + Number(r.total), 0);
+      const taxaProvimento = totalJulgados > 0 ? Math.round((providos / totalJulgados) * 100) : null;
+
+      return {
+        total: totalRecursos[0]?.total ?? 0,
+        pendentes: pendentes[0]?.total ?? 0,
+        emPauta: emPauta[0]?.total ?? 0,
+        julgados: julgados[0]?.total ?? 0,
+        taxaProvimento,
+        porTipo,
+        porResultado,
+        porCamara,
+        porTribunal,
+        porStatus,
+      };
+    }),
+
+  /**
+   * Mapa de casos por assunto (tipos penais). Unnest do array jsonb
+   * tiposPenais → contagem + taxa de provimento por crime/tema.
+   */
+  mapaPorAssunto: protectedProcedure
+    .input(z.object({ escopo: escopoInput, limit: z.number().default(20) }).optional())
+    .query(async ({ ctx, input }) => {
+      const scope = buildRecursoScope(ctx.user, input?.escopo);
+      const limit = input?.limit ?? 20;
+      return db
+        .select({
+          assunto: sql<string>`assunto`,
+          total: sql<number>`count(*)::int`,
+          julgados: sql<number>`count(*) FILTER (WHERE recursos.resultado <> 'PENDENTE')::int`,
+          providos: sql<number>`count(*) FILTER (WHERE recursos.resultado IN ('PROVIDO','CONCEDIDO','PARCIALMENTE_PROVIDO','PARCIALMENTE_CONCEDIDO'))::int`,
+          pendentes: sql<number>`count(*) FILTER (WHERE recursos.resultado = 'PENDENTE')::int`,
+        })
+        .from(sql`recursos, jsonb_array_elements_text(COALESCE(recursos.tipos_penais, '[]'::jsonb)) AS assunto`)
+        .where(scope ? sql`${scope}` : sql`true`)
+        .groupBy(sql`assunto`)
+        .orderBy(sql`count(*) DESC`)
+        .limit(limit);
+    }),
+
+  /** Agenda de julgamentos — recursos com data de pauta futura */
+  agendaPauta: protectedProcedure
+    .input(z.object({ escopo: escopoInput, limit: z.number().default(30) }).optional())
+    .query(async ({ ctx, input }) => {
+      const scope = buildRecursoScope(ctx.user, input?.escopo);
+      const limit = input?.limit ?? 30;
+      return db
+        .select({
+          id: recursos.id,
+          tipo: recursos.tipo,
+          tribunal: recursos.tribunal,
+          numeroRecurso: recursos.numeroRecurso,
+          camara: recursos.camara,
+          status: recursos.status,
+          dataPauta: recursos.dataPauta,
+          assistidoNome: assistidos.nome,
+          relatorNome: desembargadores.nome,
+        })
         .from(recursos)
-        .groupBy(recursos.tipo)
-        .orderBy(desc(count())),
+        .leftJoin(assistidos, eq(recursos.assistidoId, assistidos.id))
+        .leftJoin(desembargadores, eq(recursos.relatorId, desembargadores.id))
+        .where(and(scope, sql`${recursos.dataPauta} IS NOT NULL AND ${recursos.dataPauta} >= CURRENT_DATE`))
+        .orderBy(asc(recursos.dataPauta))
+        .limit(limit);
+    }),
 
-      db
-        .select({ resultado: recursos.resultado, total: count() })
-        .from(recursos)
-        .where(sql`${recursos.resultado} != 'PENDENTE'`)
-        .groupBy(recursos.resultado)
-        .orderBy(desc(count())),
-
-      db
-        .select({ camara: recursos.camara, total: count() })
-        .from(recursos)
-        .where(sql`${recursos.camara} IS NOT NULL`)
-        .groupBy(recursos.camara)
-        .orderBy(desc(count())),
-
-      db
-        .select({ total: count() })
-        .from(recursos)
-        .where(eq(recursos.resultado, "PENDENTE")),
-    ]);
-
-    return {
-      total: totalRecursos[0]?.total ?? 0,
-      pendentes: pendentes[0]?.total ?? 0,
-      porTipo,
-      porResultado,
-      porCamara,
-    };
-  }),
+  /**
+   * Inteligência institucional — agrega recursos por dimensão (comarca,
+   * unidade, especialidade, área, localização) cruzando os defensores de
+   * origem. Base dos comparativos entre defensores/juízos.
+   */
+  institucional: protectedProcedure
+    .input(
+      z.object({
+        dimensao: z
+          .enum(["comarca", "unidade", "especialidade", "area", "localizacao"])
+          .default("comarca"),
+        limit: z.number().default(30),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const dimensao = input?.dimensao ?? "comarca";
+      const limit = input?.limit ?? 30;
+      const COL: Record<string, string> = {
+        comarca: "comarca",
+        unidade: "unidade",
+        especialidade: "especialidade",
+        area: "area",
+        localizacao: "localizacao",
+      };
+      const col = COL[dimensao];
+      return db
+        .select({
+          grupo: sql<string>`COALESCE(d.${sql.raw(col)}, '—')`,
+          total: sql<number>`count(*)::int`,
+          pendentes: sql<number>`count(*) FILTER (WHERE r.resultado = 'PENDENTE')::int`,
+          julgados: sql<number>`count(*) FILTER (WHERE r.resultado <> 'PENDENTE')::int`,
+          providos: sql<number>`count(*) FILTER (WHERE r.resultado IN ('PROVIDO','CONCEDIDO','PARCIALMENTE_PROVIDO','PARCIALMENTE_CONCEDIDO'))::int`,
+          defensores: sql<number>`count(DISTINCT r.defensor_origem_id)::int`,
+        })
+        .from(sql`recursos r LEFT JOIN defensores_ba d ON r.defensor_origem_id = d.id`)
+        .groupBy(sql`COALESCE(d.${sql.raw(col)}, '—')`)
+        .orderBy(sql`count(*) DESC`)
+        .limit(limit);
+    }),
 
   /** Perfil de atuação de um desembargador */
   perfilDesembargador: protectedProcedure
