@@ -88,6 +88,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
+  { label: "Mapa dos Fatos", path: "/admin/mapa-dos-fatos", icon: "MapPin" },
 ];
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
