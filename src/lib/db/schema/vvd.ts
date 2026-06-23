@@ -205,6 +205,37 @@ export const processosVVD = pgTable("processos_vvd", {
 
   // Dados analíticos - Medidas deferidas (JSONB array de medidas específicas)
   medidasDeferidas: jsonb("medidas_deferidas").$type<string[]>(),
+  // Medidas SOLICITADAS (simétrico a deferidas; permite ver pedido vs concedido)
+  medidasSolicitadas: jsonb("medidas_solicitadas").$type<string[]>(),
+
+  // Fase VII — bloco Contexto Cível (litígios cíveis paralelos à MPU; preenchido
+  // pelo defensor). Apenas estrutura de dados — NENHUM detector/flag nesta fase.
+  contextoCivel: jsonb("contexto_civel").$type<{
+    divorcioEmCurso?: boolean;
+    divorcioDataInicio?: string | null;
+    guardaEmDisputa?: boolean;
+    guardaDataInicio?: string | null;
+    alimentosEmCurso?: boolean;
+    inventarioPendente?: boolean;
+    reintegracaoPosseAtiva?: boolean;
+    imovelConjugalEmDisputa?: boolean;
+    observacoes?: string | null;
+  }>(),
+
+  // Fase VII — bloco Ação Penal VVD (denúncia, retratação art. 16, condenação)
+  acaoPenalVvd: jsonb("acao_penal_vvd").$type<{
+    denunciaOferecida?: boolean;
+    dataDenuncia?: string | null;
+    arquivada?: boolean;
+    retratacaoPolicialData?: string | null;
+    retratacaoAudienciaData?: string | null;
+    art16Aplicado?: boolean;
+    condenacao?: boolean;
+    penaAnos?: number | null;
+    penaMeses?: number | null;
+    regime?: string | null;
+    substituicaoRestritiva?: boolean;
+  }>(),
 
   // Geolocalização — restrição e endereços do agressor
   raioRestricaoMetros: integer("raio_restricao_metros"),

@@ -390,6 +390,79 @@ export const vvdRouter = router({
     }),
 
   // ==========================================
+  // FASE VII — BLOCOS ESTRUTURADOS (contexto cível, ação penal, medidas solicitadas)
+  // ==========================================
+
+  /** Lê os blocos da Fase VII do processo VVD vinculado a um processo geral. */
+  getBlocosFaseVii: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [pv] = await db
+        .select({
+          processoVvdId: processosVVD.id,
+          contextoCivel: processosVVD.contextoCivel,
+          acaoPenalVvd: processosVVD.acaoPenalVvd,
+          medidasSolicitadas: processosVVD.medidasSolicitadas,
+          medidasDeferidas: processosVVD.medidasDeferidas,
+        })
+        .from(processosVVD)
+        .where(and(eq(processosVVD.processoId, input.processoId), isNull(processosVVD.deletedAt)))
+        .limit(1);
+      return pv ?? null;
+    }),
+
+  /** Atualiza os blocos da Fase VII (preenchidos pelo defensor no formulário). */
+  updateBlocosFaseVii: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        contextoCivel: z
+          .object({
+            divorcioEmCurso: z.boolean().optional(),
+            divorcioDataInicio: z.string().nullable().optional(),
+            guardaEmDisputa: z.boolean().optional(),
+            guardaDataInicio: z.string().nullable().optional(),
+            alimentosEmCurso: z.boolean().optional(),
+            inventarioPendente: z.boolean().optional(),
+            reintegracaoPosseAtiva: z.boolean().optional(),
+            imovelConjugalEmDisputa: z.boolean().optional(),
+            observacoes: z.string().nullable().optional(),
+          })
+          .optional(),
+        acaoPenalVvd: z
+          .object({
+            denunciaOferecida: z.boolean().optional(),
+            dataDenuncia: z.string().nullable().optional(),
+            arquivada: z.boolean().optional(),
+            retratacaoPolicialData: z.string().nullable().optional(),
+            retratacaoAudienciaData: z.string().nullable().optional(),
+            art16Aplicado: z.boolean().optional(),
+            condenacao: z.boolean().optional(),
+            penaAnos: z.number().nullable().optional(),
+            penaMeses: z.number().nullable().optional(),
+            regime: z.string().nullable().optional(),
+            substituicaoRestritiva: z.boolean().optional(),
+          })
+          .optional(),
+        medidasSolicitadas: z.array(z.string()).optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const set: Record<string, unknown> = { updatedAt: new Date() };
+      if (input.contextoCivel !== undefined) set.contextoCivel = input.contextoCivel;
+      if (input.acaoPenalVvd !== undefined) set.acaoPenalVvd = input.acaoPenalVvd;
+      if (input.medidasSolicitadas !== undefined) set.medidasSolicitadas = input.medidasSolicitadas;
+
+      const [row] = await db
+        .update(processosVVD)
+        .set(set as any)
+        .where(and(eq(processosVVD.processoId, input.processoId), isNull(processosVVD.deletedAt)))
+        .returning({ id: processosVVD.id });
+      if (!row) throw new Error("Processo VVD não encontrado para este processo");
+      return row;
+    }),
+
+  // ==========================================
   // INTIMAÇÕES VVD
   // ==========================================
 
