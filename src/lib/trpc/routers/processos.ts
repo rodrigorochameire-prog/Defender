@@ -1107,4 +1107,45 @@ export const processosRouter = router({
       return await db.select().from(processos)
         .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
     }),
+
+  /** Lê o bloco ANPP do processo + a flag "cabível não oferecido". */
+  getAnpp: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [row] = await db.select({ anpp: processos.anpp }).from(processos).where(eq(processos.id, input.processoId)).limit(1);
+      const { detectAnppCabivelNaoOferecido } = await import("@/lib/anpp/anpp-flags");
+      return { anpp: row?.anpp ?? null, flag: detectAnppCabivelNaoOferecido(row?.anpp ?? null) };
+    }),
+
+  /** Atualiza o bloco ANPP (formulário do defensor). */
+  updateAnpp: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        anpp: z.object({
+          penaMinimaInferior4Anos: z.boolean().optional(),
+          semViolenciaGraveAmeaca: z.boolean().optional(),
+          primario: z.boolean().optional(),
+          confessou: z.boolean().optional(),
+          oferecido: z.boolean().optional(),
+          dataOferecimento: z.string().nullable().optional(),
+          propostas: z.object({
+            reparacao: z.boolean().optional(),
+            psc: z.boolean().optional(),
+            multa: z.boolean().optional(),
+            curso: z.boolean().optional(),
+            outras: z.string().nullable().optional(),
+          }).optional(),
+          homologado: z.boolean().optional(),
+          cumprido: z.boolean().optional(),
+          descumprido: z.boolean().optional(),
+          observacoes: z.string().nullable().optional(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const [row] = await db.update(processos).set({ anpp: input.anpp } as any).where(eq(processos.id, input.processoId)).returning({ id: processos.id });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      return { id: row.id };
+    }),
 });
