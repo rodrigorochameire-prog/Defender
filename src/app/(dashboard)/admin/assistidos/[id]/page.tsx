@@ -24,7 +24,7 @@ import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { statusConfig } from "../_components/assistido-config";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { FeedUnificado } from "@/components/registros/feed-unificado";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
 function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
@@ -597,9 +597,9 @@ export default function AssistidoHubPage() {
             )}
           </CardShell>
 
-          {/* Atividade recente */}
-          <CardShell title="Atividade recente" icon={Clock}>
-            <RegistrosTimeline assistidoId={id} emptyHint="Nenhum registro deste assistido ainda." />
+          {/* Linha do tempo unificada: registros + demandas + audiências */}
+          <CardShell title="Linha do tempo" icon={Clock}>
+            <FeedUnificado assistidoId={id} emptyHint="Nenhuma atividade deste assistido ainda." />
           </CardShell>
 
           {/* Drive recente */}
