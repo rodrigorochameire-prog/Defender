@@ -209,6 +209,8 @@ export const processos = pgTable("processos", {
   // Camada de promoção: marca quando as pessoas deste processo foram promovidas
   // ao catálogo (backfill ignora processos já promovidos; idempotência).
   pessoasPromovidasEm: timestamp("pessoas_promovidas_em", { withTimezone: true }),
+  // Idem para delitos (tipificações promovidas do analysisData.imputacoes).
+  delitosPromovidosEm: timestamp("delitos_promovidos_em", { withTimezone: true }),
 
   // Geolocalização do fato
   localDoFatoEndereco: text("local_do_fato_endereco"),
