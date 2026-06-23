@@ -230,6 +230,20 @@ export const processos = pgTable("processos", {
   // Idem para lugares (de analysisData.locais) e cautelares (de medidasCautelares).
   lugaresPromovidosEm: timestamp("lugares_promovidos_em", { withTimezone: true }),
   cautelaresPromovidasEm: timestamp("cautelares_promovidas_em", { withTimezone: true }),
+  // Fase X — bloco ANPP (acordo de não persecução penal). Preenchido pelo defensor.
+  anpp: jsonb("anpp").$type<{
+    penaMinimaInferior4Anos?: boolean;
+    semViolenciaGraveAmeaca?: boolean;
+    primario?: boolean; // não reincidente em crime doloso
+    confessou?: boolean;
+    oferecido?: boolean;
+    dataOferecimento?: string | null;
+    propostas?: { reparacao?: boolean; psc?: boolean; multa?: boolean; curso?: boolean; outras?: string | null };
+    homologado?: boolean;
+    cumprido?: boolean;
+    descumprido?: boolean;
+    observacoes?: string | null;
+  }>(),
 
   // Geolocalização do fato
   localDoFatoEndereco: text("local_do_fato_endereco"),
