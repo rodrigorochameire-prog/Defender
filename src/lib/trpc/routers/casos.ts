@@ -19,7 +19,7 @@ import {
   anotacoes,
   assistidosProcessos,
 } from "@/lib/db/schema";
-import { eq, and, isNull, sql, desc, ilike, inArray, or } from "drizzle-orm";
+import { eq, and, isNull, sql, desc, ilike, inArray, or, gte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 // ==========================================
@@ -1303,6 +1303,159 @@ export const casosRouter = router({
           )
         )
         .orderBy(desc(casos.updatedAt));
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // getCasosComProcessos — visão "processos sistematizados" da aba Casos:
+  // cada caso do assistido com seus processos (área, situação, próxima
+  // audiência, próximo prazo) + bucket "sem caso" para processos avulsos.
+  // ────────────────────────────────────────────────────────────────────
+  getCasosComProcessos: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+
+      // ACL: o assistido tem de pertencer ao workspace do usuário.
+      const [dono] = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId)))
+        .limit(1);
+      if (!dono) return { casos: [], semCaso: [] };
+
+      const casosRows = await db
+        .select({
+          id: casos.id,
+          titulo: casos.titulo,
+          codigo: casos.codigo,
+          atribuicao: casos.atribuicao,
+          status: casos.status,
+          fase: casos.fase,
+          prioridade: casos.prioridade,
+          updatedAt: casos.updatedAt,
+        })
+        .from(casos)
+        .where(
+          and(
+            eq(casos.assistidoId, input.assistidoId),
+            isNull(casos.deletedAt),
+          )
+        )
+        .orderBy(desc(casos.updatedAt));
+
+      const procRows = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+          atribuicao: processos.atribuicao,
+          situacao: processos.situacao,
+          fase: processos.fase,
+          isJuri: processos.isJuri,
+          vara: processos.vara,
+          comarca: processos.comarca,
+          assunto: processos.assunto,
+          classeProcessual: processos.classeProcessual,
+          casoId: processos.casoId,
+        })
+        .from(processos)
+        .where(
+          and(
+            eq(processos.assistidoId, input.assistidoId),
+            isNull(processos.deletedAt),
+          )
+        )
+        .orderBy(desc(processos.updatedAt));
+
+      const procIds = procRows.map((p) => p.id);
+      const agora = new Date();
+
+      // Próxima audiência (futura, não cancelada) por processo.
+      const audRows = procIds.length
+        ? await db
+            .select({
+              processoId: audiencias.processoId,
+              dataAudiencia: audiencias.dataAudiencia,
+              tipo: audiencias.tipo,
+            })
+            .from(audiencias)
+            .where(
+              and(
+                inArray(audiencias.processoId, procIds),
+                gte(audiencias.dataAudiencia, agora),
+                sql`${audiencias.status} <> 'cancelada'`,
+              )
+            )
+            .orderBy(audiencias.dataAudiencia)
+        : [];
+      const proxAud = new Map<number, { data: Date; tipo: string | null }>();
+      for (const a of audRows) {
+        if (a.processoId && !proxAud.has(a.processoId)) {
+          proxAud.set(a.processoId, { data: a.dataAudiencia, tipo: a.tipo });
+        }
+      }
+
+      // Próximo prazo de demanda aberta (prazo >= hoje) por processo.
+      const hojeISO = agora.toISOString().slice(0, 10);
+      const demRows = procIds.length
+        ? await db
+            .select({
+              processoId: demandas.processoId,
+              prazo: demandas.prazo,
+              ato: demandas.ato,
+            })
+            .from(demandas)
+            .where(
+              and(
+                inArray(demandas.processoId, procIds),
+                isNull(demandas.deletedAt),
+                sql`${demandas.status} NOT IN ('CONCLUIDO', 'ARQUIVADO')`,
+                sql`${demandas.prazo} IS NOT NULL AND ${demandas.prazo} >= ${hojeISO}`,
+              )
+            )
+            .orderBy(demandas.prazo)
+        : [];
+      const proxPrazo = new Map<number, { data: string; ato: string | null }>();
+      for (const d of demRows) {
+        if (d.processoId && d.prazo && !proxPrazo.has(d.processoId)) {
+          proxPrazo.set(d.processoId, { data: d.prazo, ato: d.ato });
+        }
+      }
+
+      const sistematizar = (p: (typeof procRows)[number]) => ({
+        id: p.id,
+        numeroAutos: p.numeroAutos,
+        area: p.area,
+        atribuicao: p.atribuicao,
+        situacao: p.situacao,
+        fase: p.fase,
+        isJuri: p.isJuri,
+        vara: p.vara,
+        comarca: p.comarca,
+        assunto: p.assunto,
+        classeProcessual: p.classeProcessual,
+        proximaAudiencia: proxAud.get(p.id) ?? null,
+        proximoPrazo: proxPrazo.get(p.id) ?? null,
+      });
+
+      const casoIds = new Set(casosRows.map((c) => c.id));
+      const porCaso = new Map<number, ReturnType<typeof sistematizar>[]>();
+      const semCaso: ReturnType<typeof sistematizar>[] = [];
+      for (const p of procRows) {
+        const item = sistematizar(p);
+        if (p.casoId && casoIds.has(p.casoId)) {
+          const arr = porCaso.get(p.casoId) ?? [];
+          arr.push(item);
+          porCaso.set(p.casoId, arr);
+        } else {
+          semCaso.push(item);
+        }
+      }
+
+      return {
+        casos: casosRows.map((c) => ({ ...c, processos: porCaso.get(c.id) ?? [] })),
+        semCaso,
+      };
     }),
 
   getCasoById: protectedProcedure
