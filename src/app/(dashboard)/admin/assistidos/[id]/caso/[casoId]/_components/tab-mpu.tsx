@@ -3,6 +3,7 @@
 import { trpc } from "@/lib/trpc/client";
 import { MedidasVigentesPanel } from "@/components/mpu/medidas-vigentes-panel";
 import { BlocosFaseVii } from "@/components/mpu/blocos-fase-vii";
+import { FlagUsoInstrumentalCard } from "@/components/mpu/flag-uso-instrumental-card";
 
 interface Props { casoId: number; }
 
@@ -25,6 +26,7 @@ export function TabMpu({ casoId }: Props) {
           Vista técnica →
         </a>
       </div>
+      <FlagUsoInstrumentalCard processoId={procRef.id} />
       <MedidasVigentesPanel processoId={procRef.id} />
       <BlocosFaseVii processoId={procRef.id} />
     </div>

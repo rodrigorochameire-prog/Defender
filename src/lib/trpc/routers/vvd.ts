@@ -10,7 +10,9 @@ import {
   processos,
   assistidos,
   audiencias,
+  mpuRelatos,
 } from "@/lib/db/schema";
+import { avaliarUsoInstrumental } from "@/lib/mpu/flag-uso-instrumental";
 import { eq, and, desc, asc, sql, isNull, isNotNull, or, ilike, gte, lte, count, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDefensoresVisiveis } from "@/lib/trpc/defensor-scope";
@@ -460,6 +462,73 @@ export const vvdRouter = router({
         .returning({ id: processosVVD.id });
       if (!row) throw new Error("Processo VVD não encontrado para este processo");
       return row;
+    }),
+
+  /**
+   * Avalia a flag "uso instrumental da LMP" para um processo (defensor-only).
+   * Detector de FATORES CÍVEIS CONECTADOS — não é veredito sobre a vítima.
+   * Monta os insumos dos blocos estruturados e roda a função pura conservadora.
+   */
+  getFlagUsoInstrumental: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [pv] = await db
+        .select({
+          id: processosVVD.id,
+          requerenteId: processosVVD.requerenteId,
+          dataDecisaoMPU: processosVVD.dataDecisaoMPU,
+          dataDistribuicao: processosVVD.dataDistribuicao,
+          contextoCivel: processosVVD.contextoCivel,
+          acaoPenalVvd: processosVVD.acaoPenalVvd,
+        })
+        .from(processosVVD)
+        .where(and(eq(processosVVD.processoId, input.processoId), isNull(processosVVD.deletedAt)))
+        .limit(1);
+      if (!pv) return null;
+
+      // Tipos de violência (mpu_relatos é 1:1 por processo geral).
+      const [relato] = await db
+        .select({ tiposViolencia: mpuRelatos.tiposViolencia })
+        .from(mpuRelatos)
+        .where(eq(mpuRelatos.processoId, input.processoId))
+        .limit(1);
+
+      // Requerente recorrente: aparece em >=2 casos VVD (por CPF, senão por nome).
+      let requerenteRecorrente = false;
+      if (pv.requerenteId) {
+        const [req] = await db
+          .select({ nome: partesVVD.nome, cpf: partesVVD.cpf })
+          .from(partesVVD)
+          .where(eq(partesVVD.id, pv.requerenteId))
+          .limit(1);
+        if (req) {
+          const matchParte = req.cpf ? eq(partesVVD.cpf, req.cpf) : eq(partesVVD.nome, req.nome);
+          const [{ n }] = await db
+            .select({ n: sql<number>`count(distinct ${processosVVD.id})::int` })
+            .from(processosVVD)
+            .innerJoin(partesVVD, eq(partesVVD.id, processosVVD.requerenteId))
+            .where(and(isNull(processosVVD.deletedAt), matchParte));
+          requerenteRecorrente = Number(n) >= 2;
+        }
+      }
+
+      const cc = pv.contextoCivel ?? {};
+      const ap = pv.acaoPenalVvd ?? {};
+      const resultado = avaliarUsoInstrumental({
+        dataPedidoMpu: pv.dataDecisaoMPU ?? pv.dataDistribuicao ?? null,
+        divorcioEmCurso: cc.divorcioEmCurso,
+        divorcioDataInicio: cc.divorcioDataInicio,
+        guardaEmDisputa: cc.guardaEmDisputa,
+        guardaDataInicio: cc.guardaDataInicio,
+        imovelConjugalEmDisputa: cc.imovelConjugalEmDisputa,
+        tiposViolencia: relato?.tiposViolencia ?? [],
+        retratacaoPolicialData: ap.retratacaoPolicialData,
+        denunciaOferecida: ap.denunciaOferecida,
+        dataDenuncia: ap.dataDenuncia,
+        requerenteRecorrente,
+      });
+
+      return resultado;
     }),
 
   // ==========================================
