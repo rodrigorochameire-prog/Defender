@@ -75,6 +75,10 @@ export const participacoesProcesso = pgTable(
     audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
     dataPrimeiraAparicao: date("data_primeira_aparicao"),
     fonte: varchar("fonte", { length: 40 }).notNull(),
+    // Promoção automática: `origem` default 'manual' blinda toda linha existente;
+    // `fonteRef` rastreia a extração de origem (idempotência + auditoria).
+    origem: varchar("origem", { length: 20 }).notNull().default("manual"),
+    fonteRef: varchar("fonte_ref", { length: 120 }),
     confidence: numeric("confidence", { precision: 3, scale: 2 }).default("1.0").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

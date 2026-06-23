@@ -206,6 +206,9 @@ export const processos = pgTable("processos", {
   analysisData: jsonb("analysis_data").$type<Record<string, any>>(),
   analyzedAt: timestamp("analyzed_at"),
   analysisVersion: integer("analysis_version").default(0),
+  // Camada de promoção: marca quando as pessoas deste processo foram promovidas
+  // ao catálogo (backfill ignora processos já promovidos; idempotência).
+  pessoasPromovidasEm: timestamp("pessoas_promovidas_em", { withTimezone: true }),
 
   // Geolocalização do fato
   localDoFatoEndereco: text("local_do_fato_endereco"),
