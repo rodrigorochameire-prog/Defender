@@ -1383,7 +1383,9 @@ export const casosRouter = router({
               and(
                 inArray(audiencias.processoId, procIds),
                 gte(audiencias.dataAudiencia, agora),
-                sql`${audiencias.status} <> 'cancelada'`,
+                // status é nullable; `<> 'cancelada'` daria NULL e esconderia
+                // audiências de status NULL. IS DISTINCT FROM trata NULL como ≠.
+                sql`${audiencias.status} IS DISTINCT FROM 'cancelada'`,
               )
             )
             .orderBy(audiencias.dataAudiencia)
@@ -1396,7 +1398,9 @@ export const casosRouter = router({
       }
 
       // Próximo prazo de demanda aberta (prazo >= hoje) por processo.
-      const hojeISO = agora.toISOString().slice(0, 10);
+      // Data "hoje" no fuso da Bahia (UTC-3): toISOString() daria a data UTC e,
+      // à noite, esconderia um prazo que ainda é "hoje" localmente.
+      const hojeISO = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bahia" }).format(agora);
       const demRows = procIds.length
         ? await db
             .select({
