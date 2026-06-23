@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   MessageCircle,
   CalendarPlus,
@@ -25,7 +26,42 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { statusConfig } from "../_components/assistido-config";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
-import { NotaPrivadaAssistido } from "@/components/assistidos/nota-privada-assistido";
+/** Editor inline de nota privada (auto-contido — não depende de componente externo). */
+function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
+  const [texto, setTexto] = useState(initial ?? "");
+  const [sujo, setSujo] = useState(false);
+  const salvar = trpc.assistidos.salvarNotaPrivada.useMutation({
+    onSuccess: () => {
+      setSujo(false);
+      toast.success("Nota salva");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={texto}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          setSujo(true);
+        }}
+        rows={4}
+        placeholder="Anotação privada do defensor (não compartilhada)…"
+        className="w-full rounded border border-border bg-transparent px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"
+      />
+      {sujo && (
+        <button
+          type="button"
+          onClick={() => salvar.mutate({ id: assistidoId, notaPrivada: texto || null })}
+          disabled={salvar.isPending}
+          className="rounded border px-3 py-1.5 text-xs cursor-pointer transition-colors hover:border-emerald-400 disabled:opacity-50"
+        >
+          {salvar.isPending ? "Salvando…" : "Salvar nota"}
+        </button>
+      )}
+    </div>
+  );
+}
 import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
 import { whatsappUrl } from "@/components/atendimentos/config";
 import { statusAudienciaInfo } from "@/lib/config/design-tokens";
@@ -466,7 +502,7 @@ export default function AssistidoHubPage() {
           </CardShell>
 
           <CardShell title="Nota privada" icon={FileText}>
-            <NotaPrivadaAssistido assistidoId={id} initial={assistido.notaPrivada ?? undefined} />
+            <NotaPrivadaInline assistidoId={id} initial={assistido.notaPrivada ?? undefined} />
           </CardShell>
         </div>
 
