@@ -384,8 +384,8 @@ export default function AssistidoHubPage() {
       )}
 
       {/* ── GRID 2 COLUNAS ────────────────────────────────────────── */}
-      <div className="grid md:grid-cols-2 gap-3 items-start">
-        {/* COLUNA ESQUERDA */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3 items-start">
+        {/* COLUNA 1 — quem é */}
         <div className="space-y-3">
           <CardShell title="Identidade" icon={FileText}>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
@@ -451,7 +451,7 @@ export default function AssistidoHubPage() {
           </CardShell>
         </div>
 
-        {/* COLUNA DIREITA */}
+        {/* COLUNA 2 — o que urge */}
         <div className="space-y-3">
           {/* Próxima audiência */}
           <CardShell title="Próxima audiência" icon={CalendarDays}>
@@ -593,7 +593,10 @@ export default function AssistidoHubPage() {
               <p className="text-[12px] italic text-neutral-400">Nenhum caso agrupado.</p>
             )}
           </CardShell>
+        </div>
 
+        {/* COLUNA 3 — o que aconteceu */}
+        <div className="space-y-3 md:col-span-2 xl:col-span-1">
           {/* Linha do tempo unificada: registros + demandas + audiências */}
           <CardShell title="Linha do tempo" icon={Clock}>
             <FeedUnificado assistidoId={id} emptyHint="Nenhuma atividade deste assistido ainda." />
