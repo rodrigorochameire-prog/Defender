@@ -165,6 +165,8 @@ export const assistidos = pgTable("assistidos", {
   comarcaId: integer("comarca_id").references(() => comarcas.id).default(1).notNull(), // default 1 = Camaçari (first seed row)
   workspaceId: integer("workspace_id"),
   autorNaoIdentificado: boolean("autor_nao_identificado").default(false).notNull(),
+  // Nota privada do defensor sobre a PESSOA (só você vê; não entra em ofício).
+  notaPrivada: text("nota_privada"),
   deletedAt: timestamp("deleted_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -230,6 +232,19 @@ export const processos = pgTable("processos", {
   // Idem para lugares (de analysisData.locais) e cautelares (de medidasCautelares).
   lugaresPromovidosEm: timestamp("lugares_promovidos_em", { withTimezone: true }),
   cautelaresPromovidasEm: timestamp("cautelares_promovidas_em", { withTimezone: true }),
+  // Fase VI — Modus Operandi (circunstâncias do fato em tags estruturadas).
+  modusOperandi: jsonb("modus_operandi").$type<{
+    abordagem?: "denuncia-anonima" | "flagrante-ronda" | "bloqueio" | "investigacao-previa" | "mandado" | "apresentacao-espontanea" | "outro";
+    fundadaSuspeitaDocumentada?: boolean;
+    armaUsada?: "fogo" | "branca" | "impropriada" | "nenhuma" | "simulada";
+    relacaoAutorVitima?: "desconhecido" | "conhecido-esporadico" | "familiar" | "conjugal-atual" | "conjugal-ex" | "laboral" | "vizinho";
+    horarioFato?: "madrugada" | "manha" | "tarde" | "noite";
+    contexto?: "domicilio" | "via-publica" | "estabelecimento-comercial" | "escolar" | "transito" | "virtual" | "outro";
+    numAgentesCrime?: number | null;
+    numAgentesApreensao?: number | null;
+    tagsAdicionais?: string[];
+    observacoes?: string | null;
+  }>(),
   // Fase X — bloco ANPP (acordo de não persecução penal). Preenchido pelo defensor.
   anpp: jsonb("anpp").$type<{
     penaMinimaInferior4Anos?: boolean;
