@@ -33,6 +33,65 @@ function parseDataParaISO(valor?: string | null): string | null {
 }
 import { triggerReorder } from "@/lib/services/reorder-trigger";
 
+/**
+ * Computa a flag "uso instrumental da LMP" para um processo geral (defensor-only).
+ * Reusado pela query por-processo e pelo agregador da Central de Inteligência.
+ */
+async function computarUsoInstrumental(processoId: number) {
+  const [pv] = await db
+    .select({
+      requerenteId: processosVVD.requerenteId,
+      dataDecisaoMPU: processosVVD.dataDecisaoMPU,
+      dataDistribuicao: processosVVD.dataDistribuicao,
+      contextoCivel: processosVVD.contextoCivel,
+      acaoPenalVvd: processosVVD.acaoPenalVvd,
+    })
+    .from(processosVVD)
+    .where(and(eq(processosVVD.processoId, processoId), isNull(processosVVD.deletedAt)))
+    .limit(1);
+  if (!pv) return null;
+
+  const [relato] = await db
+    .select({ tiposViolencia: mpuRelatos.tiposViolencia })
+    .from(mpuRelatos)
+    .where(eq(mpuRelatos.processoId, processoId))
+    .limit(1);
+
+  let requerenteRecorrente = false;
+  if (pv.requerenteId) {
+    const [req] = await db
+      .select({ nome: partesVVD.nome, cpf: partesVVD.cpf })
+      .from(partesVVD)
+      .where(eq(partesVVD.id, pv.requerenteId))
+      .limit(1);
+    if (req) {
+      const matchParte = req.cpf ? eq(partesVVD.cpf, req.cpf) : eq(partesVVD.nome, req.nome);
+      const [{ n }] = await db
+        .select({ n: sql<number>`count(distinct ${processosVVD.id})::int` })
+        .from(processosVVD)
+        .innerJoin(partesVVD, eq(partesVVD.id, processosVVD.requerenteId))
+        .where(and(isNull(processosVVD.deletedAt), matchParte));
+      requerenteRecorrente = Number(n) >= 2;
+    }
+  }
+
+  const cc = pv.contextoCivel ?? {};
+  const ap = pv.acaoPenalVvd ?? {};
+  return avaliarUsoInstrumental({
+    dataPedidoMpu: pv.dataDecisaoMPU ?? pv.dataDistribuicao ?? null,
+    divorcioEmCurso: cc.divorcioEmCurso,
+    divorcioDataInicio: cc.divorcioDataInicio,
+    guardaEmDisputa: cc.guardaEmDisputa,
+    guardaDataInicio: cc.guardaDataInicio,
+    imovelConjugalEmDisputa: cc.imovelConjugalEmDisputa,
+    tiposViolencia: relato?.tiposViolencia ?? [],
+    retratacaoPolicialData: ap.retratacaoPolicialData,
+    denunciaOferecida: ap.denunciaOferecida,
+    dataDenuncia: ap.dataDenuncia,
+    requerenteRecorrente,
+  });
+}
+
 // ==========================================
 // ROUTER VVD - VIOLÊNCIA DOMÉSTICA / MPU
 // Redesign: requerido (assistido DPE) / requerente (quem pede MPU)
@@ -471,65 +530,40 @@ export const vvdRouter = router({
    */
   getFlagUsoInstrumental: protectedProcedure
     .input(z.object({ processoId: z.number() }))
-    .query(async ({ input }) => {
-      const [pv] = await db
-        .select({
-          id: processosVVD.id,
-          requerenteId: processosVVD.requerenteId,
-          dataDecisaoMPU: processosVVD.dataDecisaoMPU,
-          dataDistribuicao: processosVVD.dataDistribuicao,
-          contextoCivel: processosVVD.contextoCivel,
-          acaoPenalVvd: processosVVD.acaoPenalVvd,
-        })
-        .from(processosVVD)
-        .where(and(eq(processosVVD.processoId, input.processoId), isNull(processosVVD.deletedAt)))
-        .limit(1);
-      if (!pv) return null;
+    .query(async ({ input }) => computarUsoInstrumental(input.processoId)),
 
-      // Tipos de violência (mpu_relatos é 1:1 por processo geral).
-      const [relato] = await db
-        .select({ tiposViolencia: mpuRelatos.tiposViolencia })
-        .from(mpuRelatos)
-        .where(eq(mpuRelatos.processoId, input.processoId))
-        .limit(1);
+  /**
+   * Agrega, no workspace, os processos VVD com a flag "uso instrumental" ATIVA.
+   * Defensor-only. Para a Central de Inteligência. Reusa o helper conservador.
+   */
+  listFlagUsoInstrumental: protectedProcedure.query(async ({ ctx }) => {
+    const wid = ctx.user.workspaceId ?? 1;
+    const casos = await db
+      .select({
+        processoId: processosVVD.processoId,
+        numero: processosVVD.numeroAutos,
+        requeridoNome: partesVVD.nome,
+      })
+      .from(processosVVD)
+      .innerJoin(processos, and(eq(processos.id, processosVVD.processoId), eq(processos.workspaceId, wid)))
+      .leftJoin(partesVVD, eq(partesVVD.id, processosVVD.requeridoId))
+      .where(isNull(processosVVD.deletedAt));
 
-      // Requerente recorrente: aparece em >=2 casos VVD (por CPF, senão por nome).
-      let requerenteRecorrente = false;
-      if (pv.requerenteId) {
-        const [req] = await db
-          .select({ nome: partesVVD.nome, cpf: partesVVD.cpf })
-          .from(partesVVD)
-          .where(eq(partesVVD.id, pv.requerenteId))
-          .limit(1);
-        if (req) {
-          const matchParte = req.cpf ? eq(partesVVD.cpf, req.cpf) : eq(partesVVD.nome, req.nome);
-          const [{ n }] = await db
-            .select({ n: sql<number>`count(distinct ${processosVVD.id})::int` })
-            .from(processosVVD)
-            .innerJoin(partesVVD, eq(partesVVD.id, processosVVD.requerenteId))
-            .where(and(isNull(processosVVD.deletedAt), matchParte));
-          requerenteRecorrente = Number(n) >= 2;
-        }
+    const out: Array<{
+      processoId: number;
+      processoNumero: string | null;
+      requeridoNome: string | null;
+      flag: NonNullable<Awaited<ReturnType<typeof computarUsoInstrumental>>>;
+    }> = [];
+    for (const c of casos) {
+      if (c.processoId == null) continue;
+      const flag = await computarUsoInstrumental(c.processoId);
+      if (flag?.ativo) {
+        out.push({ processoId: c.processoId, processoNumero: c.numero, requeridoNome: c.requeridoNome, flag });
       }
-
-      const cc = pv.contextoCivel ?? {};
-      const ap = pv.acaoPenalVvd ?? {};
-      const resultado = avaliarUsoInstrumental({
-        dataPedidoMpu: pv.dataDecisaoMPU ?? pv.dataDistribuicao ?? null,
-        divorcioEmCurso: cc.divorcioEmCurso,
-        divorcioDataInicio: cc.divorcioDataInicio,
-        guardaEmDisputa: cc.guardaEmDisputa,
-        guardaDataInicio: cc.guardaDataInicio,
-        imovelConjugalEmDisputa: cc.imovelConjugalEmDisputa,
-        tiposViolencia: relato?.tiposViolencia ?? [],
-        retratacaoPolicialData: ap.retratacaoPolicialData,
-        denunciaOferecida: ap.denunciaOferecida,
-        dataDenuncia: ap.dataDenuncia,
-        requerenteRecorrente,
-      });
-
-      return resultado;
-    }),
+    }
+    return out;
+  }),
 
   // ==========================================
   // INTIMAÇÕES VVD

@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
+  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -127,6 +127,7 @@ const TOOLS_NAV: AssignmentMenuItem[] = [
   { label: "Calc. Prazos", path: "/admin/calculadora-prazos", icon: "Clock" },
   { label: "Calc. Exec. Penal", path: "/admin/calculadoras?tipo=ep", icon: "Clock" },
   { label: "Inteligência", path: "/admin/inteligencia", icon: "Sparkles" },
+  { label: "Central Intel", path: "/admin/central-inteligencia", icon: "Radar" },
   { label: "Investigação", path: "/admin/diligencias", icon: "FileSearch" },
   { label: "Palácio da Mente", path: "/admin/palacio-mente", icon: "Network" },
   { label: "Simulador 3D", path: "/admin/simulador-3d", icon: "Box" },
@@ -205,7 +206,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
