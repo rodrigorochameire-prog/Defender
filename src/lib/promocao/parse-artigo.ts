@@ -53,12 +53,19 @@ export function parseArtigo(raw: string | null | undefined): ArtigoParseado {
   if (mLei) {
     codigoLei = mLei[1];
     resto = resto.replace(mLei[1], " ");
+    // Remove sufixo de ano da lei ("11.343/06" → "11.343"); senão "06" viraria o artigo.
+    resto = resto.replace(/\/\s*\d{2,4}\b/g, " ");
   } else {
     resto = resto.replace(/\bCP\b/gi, " ");
   }
 
   // 2. Remove prefixos "art."/"artigo" (ruído).
   resto = resto.replace(RE_PREFIXO_ART, " ");
+
+  // 2.5. Corta no "concurso" (c/c, c.c): só promovemos o crime PRIMÁRIO. O artigo
+  //      após "c/c" (ex.: continuidade delitiva art. 71) não é tipo penal próprio,
+  //      e o "c" de "c/c" não pode ser confundido com inciso romano "C".
+  resto = resto.split(/\bc\s*[\/.]\s*c\.?/i)[0];
 
   // 3. caput (mutuamente exclusivo com §).
   let paragrafo: string | null = null;

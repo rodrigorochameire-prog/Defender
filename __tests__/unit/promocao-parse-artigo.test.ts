@@ -137,4 +137,23 @@ describe("parseArtigo", () => {
       inciso: null,
     });
   });
+
+  it("'c/c' (concurso) não vira inciso 'C' e ignora o 2º artigo", () => {
+    expect(parseArtigo("121 c/c art. 71")).toEqual({
+      codigoLei: "CP",
+      artigo: "121",
+      paragrafo: null,
+      inciso: null,
+    });
+    expect(parseArtigo("157, §2º, II c/c 71").inciso).toBe("II");
+  });
+
+  it("sufixo de ano da lei ('/06') não vira o artigo", () => {
+    expect(parseArtigo("Lei 11.343/06 art. 33")).toEqual({
+      codigoLei: "11.343",
+      artigo: "33",
+      paragrafo: null,
+      inciso: null,
+    });
+  });
 });
