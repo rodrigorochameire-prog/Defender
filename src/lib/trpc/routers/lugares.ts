@@ -545,4 +545,62 @@ export const lugaresRouter = router({
         .map((g) => ({ ...g, count: g.processoIds.length }))
         .slice(0, input?.limit ?? 800);
     }),
+
+  /**
+   * Geocodifica em lote os lugares ainda sem coordenada (ex.: promovidos da IA
+   * sem lat/lng) que nunca foram tentados. Lote pequeno + throttle p/ respeitar o
+   * Nominatim. Gated (botão manual no mapa dos fatos). Idempotente.
+   */
+  geocodificarFaltantes: protectedProcedure
+    .input(z.object({ limite: z.number().min(1).max(50).default(15) }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const limite = input?.limite ?? 15;
+
+      const faltantes = await db
+        .select()
+        .from(lugares)
+        .where(
+          and(
+            eq(lugares.workspaceId, workspaceId),
+            isNull(lugares.mergedInto),
+            isNull(lugares.latitude),
+            isNull(lugares.geocodingSource), // nunca tentado (não re-tenta os 'nominatim-fail')
+          ),
+        )
+        .limit(limite);
+
+      if (faltantes.length === 0) return { tentados: 0, geocodificados: 0, falharam: 0 };
+
+      const { getGeocoder } = await import("@/lib/lugares/geocoder-instance");
+      const geocoder = getGeocoder();
+      let geocodificados = 0;
+      let falharam = 0;
+
+      for (const l of faltantes) {
+        const result = await geocoder.geocode({
+          logradouro: l.logradouro,
+          numero: l.numero,
+          bairro: l.bairro,
+          cidade: l.cidade,
+          uf: l.uf,
+        });
+        if (result.failed || result.latitude == null || result.longitude == null) {
+          falharam++;
+          await db.update(lugares).set({ geocodedAt: new Date(), geocodingSource: "nominatim-fail" } as any).where(eq(lugares.id, l.id));
+        } else {
+          geocodificados++;
+          await db.update(lugares).set({
+            latitude: String(result.latitude),
+            longitude: String(result.longitude),
+            geocodedAt: new Date(),
+            geocodingSource: "nominatim",
+          } as any).where(eq(lugares.id, l.id));
+        }
+        // Throttle Nominatim (~1 req/s) — botão manual, latência aceitável.
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+
+      return { tentados: faltantes.length, geocodificados, falharam };
+    }),
 });

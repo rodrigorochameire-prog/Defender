@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
+import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Maximize2, Minimize2, RotateCcw } from "lucide-react";
+import { MapPin, Maximize2, Minimize2, RotateCcw, Navigation, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TIPOS_LUGAR, TIPO_COR, TIPO_LABEL } from "@/components/mapa-dos-fatos/tipos-config";
 
@@ -31,9 +32,22 @@ export function MapaDosFatos() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [resetViewTrigger, setResetViewTrigger] = useState(0);
 
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.lugares.mapDataByAtribuicao.useQuery({
     atribuicao,
     showTipos: showTipos.length > 0 ? showTipos : undefined,
+  });
+
+  const geocodificar = trpc.lugares.geocodificarFaltantes.useMutation({
+    onSuccess: (r) => {
+      toast.success(
+        r.tentados === 0
+          ? "Nenhum lugar pendente de geocodificação."
+          : `${r.geocodificados} geocodificado(s), ${r.falharam} sem resultado (de ${r.tentados}).`,
+      );
+      utils.lugares.mapDataByAtribuicao.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const pontos = useMemo(() => data ?? [], [data]);
@@ -175,6 +189,26 @@ export function MapaDosFatos() {
             );
           })}
         </div>
+      </div>
+
+      {/* Geocodificação dos faltantes (lugares promovidos sem coordenada) */}
+      <div className="mt-auto px-4 py-3 border-t border-border">
+        <button
+          type="button"
+          onClick={() => geocodificar.mutate({ limite: 15 })}
+          disabled={geocodificar.isPending}
+          className="flex w-full items-center justify-center gap-1.5 rounded border px-3 py-2 text-xs cursor-pointer transition-colors hover:border-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {geocodificar.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Navigation className="h-3.5 w-3.5" />
+          )}
+          Geocodificar faltantes
+        </button>
+        <p className="mt-1.5 text-[10px] leading-tight text-muted-foreground">
+          Busca coordenadas (Nominatim) de até 15 lugares ainda sem localização.
+        </p>
       </div>
     </aside>
   );
