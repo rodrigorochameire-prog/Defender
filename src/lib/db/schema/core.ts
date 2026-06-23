@@ -112,6 +112,22 @@ export const assistidos = pgTable("assistidos", {
   endereco: text("endereco"),
   photoUrl: text("photo_url"),
   observacoes: text("observacoes"),
+  // Fase XI — Histórico penal (per-assistido, reusado em todo processo ativo).
+  historicoPenal: jsonb("historico_penal").$type<{
+    primariedade?: "primario" | "reincidente-generico" | "reincidente-especifico";
+    condenacoesAnteriores?: Array<{
+      delito?: string | null;
+      pena?: string | null;
+      regime?: string | null;
+      dataTransitoJulgado?: string | null;
+      extinta?: boolean;
+      extintaMotivo?: string | null;
+    }>;
+    passagensPoliciaisSemCondenacao?: number;
+    mausAntecedentesAlegados?: boolean;
+    anppAnterior?: boolean;
+    observacoes?: string | null;
+  }>(),
   defensorId: integer("defensor_id").references(() => users.id),
   atribuicaoPrimaria: atribuicaoEnum("atribuicao_primaria").default("SUBSTITUICAO"),
   driveFolderId: text("drive_folder_id"),
