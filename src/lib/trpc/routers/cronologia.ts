@@ -4,7 +4,12 @@ import { db } from "@/lib/db";
 import { marcosProcessuais, prisoes, cautelares } from "@/lib/db/schema/cronologia";
 import { processos, assistidos } from "@/lib/db/schema/core";
 import { casos } from "@/lib/db/schema/casos";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, isNull } from "drizzle-orm";
+import {
+  detectExcessoPrazoPreventiva,
+  detectTempoFatoDenunciaExcessivo,
+  detectFlagranteSemCustodia,
+} from "@/lib/cronologia/flags";
 
 const MARCO_TIPO = z.enum([
   "fato",
@@ -342,4 +347,68 @@ export const cronologiaRouter = router({
       ]);
       return { marcos, prisoes: prisoesRows, cautelares: cautelaresRows };
     }),
+
+  /**
+   * Agrega, em todo o workspace, os processos com flags de cronologia ativas
+   * (excesso de prazo de preventiva, fato→denúncia excessivo, flagrante sem
+   * custódia). Reusa as funções puras já testadas. Para a Central de Inteligência.
+   */
+  listComFlagsAlertas: protectedProcedure.query(async ({ ctx }) => {
+    const wid = ctx.user.workspaceId ?? 1;
+
+    const procs = await db
+      .select({ id: processos.id, numero: processos.numeroAutos, assistidoId: assistidos.id, assistidoNome: assistidos.nome })
+      .from(processos)
+      .leftJoin(assistidos, eq(assistidos.id, processos.assistidoId))
+      .where(and(eq(processos.workspaceId, wid), isNull(processos.deletedAt)));
+    if (procs.length === 0) return [];
+    const procIds = procs.map((p) => p.id);
+
+    const [marcosRows, prisoesRows] = await Promise.all([
+      db.select().from(marcosProcessuais).where(inArray(marcosProcessuais.processoId, procIds)),
+      db.select().from(prisoes).where(inArray(prisoes.processoId, procIds)),
+    ]);
+
+    const marcosPorProc = new Map<number, { tipo: string; data: string }[]>();
+    for (const m of marcosRows) {
+      const arr = marcosPorProc.get(m.processoId) ?? [];
+      arr.push({ tipo: m.tipo, data: m.data });
+      marcosPorProc.set(m.processoId, arr);
+    }
+    const prisoesPorProc = new Map<number, { tipo: string; dataInicio: string; dataFim: string | null; situacao: string }[]>();
+    for (const p of prisoesRows) {
+      const arr = prisoesPorProc.get(p.processoId) ?? [];
+      arr.push({ tipo: p.tipo, dataInicio: p.dataInicio, dataFim: p.dataFim, situacao: p.situacao });
+      prisoesPorProc.set(p.processoId, arr);
+    }
+
+    const out: Array<{
+      processoId: number; processoNumero: string | null; assistidoId: number | null; assistidoNome: string | null;
+      excessoPrazo: ReturnType<typeof detectExcessoPrazoPreventiva>;
+      tempoFatoDenuncia: ReturnType<typeof detectTempoFatoDenunciaExcessivo>;
+      flagranteSemCustodia: ReturnType<typeof detectFlagranteSemCustodia>;
+      maxNivel: "amber" | "red";
+    }> = [];
+
+    for (const p of procs) {
+      const ms = marcosPorProc.get(p.id) ?? [];
+      const ps = prisoesPorProc.get(p.id) ?? [];
+      const excessoPrazo = detectExcessoPrazoPreventiva(ps, ms);
+      const tempoFatoDenuncia = detectTempoFatoDenunciaExcessivo(ms);
+      const flagranteSemCustodia = detectFlagranteSemCustodia(ps, ms);
+      if (!excessoPrazo && !tempoFatoDenuncia && !flagranteSemCustodia) continue;
+      const temRed = excessoPrazo?.nivel === "red" || tempoFatoDenuncia?.nivel === "red";
+      out.push({
+        processoId: p.id,
+        processoNumero: p.numero,
+        assistidoId: p.assistidoId,
+        assistidoNome: p.assistidoNome,
+        excessoPrazo,
+        tempoFatoDenuncia,
+        flagranteSemCustodia,
+        maxNivel: temRed || flagranteSemCustodia ? "red" : "amber",
+      });
+    }
+    return out;
+  }),
 });
