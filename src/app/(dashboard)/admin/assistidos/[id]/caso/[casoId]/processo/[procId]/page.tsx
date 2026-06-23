@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { AnppBlock } from "@/components/anpp/anpp-block";
 
 export default function ProcessoTecnicoPage() {
   const params = useParams();
@@ -29,6 +30,10 @@ export default function ProcessoTecnicoPage() {
       <p className="text-xs italic text-neutral-400 mt-3">
         Abas técnicas (Andamentos, Documentos específicos) entram em X-γ Task 12.
       </p>
+      <section className="pt-3 border-t border-neutral-100 dark:border-neutral-800/60">
+        <h3 className="text-sm font-semibold mb-2">Análise penal</h3>
+        <AnppBlock processoId={procId} />
+      </section>
       <section className="pt-3 border-t border-neutral-100 dark:border-neutral-800/60">
         <h3 className="text-sm font-semibold mb-2">Registros deste processo</h3>
         <RegistrosTimeline
