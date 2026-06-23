@@ -164,6 +164,7 @@ import {
   areaMatchesFilter,
   SOLID_COLOR_MAP,
 } from "@/lib/config/atribuicoes";
+import { situacaoProcessoInfo } from "@/lib/config/tipologia";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO
@@ -182,13 +183,7 @@ const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   CURADORIA: <Shield className="w-3.5 h-3.5" />,
 };
 
-// Status NEUTROS para reduzir poluição visual
-const SITUACAO_CONFIGS: Record<string, { label: string; color: string; bg: string }> = {
-  ativo: { label: "Ativo", color: "text-neutral-700 dark:text-neutral-300", bg: "bg-neutral-100 dark:bg-neutral-800" },
-  suspenso: { label: "Suspenso", color: "text-neutral-500 dark:text-neutral-400", bg: "bg-neutral-100 dark:bg-neutral-800" },
-  arquivado: { label: "Arquivado", color: "text-neutral-400 dark:text-neutral-500", bg: "bg-neutral-50 dark:bg-neutral-900" },
-  baixado: { label: "Baixado", color: "text-neutral-400 dark:text-neutral-500", bg: "bg-neutral-50 dark:bg-neutral-900" },
-};
+// Situação do processo: tipologia central (lib/config/tipologia/processo).
 
 // ==========================================
 // FASES DO PROCESSO DO JÚRI
@@ -1069,7 +1064,7 @@ function ProcessoRow({ processo }: { processo: Processo }) {
   const [copied, setCopied] = useState(false);
   const atribuicaoColors = getAtribuicaoColors(processo.area);
   const areaColor = SOLID_COLOR_MAP[normalizeAreaToFilter(processo.area)] || "#71717a";
-  const situacaoConfig = SITUACAO_CONFIGS[processo.situacao] || SITUACAO_CONFIGS.ativo;
+  const situacaoConfig = situacaoProcessoInfo(processo.situacao);
   
   const diasPrazo = processo.proximoPrazo 
     ? differenceInDays(processo.proximoPrazo, new Date())
@@ -1844,7 +1839,7 @@ export default function ProcessosPage() {
     situacaoFilter !== "all" && { 
       key: "situacao", 
       label: "Situação", 
-      value: SITUACAO_CONFIGS[situacaoFilter]?.label || situacaoFilter 
+      value: situacaoProcessoInfo(situacaoFilter).label
     },
     areaFilter !== "all" && { 
       key: "area", 
