@@ -126,6 +126,9 @@ export async function backfillPromocaoPessoas(
         dataNascimento: pessoas.dataNascimento,
       })
       .from(pessoas)
+      // Pool de dedup escopado por workspace (divergência consciente do design §12):
+      // mais conservador no caminho de escrita — nunca cross-linka entre workspaces;
+      // a merge-queue global reconcilia duplicatas. Ver design doc §12.
       .where(
         and(
           isNull(pessoas.mergedInto),
