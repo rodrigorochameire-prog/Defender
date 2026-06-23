@@ -26,10 +26,11 @@
 | `src/lib/promocao/adaptador-case-personas.ts` (criar) | Puro: linhas `case_personas` → `CandidatoPessoa[]` |
 | `src/lib/promocao/adaptador-analysis.ts` (criar) | Puro: `analysisData` → `CandidatoPessoa[]` |
 | `src/lib/promocao/planejar.ts` (criar) | Puro: candidatos + estado → lista de `AcaoPromocao` (idempotente) |
-| `src/lib/promocao/applier.ts` (criar) | IO: executa o plano numa transação + `promocao_log` |
+| `src/lib/promocao/repo.ts` (criar) | Porta `PromocaoRepo` + impl Drizzle (`criarRepoDrizzle(tx)`) |
+| `src/lib/promocao/applier.ts` (criar) | IO fino: executa o plano via repositório injetado |
 | `src/lib/promocao/backfill.ts` (criar) | IO: varre fontes, chama planejar+applier, contadores |
 | `src/lib/trpc/routers/promocao.ts` (criar) | tRPC: `backfillPessoas` (dispara backfill), `statsPromocao` |
-| `src/lib/inngest/functions.ts` (modificar) | Hook: promove ao final de `intelligence/consolidate` |
+| `src/lib/services/intelligence-consolidation.ts` (modificar) | Hook: promove ao final de `consolidateForProcesso` (onde `case_personas` é escrito) |
 | `__tests__/unit/promocao-*.test.ts` | Testes das unidades puras |
 
 ---
@@ -240,36 +241,35 @@ const ex = (p: Partial<PessoaExistente>): PessoaExistente => ({
 
 describe("resolverIdentidade", () => {
   it("CPF igual → vincular alta confiança", () => {
-    const r = resolverIdentidade(cand({ cpf: "111.222.333-44" }), [ex({ id: 7, cpf: "111.222.333-44" })], new Set());
+    const r = resolverIdentidade(cand({ cpf: "111.222.333-44" }), [ex({ id: 7, cpf: "111.222.333-44" })]);
     expect(r).toMatchObject({ acao: "vincular", pessoaId: 7 });
     expect(r.confianca).toBeGreaterThanOrEqual(0.95);
   });
   it("sem CPF, nome+nascimento batem em 1 → vincular", () => {
     const r = resolverIdentidade(
       cand({ dataNascimento: "1990-05-10" }),
-      [ex({ id: 3, dataNascimento: "1990-05-10" })], new Set());
+      [ex({ id: 3, dataNascimento: "1990-05-10" })]);
     expect(r).toMatchObject({ acao: "vincular", pessoaId: 3 });
   });
   it("nome-só batendo em ≥1 → revisar com candidatosIds", () => {
-    const r = resolverIdentidade(cand({}), [ex({ id: 3 }), ex({ id: 4 })], new Set());
+    const r = resolverIdentidade(cand({}), [ex({ id: 3 }), ex({ id: 4 })]);
     expect(r.acao).toBe("revisar");
     if (r.acao === "revisar") expect(r.candidatosIds).toEqual([3, 4]);
   });
   it("nenhum match → criar", () => {
-    const r = resolverIdentidade(cand({ nome: "Maria Outra" }), [ex({ id: 3 })], new Set());
+    const r = resolverIdentidade(cand({ nome: "Maria Outra" }), [ex({ id: 3 })]);
     expect(r.acao).toBe("criar");
   });
   it("match via nomesAlternativos conta como nome-só", () => {
-    const r = resolverIdentidade(cand({}), [ex({ id: 9, nomeNormalizado: "outro nome", nomesAlternativos: ["jose da silva"] })], new Set());
+    const r = resolverIdentidade(cand({}), [ex({ id: 9, nomeNormalizado: "outro nome", nomesAlternativos: ["jose da silva"] })]);
     expect(r.acao).toBe("revisar");
   });
-  it("par já confirmado distinto não entra em revisar", () => {
-    // candidato bate por nome com id 3, mas (novo,3) é par distinto → não sugere
-    const distinct = new Set<string>(["jose da silva|3"]);
-    const r = resolverIdentidade(cand({}), [ex({ id: 3 })], distinct);
-    expect(r.acao).toBe("criar");
-  });
 });
+
+// NOTA: a exclusão de pares confirmados-distintos (pessoasDistinctsConfirmed)
+// NÃO é do resolvedor — o candidato não tem id. Esse filtro já vive na
+// merge-queue existente (suggestMerges), que exclui pares confirmados distintos
+// entre pessoas EXISTENTES. O resolvedor só decide vincular/criar/revisar.
 ```
 
 - [ ] **Step 2: Rodar e ver falhar** — Run: `npx vitest run __tests__/unit/promocao-resolver.test.ts` → Expected: FAIL
@@ -288,14 +288,9 @@ function nomeBate(cand: string, p: PessoaExistente): boolean {
   return p.nomeNormalizado === n || p.nomesAlternativos.map(normalizarNome).includes(n);
 }
 
-/**
- * distinctsConfirmados: chaves "nomeNormalizadoCandidato|idExistente" de pares já
- * marcados como pessoas distintas — não devem ser sugeridos para revisão/merge.
- */
 export function resolverIdentidade(
   candidato: CandidatoPessoa,
   existentes: PessoaExistente[],
-  distinctsConfirmados: Set<string>,
 ): ResultadoResolucao {
   // 1. CPF
   const cpf = soDigitos(candidato.cpf);
@@ -314,11 +309,8 @@ export function resolverIdentidade(
     }
   }
 
-  // 3. nome-só (descontando pares confirmados distintos)
-  const nNorm = normalizarNome(candidato.nome);
-  const porNome = existentes.filter(
-    (p) => nomeBate(candidato.nome, p) && !distinctsConfirmados.has(`${nNorm}|${p.id}`),
-  );
+  // 3. nome-só → ambíguo (a desambiguação fica com a merge-queue humana)
+  const porNome = existentes.filter((p) => nomeBate(candidato.nome, p));
   if (porNome.length >= 1) {
     return { acao: "revisar", candidatosIds: porNome.map((p) => p.id), confianca: 0.4, motivo: "Nome coincide; ambíguo" };
   }
@@ -367,7 +359,7 @@ describe("candidatosDeCasePersonas", () => {
 - [ ] **Step 3: Implementar** (`src/lib/promocao/adaptador-case-personas.ts`)
 
 ```ts
-import type { CasePersonaRow } from "@/lib/db/schema/casos";
+import type { CasePersona } from "@/lib/db/schema/casos"; // typeof casePersonas.$inferSelect
 import type { CandidatoPessoa } from "./tipos";
 import { mapearPapel } from "./de-para-papeis";
 
@@ -379,7 +371,7 @@ const pick = (o: unknown, k: string): string | null => {
   return null;
 };
 
-export function candidatosDeCasePersonas(rows: CasePersonaRow[]): CandidatoPessoa[] {
+export function candidatosDeCasePersonas(rows: CasePersona[]): CandidatoPessoa[] {
   return rows.map((r) => {
     const pp = mapearPapel(r.tipo);
     return {
@@ -495,7 +487,6 @@ describe("planejarPromocao", () => {
       candidatos: [cand({ cpf: "1" })],
       existentes: [{ id: 5, nomeNormalizado: "ze", nomesAlternativos: [], cpf: "1", dataNascimento: null }],
       participacoes: [{ pessoaId: 5, processoId: 1, papel: "testemunha", origem: "manual" }],
-      distinctsConfirmados: new Set(),
     });
     expect(acoes[0]).toMatchObject({ tipo: "ignorar" });
   });
@@ -505,12 +496,11 @@ describe("planejarPromocao", () => {
       candidatos: [cand({ cpf: "1" })],
       existentes: [{ id: 5, nomeNormalizado: "ze", nomesAlternativos: [], cpf: "1", dataNascimento: null }],
       participacoes: [{ pessoaId: 5, processoId: 1, papel: "testemunha", origem: "promocao" }],
-      distinctsConfirmados: new Set(),
     });
     expect(acoes[0]).toMatchObject({ tipo: "vincular", pessoaId: 5, atualizar: true });
   });
   it("sem match → criar", () => {
-    const acoes = planejarPromocao({ processoId: 1, candidatos: [cand({})], existentes: [], participacoes: [], distinctsConfirmados: new Set() });
+    const acoes = planejarPromocao({ processoId: 1, candidatos: [cand({})], existentes: [], participacoes: [] });
     expect(acoes[0].tipo).toBe("criar");
   });
 });
@@ -528,11 +518,10 @@ export function planejarPromocao(args: {
   candidatos: CandidatoPessoa[];
   existentes: PessoaExistente[];
   participacoes: ParticipacaoExistente[];
-  distinctsConfirmados: Set<string>;
 }): AcaoPromocao[] {
-  const { processoId, candidatos, existentes, participacoes, distinctsConfirmados } = args;
+  const { processoId, candidatos, existentes, participacoes } = args;
   return candidatos.map((candidato) => {
-    const r = resolverIdentidade(candidato, existentes, distinctsConfirmados);
+    const r = resolverIdentidade(candidato, existentes);
     if (r.acao === "criar") return { tipo: "criar", candidato };
     if (r.acao === "revisar") return { tipo: "revisar", candidato, candidatosIds: r.candidatosIds };
     // vincular: checar participação existente (idempotência + soberania manual)
@@ -550,46 +539,119 @@ export function planejarPromocao(args: {
 
 ---
 
-## Task 6: Applier (IO, transação)
+## Task 6: Applier (IO, via repositório injetado — testável)
 
-Executa um `AcaoPromocao[]` para um processo numa transação Drizzle: cria pessoas (`fonteCriacao` = `promocao-auto`/`promocao-revisao`), insere/atualiza participações (`origem='promocao'`, `fonteRef`, `confidence`), grava `promocao_log`, e seta `processos.pessoas_promovidas_em`.
+Executa um `AcaoPromocao[]` para um processo. Para ser testável sem DB real e sem depender de internals do Drizzle, o applier recebe um **repositório** (porta) com métodos explícitos; o repositório real envolve a transação Drizzle. `criar`/`revisar` criam pessoa (`fonteCriacao` = `promocao-auto`/`promocao-revisao`); `vincular` insere ou atualiza participação; tudo loga em `promocao_log`; ao fim marca `processos.pessoas_promovidas_em`.
 
 **Files:**
-- Create: `src/lib/promocao/applier.ts`
-- Test: `__tests__/unit/promocao-applier.test.ts` (testa o **plano→efeitos** com um fake de transação; sem DB real)
+- Create: `src/lib/promocao/applier.ts`, `src/lib/promocao/repo.ts` (interface + impl Drizzle)
+- Test: `__tests__/unit/promocao-applier.test.ts` (repositório **fake** que coleta chamadas — sem `tx._name`)
 
-- [ ] **Step 1: Teste falho com transação fake** — verifica que `criar` insere pessoa+participação+log; `vincular atualizar=false` insere participação; `vincular atualizar=true` faz update; `ignorar` só loga; `revisar` cria provisória + log com candidatosIds. Usar um objeto `tx` falso que coleta chamadas.
+- [ ] **Step 1: Definir a porta** (`src/lib/promocao/repo.ts`)
 
 ```ts
-import { describe, it, expect, vi } from "vitest";
-import { aplicarAcoes } from "@/lib/promocao/applier";
+import type { CandidatoPessoa } from "./tipos";
 
-function fakeTx() {
-  const calls: any[] = [];
-  const ins = (tabela: string) => ({ values: (v: any) => ({ returning: async () => { calls.push({ op: "insert", tabela, v }); return [{ id: 99 }]; } }) });
-  return {
-    tx: {
-      insert: (t: any) => ins(t?._name ?? "?"),
-      update: (t: any) => ({ set: (v: any) => ({ where: async () => { calls.push({ op: "update", v }); } }) }),
-    },
-    calls,
-  };
+export interface PromocaoRepo {
+  criarPessoa(c: CandidatoPessoa, fonteCriacao: string, workspaceId: number | null): Promise<number>; // retorna pessoaId
+  inserirParticipacao(processoId: number, pessoaId: number, c: CandidatoPessoa): Promise<void>;
+  atualizarParticipacao(processoId: number, pessoaId: number, c: CandidatoPessoa): Promise<void>;
+  log(processoId: number, acao: string, c: CandidatoPessoa, pessoaId: number | null, candidatosIds: number[] | null): Promise<void>;
+  marcarPromovido(processoId: number): Promise<void>;
 }
+```
+
+- [ ] **Step 2: Teste falho com repo fake** — `criar` chama criarPessoa+inserirParticipacao+log; `vincular atualizar=false` insere; `vincular atualizar=true` atualiza; `ignorar` só loga; `revisar` cria provisória (fonteCriacao `promocao-revisao`) + log com candidatosIds; ao fim, `marcarPromovido`.
+
+```ts
+import { describe, it, expect } from "vitest";
+import { aplicarAcoes } from "@/lib/promocao/applier";
+import type { PromocaoRepo } from "@/lib/promocao/repo";
+
+function fakeRepo() {
+  const c: Record<string, any[]> = { criarPessoa: [], inserir: [], atualizar: [], log: [], marcar: [] };
+  const repo: PromocaoRepo = {
+    async criarPessoa(cand, fonte) { c.criarPessoa.push({ cand, fonte }); return 99; },
+    async inserirParticipacao(p, id, cand) { c.inserir.push({ p, id, cand }); },
+    async atualizarParticipacao(p, id, cand) { c.atualizar.push({ p, id, cand }); },
+    async log(p, acao, cand, id, ids) { c.log.push({ p, acao, id, ids }); },
+    async marcarPromovido(p) { c.marcar.push(p); },
+  };
+  return { repo, c };
+}
+const cand = (x: any) => ({ nome: "N", papel: "testemunha", fonteRef: "f", confianca: 0.8, ...x });
 
 describe("aplicarAcoes", () => {
-  it("criar insere pessoa + participação + log", async () => {
-    const { tx, calls } = fakeTx();
-    await aplicarAcoes(tx as any, 1, [{ tipo: "criar", candidato: { nome: "Novo", papel: "testemunha", fonteRef: "f", confianca: 0.8 } } as any]);
-    expect(calls.filter((c) => c.op === "insert").length).toBeGreaterThanOrEqual(3); // pessoa, participacao, log
+  it("criar: cria pessoa + participação + log + marca promovido", async () => {
+    const { repo, c } = fakeRepo();
+    await aplicarAcoes(repo, 1, null, [{ tipo: "criar", candidato: cand({}) } as any]);
+    expect(c.criarPessoa).toHaveLength(1);
+    expect(c.criarPessoa[0].fonte).toBe("promocao-auto");
+    expect(c.inserir).toHaveLength(1);
+    expect(c.log[0].acao).toBe("criar");
+    expect(c.marcar).toEqual([1]);
+  });
+  it("vincular atualizar=true → atualiza, não insere", async () => {
+    const { repo, c } = fakeRepo();
+    await aplicarAcoes(repo, 1, null, [{ tipo: "vincular", candidato: cand({}), pessoaId: 5, atualizar: true } as any]);
+    expect(c.atualizar).toHaveLength(1);
+    expect(c.inserir).toHaveLength(0);
+  });
+  it("revisar → pessoa provisória + log com candidatosIds", async () => {
+    const { repo, c } = fakeRepo();
+    await aplicarAcoes(repo, 1, null, [{ tipo: "revisar", candidato: cand({}), candidatosIds: [3, 4] } as any]);
+    expect(c.criarPessoa[0].fonte).toBe("promocao-revisao");
+    expect(c.log[0].ids).toEqual([3, 4]);
+  });
+  it("ignorar → só loga", async () => {
+    const { repo, c } = fakeRepo();
+    await aplicarAcoes(repo, 1, null, [{ tipo: "ignorar", candidato: cand({}), motivo: "manual" } as any]);
+    expect(c.criarPessoa).toHaveLength(0);
+    expect(c.log[0].acao).toBe("ignorar");
   });
 });
 ```
 
-> NOTA: o teste do applier valida o **fluxo de escrita** com um fake; a corretude end-to-end vem do Task 8 (backfill num fixture) ou de verificação manual. Mantenha o applier fino — toda decisão já foi tomada no planejador (puro).
+- [ ] **Step 3: Rodar e ver falhar.**
+- [ ] **Step 4: Implementar `aplicarAcoes`** (`src/lib/promocao/applier.ts`)
 
-- [ ] **Step 2–4: Implementar** `aplicarAcoes(tx, processoId, acoes)` usando `db.transaction` no chamador. Inserts: `pessoas` (nome, nomeNormalizado via `normalizarNome`, cpf, dataNascimento, confidence, fonteCriacao, workspaceId herdado), `participacoesProcesso` (pessoaId, processoId, papel, lado, subpapel, fonte='promocao', fonteRef, origem='promocao', confidence), `promocaoLog`. Para `vincular atualizar`, `update` da participação (confidence/fonteRef). Rodar e ver passar.
+```ts
+import type { PromocaoRepo } from "./repo";
+import type { AcaoPromocao } from "./tipos";
 
-- [ ] **Step 5: Commit** — `git add -A && git commit -m "feat(promocao): applier transacional (IO)"`
+export async function aplicarAcoes(
+  repo: PromocaoRepo,
+  processoId: number,
+  workspaceId: number | null,
+  acoes: AcaoPromocao[],
+): Promise<void> {
+  for (const a of acoes) {
+    if (a.tipo === "ignorar") {
+      await repo.log(processoId, "ignorar", a.candidato, null, null);
+    } else if (a.tipo === "criar") {
+      const id = await repo.criarPessoa(a.candidato, "promocao-auto", workspaceId);
+      await repo.inserirParticipacao(processoId, id, a.candidato);
+      await repo.log(processoId, "criar", a.candidato, id, null);
+    } else if (a.tipo === "revisar") {
+      const id = await repo.criarPessoa(a.candidato, "promocao-revisao", workspaceId);
+      await repo.inserirParticipacao(processoId, id, a.candidato);
+      await repo.log(processoId, "revisar", a.candidato, id, a.candidatosIds);
+    } else {
+      if (a.atualizar) await repo.atualizarParticipacao(processoId, a.pessoaId, a.candidato);
+      else await repo.inserirParticipacao(processoId, a.pessoaId, a.candidato);
+      await repo.log(processoId, "vincular", a.candidato, a.pessoaId, null);
+    }
+  }
+  await repo.marcarPromovido(processoId);
+}
+```
+
+- [ ] **Step 5: Implementar o repositório Drizzle** (`repo.ts`, `criarRepoDrizzle(tx)`) — inserts reais: `pessoas` (nome, `nomeNormalizado` via `normalizarNome`, cpf, dataNascimento, `confidence: String(c.confianca)` [coluna é `numeric`→string], fonteCriacao, workspaceId), `participacoesProcesso` (pessoaId, processoId, papel, lado, subpapel, `fonte:'promocao'`, fonteRef, `origem:'promocao'`, `confidence: String(c.confianca)`), `promocaoLog` (`confianca: String(c.confianca)`), e `update` de `processos.pessoasPromovidasEm`. O chamador (backfill/hook) abre `db.transaction(tx => aplicarAcoes(criarRepoDrizzle(tx), processoId, workspaceId, acoes))`.
+
+> **NUMERIC→string:** colunas `confidence`/`confianca` são `numeric` no Drizzle → inserir como string (`String(c.confianca)`). `case_personas.confidence` é `real` (number) — converter no adaptador já entrega `confianca:number`.
+
+- [ ] **Step 6: Rodar e ver passar.**
+- [ ] **Step 7: Commit** — `git add -A && git commit -m "feat(promocao): applier via repositório injetado (testável)"`
 
 ---
 
@@ -600,23 +662,26 @@ describe("aplicarAcoes", () => {
 - Modify: `src/lib/trpc/routers/index.ts` (registrar `promocao`)
 
 - [ ] **Step 1: Implementar `backfillPromocaoPessoas(opts)`** — itera, em lotes:
-  - (a) `case_personas` com `processo_id` não nulo cujo processo tem `pessoas_promovidas_em IS NULL`;
+  - (a) `case_personas` com `processo_id` **não nulo** cujo processo tem `pessoas_promovidas_em IS NULL`;
   - (b) processos com `analysisData->'pessoas' IS NOT NULL` e `pessoas_promovidas_em IS NULL`.
-  Para cada processo: carrega `existentes` (pessoas) + `participacoes` + `distinctsConfirmados`; junta candidatos das duas fontes; `planejarPromocao`; `db.transaction(tx => aplicarAcoes(...))`. Acumula contadores `{ processos, vinculadas, criadas, revisao, ignoradas }`.
+  Para cada processo: carrega `processos.workspaceId`, `existentes` (pessoas) + `participacoes` (com `origem`); junta candidatos das duas fontes; `planejarPromocao`; `db.transaction(tx => aplicarAcoes(criarRepoDrizzle(tx), processoId, workspaceId, acoes))`. Acumula contadores `{ processos, vinculadas, criadas, revisao, ignoradas }`.
+  - **Escopo do piloto (decisão consciente):** `case_personas` com `processo_id NULL` (caso-scoped) são **adiadas** — não chutamos o processo quando o caso tem múltiplos. Conta-se quantas foram puladas (`{ caseScopedAdiadas }`) e registra-se; a derivação via `casoId` fica para uma fase posterior (spec §6).
 - [ ] **Step 2: tRPC** `promocao.backfillPessoas` (mutation, protegida; aceita `limite` p/ lote) e `promocao.stats` (query: contagem por `acao` em `promocao_log`).
 - [ ] **Step 3: Verificação manual controlada** — rodar `backfillPessoas({ limite: 5 })` em prod; conferir `promocao_log` e a merge-queue; validar com o defensor antes de ampliar.
 - [ ] **Step 4: Gate + commit** — `npx tsc --noEmit` 0, `npx vitest run` verde → `git commit -m "feat(promocao): backfill + tRPC (IO)"`
 
 ---
 
-## Task 8: Hook no intelligence/consolidate
+## Task 8: Hook no consolidateForProcesso
+
+> **Atenção:** `case_personas` NÃO é gravado inline em `functions.ts`. A função Inngest `intelligenceConsolidateFn` (`functions.ts:~2032`) delega a `consolidateForProcesso`/`consolidateForAssistido` em `src/lib/services/intelligence-consolidation.ts`, onde os inserts em `case_personas` acontecem (`~:654`). O hook correto é **lá** (que já tem `processoId` em escopo), ou logo após o `step.run` de consolidação em `functions.ts` chamando a promoção do `processoId` consolidado.
 
 **Files:**
-- Modify: `src/lib/inngest/functions.ts` (função `intelligence/consolidate`, após escrever `case_personas`)
+- Modify: `src/lib/services/intelligence-consolidation.ts` (ao final de `consolidateForProcesso`, após inserir `case_personas`)
 
-- [ ] **Step 1: Localizar** o ponto em `intelligence-consolidation.ts`/`functions.ts` onde `case_personas` é gravado para o caso/processo.
-- [ ] **Step 2: Após a escrita**, chamar a promoção dos processos afetados (reusa `planejarPromocao`+`aplicarAcoes` por processo). Idempotente — se já promovido, o planejador não duplica.
-- [ ] **Step 3: Gate + commit** — `git commit -m "feat(promocao): hook no intelligence/consolidate"`
+- [ ] **Step 1: Localizar** o insert de `case_personas` em `consolidateForProcesso` (`intelligence-consolidation.ts:~654`).
+- [ ] **Step 2: Após a escrita**, chamar `promoverProcesso(processoId)` (helper que carrega estado + `planejarPromocao` + `db.transaction(aplicarAcoes)`, reusado pelo backfill). Idempotente — re-rodar não duplica. Envolver em try/catch para não derrubar a consolidação se a promoção falhar (log de erro).
+- [ ] **Step 3: Gate + commit** — `git commit -m "feat(promocao): hook de promoção ao final de consolidateForProcesso"`
 
 ---
 
