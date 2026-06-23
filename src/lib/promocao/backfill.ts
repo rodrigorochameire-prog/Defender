@@ -77,7 +77,12 @@ export async function promoverProcesso(
     ...candidatosDeCasePersonas(rowsCase),
     ...candidatosDeAnalysis(processoId, proc.analysisData ?? null),
   ];
-  if (candidatos.length === 0) return contadores;
+  if (candidatos.length === 0) {
+    // Sem pessoas extraíveis: marca como promovido mesmo assim, para o backfill
+    // não re-selecionar este processo a cada execução (liveness do lote).
+    await db.update(processos).set({ pessoasPromovidasEm: new Date() }).where(eq(processos.id, processoId));
+    return contadores;
+  }
 
   // Pessoas existentes do workspace (pool de dedup).
   const rowsPessoas = await db

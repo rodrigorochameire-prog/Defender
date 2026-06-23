@@ -27,4 +27,27 @@ describe("planejarPromocao", () => {
     const acoes = planejarPromocao({ processoId: 1, candidatos: [cand({})], existentes: [], participacoes: [] });
     expect(acoes[0].tipo).toBe("criar");
   });
+
+  it("idempotência de só-nome: candidato cuja provisória de promoção já existe no processo → ignorar (não re-cria)", () => {
+    // Simula a 2ª rodada: na 1ª, o candidato só-nome virou pessoa 9 (provisória,
+    // origem='promocao'). Na 2ª, o resolvedor casa por nome (revisar) — mas como
+    // já há participação de promoção dessa pessoa neste processo+papel, ignora.
+    const acoes = planejarPromocao({
+      processoId: 1,
+      candidatos: [cand({})], // só nome, sem CPF/nascimento
+      existentes: [{ id: 9, nomeNormalizado: "ze", nomesAlternativos: [], cpf: null, dataNascimento: null }],
+      participacoes: [{ pessoaId: 9, processoId: 1, papel: "testemunha", origem: "promocao" }],
+    });
+    expect(acoes[0]).toMatchObject({ tipo: "ignorar" });
+  });
+
+  it("só-nome sem promoção prévia ainda vai para revisar", () => {
+    const acoes = planejarPromocao({
+      processoId: 1,
+      candidatos: [cand({})],
+      existentes: [{ id: 9, nomeNormalizado: "ze", nomesAlternativos: [], cpf: null, dataNascimento: null }],
+      participacoes: [], // nenhuma participação prévia
+    });
+    expect(acoes[0].tipo).toBe("revisar");
+  });
 });
