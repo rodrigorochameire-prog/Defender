@@ -4,11 +4,12 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
-  FileText, FileImage, File as FileIcon, Search, ExternalLink, Scale, FolderOpen,
+  FileText, FileImage, File as FileIcon, Search, Scale, FolderOpen, Sparkles, Layers,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
+import { tipoDocumento, type TipoDocumento } from "@/lib/documentos/tipo-documento";
 
 type DocFile = {
   id: number;
@@ -19,6 +20,7 @@ type DocFile = {
   sizeBytes: number | null;
   modifiedTime: string | null;
   processoId: number | null;
+  documentType: string | null;
 };
 
 type Filtro = "todos" | "pdf" | "imagem" | "outros";
@@ -49,10 +51,9 @@ function fmtData(iso: string | null): string {
 
 const driveUrl = (driveFileId: string) => `https://drive.google.com/file/d/${driveFileId}/view`;
 
-function DocRow({ f, onOpen }: { f: DocFile; onOpen: (f: DocFile) => void }) {
+function DocRow({ f, tipo, onOpen }: { f: DocFile; tipo: TipoDocumento; onOpen: (f: DocFile) => void }) {
   const cat = categoria(f);
   const Icone = cat === "pdf" ? FileText : cat === "imagem" ? FileImage : FileIcon;
-  const cor = cat === "pdf" ? "text-rose-500" : cat === "imagem" ? "text-violet-500" : "text-neutral-400";
   const pdf = cat === "pdf";
 
   return (
@@ -68,24 +69,23 @@ function DocRow({ f, onOpen }: { f: DocFile; onOpen: (f: DocFile) => void }) {
       }}
       className="flex items-center gap-2.5 rounded-lg border border-neutral-200/70 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.03] px-2.5 py-2 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
     >
-      <Icone className={cn("h-4 w-4 shrink-0", cor)} />
+      <Icone className={cn("h-4 w-4 shrink-0", pdf ? "text-rose-500" : cat === "imagem" ? "text-violet-500" : "text-neutral-400")} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11.5px] font-medium text-foreground/90">{f.fileName}</p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-muted-foreground">
           {f.modifiedTime && <span className="tabular-nums">{fmtData(f.modifiedTime)}</span>}
           {f.sizeBytes ? <span className="tabular-nums">· {fmtTamanho(f.sizeBytes)}</span> : null}
-          {f.drivePath && <span className="truncate max-w-[260px]">· {f.drivePath}</span>}
         </div>
       </div>
-      {f.processoId && (
-        <Link
-          href={`/admin/processos/${f.processoId}`}
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-200/50 dark:bg-white/[0.06] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-          title="Abrir processo"
+      {tipo.key !== "outro" && (
+        <span
+          className="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-medium"
+          style={{ backgroundColor: `${tipo.cor}1a`, color: tipo.cor }}
+          title={tipo.fonte === "ia" ? "Tipo classificado pela IA" : "Tipo inferido do nome"}
         >
-          <Scale className="h-2.5 w-2.5" /> Processo
-        </Link>
+          {tipo.fonte === "ia" && <Sparkles className="h-2.5 w-2.5" />}
+          {tipo.label}
+        </span>
       )}
       <span className="shrink-0 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
         {pdf ? "Ver autos" : "Abrir"}
@@ -100,9 +100,7 @@ function FiltroPill({ ativo, onClick, label, count }: { ativo: boolean; onClick:
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors cursor-pointer",
-        ativo
-          ? "bg-emerald-600 text-white"
-          : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-white/5",
+        ativo ? "bg-emerald-600 text-white" : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-white/5",
       )}
     >
       {label}
@@ -122,11 +120,18 @@ export default function DocumentosPage() {
     { assistidoId },
     { enabled: !isNaN(assistidoId), staleTime: 60_000 },
   );
+  // Mapa processoId → nº dos autos (rótulo dos grupos). getById é cacheado.
+  const { data: assistido } = trpc.assistidos.getById.useQuery(
+    { id: assistidoId },
+    { enabled: !isNaN(assistidoId) },
+  );
+  const procMap = useMemo(() => {
+    const m = new Map<number, { numeroAutos: string | null; tipoProcesso: string | null }>();
+    for (const p of assistido?.processos ?? []) m.set(p.id, { numeroAutos: p.numeroAutos, tipoProcesso: p.tipoProcesso ?? null });
+    return m;
+  }, [assistido?.processos]);
 
-  const arquivos = useMemo(() => {
-    const list = (data ?? []) as DocFile[];
-    return [...list].sort((a, b) => (b.modifiedTime ?? "").localeCompare(a.modifiedTime ?? ""));
-  }, [data]);
+  const arquivos = useMemo(() => (data ?? []) as DocFile[], [data]);
 
   const contagem = useMemo(() => {
     const c = { todos: arquivos.length, pdf: 0, imagem: 0, outros: 0 };
@@ -134,21 +139,37 @@ export default function DocumentosPage() {
     return c;
   }, [arquivos]);
 
-  const filtrados = useMemo(() => {
+  // Filtra, resolve tipo, e agrupa por processo.
+  const grupos = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return arquivos.filter((f) => {
+    const filtrados = arquivos.filter((f) => {
       if (filtro !== "todos" && categoria(f) !== filtro) return false;
       if (termo && !f.fileName.toLowerCase().includes(termo) && !f.drivePath.toLowerCase().includes(termo)) return false;
       return true;
     });
+
+    const porProc = new Map<number | "gerais", DocFile[]>();
+    for (const f of filtrados) {
+      const k = f.processoId ?? "gerais";
+      const arr = porProc.get(k) ?? [];
+      arr.push(f);
+      porProc.set(k, arr);
+    }
+    for (const arr of porProc.values()) {
+      arr.sort((a, b) => (b.modifiedTime ?? "").localeCompare(a.modifiedTime ?? ""));
+    }
+
+    const ordem = [...porProc.keys()].sort((a, b) => {
+      if (a === "gerais") return 1;
+      if (b === "gerais") return -1;
+      return (a as number) - (b as number);
+    });
+    return ordem.map((k) => ({ key: k, arquivos: porProc.get(k)! }));
   }, [arquivos, filtro, busca]);
 
   const abrir = (f: DocFile) => {
-    if (isPdf(f.mimeType, f.fileName)) {
-      setViewer({ driveFileId: f.driveFileId, processoId: f.processoId });
-    } else {
-      window.open(driveUrl(f.driveFileId), "_blank", "noopener,noreferrer");
-    }
+    if (isPdf(f.mimeType, f.fileName)) setViewer({ driveFileId: f.driveFileId, processoId: f.processoId });
+    else window.open(driveUrl(f.driveFileId), "_blank", "noopener,noreferrer");
   };
 
   if (isLoading) {
@@ -160,6 +181,8 @@ export default function DocumentosPage() {
       </div>
     );
   }
+
+  const totalFiltrado = grupos.reduce((n, g) => n + g.arquivos.length, 0);
 
   return (
     <div className="p-6 space-y-3">
@@ -187,7 +210,7 @@ export default function DocumentosPage() {
         <FiltroPill ativo={filtro === "outros"} onClick={() => setFiltro("outros")} label="Outros" count={contagem.outros} />
       </div>
 
-      {filtrados.length === 0 ? (
+      {totalFiltrado === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
           <FolderOpen className="h-5 w-5 text-muted-foreground/50" />
           <p className="text-xs text-muted-foreground">
@@ -195,13 +218,43 @@ export default function DocumentosPage() {
           </p>
         </div>
       ) : (
-        <ul className="space-y-1">
-          {filtrados.map((f) => (
-            <li key={f.id}>
-              <DocRow f={f} onOpen={abrir} />
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-3">
+          {grupos.map((g) => {
+            const proc = g.key === "gerais" ? null : procMap.get(g.key as number);
+            return (
+              <section key={String(g.key)}>
+                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+                  {g.key === "gerais" ? (
+                    <>
+                      <Layers className="h-3 w-3" /> Gerais / sem processo
+                    </>
+                  ) : (
+                    <>
+                      <Scale className="h-3 w-3" />
+                      {proc?.numeroAutos ? (
+                        <Link
+                          href={`/admin/processos/${g.key}`}
+                          className="font-mono normal-case tracking-normal text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          {proc.numeroAutos}
+                        </Link>
+                      ) : (
+                        <span className="normal-case">Processo #{g.key}</span>
+                      )}
+                      {proc?.tipoProcesso && <span className="normal-case tracking-normal text-neutral-400">· {proc.tipoProcesso}</span>}
+                    </>
+                  )}
+                  <span className="font-normal text-neutral-400">· {g.arquivos.length}</span>
+                </div>
+                <div className="space-y-1">
+                  {g.arquivos.map((f) => (
+                    <DocRow key={f.id} f={f} tipo={tipoDocumento(f.documentType, f.fileName)} onOpen={abrir} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       )}
 
       {viewer && (
