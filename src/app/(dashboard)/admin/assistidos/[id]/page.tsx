@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { MessageCircle, CalendarPlus } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
 import { whatsappUrl } from "@/components/atendimentos/config";
 
@@ -75,6 +76,11 @@ export default function AssistidoHubPage() {
           </p>
         </section>
       )}
+      <section>
+        <h2 className="text-base font-semibold mb-2">Histórico penal</h2>
+        <HistoricoPenalBlock assistidoId={id} />
+      </section>
+
       <section>
         <h2 className="text-base font-semibold mb-2">Registros</h2>
         <RegistrosTimeline
