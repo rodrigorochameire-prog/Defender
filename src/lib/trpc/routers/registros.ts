@@ -277,7 +277,8 @@ export const registrosRouter = router({
         db
           .select({ id: assistidosProcessos.processoId })
           .from(assistidosProcessos)
-          .where(eq(assistidosProcessos.assistidoId, assistidoId)),
+          .innerJoin(processos, eq(assistidosProcessos.processoId, processos.id))
+          .where(and(eq(assistidosProcessos.assistidoId, assistidoId), isNull(processos.deletedAt))),
       ]);
       const procIds = [...new Set([...diretos.map((p) => p.id), ...viaJuncao.map((p) => p.id)])];
 
