@@ -92,6 +92,7 @@ import { tipificacoesRouter } from "./tipificacoes";
 import { mpuRouter } from "./mpu";
 import { cautelaresRouter } from "./cautelares";
 import { execucaoRouter } from "./execucao";
+import { objetosRouter } from "./objetos";
 import { promocaoRouter } from "./promocao";
 
 
@@ -423,6 +424,7 @@ export const appRouter = router({
   // ==========================================
   cronologia: cronologiaRouter,
   execucao: execucaoRouter,
+  objetos: objetosRouter,
 
   // ==========================================
   // TIPIFICACOES (FASE III-A — CATÁLOGO + VÍNCULO AO PROCESSO)
