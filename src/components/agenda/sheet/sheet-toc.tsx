@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ToCSection {
@@ -15,6 +16,18 @@ interface Props {
 }
 
 export function SheetToC({ sections, activeId, onJump }: Props) {
+  // Mantém a pill ativa sempre visível: quando o scroll-spy muda a seção,
+  // rola horizontalmente a nav para revelá-la (essencial quando há overflow).
+  const pillRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  useEffect(() => {
+    if (!activeId) return;
+    pillRefs.current[activeId]?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [activeId]);
+
   if (sections.length === 0) return null;
   return (
     <nav
@@ -27,9 +40,9 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
         className="flex gap-1.5 overflow-x-auto scrollbar-none"
         style={{
           maskImage:
-            "linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)",
+            "linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%)",
           WebkitMaskImage:
-            "linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%)",
+            "linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%)",
         }}
       >
         {sections.map((s) => {
@@ -37,6 +50,7 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
           return (
             <button
               key={s.id}
+              ref={(el) => { pillRefs.current[s.id] = el; }}
               type="button"
               onClick={() => onJump(s.id)}
               className={cn(

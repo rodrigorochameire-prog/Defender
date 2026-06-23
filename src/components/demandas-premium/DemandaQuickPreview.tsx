@@ -60,6 +60,8 @@ import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
 import { setAllSections, areAllOpen, nextToggleAll } from "./sheet-sections";
 import { searchCasos, casoLabel } from "./caso-picker";
 import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
+import { calcularPrazoBadge } from "./sheet/prazo-badge";
+import { getAtribuicaoColors } from "@/lib/config/tipologia";
 import {
   DocumentPreviewDialog,
   type PreviewFile,
@@ -166,15 +168,6 @@ const TIPO_PROCESSO_COLORS: Record<string, string> = {
   HC: "#9333ea",        // Habeas Corpus — purple
   PPP: "#b91c1c",       // Prisão Preventiva — red dark
   OUTRO: "#71717a",     // Outro — gray neutro
-};
-
-const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#22c55e",
-  "Grupo Especial do Júri": "#f97316",
-  "Violência Doméstica": "#f59e0b",
-  "Execução Penal": "#3b82f6",
-  "Substituição Criminal": "#8b5cf6",
-  "Curadoria Especial": "#71717a",
 };
 
 const ATRIBUICAO_OPTIONS = [
@@ -484,6 +477,10 @@ export function DemandaQuickPreview({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSecao, setActiveSecao] = useState<string | undefined>();
+  // Header dedup (P2): o título "ato · nome" no nav-header só aparece quando o
+  // hero (que já mostra ambos) sai de vista no scroll. Handler ligado direto no
+  // onScroll do container (abaixo), evitando timing de ref no Sheet do Radix.
+  const [heroVisible, setHeroVisible] = useState(true);
 
   const handleJump = useCallback((id: string) => {
     setSecaoOpen(id as SecaoId, true);
@@ -545,10 +542,14 @@ export function DemandaQuickPreview({
 
   // ── Nota interna privada (follow-up) — salva no blur, não reescreve se igual ──
   const [nota, setNota] = useState(demanda?.notaPrivada ?? "");
+  // Nota privada compacta quando vazia (P4): só vira textarea ao clicar — não
+  // disputa espaço acima da dobra com Registros (a seção que mais importa).
+  const [notaExpanded, setNotaExpanded] = useState(false);
   const notaSalvaRef = useRef(demanda?.notaPrivada ?? "");
   useEffect(() => {
     const v = demanda?.notaPrivada ?? "";
     setNota(v);
+    setNotaExpanded(false);
     notaSalvaRef.current = v;
   }, [demanda?.id, demanda?.notaPrivada]);
   const salvarNotaMut = trpc.demandas.update.useMutation({
@@ -559,6 +560,18 @@ export function DemandaQuickPreview({
     notaSalvaRef.current = nota;
     salvarNotaMut.mutate({ id: Number(demanda.id), notaPrivada: nota || null });
   }, [demanda, nota, salvarNotaMut]);
+
+  // Contagem de registros da demanda — alimenta o badge na pill da ToC e no
+  // header da seção. Mesma assinatura do RegistrosTimeline -> React Query dedupe.
+  const { data: registrosDaDemanda = [] } = trpc.registros.list.useQuery(
+    {
+      assistidoId: demanda?.assistidoId ?? undefined,
+      processoId: demanda?.processoId ?? undefined,
+      demandaId: demanda?.id != null ? Number(demanda.id) : undefined,
+    },
+    { enabled: open && !!demanda?.assistidoId },
+  );
+  const registrosCount = registrosDaDemanda.length;
 
   const createDriveFolder = trpc.drive.createDemandaFolder.useMutation({
     onSuccess: () => {
@@ -816,10 +829,15 @@ export function DemandaQuickPreview({
 
   const statusConfig = getStatusConfig(demanda.status);
   const statusColor = STATUS_GROUPS[statusConfig.group]?.color || "#A1A1AA";
-  const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
+  // Tipologia padronizada: a cor da atribuição vem do registry central
+  // (@/lib/config/tipologia), igual a cockpit/Casos/Timeline.
+  const atribuicaoColor = getAtribuicaoColors(demanda.atribuicao).color;
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao] || Scale;
   const isPreso = demanda.estadoPrisional === "preso";
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
+  // Prazo no hero — dado mais crítico de uma demanda. Sempre visível acima da
+  // dobra; clique pula/abre a seção Cronologia & Prazo para editar.
+  const prazoBadge = calcularPrazoBadge(demanda.prazo);
 
   const statusOptions = Object.entries(DEMANDA_STATUS).map(([k, v]) => ({
     value: k,
@@ -848,6 +866,7 @@ export function DemandaQuickPreview({
     registros: {
       label: "Registros",
       temDado: true,
+      count: registrosCount || undefined,
       node: demanda.assistidoId ? (
         <div className="space-y-3">
           {!novoRegistroOpen && (
@@ -865,15 +884,17 @@ export function DemandaQuickPreview({
                   <span className="hidden md:inline">Com autos</span>
                 </button>
               )}
+              {/* CTA primário — Registros é a ação central do sheet, então o
+                  "Adicionar" ganha peso (emerald filled) em vez de link fantasma. */}
               <button
                 type="button"
                 onClick={() => setNovoRegistroOpen(true)}
                 title="Adicionar registro (n)"
                 aria-label="Adicionar registro"
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors cursor-pointer p-1 -mr-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-colors cursor-pointer px-2 py-1 rounded-md"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Adicionar</span>
+                Adicionar
               </button>
             </div>
           )}
@@ -1106,7 +1127,10 @@ export function DemandaQuickPreview({
         <div className="h-1 w-full shrink-0 transition-colors duration-300" style={{ backgroundColor: atribuicaoColor }} aria-hidden />
         <div className="bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
-            <SheetTitle className="text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 truncate">
+            <SheetTitle className={cn(
+              "text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 truncate transition-opacity duration-200",
+              heroVisible ? "opacity-0" : "opacity-100",
+            )}>
               {demanda.assistido ? (
                 <span className="flex items-center gap-1.5 min-w-0">
                   <span className="text-neutral-400 dark:text-neutral-500 font-normal shrink-0">
@@ -1154,7 +1178,11 @@ export function DemandaQuickPreview({
         </div>
 
         {/* ===== SCROLLABLE CONTENT ===== */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div
+          ref={scrollRef}
+          onScroll={(e) => setHeroVisible(e.currentTarget.scrollTop < 120)}
+          className="flex-1 overflow-y-auto"
+        >
           {/* ===== HERO CARD — ring neutro + shadow sutil. Identidade da
               atribuição vive no avatar colorido (substitui o border-l). ===== */}
           <div className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
@@ -1230,6 +1258,25 @@ export function DemandaQuickPreview({
                     options={statusOptions}
                     onChange={(v) => onStatusChange(demanda.id, v)}
                   />
+                  {/* Chip de prazo — urgência sempre visível. Clique pula/abre
+                      Cronologia & Prazo para editar a data. */}
+                  {prazoBadge && prazoBadge.cor !== "none" && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleJump("cronologia"); }}
+                      title={`Prazo: ${demanda.prazo} — clique para ver/editar`}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums transition-colors cursor-pointer",
+                        prazoBadge.cor === "red" && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50",
+                        prazoBadge.cor === "amber" && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/50",
+                        prazoBadge.cor === "green" && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50",
+                        prazoBadge.cor === "gray" && "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700",
+                      )}
+                    >
+                      <Clock className="w-3 h-3" />
+                      {prazoBadge.texto}
+                    </button>
+                  )}
                 </div>
 
                 {/* Linha 3 — processo. Número real = chip copiável (tipo cinza +
@@ -1488,25 +1535,6 @@ export function DemandaQuickPreview({
               )}
             </div>
 
-            {/* Nota interna privada (follow-up) — só o defensor vê; não entra em ofício */}
-            <div className="rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <FileText className="w-3 h-3 text-neutral-400" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-                  Nota privada
-                </span>
-                <span className="text-[9px] text-neutral-400 ml-auto">só você vê · não entra em ofício</span>
-              </div>
-              <textarea
-                value={nota}
-                onChange={(e) => setNota(e.target.value)}
-                onBlur={salvarNota}
-                rows={2}
-                placeholder="Anotações privadas sobre a demanda…"
-                className="w-full resize-y bg-transparent text-[12px] leading-relaxed outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
-              />
-            </div>
-
             <div className="flex justify-end">
               <button
                 type="button"
@@ -1531,6 +1559,41 @@ export function DemandaQuickPreview({
                 {secoesMap[id].node}
               </CollapsibleSection>
             ))}
+
+            {/* ===== NOTA PRIVADA (P4) — abaixo das seções; só o defensor vê, não
+                entra em ofício. Compacta quando vazia: vira textarea ao clicar. ===== */}
+            {(nota || notaExpanded) ? (
+              <div className="rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <FileText className="w-3 h-3 text-neutral-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
+                    Nota privada
+                  </span>
+                  <span className="text-[9px] text-neutral-400 ml-auto">só você vê · não entra em ofício</span>
+                </div>
+                <textarea
+                  value={nota}
+                  autoFocus={notaExpanded && !nota}
+                  onChange={(e) => setNota(e.target.value)}
+                  onBlur={salvarNota}
+                  rows={2}
+                  placeholder="Anotações privadas sobre a demanda…"
+                  className="w-full resize-y bg-transparent text-[12px] leading-relaxed outline-none text-neutral-700 dark:text-neutral-200 placeholder:text-neutral-400"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setNotaExpanded(true)}
+                className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100/60 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer"
+                title="Adicionar nota privada (só você vê)"
+              >
+                <Plus className="w-3 h-3" />
+                <FileText className="w-3 h-3" />
+                Nota privada
+                <span className="text-[9px] opacity-70 ml-1">só você vê</span>
+              </button>
+            )}
 
             {/* ===== AÇÕES RÁPIDAS (fixo — não colapsável) ===== */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
