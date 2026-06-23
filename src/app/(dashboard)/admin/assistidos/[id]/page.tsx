@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
-  MessageCircle,
-  CalendarPlus,
   Briefcase,
   Scale,
   Clock,
@@ -22,8 +20,6 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
-import { statusConfig } from "../_components/assistido-config";
 import { FeedUnificado } from "@/components/registros/feed-unificado";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
@@ -62,8 +58,6 @@ function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; init
     </div>
   );
 }
-import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
-import { whatsappUrl } from "@/components/atendimentos/config";
 import { statusAudienciaInfo } from "@/lib/config/design-tokens";
 import { statusCasoInfo, prioridadeCasoInfo, pesoPrioridadeCaso, getAtribuicaoColors } from "@/lib/config/tipologia";
 
@@ -208,7 +202,6 @@ export default function AssistidoHubPage() {
   const params = useParams();
   const router = useRouter();
   const id = Number(params?.id);
-  const [agendar, setAgendar] = useState(false);
 
   const { data: assistido, isLoading: loadingAssistido } = trpc.assistidos.getById.useQuery(
     { id },
@@ -303,63 +296,10 @@ export default function AssistidoHubPage() {
 
   const sp = String(assistido.statusPrisional ?? "").toUpperCase();
   const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(sp);
-  const monit = /MONITOR|TORNOZEL|DOMICILIAR/.test(sp);
-  const statusLabel = statusConfig[assistido.statusPrisional ?? ""]?.label ?? (preso ? "Preso" : monit ? "Monitorado" : "Solto");
-  const zap = whatsappUrl(assistido.telefone) ?? whatsappUrl(assistido.telefoneContato);
 
   return (
     <div className="p-6 space-y-4 max-w-5xl">
-      {/* ── HEADER: identidade + contato + ações ──────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm px-4 py-3">
-        <AssistidoAvatar
-          nome={assistido.nome}
-          photoUrl={assistido.photoUrl}
-          size="lg"
-          statusPrisional={assistido.statusPrisional}
-          showStatusDot
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-base font-semibold truncate text-neutral-900 dark:text-neutral-100">
-              {assistido.nome}
-            </h1>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                preso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                monit && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                !preso && !monit && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
-              )}
-            >
-              <span className={cn("w-1.5 h-1.5 rounded-full", preso ? "bg-rose-500" : monit ? "bg-amber-500" : "bg-emerald-500")} />
-              {statusLabel}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 flex-wrap">
-            {assistido.cpf && <span className="font-mono tabular-nums">{assistido.cpf}</span>}
-            {assistido.telefone && <span>☎ {assistido.telefone}</span>}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {zap && (
-            <a
-              href={zap}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-            </a>
-          )}
-          <button
-            type="button"
-            onClick={() => setAgendar(true)}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
-          >
-            <CalendarPlus className="w-3.5 h-3.5" /> Atendimento
-          </button>
-        </div>
-      </div>
+      {/* Identidade + ações ficam no header persistente (layout.tsx). */}
 
       {/* ── KPI STRIP ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -493,18 +433,11 @@ export default function AssistidoHubPage() {
 
             {/* Quick actions */}
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <button
-                type="button"
-                onClick={() => setAgendar(true)}
-                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3 h-3" /> Atendimento
-              </button>
               <Link
                 href={`/admin/demandas/nova?assistidoId=${id}`}
                 className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
               >
-                <Plus className="w-3 h-3" /> Demanda
+                <Plus className="w-3 h-3" /> Nova demanda
               </Link>
             </div>
           </CardShell>
@@ -692,16 +625,6 @@ export default function AssistidoHubPage() {
           )}
         </div>
       </div>
-
-      <AtendimentoFormModal
-        open={agendar}
-        onClose={() => setAgendar(false)}
-        prefill={
-          assistido
-            ? { assistidoId: id, assistidoNome: assistido.nome, subtipo: "inicial" }
-            : null
-        }
-      />
     </div>
   );
 }
