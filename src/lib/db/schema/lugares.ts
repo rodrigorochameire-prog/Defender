@@ -23,6 +23,9 @@ export const lugarTipoParticipacaoEnum = pgEnum("lugar_tipo_participacao", [
   "trabalho-agressor",
   "local-atendimento",
   "radar-noticia",
+  "residencia-vitima",
+  "residencia-testemunha",
+  "outro",
 ]);
 
 export const lugares = pgTable("lugares", {

@@ -211,6 +211,9 @@ export const processos = pgTable("processos", {
   pessoasPromovidasEm: timestamp("pessoas_promovidas_em", { withTimezone: true }),
   // Idem para delitos (tipificações promovidas do analysisData.imputacoes).
   delitosPromovidosEm: timestamp("delitos_promovidos_em", { withTimezone: true }),
+  // Idem para lugares (de analysisData.locais) e cautelares (de medidasCautelares).
+  lugaresPromovidosEm: timestamp("lugares_promovidos_em", { withTimezone: true }),
+  cautelaresPromovidasEm: timestamp("cautelares_promovidas_em", { withTimezone: true }),
 
   // Geolocalização do fato
   localDoFatoEndereco: text("local_do_fato_endereco"),
