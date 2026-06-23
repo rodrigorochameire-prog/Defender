@@ -92,6 +92,7 @@ import { tipificacoesRouter } from "./tipificacoes";
 import { mpuRouter } from "./mpu";
 import { cautelaresRouter } from "./cautelares";
 import { execucaoRouter } from "./execucao";
+import { promocaoRouter } from "./promocao";
 
 
 export const appRouter = router({
@@ -433,6 +434,11 @@ export const appRouter = router({
   // ==========================================
   mpu: mpuRouter,
   cautelares: cautelaresRouter,
+
+  // ==========================================
+  // PROMOÇÃO — camada de promoção de pessoas (case_personas + analysisData → catálogo)
+  // ==========================================
+  promocao: promocaoRouter,
 });
 
 export type AppRouter = typeof appRouter;
