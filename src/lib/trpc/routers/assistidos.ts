@@ -506,6 +506,9 @@ export const assistidosRouter = router({
       let casosAgrupados: {
         id: number;
         titulo: string;
+        status: string | null;
+        atribuicao: string | null;
+        prioridade: string | null;
         processos: {
           id: number;
           numeroAutos: string | null;
@@ -519,7 +522,13 @@ export const assistidosRouter = router({
 
       if (casoIds.length > 0) {
         const casoRows = await db
-          .select({ id: casos.id, titulo: casos.titulo })
+          .select({
+            id: casos.id,
+            titulo: casos.titulo,
+            status: casos.status,
+            atribuicao: casos.atribuicao,
+            prioridade: casos.prioridade,
+          })
           .from(casos)
           .where(inArray(casos.id, casoIds));
 
@@ -546,6 +555,9 @@ export const assistidosRouter = router({
         casosAgrupados = casoRows.map((c) => ({
           id: c.id,
           titulo: c.titulo,
+          status: c.status,
+          atribuicao: c.atribuicao,
+          prioridade: c.prioridade,
           processos: todosProcessosCaso
             .filter((p) => p.casoId === c.id)
             .map((p) => {

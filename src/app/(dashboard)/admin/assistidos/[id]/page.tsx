@@ -65,6 +65,7 @@ function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; init
 import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
 import { whatsappUrl } from "@/components/atendimentos/config";
 import { statusAudienciaInfo } from "@/lib/config/design-tokens";
+import { statusCasoInfo, prioridadeCasoInfo, pesoPrioridadeCaso, getAtribuicaoColors } from "@/lib/config/tipologia";
 
 /** Demandas em aberto = qualquer status que não seja CONCLUIDO/ARQUIVADO. */
 const STATUS_CONCLUIDO = new Set(["CONCLUIDO", "ARQUIVADO"]);
@@ -251,6 +252,17 @@ export default function AssistidoHubPage() {
   }, [demandasAbertas]);
 
   const prazoUrgente = prazoMaisProximo !== null && prazoMaisProximo <= 7;
+
+  // Próximas demandas com prazo definido (ordem por proximidade) para o card.
+  const proximasDemandas = useMemo(
+    () =>
+      demandasAbertas
+        .filter((d) => d.prazo)
+        .map((d) => ({ ...d, dias: diasAte(d.prazo) }))
+        .sort((a, b) => (a.dias ?? 9999) - (b.dias ?? 9999))
+        .slice(0, 4),
+    [demandasAbertas],
+  );
 
   const proximaAudiencia = useMemo(() => {
     const futuras = audiencias
@@ -555,17 +567,44 @@ export default function AssistidoHubPage() {
                   </span>
                   <span className="text-[11px] text-neutral-500">demanda{demandasAbertas.length !== 1 ? "s" : ""} em aberto</span>
                 </div>
-                {prazoMaisProximo !== null && (
-                  <p
-                    className={cn(
-                      "text-[12px] font-medium",
-                      prazoUrgente ? "text-rose-600 dark:text-rose-400" : "text-neutral-500 dark:text-neutral-400",
-                    )}
-                  >
-                    {prazoMaisProximo === 0
-                      ? "Prazo mais próximo: hoje"
-                      : `Prazo mais próximo em ${prazoMaisProximo}d`}
-                  </p>
+                {proximasDemandas.length > 0 && (
+                  <div className="space-y-1 pt-0.5">
+                    {proximasDemandas.map((d) => {
+                      const dias = d.dias;
+                      const venc = dias !== null && dias < 0;
+                      const urge = dias !== null && dias >= 0 && dias <= 7;
+                      const corPrazo = venc
+                        ? "text-rose-600 dark:text-rose-400"
+                        : urge
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-neutral-400";
+                      const rotuloPrazo =
+                        dias === null
+                          ? "—"
+                          : dias < 0
+                            ? `${Math.abs(dias)}d atraso`
+                            : dias === 0
+                              ? "hoje"
+                              : `${dias}d`;
+                      return (
+                        <Link
+                          key={d.id}
+                          href={`/admin/demandas/${d.id}`}
+                          className="flex items-center gap-2 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-2.5 py-1.5 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-[11.5px] text-neutral-700 dark:text-neutral-200">
+                            {d.ato ?? "Demanda"}
+                          </span>
+                          <span className="shrink-0 text-[10px] tabular-nums text-neutral-400" title={fmtData(d.prazo)}>
+                            {fmtData(d.prazo)}
+                          </span>
+                          <span className={cn("shrink-0 text-[10px] font-semibold tabular-nums", corPrazo)}>
+                            {rotuloPrazo}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             ) : (
@@ -574,23 +613,48 @@ export default function AssistidoHubPage() {
           </CardShell>
 
           {/* Casos */}
-          <CardShell title="Casos" icon={Briefcase}>
+          <CardShell
+            title="Casos"
+            icon={Briefcase}
+            action={
+              casosAgrupados.length > 0 ? (
+                <Link
+                  href={`/admin/assistidos/${id}/casos`}
+                  className="inline-flex items-center gap-0.5 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                >
+                  ver todos <ChevronRight className="w-3 h-3" />
+                </Link>
+              ) : undefined
+            }
+          >
             {casosAgrupados.length > 0 ? (
               <div className="space-y-1.5">
-                {casosAgrupados.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/admin/assistidos/${id}/caso/${c.id}`}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer"
-                  >
-                    <span className="text-[12.5px] font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                      {c.titulo}
-                    </span>
-                    <span className="shrink-0 text-[10px] tabular-nums text-neutral-400">
-                      {c.processos.length} proc.
-                    </span>
-                  </Link>
-                ))}
+                {[...casosAgrupados]
+                  .sort((a, b) => pesoPrioridadeCaso(b.prioridade) - pesoPrioridadeCaso(a.prioridade))
+                  .map((c) => {
+                    const st = statusCasoInfo(c.status);
+                    const pr = prioridadeCasoInfo(c.prioridade);
+                    const atrib = getAtribuicaoColors(c.atribuicao);
+                    return (
+                      <Link
+                        key={c.id}
+                        href={`/admin/assistidos/${id}/caso/${c.id}`}
+                        className="flex items-center gap-2 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer"
+                      >
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: atrib.color }} title={atrib.label} />
+                        <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-neutral-800 dark:text-neutral-200">
+                          {c.titulo}
+                        </span>
+                        {c.prioridade && pesoPrioridadeCaso(c.prioridade) >= 4 && (
+                          <span className={cn("shrink-0 rounded px-1.5 py-px text-[9.5px] font-medium", pr.badge)}>{pr.label}</span>
+                        )}
+                        <span className={cn("shrink-0 rounded px-1.5 py-px text-[9.5px] font-medium", st.badge)}>{st.label}</span>
+                        <span className="shrink-0 text-[10px] tabular-nums text-neutral-400">
+                          {c.processos.length} proc.
+                        </span>
+                      </Link>
+                    );
+                  })}
               </div>
             ) : (
               <p className="text-[12px] italic text-neutral-400">Nenhum caso agrupado.</p>
