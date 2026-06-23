@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { AnppBlock } from "@/components/anpp/anpp-block";
+import { ModusOperandiBlock } from "@/components/modus/modus-operandi-block";
 
 export default function ProcessoTecnicoPage() {
   const params = useParams();
@@ -32,7 +33,10 @@ export default function ProcessoTecnicoPage() {
       </p>
       <section className="pt-3 border-t border-neutral-100 dark:border-neutral-800/60">
         <h3 className="text-sm font-semibold mb-2">Análise penal</h3>
-        <AnppBlock processoId={procId} />
+        <div className="space-y-3">
+          <AnppBlock processoId={procId} />
+          <ModusOperandiBlock processoId={procId} />
+        </div>
       </section>
       <section className="pt-3 border-t border-neutral-100 dark:border-neutral-800/60">
         <h3 className="text-sm font-semibold mb-2">Registros deste processo</h3>
