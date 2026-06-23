@@ -26,6 +26,8 @@ import { aplicarPreventiva, revogarPreventiva } from "@/lib/cautelares/aplicar-p
 import { parseDecisaoCautelar } from "@/lib/cautelares/parse-decisao-cautelar";
 import { CAUTELAR } from "@/lib/cautelares/cautelares-taxonomia";
 import { aplicarAtaAudiencia } from "@/lib/registros/aplicar-ata-audiencia";
+import { demandaEventos } from "@/lib/db/schema/demanda-eventos";
+import { normalizarFeed } from "@/lib/registros/feed-unificado";
 
 /**
  * Sync Google Sheets (fire-and-forget) — reconstrói a célula "Providências"
@@ -246,6 +248,127 @@ export const registrosRouter = router({
         .limit(input.limit);
 
       return rows.map((r) => ({ ...r.registro, autor: r.autor }));
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // feedUnificado — linha do tempo única do assistido fundindo três fontes:
+  //   registros (diário de bordo) + eventos de demanda + audiências.
+  // Cada item carrega família/rótulo/ícone (tipologia) e links de origem,
+  // permitindo navegar do feed para a demanda/audiência/processo. A fusão e
+  // a ordenação cronológica ficam na função pura `normalizarFeed`.
+  // ────────────────────────────────────────────────────────────────────
+  feedUnificado: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number().int().positive(),
+        limit: z.number().int().min(1).max(300).default(120),
+      })
+    )
+    .query(async ({ input }) => {
+      const { assistidoId, limit } = input;
+
+      // Processos do assistido (titularidade direta + junção) — usados para
+      // alcançar audiências que só referenciam o processo.
+      const [diretos, viaJuncao] = await Promise.all([
+        db
+          .select({ id: processos.id })
+          .from(processos)
+          .where(and(eq(processos.assistidoId, assistidoId), isNull(processos.deletedAt))),
+        db
+          .select({ id: assistidosProcessos.processoId })
+          .from(assistidosProcessos)
+          .where(eq(assistidosProcessos.assistidoId, assistidoId)),
+      ]);
+      const procIds = [...new Set([...diretos.map((p) => p.id), ...viaJuncao.map((p) => p.id)])];
+
+      // Janela de busca por fonte (margem sobre o limite final).
+      const FETCH = Math.min(limit * 2, 300);
+
+      const audWhere = procIds.length
+        ? or(eq(audiencias.assistidoId, assistidoId), inArray(audiencias.processoId, procIds))!
+        : eq(audiencias.assistidoId, assistidoId);
+
+      const [regRows, evtRows, audRows] = await Promise.all([
+        db
+          .select({
+            id: registros.id,
+            tipo: registros.tipo,
+            dataRegistro: registros.dataRegistro,
+            titulo: registros.titulo,
+            conteudo: registros.conteudo,
+            status: registros.status,
+            demandaId: registros.demandaId,
+            audienciaId: registros.audienciaId,
+            processoId: registros.processoId,
+            dossieAtendimento: registros.dossieAtendimento,
+            enrichmentData: registros.enrichmentData,
+            pontosChave: registros.pontosChave,
+            autorId: registros.autorId,
+          })
+          .from(registros)
+          .where(eq(registros.assistidoId, assistidoId))
+          .orderBy(desc(registros.dataRegistro))
+          .limit(FETCH),
+        db
+          .select({
+            id: demandaEventos.id,
+            tipo: demandaEventos.tipo,
+            subtipo: demandaEventos.subtipo,
+            resumo: demandaEventos.resumo,
+            descricao: demandaEventos.descricao,
+            status: demandaEventos.status,
+            prazo: demandaEventos.prazo,
+            createdAt: demandaEventos.createdAt,
+            demandaId: demandaEventos.demandaId,
+            processoId: demandas.processoId,
+            autorId: demandaEventos.autorId,
+          })
+          .from(demandaEventos)
+          .innerJoin(demandas, eq(demandaEventos.demandaId, demandas.id))
+          .where(
+            and(
+              eq(demandas.assistidoId, assistidoId),
+              isNull(demandaEventos.deletedAt),
+              isNull(demandas.deletedAt)
+            )
+          )
+          .orderBy(desc(demandaEventos.createdAt))
+          .limit(FETCH),
+        db
+          .select({
+            id: audiencias.id,
+            tipo: audiencias.tipo,
+            dataAudiencia: audiencias.dataAudiencia,
+            local: audiencias.local,
+            status: audiencias.status,
+            processoId: audiencias.processoId,
+          })
+          .from(audiencias)
+          .where(audWhere)
+          .orderBy(desc(audiencias.dataAudiencia))
+          .limit(FETCH),
+      ]);
+
+      const itens = normalizarFeed({
+        registros: regRows,
+        demandaEventos: evtRows,
+        audiencias: audRows,
+      }).slice(0, limit);
+
+      // Resolve nomes dos autores num único lookup.
+      const autorIds = [...new Set(itens.map((i) => i.autorId).filter((v): v is number => v != null))];
+      const autores = autorIds.length
+        ? await db
+            .select({ id: users.id, name: users.name })
+            .from(users)
+            .where(inArray(users.id, autorIds))
+        : [];
+      const nomePorId = new Map(autores.map((a) => [a.id, a.name]));
+
+      return itens.map((i) => ({
+        ...i,
+        autorNome: i.autorId != null ? nomePorId.get(i.autorId) ?? null : null,
+      }));
     }),
 
   // ────────────────────────────────────────────────────────────────────
