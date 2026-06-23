@@ -23,6 +23,7 @@ import {
 import { eq, and, isNotNull, sql, count } from "drizzle-orm";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 import type { ConsolidationPessoa } from "@/lib/services/enrichment-client";
+import { promoverProcesso } from "@/lib/promocao/backfill";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -763,6 +764,19 @@ export async function consolidateForProcesso(
         analysisVersion: sql`COALESCE(${processos.analysisVersion}, 0) + 1`,
       })
       .where(eq(processos.id, processoId));
+
+    // Promover pessoas extraídas (case_personas + analysisData) para o catálogo
+    // global. Idempotente — uma falha aqui NÃO deve derrubar a consolidação.
+    try {
+      await promoverProcesso(processoId);
+    } catch (promoErr) {
+      const promoMsg =
+        promoErr instanceof Error ? promoErr.message : "Unknown error";
+      console.error(
+        `[Intelligence] Promoção de pessoas falhou para processo ${processoId}:`,
+        promoMsg,
+      );
+    }
 
     return {
       success: true,

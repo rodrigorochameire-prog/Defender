@@ -26,6 +26,119 @@ export interface BackfillOpts {
   workspaceId?: number;
 }
 
+/** Contadores de ações para um único processo promovido. */
+export interface PromocaoProcessoContadores {
+  vinculadas: number;
+  criadas: number;
+  revisao: number;
+  ignoradas: number;
+}
+
+/**
+ * Promove as pessoas extraídas pela IA para um único processo: carrega o estado
+ * (workspace, candidatos das duas fontes, pessoas existentes, participações),
+ * planeja as ações de forma idempotente e aplica em transação.
+ *
+ * Reusado pelo backfill (varredura em lote) e pelo hook de consolidação
+ * (`consolidateForProcesso`). NÃO faz early-return em `pessoas_promovidas_em`:
+ * essa flag é apenas o filtro de skip do backfill. Quando chamado diretamente,
+ * sempre processa — a idempotência é garantida pelo planejador (dedup por
+ * participação) e não duplica.
+ */
+export async function promoverProcesso(
+  processoId: number,
+): Promise<PromocaoProcessoContadores> {
+  const contadores: PromocaoProcessoContadores = {
+    vinculadas: 0,
+    criadas: 0,
+    revisao: 0,
+    ignoradas: 0,
+  };
+
+  // Estado do processo: workspaceId + analysisData.
+  const [proc] = await db
+    .select({
+      workspaceId: processos.workspaceId,
+      analysisData: processos.analysisData,
+    })
+    .from(processos)
+    .where(eq(processos.id, processoId))
+    .limit(1);
+  if (!proc) return contadores;
+
+  const workspaceId = proc.workspaceId ?? null;
+
+  // Candidatos das duas fontes.
+  const rowsCase = await db
+    .select()
+    .from(casePersonas)
+    .where(eq(casePersonas.processoId, processoId));
+  const candidatos: CandidatoPessoa[] = [
+    ...candidatosDeCasePersonas(rowsCase),
+    ...candidatosDeAnalysis(processoId, proc.analysisData ?? null),
+  ];
+  if (candidatos.length === 0) return contadores;
+
+  // Pessoas existentes do workspace (pool de dedup).
+  const rowsPessoas = await db
+    .select({
+      id: pessoas.id,
+      nomeNormalizado: pessoas.nomeNormalizado,
+      nomesAlternativos: pessoas.nomesAlternativos,
+      cpf: pessoas.cpf,
+      dataNascimento: pessoas.dataNascimento,
+    })
+    .from(pessoas)
+    // Pool de dedup escopado por workspace (divergência consciente do design §12):
+    // mais conservador no caminho de escrita — nunca cross-linka entre workspaces;
+    // a merge-queue global reconcilia duplicatas. Ver design doc §12.
+    .where(
+      and(
+        isNull(pessoas.mergedInto),
+        workspaceId != null ? eq(pessoas.workspaceId, workspaceId) : isNull(pessoas.workspaceId),
+      ),
+    );
+  const existentes: PessoaExistente[] = rowsPessoas.map((p) => ({
+    id: p.id,
+    nomeNormalizado: p.nomeNormalizado,
+    nomesAlternativos: p.nomesAlternativos ?? [],
+    cpf: p.cpf,
+    dataNascimento: p.dataNascimento,
+  }));
+
+  // Participações já existentes neste processo (com origem, p/ idempotência).
+  const rowsPart = await db
+    .select({
+      pessoaId: participacoesProcesso.pessoaId,
+      processoId: participacoesProcesso.processoId,
+      papel: participacoesProcesso.papel,
+      origem: participacoesProcesso.origem,
+    })
+    .from(participacoesProcesso)
+    .where(eq(participacoesProcesso.processoId, processoId));
+  const participacoes: ParticipacaoExistente[] = rowsPart.map((p) => ({
+    pessoaId: p.pessoaId,
+    processoId: p.processoId,
+    papel: p.papel,
+    origem: p.origem,
+  }));
+
+  const acoes = planejarPromocao({ processoId, candidatos, existentes, participacoes });
+
+  await withTransaction(async (tx) => {
+    await aplicarAcoes(criarRepoDrizzle(tx), processoId, workspaceId, acoes);
+  });
+
+  for (const a of acoes) {
+    if (a.tipo === "vincular") contadores.vinculadas += 1;
+    else if (a.tipo === "criar") contadores.criadas += 1;
+    else if (a.tipo === "revisar") contadores.revisao += 1;
+    else if (a.tipo === "ignorar") contadores.ignoradas += 1;
+  }
+
+  return contadores;
+}
+
 /**
  * Varre as duas fontes de pessoas extraídas pela IA e promove para o catálogo
  * global. Idempotente: ignora processos já marcados (`pessoas_promovidas_em`).
@@ -92,87 +205,12 @@ export async function backfillPromocaoPessoas(
   const processoIds = [...idsUnicos].slice(0, limite);
 
   for (const processoId of processoIds) {
-    // Estado do processo: workspaceId + analysisData.
-    const [proc] = await db
-      .select({
-        workspaceId: processos.workspaceId,
-        analysisData: processos.analysisData,
-      })
-      .from(processos)
-      .where(eq(processos.id, processoId))
-      .limit(1);
-    if (!proc) continue;
-
-    const workspaceId = proc.workspaceId ?? null;
-
-    // Candidatos das duas fontes.
-    const rowsCase = await db
-      .select()
-      .from(casePersonas)
-      .where(eq(casePersonas.processoId, processoId));
-    const candidatos: CandidatoPessoa[] = [
-      ...candidatosDeCasePersonas(rowsCase),
-      ...candidatosDeAnalysis(processoId, proc.analysisData ?? null),
-    ];
-    if (candidatos.length === 0) continue;
-
-    // Pessoas existentes do workspace (pool de dedup).
-    const rowsPessoas = await db
-      .select({
-        id: pessoas.id,
-        nomeNormalizado: pessoas.nomeNormalizado,
-        nomesAlternativos: pessoas.nomesAlternativos,
-        cpf: pessoas.cpf,
-        dataNascimento: pessoas.dataNascimento,
-      })
-      .from(pessoas)
-      // Pool de dedup escopado por workspace (divergência consciente do design §12):
-      // mais conservador no caminho de escrita — nunca cross-linka entre workspaces;
-      // a merge-queue global reconcilia duplicatas. Ver design doc §12.
-      .where(
-        and(
-          isNull(pessoas.mergedInto),
-          workspaceId != null ? eq(pessoas.workspaceId, workspaceId) : isNull(pessoas.workspaceId),
-        ),
-      );
-    const existentes: PessoaExistente[] = rowsPessoas.map((p) => ({
-      id: p.id,
-      nomeNormalizado: p.nomeNormalizado,
-      nomesAlternativos: p.nomesAlternativos ?? [],
-      cpf: p.cpf,
-      dataNascimento: p.dataNascimento,
-    }));
-
-    // Participações já existentes neste processo (com origem, p/ idempotência).
-    const rowsPart = await db
-      .select({
-        pessoaId: participacoesProcesso.pessoaId,
-        processoId: participacoesProcesso.processoId,
-        papel: participacoesProcesso.papel,
-        origem: participacoesProcesso.origem,
-      })
-      .from(participacoesProcesso)
-      .where(eq(participacoesProcesso.processoId, processoId));
-    const participacoes: ParticipacaoExistente[] = rowsPart.map((p) => ({
-      pessoaId: p.pessoaId,
-      processoId: p.processoId,
-      papel: p.papel,
-      origem: p.origem,
-    }));
-
-    const acoes = planejarPromocao({ processoId, candidatos, existentes, participacoes });
-
-    await withTransaction(async (tx) => {
-      await aplicarAcoes(criarRepoDrizzle(tx), processoId, workspaceId, acoes);
-    });
-
+    const c = await promoverProcesso(processoId);
     contadores.processos += 1;
-    for (const a of acoes) {
-      if (a.tipo === "vincular") contadores.vinculadas += 1;
-      else if (a.tipo === "criar") contadores.criadas += 1;
-      else if (a.tipo === "revisar") contadores.revisao += 1;
-      else if (a.tipo === "ignorar") contadores.ignoradas += 1;
-    }
+    contadores.vinculadas += c.vinculadas;
+    contadores.criadas += c.criadas;
+    contadores.revisao += c.revisao;
+    contadores.ignoradas += c.ignoradas;
   }
 
   return contadores;
