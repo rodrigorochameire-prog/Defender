@@ -12,7 +12,7 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar
+  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -82,6 +82,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Assistidos", path: "/admin/assistidos", icon: "Users", requiredRoles: ["admin", "defensor", "servidor", "estagiario", "triagem"] },
   { label: "Pessoas", path: "/admin/pessoas", icon: "UsersRound" },
   { label: "Lugares", path: "/admin/lugares", icon: "MapPin" },
+  { label: "Objetos", path: "/admin/objetos", icon: "Package" },
   { label: "Delitos", path: "/admin/delitos", icon: "Scale" },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
   { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Gavel" },
@@ -206,7 +207,7 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";
