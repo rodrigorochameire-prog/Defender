@@ -1383,4 +1383,56 @@ export const assistidosRouter = router({
 
       return { success: true };
     }),
+
+  /** Lê o histórico penal do assistido + a flag de primariedade arguível. */
+  getHistoricoPenal: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const [row] = await db
+        .select({ historicoPenal: assistidos.historicoPenal })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+      const { detectPrimariedadeArguivel } = await import("@/lib/assistidos/historico-penal-flags");
+      return {
+        historicoPenal: row?.historicoPenal ?? null,
+        flagPrimariedade: detectPrimariedadeArguivel(row?.historicoPenal ?? null),
+      };
+    }),
+
+  /** Atualiza o bloco de histórico penal (formulário do defensor). */
+  updateHistoricoPenal: protectedProcedure
+    .input(
+      z.object({
+        assistidoId: z.number(),
+        historicoPenal: z.object({
+          primariedade: z.enum(["primario", "reincidente-generico", "reincidente-especifico"]).optional(),
+          condenacoesAnteriores: z
+            .array(
+              z.object({
+                delito: z.string().nullable().optional(),
+                pena: z.string().nullable().optional(),
+                regime: z.string().nullable().optional(),
+                dataTransitoJulgado: z.string().nullable().optional(),
+                extinta: z.boolean().optional(),
+                extintaMotivo: z.string().nullable().optional(),
+              }),
+            )
+            .optional(),
+          passagensPoliciaisSemCondenacao: z.number().int().min(0).optional(),
+          mausAntecedentesAlegados: z.boolean().optional(),
+          anppAnterior: z.boolean().optional(),
+          observacoes: z.string().nullable().optional(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const [row] = await db
+        .update(assistidos)
+        .set({ historicoPenal: input.historicoPenal } as any)
+        .where(eq(assistidos.id, input.assistidoId))
+        .returning({ id: assistidos.id });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
+      return { id: row.id };
+    }),
 });
