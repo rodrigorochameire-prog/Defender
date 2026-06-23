@@ -24,6 +24,7 @@ import { eq, and, isNotNull, sql, count } from "drizzle-orm";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 import type { ConsolidationPessoa } from "@/lib/services/enrichment-client";
 import { promoverProcesso } from "@/lib/promocao/backfill";
+import { promoverDelitosProcesso } from "@/lib/promocao/backfill-delito";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -774,6 +775,20 @@ export async function consolidateForProcesso(
         promoErr instanceof Error ? promoErr.message : "Unknown error";
       console.error(
         `[Intelligence] Promoção de pessoas falhou para processo ${processoId}:`,
+        promoMsg,
+      );
+    }
+
+    // Promover delitos extraídos (analysisData.imputacoes) para tipificações.
+    // Idempotente — uma falha aqui NÃO deve derrubar a consolidação nem a
+    // promoção de pessoas (try/catch próprio).
+    try {
+      await promoverDelitosProcesso(processoId);
+    } catch (promoErr) {
+      const promoMsg =
+        promoErr instanceof Error ? promoErr.message : "Unknown error";
+      console.error(
+        `[Intelligence] Promoção de delitos falhou para processo ${processoId}:`,
         promoMsg,
       );
     }
