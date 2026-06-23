@@ -4,7 +4,7 @@ import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { User, Briefcase, Clock, Newspaper, MessageCircle, CalendarPlus } from "lucide-react";
+import { User, Briefcase, FileText, Clock, Newspaper, MessageCircle, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { statusConfig } from "../_components/assistido-config";
@@ -12,10 +12,11 @@ import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form
 import { whatsappUrl } from "@/components/atendimentos/config";
 
 const NIVEL_1_TABS = [
-  { key: "geral",    label: "Geral",    icon: User,       path: "" },
-  { key: "casos",    label: "Casos",    icon: Briefcase,  path: "casos" },
-  { key: "timeline", label: "Timeline", icon: Clock,      path: "timeline" },
-  { key: "radar",    label: "Radar",    icon: Newspaper,  path: "radar" },
+  { key: "geral",       label: "Geral",       icon: User,       path: "" },
+  { key: "casos",       label: "Casos",       icon: Briefcase,  path: "casos" },
+  { key: "documentos",  label: "Documentos",  icon: FileText,   path: "documentos" },
+  { key: "timeline",    label: "Timeline",    icon: Clock,      path: "timeline" },
+  { key: "radar",       label: "Radar",       icon: Newspaper,  path: "radar" },
 ] as const;
 
 export default function AssistidoLayout({ children }: { children: React.ReactNode }) {
