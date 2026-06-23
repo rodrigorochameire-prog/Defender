@@ -19,6 +19,14 @@ export {
 
 export { PROCESSO_SITUACAO_CONFIG, situacaoProcessoInfo } from "./processo";
 
+export type { StatusPrisional, StatusPrisionalVisual } from "./status-prisional";
+export {
+  STATUS_PRISIONAL_VALUES,
+  STATUS_PRISIONAL_CONFIG,
+  STATUS_PRISIONAL_OPTIONS,
+  statusPrisionalInfo,
+} from "./status-prisional";
+
 export type { EventoProcessoVisual } from "./evento-processo";
 export {
   EVENTO_PROCESSO_CONFIG,
