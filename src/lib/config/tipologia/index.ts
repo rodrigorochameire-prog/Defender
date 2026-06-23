@@ -19,6 +19,13 @@ export {
 
 export { PROCESSO_SITUACAO_CONFIG, situacaoProcessoInfo } from "./processo";
 
+export type { EventoProcessoVisual } from "./evento-processo";
+export {
+  EVENTO_PROCESSO_CONFIG,
+  EVENTO_PROCESSO_DEFAULT,
+  eventoProcessoInfo,
+} from "./evento-processo";
+
 // Atribuição (já centralizada) — re-export para um único ponto de entrada.
 export {
   getAtribuicaoColors,

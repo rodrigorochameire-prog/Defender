@@ -25,30 +25,21 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { LucideIcon } from "lucide-react";
+import { eventoProcessoInfo } from "@/lib/config/tipologia";
 
 // ============================================================
-// Config
+// Config — tipologia central de eventos (lib/config/tipologia);
+// aqui só resolvemos o NOME do ícone para o componente Lucide.
 // ============================================================
 
-const TIPO_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string; label: string }> = {
-  denuncia: { icon: BookMarked, color: "text-red-500", bg: "bg-red-500", label: "Denuncia" },
-  sentenca: { icon: Gavel, color: "text-amber-500", bg: "bg-amber-500", label: "Sentenca" },
-  decisao: { icon: Gavel, color: "text-orange-500", bg: "bg-orange-500", label: "Decisao" },
-  despacho: { icon: FileText, color: "text-blue-400", bg: "bg-blue-400", label: "Despacho" },
-  depoimento: { icon: Users, color: "text-blue-500", bg: "bg-blue-500", label: "Depoimento" },
-  laudo: { icon: Microscope, color: "text-purple-500", bg: "bg-purple-500", label: "Laudo" },
-  pericia: { icon: Microscope, color: "text-purple-400", bg: "bg-purple-400", label: "Pericia" },
-  defesa: { icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-500", label: "Defesa" },
-  investigacao: { icon: Shield, color: "text-orange-400", bg: "bg-orange-400", label: "Investigacao" },
-  audiencia: { icon: CalendarDays, color: "text-indigo-500", bg: "bg-indigo-500", label: "Audiencia" },
-  midia: { icon: Music, color: "text-cyan-500", bg: "bg-cyan-500", label: "Midia" },
-  documento: { icon: FileText, color: "text-neutral-600 dark:text-neutral-400", bg: "bg-neutral-400", label: "Documento" },
+const ICONES: Record<string, LucideIcon> = {
+  BookMarked, Gavel, FileText, Users, Microscope, ShieldCheck, Shield,
+  CalendarDays, Music, HelpCircle,
 };
 
-const DEFAULT_CONFIG = { icon: HelpCircle, color: "text-neutral-600 dark:text-neutral-400", bg: "bg-neutral-400", label: "Outro" };
-
 function getConfig(tipo: string) {
-  return TIPO_CONFIG[tipo.toLowerCase()] || DEFAULT_CONFIG;
+  const info = eventoProcessoInfo(tipo);
+  return { ...info, icon: ICONES[info.icone] ?? HelpCircle, bg: info.dot };
 }
 
 function formatTimelineDate(isoDate: string | null): string {
