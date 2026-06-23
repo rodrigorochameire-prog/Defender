@@ -78,7 +78,7 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
   return (
     <AnexoDropzone onFiles={(files) => upload(registro.id, files)}>
       <div
-        className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-4 py-3 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
+        className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-3.5 py-2.5 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
         style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}33` }}
       >
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
@@ -126,7 +126,7 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
       </div>
 
       {registro.titulo && (
-        <h4 className="mt-2 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
+        <h4 className="mt-1.5 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
           {registro.titulo}
         </h4>
       )}
@@ -163,7 +163,7 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
 
       {/* Footer: autor — discreto, com iniciais como avatar mini */}
       {registro.autor?.name && (
-        <div className="mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center gap-1.5">
+        <div className="mt-2 pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center gap-1.5">
           <span
             className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-semibold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800"
             aria-hidden

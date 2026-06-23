@@ -4,33 +4,12 @@
 import { Calendar, Clock, History, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
+import { calcularPrazoBadge } from "../prazo-badge";
 import type { Demanda } from "../types";
 
 interface Props {
   demanda: Demanda;
   onPrazoChange: (id: string, prazo: string) => void;
-}
-
-function calcularPrazoBadge(prazoStr: string): { texto: string; cor: "red" | "amber" | "green" | "gray" | "none" } | null {
-  if (!prazoStr) return null;
-  try {
-    const parts = prazoStr.split("/").map(Number);
-    if (parts.length < 3) return null;
-    const [dia, mes, ano] = parts;
-    const fullYear = ano < 100 ? 2000 + ano : ano;
-    const prazo = new Date(fullYear, mes - 1, dia);
-    prazo.setHours(0, 0, 0, 0);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return { texto: `${Math.abs(diff)}d vencido`, cor: "red" };
-    if (diff === 0) return { texto: "Hoje", cor: "red" };
-    if (diff <= 3) return { texto: `${diff}d`, cor: "amber" };
-    if (diff <= 7) return { texto: `${diff}d`, cor: "green" };
-    return { texto: `${diff}d`, cor: "gray" };
-  } catch {
-    return null;
-  }
 }
 
 export function CronologiaSecao({ demanda, onPrazoChange }: Props) {
