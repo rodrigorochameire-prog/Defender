@@ -1108,6 +1108,51 @@ export const processosRouter = router({
         .where(and(eq(processos.casoId, input.casoId), eq(processos.workspaceId, wid)));
     }),
 
+  /** Lê o bloco Modus Operandi + a flag de abordagem sem fundada suspeita. */
+  getModus: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const { objetos, participacoesObjeto } = await import("@/lib/db/schema/objetos");
+      const [row] = await db.select({ modusOperandi: processos.modusOperandi }).from(processos).where(eq(processos.id, input.processoId)).limit(1);
+      // Apreensão ilícita = droga ou arma apreendida vinculada ao processo (Fase V).
+      const [{ n }] = await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(participacoesObjeto)
+        .innerJoin(objetos, eq(objetos.id, participacoesObjeto.objetoId))
+        .where(and(eq(participacoesObjeto.processoId, input.processoId), inArray(objetos.tipo, ["droga", "arma-fogo", "arma-branca"])));
+      const { detectAbordagemSemFundadaSuspeita } = await import("@/lib/modus/modus-flags");
+      return {
+        modusOperandi: row?.modusOperandi ?? null,
+        temApreensaoIlicita: Number(n) > 0,
+        flag: detectAbordagemSemFundadaSuspeita(row?.modusOperandi ?? null, Number(n) > 0),
+      };
+    }),
+
+  /** Atualiza o bloco Modus Operandi (tags do defensor). */
+  updateModus: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        modusOperandi: z.object({
+          abordagem: z.enum(["denuncia-anonima", "flagrante-ronda", "bloqueio", "investigacao-previa", "mandado", "apresentacao-espontanea", "outro"]).optional(),
+          fundadaSuspeitaDocumentada: z.boolean().optional(),
+          armaUsada: z.enum(["fogo", "branca", "impropriada", "nenhuma", "simulada"]).optional(),
+          relacaoAutorVitima: z.enum(["desconhecido", "conhecido-esporadico", "familiar", "conjugal-atual", "conjugal-ex", "laboral", "vizinho"]).optional(),
+          horarioFato: z.enum(["madrugada", "manha", "tarde", "noite"]).optional(),
+          contexto: z.enum(["domicilio", "via-publica", "estabelecimento-comercial", "escolar", "transito", "virtual", "outro"]).optional(),
+          numAgentesCrime: z.number().int().nullable().optional(),
+          numAgentesApreensao: z.number().int().nullable().optional(),
+          tagsAdicionais: z.array(z.string()).optional(),
+          observacoes: z.string().nullable().optional(),
+        }),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const [row] = await db.update(processos).set({ modusOperandi: input.modusOperandi } as any).where(eq(processos.id, input.processoId)).returning({ id: processos.id });
+      if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      return { id: row.id };
+    }),
+
   /** Lê o bloco ANPP do processo + a flag "cabível não oferecido". */
   getAnpp: protectedProcedure
     .input(z.object({ processoId: z.number() }))
