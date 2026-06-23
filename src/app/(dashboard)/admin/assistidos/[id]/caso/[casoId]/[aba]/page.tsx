@@ -15,13 +15,17 @@ import { TabInstitutos } from "../_components/tab-institutos";
 import { TabMpu } from "../_components/tab-mpu";
 import { TabExecucaoPenal } from "../_components/tab-execucao-penal";
 import { TabAtosInfracionais } from "../_components/tab-atos-infracionais";
+import { TabProcessos } from "../_components/tab-processos";
 
 export default function CasoAbaPage() {
   const params = useParams();
   const casoId = Number(params?.casoId);
+  const assistidoId = Number(params?.id);
   const aba = String(params?.aba);
 
   switch (aba) {
+    case "processos":
+      return <TabProcessos casoId={casoId} assistidoId={assistidoId} />;
     case "demandas":
       return <TabDemandas casoId={casoId} />;
     case "oficios":
