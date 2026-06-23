@@ -13,8 +13,10 @@ import {
   acordaos,
   desembargadores,
   defensoresBa,
+  claudeCodeTasks,
 } from "@/lib/db/schema";
 import { processos, assistidos } from "@/lib/db/schema/core";
+import type { AnaliseAcordao } from "@/lib/db/schema/instancia-superior";
 import { eq, and, desc, asc, sql, count, isNull, inArray, ilike, or } from "drizzle-orm";
 import { buildRecursoScope } from "../instancia-superior-scope";
 
@@ -274,9 +276,10 @@ export const instanciaSuperiorRouter = router({
     .input(
       z.object({
         id: z.number(),
+        tribunal: z.enum(["TJBA", "STJ", "STF"]).optional(),
         status: z.string().optional(),
         resultado: z.string().optional(),
-        camara: z.string().optional(),
+        camara: z.string().nullable().optional(),
         relatorId: z.number().nullable().optional(),
         revisorId: z.number().nullable().optional(),
         defensorDestinoId: z.number().nullable().optional(),
@@ -285,6 +288,7 @@ export const instanciaSuperiorRouter = router({
         dataJulgamento: z.string().nullable().optional(),
         dataTransito: z.string().nullable().optional(),
         tesesInvocadas: z.array(z.string()).optional(),
+        tiposPenais: z.array(z.string()).optional(),
         resumo: z.string().nullable().optional(),
         observacoes: z.string().nullable().optional(),
       })
@@ -368,6 +372,111 @@ export const instanciaSuperiorRouter = router({
         .returning();
 
       return updated;
+    }),
+
+  /**
+   * Dispara a análise IA de um acórdão pelo DAEMON (Claude Code, lane ai).
+   * Não usa API de IA: enfileira uma claude_code_task com a skill
+   * `analise-acordao`; o daemon roda `claude -p` e grava o JSON em
+   * resultado. A persistência em acordaos.analiseIa acontece no poll.
+   */
+  analisarAcordaoIA: protectedProcedure
+    .input(z.object({ acordaoId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const [ac] = await db
+        .select({
+          id: acordaos.id,
+          ementa: acordaos.ementa,
+          resultado: acordaos.resultado,
+          votacao: acordaos.votacao,
+          recursoId: acordaos.recursoId,
+        })
+        .from(acordaos)
+        .where(eq(acordaos.id, input.acordaoId))
+        .limit(1);
+      if (!ac) throw new Error("Acórdão não encontrado");
+      if (!ac.ementa || ac.ementa.trim().length < 40) {
+        throw new Error("Cole a ementa/inteiro teor do acórdão antes de analisar");
+      }
+
+      // Contexto do recurso (assistido/processo/tipo/tribunal) para a task
+      const [rec] = await db
+        .select({
+          tipo: recursos.tipo,
+          tribunal: recursos.tribunal,
+          assistidoId: recursos.assistidoId,
+          processoOrigemId: recursos.processoOrigemId,
+        })
+        .from(recursos)
+        .where(eq(recursos.id, ac.recursoId))
+        .limit(1);
+
+      const prompt = [
+        rec?.tribunal && `Tribunal: ${rec.tribunal}`,
+        rec?.tipo && `Recurso: ${rec.tipo}`,
+        ac.resultado && `Resultado: ${ac.resultado}`,
+        ac.votacao && `Votação: ${ac.votacao}`,
+        "",
+        "ACÓRDÃO (ementa / inteiro teor):",
+        ac.ementa,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const [task] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          skill: "analise-acordao",
+          lane: "ai",
+          prompt,
+          status: "pending",
+          createdBy: ctx.user.id,
+          assistidoId: rec?.assistidoId ?? null,
+          processoId: rec?.processoOrigemId ?? null,
+        })
+        .returning({ id: claudeCodeTasks.id });
+
+      await db
+        .update(acordaos)
+        .set({ analiseStatus: "ANALISANDO", updatedAt: new Date() })
+        .where(eq(acordaos.id, input.acordaoId));
+
+      return { taskId: task.id };
+    }),
+
+  /**
+   * Poll do resultado da análise. Quando a task do daemon conclui,
+   * persiste o JSON em acordaos.analiseIa e marca CONCLUIDO.
+   */
+  pollAnaliseAcordao: protectedProcedure
+    .input(z.object({ acordaoId: z.number(), taskId: z.number() }))
+    .query(async ({ input }) => {
+      const [task] = await db
+        .select({ status: claudeCodeTasks.status, resultado: claudeCodeTasks.resultado, erro: claudeCodeTasks.erro })
+        .from(claudeCodeTasks)
+        .where(eq(claudeCodeTasks.id, input.taskId))
+        .limit(1);
+      if (!task) return { status: "PENDENTE" as const, analiseIa: null };
+
+      if (task.status === "completed" && task.resultado && !("raw" in (task.resultado as object))) {
+        const analise = task.resultado as unknown as AnaliseAcordao;
+        const [updated] = await db
+          .update(acordaos)
+          .set({ analiseIa: analise, analiseStatus: "CONCLUIDO", updatedAt: new Date() })
+          .where(eq(acordaos.id, input.acordaoId))
+          .returning({ analiseIa: acordaos.analiseIa });
+        return { status: "CONCLUIDO" as const, analiseIa: updated?.analiseIa ?? analise };
+      }
+
+      if (task.status === "failed" || task.status === "error" || task.status === "needs_review") {
+        await db
+          .update(acordaos)
+          .set({ analiseStatus: "ERRO", updatedAt: new Date() })
+          .where(eq(acordaos.id, input.acordaoId));
+        return { status: "ERRO" as const, analiseIa: null, erro: task.erro ?? "Falha na análise" };
+      }
+
+      return { status: "ANALISANDO" as const, analiseIa: null };
     }),
 
   // ==========================================

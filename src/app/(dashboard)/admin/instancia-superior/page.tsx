@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +18,9 @@ import {
   BarChart3,
   Users,
   X,
+  Pencil,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { GLASS } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -716,6 +719,7 @@ function InstitucionalTab() {
 function RecursoDetailSheet({ recursoId, onClose }: { recursoId: number | null; onClose: () => void }) {
   const { data: r, isLoading } = trpc.instanciaSuperior.getRecurso.useQuery({ id: recursoId! }, { enabled: recursoId != null });
   const [anexarOpen, setAnexarOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <Sheet open={recursoId != null} onOpenChange={(o) => !o && onClose()}>
@@ -738,9 +742,14 @@ function RecursoDetailSheet({ recursoId, onClose }: { recursoId: number | null; 
                     <p className="text-[11px] text-white/60 font-mono mt-0.5">{r.numeroRecurso ?? "sem número"}</p>
                   </div>
                 </div>
-                <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => setEditOpen(true)} title="Editar recurso" className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 flex items-center gap-1 text-[11px] font-medium cursor-pointer transition-colors">
+                    <Pencil className="w-3 h-3" /> Editar
+                  </button>
+                  <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
               {r.assistido?.nome && (
                 <div className="mt-3 flex items-center gap-2 text-[12px] text-white/80">
@@ -793,7 +802,129 @@ function RecursoDetailSheet({ recursoId, onClose }: { recursoId: number | null; 
         )}
       </SheetContent>
       {r && <AnexarAcordaoDialog open={anexarOpen} onOpenChange={setAnexarOpen} recursoId={r.id} relatorNome={r.relator?.nome} />}
+      {r && <EditRecursoDialog open={editOpen} onOpenChange={setEditOpen} recurso={r} />}
     </Sheet>
+  );
+}
+
+// ─── Editar Recurso Dialog ────────────────────────────────────────────────
+
+function EditRecursoDialog({ open, onOpenChange, recurso: r }: {
+  open: boolean; onOpenChange: (v: boolean) => void; recurso: any;
+}) {
+  const [status, setStatus] = useState<string>(r.status);
+  const [resultado, setResultado] = useState<string>(r.resultado);
+  const [tribunal, setTribunal] = useState<string>(r.tribunal ?? "TJBA");
+  const [dataDistribuicao, setDataDist] = useState<string>(r.dataDistribuicao ?? "");
+  const [dataPauta, setDataPauta] = useState<string>(r.dataPauta ?? "");
+  const [dataJulgamento, setDataJulg] = useState<string>(r.dataJulgamento ?? "");
+  const [dataTransito, setDataTrans] = useState<string>(r.dataTransito ?? "");
+  const [tiposPenais, setTiposPenais] = useState<string>((r.tiposPenais ?? []).join(", "));
+  const [teses, setTeses] = useState<string>((r.tesesInvocadas ?? []).join(", "));
+  const [resumo, setResumo] = useState<string>(r.resumo ?? "");
+  const [observacoes, setObs] = useState<string>(r.observacoes ?? "");
+
+  const utils = trpc.useUtils();
+  const update = trpc.instanciaSuperior.updateRecurso.useMutation({
+    onSuccess: () => {
+      toast.success("Recurso atualizado");
+      utils.instanciaSuperior.getRecurso.invalidate({ id: r.id });
+      utils.instanciaSuperior.listRecursos.invalidate();
+      utils.instanciaSuperior.stats.invalidate();
+      utils.instanciaSuperior.mapaPorAssunto.invalidate();
+      utils.instanciaSuperior.agendaPauta.invalidate();
+      onOpenChange(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const splitTags = (s: string) => s.split(",").map(t => t.trim()).filter(Boolean);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[88vh] overflow-y-auto">
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="w-4 h-4" /> Editar recurso</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          <div>
+            <Lbl>Fase / status</Lbl>
+            <div className="flex flex-wrap gap-1">
+              {STATUS_ORDER.map(s => (
+                <button key={s} onClick={() => setStatus(s)} className={cn(
+                  "text-[11px] px-2 py-1 rounded-md border transition-colors flex items-center gap-1",
+                  status === s ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium" : "border-neutral-200 dark:border-neutral-700 text-neutral-500"
+                )}>
+                  <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_CONFIG[s].dot)} />{STATUS_CONFIG[s].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Lbl>Tribunal</Lbl>
+            <div className="flex gap-1.5">
+              {TRIBUNAIS.map(t => (
+                <button key={t.key} onClick={() => setTribunal(t.key)} className={cn(
+                  "text-[12px] px-3 py-1.5 rounded-lg border transition-all flex-1",
+                  tribunal === t.key ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-medium" : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400"
+                )}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div><Lbl>Distribuição</Lbl><Input type="date" value={dataDistribuicao} onChange={(e) => setDataDist(e.target.value)} className="text-[13px] h-9" /></div>
+            <div><Lbl>Pauta</Lbl><Input type="date" value={dataPauta} onChange={(e) => setDataPauta(e.target.value)} className="text-[13px] h-9" /></div>
+            <div><Lbl>Julgamento</Lbl><Input type="date" value={dataJulgamento} onChange={(e) => setDataJulg(e.target.value)} className="text-[13px] h-9" /></div>
+            <div><Lbl>Trânsito</Lbl><Input type="date" value={dataTransito} onChange={(e) => setDataTrans(e.target.value)} className="text-[13px] h-9" /></div>
+          </div>
+
+          <div>
+            <Lbl>Resultado</Lbl>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.keys(RESULTADO_CONFIG).map(k => (
+                <button key={k} onClick={() => setResultado(k)} className={cn(
+                  "text-[11px] px-2 py-1 rounded-md border transition-colors",
+                  resultado === k ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium" : "border-neutral-200 dark:border-neutral-700 text-neutral-500"
+                )}>{RESULTADO_CONFIG[k].label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div><Lbl>Tipos penais (vírgula)</Lbl><Input value={tiposPenais} onChange={(e) => setTiposPenais(e.target.value)} placeholder="Roubo majorado, Tráfico…" className="text-[13px] h-9" /></div>
+          <div><Lbl>Teses invocadas (vírgula)</Lbl><Input value={teses} onChange={(e) => setTeses(e.target.value)} placeholder="Insuficiência probatória, Nulidade…" className="text-[13px] h-9" /></div>
+          <div>
+            <Lbl>Resumo</Lbl>
+            <textarea value={resumo} onChange={(e) => setResumo(e.target.value)} className="w-full text-[13px] rounded-lg border border-neutral-200 dark:border-neutral-800 bg-transparent px-3 py-2.5 min-h-[70px] resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed" />
+          </div>
+          <div>
+            <Lbl>Observações</Lbl>
+            <textarea value={observacoes} onChange={(e) => setObs(e.target.value)} className="w-full text-[13px] rounded-lg border border-neutral-200 dark:border-neutral-800 bg-transparent px-3 py-2.5 min-h-[60px] resize-none focus:outline-none focus:ring-1 focus:ring-emerald-500 leading-relaxed" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button
+            onClick={() => update.mutate({
+              id: r.id,
+              tribunal: tribunal as "TJBA" | "STJ" | "STF",
+              status, resultado,
+              dataDistribuicao: dataDistribuicao || null,
+              dataPauta: dataPauta || null,
+              dataJulgamento: dataJulgamento || null,
+              dataTransito: dataTransito || null,
+              tiposPenais: splitTags(tiposPenais),
+              tesesInvocadas: splitTags(teses),
+              resumo: resumo || null,
+              observacoes: observacoes || null,
+            })}
+            disabled={update.isPending}
+            className="gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+          >
+            {update.isPending ? "Salvando…" : "Salvar alterações"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -845,6 +976,33 @@ function TagRow({ label, tags }: { label: string; tags: string[] }) {
 
 function AcordaoCard({ acordao: a }: { acordao: any }) {
   const cfg = RESULTADO_CONFIG[a.resultado] ?? null;
+  const utils = trpc.useUtils();
+  const [taskId, setTaskId] = useState<number | null>(null);
+
+  const analisar = trpc.instanciaSuperior.analisarAcordaoIA.useMutation({
+    onSuccess: (res) => { setTaskId(res.taskId); toast.message("Análise enfileirada no daemon…"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const poll = trpc.instanciaSuperior.pollAnaliseAcordao.useQuery(
+    { acordaoId: a.id, taskId: taskId ?? 0 },
+    { enabled: taskId != null, refetchInterval: 3000 }
+  );
+
+  useEffect(() => {
+    const s = poll.data?.status;
+    if (s === "CONCLUIDO" || s === "ERRO") {
+      setTaskId(null);
+      utils.instanciaSuperior.getRecurso.invalidate();
+      if (s === "ERRO") toast.error("Falha na análise do acórdão");
+      else toast.success("Análise concluída");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poll.data?.status]);
+
+  const analise = (poll.data?.analiseIa as any) ?? (a.analiseIa as any) ?? null;
+  const analisando = analisar.isPending || taskId != null || a.analiseStatus === "ANALISANDO";
+
   return (
     <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/40 p-3">
       <div className="flex items-center justify-between">
@@ -865,6 +1023,70 @@ function AcordaoCard({ acordao: a }: { acordao: any }) {
               {v.nome.split(" ")[0]}: {v.voto === "ACOMPANHA_RELATOR" ? "✓" : v.voto === "DIVERGENTE" ? "✗" : "—"}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Análise IA (daemon / Claude Code) */}
+      <div className="mt-3 pt-3 border-t border-neutral-200/50 dark:border-white/[0.04]">
+        {analise ? (
+          <AnaliseAcordaoView analise={analise} />
+        ) : analisando ? (
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground py-1">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-500" />
+            Analisando no daemon… (Claude Code)
+          </div>
+        ) : (
+          <button
+            onClick={() => analisar.mutate({ acordaoId: a.id })}
+            disabled={!a.ementa}
+            title={!a.ementa ? "Cole a ementa do acórdão para analisar" : "Analisar com IA via daemon"}
+            className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Analisar acórdão com IA
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AnaliseAcordaoView({ analise }: { analise: any }) {
+  const blocks: { label: string; items?: string[]; text?: string; tone: string }[] = [
+    { label: "Teses acolhidas", items: analise.tesesAcolhidas, tone: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Teses rejeitadas", items: analise.tesesRejeitadas, tone: "text-red-600 dark:text-red-400" },
+    { label: "Fundamentos-chave", items: analise.fundamentosChave, tone: "text-foreground/75" },
+    { label: "Precedentes citados", items: analise.precedentesCitados, tone: "text-blue-600 dark:text-blue-400" },
+    { label: "Observações", items: analise.observacoesRelevantes, tone: "text-amber-600 dark:text-amber-400" },
+  ];
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="w-3 h-3 text-violet-500" />
+        <span className="text-[9px] uppercase tracking-widest font-semibold text-violet-500">Análise IA</span>
+      </div>
+      {blocks.filter(b => (b.items?.length ?? 0) > 0).map(b => (
+        <div key={b.label}>
+          <span className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/70 block mb-0.5">{b.label}</span>
+          <ul className="space-y-0.5">
+            {b.items!.map((it, i) => (
+              <li key={i} className={cn("text-[11px] leading-snug flex gap-1.5", b.tone)}>
+                <span className="text-muted-foreground/40 shrink-0">›</span>{it}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {analise.impactoParaDefesa && (
+        <div className="rounded-md bg-violet-50/60 dark:bg-violet-500/[0.06] px-2.5 py-2">
+          <span className="text-[9px] uppercase tracking-wider font-semibold text-violet-500 block mb-0.5">Impacto para a defesa</span>
+          <p className="text-[11px] text-foreground/80 leading-snug">{analise.impactoParaDefesa}</p>
+        </div>
+      )}
+      {analise.recomendacaoProxPasso && (
+        <div className="flex items-start gap-1.5 text-[11px] text-foreground/75">
+          <ChevronRight className="w-3.5 h-3.5 text-violet-500 shrink-0 mt-px" />
+          <span><span className="font-medium">Próximo passo:</span> {analise.recomendacaoProxPasso}</span>
         </div>
       )}
     </div>
