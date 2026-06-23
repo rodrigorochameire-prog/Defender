@@ -3,8 +3,10 @@ import { db, withTransaction } from "@/lib/db";
 import { processos } from "@/lib/db/schema/core";
 import { casePersonas } from "@/lib/db/schema/casos";
 import { pessoas, participacoesProcesso } from "@/lib/db/schema/pessoas";
+import { testemunhas } from "@/lib/db/schema/agenda";
 import { candidatosDeCasePersonas } from "./adaptador-case-personas";
 import { candidatosDeAnalysis } from "./adaptador-analysis";
+import { candidatosDeDepoentes } from "./adaptador-depoentes";
 import { planejarPromocao } from "./planejar";
 import { criarRepoDrizzle } from "./repo";
 import { aplicarAcoes } from "./applier";
@@ -73,9 +75,23 @@ export async function promoverProcesso(
     .select()
     .from(casePersonas)
     .where(eq(casePersonas.processoId, processoId));
+  // Depoentes (testemunhas) como terceira fonte. Falha isolada (CA-A4): se a
+  // carga falhar, segue com as outras fontes em vez de abortar a promoção.
+  let candidatosDepoentes: CandidatoPessoa[] = [];
+  try {
+    const rowsTestemunhas = await db
+      .select()
+      .from(testemunhas)
+      .where(eq(testemunhas.processoId, processoId));
+    candidatosDepoentes = candidatosDeDepoentes(processoId, rowsTestemunhas);
+  } catch (err) {
+    console.error(`[promocao] falha ao carregar depoentes do processo ${processoId}:`, err);
+  }
+
   const candidatos: CandidatoPessoa[] = [
     ...candidatosDeCasePersonas(rowsCase),
     ...candidatosDeAnalysis(processoId, proc.analysisData ?? null),
+    ...candidatosDepoentes,
   ];
   if (candidatos.length === 0) {
     // Sem pessoas extraíveis: marca como promovido mesmo assim, para o backfill
@@ -210,12 +226,76 @@ export async function backfillPromocaoPessoas(
   const processoIds = [...idsUnicos].slice(0, limite);
 
   for (const processoId of processoIds) {
-    const c = await promoverProcesso(processoId);
-    contadores.processos += 1;
-    contadores.vinculadas += c.vinculadas;
-    contadores.criadas += c.criadas;
-    contadores.revisao += c.revisao;
-    contadores.ignoradas += c.ignoradas;
+    try {
+      const c = await promoverProcesso(processoId);
+      contadores.processos += 1;
+      contadores.vinculadas += c.vinculadas;
+      contadores.criadas += c.criadas;
+      contadores.revisao += c.revisao;
+      contadores.ignoradas += c.ignoradas;
+    } catch (err) {
+      // Isola falha por processo (ex.: dado de extração inválido): pula e segue,
+      // em vez de abortar a varredura inteira. O processo não é marcado como promovido.
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[promocao] processo ${processoId} falhou, pulando: ${msg}`);
+    }
+  }
+
+  return contadores;
+}
+
+/**
+ * Varre processos que têm depoentes (`testemunhas`) ainda não promovidos e os
+ * promove via `promoverProcesso` (que já consolida as três fontes — case_personas,
+ * analysisData e depoentes). Complementa `backfillPromocaoPessoas`, cujo seletor
+ * só alcança processos com case_personas/analysisData.pessoas: aqui o gatilho é a
+ * presença de linhas em `testemunhas`. A idempotência é a do planejador (dedup por
+ * participação), então reprocessar é seguro.
+ */
+export async function backfillPromocaoDepoentes(
+  opts: BackfillOpts = {},
+): Promise<BackfillContadores> {
+  const limite = opts.limite ?? 50;
+  const contadores: BackfillContadores = {
+    processos: 0,
+    vinculadas: 0,
+    criadas: 0,
+    revisao: 0,
+    ignoradas: 0,
+    caseScopedAdiadas: 0,
+  };
+
+  const wsFilter = opts.workspaceId != null ? eq(processos.workspaceId, opts.workspaceId) : undefined;
+
+  const deDepoentes = await db
+    .selectDistinct({ processoId: testemunhas.processoId })
+    .from(testemunhas)
+    .innerJoin(processos, eq(processos.id, testemunhas.processoId))
+    .where(
+      and(
+        isNull(processos.pessoasPromovidasEm),
+        ...(wsFilter ? [wsFilter] : []),
+      ),
+    );
+
+  const idsUnicos = new Set<number>();
+  for (const r of deDepoentes) if (r.processoId != null) idsUnicos.add(r.processoId);
+  const processoIds = [...idsUnicos].slice(0, limite);
+
+  for (const processoId of processoIds) {
+    try {
+      const c = await promoverProcesso(processoId);
+      contadores.processos += 1;
+      contadores.vinculadas += c.vinculadas;
+      contadores.criadas += c.criadas;
+      contadores.revisao += c.revisao;
+      contadores.ignoradas += c.ignoradas;
+    } catch (err) {
+      // Isola falha por processo (ex.: dado de extração inválido): pula e segue,
+      // em vez de abortar a varredura inteira. O processo não é marcado como promovido.
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[promocao] processo ${processoId} falhou, pulando: ${msg}`);
+    }
   }
 
   return contadores;
