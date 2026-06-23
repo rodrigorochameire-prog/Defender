@@ -79,6 +79,123 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
   "midia",
 ];
 
+/**
+ * AIJ / Sumariante / PAP — instrução completa (ordem do art. 400 CPP).
+ * Lidera com a preparação acionável (roteiro + depoentes + teses), depois o
+ * contexto da imputação e os elementos de prova; resultado (ata) ao final.
+ */
+export const SECOES_INSTRUCAO: SecaoId[] = [
+  "dossie",
+  "depoentes",
+  "teses",
+  "imputacao",
+  "fatos",
+  "contradicoes",
+  "laudos",
+  "versao",
+  "relato-vitima",
+  "sintese",
+  "investigacao",
+  "pendencias",
+  "medidas",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
+/** Custódia — legalidade do flagrante, requisitos do art. 312 e cautelares. */
+export const SECOES_CUSTODIA: SecaoId[] = [
+  "motivo-designacao",
+  "preventiva",
+  "cautelares",
+  "versao",
+  "medidas",
+  "dossie",
+  "imputacao",
+  "fatos",
+  "relato-vitima",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
+/** Plenário do Júri — preparação/acompanhamento ao vivo ficam no Cockpit. */
+export const SECOES_PLENARIO: SecaoId[] = [
+  "teses",
+  "depoentes",
+  "imputacao",
+  "fatos",
+  "contradicoes",
+  "laudos",
+  "dossie",
+  "sintese",
+  "versao",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
+/** Oitiva/Depoimento Especial (Lei 13.431/17) — escuta protegida. */
+export const SECOES_OITIVA_ESPECIAL: SecaoId[] = [
+  "motivo-designacao",
+  "relato-vitima",
+  "depoentes",
+  "dossie",
+  "versao",
+  "medidas",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
+/** ANPP — confissão formal e pactuação de condições. */
+export const SECOES_ANPP: SecaoId[] = [
+  "motivo-designacao",
+  "imputacao",
+  "fatos",
+  "versao",
+  "dossie",
+  "cautelares",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
+/** Admonitória (EP) — leitura de condições e início do cumprimento. */
+export const SECOES_ADMONITORIA: SecaoId[] = [
+  "motivo-designacao",
+  "versao",
+  "dossie",
+  "cautelares",
+  "ata",
+  "anotacoes-rapidas",
+  "documentos",
+  "midia",
+];
+
+/** Justificação na Execução Penal — falta disciplinar / descumprimento. */
+export const SECOES_JUSTIFICACAO_EP: SecaoId[] = [
+  "motivo-designacao",
+  "versao",
+  "depoentes",
+  "dossie",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
+  "documentos",
+  "midia",
+];
+
 export function resolverManifesto(config: { secoes?: SecaoId[] }): SecaoId[] {
   return config.secoes ?? SECOES_DEFAULT;
 }

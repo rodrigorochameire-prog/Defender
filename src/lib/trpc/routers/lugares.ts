@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed } from "@/lib/db/schema";
-import { eq, and, isNull, desc, sql, ilike, or } from "drizzle-orm";
+import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed, processos } from "@/lib/db/schema";
+import { eq, and, isNull, isNotNull, inArray, desc, sql, ilike, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarEndereco } from "@/lib/lugares/normalizar-endereco";
 import { isPlaceholderLugar } from "@/lib/lugares/placeholders";
@@ -476,5 +476,73 @@ export const lugaresRouter = router({
         longitude: result.longitude,
         source: "nominatim" as const,
       };
+    }),
+
+  /**
+   * Dados do "mapa dos fatos": lugares geocodificados agrupados, com os tipos de
+   * participação e as atribuições dos processos vinculados. Para colorir por tipo
+   * e filtrar por atribuição (Júri/VVD/criminal). Escopo por workspace.
+   */
+  mapDataByAtribuicao: protectedProcedure
+    .input(
+      z.object({
+        atribuicao: z.string().optional(),
+        showTipos: z.array(z.string()).optional(),
+        limit: z.number().max(2000).default(800),
+      }).optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const conditions = [
+        eq(lugares.workspaceId, workspaceId),
+        isNull(lugares.mergedInto),
+        isNotNull(lugares.latitude),
+        isNotNull(lugares.longitude),
+      ];
+      if (input?.atribuicao) {
+        conditions.push(eq(processos.atribuicao, input.atribuicao as any));
+      }
+      if (input?.showTipos && input.showTipos.length > 0) {
+        conditions.push(inArray(participacoesLugar.tipo, input.showTipos as any));
+      }
+
+      const rows = await db
+        .select({
+          lugarId: lugares.id,
+          latitude: lugares.latitude,
+          longitude: lugares.longitude,
+          endereco: lugares.enderecoCompleto,
+          bairro: lugares.bairro,
+          tipo: participacoesLugar.tipo,
+          atribuicao: processos.atribuicao,
+          processoId: processos.id,
+        })
+        .from(participacoesLugar)
+        .innerJoin(lugares, eq(lugares.id, participacoesLugar.lugarId))
+        .innerJoin(processos, and(eq(processos.id, participacoesLugar.processoId), isNull(processos.deletedAt)))
+        .where(and(...conditions));
+
+      // Agrupa por lugar: um marcador por endereço, com os tipos/atribuições/processos.
+      const porLugar = new Map<number, {
+        lugarId: number; latitude: number; longitude: number; endereco: string | null; bairro: string | null;
+        tipos: string[]; atribuicoes: string[]; processoIds: number[];
+      }>();
+      for (const r of rows) {
+        const lat = r.latitude != null ? parseFloat(String(r.latitude)) : NaN;
+        const lng = r.longitude != null ? parseFloat(String(r.longitude)) : NaN;
+        if (isNaN(lat) || isNaN(lng)) continue;
+        let g = porLugar.get(r.lugarId);
+        if (!g) {
+          g = { lugarId: r.lugarId, latitude: lat, longitude: lng, endereco: r.endereco, bairro: r.bairro, tipos: [], atribuicoes: [], processoIds: [] };
+          porLugar.set(r.lugarId, g);
+        }
+        if (r.tipo && !g.tipos.includes(r.tipo)) g.tipos.push(r.tipo);
+        if (r.atribuicao && !g.atribuicoes.includes(r.atribuicao)) g.atribuicoes.push(r.atribuicao);
+        if (r.processoId && !g.processoIds.includes(r.processoId)) g.processoIds.push(r.processoId);
+      }
+
+      return [...porLugar.values()]
+        .map((g) => ({ ...g, count: g.processoIds.length }))
+        .slice(0, input?.limit ?? 800);
     }),
 });

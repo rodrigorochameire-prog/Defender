@@ -116,6 +116,54 @@ export const HEADER_STYLE = {
 } as const;
 
 // ============================================
+// SHEET (v5 refinado — sheets laterais adaptáveis)
+// ============================================
+// Tokens compartilhados pelos detail-sheets (Agenda, Demandas, Atendimentos).
+// Objetivo: ritmo de espaçamento consistente, tipografia sóbria e o padrão de
+// campos-dropdown inline que o usuário prefere — sem desnaturar o comportamento.
+
+export const SHEET_STYLE = {
+  /** Barra fixa do topo — backdrop blur + borda inferior sutil */
+  topBar:
+    "bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800",
+  /** Card de identidade (assistido + processo) elevado sobre o corpo */
+  identityCard:
+    "rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm",
+  /** Botão icônico do header (fechar, navegar) */
+  iconBtn:
+    "w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer shrink-0 transition-colors duration-150",
+  /** Chip do rito/tipo no header — cores vêm de corBadge(cor) por atribuição */
+  ritoBadge:
+    "inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-lg border text-[11.5px] font-semibold min-w-0 transition-colors duration-150",
+  /** Pill de status (read-only) no header */
+  statusPill: "shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-semibold tabular-nums",
+  /** Ritmo de respiro entre seções do corpo */
+  sectionGap: "space-y-3",
+  /** Label de campo — uppercase sóbrio */
+  fieldLabel:
+    "text-[9px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500",
+  /** Valor de campo */
+  fieldValue: "text-[13px] text-neutral-800 dark:text-neutral-200 leading-snug",
+  /** Trigger de dropdown inline — preserva o padrão atual, só refina o frame */
+  dropdownTrigger:
+    "inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium ring-1 ring-inset ring-neutral-200 dark:ring-neutral-700 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-150 cursor-pointer",
+} as const;
+
+/** Tom (label + classes) do status de uma audiência — fonte única do pill. */
+export function statusAudienciaInfo(status?: string | null): { label: string; cls: string } {
+  const s = (status ?? "").toLowerCase();
+  if (s.includes("conclu") || s.includes("realiz"))
+    return { label: "Realizada", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+  if (s.includes("cancel"))
+    return { label: "Cancelada", cls: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+  if (s.includes("redesign") || s.includes("remarc") || s.includes("reagend") || s.includes("adiad"))
+    return { label: "Redesignada", cls: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+  if (s.includes("ata"))
+    return { label: "Aguard. ata", cls: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+  return { label: "Designada", cls: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400" };
+}
+
+// ============================================
 // GLASS (v3 — cards translúcidos)
 // ============================================
 

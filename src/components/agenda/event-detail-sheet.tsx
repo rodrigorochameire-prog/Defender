@@ -1,6 +1,7 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { SHEET_STYLE, statusAudienciaInfo } from "@/lib/config/design-tokens";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc/client";
 import { format, formatDistanceToNow } from "date-fns";
@@ -1289,20 +1290,36 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         {/* Faixa fina da atribuição — substitui o header preto sólido por um
             acento leve, alinhado à cor do avatar/rótulo (paleta por atribuição). */}
         <div className="h-1 w-full shrink-0 transition-colors duration-300" style={{ backgroundColor: atribColor }} aria-hidden />
-        <div className="bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <SheetHeader className="p-0">
-              <SheetTitle className="text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">Evento</SheetTitle>
-            </SheetHeader>
-          </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="w-7 h-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center cursor-pointer shrink-0 transition-colors"
-            title="Fechar"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {/* Header adaptativo — identidade do rito (badge + cor) + data + status.
+            Sempre visível: dá contexto instantâneo de QUE audiência é esta. */}
+        {(() => {
+          const RitoIcon = subtipoCfg.icon;
+          const ritoCores = corBadge(subtipoCfg.cor);
+          const st = statusAudienciaInfo((ctx as any)?.audiencia?.status ?? evento.status);
+          return (
+            <div className={cn(SHEET_STYLE.topBar, "px-3 py-2 flex items-center justify-between gap-2")}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={cn(SHEET_STYLE.ritoBadge, ritoCores.border, ritoCores.bgSubtle, ritoCores.text)}>
+                  <RitoIcon className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate max-w-[210px]">{subtipoCfg.label}</span>
+                </span>
+                {dataHora && (
+                  <span className="hidden sm:inline text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums shrink-0">
+                    {format(dataHora, "dd/MM · HH:mm", { locale: ptBR })}
+                  </span>
+                )}
+                <span className={cn(SHEET_STYLE.statusPill, st.cls)}>{st.label}</span>
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                className={SHEET_STYLE.iconBtn}
+                title="Fechar"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })()}
 
         <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
 
