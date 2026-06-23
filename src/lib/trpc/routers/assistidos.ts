@@ -1501,7 +1501,11 @@ export const assistidosRouter = router({
             .innerJoin(objetos, eq(objetos.id, participacoesObjeto.objetoId))
             .where(and(inArray(participacoesObjeto.processoId, procIds), inArray(objetos.tipo, ["droga", "arma-fogo", "arma-branca"]))),
           db.select().from(execucoesPenais).where(inArray(execucoesPenais.processoId, procIds)),
-          db.select().from(execucaoEventos),
+          // Eventos só das execuções dos processos deste assistido (evita varrer a tabela toda).
+          db.select({ execucaoId: execucaoEventos.execucaoId, tipo: execucaoEventos.tipo, dados: execucaoEventos.dados })
+            .from(execucaoEventos)
+            .innerJoin(execucoesPenais, eq(execucoesPenais.id, execucaoEventos.execucaoId))
+            .where(inArray(execucoesPenais.processoId, procIds)),
         ]);
 
         const mPorProc = new Map<number, { tipo: string; data: string }[]>();
