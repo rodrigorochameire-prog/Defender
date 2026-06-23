@@ -23,8 +23,8 @@ export const promocaoLog = pgTable(
     entidade: varchar("entidade", { length: 20 }).notNull().default("pessoa"),
     processoId: integer("processo_id").references(() => processos.id, { onDelete: "cascade" }),
     candidatoNome: text("candidato_nome").notNull(),
-    candidatoCpf: varchar("candidato_cpf", { length: 14 }),
-    acao: varchar("acao", { length: 12 }).notNull(), // vincular | criar | revisar | ignorar
+    candidatoCpf: text("candidato_cpf"), // reusado p/ artigo (delito) / medida (cautelar) — text liberal (auditoria)
+    acao: text("acao").notNull(), // vincular | criar | revisar | ignorar | sem-correspondencia
     pessoaId: integer("pessoa_id"),
     candidatosIds: text("candidatos_ids"), // CSV dos ids ambíguos quando acao=revisar
     confianca: numeric("confianca", { precision: 3, scale: 2 }),
