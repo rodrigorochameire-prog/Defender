@@ -275,7 +275,7 @@ export default function AssistidoHubPage() {
   // ── Loading / empty ──────────────────────────────────────────────
   if (loadingAssistido || loadingCasos) {
     return (
-      <div className="p-6 space-y-3 max-w-5xl">
+      <div className="p-6 space-y-3">
         <div className="h-20 rounded-xl bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -298,7 +298,7 @@ export default function AssistidoHubPage() {
   const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(sp);
 
   return (
-    <div className="p-6 space-y-4 max-w-5xl">
+    <div className="p-6 space-y-4">
       {/* Identidade + ações ficam no header persistente (layout.tsx). */}
 
       {/* ── KPI STRIP ─────────────────────────────────────────────── */}
