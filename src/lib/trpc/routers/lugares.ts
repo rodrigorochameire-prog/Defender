@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed } from "@/lib/db/schema";
-import { eq, and, isNull, desc, sql, ilike, or } from "drizzle-orm";
+import { lugares, participacoesLugar, lugaresAccessLog, lugaresDistinctsConfirmed, processos } from "@/lib/db/schema";
+import { eq, and, isNull, isNotNull, inArray, desc, sql, ilike, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarEndereco } from "@/lib/lugares/normalizar-endereco";
 import { isPlaceholderLugar } from "@/lib/lugares/placeholders";
@@ -476,5 +476,131 @@ export const lugaresRouter = router({
         longitude: result.longitude,
         source: "nominatim" as const,
       };
+    }),
+
+  /**
+   * Dados do "mapa dos fatos": lugares geocodificados agrupados, com os tipos de
+   * participação e as atribuições dos processos vinculados. Para colorir por tipo
+   * e filtrar por atribuição (Júri/VVD/criminal). Escopo por workspace.
+   */
+  mapDataByAtribuicao: protectedProcedure
+    .input(
+      z.object({
+        atribuicao: z.string().optional(),
+        showTipos: z.array(z.string()).optional(),
+        limit: z.number().max(2000).default(800),
+      }).optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const conditions = [
+        eq(lugares.workspaceId, workspaceId),
+        isNull(lugares.mergedInto),
+        isNotNull(lugares.latitude),
+        isNotNull(lugares.longitude),
+      ];
+      if (input?.atribuicao) {
+        conditions.push(eq(processos.atribuicao, input.atribuicao as any));
+      }
+      if (input?.showTipos && input.showTipos.length > 0) {
+        conditions.push(inArray(participacoesLugar.tipo, input.showTipos as any));
+      }
+
+      const rows = await db
+        .select({
+          lugarId: lugares.id,
+          latitude: lugares.latitude,
+          longitude: lugares.longitude,
+          endereco: lugares.enderecoCompleto,
+          bairro: lugares.bairro,
+          tipo: participacoesLugar.tipo,
+          atribuicao: processos.atribuicao,
+          processoId: processos.id,
+        })
+        .from(participacoesLugar)
+        .innerJoin(lugares, eq(lugares.id, participacoesLugar.lugarId))
+        .innerJoin(processos, and(eq(processos.id, participacoesLugar.processoId), isNull(processos.deletedAt)))
+        .where(and(...conditions));
+
+      // Agrupa por lugar: um marcador por endereço, com os tipos/atribuições/processos.
+      const porLugar = new Map<number, {
+        lugarId: number; latitude: number; longitude: number; endereco: string | null; bairro: string | null;
+        tipos: string[]; atribuicoes: string[]; processoIds: number[];
+      }>();
+      for (const r of rows) {
+        const lat = r.latitude != null ? parseFloat(String(r.latitude)) : NaN;
+        const lng = r.longitude != null ? parseFloat(String(r.longitude)) : NaN;
+        if (isNaN(lat) || isNaN(lng)) continue;
+        let g = porLugar.get(r.lugarId);
+        if (!g) {
+          g = { lugarId: r.lugarId, latitude: lat, longitude: lng, endereco: r.endereco, bairro: r.bairro, tipos: [], atribuicoes: [], processoIds: [] };
+          porLugar.set(r.lugarId, g);
+        }
+        if (r.tipo && !g.tipos.includes(r.tipo)) g.tipos.push(r.tipo);
+        if (r.atribuicao && !g.atribuicoes.includes(r.atribuicao)) g.atribuicoes.push(r.atribuicao);
+        if (r.processoId && !g.processoIds.includes(r.processoId)) g.processoIds.push(r.processoId);
+      }
+
+      return [...porLugar.values()]
+        .map((g) => ({ ...g, count: g.processoIds.length }))
+        .slice(0, input?.limit ?? 800);
+    }),
+
+  /**
+   * Geocodifica em lote os lugares ainda sem coordenada (ex.: promovidos da IA
+   * sem lat/lng) que nunca foram tentados. Lote pequeno + throttle p/ respeitar o
+   * Nominatim. Gated (botão manual no mapa dos fatos). Idempotente.
+   */
+  geocodificarFaltantes: protectedProcedure
+    .input(z.object({ limite: z.number().min(1).max(50).default(15) }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const limite = input?.limite ?? 15;
+
+      const faltantes = await db
+        .select()
+        .from(lugares)
+        .where(
+          and(
+            eq(lugares.workspaceId, workspaceId),
+            isNull(lugares.mergedInto),
+            isNull(lugares.latitude),
+            isNull(lugares.geocodingSource), // nunca tentado (não re-tenta os 'nominatim-fail')
+          ),
+        )
+        .limit(limite);
+
+      if (faltantes.length === 0) return { tentados: 0, geocodificados: 0, falharam: 0 };
+
+      const { getGeocoder } = await import("@/lib/lugares/geocoder-instance");
+      const geocoder = getGeocoder();
+      let geocodificados = 0;
+      let falharam = 0;
+
+      for (const l of faltantes) {
+        const result = await geocoder.geocode({
+          logradouro: l.logradouro,
+          numero: l.numero,
+          bairro: l.bairro,
+          cidade: l.cidade,
+          uf: l.uf,
+        });
+        if (result.failed || result.latitude == null || result.longitude == null) {
+          falharam++;
+          await db.update(lugares).set({ geocodedAt: new Date(), geocodingSource: "nominatim-fail" } as any).where(eq(lugares.id, l.id));
+        } else {
+          geocodificados++;
+          await db.update(lugares).set({
+            latitude: String(result.latitude),
+            longitude: String(result.longitude),
+            geocodedAt: new Date(),
+            geocodingSource: "nominatim",
+          } as any).where(eq(lugares.id, l.id));
+        }
+        // Throttle Nominatim (~1 req/s) — botão manual, latência aceitável.
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+
+      return { tentados: faltantes.length, geocodificados, falharam };
     }),
 });

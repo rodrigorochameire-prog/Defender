@@ -2,7 +2,16 @@ import type { LucideIcon } from "lucide-react";
 import { Gavel, Scale, Shield, ShieldAlert, Users, HelpCircle, FileClock, Handshake, BookCheck } from "lucide-react";
 import { detectarSlug } from "@/lib/agenda/tipos-audiencia";
 import type { SecaoId } from "@/components/agenda/sheet/secoes-manifest";
-import { SECOES_JUSTIFICACAO } from "@/components/agenda/sheet/secoes-manifest";
+import {
+  SECOES_JUSTIFICACAO,
+  SECOES_INSTRUCAO,
+  SECOES_CUSTODIA,
+  SECOES_PLENARIO,
+  SECOES_OITIVA_ESPECIAL,
+  SECOES_ANPP,
+  SECOES_ADMONITORIA,
+  SECOES_JUSTIFICACAO_EP,
+} from "@/components/agenda/sheet/secoes-manifest";
 
 export type SubtipoAudiencia =
   | "justificacao"
@@ -12,6 +21,7 @@ export type SubtipoAudiencia =
   | "anpp"
   | "oitiva_especial"
   | "aij"
+  | "sumariante"
   | "custodia"
   | "plenario"
   | "indefinido";
@@ -81,6 +91,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Vedação a revitimização: a oitiva substitui o depoimento policial — não se repete.",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_OITIVA_ESPECIAL,
   },
   aij: {
     key: "aij",
@@ -99,6 +110,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Ofendida pode ser ouvida fora da presença do defendido (art. 217 CPP).",
     ],
     instrucaoCompleta: true,
+    secoes: SECOES_INSTRUCAO,
   },
   custodia: {
     key: "custodia",
@@ -117,6 +129,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Demonstrar inexistência dos requisitos da preventiva (art. 312, 313). Propor MPU como substitutiva.",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_CUSTODIA,
   },
   plenario: {
     key: "plenario",
@@ -136,6 +149,26 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
     ],
     instrucaoCompleta: true,
     direcionaCockpit: true,
+    secoes: SECOES_PLENARIO,
+  },
+  sumariante: {
+    key: "sumariante",
+    label: "Instrução Sumariante (Júri)",
+    icon: Scale,
+    cor: "violet",
+    descricao: "Primeira fase do procedimento do júri (judicium accusationis) — instrução para juízo de pronúncia, art. 411 CPP. Encerra com decisão de pronúncia, impronúncia, desclassificação ou absolvição sumária.",
+    foco: "Produzir prova oral visando afastar a pronúncia (impronúncia/absolvição sumária/desclassificação) ou, ao menos, depurar excessos da denúncia. Mesma técnica da AIJ.",
+    labelAbaDepoentes: "Depoentes",
+    exibeAbaDepoentes: true,
+    resultadoDetalhado: true,
+    tiposDepoente: ["vitima", "testemunha", "reu", "perito", "informante", "policial"],
+    lembretes: [
+      "Juízo de pronúncia: standard é indício de autoria + materialidade (art. 413) — pleitear impronúncia se a prova for frágil.",
+      "Pleitear desclassificação para crime não doloso contra a vida quando a qualificadora/dolo eventual não se sustentar.",
+      "Excesso de linguagem na pronúncia é nulidade (eloquência acusatória contamina os jurados).",
+    ],
+    instrucaoCompleta: true,
+    secoes: SECOES_INSTRUCAO,
   },
   justificacao_ep: {
     key: "justificacao_ep",
@@ -155,6 +188,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Prazo prescricional da falta disciplinar (analogia: menor prazo do art. 109 CP).",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_JUSTIFICACAO_EP,
   },
   admonitoria: {
     key: "admonitoria",
@@ -173,6 +207,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Registrar data-base do cumprimento e período de prova; alertar sobre consequências do descumprimento.",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_ADMONITORIA,
   },
   pap: {
     key: "pap",
@@ -191,6 +226,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "Réu citado por edital e ausente: conferir nomeação de defensor e ciência dos atos.",
     ],
     instrucaoCompleta: true,
+    secoes: SECOES_INSTRUCAO,
   },
   anpp: {
     key: "anpp",
@@ -210,6 +246,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
       "ANPP homologado faz cessar cautelares/monitoração por perda de objeto.",
     ],
     instrucaoCompleta: false,
+    secoes: SECOES_ANPP,
   },
   indefinido: {
     key: "indefinido",
@@ -230,6 +267,7 @@ export const SUBTIPO_CONFIG: Record<SubtipoAudiencia, SubtipoConfig> = {
 // Catálogo (slug) → subtipo local do registro de audiência.
 const SLUG_PARA_SUBTIPO: Record<string, SubtipoAudiencia> = {
   plenario_juri: "plenario",
+  sumariante: "sumariante",
   aij: "aij",
   instrucao_oitiva: "aij",
   justificacao: "justificacao",
