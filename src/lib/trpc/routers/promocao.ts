@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { promocaoLog } from "@/lib/db/schema/promocao";
-import { backfillPromocaoPessoas } from "@/lib/promocao/backfill";
+import { backfillPromocaoPessoas, backfillPromocaoDepoentes } from "@/lib/promocao/backfill";
 import { backfillPromocaoDelitos } from "@/lib/promocao/backfill-delito";
 import { backfillPromocaoLocais } from "@/lib/promocao/backfill-locais";
 import { backfillPromocaoCautelares } from "@/lib/promocao/backfill-cautelares";
@@ -19,6 +19,21 @@ export const promocaoRouter = router({
     .mutation(async ({ ctx, input }) => {
       const workspaceId = ctx.user.workspaceId ?? 1;
       return backfillPromocaoPessoas({ limite: input?.limite, workspaceId });
+    }),
+
+  /**
+   * Dispara o backfill de promoção de depoentes/testemunhas (idempotente).
+   * Diferente de `backfillPessoas` (que só varre processos com case_personas ou
+   * analysisData.pessoas), este seleciona processos que têm linhas em
+   * `testemunhas` — cobrindo o caso de um processo cujos únicos candidatos a
+   * pessoa são depoentes. A promoção em si reusa `promoverProcesso` (que já
+   * inclui as três fontes), então a idempotência é a mesma.
+   */
+  backfillDepoentes: protectedProcedure
+    .input(z.object({ limite: z.number().int().min(1).max(500).optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      return backfillPromocaoDepoentes({ limite: input?.limite, workspaceId });
     }),
 
   /**

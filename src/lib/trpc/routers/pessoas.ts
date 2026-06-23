@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos, pessoaRecortes, assistidos, testemunhas } from "@/lib/db/schema";
+import { pessoas, participacoesProcesso, pessoasDistinctsConfirmed, processos, pessoaRecortes, pessoaRelacoes, assistidos, testemunhas, lugares, participacoesLugar } from "@/lib/db/schema";
 import { eq, and, isNull, desc, asc, sql, inArray } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { normalizarNome } from "@/lib/pessoas/normalize";
 import { PAPEIS_VALIDOS } from "@/lib/pessoas/intel-config";
+import { agruparEnvolvimento } from "@/lib/pessoas/agrupar-envolvimento";
 
 const papelEnum = z.enum(PAPEIS_VALIDOS as unknown as [string, ...string[]]);
 
@@ -145,6 +146,106 @@ export const pessoasRouter = router({
         .where(eq(participacoesProcesso.pessoaId, input.id))
         .orderBy(desc(participacoesProcesso.createdAt));
       return { pessoa, participacoes: parts };
+    }),
+
+  // Envolvimento cruzado (Ficha 360°): todas as participações da pessoa, agrupadas
+  // por processo (papel/lado/subpapel + metadados do processo), mais os endereços
+  // geocodificados ligados à pessoa para o mapa. Uma chamada alimenta a Ficha.
+  getEnvolvimento: protectedProcedure
+    .input(z.object({ pessoaId: z.number() }))
+    .query(async ({ input }) => {
+      // 1) Participações × processos.
+      const rows = await db
+        .select({
+          participacaoId: participacoesProcesso.id,
+          processoId: participacoesProcesso.processoId,
+          papel: participacoesProcesso.papel,
+          lado: participacoesProcesso.lado,
+          subpapel: participacoesProcesso.subpapel,
+          resumoNestaCausa: participacoesProcesso.resumoNestaCausa,
+          numeroAutos: processos.numeroAutos,
+          area: processos.area,
+          fase: processos.fase,
+          atribuicao: processos.atribuicao,
+          classeProcessual: processos.classeProcessual,
+          assistidoId: processos.assistidoId,
+        })
+        .from(participacoesProcesso)
+        .innerJoin(
+          processos,
+          and(eq(processos.id, participacoesProcesso.processoId), isNull(processos.deletedAt)),
+        )
+        .where(eq(participacoesProcesso.pessoaId, input.pessoaId))
+        .orderBy(asc(participacoesProcesso.processoId), asc(participacoesProcesso.papel));
+
+      // Agrupa por processo: 1 card por processo, com N papéis/lados (helper puro).
+      const envolvimento = agruparEnvolvimento(rows);
+
+      // 2) Endereços geocodificados ligados à pessoa (para o mapa da Ficha).
+      const lugaresRows = await db
+        .select({
+          lugarId: lugares.id,
+          latitude: lugares.latitude,
+          longitude: lugares.longitude,
+          enderecoCompleto: lugares.enderecoCompleto,
+          bairro: lugares.bairro,
+          tipo: participacoesLugar.tipo,
+          processoId: participacoesLugar.processoId,
+        })
+        .from(participacoesLugar)
+        .innerJoin(lugares, eq(lugares.id, participacoesLugar.lugarId))
+        .where(
+          and(
+            eq(participacoesLugar.pessoaId, input.pessoaId),
+            isNull(lugares.mergedInto),
+          ),
+        );
+
+      // Um ponto por lugar (dedup), só os geocodificados (lat/lng presentes).
+      const porLugar = new Map<
+        number,
+        {
+          lugarId: number;
+          latitude: number;
+          longitude: number;
+          endereco: string | null;
+          bairro: string | null;
+          tipos: string[];
+          processoIds: number[];
+          count: number;
+        }
+      >();
+      for (const r of lugaresRows) {
+        const lat = r.latitude != null ? parseFloat(String(r.latitude)) : NaN;
+        const lng = r.longitude != null ? parseFloat(String(r.longitude)) : NaN;
+        if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+        let g = porLugar.get(r.lugarId);
+        if (!g) {
+          g = {
+            lugarId: r.lugarId,
+            latitude: lat,
+            longitude: lng,
+            endereco: r.enderecoCompleto,
+            bairro: r.bairro,
+            tipos: [],
+            processoIds: [],
+            count: 0,
+          };
+          porLugar.set(r.lugarId, g);
+        }
+        if (r.tipo && !g.tipos.includes(r.tipo)) g.tipos.push(r.tipo);
+        if (r.processoId && !g.processoIds.includes(r.processoId)) g.processoIds.push(r.processoId);
+      }
+      const enderecos = [...porLugar.values()].map((g) => ({
+        ...g,
+        count: g.processoIds.length,
+      }));
+
+      return {
+        envolvimento,
+        totalProcessos: envolvimento.length,
+        enderecos,
+      };
     }),
 
   // === BUSCA ===
@@ -602,6 +703,63 @@ export const pessoasRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await db.delete(pessoaRecortes).where(eq(pessoaRecortes.id, input.id));
+      return { ok: true };
+    }),
+
+  // ── Familiares / contatos do assistido (réu) — pessoa_relacoes ─────
+  getFamiliares: protectedProcedure
+    .input(z.object({ pessoaId: z.number() }))
+    .query(async ({ input }) => {
+      return db
+        .select()
+        .from(pessoaRelacoes)
+        .where(eq(pessoaRelacoes.pessoaId, input.pessoaId))
+        .orderBy(asc(pessoaRelacoes.grau), asc(pessoaRelacoes.nomeLivre));
+    }),
+
+  addFamiliar: protectedProcedure
+    .input(
+      z.object({
+        pessoaId: z.number(),
+        relacionadaPessoaId: z.number().nullish(),
+        grau: z.enum(["mae", "pai", "conjuge", "filho", "irmao", "contato", "outro"]),
+        nomeLivre: z.string().min(1).nullish(),
+        telefone: z.string().max(20).nullish(),
+        endereco: z.string().nullish(),
+        confirmado: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      if (!input.relacionadaPessoaId && !input.nomeLivre) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Informe nomeLivre ou relacionadaPessoaId" });
+      }
+      try {
+        const [row] = await db
+          .insert(pessoaRelacoes)
+          .values({
+            pessoaId: input.pessoaId,
+            relacionadaPessoaId: input.relacionadaPessoaId ?? null,
+            grau: input.grau,
+            nomeLivre: input.nomeLivre ?? null,
+            telefone: input.telefone ?? null,
+            endereco: input.endereco ?? null,
+            fonte: "manual",
+            confirmado: input.confirmado,
+          } as any)
+          .returning();
+        return row;
+      } catch (e: any) {
+        if (e?.code === "23505") {
+          throw new TRPCError({ code: "CONFLICT", message: "Essa relação já existe" });
+        }
+        throw e;
+      }
+    }),
+
+  removeFamiliar: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.delete(pessoaRelacoes).where(eq(pessoaRelacoes.id, input.id));
       return { ok: true };
     }),
 });

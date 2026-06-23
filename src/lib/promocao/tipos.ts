@@ -7,6 +7,12 @@ export interface CandidatoPessoa {
   subpapel?: string | null;
   fonteRef: string;
   confianca: number;
+  /**
+   * Quando o candidato vem da tabela `testemunhas` (adaptador-depoentes), liga a
+   * participação criada à linha de origem. Opcional/aditivo: as demais fontes não
+   * o preenchem.
+   */
+  testemunhaId?: number | null;
 }
 
 export interface PessoaExistente {

@@ -7,6 +7,34 @@ import { normalizarNome } from "@/lib/pessoas/normalize";
 import type { CandidatoPessoa } from "./tipos";
 
 /**
+ * Trunca defensivamente um valor ao limite da coluna varchar. Campos derivados de
+ * texto livre da IA (ex.: `vinculoComDefendido` → `subpapel`) podem exceder o limite
+ * e abortar a transação (22001). Truncar é preferível a perder a promoção do processo.
+ */
+function trunc(v: string | null | undefined, max: number): string | null {
+  if (v == null) return null;
+  return v.length > max ? v.slice(0, max) : v;
+}
+
+/**
+ * Sanitiza data de nascimento vinda de texto livre da IA. Aceita ISO (YYYY-MM-DD)
+ * ou BR (DD/MM/YYYY), tolera lixo após a data (ex.: "17/05/2011 (confirmado)").
+ * Retorna `YYYY-MM-DD` válido ou null — evita abortar a promoção do processo (22007).
+ */
+function sanitizeDate(v: string | null | undefined): string | null {
+  if (v == null) return null;
+  const s = v.trim();
+  let y: number, m: number, d: number;
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
+  else if (br) { d = +br[1]; m = +br[2]; y = +br[3]; }
+  else return null;
+  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return null;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/**
  * Porta (interface) que o applier consome. O applier não sabe nada sobre Drizzle:
  * recebe um `PromocaoRepo` injetado. Em produção, `criarRepoDrizzle(tx)` envolve
  * a transação real; nos testes, um repositório fake coleta as chamadas.
@@ -41,9 +69,10 @@ export function criarRepoDrizzle(tx: typeof db): PromocaoRepo {
         .values({
           nome: c.nome,
           nomeNormalizado: normalizarNome(c.nome),
-          cpf: c.cpf ?? null,
-          dataNascimento: c.dataNascimento ?? null,
-          fonteCriacao,
+          // cpf > 14 chars = lixo da extração (texto livre); descarta em vez de truncar.
+          cpf: c.cpf && c.cpf.length <= 14 ? c.cpf : null,
+          dataNascimento: sanitizeDate(c.dataNascimento),
+          fonteCriacao: trunc(fonteCriacao, 40) ?? fonteCriacao,
           confidence: String(c.confianca),
           workspaceId,
         })
@@ -55,9 +84,10 @@ export function criarRepoDrizzle(tx: typeof db): PromocaoRepo {
       await tx.insert(participacoesProcesso).values({
         pessoaId,
         processoId,
-        papel: c.papel,
-        lado: c.lado ?? null,
-        subpapel: c.subpapel ?? null,
+        papel: trunc(c.papel, 30) ?? c.papel,
+        lado: trunc(c.lado, 20),
+        subpapel: trunc(c.subpapel, 40),
+        testemunhaId: c.testemunhaId ?? null,
         fonte: "promocao",
         origem: "promocao",
         fonteRef: c.fonteRef,
@@ -69,8 +99,8 @@ export function criarRepoDrizzle(tx: typeof db): PromocaoRepo {
       await tx
         .update(participacoesProcesso)
         .set({
-          lado: c.lado ?? null,
-          subpapel: c.subpapel ?? null,
+          lado: trunc(c.lado, 20),
+          subpapel: trunc(c.subpapel, 40),
           fonteRef: c.fonteRef,
           confidence: String(c.confianca),
           updatedAt: new Date(),

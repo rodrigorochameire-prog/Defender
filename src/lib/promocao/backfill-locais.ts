@@ -1,8 +1,10 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db, withTransaction } from "@/lib/db";
 import { processos } from "@/lib/db/schema/core";
+import { testemunhas } from "@/lib/db/schema/agenda";
 import { lugares, participacoesLugar } from "@/lib/db/schema/lugares";
 import { candidatosDeLocais } from "./adaptador-analysis-locais";
+import { candidatosDeDepoentesLocais } from "./adaptador-depoentes-locais";
 import { planejarLocais } from "./planejar-locais";
 import { criarRepoLugarDrizzle } from "./repo-lugar";
 import { aplicarAcoesLugar } from "./applier-lugar";
@@ -62,10 +64,25 @@ export async function promoverLocaisProcesso(
   // `lugares.workspace_id` é NOT NULL → usa o workspace do processo ou fallback 1.
   const workspaceId = proc.workspaceId ?? 1;
 
-  const candidatos = candidatosDeLocais(
+  const candidatosAnalysis = candidatosDeLocais(
     processoId,
     (proc.analysisData as Record<string, unknown> | null) ?? null,
   );
+
+  // Residências dos depoentes (`testemunhas.endereco`) entram no MESMO pipeline.
+  // O planner deduplica por endereço normalizado + (processo, lugar, tipo), então
+  // concatenar é idempotente em re-run.
+  const rowsTestemunhas = await db
+    .select({
+      id: testemunhas.id,
+      nome: testemunhas.nome,
+      endereco: testemunhas.endereco,
+    })
+    .from(testemunhas)
+    .where(eq(testemunhas.processoId, processoId));
+  const candidatosDepoentes = candidatosDeDepoentesLocais(processoId, rowsTestemunhas);
+
+  const candidatos = [...candidatosAnalysis, ...candidatosDepoentes];
 
   if (candidatos.length === 0) {
     // Sem locais extraíveis: marca como promovido mesmo assim (liveness do lote).

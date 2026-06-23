@@ -8,8 +8,10 @@ import {
   integer,
   jsonb,
   numeric,
+  boolean,
   primaryKey,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users, processos } from "./core";
@@ -138,9 +140,47 @@ export const pessoaRecortes = pgTable(
   }),
 );
 
+// Relações familiares/contatos do assistido (réu) — aresta pessoa↔pessoa quando
+// o familiar já está no grafo (`relacionadaPessoaId`), ou texto livre (`nomeLivre`)
+// como fallback. Alimentada pelo backfill de `assistidos.nomeMae/nomePai/nomeContato`
+// e por entradas manuais. `fonteRef` garante idempotência do backfill.
+export const pessoaRelacoes = pgTable(
+  "pessoa_relacoes",
+  {
+    id: serial("id").primaryKey(),
+    // A pessoa âncora (o assistido/réu) cujos familiares estamos registrando.
+    pessoaId: integer("pessoa_id")
+      .notNull()
+      .references(() => pessoas.id, { onDelete: "cascade" }),
+    // O familiar, quando já existe como pessoa no grafo (nullable: fallback p/ texto).
+    relacionadaPessoaId: integer("relacionada_pessoa_id").references(() => pessoas.id, {
+      onDelete: "set null",
+    }),
+    // mae | pai | conjuge | filho | irmao | contato | outro
+    grau: varchar("grau", { length: 40 }).notNull(),
+    nomeLivre: text("nome_livre"),
+    telefone: varchar("telefone", { length: 20 }),
+    endereco: text("endereco"),
+    // backfill-assistido | triagem | manual
+    fonte: varchar("fonte", { length: 40 }).notNull(),
+    fonteRef: varchar("fonte_ref", { length: 120 }),
+    confirmado: boolean("confirmado").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    pessoaIdx: index("pessoa_relacoes_pessoa_idx").on(t.pessoaId),
+    relacionadaIdx: index("pessoa_relacoes_relacionada_idx").on(t.relacionadaPessoaId),
+    // Idempotência do backfill: evita duplicar a mesma relação textual.
+    uniqueIdx: uniqueIndex("pessoa_relacoes_unique_idx").on(t.pessoaId, t.grau, t.nomeLivre),
+  }),
+);
+
 export type Pessoa = typeof pessoas.$inferSelect;
 export type NovaPessoa = typeof pessoas.$inferInsert;
 export type ParticipacaoProcesso = typeof participacoesProcesso.$inferSelect;
 export type NovaParticipacaoProcesso = typeof participacoesProcesso.$inferInsert;
 export type PessoaRecorte = typeof pessoaRecortes.$inferSelect;
 export type NovoPessoaRecorte = typeof pessoaRecortes.$inferInsert;
+export type PessoaRelacao = typeof pessoaRelacoes.$inferSelect;
+export type NovaPessoaRelacao = typeof pessoaRelacoes.$inferInsert;
