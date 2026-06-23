@@ -9,6 +9,7 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
+import { STATUS_PRISIONAL_CONFIG } from "@/lib/config/tipologia/status-prisional";
 
 // Ícones para cada atribuição (Lucide icons)
 export const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
@@ -23,16 +24,22 @@ export const ATRIBUICAO_ICONS: Record<string, React.ReactNode> = {
   CURADORIA: React.createElement(Users, { className: "w-3.5 h-3.5" }),
 };
 
-// Configurações de status
-export const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> = {
-  CADEIA_PUBLICA: { label: "Cadeia Pública", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 1 },
-  PENITENCIARIA: { label: "Penitenciária", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 2 },
-  COP: { label: "COP", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 3 },
-  HOSPITAL_CUSTODIA: { label: "Hosp. Custódia", color: "text-rose-700 dark:text-rose-300", bgColor: "bg-rose-50/80 dark:bg-rose-950/20", borderColor: "border-rose-200/60 dark:border-rose-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 4 },
-  MONITORADO: { label: "Monitorado", color: "text-amber-700 dark:text-amber-300", bgColor: "bg-amber-50/80 dark:bg-amber-950/20", borderColor: "border-amber-200/60 dark:border-amber-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 5 },
-  DOMICILIAR: { label: "Domiciliar", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-50/80 dark:bg-orange-950/20", borderColor: "border-orange-200/60 dark:border-orange-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 6 },
-  SOLTO: { label: "Solto", color: "text-emerald-700 dark:text-emerald-300", bgColor: "bg-emerald-50/80 dark:bg-emerald-950/20", borderColor: "border-emerald-200/60 dark:border-emerald-800/30", iconBg: "bg-zinc-800 dark:bg-zinc-700", priority: 7 },
-};
+// Configurações de status prisional — derivadas da tipologia central
+// (fonte única). Usa o rótulo abreviado (pills compactos) e os campos de card.
+export const statusConfig: Record<string, { label: string; color: string; bgColor: string; borderColor: string; iconBg: string; priority: number }> =
+  Object.fromEntries(
+    Object.entries(STATUS_PRISIONAL_CONFIG).map(([k, v]) => [
+      k,
+      {
+        label: v.labelShort,
+        color: v.color,
+        bgColor: v.bgColor,
+        borderColor: v.borderColor,
+        iconBg: v.iconBg,
+        priority: v.priority,
+      },
+    ]),
+  );
 
 // Fases NEUTRAS para reduzir poluição visual
 export const faseConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ElementType }> = {
