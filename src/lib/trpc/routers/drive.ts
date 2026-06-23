@@ -5986,13 +5986,17 @@ export const driveRouter = router({
   filesByAssistido: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
     .query(async ({ input }) => {
+      // LEFT JOIN drive_files p/ trazer o tipo enriquecido (document_type) quando
+      // existir — a UI faz híbrido: tipo real da IA, com fallback heurístico.
       const result = await db.execute(sql`
-        SELECT id, drive_file_id, drive_path, file_name, mime_type, size_bytes,
-          modified_time, processo_id, link_strategy, link_confidence
-        FROM drive_file_index
-        WHERE assistido_id = ${input.assistidoId}
-          AND deleted_at IS NULL
-        ORDER BY drive_path
+        SELECT dfi.id, dfi.drive_file_id, dfi.drive_path, dfi.file_name, dfi.mime_type,
+          dfi.size_bytes, dfi.modified_time, dfi.processo_id, dfi.link_strategy,
+          dfi.link_confidence, df.document_type, df.categoria
+        FROM drive_file_index dfi
+        LEFT JOIN drive_files df ON df.drive_file_id = dfi.drive_file_id
+        WHERE dfi.assistido_id = ${input.assistidoId}
+          AND dfi.deleted_at IS NULL
+        ORDER BY dfi.drive_path
       `);
       return (result as any[]).map((r: any) => ({
         id: Number(r.id),
@@ -6005,6 +6009,8 @@ export const driveRouter = router({
         processoId: r.processo_id ? Number(r.processo_id) : null,
         linkStrategy: String(r.link_strategy),
         linkConfidence: r.link_confidence ? Number(r.link_confidence) : null,
+        documentType: r.document_type ? String(r.document_type) : null,
+        categoria: r.categoria ? String(r.categoria) : null,
       }));
     }),
 
