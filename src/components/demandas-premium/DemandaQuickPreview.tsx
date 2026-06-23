@@ -481,6 +481,7 @@ export function DemandaQuickPreview({
   // hero (que já mostra ambos) sai de vista no scroll. Handler ligado direto no
   // onScroll do container (abaixo), evitando timing de ref no Sheet do Radix.
   const [heroVisible, setHeroVisible] = useState(true);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   const handleJump = useCallback((id: string) => {
     setSecaoOpen(id as SecaoId, true);
@@ -1127,7 +1128,9 @@ export function DemandaQuickPreview({
         <div className="h-1 w-full shrink-0 transition-colors duration-300" style={{ backgroundColor: atribuicaoColor }} aria-hidden />
         <div className="bg-white/95 dark:bg-neutral-950/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5 flex items-center justify-between">
           <SheetHeader className="p-0 min-w-0 flex-1">
-            <SheetTitle className={cn(
+            <SheetTitle
+              aria-hidden={heroVisible}
+              className={cn(
               "text-[13px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100 truncate transition-opacity duration-200",
               heroVisible ? "opacity-0" : "opacity-100",
             )}>
@@ -1180,12 +1183,18 @@ export function DemandaQuickPreview({
         {/* ===== SCROLLABLE CONTENT ===== */}
         <div
           ref={scrollRef}
-          onScroll={(e) => setHeroVisible(e.currentTarget.scrollTop < 120)}
+          onScroll={(e) => {
+            // Mede a altura real do hero (cresce com nome longo, chips, 2ª linha
+            // de processo) em vez de um limiar fixo — o título do nav troca no
+            // ponto certo independente do conteúdo. Fallback 120 se ainda sem ref.
+            const h = heroRef.current?.offsetHeight ?? 120;
+            setHeroVisible(e.currentTarget.scrollTop < h - 24);
+          }}
           className="flex-1 overflow-y-auto"
         >
           {/* ===== HERO CARD — ring neutro + shadow sutil. Identidade da
               atribuição vive no avatar colorido (substitui o border-l). ===== */}
-          <div className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
+          <div ref={heroRef} className="mx-3 mt-3 mb-4 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
             <div className="flex items-start gap-3">
               {/* Avatar colorido — única fonte de identidade visual da atribuição. */}
               <div
