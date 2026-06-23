@@ -27,6 +27,8 @@ export const tipificacoes = pgTable("tipificacoes", {
   modalidade: varchar("modalidade", { length: 20 }).default("consumada"),
   observacoes: text("observacoes"),
   fonte: varchar("fonte", { length: 30 }).notNull().default("manual"),
+  // Promoção automática: 'manual' default blinda tipificações existentes.
+  origem: varchar("origem", { length: 20 }).notNull().default("manual"),
   confidence: numeric("confidence", { precision: 3, scale: 2 }).default("0.9"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
