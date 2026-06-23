@@ -25,6 +25,8 @@ import { enrichmentClient } from "@/lib/services/enrichment-client";
 import type { ConsolidationPessoa } from "@/lib/services/enrichment-client";
 import { promoverProcesso } from "@/lib/promocao/backfill";
 import { promoverDelitosProcesso } from "@/lib/promocao/backfill-delito";
+import { promoverLocaisProcesso } from "@/lib/promocao/backfill-locais";
+import { promoverCautelaresProcesso } from "@/lib/promocao/backfill-cautelares";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -789,6 +791,32 @@ export async function consolidateForProcesso(
         promoErr instanceof Error ? promoErr.message : "Unknown error";
       console.error(
         `[Intelligence] Promoção de delitos falhou para processo ${processoId}:`,
+        promoMsg,
+      );
+    }
+
+    // Promover lugares extraídos (analysisData.locais) para o catálogo de lugares.
+    // Idempotente — try/catch próprio: uma falha aqui é isolada das demais.
+    try {
+      await promoverLocaisProcesso(processoId);
+    } catch (promoErr) {
+      const promoMsg =
+        promoErr instanceof Error ? promoErr.message : "Unknown error";
+      console.error(
+        `[Intelligence] Promoção de lugares falhou para processo ${processoId}:`,
+        promoMsg,
+      );
+    }
+
+    // Promover cautelares extraídas (analysisData.pessoas[].medidasCautelares)
+    // para cautelares_decisao. Idempotente — try/catch próprio: isolada das demais.
+    try {
+      await promoverCautelaresProcesso(processoId);
+    } catch (promoErr) {
+      const promoMsg =
+        promoErr instanceof Error ? promoErr.message : "Unknown error";
+      console.error(
+        `[Intelligence] Promoção de cautelares falhou para processo ${processoId}:`,
         promoMsg,
       );
     }

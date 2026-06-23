@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { promocaoLog } from "@/lib/db/schema/promocao";
 import { backfillPromocaoPessoas } from "@/lib/promocao/backfill";
 import { backfillPromocaoDelitos } from "@/lib/promocao/backfill-delito";
+import { backfillPromocaoLocais } from "@/lib/promocao/backfill-locais";
+import { backfillPromocaoCautelares } from "@/lib/promocao/backfill-cautelares";
 
 export const promocaoRouter = router({
   /**
@@ -29,6 +31,31 @@ export const promocaoRouter = router({
     .mutation(async ({ ctx, input }) => {
       const workspaceId = ctx.user.workspaceId ?? 1;
       return backfillPromocaoDelitos({ limite: input?.limite, workspaceId });
+    }),
+
+  /**
+   * Dispara o backfill de promoção de lugares (idempotente). Processa um lote de
+   * processos com `analysisData.locais` ainda não promovidos. Dedup determinístico
+   * por endereço normalizado (escopo de workspace).
+   */
+  backfillLugares: protectedProcedure
+    .input(z.object({ limite: z.number().int().min(1).max(500).optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      return backfillPromocaoLocais({ limite: input?.limite, workspaceId });
+    }),
+
+  /**
+   * Dispara o backfill de promoção de cautelares (idempotente). Processa um lote
+   * de processos com `analysisData.pessoas` ainda não promovidos quanto a
+   * cautelares. Conservador: nunca cria entradas na taxonomia (sem-correspondencia
+   * é só logada).
+   */
+  backfillCautelares: protectedProcedure
+    .input(z.object({ limite: z.number().int().min(1).max(500).optional() }).optional())
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      return backfillPromocaoCautelares({ limite: input?.limite, workspaceId });
     }),
 
   /**
