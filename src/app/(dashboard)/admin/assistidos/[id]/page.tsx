@@ -1,17 +1,207 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { MessageCircle, CalendarPlus } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import {
+  MessageCircle,
+  CalendarPlus,
+  Briefcase,
+  Scale,
+  Clock,
+  CalendarDays,
+  AlertTriangle,
+  FileText,
+  FolderOpen,
+  ExternalLink,
+  ShieldAlert,
+  Sparkles,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
+import { statusConfig } from "../_components/assistido-config";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
+/** Editor inline de nota privada (auto-contido — não depende de componente externo). */
+function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
+  const [texto, setTexto] = useState(initial ?? "");
+  const [sujo, setSujo] = useState(false);
+  const salvar = trpc.assistidos.salvarNotaPrivada.useMutation({
+    onSuccess: () => {
+      setSujo(false);
+      toast.success("Nota salva");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={texto}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          setSujo(true);
+        }}
+        rows={4}
+        placeholder="Anotação privada do defensor (não compartilhada)…"
+        className="w-full rounded border border-border bg-transparent px-2.5 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"
+      />
+      {sujo && (
+        <button
+          type="button"
+          onClick={() => salvar.mutate({ id: assistidoId, notaPrivada: texto || null })}
+          disabled={salvar.isPending}
+          className="rounded border px-3 py-1.5 text-xs cursor-pointer transition-colors hover:border-emerald-400 disabled:opacity-50"
+        >
+          {salvar.isPending ? "Salvando…" : "Salvar nota"}
+        </button>
+      )}
+    </div>
+  );
+}
 import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
 import { whatsappUrl } from "@/components/atendimentos/config";
+import { statusAudienciaInfo } from "@/lib/config/design-tokens";
+
+/** Demandas em aberto = qualquer status que não seja CONCLUIDO/ARQUIVADO. */
+const STATUS_CONCLUIDO = new Set(["CONCLUIDO", "ARQUIVADO"]);
+
+function diasAte(d: Date | string | null | undefined): number | null {
+  if (!d) return null;
+  const alvo = new Date(d).getTime();
+  if (Number.isNaN(alvo)) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hoje.getTime()) / 86_400_000);
+}
+
+function fmtData(d: Date | string | null | undefined): string {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "—";
+  return dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+
+function fmtDataHora(d: Date | string | null | undefined): string {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "—";
+  return dt.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const NIVEL_STYLE: Record<"red" | "amber" | "emerald", { wrap: string; dot: string; chip: string; Icon: typeof AlertTriangle }> = {
+  red: {
+    wrap: "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200/70 dark:border-rose-900/40",
+    dot: "bg-rose-500",
+    chip: "text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40",
+    Icon: ShieldAlert,
+  },
+  amber: {
+    wrap: "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/70 dark:border-amber-900/40",
+    dot: "bg-amber-500",
+    chip: "text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40",
+    Icon: AlertTriangle,
+  },
+  emerald: {
+    wrap: "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-900/40",
+    dot: "bg-emerald-500",
+    chip: "text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40",
+    Icon: Sparkles,
+  },
+};
+
+/* ── Primitivos de seção ─────────────────────────────────────────── */
+
+function CardShell({
+  title,
+  icon: Icon,
+  action,
+  children,
+  className,
+}: {
+  title?: string;
+  icon?: typeof Briefcase;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm",
+        className,
+      )}
+    >
+      {title && (
+        <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2">
+          <h2 className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {Icon && <Icon className="w-3.5 h-3.5" />}
+            {title}
+          </h2>
+          {action}
+        </div>
+      )}
+      <div className={cn(title ? "px-4 pb-4" : "p-4")}>{children}</div>
+    </section>
+  );
+}
+
+function KpiPill({
+  label,
+  value,
+  icon: Icon,
+  tone = "neutral",
+  href,
+  onClick,
+}: {
+  label: string;
+  value: string | number;
+  icon: typeof Briefcase;
+  tone?: "neutral" | "rose" | "amber" | "emerald" | "blue";
+  href?: string;
+  onClick?: () => void;
+}) {
+  const toneCls: Record<string, string> = {
+    neutral: "text-neutral-500 dark:text-neutral-400",
+    rose: "text-rose-600 dark:text-rose-400",
+    amber: "text-amber-600 dark:text-amber-400",
+    emerald: "text-emerald-600 dark:text-emerald-400",
+    blue: "text-blue-600 dark:text-blue-400",
+  };
+  const body = (
+    <div className="flex items-center gap-2.5 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer min-w-0">
+      <Icon className={cn("w-4 h-4 shrink-0", toneCls[tone])} />
+      <div className="min-w-0">
+        <div className="text-sm font-bold leading-none tabular-nums text-neutral-800 dark:text-neutral-100">
+          {value}
+        </div>
+        <div className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mt-0.5 truncate">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+  if (href) return <Link href={href}>{body}</Link>;
+  if (onClick)
+    return (
+      <button type="button" onClick={onClick} className="text-left">
+        {body}
+      </button>
+    );
+  return body;
+}
 
 /**
- * Nível 1 (Assistido) — aba "Geral" default.
- * Auto-redireciona pra caso ativo único quando aplicável.
+ * Nível 1 (Assistido) — aba "Geral": COCKPIT 360°.
+ * Auto-redireciona pra caso ativo único quando aplicável (preservado).
  */
 export default function AssistidoHubPage() {
   const params = useParams();
@@ -19,75 +209,425 @@ export default function AssistidoHubPage() {
   const id = Number(params?.id);
   const [agendar, setAgendar] = useState(false);
 
-  const { data: assistido } = trpc.assistidos.getById.useQuery({ id }, { enabled: !isNaN(id) });
-  const { data: casos = [], isLoading } = trpc.casos.getCasosDoAssistido.useQuery(
-    { assistidoId: id }, { enabled: !isNaN(id) }
+  const { data: assistido, isLoading: loadingAssistido } = trpc.assistidos.getById.useQuery(
+    { id },
+    { enabled: !isNaN(id) },
+  );
+  const { data: casos = [], isLoading: loadingCasos } = trpc.casos.getCasosDoAssistido.useQuery(
+    { assistidoId: id },
+    { enabled: !isNaN(id) },
+  );
+  const { data: alertas = [] } = trpc.assistidos.getAlertasInteligencia.useQuery(
+    { assistidoId: id },
+    { enabled: !isNaN(id) },
   );
 
-  const casosAtivos = casos.filter((c: any) => c.status === "ativo");
+  const casosAtivos = useMemo(() => casos.filter((c) => c.status === "ativo"), [casos]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (loadingCasos) return;
     if (casosAtivos.length === 1) {
       router.replace(`/admin/assistidos/${id}/caso/${casosAtivos[0].id}`);
     }
-  }, [isLoading, casosAtivos, id, router]);
+  }, [loadingCasos, casosAtivos, id, router]);
 
-  if (isLoading) return <p className="p-6 italic text-neutral-400">Carregando…</p>;
+  // ── Derivações de KPI/painéis ────────────────────────────────────
+  const processos = useMemo(() => assistido?.processos ?? [], [assistido?.processos]);
+  const demandas = useMemo(() => assistido?.demandas ?? [], [assistido?.demandas]);
+  const audiencias = useMemo(() => assistido?.audiencias ?? [], [assistido?.audiencias]);
+  const driveFiles = useMemo(() => assistido?.driveFiles ?? [], [assistido?.driveFiles]);
+  const casosAgrupados = useMemo(() => assistido?.casosAgrupados ?? [], [assistido?.casosAgrupados]);
 
-  const zap = whatsappUrl(assistido?.telefone);
+  const demandasAbertas = useMemo(
+    () => demandas.filter((d) => !STATUS_CONCLUIDO.has(String(d.status ?? "").toUpperCase())),
+    [demandas],
+  );
+
+  const prazoMaisProximo = useMemo(() => {
+    const dias = demandasAbertas
+      .map((d) => diasAte(d.prazo))
+      .filter((n): n is number => n !== null && n >= 0);
+    return dias.length ? Math.min(...dias) : null;
+  }, [demandasAbertas]);
+
+  const prazoUrgente = prazoMaisProximo !== null && prazoMaisProximo <= 7;
+
+  const proximaAudiencia = useMemo(() => {
+    const futuras = audiencias
+      .filter((a) => {
+        const dias = diasAte(a.dataAudiencia);
+        return dias !== null && dias >= 0;
+      })
+      .sort((a, b) => new Date(a.dataAudiencia).getTime() - new Date(b.dataAudiencia).getTime());
+    return futuras[0] ?? null;
+  }, [audiencias]);
+
+  const arquivosRecentes = useMemo(
+    () => driveFiles.filter((f) => !f.isFolder).slice(0, 5),
+    [driveFiles],
+  );
+
+  // ── Loading / empty ──────────────────────────────────────────────
+  if (loadingAssistido || loadingCasos) {
+    return (
+      <div className="p-6 space-y-3 max-w-5xl">
+        <div className="h-20 rounded-xl bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-14 rounded-lg bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="h-64 rounded-xl bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
+          <div className="h-64 rounded-xl bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!assistido) {
+    return <p className="p-6 italic text-neutral-400">Assistido não encontrado.</p>;
+  }
+
+  const sp = String(assistido.statusPrisional ?? "").toUpperCase();
+  const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(sp);
+  const monit = /MONITOR|TORNOZEL|DOMICILIAR/.test(sp);
+  const statusLabel = statusConfig[assistido.statusPrisional ?? ""]?.label ?? (preso ? "Preso" : monit ? "Monitorado" : "Solto");
+  const zap = whatsappUrl(assistido.telefone) ?? whatsappUrl(assistido.telefoneContato);
 
   return (
-    <div className="p-6 space-y-4 max-w-2xl">
-      <section>
-        <div className="flex items-center justify-between mb-2 gap-3">
-          <h2 className="text-base font-semibold">Dados pessoais</h2>
-          <div className="flex items-center gap-2">
-            {zap && (
-              <a
-                href={zap}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
-              >
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-              </a>
-            )}
-            <button
-              onClick={() => setAgendar(true)}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+    <div className="p-6 space-y-4 max-w-5xl">
+      {/* ── HEADER: identidade + contato + ações ──────────────────── */}
+      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm px-4 py-3">
+        <AssistidoAvatar
+          nome={assistido.nome}
+          photoUrl={assistido.photoUrl}
+          size="lg"
+          statusPrisional={assistido.statusPrisional}
+          showStatusDot
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-base font-semibold truncate text-neutral-900 dark:text-neutral-100">
+              {assistido.nome}
+            </h1>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
+                preso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                monit && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                !preso && !monit && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+              )}
             >
-              <CalendarPlus className="w-3.5 h-3.5" /> Agendar atendimento
-            </button>
+              <span className={cn("w-1.5 h-1.5 rounded-full", preso ? "bg-rose-500" : monit ? "bg-amber-500" : "bg-emerald-500")} />
+              {statusLabel}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-neutral-500 dark:text-neutral-400 mt-1 flex-wrap">
+            {assistido.cpf && <span className="font-mono tabular-nums">{assistido.cpf}</span>}
+            {assistido.telefone && <span>☎ {assistido.telefone}</span>}
           </div>
         </div>
-        <dl className="grid grid-cols-2 gap-2 text-sm">
-          <div><dt className="text-xs text-neutral-500">Nome</dt><dd>{assistido?.nome ?? "—"}</dd></div>
-          <div><dt className="text-xs text-neutral-500">CPF</dt><dd className="font-mono">{assistido?.cpf ?? "—"}</dd></div>
-          <div><dt className="text-xs text-neutral-500">Telefone</dt><dd>{assistido?.telefone ?? "—"}</dd></div>
-          <div><dt className="text-xs text-neutral-500">Endereço</dt><dd>{(assistido as any)?.endereco ?? "—"}</dd></div>
-        </dl>
-      </section>
-      {casos.length > 0 && (
-        <section>
-          <p className="text-xs text-neutral-500">
-            {casos.length} caso{casos.length !== 1 ? "s" : ""} ·{" "}
-            <a href={`/admin/assistidos/${id}/casos`} className="underline hover:text-emerald-600">ver todos</a>
-          </p>
+        <div className="flex items-center gap-2">
+          {zap && (
+            <a
+              href={zap}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => setAgendar(true)}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+          >
+            <CalendarPlus className="w-3.5 h-3.5" /> Atendimento
+          </button>
+        </div>
+      </div>
+
+      {/* ── KPI STRIP ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <KpiPill
+          label={`Caso${casosAgrupados.length !== 1 ? "s" : ""}`}
+          value={casosAgrupados.length || casos.length}
+          icon={Briefcase}
+          tone="blue"
+          href={`/admin/assistidos/${id}/casos`}
+        />
+        <KpiPill
+          label={`Processo${processos.length !== 1 ? "s" : ""}`}
+          value={processos.length}
+          icon={Scale}
+          tone="neutral"
+          href={`/admin/assistidos/${id}/casos`}
+        />
+        <KpiPill
+          label={prazoUrgente ? "Prazos!" : "Demandas"}
+          value={demandasAbertas.length}
+          icon={Clock}
+          tone={prazoUrgente ? "rose" : "amber"}
+          href={`/admin/demandas?assistidoId=${id}`}
+        />
+        <KpiPill
+          label="Próx. audiência"
+          value={proximaAudiencia ? fmtData(proximaAudiencia.dataAudiencia) : "—"}
+          icon={CalendarDays}
+          tone={proximaAudiencia ? "emerald" : "neutral"}
+          href={`/admin/assistidos/${id}/timeline`}
+        />
+        <KpiPill
+          label={`Arquivo${arquivosRecentes.length !== 1 ? "s" : ""}`}
+          value={driveFiles.filter((f) => !f.isFolder).length}
+          icon={FolderOpen}
+          tone="neutral"
+        />
+      </div>
+
+      {/* ── ⚠ INTELIGÊNCIA ────────────────────────────────────────── */}
+      {alertas.length > 0 && (
+        <section className="rounded-xl border bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 border-neutral-200/80 dark:border-neutral-800 shadow-sm overflow-hidden">
+          <div className="flex items-center gap-1.5 px-4 pt-3 pb-2 text-[12px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            Inteligência
+            <span className="ml-1 text-[10px] font-normal normal-case text-neutral-400">
+              {alertas.length} sinal{alertas.length !== 1 ? "is" : ""}
+            </span>
+          </div>
+          <div className="px-4 pb-4 space-y-1.5">
+            {alertas.map((a, i) => {
+              const s = NIVEL_STYLE[a.nivel] ?? NIVEL_STYLE.amber;
+              const Icon = s.Icon;
+              return (
+                <div
+                  key={`${a.tipo}-${a.processoId ?? "geral"}-${i}`}
+                  className={cn("flex items-start gap-2.5 rounded-lg border px-3 py-2", s.wrap)}
+                >
+                  <Icon className={cn("w-3.5 h-3.5 mt-0.5 shrink-0", s.chip.split(" ")[0])} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12.5px] leading-snug text-neutral-700 dark:text-neutral-200">
+                      {a.motivo}
+                    </p>
+                    {a.processoId && a.processoNumero && (
+                      <Link
+                        href={`/admin/processos/${a.processoId}`}
+                        className={cn(
+                          "inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded font-mono text-[10px] tabular-nums transition-colors cursor-pointer",
+                          s.chip,
+                        )}
+                      >
+                        {a.processoNumero}
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
       )}
-      <section>
-        <h2 className="text-base font-semibold mb-2">Histórico penal</h2>
-        <HistoricoPenalBlock assistidoId={id} />
-      </section>
 
-      <section>
-        <h2 className="text-base font-semibold mb-2">Registros</h2>
-        <RegistrosTimeline
-          assistidoId={id}
-          emptyHint="Nenhum registro deste assistido ainda."
-        />
-      </section>
+      {/* ── GRID 2 COLUNAS ────────────────────────────────────────── */}
+      <div className="grid md:grid-cols-2 gap-3 items-start">
+        {/* COLUNA ESQUERDA */}
+        <div className="space-y-3">
+          <CardShell title="Identidade" icon={FileText}>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">CPF</dt>
+                <dd className="font-mono tabular-nums text-neutral-800 dark:text-neutral-200">{assistido.cpf ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">RG</dt>
+                <dd className="text-neutral-800 dark:text-neutral-200">{assistido.rg ?? "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Nascimento</dt>
+                <dd className="text-neutral-800 dark:text-neutral-200">{assistido.dataNascimento ? fmtData(assistido.dataNascimento) : "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Telefone</dt>
+                <dd className="text-neutral-800 dark:text-neutral-200">{assistido.telefone ?? "—"}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Mãe</dt>
+                <dd className="text-neutral-800 dark:text-neutral-200 truncate">{assistido.nomeMae ?? "—"}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Endereço</dt>
+                <dd className="text-neutral-800 dark:text-neutral-200">{assistido.endereco ?? "—"}</dd>
+              </div>
+              {assistido.nomeContato && (
+                <div className="col-span-2">
+                  <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Contato</dt>
+                  <dd className="text-neutral-800 dark:text-neutral-200">
+                    {assistido.nomeContato}
+                    {assistido.parentescoContato ? ` (${assistido.parentescoContato})` : ""}
+                    {assistido.telefoneContato ? ` · ${assistido.telefoneContato}` : ""}
+                  </dd>
+                </div>
+              )}
+              {preso && assistido.unidadePrisional && (
+                <div className="col-span-2">
+                  <dt className="text-[10px] uppercase tracking-wider text-neutral-400">Unidade prisional</dt>
+                  <dd className="text-neutral-800 dark:text-neutral-200">{assistido.unidadePrisional}</dd>
+                </div>
+              )}
+            </dl>
+
+            {/* Quick actions */}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => setAgendar(true)}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Atendimento
+              </button>
+              <Link
+                href={`/admin/demandas/nova?assistidoId=${id}`}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" /> Demanda
+              </Link>
+            </div>
+          </CardShell>
+
+          <CardShell title="Histórico penal" icon={ShieldAlert}>
+            <HistoricoPenalBlock assistidoId={id} />
+          </CardShell>
+
+          <CardShell title="Nota privada" icon={FileText}>
+            <NotaPrivadaInline assistidoId={id} initial={assistido.notaPrivada ?? undefined} />
+          </CardShell>
+        </div>
+
+        {/* COLUNA DIREITA */}
+        <div className="space-y-3">
+          {/* Próxima audiência */}
+          <CardShell title="Próxima audiência" icon={CalendarDays}>
+            {proximaAudiencia ? (
+              <Link
+                href={`/admin/assistidos/${id}/timeline`}
+                className="block rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2.5 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                    {fmtDataHora(proximaAudiencia.dataAudiencia)}
+                  </span>
+                  {(() => {
+                    const st = statusAudienciaInfo(proximaAudiencia.status);
+                    return <span className={cn("rounded-full px-2 py-0.5 text-[9.5px] font-semibold", st.cls)}>{st.label}</span>;
+                  })()}
+                </div>
+                <div className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  {proximaAudiencia.tipo ?? "Audiência"}
+                  {proximaAudiencia.local ? ` · ${proximaAudiencia.local}` : ""}
+                </div>
+              </Link>
+            ) : (
+              <p className="text-[12px] italic text-neutral-400">Nenhuma audiência futura agendada.</p>
+            )}
+          </CardShell>
+
+          {/* Prazos próximos */}
+          <CardShell
+            title="Prazos"
+            icon={Clock}
+            action={
+              <Link
+                href={`/admin/demandas?assistidoId=${id}`}
+                className="inline-flex items-center gap-0.5 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+              >
+                ver demandas <ChevronRight className="w-3 h-3" />
+              </Link>
+            }
+          >
+            {demandasAbertas.length > 0 ? (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold tabular-nums text-neutral-800 dark:text-neutral-100">
+                    {demandasAbertas.length}
+                  </span>
+                  <span className="text-[11px] text-neutral-500">demanda{demandasAbertas.length !== 1 ? "s" : ""} em aberto</span>
+                </div>
+                {prazoMaisProximo !== null && (
+                  <p
+                    className={cn(
+                      "text-[12px] font-medium",
+                      prazoUrgente ? "text-rose-600 dark:text-rose-400" : "text-neutral-500 dark:text-neutral-400",
+                    )}
+                  >
+                    {prazoMaisProximo === 0
+                      ? "Prazo mais próximo: hoje"
+                      : `Prazo mais próximo em ${prazoMaisProximo}d`}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="text-[12px] italic text-neutral-400">Sem demandas em aberto.</p>
+            )}
+          </CardShell>
+
+          {/* Casos */}
+          <CardShell title="Casos" icon={Briefcase}>
+            {casosAgrupados.length > 0 ? (
+              <div className="space-y-1.5">
+                {casosAgrupados.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/admin/assistidos/${id}/caso/${c.id}`}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2 hover:bg-neutral-100 dark:hover:bg-white/[0.07] transition-colors cursor-pointer"
+                  >
+                    <span className="text-[12.5px] font-medium text-neutral-800 dark:text-neutral-200 truncate">
+                      {c.titulo}
+                    </span>
+                    <span className="shrink-0 text-[10px] tabular-nums text-neutral-400">
+                      {c.processos.length} proc.
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[12px] italic text-neutral-400">Nenhum caso agrupado.</p>
+            )}
+          </CardShell>
+
+          {/* Atividade recente */}
+          <CardShell title="Atividade recente" icon={Clock}>
+            <RegistrosTimeline assistidoId={id} emptyHint="Nenhum registro deste assistido ainda." />
+          </CardShell>
+
+          {/* Drive recente */}
+          {arquivosRecentes.length > 0 && (
+            <CardShell title="Drive recente" icon={FolderOpen}>
+              <div className="space-y-1">
+                {arquivosRecentes.map((f) => (
+                  <a
+                    key={f.id}
+                    href={f.webViewLink ?? "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 hover:bg-neutral-100 dark:hover:bg-white/[0.05] transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span className="text-[12px] text-neutral-700 dark:text-neutral-300 truncate">{f.name}</span>
+                    </span>
+                    <span className="shrink-0 text-[10px] tabular-nums text-neutral-400">
+                      {fmtData(f.lastModifiedTime)}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </CardShell>
+          )}
+        </div>
+      </div>
 
       <AtendimentoFormModal
         open={agendar}

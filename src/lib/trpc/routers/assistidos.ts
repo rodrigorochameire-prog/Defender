@@ -804,6 +804,28 @@ export const assistidosRouter = router({
       };
     }),
 
+  // Nota privada do defensor sobre a PESSOA (só você vê; não entra em ofício).
+  getNotaPrivada: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const [row] = await db
+        .select({ notaPrivada: assistidos.notaPrivada })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.id))
+        .limit(1);
+      return row?.notaPrivada ?? null;
+    }),
+
+  salvarNotaPrivada: protectedProcedure
+    .input(z.object({ id: z.number(), notaPrivada: z.string().nullable() }))
+    .mutation(async ({ input }) => {
+      await db
+        .update(assistidos)
+        .set({ notaPrivada: input.notaPrivada, updatedAt: new Date() })
+        .where(eq(assistidos.id, input.id));
+      return { ok: true };
+    }),
+
   // Atualizar assistido
   update: protectedProcedure
     .input(
@@ -1434,5 +1456,98 @@ export const assistidosRouter = router({
         .returning({ id: assistidos.id });
       if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido não encontrado" });
       return { id: row.id };
+    }),
+
+  /**
+   * Alertas de inteligência AGREGADOS do assistido: roda os flags (já construídos
+   * e testados) sobre todos os processos do assistido + o histórico penal, e
+   * devolve os ativos ordenados por severidade. Coração "inteligente" do cockpit.
+   */
+  getAlertasInteligencia: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const wid = ctx.user.workspaceId ?? 1;
+      const { marcosProcessuais, prisoes } = await import("@/lib/db/schema/cronologia");
+      const { objetos, participacoesObjeto } = await import("@/lib/db/schema/objetos");
+      const { execucoesPenais, execucaoEventos } = await import("@/lib/db/schema/execucao");
+      const flagsCrono = await import("@/lib/cronologia/flags");
+      const { detectAbordagemSemFundadaSuspeita } = await import("@/lib/modus/modus-flags");
+      const { detectAnppCabivelNaoOferecido } = await import("@/lib/anpp/anpp-flags");
+      const { detectPrimariedadeArguivel } = await import("@/lib/assistidos/historico-penal-flags");
+      const { avaliarPrescricaoExecucao } = await import("@/lib/execucao/reader");
+
+      type Alerta = { processoId: number | null; processoNumero: string | null; tipo: string; nivel: "red" | "amber" | "emerald"; motivo: string };
+      const alertas: Alerta[] = [];
+
+      const [ass] = await db
+        .select({ historicoPenal: assistidos.historicoPenal })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+      const fp = detectPrimariedadeArguivel(ass?.historicoPenal ?? null);
+      if (fp) alertas.push({ processoId: null, processoNumero: null, tipo: "primariedade-arguivel", nivel: fp.nivel, motivo: fp.motivo });
+
+      const procs = await db
+        .select({ id: processos.id, numero: processos.numeroAutos, anpp: processos.anpp, modus: processos.modusOperandi })
+        .from(processos)
+        .where(and(eq(processos.assistidoId, input.assistidoId), eq(processos.workspaceId, wid), isNull(processos.deletedAt)));
+      const procIds = procs.map((p) => p.id);
+
+      if (procIds.length > 0) {
+        const [marcosRows, prisoesRows, objIlicitos, execRows, eventosRows] = await Promise.all([
+          db.select().from(marcosProcessuais).where(inArray(marcosProcessuais.processoId, procIds)),
+          db.select().from(prisoes).where(inArray(prisoes.processoId, procIds)),
+          db.select({ processoId: participacoesObjeto.processoId }).from(participacoesObjeto)
+            .innerJoin(objetos, eq(objetos.id, participacoesObjeto.objetoId))
+            .where(and(inArray(participacoesObjeto.processoId, procIds), inArray(objetos.tipo, ["droga", "arma-fogo", "arma-branca"]))),
+          db.select().from(execucoesPenais).where(inArray(execucoesPenais.processoId, procIds)),
+          // Eventos só das execuções dos processos deste assistido (evita varrer a tabela toda).
+          db.select({ execucaoId: execucaoEventos.execucaoId, tipo: execucaoEventos.tipo, dados: execucaoEventos.dados })
+            .from(execucaoEventos)
+            .innerJoin(execucoesPenais, eq(execucoesPenais.id, execucaoEventos.execucaoId))
+            .where(inArray(execucoesPenais.processoId, procIds)),
+        ]);
+
+        const mPorProc = new Map<number, { tipo: string; data: string }[]>();
+        for (const m of marcosRows) { const a = mPorProc.get(m.processoId) ?? []; a.push({ tipo: m.tipo, data: m.data }); mPorProc.set(m.processoId, a); }
+        const pPorProc = new Map<number, { tipo: string; dataInicio: string; dataFim: string | null; situacao: string }[]>();
+        for (const p of prisoesRows) { const a = pPorProc.get(p.processoId) ?? []; a.push({ tipo: p.tipo, dataInicio: p.dataInicio, dataFim: p.dataFim, situacao: p.situacao }); pPorProc.set(p.processoId, a); }
+        const ilicitoProc = new Set(objIlicitos.map((o) => o.processoId));
+
+        for (const p of procs) {
+          const ms = mPorProc.get(p.id) ?? [];
+          const ps = pPorProc.get(p.id) ?? [];
+          const push = (tipo: string, nivel: "red" | "amber" | "emerald", motivo: string) =>
+            alertas.push({ processoId: p.id, processoNumero: p.numero, tipo, nivel, motivo });
+
+          const ex = flagsCrono.detectExcessoPrazoPreventiva(ps, ms);
+          if (ex) push("excesso-prazo-preventiva", ex.nivel, ex.motivo);
+          const fd = flagsCrono.detectTempoFatoDenunciaExcessivo(ms);
+          if (fd) push("tempo-fato-denuncia", fd.nivel, fd.motivo);
+          const fc = flagsCrono.detectFlagranteSemCustodia(ps, ms);
+          if (fc) push("flagrante-sem-custodia", "red", `Flagrante há ${fc.diasDesdeFlagrante}d sem audiência de custódia documentada`);
+          const ab = detectAbordagemSemFundadaSuspeita(p.modus ?? null, ilicitoProc.has(p.id));
+          if (ab) push("abordagem-sem-fundada-suspeita", ab.nivel, ab.motivo);
+          const an = detectAnppCabivelNaoOferecido(p.anpp ?? null);
+          if (an) push("anpp-cabivel-nao-oferecido", an.nivel, an.motivo);
+        }
+
+        const evPorExec = new Map<number, { tipo: string; dados: { dias?: number } | null }[]>();
+        for (const ev of eventosRows) { const a = evPorExec.get(ev.execucaoId) ?? []; a.push({ tipo: ev.tipo, dados: ev.dados }); evPorExec.set(ev.execucaoId, a); }
+        for (const e of execRows) {
+          const pr = avaliarPrescricaoExecucao(
+            { penaAnos: e.penaAnos, penaMeses: e.penaMeses, penaDias: e.penaDias, detracaoDias: e.detracaoDias, reincidente: e.reincidente, menor21NoFato: e.menor21NoFato, maior70NaSentenca: e.maior70NaSentenca, inicioCumprimento: e.inicioCumprimento, transitoJulgadoData: e.transitoJulgadoData, situacao: e.situacao },
+            (evPorExec.get(e.id) ?? []).map((x) => ({ tipo: x.tipo, dados: x.dados })),
+          );
+          if (pr) {
+            const num = procs.find((p) => p.id === e.processoId)?.numero ?? null;
+            alertas.push({ processoId: e.processoId, processoNumero: num, tipo: "prescricao-executoria", nivel: pr.nivel, motivo: pr.motivo });
+          }
+        }
+      }
+
+      const ordem = { red: 0, amber: 1, emerald: 2 } as const;
+      alertas.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
+      return alertas;
     }),
 });
