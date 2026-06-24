@@ -6,6 +6,7 @@ import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
+import { EmptyState } from "@/components/agenda/ds";
 
 interface Props {
   /** Lista de PDFs disponíveis (ranqueada: o primeiro é o destaque). */
@@ -68,9 +69,13 @@ export function AutosPreviewPane({
 
   if (!selected) {
     return (
-      <div className={`flex flex-col items-center justify-center text-center gap-2 ${bodyClassName} ${className}`}>
-        <FileText className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
-        <p className="text-xs text-neutral-400">Nenhum PDF disponível para este caso.</p>
+      <div className={`flex items-center justify-center ${bodyClassName} ${className}`}>
+        <EmptyState
+          icon={FileText}
+          title="Nenhum PDF disponível"
+          description="Não há autos ou documentos em PDF vinculados a este caso ainda."
+          compact
+        />
       </div>
     );
   }
