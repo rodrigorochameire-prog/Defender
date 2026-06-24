@@ -13,6 +13,14 @@ import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
+import { AreaTabs } from "@/components/agenda/sheet/area-tabs";
+import { computeWorkspaceTabs, type AreaMae } from "@/components/agenda/sheet/areas-mae";
+import { ProvaOralConsole } from "@/components/agenda/sheet/prova-oral-console";
+import { resumoProvaOral } from "@/lib/agenda/depoente-status";
+import { EstrategiaConsole } from "@/components/agenda/sheet/estrategia-console";
+import { resumoEstrategia } from "@/lib/agenda/resumo-estrategia";
+import { ExecucaoConsole } from "@/components/agenda/sheet/execucao-console";
+import { resumoExecucao } from "@/lib/agenda/resumo-execucao";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -211,6 +219,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   } = useSheetWidthResize({ storageKey: "ombuds_autos_modal_split_v2" });
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
+  const [activeTab, setActiveTab] = useState<AreaMae>("resumo");
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
   const [deteccaoPendente, setDeteccaoPendente] = useState<AnotacaoAudienciaParsed | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -1150,19 +1159,26 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     ? secoesVisiveis.filter((id) => !GRUPO_CONTEXTO_INSTRUCAO.includes(id))
     : secoesVisiveis;
 
+  // Modos de trabalho (áreas-mãe, spec §D): particiona as seções visíveis em 5
+  // abas (lógica pura/testada em areas-mae.ts). A aba só aparece se tiver
+  // conteúdo; a navegação por dropdown e o corpo operam SOBRE a aba ativa,
+  // preservando o split espinha/Contexto do AIJ dentro de cada modo.
+  const { areaCounts, areasComConteudo, tabAtiva, espinhaDaTab, contextoDaTab } =
+    computeWorkspaceTabs({ secoesVisiveis, espinhaVisiveis, contextoIds, activeTab });
+
   const tocSections: ToCSection[] = [
-    ...espinhaVisiveis.map((id) => ({
+    ...espinhaDaTab.map((id) => ({
       id,
       label: secoesMap[id]!.label,
       ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
     })),
     // Grupo Contexto entra como UMA única pill no ToC (a âncora é o wrapper).
-    ...(contextoIds.length > 0 ? [{ id: "contexto", label: "Contexto", count: contextoIds.length }] : []),
+    ...(contextoDaTab.length > 0 ? [{ id: "contexto", label: "Contexto", count: contextoDaTab.length }] : []),
   ];
 
-  // Assinatura estável das âncoras renderizadas — o observer só precisa re-rodar
-  // quando o conjunto de seções (espinha + grupo Contexto) muda, não a cada render.
-  const ancorasKey = [...espinhaVisiveis, ...(contextoIds.length > 0 ? ["contexto"] : [])].join("|");
+  // Assinatura estável das âncoras — re-roda quando muda a aba ativa ou o
+  // conjunto de seções dela.
+  const ancorasKey = [tabAtiva, ...espinhaDaTab, ...(contextoDaTab.length > 0 ? ["contexto"] : [])].join("|");
 
   useEffect(() => {
     if (!open || !scrollContainerRef.current) return;
@@ -1295,6 +1311,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             </div>
           );
         })()}
+
+        <AreaTabs
+          areas={areasComConteudo}
+          active={tabAtiva}
+          onChange={setActiveTab}
+          counts={areaCounts}
+        />
 
         <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
 
@@ -1471,19 +1494,42 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </div>
             )}
 
-            {!isLoading && espinhaVisiveis.map((id) => (
+            {/* Console do modo Prova oral — síntese de oitiva no topo da aba. */}
+            {!isLoading && tabAtiva === "prova-oral" && depoentesStatus.length > 0 && (
+              <ProvaOralConsole resumo={resumoProvaOral(depoentesStatus)} />
+            )}
+
+            {/* Painel de inteligência do modo Estratégia — prontidão estratégica. */}
+            {!isLoading && tabAtiva === "estrategia" && (
+              <EstrategiaConsole resumo={resumoEstrategia({ imputacao, denuncia: fatos, teses, contradicoes })} />
+            )}
+
+            {/* Console do modo Execução — ciclo do ato + pendências/gravações. */}
+            {!isLoading && tabAtiva === "execucao" && (
+              <ExecucaoConsole resumo={resumoExecucao({ jaConcluida, pendencias, midias: allMediaCandidates })} />
+            )}
+
+            {!isLoading && espinhaDaTab.map((id) => (
               <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
             ))}
 
-            {/* Instrução: grupo Contexto colapsado (uma âncora única no ToC). */}
-            {!isLoading && contextoIds.length > 0 && (
-              <CollapsibleSection id="contexto" label="Contexto" count={contextoIds.length} defaultOpen={false}>
+            {/* Instrução: grupo Contexto colapsado (uma âncora única no ToC),
+                escopado às seções de Contexto que caem na aba ativa. */}
+            {!isLoading && contextoDaTab.length > 0 && (
+              <CollapsibleSection id="contexto" label="Contexto" count={contextoDaTab.length} defaultOpen={false}>
                 <div className="space-y-3">
-                  {contextoIds.map((id) => (
+                  {contextoDaTab.map((id) => (
                     <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
                   ))}
                 </div>
               </CollapsibleSection>
+            )}
+
+            {/* Modo sem seções com dado (raro): convida a trocar de aba. */}
+            {!isLoading && espinhaDaTab.length === 0 && contextoDaTab.length === 0 && (
+              <p className="text-center text-xs text-neutral-400 dark:text-neutral-500 py-10">
+                Nada neste modo para este ato.
+              </p>
             )}
           </div>
         </div>
@@ -1496,6 +1542,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
           onDeteccao={setDeteccaoPendente}
+          redesignarContexto={{
+            tipoLabel: evento.tipoAudiencia || evento.titulo,
+            assistidoNome: evento.assistido,
+            dataAtual: evento.data,
+            horaAtual: evento.horarioInicio,
+            prioridade: evento.prioridade,
+          }}
         />
         <PessoaSheet
           pessoaId={pessoaSheetId}

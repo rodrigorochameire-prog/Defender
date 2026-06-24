@@ -34,6 +34,14 @@ export {
   eventoProcessoInfo,
 } from "./evento-processo";
 
+export {
+  AUDIENCIA_STATUS_CONFIG,
+  PREPARO_STATUS_CONFIG,
+  statusAudienciaTipo,
+  statusPreparoInfo,
+  eventoAgendaTipo,
+} from "./agenda";
+
 // Atribuição (já centralizada) — re-export para um único ponto de entrada.
 export {
   getAtribuicaoColors,

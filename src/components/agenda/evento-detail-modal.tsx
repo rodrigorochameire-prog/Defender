@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusChip } from "@/components/agenda/ds";
 import { toast } from "sonner";
 import {
   X,
@@ -120,49 +121,6 @@ export function EventoDetailModal({
     
     return `${dias[date.getDay()]}, ${date.getDate()} de ${meses[date.getMonth()]}`;
   };
-
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "confirmado":
-        return {
-          icon: CheckCircle2,
-          label: "designada",
-          color: "text-emerald-600 dark:text-emerald-400",
-          bg: "bg-emerald-50 dark:bg-emerald-950/30",
-        };
-      case "cancelado":
-        return {
-          icon: XCircle,
-          label: "cancelada",
-          color: "text-red-600 dark:text-red-400",
-          bg: "bg-red-50 dark:bg-red-950/30",
-        };
-      case "concluido":
-        return {
-          icon: CheckCircle2,
-          label: "realizada",
-          color: "text-blue-600 dark:text-blue-400",
-          bg: "bg-blue-50 dark:bg-blue-950/30",
-        };
-      case "remarcado":
-        return {
-          icon: AlertCircle,
-          label: "redesignada",
-          color: "text-amber-600 dark:text-amber-400",
-          bg: "bg-amber-50 dark:bg-amber-950/30",
-        };
-      default:
-        return {
-          icon: Clock,
-          label: status,
-          color: "text-neutral-600 dark:text-neutral-400",
-          bg: "bg-neutral-50 dark:bg-neutral-950/30",
-        };
-    }
-  };
-
-  const statusConfig = getStatusConfig(evento.status);
-  const StatusIcon = statusConfig.icon;
 
   const handleSaveObservacao = () => {
     // Aqui você salvaria a observação
@@ -479,13 +437,10 @@ export function EventoDetailModal({
                 </p>
               </div>
 
-              {/* Status */}
+              {/* Status — via registry central (rótulo normalizado + cor=exceção). */}
               <div>
-                <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1 flex items-center gap-2">
-                  <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
-                  Status:
-                </p>
-                <p className={`${statusConfig.color} font-medium`}>{statusConfig.label}</p>
+                <p className="font-bold text-neutral-900 dark:text-neutral-50 mb-1">Status:</p>
+                <StatusChip kind="audiencia" status={evento.status} size="sm" dot />
               </div>
 
               {/* Prioridade */}

@@ -1,5 +1,40 @@
 import { describe, it, expect } from "vitest";
-import { categorizeDocument, CATEGORY_ORDER, CATEGORY_LABEL } from "../document-category";
+import { categorizeDocument, CATEGORY_ORDER, CATEGORY_LABEL, agruparPorCategoria } from "../document-category";
+
+describe("agruparPorCategoria", () => {
+  it("agrupa por categoria na ordem canônica, só grupos não-vazios", () => {
+    const grupos = agruparPorCategoria([
+      { name: "Laudo necroscópico.pdf" },
+      { name: "Apelacao.pdf" },
+      { name: "Termo de oitiva.pdf" },
+      { name: "arquivo qualquer.pdf" },
+    ]);
+    // ordem: acao-penal < laudo < termo < outros (conforme CATEGORY_ORDER)
+    expect(grupos.map((g) => g.category)).toEqual(["acao-penal", "laudo", "termo", "outros"]);
+    expect(grupos[0].label).toBe(CATEGORY_LABEL["acao-penal"]);
+  });
+
+  it("preserva a ordem de entrada dentro do grupo", () => {
+    const grupos = agruparPorCategoria([
+      { name: "Laudo A.pdf" },
+      { name: "Laudo B.pdf" },
+    ]);
+    expect(grupos).toHaveLength(1);
+    expect(grupos[0].files.map((f) => f.name)).toEqual(["Laudo A.pdf", "Laudo B.pdf"]);
+  });
+
+  it("usa mimeType para imagem/mídia", () => {
+    const grupos = agruparPorCategoria([
+      { name: "foto.jpg", mimeType: "image/jpeg" },
+      { name: "audio.mp3", mimeType: "audio/mpeg" },
+    ]);
+    expect(grupos.map((g) => g.category).sort()).toEqual(["imagem", "midia"]);
+  });
+
+  it("lista vazia → sem grupos", () => {
+    expect(agruparPorCategoria([])).toEqual([]);
+  });
+});
 
 type F = { driveFileId: string; name: string; mimeType?: string | null };
 
