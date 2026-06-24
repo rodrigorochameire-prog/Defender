@@ -28,6 +28,11 @@ import {
 } from "@/lib/services/plaud-api";
 import { autoVincularAtendimentoADemandas } from "./demanda-eventos";
 
+// Normaliza o tipo do registro para lowercase (com trim), evitando valores
+// mis-cased como "Atendimento" que caem fora do set canônico e renderizam
+// como desconhecido no feed. Usar em todo input que persiste registros.tipo.
+const tipoRegistroSchema = z.string().transform((s) => s.trim().toLowerCase());
+
 export const atendimentosRouter = router({
   /** Lista atendimentos vinculados a um caso específico. */
   listByCaso: protectedProcedure
@@ -216,7 +221,7 @@ export const atendimentosRouter = router({
         processoId: z.number().optional(),
         casoId: z.number().optional(),
         dataRegistro: z.string().transform((s) => new Date(s)),
-        tipo: z.string(),
+        tipo: tipoRegistroSchema,
         local: z.string().optional(),
         assunto: z.string().optional(),
         conteudo: z.string().optional(),
@@ -406,7 +411,7 @@ export const atendimentosRouter = router({
         assistidoId: z.number(),
         processoId: z.number().optional().nullable(),
         casoId: z.number().optional().nullable(),
-        tipo: z.string().default("presencial"),
+        tipo: tipoRegistroSchema.default("presencial"),
         descricao: z.string().optional(),
       })
     )
@@ -707,7 +712,7 @@ export const atendimentosRouter = router({
       processoId: z.number().optional(),
       atendimentoId: z.number().optional(),
       novoAtendimento: z.object({
-        tipo: z.string(),
+        tipo: tipoRegistroSchema,
         descricao: z.string().optional(),
       }).optional(),
       interlocutor: z.object({
