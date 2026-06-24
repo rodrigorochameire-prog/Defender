@@ -112,7 +112,6 @@ import {
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { DashboardPorPerfil } from "@/components/dashboard/dashboard-por-perfil";
 import { PainelServidor } from "@/components/dashboard/painel-servidor";
-import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { AudioRecorderButton } from "@/components/shared/audio-recorder";
 import { VoiceMemosButton } from "@/components/shared/voice-memos-button";
 import { TranscriptViewer } from "@/components/shared/transcript-viewer";
@@ -717,6 +716,10 @@ export default function DashboardJuriPage() {
   }, [atendimentoRapido.assistidoId, processos]);
 
   const assistidosFiltrados = useMemo(() => {
+    // Normaliza removendo acentos para busca tolerante (ex.: "joao" acha "João")
+    const normalize = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
     const assistidosValidos = assistidos.filter((a: any) => {
       const nome = typeof a.nome === "string" ? a.nome.toLowerCase() : "";
       return nome.length > 2 &&
@@ -728,15 +731,42 @@ export default function DashboardJuriPage() {
     const filtradosPorAtribuicao = atribuicaoFilter === "all"
       ? assistidosValidos
       : assistidosValidos.filter((a: any) => areaMatchesFilter(a.atribuicaoPrimaria, atribuicaoFilter));
-    if (!assistidoSearchQuery.trim()) return filtradosPorAtribuicao.slice(0, 10);
-    const query = assistidoSearchQuery.toLowerCase();
-    return filtradosPorAtribuicao
-      .filter((a: any) =>
-        a.nome?.toLowerCase().includes(query) ||
-        a.cpf?.includes(query) ||
-        a.vulgo?.toLowerCase().includes(query)
-      )
-      .slice(0, 10);
+
+    const query = assistidoSearchQuery.trim();
+
+    // Sem busca: sugestões priorizando réus presos (urgência), depois alfabético
+    if (!query) {
+      return [...filtradosPorAtribuicao]
+        .sort((a: any, b: any) => {
+          const presoA = a.situacaoPrisional === "PRESO" ? 0 : 1;
+          const presoB = b.situacaoPrisional === "PRESO" ? 0 : 1;
+          if (presoA !== presoB) return presoA - presoB;
+          return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+        })
+        .slice(0, 12);
+    }
+
+    // Com busca: ranquear por relevância — prefixo de nome > prefixo de vulgo > substring > CPF
+    const q = normalize(query);
+    const qDigits = query.replace(/\D/g, "");
+    const ranked = filtradosPorAtribuicao
+      .map((a: any) => {
+        const nome = normalize(a.nome || "");
+        const vulgo = normalize(a.vulgo || "");
+        const cpf = (a.cpf || "").replace(/\D/g, "");
+        let score = -1;
+        if (nome.startsWith(q)) score = 0;
+        else if (vulgo && vulgo.startsWith(q)) score = 1;
+        else if (nome.includes(q)) score = 2;
+        else if (vulgo && vulgo.includes(q)) score = 3;
+        else if (qDigits && cpf.includes(qDigits)) score = 4;
+        return { a, score };
+      })
+      .filter((r) => r.score >= 0)
+      .sort((x, y) => x.score - y.score || (x.a.nome || "").localeCompare(y.a.nome || "", "pt-BR"))
+      .map((r) => r.a);
+
+    return ranked.slice(0, 12);
   }, [assistidos, assistidoSearchQuery, atribuicaoFilter]);
 
   const totalJuris = jurisFiltrados.length;
@@ -900,8 +930,8 @@ export default function DashboardJuriPage() {
           
           <div className="p-4 space-y-3">
 
-            {/* Row 1 — Assistido + Tipo lado a lado */}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-start">
+            {/* Row 1 — Busca de assistido + Tipo de registro (empilhados, largura total) */}
+            <div className="space-y-3">
             <div className="space-y-1.5">
               {/* Row 1 — Busca de Assistido */}
               <Popover open={assistidoSearchOpen} onOpenChange={setAssistidoSearchOpen}>
@@ -1223,8 +1253,8 @@ export default function DashboardJuriPage() {
               )}
             </div>
 
-            {/* Tipo de Registro — grid 6-col inline */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+            {/* Tipo de Registro — linha cheia: 2-col (mobile) · 3-col (sm/md) · 6-col (lg+) sem truncar rótulos */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
               {tiposRegistro.map((tipo) => {
                 const Icon = tipo.icon;
                 const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -1375,10 +1405,10 @@ export default function DashboardJuriPage() {
             </div>
 
             {/* Footer: Detalhes opcionais + Botão Submit */}
-            <div className="flex items-center justify-between mt-2 pt-2.5 border-t border-neutral-200/60 dark:border-neutral-800/60">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between mt-2 pt-2.5 border-t border-neutral-200/60 dark:border-neutral-800/60">
               <button
                 onClick={() => setShowDetalhes(!showDetalhes)}
-                className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground uppercase tracking-wide transition-colors"
+                className="flex items-center justify-center sm:justify-start gap-1.5 text-[10px] font-medium text-muted-foreground hover:text-foreground uppercase tracking-wide transition-colors"
               >
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showDetalhes ? "rotate-180" : ""}`} />
                 Detalhes opcionais
@@ -1386,7 +1416,7 @@ export default function DashboardJuriPage() {
 
               <Button
                 size="sm"
-                className="h-8 px-4 text-[12px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-8 w-full sm:w-auto px-4 text-[12px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!atendimentoRapido.descricao.trim() || !atendimentoRapido.assistidoId || createAtendimento.isPending}
                 onClick={() => {
                   if (!atendimentoRapido.assistidoId) {
@@ -1457,55 +1487,8 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
-        {/* ===== 1b. PANORAMA — faixa de KPIs (command-center) logo abaixo do
-            Registro Rápido. Números acionáveis, cor por urgência via gradiente;
-            clique abre a lista já filtrada em Demandas. ===== */}
-        <KPIGrid columns={5}>
-          <KPICardPremium
-            title="Vencidos"
-            value={estatisticasPrazos.vencidos}
-            subtitle="prazos"
-            gradient="rose"
-            icon={AlertTriangle}
-            href="/admin/demandas?filtro=vencidos"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Vence hoje"
-            value={estatisticasPrazos.venceHoje}
-            subtitle="prazos"
-            gradient="amber"
-            icon={Clock}
-            href="/admin/demandas?filtro=hoje"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Próx. 7 dias"
-            value={estatisticasPrazos.proximosDias}
-            subtitle="prazos"
-            gradient="blue"
-            icon={CalendarDays}
-            href="/admin/demandas?filtro=prazo"
-            size="sm"
-          />
-          <KPICardPremium
-            title="Réu preso"
-            value={estatisticasPrazos.reuPresoVencido}
-            subtitle="vencidos"
-            gradient="rose"
-            icon={Lock}
-            href="/admin/demandas?filtro=reuPreso"
-            size="sm"
-          />
-          <KPICardPremium
-            title="A registrar"
-            value={atendimentosPendentes.length}
-            subtitle="atendimentos"
-            gradient="violet"
-            icon={PenLine}
-            size="sm"
-          />
-        </KPIGrid>
+        {/* Stats cards (KPIGrid) removidos — métricas disponíveis sob demanda
+            via toggle "KPIs" no header e no alerta crítico de réu preso abaixo. */}
 
         {/* ===== 2. EQUIPE & COWORK ===== */}
         <EquipeCoworkCard
@@ -2070,7 +2053,7 @@ export default function DashboardJuriPage() {
             areaCards.push({
               area: "JURI", label: "Tribunal do Júri", icon: Gavel,
               color: "text-emerald-600 dark:text-emerald-400", borderColor: "border-l-emerald-500",
-              subtitle: `${jurisCount} júris próximos`,
+              subtitle: jurisCount === 0 ? "Nenhum júri próximo" : `${jurisCount} júri${jurisCount > 1 ? "s" : ""} próximo${jurisCount > 1 ? "s" : ""}`,
               links: [
                 { label: "Sessões", href: "/admin/juri", icon: CalendarDays },
                 { label: "Plenário", href: "/admin/juri/cockpit", icon: Zap },
@@ -2113,9 +2096,11 @@ export default function DashboardJuriPage() {
             areaCards.push({
               area: "CRIMINAL", label: "Criminal Geral", icon: Handshake,
               color: "text-rose-600 dark:text-rose-400", borderColor: "border-l-rose-500",
-              subtitle: `${instCount} institutos despenalizadores ativos`,
+              subtitle: instCount === 0 ? "Institutos despenalizadores" : `${instCount} instituto${instCount > 1 ? "s" : ""} despenalizador${instCount > 1 ? "es" : ""} ativo${instCount > 1 ? "s" : ""}`,
               links: [
                 { label: "Demandas", href: "/admin/demandas", icon: ListTodo },
+                { label: "Diligências", href: "/admin/diligencias", icon: Search },
+                { label: "Atendimentos", href: "/admin/atendimentos", icon: MessageSquare },
                 { label: "Calculadoras", href: "/admin/calculadoras", icon: Calculator },
               ],
             });
@@ -2126,10 +2111,12 @@ export default function DashboardJuriPage() {
             areaCards.push({
               area: "INFANCIA", label: "Infância e Juventude", icon: Baby,
               color: "text-violet-600 dark:text-violet-400", borderColor: "border-l-violet-500",
-              subtitle: `${medCount} medidas socioeducativas ativas`,
+              subtitle: medCount === 0 ? "Medidas socioeducativas" : `${medCount} medida${medCount > 1 ? "s" : ""} socioeducativa${medCount > 1 ? "s" : ""} ativa${medCount > 1 ? "s" : ""}`,
               links: [
                 { label: "Medidas", href: "/admin/medidas", icon: ClipboardList },
                 { label: "Demandas", href: "/admin/demandas", icon: ListTodo },
+                { label: "Audiências", href: "/admin/audiencias", icon: CalendarDays },
+                { label: "Atendimentos", href: "/admin/atendimentos", icon: MessageSquare },
               ],
             });
           }
@@ -2143,30 +2130,31 @@ export default function DashboardJuriPage() {
                 <h2 className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Especialidades</h2>
                 <div className="flex-1 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                 {areaCards.map((ac) => {
                   const AreaIcon = ac.icon;
                   return (
-                    <Card key={ac.area} className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-t-2 border-t-[#414144] dark:border-t-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200">
-                      <div className={cn("px-5 py-4 border-l-[4px]", ac.borderColor)}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                    <Card key={ac.area} className="flex flex-col bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 border-t-2 border-t-[#414144] dark:border-t-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-neutral-300/80 dark:hover:border-neutral-700/60 transition-all duration-200">
+                      <div className={cn("px-4 sm:px-5 py-3.5 border-l-[4px]", ac.borderColor)}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
                             <AreaIcon className={cn("w-4 h-4", ac.color)} />
                           </div>
-                          <div>
-                            <h3 className="font-serif text-[17px] font-semibold text-foreground tracking-tight leading-tight">{ac.label}</h3>
-                            <p className="text-[10px] text-muted-foreground tabular-nums">{ac.subtitle}</p>
+                          <div className="min-w-0">
+                            <h3 className="font-serif text-[16px] sm:text-[17px] font-semibold text-foreground tracking-tight leading-tight truncate">{ac.label}</h3>
+                            <p className="text-[10px] text-muted-foreground tabular-nums truncate">{ac.subtitle}</p>
                           </div>
                         </div>
                       </div>
-                                            <div className="p-3 grid grid-cols-2 gap-1.5">
+                      <div className="p-2.5 grid grid-cols-2 gap-1.5 mt-auto">
                         {ac.links.map((link) => {
                           const LinkIcon = link.icon;
                           return (
-                            <Link href={link.href} key={link.href}>
-                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-all duration-150 cursor-pointer">
-                                <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80 truncate">{link.label}</span>
+                            <Link href={link.href} key={link.href} className="group/link">
+                              <div className="flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-lg border border-transparent hover:border-neutral-200/80 dark:hover:border-neutral-700/60 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 active:bg-neutral-100 dark:active:bg-neutral-800/60 transition-all duration-150 cursor-pointer">
+                                <LinkIcon className="w-3.5 h-3.5 shrink-0 text-muted-foreground transition-colors group-hover/link:text-foreground" />
+                                <span className="text-[11px] font-medium text-neutral-700 dark:text-foreground/80 truncate flex-1">{link.label}</span>
+                                <ArrowRight className="w-3 h-3 shrink-0 text-muted-foreground/0 -translate-x-1 transition-all duration-150 group-hover/link:text-muted-foreground group-hover/link:translate-x-0" />
                               </div>
                             </Link>
                           );
