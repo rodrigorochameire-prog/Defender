@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format } from "date-fns";
 import {
   Check,
@@ -8,9 +8,11 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Mic,
+  Play,
+  Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { audioBarHeights } from "./ds/audio-waveform";
 import { MessageActionBar } from "./MessageActionBar";
 import {
   SaveToProcessModal,
@@ -147,7 +149,7 @@ function MediaImage({ url }: { url: string }) {
     <img
       src={url}
       alt="Imagem"
-      className="max-w-full rounded-xl mb-1.5 cursor-pointer hover:opacity-95 transition-opacity"
+      className="max-w-full rounded-xl mb-1.5 cursor-pointer hover:opacity-95 transition-opacity border border-black/5 dark:border-white/5"
       loading="lazy"
     />
   );
@@ -182,38 +184,57 @@ function MediaDocument({
   );
 }
 
+const AUDIO_BARS = audioBarHeights(28);
+
 function MediaAudio({ url }: { url: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) audio.play();
+    else audio.pause();
+  };
+
   return (
     <div className="flex items-center gap-3 py-1.5 px-1 min-w-[240px]">
       <button
+        type="button"
+        aria-label={playing ? "Pausar áudio" : "Reproduzir áudio"}
         className="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
         style={{ backgroundColor: 'var(--wa-unread-badge)' }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const audio = e.currentTarget.parentElement?.querySelector('audio');
-          if (audio) {
-            if (audio.paused) audio.play();
-            else audio.pause();
-          }
-        }}
+        onClick={togglePlay}
       >
-        <Mic className="h-4 w-4 text-white" />
+        {playing ? (
+          <Pause className="h-4 w-4 text-white" />
+        ) : (
+          <Play className="h-4 w-4 text-white translate-x-px" />
+        )}
       </button>
       <div className="flex items-end gap-[2px] h-5 flex-1">
-        {Array.from({ length: 28 }).map((_, i) => (
+        {AUDIO_BARS.map((h, i) => (
           <div
             key={i}
             className="wa-audio-bar"
             style={{
-              height: `${Math.max(3, Math.random() * 16)}px`,
+              height: `${h}px`,
               animationDelay: `${i * 0.05}s`,
-              animationPlayState: 'paused',
+              animationPlayState: playing ? 'running' : 'paused',
             }}
           />
         ))}
       </div>
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio src={url || undefined} className="hidden" />
+      <audio
+        ref={audioRef}
+        src={url || undefined}
+        className="hidden"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
     </div>
   );
 }

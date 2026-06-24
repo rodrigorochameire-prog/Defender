@@ -1022,14 +1022,11 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
             <div>
               {messageGroups.map((group) => (
                 <div key={group.date}>
-                  {/* Date separator */}
-                  <div className="flex justify-center my-3">
+                  {/* Date separator — sticky, sober translucent pill */}
+                  <div className="flex justify-center my-3 sticky top-2 z-10">
                     <span
-                      className="px-3 py-1 rounded-lg text-xs shadow-sm"
-                      style={{
-                        backgroundColor: 'var(--wa-bg-system)',
-                        color: 'var(--wa-text-primary)',
-                      }}
+                      className="px-3 py-1 rounded-full text-[11px] font-medium shadow-sm backdrop-blur-sm bg-white/85 dark:bg-black/40"
+                      style={{ color: 'var(--wa-text-secondary)' }}
                     >
                       {formatDateHeader(group.date)}
                     </span>
