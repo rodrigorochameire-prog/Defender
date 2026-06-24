@@ -10,10 +10,34 @@ import {
   ordenarCarteira,
   validarNumeroRecurso,
   formatarNumeroRecurso,
+  tribunalCount,
+  kpiRowData,
   type CarteiraRow,
 } from "@/components/instancia-superior/logic";
 
 const NOW = new Date("2026-06-24T12:00:00");
+
+describe("tribunalCount / kpiRowData", () => {
+  const stats = {
+    total: 9, pendentes: 4, emPauta: 2, julgados: 3, taxaProvimento: 67,
+    porTribunal: [{ tribunal: "TJBA", total: 6 }, { tribunal: "STJ", total: 2 }],
+  };
+  it("conta por tribunal e devolve 0 para ausentes", () => {
+    expect(tribunalCount(stats.porTribunal, "TJBA")).toBe(6);
+    expect(tribunalCount(stats.porTribunal, "STF")).toBe(0);
+    expect(tribunalCount(undefined, "TJBA")).toBe(0);
+  });
+  it("deriva os 8 KPIs do stats", () => {
+    expect(kpiRowData(stats)).toEqual({
+      total: 9, tjba: 6, stj: 2, stf: 0, pendentes: 4, emPauta: 2, julgados: 3, provimento: 67,
+    });
+  });
+  it("usa defaults seguros quando stats é nulo", () => {
+    expect(kpiRowData(null)).toEqual({
+      total: 0, tjba: 0, stj: 0, stf: 0, pendentes: 0, emPauta: 0, julgados: 0, provimento: null,
+    });
+  });
+});
 
 describe("subtituloDoModo", () => {
   it("descreve o escopo pessoal em 'meus'", () => {

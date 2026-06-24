@@ -6,7 +6,6 @@ import { format } from "date-fns";
 import { trpc } from "@/lib/trpc/client";
 import { ACCENT, STATUS_ORDER, STATUS_CONFIG, RESULTADO_CONFIG, TIPO_SHORT } from "./ds";
 import { Card, EmptyHint } from "./primitives";
-import { KpiStrip } from "./kpi-strip";
 import { taxaProvimento, type EscopoModo } from "./logic";
 
 export function VisaoGeral({
@@ -22,19 +21,14 @@ export function VisaoGeral({
 
   if (statsLoading) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-20 rounded-xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-44 rounded-xl" />)}
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <KpiStrip stats={stats} />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card title="Mapa por assunto" icon={Layers}>
           {mapaLoading ? (

@@ -1,24 +1,46 @@
-// ─── KPI strip ────────────────────────────────────────────────────────────
+// ─── Faixa B — KPIs principais (banda persistente do cabeçalho) ───────────
 import { cn } from "@/lib/utils";
-import { Layers, Clock, CalendarClock, Gavel, CheckCircle2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { kpiRowData } from "./logic";
 
-export function KpiStrip({ stats }: { stats: any }) {
-  const items = [
-    { label: "Recursos", value: stats?.total ?? 0, icon: Layers, tone: "text-foreground" },
-    { label: "Pendentes", value: stats?.pendentes ?? 0, icon: Clock, tone: "text-amber-500" },
-    { label: "Em pauta", value: stats?.emPauta ?? 0, icon: CalendarClock, tone: "text-orange-500" },
-    { label: "Julgados", value: stats?.julgados ?? 0, icon: Gavel, tone: "text-foreground" },
-    { label: "Provimento", value: stats?.taxaProvimento != null ? `${stats.taxaProvimento}%` : "—", icon: CheckCircle2, tone: "text-emerald-500" },
+type Cell = { label: string; value: string | number; tone: string; group: "tribunal" | "status" | "total" };
+
+function cellsFrom(stats: any): Cell[] {
+  const k = kpiRowData(stats);
+  return [
+    { label: "Recursos", value: k.total, tone: "text-foreground", group: "total" },
+    { label: "TJBA", value: k.tjba, tone: "text-foreground/80", group: "tribunal" },
+    { label: "STJ", value: k.stj, tone: "text-foreground/80", group: "tribunal" },
+    { label: "STF", value: k.stf, tone: "text-foreground/80", group: "tribunal" },
+    { label: "Pendentes", value: k.pendentes, tone: k.pendentes > 0 ? "text-amber-500" : "text-foreground/40", group: "status" },
+    { label: "Em pauta", value: k.emPauta, tone: k.emPauta > 0 ? "text-orange-500" : "text-foreground/40", group: "status" },
+    { label: "Julgados", value: k.julgados, tone: "text-foreground", group: "status" },
+    { label: "Provimento", value: k.provimento != null ? `${k.provimento}%` : "—", tone: k.provimento != null ? "text-emerald-500" : "text-foreground/40", group: "status" },
   ];
+}
+
+export function SuperiorKpiRow({ stats, loading }: { stats: any; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[52px] rounded-xl" />)}
+      </div>
+    );
+  }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-      {items.map(it => (
-        <div key={it.label} className="bg-white dark:bg-[#1c1c1f] rounded-xl border border-neutral-200/70 dark:border-white/[0.05] px-3.5 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center gap-1 mb-1">
-            <it.icon className="w-3 h-3 text-muted-foreground/60" />
-            <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground">{it.label}</span>
-          </div>
-          <span className={cn("text-xl font-bold tabular-nums tracking-tight", it.tone)}>{it.value}</span>
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+      {cellsFrom(stats).map((c) => (
+        <div
+          key={c.label}
+          className="bg-white dark:bg-[#1c1c1f] rounded-xl border border-neutral-200/70 dark:border-white/[0.05] px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+        >
+          <span className={cn(
+            "block text-[8.5px] uppercase tracking-widest font-semibold mb-0.5",
+            c.group === "tribunal" ? "text-muted-foreground/70 font-mono tracking-wider" : "text-muted-foreground",
+          )}>
+            {c.label}
+          </span>
+          <span className={cn("text-lg font-bold tabular-nums tracking-tight leading-none", c.tone)}>{c.value}</span>
         </div>
       ))}
     </div>

@@ -7,8 +7,9 @@ import { Landmark, Plus, Layers, BarChart3, Scale, Building2 } from "lucide-reac
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { ACCENT } from "@/components/instancia-superior/ds";
-import type { EscopoModo } from "@/components/instancia-superior/logic";
+import { subtituloDoModo, type EscopoModo } from "@/components/instancia-superior/logic";
 import { DarkEscopoSwitch, DarkTribunalPills } from "@/components/instancia-superior/header-controls";
+import { SuperiorKpiRow } from "@/components/instancia-superior/kpi-strip";
 import { VisaoGeral } from "@/components/instancia-superior/visao-geral";
 import { RecursosTab } from "@/components/instancia-superior/recursos-tab";
 import { ComparativosTab } from "@/components/instancia-superior/comparativos-tab";
@@ -59,6 +60,23 @@ export default function InstanciaSuperiorPage() {
   const hasFilters = !!(filtroTipo || filtroStatus || filtroCamara);
 
   const visibleTabs = TABS.filter(t => t.key !== "comparativos" || podeInstitucional);
+
+  // ── Faixa A — Contexto (Row 1 do charcoal): subtítulo por modo + escopo ──
+  const headerContext = (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[12px] text-white/65 leading-snug truncate">
+          {subtituloDoModo(effectiveModo)}
+        </p>
+      </div>
+      {podeInstitucional && (
+        <span className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] ring-1 ring-white/[0.06] px-2 py-1 text-[10px] font-medium text-white/70">
+          <span className={cn("w-1.5 h-1.5 rounded-full", effectiveModo === "todos" ? "bg-[#9aa7bb]" : "bg-emerald-400/70")} />
+          {effectiveModo === "todos" ? "Visão institucional" : "Meus recursos"}
+        </span>
+      )}
+    </div>
+  );
 
   // ── Toolbar (vive no bottomRow do charcoal header — padrão Demandas) ──
   const headerBottomRow = (
@@ -139,10 +157,15 @@ export default function InstanciaSuperiorPage() {
         }
         bottomRow={headerBottomRow}
         seamless
-      />
+      >
+        {headerContext}
+      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
-      <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
+      <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
+        {/* Faixa B — KPIs principais (persistente em todas as abas) */}
+        <SuperiorKpiRow stats={stats} loading={statsLoading} />
+
         {tab === "geral" && (
           <VisaoGeral escopo={escopo} stats={stats} statsLoading={statsLoading} onOpenRecurso={setSelectedId} />
         )}

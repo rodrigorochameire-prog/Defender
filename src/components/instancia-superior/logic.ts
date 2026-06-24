@@ -52,6 +52,50 @@ export function ordenarCarteira<T extends CarteiraRow>(rows: readonly T[], now: 
     .map((x) => x.row);
 }
 
+// ─── KPIs do cabeçalho (Faixa B) ──────────────────────────────────────────
+
+export type StatsLike = {
+  total?: number | null;
+  pendentes?: number | null;
+  emPauta?: number | null;
+  julgados?: number | null;
+  taxaProvimento?: number | null;
+  porTribunal?: { tribunal: string; total: number }[] | null;
+};
+
+export type KpiRowData = {
+  total: number;
+  tjba: number;
+  stj: number;
+  stf: number;
+  pendentes: number;
+  emPauta: number;
+  julgados: number;
+  provimento: number | null;
+};
+
+/** Total de recursos de um tribunal a partir de stats.porTribunal. */
+export function tribunalCount(
+  porTribunal: { tribunal: string; total: number }[] | null | undefined,
+  key: string,
+): number {
+  return porTribunal?.find((t) => t.tribunal === key)?.total ?? 0;
+}
+
+/** Deriva os 8 valores da faixa de KPIs a partir do objeto stats. */
+export function kpiRowData(stats: StatsLike | null | undefined): KpiRowData {
+  return {
+    total: stats?.total ?? 0,
+    tjba: tribunalCount(stats?.porTribunal, "TJBA"),
+    stj: tribunalCount(stats?.porTribunal, "STJ"),
+    stf: tribunalCount(stats?.porTribunal, "STF"),
+    pendentes: stats?.pendentes ?? 0,
+    emPauta: stats?.emPauta ?? 0,
+    julgados: stats?.julgados ?? 0,
+    provimento: stats?.taxaProvimento ?? null,
+  };
+}
+
 // ─── Número CNJ ───────────────────────────────────────────────────────────
 // Formato: NNNNNNN-DD.AAAA.J.TR.OOOO (20 dígitos).
 
