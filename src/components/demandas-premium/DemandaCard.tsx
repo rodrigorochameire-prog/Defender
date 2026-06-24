@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusChip } from "./StatusChip";
 import {
   Select,
   SelectContent,
@@ -375,18 +376,7 @@ export function DemandaCard({
             </div>
 
             {/* Status Badge */}
-            <button
-              onClick={handleStatusClick}
-              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:scale-105"
-              style={{
-                backgroundColor: hexToRgba(statusConf.color, 0.12),
-                color: statusConf.color,
-                border: `1px solid ${hexToRgba(statusConf.color, 0.3)}`,
-              }}
-            >
-              {statusConf.label}
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
+            <StatusChip status={demanda.status} onClick={handleStatusClick} className="flex-shrink-0" />
           </div>
 
           {/* Info Grid: Atribuição + Prazo */}
