@@ -139,6 +139,7 @@ import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
 import { StatusChip } from "@/components/agenda/ds";
 import { eventoAgendaTipo } from "@/lib/config/tipologia";
+import { cargaDoDia, CARGA_CONFIG } from "@/lib/agenda/carga-dia";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -2056,11 +2057,12 @@ export default function AgendaPage() {
                       const dataObj = new Date(dataKey + "T12:00:00");
                       const isHoje = isToday(dataObj);
                       const isAmanha = isTomorrow(dataObj);
-                      
-                      const dataLabel = isHoje 
-                        ? "Hoje" 
-                        : isAmanha 
-                          ? "Amanhã" 
+                      const carga = cargaDoDia(eventosDodia);
+
+                      const dataLabel = isHoje
+                        ? "Hoje"
+                        : isAmanha
+                          ? "Amanhã"
                           : format(dataObj, "EEEE, dd 'de' MMMM", { locale: ptBR });
 
                       return (
@@ -2095,10 +2097,10 @@ export default function AgendaPage() {
                                 {format(dataObj, "dd")}
                               </span>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <p className={cn(
                                 "text-sm font-semibold capitalize",
-                                isHoje 
+                                isHoje
                                   ? "text-rose-700 dark:text-rose-400"
                                   : isAmanha
                                     ? "text-amber-700 dark:text-amber-400"
@@ -2106,10 +2108,27 @@ export default function AgendaPage() {
                               )}>
                                 {dataLabel}
                               </p>
-                              <p className="text-xs text-neutral-500">
-                                {eventosDodia.length} evento{eventosDodia.length !== 1 && 's'}
+                              <p className="text-xs text-neutral-500 tabular-nums">
+                                {carga.total} evento{carga.total !== 1 && "s"}
+                                {carga.audiencias > 0 && (
+                                  <span className="text-neutral-400">
+                                    {" · "}{carga.audiencias} audiência{carga.audiencias !== 1 && "s"}
+                                  </span>
+                                )}
                               </p>
                             </div>
+                            {/* Carga do dia — cor = exceção: só ALTA sinaliza */}
+                            {carga.nivel === "alta" && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap shrink-0",
+                                  CARGA_CONFIG.alta.badge
+                                )}
+                              >
+                                <span aria-hidden className={cn("w-1.5 h-1.5 rounded-full", CARGA_CONFIG.alta.dot)} />
+                                {CARGA_CONFIG.alta.label}
+                              </span>
+                            )}
                           </div>
 
                           {/* Eventos do Dia */}
