@@ -27,6 +27,7 @@ import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { montarReviewRow } from "@/lib/pje-review-row";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
 import { PjeWizardStepper } from "./pje-wizard-stepper";
+import { PjeCopyHelp } from "./pje-copy-help";
 
 interface PJeImportModalProps {
   isOpen: boolean;
@@ -831,26 +832,8 @@ export function PJeImportModal({
               </div>
             </div>
 
-            {/* Instruções */}
-            <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl">
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-500 dark:bg-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
-                  <AlertCircle className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold text-base text-blue-900 dark:text-blue-100 mb-2">
-                    Como copiar do PJe
-                  </p>
-                  <ol className="list-decimal list-inside space-y-1.5 text-sm text-blue-800 dark:text-blue-200">
-                    <li>Acesse o <strong>PJe</strong> e vá para <strong>Intimações Pendentes</strong></li>
-                    <li>Selecione todo o texto das intimações <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+A</span></li>
-                    <li>Copie o texto <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+C</span></li>
-                    <li>Cole no campo abaixo <span className="px-1.5 py-0.5 bg-blue-200 dark:bg-blue-800 rounded font-mono text-xs">Ctrl+V</span></li>
-                    <li>Clique em <strong>&ldquo;Analisar Intimações&rdquo;</strong></li>
-                  </ol>
-                </div>
-              </div>
-            </div>
+            {/* Instruções — recolhíveis (textarea protagonista, Fase 5.2) */}
+            <PjeCopyHelp />
 
             {/* Área de texto */}
             <div className="space-y-2.5">
