@@ -53,11 +53,5 @@ export const faseConfig: Record<string, { label: string; color: string; bgColor:
   ARQUIVADO: { label: "Arquivado", color: "text-neutral-400 dark:text-neutral-500", bgColor: "bg-neutral-50 dark:bg-neutral-900", icon: CheckCircle2 },
 };
 
-// Áreas NEUTRAS para reduzir poluição visual
-export const areaConfig: Record<string, { label: string; labelFull: string; color: string; bgColor: string }> = {
-  JURI: { label: "Júri", labelFull: "Tribunal do Júri", color: "text-violet-600", bgColor: "bg-violet-50" },
-  EXECUCAO_PENAL: { label: "EP", labelFull: "Execução Penal", color: "text-blue-600", bgColor: "bg-blue-50" },
-  VIOLENCIA_DOMESTICA: { label: "V.D.", labelFull: "Violência Doméstica", color: "text-pink-600", bgColor: "bg-pink-50" },
-  SUBSTITUICAO: { label: "Sub", labelFull: "Substituição", color: "text-orange-600", bgColor: "bg-orange-50" },
-  FAMILIA: { label: "Fam", labelFull: "Família", color: "text-rose-600", bgColor: "bg-rose-50" },
-};
+// (areaConfig removido — estava importado mas nunca usado e divergia do canônico.
+//  Cores de atribuição vêm de getAtribuicaoColors / lib/config/tipologia.)
