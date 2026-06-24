@@ -25,9 +25,17 @@ export {
  * Linha de metadados "Área · Tipo" (ex.: "Violência Doméstica · Inicial").
  * Área e tipo são taxonomia — vão para tipografia secundária, nunca para um
  * badge forte. Omite partes ausentes; sem nenhuma das duas retorna "".
+ *
+ * `areaLabel` permite passar um rótulo de área já resolvido (ex.: derivado da
+ * atribuição do processo vinculado, mais fiel que `a.area`). Quando ausente,
+ * cai no rótulo da área do próprio atendimento via `AREA_CONFIG`.
  */
-export function metadataLine(item: { area: string | null; subtipo: string | null }): string {
-  const areaLabel = item.area ? AREA_CONFIG[item.area]?.label ?? null : null;
+export function metadataLine(item: {
+  area: string | null;
+  subtipo: string | null;
+  areaLabel?: string | null;
+}): string {
+  const areaLabel = item.areaLabel ?? (item.area ? AREA_CONFIG[item.area]?.label ?? null : null);
   const tipoLabel = item.subtipo ? SUBTIPO_CONFIG[item.subtipo]?.label ?? null : null;
   return [areaLabel, tipoLabel].filter(Boolean).join(" · ");
 }

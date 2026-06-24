@@ -89,13 +89,15 @@ export function ReadinessBadge({
 export function MetadataLine({
   area,
   subtipo,
+  areaLabel,
   className,
 }: {
   area: string | null;
   subtipo: string | null;
+  areaLabel?: string | null;
   className?: string;
 }) {
-  const text = metadataLine({ area, subtipo });
+  const text = metadataLine({ area, subtipo, areaLabel });
   if (!text) return null;
   return <span className={cn("text-[11px] text-muted-foreground", className)}>{text}</span>;
 }

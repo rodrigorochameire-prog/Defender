@@ -56,12 +56,15 @@
 - [x] 1.4 **Testes**: `__tests__/unit/tipologia-atendimento.test.ts` (resolução de status + tom/força + paleta), `atendimento-semantica.test.ts` (metadataLine + readiness), `__tests__/components/atendimento-badges.test.tsx` (render + 1 só badge forte). 24/24 ✓.
 - **Pendente p/ Fase 2** (rewiring, fora do DoD da Fase 1): consumir os primitivos nas cards/list rows e aposentar `STATUS_CONFIG`/`SUBTIPO_CONFIG`/chip âmbar inline de `config.ts`/`atendimentos-cards.tsx`/`atendimentos-view.tsx`.
 
-### Fase 2 — Lista / fila operacional
+### Fase 2 — Lista / fila operacional (em andamento)
 - 2.1 `AtendimentoModuleHeader` (título + subtítulo + CTA Novo) + `AtendimentoKPICard` operacionais (A registrar · Hoje · 7 dias · Realizados no mês).
 - 2.2 `AtendimentoSegmentedControl`: modos Visão geral · A registrar · Agenda · Histórico + `AtendimentoFiltersBar` (busca · filtros · alternância Lista/Cards/Agenda · avançados).
 - 2.3 `AtendimentoListRow`/`AtendimentoCard`: anatomia da spec (L1 hora+status … L6 ação+overflow); **1 ação dominante** (Gerar demanda só quando for próximo passo; Registrar domina pendência).
+  - [x] **cards-view** (`atendimentos-cards.tsx`): consome `AtendimentoStatusBadge` (1 forte; chip âmbar inline + `STATUS_CONFIG` aposentados aqui), `MetadataLine` (área·tipo em texto, com `areaLabel` fiel à atribuição do processo) e `ReadinessBadge` (sutil; sparkle do rodapé migrado). Acento de cor da área preservado na barra lateral.
+  - [ ] **list-row** (componente `AtendimentoCard` dentro de `atendimentos-view.tsx`) e **calendário** (`atendimentos-calendar.tsx`): mesmo rewiring.
 - 2.4 Valorizar "A registrar" como fila prioritária; separar histórico de pendência.
 - 2.5 **Testes**: render dos campos essenciais; filtros por status; troca de modo; item "A registrar"; 1 ação principal visível + overflow; clique abre workspace certo.
+  - [x] `areaLabel` override em `metadataLine` (precedência sobre `a.area`). _Pendente_: teste de integração da card (render com trpc mockado) afirmando 1 só badge forte + metadata em texto.
 
 ### Fase 3 — Workspace do atendimento
 - 3.1 `AtendimentoWorkspaceShell` + `AtendimentoSectionPanel`: 5 áreas-mãe (Resumo · Motivo e pedido · Próximos passos · Registros · Contexto jurídico).

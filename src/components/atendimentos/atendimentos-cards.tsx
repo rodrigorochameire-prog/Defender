@@ -10,25 +10,20 @@ import { ptBR } from "date-fns/locale";
 import {
   Check,
   ChevronRight,
-  Clock,
   Copy,
   FileText,
   Link2,
   ListPlus,
   Loader2,
   Scale,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import {
-  STATUS_CONFIG,
-  SUBTIPO_CONFIG,
-  type AtendimentoListItem,
-} from "./config";
+import { type AtendimentoListItem } from "./config";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { isPendente, rotuloDia, type GrupoDia } from "./agenda-helpers";
+import { AtendimentoStatusBadge, ReadinessBadge, MetadataLine } from "./atendimento-badges";
 
 export function AtendimentosCards({
   porDia,
@@ -61,8 +56,6 @@ export function AtendimentosCards({
 
 function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () => void }) {
   const dt = new Date(a.dataRegistro);
-  const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
-  const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
   // Cor/badge da área derivam da atribuição do PROCESSO vinculado (mais fiel que
   // a.area, que costuma vir genérica "CRIMINAL"). Fallback: area do atendimento.
   const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
@@ -103,30 +96,16 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
             {format(dt, "dd/MM")}
           </span>
         </span>
-        {pendente ? (
-          <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-            <Clock className="w-2.5 h-2.5" /> registrar
-          </span>
-        ) : (
-          <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", status.badge)}>
-            {status.label}
-          </span>
-        )}
+        <AtendimentoStatusBadge status={a.status} dataRegistro={a.dataRegistro} />
       </div>
 
       <p className={cn("text-sm font-semibold text-foreground/90 leading-snug line-clamp-2", cancelado && "line-through")}>
         {a.assistido?.nome ?? "Assistido não identificado"}
       </p>
 
-      <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-        {areaColors && (
-          <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", areaColors.bgSolid, areaColors.text)}>
-            {areaColors.shortLabel}
-          </span>
-        )}
-        {subtipo && (
-          <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", subtipo.badge)}>{subtipo.label}</span>
-        )}
+      <div className="flex items-center gap-x-2 gap-y-1 flex-wrap mt-1.5">
+        <MetadataLine area={a.area} subtipo={a.subtipo} areaLabel={areaColors?.label} />
+        <ReadinessBadge dossieAtendimento={a.dossieAtendimento} />
       </div>
 
       <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/70 text-[10px] text-muted-foreground flex-wrap">
@@ -157,15 +136,7 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
             <FileText className="w-3 h-3" /> {a.numeroSolar}
           </span>
         )}
-        {a.dossieAtendimento && (
-          <span
-            className="inline-flex items-center text-violet-500 dark:text-violet-400"
-            title={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
-            aria-label={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
-          >
-            <Sparkles className="w-3 h-3" />
-          </span>
-        )}
+        {/* Prontidão (contexto/dossiê) migrou para o ReadinessBadge na linha de metadados. */}
         {/* Ações rápidas — surgem no hover do card; cada uma isola o clique */}
         <div className="ml-auto flex items-center gap-0.5">
           <CardQuickAcoes a={a} />

@@ -18,6 +18,12 @@ describe("metadataLine — área e tipo como texto, nunca badge forte", () => {
   it("sem área nem tipo retorna string vazia", () => {
     expect(metadataLine({ area: null, subtipo: null })).toBe("");
   });
+
+  it("areaLabel explícito (ex.: atribuição do processo) tem precedência sobre a.area", () => {
+    expect(metadataLine({ area: "CRIMINAL", subtipo: "inicial", areaLabel: "Violência Doméstica" })).toBe(
+      "Violência Doméstica · Inicial",
+    );
+  });
 });
 
 describe("resolveReadiness — badge sutil opcional", () => {
