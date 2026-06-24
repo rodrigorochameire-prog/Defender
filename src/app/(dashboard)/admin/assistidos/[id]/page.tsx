@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { FeedUnificado } from "@/components/registros/feed-unificado";
+import { FeedPorCaso } from "@/components/registros/feed-por-caso";
+import { AnaliseResumoCockpit } from "./_components/analise-resumo-cockpit";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
 function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
@@ -630,12 +631,10 @@ export default function AssistidoHubPage() {
           </CardShell>
         </div>
 
-        {/* COLUNA 3 — o que aconteceu */}
+        {/* COLUNA 3 — leitura assistida (análise) + arquivos */}
         <div className="space-y-3 md:col-span-2 xl:col-span-1">
-          {/* Linha do tempo unificada: registros + demandas + audiências */}
-          <CardShell title="Linha do tempo" icon={Clock}>
-            <FeedUnificado assistidoId={id} emptyHint="Nenhuma atividade deste assistido ainda." />
-          </CardShell>
+          {/* Síntese das análises processuais (geradas via daemon) */}
+          <AnaliseResumoCockpit assistidoId={id} casos={casosAgrupados} />
 
           {/* Drive recente */}
           {arquivosRecentes.length > 0 && (
@@ -663,6 +662,15 @@ export default function AssistidoHubPage() {
           )}
         </div>
       </div>
+
+      {/* ── LINHA DO TEMPO (faixa larga, agrupada por caso) ─────────────── */}
+      <CardShell title="Linha do tempo" icon={Clock}>
+        <FeedPorCaso
+          assistidoId={id}
+          casos={casosAgrupados}
+          emptyHint="Nenhuma atividade deste assistido ainda."
+        />
+      </CardShell>
     </div>
   );
 }

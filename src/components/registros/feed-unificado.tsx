@@ -19,7 +19,7 @@ const ICONES: Record<string, LucideIcon> = {
   Search, Microscope, Send, ArrowRightLeft, StickyNote, MessageSquare, Gavel,
 };
 
-type ItemFeed = {
+export type ItemFeed = {
   id: string;
   origem: "registro" | "demanda-evento" | "audiencia";
   tipo: string;
@@ -106,7 +106,7 @@ function LinkChip({ href, label }: { href: string; label: string }) {
   );
 }
 
-function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: string | null }) {
+export function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: string | null }) {
   const [aberto, setAberto] = useState(false);
   const fam = FAMILIA_CONFIG[item.familia];
   const Icone = ICONES[iconeDoTipo(item.origem, item.tipo)] ?? StickyNote;
@@ -259,7 +259,7 @@ export function FeedUnificado({ assistidoId, emptyHint }: { assistidoId: number;
   );
 }
 
-function FiltroPill({
+export function FiltroPill({
   ativo, onClick, cor, label, count,
 }: { ativo: boolean; onClick: () => void; cor: string; label: string; count: number }) {
   return (
