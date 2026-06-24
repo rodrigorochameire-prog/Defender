@@ -1457,6 +1457,56 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
+        {/* ===== 1b. PANORAMA — faixa de KPIs (command-center) logo abaixo do
+            Registro Rápido. Números acionáveis, cor por urgência via gradiente;
+            clique abre a lista já filtrada em Demandas. ===== */}
+        <KPIGrid columns={5}>
+          <KPICardPremium
+            title="Vencidos"
+            value={estatisticasPrazos.vencidos}
+            subtitle="prazos"
+            gradient="rose"
+            icon={AlertTriangle}
+            href="/admin/demandas?filtro=vencidos"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Vence hoje"
+            value={estatisticasPrazos.venceHoje}
+            subtitle="prazos"
+            gradient="amber"
+            icon={Clock}
+            href="/admin/demandas?filtro=hoje"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Próx. 7 dias"
+            value={estatisticasPrazos.proximosDias}
+            subtitle="prazos"
+            gradient="blue"
+            icon={CalendarDays}
+            href="/admin/demandas?filtro=prazo"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Réu preso"
+            value={estatisticasPrazos.reuPresoVencido}
+            subtitle="vencidos"
+            gradient="rose"
+            icon={Lock}
+            href="/admin/demandas?filtro=reuPreso"
+            size="sm"
+          />
+          <KPICardPremium
+            title="A registrar"
+            value={atendimentosPendentes.length}
+            subtitle="atendimentos"
+            gradient="violet"
+            icon={PenLine}
+            size="sm"
+          />
+        </KPIGrid>
+
         {/* ===== 2. EQUIPE & COWORK ===== */}
         <EquipeCoworkCard
           delegacoesAtivas={delegacoesAtivas.length}
