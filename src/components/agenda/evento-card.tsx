@@ -44,7 +44,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { SOLID_COLOR_MAP, getAtribuicaoColors } from "@/lib/config/atribuicoes";
-import { StatusChip } from "@/components/agenda/ds";
+import { StatusChip } from "@/components/ds";
 import { eventoAgendaTipo } from "@/lib/config/tipologia";
 
 interface EventoCardProps {

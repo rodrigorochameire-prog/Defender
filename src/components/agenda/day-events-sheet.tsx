@@ -25,7 +25,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { StatusChip } from "@/components/agenda/ds";
+import { StatusChip } from "@/components/ds";
 import {
   Sheet,
   SheetContent,
