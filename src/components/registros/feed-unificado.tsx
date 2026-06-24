@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Users, Eye, FileSignature, PenLine, CheckSquare, MapPin, BookOpen,
   Search, Microscope, Send, ArrowRightLeft, StickyNote, MessageSquare,
-  Gavel, Sparkles, GitBranch, CalendarClock, ChevronRight, type LucideIcon,
+  Gavel, Sparkles, GitBranch, CalendarClock, ChevronRight, Scale, type LucideIcon,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import {
@@ -88,6 +88,11 @@ function prazoInfo(prazo: string): { label: string; cor: string } | null {
   return { label: `prazo ${data}`, cor: "text-muted-foreground" };
 }
 
+/** Abrevia o CNJ para a etiqueta da ação penal (ex.: "8003969-75"). */
+function abreviarCNJ(numeroAutos: string): string {
+  return numeroAutos.split(".")[0] || numeroAutos;
+}
+
 function LinkChip({ href, label }: { href: string; label: string }) {
   return (
     <Link
@@ -101,7 +106,7 @@ function LinkChip({ href, label }: { href: string; label: string }) {
   );
 }
 
-function FeedRow({ item }: { item: ItemFeed }) {
+function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: string | null }) {
   const [aberto, setAberto] = useState(false);
   const fam = FAMILIA_CONFIG[item.familia];
   const Icone = ICONES[iconeDoTipo(item.origem, item.tipo)] ?? StickyNote;
@@ -159,7 +164,17 @@ function FeedRow({ item }: { item: ItemFeed }) {
             {item.origem === "audiencia"
               ? <LinkChip href="/admin/audiencias" label="Audiências" />
               : item.links.audienciaId && <LinkChip href="/admin/audiencias" label="Audiência" />}
-            {item.links.processoId && <LinkChip href={`/admin/processos/${item.links.processoId}`} label="Processo" />}
+            {item.links.processoId && (
+              <Link
+                href={`/admin/processos/${item.links.processoId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-0.5 rounded px-1.5 py-px text-[9px] font-medium font-mono tabular-nums text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors"
+                title={procNumero ? `Ação penal ${procNumero}` : "Abrir processo"}
+              >
+                <Scale className="h-2.5 w-2.5" />
+                {procNumero ? abreviarCNJ(procNumero) : "Processo"}
+              </Link>
+            )}
           </span>
         </div>
       </div>
@@ -175,6 +190,15 @@ export function FeedUnificado({ assistidoId, emptyHint }: { assistidoId: number;
   );
 
   const itens = useMemo(() => (data ?? []) as ItemFeed[], [data]);
+
+  // Mapa processoId → nº dos autos, para rotular cada item pela ação penal
+  // (um assistido pode ter mais de um processo). getById é cacheado.
+  const { data: assistido } = trpc.assistidos.getById.useQuery({ id: assistidoId });
+  const procNumeros = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const p of assistido?.processos ?? []) if (p.numeroAutos) m.set(p.id, p.numeroAutos);
+    return m;
+  }, [assistido?.processos]);
 
   // Contagem por família (só famílias presentes viram filtro).
   const contagem = useMemo(() => {
@@ -224,7 +248,11 @@ export function FeedUnificado({ assistidoId, emptyHint }: { assistidoId: number;
 
       <ul className="space-y-1">
         {filtrados.map((item) => (
-          <FeedRow key={item.id} item={item} />
+          <FeedRow
+            key={item.id}
+            item={item}
+            procNumero={item.links.processoId ? procNumeros.get(item.links.processoId) ?? null : null}
+          />
         ))}
       </ul>
     </div>
