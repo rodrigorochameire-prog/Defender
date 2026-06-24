@@ -61,6 +61,7 @@ import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
 import { ActiveFiltersBar } from "./ActiveFiltersBar";
 import { buildActiveFilterChips } from "./active-filters";
+import { DemandasEmptyState } from "./DemandasEmptyState";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -3382,19 +3383,11 @@ export default function Demandas() {
                 /* ========== MODO CARDS HORIZONTAIS ========== */
                 <>
                   {demandasOrdenadas.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-5 flex items-center justify-center">
-                        <ListTodo className="w-10 h-10 text-neutral-400 dark:text-neutral-600" />
-                      </div>
-                      <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-                        Nenhuma demanda encontrada
-                      </p>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {showArchived
-                          ? "Não há demandas arquivadas no momento"
-                          : "Ajuste os filtros ou crie uma nova demanda"}
-                      </p>
-                    </div>
+                    <DemandasEmptyState
+                      hasActiveFilters={activeFilterChips.length > 0}
+                      showArchived={showArchived}
+                      onClearFilters={handleClearAllFilters}
+                    />
                   ) : (
                     visibleDemandas.map((demanda, idx) => {
                       const statusConfig = getStatusConfig(demanda.status);
@@ -3490,19 +3483,11 @@ export default function Demandas() {
                 /* ========== MODO GRID PREMIUM ========== */
                 <>
                   {demandasOrdenadas.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="w-20 h-20 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-5 flex items-center justify-center">
-                        <ListTodo className="w-10 h-10 text-neutral-400 dark:text-neutral-600" />
-                      </div>
-                      <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
-                        Nenhuma demanda encontrada
-                      </p>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {showArchived
-                          ? "Não há demandas arquivadas no momento"
-                          : "Ajuste os filtros ou crie uma nova demanda"}
-                      </p>
-                    </div>
+                    <DemandasEmptyState
+                      hasActiveFilters={activeFilterChips.length > 0}
+                      showArchived={showArchived}
+                      onClearFilters={handleClearAllFilters}
+                    />
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {visibleDemandas.map((demanda) => {
