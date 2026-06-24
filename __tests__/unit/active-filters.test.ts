@@ -54,4 +54,10 @@ describe("active-filters · buildActiveFilterChips", () => {
     });
     expect(chips.map((c) => c.key)).toEqual(["search", "status", "atrib:A", "prazo", "prisional", "ato", "tipoProc"]);
   });
+
+  it("adiciona chips dos pills (cockpit) com key pill:<k> ao final", () => {
+    const chips = buildActiveFilterChips({ pills: [{ key: "atrasados", label: "Atrasados" }, { key: "reu_preso", label: "Réu preso" }] });
+    expect(chips.map((c) => c.key)).toEqual(["pill:atrasados", "pill:reu_preso"]);
+    expect(chips[0].label).toBe("Atrasados");
+  });
 });

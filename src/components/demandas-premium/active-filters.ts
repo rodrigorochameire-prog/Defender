@@ -19,6 +19,8 @@ export interface ActiveFilterState {
   tipoAto?: string | null;
   tipoProcesso?: string | null;
   statusGroup?: string | null;
+  /** Filtros rápidos de prazo/expedição (cockpit) já resolvidos em {key,label}. */
+  pills?: { key: string; label: string }[];
 }
 
 export interface ChipLabelers {
@@ -56,6 +58,7 @@ export function buildActiveFilterChips(s: ActiveFilterState, l: ChipLabelers = {
   }
   if (s.tipoAto) chips.push({ key: "ato", label: s.tipoAto });
   if (s.tipoProcesso) chips.push({ key: "tipoProc", label: s.tipoProcesso });
+  for (const p of s.pills ?? []) chips.push({ key: `pill:${p.key}`, label: p.label });
   return chips;
 }
 
