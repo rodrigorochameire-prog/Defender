@@ -118,6 +118,25 @@ export function funnelSegments(
   });
 }
 
+// ─── Relatorias (lente analítica) ─────────────────────────────────────────
+
+export type RelatoriaRow = { total?: number | null; julgados?: number | null; providos?: number | null };
+export type RelatoriasResumo = { relatores: number; recursos: number; julgados: number; provimentoMedio: number | null };
+
+/** Síntese da lente de relatorias a partir do ranking de desembargadores. */
+export function relatoriasResumo(data: RelatoriaRow[] | null | undefined): RelatoriasResumo {
+  const rows = data ?? [];
+  const recursos = rows.reduce((a, d) => a + (d.total ?? 0), 0);
+  const julgados = rows.reduce((a, d) => a + (d.julgados ?? 0), 0);
+  const providos = rows.reduce((a, d) => a + (d.providos ?? 0), 0);
+  return {
+    relatores: rows.length,
+    recursos,
+    julgados,
+    provimentoMedio: taxaProvimento(providos, julgados),
+  };
+}
+
 // ─── Número CNJ ───────────────────────────────────────────────────────────
 // Formato: NNNNNNN-DD.AAAA.J.TR.OOOO (20 dígitos).
 

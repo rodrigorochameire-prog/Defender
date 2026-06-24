@@ -13,6 +13,7 @@ import {
   tribunalCount,
   kpiRowData,
   funnelSegments,
+  relatoriasResumo,
   type CarteiraRow,
 } from "@/components/instancia-superior/logic";
 
@@ -61,6 +62,22 @@ describe("funnelSegments", () => {
   });
   it("pct = 0 quando total é 0 (sem divisão por zero)", () => {
     expect(funnelSegments([], 0).every((s) => s.pct === 0 && s.count === 0)).toBe(true);
+  });
+});
+
+describe("relatoriasResumo", () => {
+  it("agrega relatores, recursos, julgados e provimento médio", () => {
+    const data = [
+      { total: 6, julgados: 4, providos: 2 },
+      { total: 4, julgados: 2, providos: 2 },
+    ];
+    expect(relatoriasResumo(data)).toEqual({
+      relatores: 2, recursos: 10, julgados: 6, provimentoMedio: 67, // 4/6
+    });
+  });
+  it("vazio → zeros e provimento nulo", () => {
+    expect(relatoriasResumo([])).toEqual({ relatores: 0, recursos: 0, julgados: 0, provimentoMedio: null });
+    expect(relatoriasResumo(null)).toEqual({ relatores: 0, recursos: 0, julgados: 0, provimentoMedio: null });
   });
 });
 
