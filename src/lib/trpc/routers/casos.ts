@@ -726,6 +726,77 @@ export const casosRouter = router({
     }),
 
   // ==========================================
+  // CRIAR CASO A PARTIR DE UM PROCESSO ÓRFÃO
+  // Cria o caso JÁ vinculado ao assistido (assistidoId — que `create` não seta)
+  // e move o processo para dentro dele. Saneamento estrutural em 1 clique.
+  // ==========================================
+  criarDeProcesso: protectedProcedure
+    .input(
+      z.object({
+        processoId: z.number(),
+        assistidoId: z.number(),
+        titulo: z.string().min(1).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const ATRIBS = [
+        "JURI_CAMACARI",
+        "VVD_CAMACARI",
+        "EXECUCAO_PENAL",
+        "SUBSTITUICAO",
+        "SUBSTITUICAO_CIVEL",
+        "GRUPO_JURI",
+      ] as const;
+
+      const [proc] = await db
+        .select({
+          id: processos.id,
+          atribuicao: processos.atribuicao,
+          assunto: processos.assunto,
+          numeroAutos: processos.numeroAutos,
+          casoId: processos.casoId,
+        })
+        .from(processos)
+        .where(eq(processos.id, input.processoId))
+        .limit(1);
+
+      if (!proc) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Processo não encontrado" });
+      }
+      if (proc.casoId) {
+        throw new TRPCError({ code: "CONFLICT", message: "Processo já vinculado a um caso" });
+      }
+
+      const atribuicao = (ATRIBS as readonly string[]).includes(proc.atribuicao ?? "")
+        ? proc.atribuicao!
+        : "SUBSTITUICAO";
+
+      const titulo =
+        input.titulo?.trim() ||
+        proc.assunto?.trim() ||
+        `Caso · ${(proc.numeroAutos ?? "").split(".")[0] || "novo"}`;
+
+      const [novoCaso] = await db
+        .insert(casos)
+        .values({
+          titulo,
+          atribuicao: atribuicao as any,
+          status: "ativo",
+          prioridade: "NORMAL" as any,
+          assistidoId: input.assistidoId,
+          defensorId: ctx.user?.id,
+        })
+        .returning();
+
+      await db
+        .update(processos)
+        .set({ casoId: novoCaso.id })
+        .where(eq(processos.id, input.processoId));
+
+      return novoCaso;
+    }),
+
+  // ==========================================
   // PERSONAS DO CASO
   // ==========================================
   listPersonas: protectedProcedure
