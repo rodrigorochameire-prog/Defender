@@ -41,6 +41,7 @@ import {
   FileText,
   Handshake,
   History,
+  Layers,
   LayoutGrid,
   Link2,
   List,
@@ -50,6 +51,7 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
+  X,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,13 +70,12 @@ import { AtendimentosCards } from "./atendimentos-cards";
 import { AtendimentosCalendar } from "./atendimentos-calendar";
 import { AtendimentosInsights } from "./atendimentos-insights";
 
-// Visões da pauta de atendimentos — Lista (denso), Cards (grade), Agenda (mês)
-// e Insights (métricas). O alternador fica acima do conteúdo.
+// Visões da pauta de atendimentos — Lista (denso), Cards (grade) e Agenda (mês).
+// O alternador fica no header. Insights é um toggle separado (painel sobreposto).
 const VISTAS = [
   { key: "lista", label: "Lista", icon: List },
   { key: "cards", label: "Cards", icon: LayoutGrid },
   { key: "calendario", label: "Agenda", icon: CalendarDays },
-  { key: "insights", label: "Insights", icon: BarChart3 },
 ] as const;
 type Vista = (typeof VISTAS)[number]["key"];
 import {
@@ -87,10 +88,10 @@ import {
 } from "./agenda-helpers";
 
 const STATUS_FILTROS = [
-  { value: "todos", label: "Todos" },
-  { value: "agendado", label: "Agendados" },
-  { value: "realizado", label: "Realizados" },
-  { value: "cancelado", label: "Cancelados" },
+  { value: "todos", label: "Todos", icon: Layers },
+  { value: "agendado", label: "Agendados", icon: Clock },
+  { value: "realizado", label: "Realizados", icon: Check },
+  { value: "cancelado", label: "Cancelados", icon: X },
 ];
 
 export default function AtendimentosView() {
@@ -113,6 +114,9 @@ export default function AtendimentosView() {
   // Deep-link vindo do dashboard: ?abrir=<id> abre o atendimento assim que carregar.
   const [abrirId, setAbrirId] = useState<number | null>(null);
   const [vista, setVista] = useState<Vista>("lista");
+  // Insights deixou de ser uma vista: agora é um painel sobreposto, ativado por
+  // um toggle no header, que aparece acima de qualquer vista ativa.
+  const [mostrarInsights, setMostrarInsights] = useState(false);
   const [novoInicialDate, setNovoInicialDate] = useState<string | null>(null);
 
   // Deep-links: ?novo=1 (criar), ?pendentes=1 (filtro a registrar), ?abrir=<id> (sheet)
@@ -266,20 +270,54 @@ export default function AtendimentosView() {
                 className="w-full h-8 rounded-lg bg-white/10 border border-white/10 pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
               />
             </div>
+            {/* Filtro de status — pills icon-only (label no tooltip/aria) */}
             <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
-              {STATUS_FILTROS.map((s) => (
-                <button
-                  key={s.value}
-                  onClick={() => setStatusFiltro(s.value)}
-                  className={`h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
-                    statusFiltro === s.value
-                      ? "bg-white text-neutral-900"
-                      : "text-white/65 hover:text-white"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+              {STATUS_FILTROS.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <button
+                    key={s.value}
+                    onClick={() => setStatusFiltro(s.value)}
+                    title={s.label}
+                    aria-label={s.label}
+                    aria-pressed={statusFiltro === s.value}
+                    className={cn(
+                      "h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer",
+                      statusFiltro === s.value
+                        ? "bg-white text-neutral-900"
+                        : "text-white/65 hover:text-white"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Alternador de vista — Lista / Cards / Agenda (relocado para o header) */}
+            <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
+              {VISTAS.map((v) => {
+                const Icon = v.icon;
+                const ativa = vista === v.key;
+                return (
+                  <button
+                    key={v.key}
+                    onClick={() => setVista(v.key)}
+                    title={v.label}
+                    aria-label={v.label}
+                    aria-pressed={ativa}
+                    className={cn(
+                      "h-7 px-2 rounded-md inline-flex items-center gap-1 text-[11px] font-medium transition-colors cursor-pointer",
+                      ativa
+                        ? "bg-white text-neutral-900"
+                        : "text-white/65 hover:text-white"
+                    )}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{v.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Filtros secundários agrupados num popover — tira ruído do header */}
@@ -345,6 +383,23 @@ export default function AtendimentosView() {
               </PopoverContent>
             </Popover>
 
+            {/* Toggle Insights — painel sobreposto, independente da vista ativa */}
+            <button
+              onClick={() => setMostrarInsights((v) => !v)}
+              title="Insights"
+              aria-label="Insights"
+              aria-pressed={mostrarInsights}
+              className={cn(
+                "h-8 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer shrink-0",
+                mostrarInsights
+                  ? "bg-emerald-500 border-emerald-400 text-white"
+                  : "bg-white/10 border-white/10 text-white/70 hover:text-white"
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Insights</span>
+            </button>
+
             <button
               onClick={() => {
                 setEditando(null);
@@ -405,33 +460,11 @@ export default function AtendimentosView() {
           </div>
         )}
 
-        {/* Alternador de visão */}
-        <div className="flex items-center gap-1 rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-0.5 w-fit shadow-sm">
-          {VISTAS.map((v) => {
-            const Icon = v.icon;
-            const ativa = vista === v.key;
-            return (
-              <button
-                key={v.key}
-                onClick={() => setVista(v.key)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer",
-                  ativa
-                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                    : "text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{v.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Painel de Insights — sobreposto, visível em qualquer vista quando ativo */}
+        {mostrarInsights && <AtendimentosInsights />}
 
         {/* Conteúdo conforme a visão */}
-        {vista === "insights" ? (
-          <AtendimentosInsights />
-        ) : vista === "calendario" ? (
+        {vista === "calendario" ? (
           <AtendimentosCalendar
             itens={visiveis}
             onOpen={setDetalhe}
@@ -614,12 +647,19 @@ function AtendimentoCard({
               </span>
             )}
             {a.dossieAtendimento && (
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <span
+                className="inline-flex items-center text-muted-foreground"
+                title={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
+                aria-label={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
+              >
                 <Sparkles className="w-3 h-3" />
-                {a.dossieAtendimento.fonte === "skill" ? "dossiê" : "contexto"}
               </span>
             )}
-            {a.pedido && <span className="truncate">{a.pedido}</span>}
+            {a.pedido && (
+              <span className="truncate text-[10px] text-muted-foreground/70 max-w-[10rem]">
+                {a.pedido}
+              </span>
+            )}
           </div>
         </div>
 

@@ -117,7 +117,7 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
       </div>
 
       {a.pedido && (
-        <p className="text-[11px] text-muted-foreground mt-2 line-clamp-2 leading-snug">{a.pedido}</p>
+        <p className="text-[10px] text-muted-foreground/70 mt-2 truncate leading-snug">{a.pedido}</p>
       )}
 
       <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/70 text-[10px] text-muted-foreground flex-wrap">
@@ -141,9 +141,12 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
           </span>
         )}
         {a.dossieAtendimento && (
-          <span className="inline-flex items-center gap-1 text-violet-500 dark:text-violet-400">
+          <span
+            className="inline-flex items-center text-violet-500 dark:text-violet-400"
+            title={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
+            aria-label={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
+          >
             <Sparkles className="w-3 h-3" />
-            {a.dossieAtendimento.fonte === "skill" ? "dossiê" : "contexto"}
           </span>
         )}
         <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 ml-auto opacity-0 group-hover/card:opacity-100 transition-opacity" />
