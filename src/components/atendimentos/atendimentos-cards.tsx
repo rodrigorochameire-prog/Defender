@@ -11,7 +11,6 @@ import {
   Clock,
   Copy,
   FileText,
-  History,
   Link2,
   Scale,
   Sparkles,
@@ -150,11 +149,6 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
         {a.numeroSolar && (
           <span className="font-mono inline-flex items-center gap-1" title="Número SOLAR">
             <FileText className="w-3 h-3" /> {a.numeroSolar}
-          </span>
-        )}
-        {a.historicoSolar && a.historicoSolar.length > 0 && (
-          <span className="inline-flex items-center" title="Possui histórico SOLAR" aria-label="Possui histórico SOLAR">
-            <History className="w-3 h-3" />
           </span>
         )}
         {a.dossieAtendimento && (
