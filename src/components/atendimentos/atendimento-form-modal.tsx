@@ -299,7 +299,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:max-w-none">
         <DialogHeader>
           <DialogTitle>
             {editing
