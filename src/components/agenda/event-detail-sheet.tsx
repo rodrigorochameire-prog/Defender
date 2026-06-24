@@ -17,6 +17,8 @@ import { AreaTabs } from "@/components/agenda/sheet/area-tabs";
 import { computeWorkspaceTabs, type AreaMae } from "@/components/agenda/sheet/areas-mae";
 import { ProvaOralConsole } from "@/components/agenda/sheet/prova-oral-console";
 import { resumoProvaOral } from "@/lib/agenda/depoente-status";
+import { EstrategiaConsole } from "@/components/agenda/sheet/estrategia-console";
+import { resumoEstrategia } from "@/lib/agenda/resumo-estrategia";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -1493,6 +1495,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             {/* Console do modo Prova oral — síntese de oitiva no topo da aba. */}
             {!isLoading && tabAtiva === "prova-oral" && depoentesStatus.length > 0 && (
               <ProvaOralConsole resumo={resumoProvaOral(depoentesStatus)} />
+            )}
+
+            {/* Painel de inteligência do modo Estratégia — prontidão estratégica. */}
+            {!isLoading && tabAtiva === "estrategia" && (
+              <EstrategiaConsole resumo={resumoEstrategia({ imputacao, denuncia: fatos, teses, contradicoes })} />
             )}
 
             {!isLoading && espinhaDaTab.map((id) => (
