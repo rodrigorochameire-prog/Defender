@@ -6,6 +6,7 @@
 // agendado aparece também em /admin/agenda (fonte registros) e no feed ICS.
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -45,6 +46,7 @@ import {
   LayoutGrid,
   Link2,
   List,
+  ListPlus,
   Loader2,
   Plus,
   RotateCcw,
@@ -56,14 +58,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  AREA_CONFIG,
   AREA_OPTIONS,
   STATUS_CONFIG,
   SUBTIPO_CONFIG,
   SUBTIPO_OPTIONS,
   type AtendimentoListItem,
 } from "./config";
-import { areaHex } from "./area-color";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
 import { AtendimentosCards } from "./atendimentos-cards";
@@ -307,14 +308,13 @@ export default function AtendimentosView() {
                     aria-label={v.label}
                     aria-pressed={ativa}
                     className={cn(
-                      "h-7 px-2 rounded-md inline-flex items-center gap-1 text-[11px] font-medium transition-colors cursor-pointer",
+                      "h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer",
                       ativa
                         ? "bg-white text-neutral-900"
                         : "text-white/65 hover:text-white"
                     )}
                   >
                     <Icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{v.label}</span>
                   </button>
                 );
               })}
@@ -390,14 +390,13 @@ export default function AtendimentosView() {
               aria-label="Insights"
               aria-pressed={mostrarInsights}
               className={cn(
-                "h-8 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer shrink-0",
+                "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors cursor-pointer shrink-0",
                 mostrarInsights
                   ? "bg-emerald-500 border-emerald-400 text-white"
                   : "bg-white/10 border-white/10 text-white/70 hover:text-white"
               )}
             >
               <BarChart3 className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Insights</span>
             </button>
 
             <button
@@ -406,10 +405,10 @@ export default function AtendimentosView() {
                 setModalAberto(true);
               }}
               title="Novo atendimento"
-              className="h-8 px-2.5 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-colors duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+              aria-label="Novo atendimento"
+              className="h-8 w-8 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-colors duration-150 cursor-pointer inline-flex items-center justify-center shrink-0"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Novo</span>
+              <Plus className="w-4 h-4" />
             </button>
           </div>
         }
@@ -557,7 +556,11 @@ function AtendimentoCard({
   const dt = new Date(a.dataRegistro);
   const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
   const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
-  const area = a.area ? AREA_CONFIG[a.area] : null;
+  // Cor/badge da área derivam da atribuição do PROCESSO vinculado (mais fiel que
+  // a.area, que costuma vir genérica "CRIMINAL"). Fallback: area do atendimento.
+  const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
+  const areaColors = areaKey ? getAtribuicaoColors(areaKey) : null;
+  const areaHexColor = areaColors?.color ?? getAtribuicaoColors(null).color;
   const cancelado = a.status === "cancelado";
   const agendado = a.status === "agendado";
   const pendente = isPendente(a);
@@ -583,13 +586,13 @@ function AtendimentoCard({
       <span
         aria-hidden
         className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full opacity-70 transition-all duration-300 group-hover/card:top-1 group-hover/card:bottom-1 group-hover/card:w-1 group-hover/card:opacity-100"
-        style={{ backgroundColor: areaHex(a.area) }}
+        style={{ backgroundColor: areaHexColor }}
       />
       {/* Wash sutil da cor da área no hover — profundidade sem poluir */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-0 w-24 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
-        style={{ backgroundImage: `linear-gradient(to right, ${areaHex(a.area)}1f, transparent)` }}
+        style={{ backgroundImage: `linear-gradient(to right, ${areaHexColor}1f, transparent)` }}
       />
       <div className="relative flex items-center gap-3">
         <div className="shrink-0 w-14 text-center">
@@ -618,10 +621,10 @@ function AtendimentoCard({
                 {subtipo.label}
               </span>
             )}
-            {area && (
+            {areaColors && (
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                <span className="w-1 h-1 rounded-full" style={{ backgroundColor: areaHex(a.area) }} />
-                {area.shortLabel}
+                <span className="w-1 h-1 rounded-full" style={{ backgroundColor: areaHexColor }} />
+                {areaColors.shortLabel}
               </span>
             )}
           </div>
@@ -663,10 +666,79 @@ function AtendimentoCard({
           </div>
         </div>
 
+        {/* Ações rápidas — aparecem no hover da linha; cada uma isola o clique */}
+        <QuickAcoes atendimento={a} onAbrir={onClick} />
         {agendado && <QuickRegistrar atendimento={a} destaque={pendente} />}
         {cancelado && <QuickReativar atendimento={a} />}
         <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 shrink-0" />
       </div>
+    </div>
+  );
+}
+
+// ─── Ações rápidas da linha — cluster que surge no hover, sem abrir o sheet ──
+
+function QuickAcoes({
+  atendimento: a,
+  onAbrir,
+}: {
+  atendimento: AtendimentoListItem;
+  onAbrir: () => void;
+}) {
+  const utils = trpc.useUtils();
+  const agendado = a.status === "agendado";
+  const assistidoId = a.assistido?.id ?? a.assistidoId;
+
+  const marcarRealizado = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      utils.registros.listAtendimentos.invalidate();
+      utils.registros.atendimentosKpis.invalidate();
+      utils.registros.listAgendados.invalidate();
+      toast.success("Atendimento marcado como realizado");
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return (
+    <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+      {agendado && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            marcarRealizado.mutate({ id: a.id, status: "realizado" });
+          }}
+          disabled={marcarRealizado.isPending}
+          title="Marcar realizado"
+          aria-label="Marcar realizado"
+          className="w-6 h-6 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
+        >
+          {marcarRealizado.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Check className="w-3.5 h-3.5" />
+          )}
+        </button>
+      )}
+      <Link
+        href={`/admin/demandas/nova?assistidoId=${assistidoId}`}
+        onClick={(e) => e.stopPropagation()}
+        title="Gerar demanda"
+        aria-label="Gerar demanda"
+        className="w-6 h-6 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50"
+      >
+        <ListPlus className="w-3.5 h-3.5" />
+      </Link>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAbrir();
+        }}
+        title="Registrar / abrir"
+        aria-label="Registrar / abrir"
+        className="w-6 h-6 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-neutral-400/50"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
