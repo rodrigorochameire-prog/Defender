@@ -54,6 +54,62 @@ export function prazoPreview(
   return { label, tone: dias <= 7 ? "neutral" : "muted" };
 }
 
+export interface BuildCreatePayloadInput {
+  assistidoNome: string;
+  assistidoId: number;
+  /** Id do processo selecionado como string ("" = nenhum → cria provisório). */
+  processoId: string;
+  /** numeroAutos do processo do atendimento (fallback quando não há processoId). */
+  processoNumeroAutos: string | null | undefined;
+  atribuicao: string;
+  ato: string;
+  urgente: boolean;
+  prazo: string;
+  reuPreso: boolean;
+  registro: string;
+  atendimentoId?: number;
+  vincular: boolean;
+}
+
+/** Payload de `demandas.createFromForm` (campos opcionais espelham o schema do tRPC). */
+export interface CreateFromFormPayload {
+  assistidoNome: string;
+  assistidoId: number;
+  processoId?: number;
+  numeroAutos?: string;
+  atribuicao: string;
+  ato: string;
+  status: string;
+  prazo?: string;
+  reuPreso: boolean;
+  providencias?: string;
+  atendimentoId?: number;
+}
+
+/**
+ * Monta o payload de `demandas.createFromForm` — firewall de regressão do fluxo
+ * Gerar demanda. Réplica fiel da regra que estava inline no componente:
+ *  - processoId numérico quando há seleção; senão numeroAutos (pode ser undefined);
+ *  - status "urgente"/"triagem"; prazo só quando preenchido;
+ *  - providencias só com texto (trimado); atendimentoId só quando vincular.
+ */
+export function buildCreateFromFormPayload(s: BuildCreatePayloadInput): CreateFromFormPayload {
+  return {
+    assistidoNome: s.assistidoNome,
+    assistidoId: s.assistidoId,
+    ...(s.processoId
+      ? { processoId: Number(s.processoId) }
+      : { numeroAutos: s.processoNumeroAutos ?? undefined }),
+    atribuicao: s.atribuicao,
+    ato: s.ato.trim(),
+    status: s.urgente ? "urgente" : "triagem",
+    ...(s.prazo ? { prazo: s.prazo } : {}),
+    reuPreso: s.reuPreso,
+    ...(s.registro.trim() ? { providencias: s.registro.trim() } : {}),
+    ...(s.atendimentoId && s.vincular ? { atendimentoId: s.atendimentoId } : {}),
+  };
+}
+
 export interface AtoGroup {
   group: string;
   options: { value: string; label: string }[];

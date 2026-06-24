@@ -37,7 +37,13 @@ import {
   AREA_TO_ATRIBUICAO_ENUM,
   ATRIBUICAO_DEMANDA_OPTIONS,
 } from "./config";
-import { montarRegistroDoAtendimento, addDiasISO, prazoPreview, type PrazoTone } from "./gerar-demanda-logic";
+import {
+  montarRegistroDoAtendimento,
+  addDiasISO,
+  prazoPreview,
+  buildCreateFromFormPayload,
+  type PrazoTone,
+} from "./gerar-demanda-logic";
 
 // Cor do texto do preview de prazo por tom (espelha o cockpit de prazos).
 const PRAZO_TONE_TEXT: Record<PrazoTone, string> = {
@@ -376,20 +382,22 @@ export function GerarDemandaPopover({
             size="sm"
             disabled={!ato.trim() || criar.isPending}
             onClick={() =>
-              criar.mutate({
-                assistidoNome: assistido.nome,
-                assistidoId: assistido.id,
-                ...(processoId
-                  ? { processoId: Number(processoId) }
-                  : { numeroAutos: processo?.numeroAutos ?? undefined }),
-                atribuicao,
-                ato: ato.trim(),
-                status: urgente ? "urgente" : "triagem",
-                ...(prazo ? { prazo } : {}),
-                reuPreso,
-                ...(registro.trim() ? { providencias: registro.trim() } : {}),
-                ...(atendimentoId && vincular ? { atendimentoId } : {}),
-              })
+              criar.mutate(
+                buildCreateFromFormPayload({
+                  assistidoNome: assistido.nome,
+                  assistidoId: assistido.id,
+                  processoId,
+                  processoNumeroAutos: processo?.numeroAutos,
+                  atribuicao,
+                  ato,
+                  urgente,
+                  prazo,
+                  reuPreso,
+                  registro,
+                  atendimentoId,
+                  vincular,
+                }),
+              )
             }
             className="flex-1 gap-1.5 h-9 text-[12px] bg-emerald-600 hover:bg-emerald-700"
           >
