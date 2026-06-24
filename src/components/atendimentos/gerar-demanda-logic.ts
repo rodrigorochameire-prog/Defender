@@ -25,6 +25,35 @@ export function atribuicaoAtosLabel(atribuicao: string): string {
   return ATRIBUICAO_DEMANDA_OPTIONS.find((o) => o.value === atribuicao)?.atosLabel ?? "Criminal Geral";
 }
 
+export type PrazoTone = "danger" | "warn" | "neutral" | "muted";
+
+/** Soma `dias` (calendário) a uma data ISO `YYYY-MM-DD`, retornando ISO `YYYY-MM-DD`. */
+export function addDiasISO(baseISO: string, dias: number): string {
+  const d = new Date(`${baseISO}T00:00:00`);
+  d.setDate(d.getDate() + dias);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Rótulo + tom para o prazo escolhido, relativo a `hojeISO`. Tons espelham o
+ * cockpit de prazos: vencido=danger, hoje=warn, ≤7d=neutral, além=muted.
+ */
+export function prazoPreview(
+  prazoISO: string | null | undefined,
+  hojeISO: string,
+): { label: string; tone: PrazoTone } | null {
+  if (!prazoISO) return null;
+  const ms = new Date(`${prazoISO}T00:00:00`).getTime() - new Date(`${hojeISO}T00:00:00`).getTime();
+  const dias = Math.round(ms / 86_400_000);
+  if (dias < 0) return { label: "vencido", tone: "danger" };
+  if (dias === 0) return { label: "hoje", tone: "warn" };
+  const label = `em ${dias} dia${dias > 1 ? "s" : ""}`;
+  return { label, tone: dias <= 7 ? "neutral" : "muted" };
+}
+
 export interface AtoGroup {
   group: string;
   options: { value: string; label: string }[];

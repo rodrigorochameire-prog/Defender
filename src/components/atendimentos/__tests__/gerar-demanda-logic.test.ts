@@ -4,6 +4,8 @@ import {
   montarRegistroDoAtendimento,
   atribuicaoAtosLabel,
   filtrarAtos,
+  addDiasISO,
+  prazoPreview,
 } from "../gerar-demanda-logic";
 
 describe("montarRegistroDoAtendimento — texto importado limpo de HTML", () => {
@@ -61,5 +63,35 @@ describe("filtrarAtos — busca + agrupamento por categoria", () => {
     const grupos = filtrarAtos("JURI_CAMACARI", semAcento.slice(0, 5));
     const labels = grupos.flatMap((g) => g.options.map((o) => o.label));
     expect(labels).toContain(alvo);
+  });
+});
+
+describe("addDiasISO", () => {
+  it("soma dias dentro do mês", () => {
+    expect(addDiasISO("2026-06-24", 5)).toBe("2026-06-29");
+  });
+  it("rola para o mês seguinte", () => {
+    expect(addDiasISO("2026-06-30", 5)).toBe("2026-07-05");
+  });
+});
+
+describe("prazoPreview", () => {
+  const HOJE = "2026-06-24";
+  it("sem prazo → null", () => {
+    expect(prazoPreview("", HOJE)).toBeNull();
+    expect(prazoPreview(null, HOJE)).toBeNull();
+  });
+  it("prazo no passado → vencido/danger", () => {
+    expect(prazoPreview("2026-06-20", HOJE)).toEqual({ label: "vencido", tone: "danger" });
+  });
+  it("prazo hoje → hoje/warn", () => {
+    expect(prazoPreview("2026-06-24", HOJE)).toEqual({ label: "hoje", tone: "warn" });
+  });
+  it("dentro de 7 dias → neutral, plural correto", () => {
+    expect(prazoPreview("2026-06-27", HOJE)).toEqual({ label: "em 3 dias", tone: "neutral" });
+    expect(prazoPreview("2026-06-25", HOJE)).toEqual({ label: "em 1 dia", tone: "neutral" });
+  });
+  it("além de 7 dias → muted", () => {
+    expect(prazoPreview("2026-07-20", HOJE)).toEqual({ label: "em 26 dias", tone: "muted" });
   });
 });

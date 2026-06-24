@@ -89,7 +89,7 @@
 ### Fase 5 — Gerar demanda (`GenerateDemandPanel`) (em andamento)
 - [x] **5.0 Lógica pura extraída** (`gerar-demanda-logic.ts`, 9 testes): `montarRegistroDoAtendimento` (movido do popover, HTML limpo), `atribuicaoAtosLabel`, e `filtrarAtos` (busca acento/caixa-insensível + agrupamento por categoria) — fundação testada do ProceduralActSelector. Popover já consome as duas primeiras. _Pendente_ (na migração popover→painel, onde o tipo do tRPC fica disponível no call-site): extrair `buildCreateFromFormPayload`.
 - 5.1 Promover de popover a superfície nobre (painel/sheet) em 5 blocos (Origem · Definição jurídica · Regime de urgência · Conteúdo inicial · Confirmação) — refatorar `gerar-demanda-popover.tsx`.
-- [x] 5.2 `ProceduralActSelector` premium: campo de busca + sugestões **agrupadas por categoria** (via `filtrarAtos`), texto livre preservado, inline (sem portal/popover aninhado). Substituiu o Input+chips no popover. 6 testes (RTL). _Resta_: controles de prazo melhores (chips +N dias).
+- [x] 5.2 `ProceduralActSelector` premium: campo de busca + sugestões **agrupadas por categoria** (via `filtrarAtos`), texto livre preservado, inline (sem portal/popover aninhado). 6 testes (RTL). **Controles de prazo**: atalhos +3/+5/+15 dias (`addDiasISO`) + preview do tom (`prazoPreview`: vencido/hoje/≤7d/além) + Limpar. 7 testes (puros).
 - 5.3 **Revisar renderização do texto importado**: [x] `htmlParaTexto` (puro/testado, 7 testes) limpa tags/entidades HTML do assunto/pedido/relato importado no `gerar-demanda-popover.tsx` — sem mais tags cruas no textarea. _Resta_: vínculo da timeline como decisão de continuidade.
 - 5.4 **Testes**: blocos/etapas; seleção de ato; texto importado limpo; cria demanda + vínculo; CTA final inequívoco.
 

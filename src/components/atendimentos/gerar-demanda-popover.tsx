@@ -33,7 +33,15 @@ import {
   AREA_TO_ATRIBUICAO_ENUM,
   ATRIBUICAO_DEMANDA_OPTIONS,
 } from "./config";
-import { montarRegistroDoAtendimento } from "./gerar-demanda-logic";
+import { montarRegistroDoAtendimento, addDiasISO, prazoPreview, type PrazoTone } from "./gerar-demanda-logic";
+
+// Cor do texto do preview de prazo por tom (espelha o cockpit de prazos).
+const PRAZO_TONE_TEXT: Record<PrazoTone, string> = {
+  danger: "text-rose-600 dark:text-rose-400",
+  warn: "text-amber-600 dark:text-amber-400",
+  neutral: "text-sky-600 dark:text-sky-400",
+  muted: "text-muted-foreground",
+};
 
 interface GerarDemandaPopoverProps {
   assistido: { id: number; nome: string };
@@ -140,6 +148,11 @@ export function GerarDemandaPopover({
     ATRIBUICAO_DEMANDA_OPTIONS.find((o) => o.value === atribuicao)?.label ?? "";
   const atribuicaoCorrigida = atribuicao !== atribuicaoDefault;
 
+  // Hoje (local) para os atalhos de prazo e o preview.
+  const agora = new Date();
+  const hojeISO = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+  const prazoInfo = prazoPreview(prazo, hojeISO);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -218,19 +231,45 @@ export function GerarDemandaPopover({
           />
         </div>
 
-        {/* Prazo + flags */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 space-y-1">
+        {/* Prazo — campo + atalhos rápidos + preview do tom */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
             <Label htmlFor="gd-prazo" className="text-[11px] text-muted-foreground">
               Prazo (opcional)
             </Label>
-            <Input
-              id="gd-prazo"
-              type="date"
-              value={prazo}
-              onChange={(e) => setPrazo(e.target.value)}
-              className="h-9 text-sm"
-            />
+            {prazoInfo && (
+              <span className={cn("text-[11px] font-medium", PRAZO_TONE_TEXT[prazoInfo.tone])}>
+                {prazoInfo.label}
+              </span>
+            )}
+          </div>
+          <Input
+            id="gd-prazo"
+            type="date"
+            value={prazo}
+            onChange={(e) => setPrazo(e.target.value)}
+            className="h-9 text-sm"
+          />
+          <div className="flex items-center gap-1.5">
+            {[3, 5, 15].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPrazo(addDiasISO(hojeISO, n))}
+                className="rounded-md px-2 py-0.5 text-[11px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+              >
+                +{n} dias
+              </button>
+            ))}
+            {prazo && (
+              <button
+                type="button"
+                onClick={() => setPrazo("")}
+                className="ml-auto rounded-md px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                Limpar
+              </button>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
