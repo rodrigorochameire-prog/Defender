@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusChip } from "./StatusChip";
+import { DemandaCardActions } from "./DemandaCardActions";
 import {
   Select,
   SelectContent,
@@ -513,57 +514,15 @@ export function DemandaCard({
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-            <Link href={`/admin/demandas/${demanda.id}`} className="flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-full text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-              >
-                <ChevronRight className="w-3.5 h-3.5 mr-1.5" />
-                Abrir
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(demanda)}
-              className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            >
-              <Edit className="w-3.5 h-3.5 mr-1.5" />
-              Editar
-            </Button>
-            {demanda.arquivado ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onUnarchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-              >
-                <ArchiveRestore className="w-3.5 h-3.5 mr-1.5" />
-                Restaurar
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onArchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              >
-                <Archive className="w-3.5 h-3.5 mr-1.5" />
-                Arquivar
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(demanda.id)}
-              className="h-8 w-8 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+          {/* Actions — 1 ação principal + overflow (Fase 3) */}
+          <DemandaCardActions
+            href={`/admin/demandas/${demanda.id}`}
+            arquivado={demanda.arquivado}
+            onEdit={() => onEdit(demanda)}
+            onArchive={() => onArchive(demanda.id)}
+            onUnarchive={() => onUnarchive(demanda.id)}
+            onDelete={() => onDelete(demanda.id)}
+          />
 
           {/* Status Pipeline (Mobile) */}
           {showStatusDropdown && (
