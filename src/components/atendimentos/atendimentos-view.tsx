@@ -53,18 +53,16 @@ import {
   Scale,
   Search,
   SlidersHorizontal,
-  Sparkles,
   X,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AREA_OPTIONS,
-  STATUS_CONFIG,
-  SUBTIPO_CONFIG,
   SUBTIPO_OPTIONS,
   type AtendimentoListItem,
 } from "./config";
+import { AtendimentoStatusBadge, ReadinessBadge, MetadataLine } from "./atendimento-badges";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
@@ -555,8 +553,6 @@ function AtendimentoCard({
   onClick: () => void;
 }) {
   const dt = new Date(a.dataRegistro);
-  const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
-  const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
   // Cor/badge da área derivam da atribuição do PROCESSO vinculado (mais fiel que
   // a.area, que costuma vir genérica "CRIMINAL"). Fallback: area do atendimento.
   const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
@@ -601,16 +597,6 @@ function AtendimentoCard({
           <p className="font-mono text-sm font-semibold text-foreground/90">
             {format(dt, "HH:mm")}
           </p>
-          {pendente ? (
-            <span className="inline-flex items-center gap-0.5 mt-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-              <Clock className="w-2.5 h-2.5" /> registrar
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 mt-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-              <span className={cn("w-1 h-1 rounded-full", status.dot)} />
-              {status.label}
-            </span>
-          )}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -618,19 +604,11 @@ function AtendimentoCard({
             <p className={`text-sm font-semibold text-foreground/90 truncate ${cancelado ? "line-through" : ""}`}>
               {a.assistido?.nome ?? "Assistido não identificado"}
             </p>
-            {subtipo && (
-              <span className="rounded px-1.5 py-px text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                {subtipo.label}
-              </span>
-            )}
-            {areaColors && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
-                <span className="w-1 h-1 rounded-full" style={{ backgroundColor: areaHexColor }} />
-                {areaColors.shortLabel}
-              </span>
-            )}
+            <AtendimentoStatusBadge status={a.status} dataRegistro={a.dataRegistro} />
           </div>
-          <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
+            <MetadataLine area={a.area} subtipo={a.subtipo} areaLabel={areaColors?.label} />
+            <ReadinessBadge dossieAtendimento={a.dossieAtendimento} />
             {/* Processo primeiro — copiável, com tooltip */}
             {a.processo?.numeroAutos && (
               <button
@@ -657,15 +635,6 @@ function AtendimentoCard({
             {a.numeroSolar && (
               <span className="font-mono inline-flex items-center gap-1" title="Número SOLAR">
                 <FileText className="w-3 h-3" /> {a.numeroSolar}
-              </span>
-            )}
-            {a.dossieAtendimento && (
-              <span
-                className="inline-flex items-center text-muted-foreground"
-                title={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
-                aria-label={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
-              >
-                <Sparkles className="w-3 h-3" />
               </span>
             )}
           </div>

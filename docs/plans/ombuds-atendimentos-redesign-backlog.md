@@ -61,7 +61,8 @@
 - 2.2 `AtendimentoSegmentedControl`: modos Visão geral · A registrar · Agenda · Histórico + `AtendimentoFiltersBar` (busca · filtros · alternância Lista/Cards/Agenda · avançados).
 - 2.3 `AtendimentoListRow`/`AtendimentoCard`: anatomia da spec (L1 hora+status … L6 ação+overflow); **1 ação dominante** (Gerar demanda só quando for próximo passo; Registrar domina pendência).
   - [x] **cards-view** (`atendimentos-cards.tsx`): consome `AtendimentoStatusBadge` (1 forte; chip âmbar inline + `STATUS_CONFIG` aposentados aqui), `MetadataLine` (área·tipo em texto, com `areaLabel` fiel à atribuição do processo) e `ReadinessBadge` (sutil; sparkle do rodapé migrado). Acento de cor da área preservado na barra lateral.
-  - [ ] **list-row** (componente `AtendimentoCard` dentro de `atendimentos-view.tsx`) e **calendário** (`atendimentos-calendar.tsx`): mesmo rewiring.
+  - [x] **list-row** (`AtendimentoCard` em `atendimentos-view.tsx`): status saiu da coluna estreita da hora p/ a linha do nome (eleva o sinal "A registrar"); subtipo/área-chip → `MetadataLine`; sparkle do dossiê → `ReadinessBadge`. `STATUS_CONFIG`/`SUBTIPO_CONFIG`/`Sparkles` aposentados no arquivo. Acento + wash da área preservados.
+  - [ ] **calendário** (`atendimentos-calendar.tsx`): mesmo rewiring (painel do dia).
 - 2.4 Valorizar "A registrar" como fila prioritária; separar histórico de pendência.
 - 2.5 **Testes**: render dos campos essenciais; filtros por status; troca de modo; item "A registrar"; 1 ação principal visível + overflow; clique abre workspace certo.
   - [x] `areaLabel` override em `metadataLine` (precedência sobre `a.area`). _Pendente_: teste de integração da card (render com trpc mockado) afirmando 1 só badge forte + metadata em texto.
