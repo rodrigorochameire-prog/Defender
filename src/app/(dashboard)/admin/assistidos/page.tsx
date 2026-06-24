@@ -73,7 +73,7 @@ import { toast } from "sonner";
 
 // Extracted components
 import { AssistidoUI } from "./_components/assistido-types";
-import { statusConfig, faseConfig, areaConfig, ATRIBUICAO_ICONS } from "./_components/assistido-config";
+import { statusConfig, faseConfig, ATRIBUICAO_ICONS } from "./_components/assistido-config";
 import { getPrazoInfo, calcularIdade, calcularTempoPreso, computeCompletude } from "./_components/assistido-utils";
 import { AnalyticsTab } from "./_components/analytics-tab";
 import { useRecentAssistidos } from "./_components/use-recent-assistidos";
