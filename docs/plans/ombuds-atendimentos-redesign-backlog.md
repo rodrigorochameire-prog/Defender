@@ -56,17 +56,17 @@
 - [x] 1.4 **Testes**: `__tests__/unit/tipologia-atendimento.test.ts` (resolução de status + tom/força + paleta), `atendimento-semantica.test.ts` (metadataLine + readiness), `__tests__/components/atendimento-badges.test.tsx` (render + 1 só badge forte). 24/24 ✓.
 - **Pendente p/ Fase 2** (rewiring, fora do DoD da Fase 1): consumir os primitivos nas cards/list rows e aposentar `STATUS_CONFIG`/`SUBTIPO_CONFIG`/chip âmbar inline de `config.ts`/`atendimentos-cards.tsx`/`atendimentos-view.tsx`.
 
-### Fase 2 — Lista / fila operacional (em andamento)
-- 2.1 `AtendimentoModuleHeader` (título + subtítulo + CTA Novo) + `AtendimentoKPICard` operacionais (A registrar · Hoje · 7 dias · Realizados no mês).
-- 2.2 `AtendimentoSegmentedControl`: modos Visão geral · A registrar · Agenda · Histórico + `AtendimentoFiltersBar` (busca · filtros · alternância Lista/Cards/Agenda · avançados).
+### Fase 2 — Lista / fila operacional (concluída)
+- [x] 2.1 Header (padrão Demandas: `CollapsiblePageHeader`+`HeaderSlotTitle`, busca, CTA Novo) + KPIs operacionais (A registrar · Hoje · Próximos 7 dias · Realizados no mês) **já existiam**; mantidos.
+- [x] 2.2 `AtendimentoSegmentedControl`: modos **Visão geral · A registrar · Agenda · Histórico** numa barra do corpo (rótulo + ícone + contador de A registrar). Fonte única `atendimento-modos.ts` (`modeFilters` puro/testado) que deriva status + `apenasPendentes`. **Substituiu as pills de status**; vista "Agenda"→"Calendário" p/ evitar colisão de nome. Período/tipo/área seguem no popover.
 - 2.3 `AtendimentoListRow`/`AtendimentoCard`: anatomia da spec (L1 hora+status … L6 ação+overflow); **1 ação dominante** (Gerar demanda só quando for próximo passo; Registrar domina pendência).
   - [x] **cards-view** (`atendimentos-cards.tsx`): consome `AtendimentoStatusBadge` (1 forte; chip âmbar inline + `STATUS_CONFIG` aposentados aqui), `MetadataLine` (área·tipo em texto, com `areaLabel` fiel à atribuição do processo) e `ReadinessBadge` (sutil; sparkle do rodapé migrado). Acento de cor da área preservado na barra lateral.
   - [x] **list-row** (`AtendimentoCard` em `atendimentos-view.tsx`): status saiu da coluna estreita da hora p/ a linha do nome (eleva o sinal "A registrar"); subtipo/área-chip → `MetadataLine`; sparkle do dossiê → `ReadinessBadge`. `STATUS_CONFIG`/`SUBTIPO_CONFIG`/`Sparkles` aposentados no arquivo. Acento + wash da área preservados.
   - [x] **calendário** (`atendimentos-calendar.tsx`, painel do dia): status inline → `AtendimentoStatusBadge` (compacto, sem ícone); área/subtipo coloridos → `MetadataLine`; + `ReadinessBadge`. `STATUS_CONFIG`/`SUBTIPO_CONFIG` aposentados. Acento âmbar/área preservado. **Rewiring da anatomia (2.3) concluído nas 3 vistas.**
-- _Resta da Fase 2_: 2.1 (header + KPIs operacionais), 2.2 (segmented control 4 modos + filtros), 2.4 (priorizar "A registrar" como fila / separar histórico). Teste de integração de card com trpc mockado (2.5).
-- 2.4 Valorizar "A registrar" como fila prioritária; separar histórico de pendência.
-- 2.5 **Testes**: render dos campos essenciais; filtros por status; troca de modo; item "A registrar"; 1 ação principal visível + overflow; clique abre workspace certo.
-  - [x] `areaLabel` override em `metadataLine` (precedência sobre `a.area`). _Pendente_: teste de integração da card (render com trpc mockado) afirmando 1 só badge forte + metadata em texto.
+- [x] 2.4 "A registrar" é fila prioritária: modo dedicado + KPI clicável (atalho) + banner contextual; "Histórico" (realizados/passado) separado de "Agenda" (agendados/próximos).
+- 2.5 **Testes**: [x] `atendimento-modos.test.ts` (ordem dos modos + `modeFilters`); [x] `areaLabel` override em `metadataLine`; [x] baseline e2e atualizado (modos + "Calendário"). _Pendente_: teste de integração da card (render com trpc mockado) afirmando 1 só badge forte + metadata em texto.
+
+> **Fase 2 fecha aqui.** Próximo: Fase 3 — Workspace do atendimento (`atendimento-detail-sheet.tsx`).
 
 ### Fase 3 — Workspace do atendimento
 - 3.1 `AtendimentoWorkspaceShell` + `AtendimentoSectionPanel`: 5 áreas-mãe (Resumo · Motivo e pedido · Próximos passos · Registros · Contexto jurídico).

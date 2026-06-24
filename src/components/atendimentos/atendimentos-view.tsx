@@ -5,7 +5,7 @@
 // (agendar → realizar/cancelar → relato). Integra a agenda: cada atendimento
 // agendado aparece também em /admin/agenda (fonte registros) e no feed ICS.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { format } from "date-fns";
@@ -38,10 +38,10 @@ import {
   CalendarRange,
   Check,
   ChevronRight,
-  Clock,
   Copy,
   FileText,
   Handshake,
+  History,
   Layers,
   LayoutGrid,
   Link2,
@@ -53,7 +53,6 @@ import {
   Scale,
   Search,
   SlidersHorizontal,
-  X,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,6 +62,7 @@ import {
   type AtendimentoListItem,
 } from "./config";
 import { AtendimentoStatusBadge, ReadinessBadge, MetadataLine } from "./atendimento-badges";
+import { ATENDIMENTO_MODOS, modeFilters, type AtendimentoModo } from "./atendimento-modos";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
@@ -75,7 +75,7 @@ import { AtendimentosInsights } from "./atendimentos-insights";
 const VISTAS = [
   { key: "lista", label: "Lista", icon: List },
   { key: "cards", label: "Cards", icon: LayoutGrid },
-  { key: "calendario", label: "Agenda", icon: CalendarDays },
+  { key: "calendario", label: "Calendário", icon: CalendarDays },
 ] as const;
 type Vista = (typeof VISTAS)[number]["key"];
 import {
@@ -87,12 +87,13 @@ import {
   type PeriodoPreset,
 } from "./agenda-helpers";
 
-const STATUS_FILTROS = [
-  { value: "todos", label: "Todos", icon: Layers },
-  { value: "agendado", label: "Agendados", icon: Clock },
-  { value: "realizado", label: "Realizados", icon: Check },
-  { value: "cancelado", label: "Cancelados", icon: X },
-];
+// Ícone por modo (componente; o registry de modos é puro em ./atendimento-modos).
+const MODO_ICON: Record<AtendimentoModo, ElementType> = {
+  geral: Layers,
+  a_registrar: AlertCircle,
+  agenda: CalendarDays,
+  historico: History,
+};
 
 export default function AtendimentosView() {
   const searchParams = useSearchParams();
@@ -101,12 +102,13 @@ export default function AtendimentosView() {
 
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
-  const [statusFiltro, setStatusFiltro] = useState("todos");
+  // Modo operacional (segmentação semântica) — fonte única que deriva status +
+  // "a registrar". Substitui as antigas pills de status. Ver ./atendimento-modos.
+  const [modo, setModo] = useState<AtendimentoModo>("geral");
+  const { status: statusFiltro, apenasPendentes } = modeFilters(modo);
   const [subtipoFiltro, setSubtipoFiltro] = useState("todos");
   const [areaFiltro, setAreaFiltro] = useState("todas");
   const [periodo, setPeriodo] = useState<PeriodoPreset>("recentes");
-  // Isola os atendimentos que já aconteceram e seguem sem registro (a registrar).
-  const [apenasPendentes, setApenasPendentes] = useState(false);
   const [detalhe, setDetalhe] = useState<AtendimentoListItem | null>(null);
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<AtendimentoListItem | null>(null);
@@ -125,7 +127,7 @@ export default function AtendimentosView() {
     const pendentes = searchParams.get("pendentes") === "1";
     const abrir = searchParams.get("abrir");
     if (novo) setModalAberto(true);
-    if (pendentes) setApenasPendentes(true);
+    if (pendentes) setModo("a_registrar");
     if (abrir) setAbrirId(Number(abrir));
     if (novo || pendentes || abrir) router.replace(pathname);
   }, [searchParams, router, pathname]);
@@ -204,7 +206,7 @@ export default function AtendimentosView() {
       value: kpis?.aRegistrar ?? 0,
       icon: AlertCircle,
       text: "text-amber-500",
-      action: () => setApenasPendentes((v) => !v),
+      action: () => setModo((m) => (m === "a_registrar" ? "geral" : "a_registrar")),
       active: apenasPendentes,
     },
     { key: "hoje", label: "Hoje", value: kpis?.hoje ?? 0, icon: CalendarDays, text: "text-rose-500" },
@@ -270,29 +272,8 @@ export default function AtendimentosView() {
                 className="w-full h-8 rounded-lg bg-white/10 border border-white/10 pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
               />
             </div>
-            {/* Filtro de status — pills icon-only (label no tooltip/aria) */}
-            <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
-              {STATUS_FILTROS.map((s) => {
-                const Icon = s.icon;
-                return (
-                  <button
-                    key={s.value}
-                    onClick={() => setStatusFiltro(s.value)}
-                    title={s.label}
-                    aria-label={s.label}
-                    aria-pressed={statusFiltro === s.value}
-                    className={cn(
-                      "h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer",
-                      statusFiltro === s.value
-                        ? "bg-white text-neutral-900"
-                        : "text-white/65 hover:text-white"
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </button>
-                );
-              })}
-            </div>
+            {/* Modos (Visão geral · A registrar · Agenda · Histórico) ficam na
+                barra do corpo, com rótulo — aqui no header só busca + render + ações. */}
 
             {/* Alternador de vista — Lista / Cards / Agenda (relocado para o header) */}
             <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
@@ -415,6 +396,43 @@ export default function AtendimentosView() {
       />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
+        {/* Modos — segmentação semântica primária; deriva status + "a registrar" */}
+        <div className="flex items-center gap-1 rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 shadow-sm w-fit max-w-full overflow-x-auto">
+          {ATENDIMENTO_MODOS.map((m) => {
+            const Icon = MODO_ICON[m.key];
+            const ativo = modo === m.key;
+            const count = m.key === "a_registrar" ? (kpis?.aRegistrar ?? 0) : 0;
+            return (
+              <button
+                key={m.key}
+                onClick={() => setModo(m.key)}
+                aria-pressed={ativo}
+                className={cn(
+                  "h-8 px-3 rounded-lg inline-flex items-center gap-1.5 text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/40",
+                  ativo
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/60"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                {m.label}
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "ml-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[9px] font-semibold tabular-nums",
+                      ativo
+                        ? "bg-white/20 dark:bg-neutral-900/15"
+                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Stats — barra inline enxuta; "A registrar" alterna o filtro de pendentes */}
         <div className="flex items-stretch rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-x divide-neutral-200/70 dark:divide-neutral-800 overflow-hidden shadow-sm">
           {kpiCards.map((s) => {
@@ -450,7 +468,7 @@ export default function AtendimentosView() {
               Mostrando só atendimentos que já aconteceram e seguem sem registro.
             </p>
             <button
-              onClick={() => setApenasPendentes(false)}
+              onClick={() => setModo("geral")}
               className="text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:underline cursor-pointer shrink-0"
             >
               Ver todos

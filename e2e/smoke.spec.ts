@@ -61,11 +61,18 @@ test.describe.skip("Atendimentos baseline (manual run — requires auth)", () =>
   test("jornada principal: lista → trocar view → workspace → agendar retorno", async ({ page }) => {
     await page.goto("/admin/atendimentos");
 
-    // Header do módulo: CTA primário e alternância de vistas presentes.
+    // Header do módulo: CTA primário e alternância de vistas (Lista/Cards/Calendário).
     await expect(page.getByRole("button", { name: "Novo atendimento" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Lista" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Cards" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Agenda" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Calendário" })).toBeVisible();
+
+    // Modos operacionais (segmentação semântica) — substituem as pills de status.
+    await expect(page.getByRole("button", { name: "Visão geral" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "A registrar" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Histórico" })).toBeVisible();
+    // Garante o modo "Visão geral" (lista cheia) antes de trocar de vista.
+    await page.getByRole("button", { name: "Visão geral" }).click();
 
     // Trocar para a vista Cards e garantir que itens renderizam.
     await page.getByRole("button", { name: "Cards" }).click();
