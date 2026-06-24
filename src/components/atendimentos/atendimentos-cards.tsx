@@ -16,12 +16,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  AREA_CONFIG,
   STATUS_CONFIG,
   SUBTIPO_CONFIG,
   type AtendimentoListItem,
 } from "./config";
-import { areaHex } from "./area-color";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { isPendente, rotuloDia, type GrupoDia } from "./agenda-helpers";
 
 export function AtendimentosCards({
@@ -57,7 +56,11 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
   const dt = new Date(a.dataRegistro);
   const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
   const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
-  const area = a.area ? AREA_CONFIG[a.area] : null;
+  // Cor/badge da área derivam da atribuição do PROCESSO vinculado (mais fiel que
+  // a.area, que costuma vir genérica "CRIMINAL"). Fallback: area do atendimento.
+  const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
+  const areaColors = areaKey ? getAtribuicaoColors(areaKey) : null;
+  const areaHexColor = areaColors?.color ?? getAtribuicaoColors(null).color;
   const cancelado = a.status === "cancelado";
   const pendente = isPendente(a);
   const citados = (a.processosCitados ?? []).length;
@@ -82,7 +85,7 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
       {/* Barra de acento à esquerda — cor da área (ou âmbar quando pendente) */}
       <span
         className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full"
-        style={{ backgroundColor: pendente ? "#f59e0b" : areaHex(a.area) }}
+        style={{ backgroundColor: pendente ? "#f59e0b" : areaHexColor }}
       />
 
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -108,8 +111,10 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
       </p>
 
       <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-        {area && (
-          <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", area.badge)}>{area.shortLabel}</span>
+        {areaColors && (
+          <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", areaColors.bgSolid, areaColors.text)}>
+            {areaColors.shortLabel}
+          </span>
         )}
         {subtipo && (
           <span className={cn("rounded px-1.5 py-px text-[10px] font-medium", subtipo.badge)}>{subtipo.label}</span>
