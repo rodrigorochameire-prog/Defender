@@ -44,6 +44,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { SOLID_COLOR_MAP, getAtribuicaoColors } from "@/lib/config/atribuicoes";
+import { StatusChip } from "@/components/agenda/ds";
+import { eventoAgendaTipo } from "@/lib/config/tipologia";
 
 interface EventoCardProps {
   evento: any;
@@ -65,44 +67,8 @@ const getAtribuicaoColor = (atribuicao: string): string => {
   return "#71717a";
 };
 
-// Status configs
-const statusConfig: Record<string, { 
-  label: string; 
-  bg: string;
-  text: string;
-  icon: any;
-}> = {
-  confirmado: {
-    label: "Confirmado",
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    text: "text-emerald-600 dark:text-emerald-400",
-    icon: CheckCircle2,
-  },
-  pendente: {
-    label: "Pendente",
-    bg: "bg-amber-50 dark:bg-amber-900/20",
-    text: "text-amber-600 dark:text-amber-400",
-    icon: Clock,
-  },
-  cancelado: {
-    label: "Cancelado",
-    bg: "bg-rose-50 dark:bg-rose-900/20",
-    text: "text-rose-600 dark:text-rose-400",
-    icon: null,
-  },
-  concluido: {
-    label: "Concluído",
-    bg: "bg-neutral-100 dark:bg-neutral-800",
-    text: "text-neutral-500 dark:text-neutral-400",
-    icon: CheckCircle2,
-  },
-  realizado: {
-    label: "Realizado",
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    text: "text-emerald-600 dark:text-emerald-400",
-    icon: CheckCircle2,
-  },
-};
+// Status agora vem do registry central (eventoAgendaTipo) via StatusChip —
+// fonte única, cor=exceção. O statusConfig inline local foi removido.
 
 // Ícones por atribuição
 const atribuicaoIcons: Record<string, any> = {
@@ -127,7 +93,9 @@ export function EventoCard({
   
   const atribuicaoColor = getAtribuicaoColor(evento.atribuicao);
   const AtribuicaoIcon = atribuicaoIcons[evento.atribuicao] || Scale;
-  const status = statusConfig[evento.status] || statusConfig.pendente;
+  // Status via registry central (cor = exceção); oculta o padrão "Designada".
+  const statusTone = eventoAgendaTipo(evento.status);
+  const showStatusChip = statusTone.label !== "Designada";
   const hasRegistro = evento.registroAudienciaId || evento.temRegistro || evento.registro;
 
   // Calcular urgência
@@ -310,15 +278,9 @@ export function EventoCard({
 
           {/* Linha 4: Status + Atribuição */}
           <div className="flex items-center gap-2 pt-0.5">
-            <span className={cn(
-              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
-              status.bg, status.text
-            )}>
-              {status.icon && <status.icon className="w-2.5 h-2.5" />}
-              {status.label}
-            </span>
-            
-            <span 
+            {showStatusChip && <StatusChip info={statusTone} size="xs" dot />}
+
+            <span
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
               style={{ backgroundColor: `${atribuicaoColor}15`, color: atribuicaoColor }}
             >
