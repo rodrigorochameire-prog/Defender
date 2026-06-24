@@ -17,6 +17,12 @@ import { cn } from "@/lib/utils";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-section";
 import { SheetToC, type ToCSection } from "@/components/agenda/sheet/sheet-toc";
@@ -29,10 +35,10 @@ import { AnexoList } from "@/components/registros/anexos/anexo-list";
 import { useAnexoUpload } from "@/components/registros/anexos/use-anexo-upload";
 import { SOLID_COLOR_MAP, normalizeAreaToFilter } from "@/lib/config/atribuicoes";
 import {
-  Calendar,
   CalendarCheck,
   CalendarPlus,
   Check,
+  ChevronDown,
   Copy,
   ExternalLink,
   FolderOpen,
@@ -316,7 +322,12 @@ export function AtendimentoDetailSheet({
                 <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                   {a.assistido?.nome ?? "Assistido"}
                 </h2>
+                {/* Identidade primária — dados que importam de relance */}
                 <div className="flex items-center gap-2 flex-wrap mt-1">
+                  <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                    <span className={`w-1 h-1 rounded-full ${status.dot}`} />
+                    {status.label}
+                  </span>
                   {a.assistido?.cpf && (
                     <button
                       onClick={() => copy(a.assistido!.cpf!, "cpf")}
@@ -336,60 +347,66 @@ export function AtendimentoDetailSheet({
                       <Phone className="w-2.5 h-2.5" /> {a.assistido.telefone}
                     </span>
                   )}
-                  {a.numeroSolar && (
-                    <span className="text-[11px] text-neutral-400 font-mono" title="Nº SOLAR">
-                      SOLAR {a.numeroSolar}
-                    </span>
-                  )}
                 </div>
+                {/* Linha secundária — metadados quietos + ações rápidas em ícones */}
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                    <span className={`w-1 h-1 rounded-full ${status.dot}`} />
-                    {status.label}
-                  </span>
                   {subtipo && (
-                    <span className="rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                    <span className="rounded px-1.5 py-px text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/70" title="Subtipo">
                       {subtipo.label}
                     </span>
                   )}
                   {area && (
-                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                    <span className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/70" title="Atribuição">
                       <span className="w-1 h-1 rounded-full" style={{ backgroundColor: atribColor }} />
                       {area.label}
                     </span>
                   )}
-                  {a.assistido?.driveFolderId && (
-                    <a
-                      href={driveFolderUrl(a.assistido.driveFolderId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                    >
-                      <FolderOpen className="w-3 h-3" /> Drive
-                    </a>
+                  {a.numeroSolar && (
+                    <span className="text-[10px] text-neutral-400 font-mono" title="Nº SOLAR">
+                      SOLAR {a.numeroSolar}
+                    </span>
                   )}
-                  {zap && (
-                    <a
-                      href={zap}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
-                    >
-                      <MessageCircle className="w-3 h-3" /> WhatsApp
-                    </a>
-                  )}
-                  {a.demandaId && (
-                    <Link
-                      href={`/admin/demandas/${a.demandaId}`}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                      title="Demanda vinculada a este atendimento"
-                    >
-                      <ListPlus className="w-3 h-3" /> Demanda vinculada
-                    </Link>
+                  {(a.assistido?.driveFolderId || zap || a.demandaId) && (
+                    <span className="flex items-center gap-1 ml-auto">
+                      {a.assistido?.driveFolderId && (
+                        <a
+                          href={driveFolderUrl(a.assistido.driveFolderId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Abrir pasta no Drive"
+                          title="Abrir pasta no Drive"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-md text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {zap && (
+                        <a
+                          href={zap}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Abrir conversa no WhatsApp"
+                          title="Abrir conversa no WhatsApp"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-md text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-900/60 transition-colors cursor-pointer"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {a.demandaId && (
+                        <Link
+                          href={`/admin/demandas/${a.demandaId}`}
+                          aria-label="Abrir demanda vinculada"
+                          title="Abrir demanda vinculada a este atendimento"
+                          className="inline-flex items-center justify-center w-6 h-6 rounded-md text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+                        >
+                          <ListPlus className="w-3.5 h-3.5" />
+                        </Link>
+                      )}
+                    </span>
                   )}
                 </div>
                 {(a.pedido || a.local) && (
-                  <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-1.5">
+                  <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-1.5 truncate">
                     {[a.pedido, a.local].filter(Boolean).join(" · ")}
                   </p>
                 )}
@@ -397,42 +414,49 @@ export function AtendimentoDetailSheet({
             </div>
 
             {a.assunto && (
-              <p className="mt-3 text-[13px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-3 leading-relaxed" style={{ borderColor: `${atribColor}66` }}>
+              <p className="mt-2.5 text-[12.5px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-2.5 leading-snug" style={{ borderColor: `${atribColor}66` }}>
                 {a.assunto}
               </p>
             )}
 
-            {/* Ações de preparação */}
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => preparar.mutate({ id: a.id })}
-                disabled={preparar.isPending}
-                className="h-7 gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-300"
-              >
-                {preparar.isPending ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3 h-3" />
-                )}
-                {dossie ? "Atualizar contexto" : "Preparar atendimento"}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => prepararCompleto.mutate({ id: a.id })}
-                disabled={prepararCompleto.isPending}
-                className="h-7 gap-1.5 text-[11px] text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
-                title="Worker local lê os autos no PJe e grava o dossiê completo"
-              >
-                {prepararCompleto.isPending ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <ScrollText className="w-3 h-3" />
-                )}
-                Dossiê dos autos
-              </Button>
+            {/* Preparação — duas formas distintas: contexto rápido vs. dossiê profundo */}
+            <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+              <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-1.5">
+                Preparação
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => preparar.mutate({ id: a.id })}
+                  disabled={preparar.isPending}
+                  className="h-7 gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-300"
+                  title="Contexto rápido — monta o dossiê com dados já no OMBUDS (processos, audiências, demandas, medidas)"
+                >
+                  {preparar.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  {dossie ? "Atualizar contexto" : "Preparar atendimento"}
+                </Button>
+                <span className="w-px h-4 bg-neutral-200 dark:bg-neutral-700" aria-hidden="true" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => prepararCompleto.mutate({ id: a.id })}
+                  disabled={prepararCompleto.isPending}
+                  className="h-7 gap-1.5 text-[11px] text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                  title="Dossiê profundo — worker local lê os autos no PJe e grava o dossiê completo (demora)"
+                >
+                  {prepararCompleto.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <ScrollText className="w-3 h-3" />
+                  )}
+                  Dossiê dos autos
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -756,80 +780,86 @@ export function AtendimentoDetailSheet({
 
         {/* Footer de ações */}
         <div className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5 flex items-center gap-1.5 flex-wrap">
+          {/* "Marcar realizado" permanece como ação primária — abre o composer de relato */}
           {a.status === "agendado" && !mostrandoRelato && (
-            <>
-              <Button
-                size="sm"
-                onClick={() => setMostrandoRelato(true)}
-                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-[12px]"
-              >
-                <CalendarCheck className="w-3.5 h-3.5" />
-                Marcar realizado
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() =>
-                  atualizar.mutate(
-                    { id: a.id, status: "cancelado" },
-                    { onSuccess: () => toast.success("Atendimento cancelado") }
-                  )
-                }
-                disabled={atualizar.isPending}
-                className="h-8 gap-1.5 text-[12px] text-neutral-500"
-              >
-                <XCircle className="w-3.5 h-3.5" />
-                Cancelar
-              </Button>
-            </>
-          )}
-          {a.status === "cancelado" && (
             <Button
               size="sm"
-              onClick={() =>
-                atualizar.mutate(
-                  { id: a.id, status: "agendado" },
-                  { onSuccess: () => toast.success("Atendimento reativado") }
-                )
-              }
-              disabled={atualizar.isPending}
-              className="h-8 gap-1.5 bg-sky-600 hover:bg-sky-700 text-[12px]"
+              onClick={() => setMostrandoRelato(true)}
+              className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-[12px]"
             >
-              {atualizar.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <RotateCcw className="w-3.5 h-3.5" />
-              )}
-              Reativar
+              <CalendarCheck className="w-3.5 h-3.5" />
+              Marcar realizado
             </Button>
           )}
-          {a.status === "realizado" && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() =>
-                atualizar.mutate(
-                  { id: a.id, status: "agendado" },
-                  { onSuccess: () => toast.success("Atendimento reaberto") }
-                )
-              }
-              disabled={atualizar.isPending}
-              className="h-8 gap-1.5 text-[12px] text-neutral-500"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reabrir
-            </Button>
+          {/* Transições de status consolidadas num único menu, conforme o status atual */}
+          {!mostrandoRelato && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={atualizar.isPending}
+                  className="h-8 gap-1.5 text-[12px] text-neutral-500"
+                >
+                  {atualizar.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  )}
+                  Status
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[11rem]">
+                {a.status === "agendado" && (
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      atualizar.mutate(
+                        { id: a.id, status: "cancelado" },
+                        { onSuccess: () => toast.success("Atendimento cancelado") }
+                      )
+                    }
+                    className="gap-2 text-[12px]"
+                  >
+                    <XCircle className="w-3.5 h-3.5 text-neutral-500" />
+                    Cancelar atendimento
+                  </DropdownMenuItem>
+                )}
+                {a.status === "cancelado" && (
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      atualizar.mutate(
+                        { id: a.id, status: "agendado" },
+                        { onSuccess: () => toast.success("Atendimento reativado") }
+                      )
+                    }
+                    className="gap-2 text-[12px]"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    Reativar (voltar a agendado)
+                  </DropdownMenuItem>
+                )}
+                {a.status === "realizado" && (
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      atualizar.mutate(
+                        { id: a.id, status: "agendado" },
+                        { onSuccess: () => toast.success("Atendimento reaberto") }
+                      )
+                    }
+                    className="gap-2 text-[12px]"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-neutral-500" />
+                    Reabrir (voltar a agendado)
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <div className="flex-1" />
           <Button size="sm" variant="ghost" onClick={() => onEdit(a)} className="h-8 gap-1.5 text-[12px] text-neutral-500">
             <Pencil className="w-3.5 h-3.5" />
             Editar
-          </Button>
-          <Button size="sm" variant="ghost" asChild className="h-8 gap-1.5 text-[12px] text-neutral-500">
-            <Link href={`/admin/agenda?date=${format(dt, "yyyy-MM-dd")}`}>
-              <Calendar className="w-3.5 h-3.5" />
-              Agenda
-            </Link>
           </Button>
           <Button
             size="sm"
