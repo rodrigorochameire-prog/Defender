@@ -1496,6 +1496,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
           onDeteccao={setDeteccaoPendente}
+          redesignarContexto={{
+            tipoLabel: evento.tipoAudiencia || evento.titulo,
+            assistidoNome: evento.assistido,
+            dataAtual: evento.data,
+            horaAtual: evento.horarioInicio,
+            prioridade: evento.prioridade,
+          }}
         />
         <PessoaSheet
           pessoaId={pessoaSheetId}

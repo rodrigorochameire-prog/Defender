@@ -15,3 +15,6 @@ export type { PriorityBadgeProps } from "./priority-badge";
 
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
+
+export { StickyActionFooter } from "./sticky-action-footer";
+export type { StickyActionFooterProps } from "./sticky-action-footer";
