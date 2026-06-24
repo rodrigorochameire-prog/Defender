@@ -62,6 +62,7 @@ import { PrazoCockpitBar } from "./PrazoCockpitBar";
 import { ActiveFiltersBar } from "./ActiveFiltersBar";
 import { buildActiveFilterChips } from "./active-filters";
 import { DemandasEmptyState } from "./DemandasEmptyState";
+import { DemandasListSkeleton } from "./DemandasListSkeleton";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -3382,7 +3383,9 @@ export default function Demandas() {
               ) : viewMode === "cards" ? (
                 /* ========== MODO CARDS HORIZONTAIS ========== */
                 <>
-                  {demandasOrdenadas.length === 0 ? (
+                  {loadingDemandas && demandasDB.length === 0 ? (
+                    <DemandasListSkeleton />
+                  ) : demandasOrdenadas.length === 0 ? (
                     <DemandasEmptyState
                       hasActiveFilters={activeFilterChips.length > 0}
                       showArchived={showArchived}
@@ -3482,7 +3485,9 @@ export default function Demandas() {
               ) : (
                 /* ========== MODO GRID PREMIUM ========== */
                 <>
-                  {demandasOrdenadas.length === 0 ? (
+                  {loadingDemandas && demandasDB.length === 0 ? (
+                    <DemandasListSkeleton />
+                  ) : demandasOrdenadas.length === 0 ? (
                     <DemandasEmptyState
                       hasActiveFilters={activeFilterChips.length > 0}
                       showArchived={showArchived}
