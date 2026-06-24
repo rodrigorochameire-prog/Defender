@@ -46,4 +46,39 @@ describe("derivarStatusOitiva", () => {
   it("intimação default é 'desconhecido' quando ausente", () => {
     expect(derivarStatusOitiva({}).intimacao).toBe("desconhecido");
   });
+
+  // --- F3: intimado (boolean|null) + certidão de comunicação ---
+
+  it("intimado é true quando intimação === 'intimado'", () => {
+    expect(derivarStatusOitiva({ intimacao: "intimado" }).intimado).toBe(true);
+  });
+
+  it("intimado é false quando explicitamente não intimado", () => {
+    expect(derivarStatusOitiva({ intimacao: "nao_intimado" }).intimado).toBe(false);
+  });
+
+  it("intimado é null quando o status é desconhecido (ausente)", () => {
+    expect(derivarStatusOitiva({}).intimado).toBeNull();
+    expect(derivarStatusOitiva({ intimacao: "desconhecido" }).intimado).toBeNull();
+  });
+
+  it("intimado é null para estados que não afirmam nem negam a intimação (pendente/dispensada)", () => {
+    expect(derivarStatusOitiva({ intimacao: "pendente" }).intimado).toBeNull();
+    expect(derivarStatusOitiva({ intimacao: "dispensada" }).intimado).toBeNull();
+  });
+
+  it("expõe o teor da certidão quando presente (snake_case certidao_comunicacao)", () => {
+    const s = derivarStatusOitiva({ certidao_comunicacao: "Mandado cumprido. Intimado pessoalmente." });
+    expect(s.certidao).toBe("Mandado cumprido. Intimado pessoalmente.");
+  });
+
+  it("expõe o teor da certidão quando presente (camelCase certidaoComunicacao)", () => {
+    const s = derivarStatusOitiva({ certidaoComunicacao: "AR negativo — não localizado." });
+    expect(s.certidao).toBe("AR negativo — não localizado.");
+  });
+
+  it("certidao é null quando ausente ou vazia", () => {
+    expect(derivarStatusOitiva({}).certidao).toBeNull();
+    expect(derivarStatusOitiva({ certidao_comunicacao: "   " }).certidao).toBeNull();
+  });
 });

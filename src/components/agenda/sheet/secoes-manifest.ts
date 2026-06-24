@@ -81,17 +81,30 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
 
 /**
  * AIJ / Sumariante / PAP — instrução completa (ordem do art. 400 CPP).
- * Lidera com a preparação acionável (roteiro + depoentes + teses), depois o
- * contexto da imputação e os elementos de prova; resultado (ata) ao final.
+ *
+ * Estrutura em 3 faixas para reduzir a poluição do sheet:
+ *  1. Espinha (7): resumo → imputação → denúncia(fatos) → depoentes →
+ *     depoimentos → laudos → documentos — o fluxo mental da audiência.
+ *  2. Preparação: dossie (Roteiro) → teses.
+ *  3. Contexto (colapsado ao final): ver {@link GRUPO_CONTEXTO_INSTRUCAO}.
+ *
+ * Espinha + preparação renderizam como seções de topo; o grupo Contexto é
+ * renderizado dentro de um único CollapsibleSection no corpo do sheet AIJ.
  */
 export const SECOES_INSTRUCAO: SecaoId[] = [
-  "dossie",
-  "depoentes",
-  "teses",
+  // Espinha (7)
+  "resumo",
   "imputacao",
   "fatos",
-  "contradicoes",
+  "depoentes",
+  "depoimentos",
   "laudos",
+  "documentos",
+  // Preparação
+  "dossie",
+  "teses",
+  // Contexto (grupo colapsado — ver GRUPO_CONTEXTO_INSTRUCAO)
+  "contradicoes",
   "versao",
   "relato-vitima",
   "sintese",
@@ -101,7 +114,25 @@ export const SECOES_INSTRUCAO: SecaoId[] = [
   "ata",
   "anotacoes-rapidas",
   "analise-ia",
-  "documentos",
+  "midia",
+];
+
+/**
+ * Seções de "Contexto" da instrução — material de apoio agrupado num único
+ * CollapsibleSection (colapsado por padrão) ao final do sheet AIJ. É disjunto
+ * da espinha + preparação e, somado a ela, cobre toda a {@link SECOES_INSTRUCAO}.
+ */
+export const GRUPO_CONTEXTO_INSTRUCAO: SecaoId[] = [
+  "contradicoes",
+  "versao",
+  "relato-vitima",
+  "sintese",
+  "investigacao",
+  "pendencias",
+  "medidas",
+  "ata",
+  "anotacoes-rapidas",
+  "analise-ia",
   "midia",
 ];
 

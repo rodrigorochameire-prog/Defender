@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { resolverManifesto, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
+import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -20,6 +20,9 @@ import { RequerimentoDefesaSecao } from "@/components/agenda/sheet/secoes/Requer
 import { ResumoGeralSecao } from "@/components/agenda/sheet/secoes/ResumoGeralSecao";
 import { IntimacaoSecao } from "@/components/agenda/sheet/secoes/IntimacaoSecao";
 import { MedidasVigentesSecao } from "@/components/agenda/sheet/secoes/MedidasVigentesSecao";
+import { DenunciaSecao } from "@/components/agenda/sheet/secoes/DenunciaSecao";
+import { LaudosSecao } from "@/components/agenda/sheet/secoes/LaudosSecao";
+import { DepoentesSecao } from "@/components/agenda/sheet/secoes/DepoentesSecao";
 import { CitacaoText } from "@/components/agenda/sheet/CitacaoText";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { toast } from "sonner";
@@ -36,7 +39,6 @@ import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
 import { AtaAudienciaBlock } from "@/components/agenda/sheet/ata-audiencia-block";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
-import { derivarStatusOitiva } from "@/lib/agenda/depoente-status";
 import { extrairNumPje } from "@/lib/agenda/extrair-num-pje";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
@@ -59,100 +61,9 @@ function EmptyHint({ text }: { text: string }) {
   return <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">{text}</p>;
 }
 
-const INTIMACAO_TONE: Record<string, string> = {
-  intimado: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  dispensada: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
-  pendente: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  nao_intimado: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-  desconhecido: "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
-};
-const INTIMACAO_LABEL: Record<string, string> = {
-  intimado: "intimado", dispensada: "dispensada", pendente: "pendente",
-  nao_intimado: "não intimado", desconhecido: "intimação a verificar",
-};
-// MOTIVO_LABEL foi para @/lib/agenda/depoente-status (fonte única, testada).
-const TIPO_DEP_LABEL: Record<string, string> = {
-  ofendida: "ofendida", testemunha_acusacao: "test. acusação",
-  testemunha_defesa: "test. defesa", informante: "informante",
-  interrogando: "interrogando", perito: "perito",
-};
-
-/** Painel de status dos depoentes — quem será ouvido, intimação e motivo. */
-function PainelDepoentesStatus({ depoentes, onAbrirDepoimento }: { depoentes: any[]; onAbrirDepoimento?: (d: any) => void }) {
-  if (!depoentes?.length) return null;
-  const stats = depoentes.map(derivarStatusOitiva);
-  const ouvidosJuizo = stats.filter((s) => s.ouvidoJuizo).length;
-  const faltamJuizo = stats.filter((s) => s.faltaJuizo).length;
-  const naoIntimados = stats.filter((s) => s.faltaJuizo && s.intimacao === "nao_intimado").length;
-  const aVerificar = stats.filter((s) => s.faltaJuizo && s.intimacao === "desconhecido").length;
-  return (
-    <div className="rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden mb-2">
-      <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-900/60 text-[10px] font-medium text-neutral-500 flex-wrap">
-        <span>{depoentes.length} depoentes</span>
-        {ouvidosJuizo > 0 && <span className="text-emerald-600 dark:text-emerald-400">· {ouvidosJuizo} ouvido(s) em juízo</span>}
-        {faltamJuizo > 0 && <span>· {faltamJuizo} a ouvir</span>}
-        {naoIntimados > 0 && <span className="text-rose-600 dark:text-rose-400">· {naoIntimados} não intimado(s)</span>}
-        {aVerificar > 0 && <span className="text-amber-600 dark:text-amber-400">· {aVerificar} a verificar</span>}
-      </div>
-      <div className="divide-y divide-neutral-100 dark:divide-neutral-800/60">
-        {depoentes.map((d, i) => {
-          const st = stats[i];
-          const temPonto = !!(onAbrirDepoimento && (d.depoimento_ip || d.depoimento_juizo));
-          return (
-            <div
-              key={`${i}-${d.nome}`}
-              onClick={temPonto ? () => onAbrirDepoimento!(d) : undefined}
-              title={temPonto ? "Abrir o depoimento no PDF dos autos" : undefined}
-              className={cn(
-                "flex items-start gap-2 px-2.5 py-1.5",
-                temPonto && "cursor-pointer hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-colors",
-              )}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-medium text-neutral-700 dark:text-neutral-200 truncate">{d.nome}</span>
-                  {temPonto && <span className="text-[9px] text-emerald-500" aria-hidden>↗</span>}
-                  {TIPO_DEP_LABEL[d.tipo] && (
-                    <span className="text-[9px] text-neutral-400">{TIPO_DEP_LABEL[d.tipo]}</span>
-                  )}
-                </div>
-                {(st.motivoLabel || d.observacao) && (
-                  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-snug mt-0.5">
-                    {st.motivoLabel ?? d.observacao}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                {/* Delegacia */}
-                <span className={cn(
-                  "text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
-                  st.ouvidoDelegacia
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                    : "bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500",
-                )}>
-                  Delegacia {st.ouvidoDelegacia ? "✓" : "—"}
-                </span>
-                {/* Juízo: ouvido, ou status de intimação */}
-                {st.ouvidoJuizo ? (
-                  <span className="text-[8.5px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap">
-                    Juízo ✓{d.ja_ouvido?.data ? ` ${d.ja_ouvido.data}` : ""}
-                  </span>
-                ) : (
-                  <span className={cn(
-                    "text-[8.5px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap",
-                    INTIMACAO_TONE[st.intimacao] ?? INTIMACAO_TONE.desconhecido,
-                  )}>
-                    Juízo: {INTIMACAO_LABEL[st.intimacao] ?? st.intimacao}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// O painel de status dos depoentes (situação + intimação + certidão de
+// comunicação) migrou para @/components/agenda/sheet/secoes/DepoentesSecao (F3).
+// As tabelas de tom/label e o `derivarStatusOitiva` agora vivem lá / no helper.
 
 /** Banner do rito — foco + lembretes específicos do subtipo da audiência. */
 function SubtipoBanner({ subtipo, processoNum }: { subtipo: ReturnType<typeof detectarSubtipo>; processoNum?: string | null }) {
@@ -469,6 +380,28 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     });
   }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa]);
 
+  // Painel de status (F3): usa o detalhe da análise, mas funde o teor da
+  // certidão de comunicação (campo do banco em `testemunhas`) por nome.
+  // A certidão é populada pela skill de sistematização (ver tasks.md F3/T3.4);
+  // quando ausente, o depoente fica sem certidão (sem ruído).
+  const depoentesStatus = useMemo(() => {
+    const norm = (s: unknown) =>
+      typeof s === "string"
+        ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+        : "";
+    const certidaoPorNome = new Map<string, string>();
+    for (const t of testemunhasDB as any[]) {
+      const teor = t?.certidaoComunicacao;
+      const key = norm(t?.nome);
+      if (key && typeof teor === "string" && teor.trim()) certidaoPorNome.set(key, teor);
+    }
+    const base = depoentesDetalhe.length ? depoentesDetalhe : depoentes;
+    return base.map((d: any) => {
+      const certidao = d?.certidao_comunicacao ?? d?.certidaoComunicacao ?? certidaoPorNome.get(norm(d?.nome));
+      return certidao ? { ...d, certidao_comunicacao: certidao } : d;
+    });
+  }, [depoentesDetalhe, depoentes, testemunhasDB]);
+
   const participacoesQuery = trpc.pessoas.getParticipacoesDoProcesso.useQuery(
     { processoId: processoId ?? 0 },
     { enabled: !!processoId && open, retry: false },
@@ -544,6 +477,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // usa SECOES_JUSTIFICACAO; demais ritos = SECOES_DEFAULT). O corpo e o ToC
   // iteram a MESMA fonte, garantindo paridade visual.
   const manifesto = resolverManifesto(SUBTIPO_CONFIG[subtipo]);
+  // Rito de Instrução (AIJ): muda a apresentação de algumas seções (denúncia
+  // verbatim, laudos linkados) e o agrupamento Contexto ao final.
+  const isInstrucao = manifesto === SECOES_INSTRUCAO;
 
   const secoesMap: Record<SecaoId, { label: string; temDado: boolean; count?: number; node: ReactNode }> = {
     "resumo": {
@@ -748,9 +684,21 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       ),
     },
     "fatos": {
-      label: "Fatos (Denúncia)",
+      label: isInstrucao ? "Denúncia" : "Fatos (Denúncia)",
       temDado: true,
-      node: (
+      node: isInstrucao ? (
+        <CollapsibleSection id="fatos" label="Denúncia" defaultOpen>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <DenunciaSecao
+            processoId={typeof processoId === "number" ? processoId : null}
+            fallbackResumo={fatos ?? fatosLiteral}
+          />
+        </CollapsibleSection>
+      ) : (
         <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
           {analyzedAt && (
             <div className="flex justify-end mb-1">
@@ -873,11 +821,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       count: depoentesDetalhe.length || depoentes.length,
       node: (
         <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
-          {depoentesDetalhe.length > 0 ? (
-            <PainelDepoentesStatus depoentes={depoentesDetalhe} onAbrirDepoimento={abrirDepoimentoNoPonto} />
-          ) : (
-            <EmptyHint text="Status dos depoentes não disponível." />
-          )}
+          <DepoentesSecao depoentes={depoentesStatus} onAbrirDepoimento={abrirDepoimentoNoPonto} />
         </CollapsibleSection>
       ),
     },
@@ -1033,25 +977,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               <FreshnessBadge analyzedAt={analyzedAt} />
             </div>
           )}
-          <ul className="space-y-1">
-            {laudos.map((l: any, i: number) => (
-              <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
-              </li>
-            ))}
-          </ul>
-          {lacunas.length > 0 && (
-            <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-              <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
-              <ul className="space-y-1">
-                {lacunas.map((l: any, i: number) => (
-                  <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                    • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <LaudosSecao
+            processoId={typeof processoId === "number" ? processoId : null}
+            laudos={laudos}
+            lacunas={lacunas}
+          />
         </CollapsibleSection>
       ),
     },
@@ -1196,11 +1126,30 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   };
 
   const secoesVisiveis = manifesto.filter((id) => secoesMap[id]?.temDado);
-  const tocSections: ToCSection[] = secoesVisiveis.map((id) => ({
-    id,
-    label: secoesMap[id]!.label,
-    ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
-  }));
+
+  // Instrução (AIJ): a espinha + preparação ficam como seções de topo e as
+  // seções do grupo Contexto colapsam dentro de UM único CollapsibleSection ao
+  // final — reduz a poluição sem perder dado. Demais ritos seguem flat.
+  const contextoIds: SecaoId[] = isInstrucao
+    ? secoesVisiveis.filter((id) => GRUPO_CONTEXTO_INSTRUCAO.includes(id))
+    : [];
+  const espinhaVisiveis = isInstrucao
+    ? secoesVisiveis.filter((id) => !GRUPO_CONTEXTO_INSTRUCAO.includes(id))
+    : secoesVisiveis;
+
+  const tocSections: ToCSection[] = [
+    ...espinhaVisiveis.map((id) => ({
+      id,
+      label: secoesMap[id]!.label,
+      ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
+    })),
+    // Grupo Contexto entra como UMA única pill no ToC (a âncora é o wrapper).
+    ...(contextoIds.length > 0 ? [{ id: "contexto", label: "Contexto", count: contextoIds.length }] : []),
+  ];
+
+  // Assinatura estável das âncoras renderizadas — o observer só precisa re-rodar
+  // quando o conjunto de seções (espinha + grupo Contexto) muda, não a cada render.
+  const ancorasKey = [...espinhaVisiveis, ...(contextoIds.length > 0 ? ["contexto"] : [])].join("|");
 
   useEffect(() => {
     if (!open || !scrollContainerRef.current) return;
@@ -1217,7 +1166,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     const nodes = root.querySelectorAll("[data-section-id]");
     nodes.forEach((n) => observer.observe(n));
     return () => observer.disconnect();
-  }, [open, tocSections]);
+  }, [open, ancorasKey]);
 
   const handleJump = (id: string) => {
     const root = scrollContainerRef.current;
@@ -1296,6 +1245,14 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           const RitoIcon = subtipoCfg.icon;
           const ritoCores = corBadge(subtipoCfg.cor);
           const st = statusAudienciaInfo((ctx as any)?.audiencia?.status ?? evento.status);
+          // UM único pill de status. Quando a audiência está concluída e há
+          // resultado registrado, o resultado prevalece sobre o status genérico
+          // ("Realizada") — é a informação mais útil. Caso contrário, mostra o
+          // status derivado. (Apresentação: não muda dados nem lógica.)
+          const resultadoTexto = (((ctx as any)?.audiencia?.resultado ?? "") as string).trim();
+          const pill = jaConcluida && resultadoTexto
+            ? { label: resultadoTexto, cls: st.cls }
+            : st;
           return (
             <div className={cn(SHEET_STYLE.topBar, "px-3 py-2 flex items-center justify-between gap-2")}>
               <div className="flex items-center gap-2 min-w-0">
@@ -1308,7 +1265,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     {format(dataHora, "dd/MM · HH:mm", { locale: ptBR })}
                   </span>
                 )}
-                <span className={cn(SHEET_STYLE.statusPill, st.cls)}>{st.label}</span>
+                <span className={cn(SHEET_STYLE.statusPill, pill.cls, "max-w-[160px] truncate")} title={pill.label}>
+                  {pill.label}
+                </span>
               </div>
               <button
                 onClick={() => onOpenChange(false)}
@@ -1496,15 +1455,28 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </div>
             )}
 
-            {!isLoading && secoesVisiveis.map((id) => (
+            {!isLoading && espinhaVisiveis.map((id) => (
               <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
             ))}
+
+            {/* Instrução: grupo Contexto colapsado (uma âncora única no ToC). */}
+            {!isLoading && contextoIds.length > 0 && (
+              <CollapsibleSection id="contexto" label="Contexto" count={contextoIds.length} defaultOpen={false}>
+                <div className="space-y-3">
+                  {contextoIds.map((id) => (
+                    <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            )}
           </div>
         </div>
 
         <SheetActionFooter
           audienciaId={audienciaIdNum}
           jaConcluida={jaConcluida}
+          assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+          processoId={typeof processoId === "number" ? processoId : null}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
           onDeteccao={setDeteccaoPendente}

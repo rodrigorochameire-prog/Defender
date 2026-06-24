@@ -316,6 +316,10 @@ export const testemunhas = pgTable("testemunhas", {
   redesignadoPara: date("redesignado_para"),
   sinteseJuizo: text("sintese_juizo"),
   audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
+  // Teor da certidão de comunicação processual (mandado/AR/precatória):
+  // cumprido / não localizado / devolvido etc. Populado pela skill de
+  // sistematização (ver tasks.md F3 / T3.4). Lido apenas quando presente.
+  certidaoComunicacao: text("certidao_comunicacao"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
