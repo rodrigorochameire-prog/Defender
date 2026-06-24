@@ -60,6 +60,18 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/use-permissions";
 
+/** Rótulo de etapa do fluxo de triagem (doutrina §5 — etapas explícitas). */
+function StepEyebrow({ n, label }: { n: number; label: string }) {
+  return (
+    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[9px] tabular-nums text-foreground/70">
+        {n}
+      </span>
+      {label}
+    </div>
+  );
+}
+
 export default function NovaDemandaPage() {
   const router = useRouter();
   const { hasArea } = usePermissions();
@@ -339,6 +351,7 @@ export default function NovaDemandaPage() {
         {/* Assistido e Processo */}
         <Card>
           <CardHeader>
+            <StepEyebrow n={1} label="Contexto" />
             <CardTitle className="text-base flex items-center gap-2">
               <User className="w-4 h-4" />
               Assistido e Processo
@@ -529,6 +542,7 @@ export default function NovaDemandaPage() {
         {/* Ato Processual */}
         <Card>
           <CardHeader>
+            <StepEyebrow n={2} label="Natureza do ato" />
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Ato Processual
@@ -608,6 +622,7 @@ export default function NovaDemandaPage() {
         {/* Cálculo de Prazo */}
         <Card className={cn(usarCalculoAutomatico && "border-blue-200 dark:border-blue-800")}>
           <CardHeader>
+            <StepEyebrow n={3} label="Cálculo do prazo" />
             <CardTitle className="text-base flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Calculator className="w-4 h-4" />
@@ -691,50 +706,48 @@ export default function NovaDemandaPage() {
                 )}
 
                 {resultadoCalculo && (
-                  <div className="p-4 border rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Check className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-green-800 dark:text-green-200">
-                        Prazo Calculado
-                      </span>
+                  <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/10">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        <Check className="h-3.5 w-3.5" /> Prazo calculado automaticamente
+                      </div>
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-white/[0.06] dark:text-neutral-300">
+                          {resultadoCalculo.prazoBaseDias}d base
+                        </span>
+                        {resultadoCalculo.aplicouDobro && (
+                          <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                            ×2 = {resultadoCalculo.prazoComDobroDias}d
+                          </span>
+                        )}
+                        <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-white/[0.06] dark:text-neutral-300">
+                          {resultadoCalculo.contadoEmDiasUteis ? "Dias úteis" : "Dias corridos"}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                      <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
-                        <div className="text-xs text-muted-foreground">Expedição</div>
-                        <div className="font-medium text-sm">{resultadoCalculo.dataExpedicao}</div>
-                      </div>
-                      <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
-                        <div className="text-xs text-muted-foreground">Leitura</div>
-                        <div className="font-medium text-sm">{resultadoCalculo.dataLeitura}</div>
-                      </div>
-                      <div className="text-center p-2 bg-white dark:bg-gray-900 rounded">
-                        <div className="text-xs text-muted-foreground">Início</div>
-                        <div className="font-medium text-sm">{resultadoCalculo.dataTermoInicial}</div>
-                      </div>
-                      <div className="text-center p-2 bg-green-100 dark:bg-green-900 rounded border-2 border-green-500">
-                        <div className="text-xs text-green-700 dark:text-green-300 font-medium">
-                          PRAZO FATAL
+                    <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-emerald-700/70 dark:text-emerald-400/70">
+                          Prazo fatal
                         </div>
-                        <div className="font-bold text-lg text-green-800 dark:text-green-200">
+                        <div className="font-mono text-2xl font-bold tabular-nums text-emerald-800 dark:text-emerald-200">
                           {resultadoCalculo.dataTermoFinal}
                         </div>
                       </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pb-1 text-[11px] text-muted-foreground">
+                        <span>Expedição <b className="font-medium tabular-nums text-foreground/80">{resultadoCalculo.dataExpedicao}</b></span>
+                        <span>Leitura <b className="font-medium tabular-nums text-foreground/80">{resultadoCalculo.dataLeitura}</b></span>
+                        <span>Início <b className="font-medium tabular-nums text-foreground/80">{resultadoCalculo.dataTermoInicial}</b></span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">
-                        {resultadoCalculo.prazoBaseDias} dias base
-                      </Badge>
-                      {resultadoCalculo.aplicouDobro && (
-                        <Badge variant="default" className="bg-blue-600">
-                          x2 = {resultadoCalculo.prazoComDobroDias} dias
-                        </Badge>
-                      )}
-                      <Badge variant="outline">
-                        {resultadoCalculo.contadoEmDiasUteis ? "Dias úteis" : "Dias corridos"}
-                      </Badge>
-                    </div>
+                    <p className="mt-2.5 text-[10.5px] leading-snug text-emerald-700/80 dark:text-emerald-300/70">
+                      {resultadoCalculo.aplicouDobro
+                        ? "Prazo em dobro (prerrogativa da Defensoria) aplicado sobre o prazo legal"
+                        : "Prazo legal simples"}
+                      , contado em {resultadoCalculo.contadoEmDiasUteis ? "dias úteis" : "dias corridos"} a partir do termo inicial.
+                    </p>
                   </div>
                 )}
 
@@ -827,6 +840,7 @@ export default function NovaDemandaPage() {
         {/* Providências */}
         <Card>
           <CardHeader>
+            <StepEyebrow n={4} label="Providências" />
             <CardTitle className="text-base flex items-center gap-2">
               <Scale className="w-4 h-4" />
               Providências
@@ -842,8 +856,10 @@ export default function NovaDemandaPage() {
           </CardContent>
         </Card>
 
-        {/* Ações */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+        {/* Ações — Revisão e salvamento */}
+        <div className="space-y-2.5">
+          <StepEyebrow n={5} label="Revisão e salvamento" />
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
           <Button variant="outline" type="button" asChild>
             <Link href="/admin/demandas">Cancelar</Link>
           </Button>
@@ -864,6 +880,7 @@ export default function NovaDemandaPage() {
               </>
             )}
           </Button>
+          </div>
         </div>
       </form>
       </div>
