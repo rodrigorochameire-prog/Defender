@@ -215,6 +215,10 @@ export default function AssistidoHubPage() {
     { assistidoId: id },
     { enabled: !isNaN(id) },
   );
+  const { data: medidasVigentes = [] } = trpc.assistidos.getMedidasVigentes.useQuery(
+    { assistidoId: id },
+    { enabled: !isNaN(id) },
+  );
 
   const casosAtivos = useMemo(() => casos.filter((c) => c.status === "ativo"), [casos]);
 
@@ -453,6 +457,37 @@ export default function AssistidoHubPage() {
 
         {/* COLUNA 2 — o que urge */}
         <div className="space-y-3">
+          {/* Medidas protetivas vigentes (VVD) — só aparece quando há */}
+          {medidasVigentes.length > 0 && (
+            <CardShell title="Medidas protetivas vigentes" icon={ShieldAlert}>
+              <div className="space-y-1.5">
+                {medidasVigentes.map((m, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-rose-200/60 dark:border-rose-900/40 bg-rose-50/50 dark:bg-rose-950/15 px-2.5 py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                      <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-rose-700 dark:text-rose-300">
+                        {m.codigo}
+                      </span>
+                      {m.artigo && (
+                        <span className="shrink-0 text-[9.5px] text-rose-600/70 dark:text-rose-400/70">{m.artigo}</span>
+                      )}
+                    </div>
+                    {(m.distanciaMetros || m.dataVencimento || m.numeroAutos) && (
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-5 text-[10px] text-muted-foreground">
+                        {m.distanciaMetros ? <span className="tabular-nums">{m.distanciaMetros}m</span> : null}
+                        {m.dataVencimento && <span>vence {fmtData(m.dataVencimento)}</span>}
+                        {m.numeroAutos && <span className="font-mono">{m.numeroAutos.split(".")[0]}</span>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardShell>
+          )}
+
           {/* Próxima audiência */}
           <CardShell title="Próxima audiência" icon={CalendarDays}>
             {proximaAudiencia ? (

@@ -6,6 +6,7 @@ import { getAssistidosVisibilityFilter, getComarcaId } from "@/lib/trpc/comarca-
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { uploadImageBuffer } from "@/lib/supabase/storage";
+import { medidasMPU, processosVVD } from "@/lib/db/schema/vvd";
 
 // Drive lifecycle: cria ou move pasta em background (fire-and-forget)
 async function ensureDriveFolderForAssistido(
@@ -1631,5 +1632,41 @@ export const assistidosRouter = router({
         .map((p) => ({ processoId: p.id, numeroAutos: p.numeroAutos, modus: p.modusOperandi }));
 
       return { personas, fatos, modus };
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // getMedidasVigentes — medidas protetivas MPU ativas do assistido (espelho
+  // VVD casado por CNJ dos processos). Mesmo join do prepararAtendimento.
+  // ────────────────────────────────────────────────────────────────────
+  getMedidasVigentes: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const [dono] = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId)))
+        .limit(1);
+      if (!dono) return [];
+
+      const procs = await db
+        .select({ numeroAutos: processos.numeroAutos })
+        .from(processos)
+        .where(and(eq(processos.assistidoId, input.assistidoId), isNull(processos.deletedAt)));
+      const cnjs = procs.map((p) => p.numeroAutos).filter((n): n is string => !!n);
+      if (cnjs.length === 0) return [];
+
+      return db
+        .select({
+          codigo: medidasMPU.codigo,
+          artigo: medidasMPU.artigo,
+          distanciaMetros: medidasMPU.distanciaMetros,
+          literal: medidasMPU.literal,
+          dataVencimento: medidasMPU.dataVencimento,
+          numeroAutos: processosVVD.numeroAutos,
+        })
+        .from(medidasMPU)
+        .innerJoin(processosVVD, eq(medidasMPU.processoVvdId, processosVVD.id))
+        .where(and(inArray(processosVVD.numeroAutos, cnjs), eq(medidasMPU.status, "ativa")));
     }),
 });
