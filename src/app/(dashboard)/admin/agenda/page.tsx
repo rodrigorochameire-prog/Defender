@@ -137,6 +137,8 @@ import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { StatusChip } from "@/components/agenda/ds";
+import { eventoAgendaTipo } from "@/lib/config/tipologia";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -319,6 +321,10 @@ function EventoDetalhado({
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
   const visual = agendaItemVisual(evento);
+  // Status via registry central (cor = exceção). Oculta o estado-padrão
+  // "Designada" para manter as linhas limpas — só exceções/conclusões aparecem.
+  const statusTone = eventoAgendaTipo(evento.status);
+  const showStatusChip = statusTone.label !== "Designada";
 
   return (
     <div
@@ -355,29 +361,32 @@ function EventoDetalhado({
               {evento.titulo}
             </h4>
           </div>
-          <Badge
-            className="flex-shrink-0 text-[10px] px-1.5 py-0.5 border-0"
-            style={{
-              backgroundColor: `${solidColor}20`,
-              color: solidColor,
-            }}
-          >
-            {atribuicaoConfig.shortLabel}
-          </Badge>
-          {isSessaoPlenario(evento) && (() => {
-            const b = defensorBadge(evento.defensorNome);
-            return b ? (
-              <Badge
-                title={`Júri de ${b.label}`}
-                className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
-              >
-                <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold ${b.badgeClass}`}>
-                  {b.initial}
-                </span>
-                <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>
-              </Badge>
-            ) : null;
-          })()}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {showStatusChip && <StatusChip info={statusTone} size="xs" dot />}
+            <Badge
+              className="text-[10px] px-1.5 py-0.5 border-0"
+              style={{
+                backgroundColor: `${solidColor}20`,
+                color: solidColor,
+              }}
+            >
+              {atribuicaoConfig.shortLabel}
+            </Badge>
+            {isSessaoPlenario(evento) && (() => {
+              const b = defensorBadge(evento.defensorNome);
+              return b ? (
+                <Badge
+                  title={`Júri de ${b.label}`}
+                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
+                >
+                  <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold ${b.badgeClass}`}>
+                    {b.initial}
+                  </span>
+                  <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>
+                </Badge>
+              ) : null;
+            })()}
+          </div>
         </div>
 
         {evento.descricao && (
@@ -408,20 +417,8 @@ function EventoDetalhado({
         </div>
       </div>
       
-      {/* Status indicator + Cowork export */}
+      {/* Ações rápidas (status migrou para o chip no cabeçalho — cor = exceção) */}
       <div className="flex flex-col items-center justify-center gap-1.5">
-        {evento.status === "confirmada" && (
-          <div className="w-2 h-2 rounded-full bg-emerald-500" title="Confirmada" />
-        )}
-        {evento.status === "pendente" && (
-          <div className="w-2 h-2 rounded-full bg-amber-500" title="Pendente" />
-        )}
-        {evento.status === "realizada" && (
-          <div className="w-2 h-2 rounded-full bg-blue-500" title="Realizada" />
-        )}
-        {evento.status === "cancelada" && (
-          <div className="w-2 h-2 rounded-full bg-red-500" title="Cancelada" />
-        )}
         {onExportCowork && evento.fonte === "audiencias" && evento.assistidoId && (
           <button
             onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}

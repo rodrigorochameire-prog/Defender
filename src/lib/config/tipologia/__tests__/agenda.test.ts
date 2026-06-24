@@ -4,6 +4,7 @@ import {
   PREPARO_STATUS_CONFIG,
   statusAudienciaTipo,
   statusPreparoInfo,
+  eventoAgendaTipo,
 } from "../agenda";
 
 describe("statusAudienciaTipo", () => {
@@ -63,5 +64,47 @@ describe("statusPreparoInfo", () => {
     expect(Object.keys(PREPARO_STATUS_CONFIG)).toEqual(
       expect.arrayContaining(["completo", "parcial", "pendente"])
     );
+  });
+});
+
+describe("eventoAgendaTipo (domínio amplo do AgendaItem)", () => {
+  it("normaliza variantes de grafia/gênero para o mesmo estado", () => {
+    // cancelada/cancelado → Cancelada
+    expect(eventoAgendaTipo("cancelada").label).toBe("Cancelada");
+    expect(eventoAgendaTipo("cancelado").label).toBe("Cancelada");
+    // realizada/realizado/concluída → Realizada
+    expect(eventoAgendaTipo("realizado").label).toBe("Realizada");
+    expect(eventoAgendaTipo("concluida").label).toBe("Realizada");
+    // redesignado/remarcado/reagendado/adiado → Redesignada
+    for (const s of ["redesignado", "remarcado", "reagendada", "adiado"]) {
+      expect(eventoAgendaTipo(s).label).toBe("Redesignada");
+    }
+  });
+
+  it("cor = exceção: estados normais são neutros, exceções coloridas", () => {
+    // normais → neutro
+    expect(eventoAgendaTipo("confirmada").badge).toMatch(/neutral/);
+    expect(eventoAgendaTipo("confirmado").badge).toMatch(/neutral/);
+    expect(eventoAgendaTipo("agendado").badge).toMatch(/neutral/);
+    expect(eventoAgendaTipo("designada").badge).toMatch(/neutral/);
+    // terminal positivo → emerald
+    expect(eventoAgendaTipo("realizada").badge).toMatch(/emerald/);
+    // exceções → rose/amber
+    expect(eventoAgendaTipo("cancelada").badge).toMatch(/rose/);
+    expect(eventoAgendaTipo("redesignada").badge).toMatch(/amber/);
+    expect(eventoAgendaTipo("pendente").badge).toMatch(/amber/);
+  });
+
+  it("rotula confirmada e agendado de forma legível (não vira só 'Designada')", () => {
+    expect(eventoAgendaTipo("confirmada").label).toBe("Confirmada");
+    expect(eventoAgendaTipo("agendado").label).toBe("Agendado");
+  });
+
+  it("é case-insensitive e cai em Designada (neutro) para vazio/desconhecido", () => {
+    expect(eventoAgendaTipo("CANCELADA").label).toBe("Cancelada");
+    expect(eventoAgendaTipo(null).label).toBe("Designada");
+    expect(eventoAgendaTipo("").label).toBe("Designada");
+    expect(eventoAgendaTipo("xyz").label).toBe("Designada");
+    expect(eventoAgendaTipo(null).badge).toMatch(/neutral/);
   });
 });

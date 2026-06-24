@@ -39,6 +39,7 @@ export {
   PREPARO_STATUS_CONFIG,
   statusAudienciaTipo,
   statusPreparoInfo,
+  eventoAgendaTipo,
 } from "./agenda";
 
 // Atribuição (já centralizada) — re-export para um único ponto de entrada.
