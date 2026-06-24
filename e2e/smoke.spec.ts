@@ -96,3 +96,37 @@ test.describe.skip("Atendimentos baseline (manual run — requires auth)", () =>
     await expect(page.getByText("Novo atendimento")).toBeVisible();
   });
 });
+
+// Contrato mobile (Fase 6) — documenta o comportamento esperado em viewport de
+// celular para ser conferido em device/app real. Requer sessão logada; rodar
+// manualmente: npx playwright test e2e/smoke.spec.ts --ui (após logar).
+test.describe.skip("Atendimentos mobile (manual run — requires auth + device)", () => {
+  test.use({ viewport: { width: 390, height: 844 } }); // iPhone 12/13/14
+
+  test("novo atendimento abre full-screen (modal ocupa a viewport)", async ({ page }) => {
+    await page.goto("/admin/atendimentos");
+    await page.getByRole("button", { name: "Novo atendimento" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    // Full-screen no mobile: a caixa deve ocupar (quase) toda a altura da viewport.
+    const box = await dialog.boundingBox();
+    expect(box, "dialog deve ter boundingBox").not.toBeNull();
+    expect(box!.height).toBeGreaterThan(700); // ~100dvh de 844
+  });
+
+  test("gerar demanda abre como sheet full-width", async ({ page }) => {
+    // Abre o workspace de um atendimento e dispara "Gerar demanda".
+    await page.goto("/admin/atendimentos");
+    await page.getByRole("button", { name: "Cards" }).click();
+    await page.locator("[data-atendimento-card]").first().click();
+    await expect(page.getByRole("dialog", { name: /detalhes do atendimento/i })).toBeVisible();
+    await page.getByRole("button", { name: /gerar demanda/i }).first().click();
+    // O painel (Sheet) deve cobrir a largura total no mobile.
+    const sheet = page.getByRole("dialog", { name: /gerar demanda/i });
+    await expect(sheet).toBeVisible();
+    const box = await sheet.boundingBox();
+    expect(box!.width).toBeGreaterThan(360); // ~full-width de 390
+    // CTA ancorado no rodapé do sheet.
+    await expect(page.getByRole("button", { name: /criar demanda/i })).toBeVisible();
+  });
+});

@@ -97,7 +97,7 @@
 - 6.1 `AtendimentoMobileCard` (1 ação dominante; metadados secundários discretos) + `AtendimentoStickyFilters` (KPIs grid 2x2/carrossel; aba "A registrar" acessível). _(carece de verificação em device — ações do card hoje aparecem no hover, sem equivalente touch)_
 - 6.2 Workspace mobile: header sticky · seções navegáveis · `AtendimentoContextSheet` (contexto OMBUDS em sheet/accordion) · `AtendimentoActionSheet` (ações rápidas). _(carece de device)_
 - [x] 6.3 **Gerar demanda / Agendar retorno full-screen no mobile**: Gerar demanda já é Sheet `w-full` (full-screen no celular); form-modal (Dialog) agora `max-sm:h-[100dvh] max-sm:max-w-none` (full-screen no celular) + CTA full-width. CTAs ancorados (SheetFooter / footer do form).
-- 6.4 **Testes**: breakpoints críticos (full-screen sheet/modal; alvo de toque; filtros recolhidos). _(melhor com Playwright em viewport mobile — device)_
+- [x] 6.4 **Baseline mobile** (`e2e/smoke.spec.ts`, `describe.skip` viewport 390×844): documenta o contrato — novo atendimento full-screen (altura ~100dvh) + Gerar demanda como Sheet full-width com CTA ancorado. Rodar manualmente/no device. _Resta_: alvo de toque + filtros recolhidos (pedem device).
 
 ### Fase 7 — QA final + estados especiais
 - 7.1 Skeletons coerentes por área. 7.2 Empty states (lista/registros/autos/contexto). 7.3 Erro + sucesso contextual. 7.4 A11y final (badges/filtros/campos/CTAs). 7.5 QA visual desktop/mobile; densidade final; consistência lista↔workspace↔fluxos.
