@@ -2,7 +2,7 @@
 
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { User, Briefcase, ClipboardList, CalendarDays, FileText, Microscope, Contact, Clock, Newspaper, MessageCircle, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,8 @@ const NIVEL_1_TABS = [
   { key: "radar",       label: "Radar",       icon: Newspaper,     path: "radar" },
 ] as const;
 
+const STATUS_CONCLUIDO = new Set(["CONCLUIDO", "ARQUIVADO"]);
+
 export default function AssistidoLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const pathname = usePathname();
@@ -30,6 +32,22 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
   const [agendar, setAgendar] = useState(false);
 
   const { data: assistido } = trpc.assistidos.getById.useQuery({ id }, { enabled: !isNaN(id) });
+
+  // Contadores por aba (do payload já cacheado do getById): casos, demandas em
+  // aberto e audiências futuras — orientação imediata na nav.
+  const contadores = useMemo<Record<string, number>>(() => {
+    if (!assistido) return {} as Record<string, number>;
+    const demandas = (assistido.demandas ?? []).filter(
+      (d) => !STATUS_CONCLUIDO.has(String(d.status ?? "").toUpperCase()),
+    ).length;
+    const agora = Date.now();
+    const audiencias = (assistido.audiencias ?? []).filter((a) => {
+      const t = new Date(a.dataAudiencia).getTime();
+      return t >= agora && !String(a.status ?? "").toLowerCase().includes("cancel");
+    }).length;
+    const casos = (assistido.casosAgrupados ?? []).length;
+    return { casos, demandas, audiencias };
+  }, [assistido]);
 
   const base = `/admin/assistidos/${id}`;
   const sub = pathname.replace(base, "").replace(/^\//, "").split("/")[0];
@@ -118,6 +136,18 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
             >
               <Icon className="w-3 h-3" />
               {t.label}
+              {contadores[t.key] ? (
+                <span
+                  className={cn(
+                    "ml-0.5 min-w-[15px] rounded-full px-1 text-center text-[9px] font-semibold tabular-nums",
+                    isActive
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                      : "bg-neutral-100 text-neutral-500 dark:bg-white/[0.08] dark:text-neutral-400",
+                  )}
+                >
+                  {contadores[t.key]}
+                </span>
+              ) : null}
             </Link>
           );
         })}
