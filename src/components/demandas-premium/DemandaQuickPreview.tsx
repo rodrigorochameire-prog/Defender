@@ -44,6 +44,14 @@ import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, type StatusGroup } from
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { InlineAutocomplete } from "@/components/shared/inline-autocomplete";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
@@ -180,6 +188,22 @@ const ATRIBUICAO_OPTIONS = [
 ];
 
 // Pipeline stages for progress bar (mapped from status groups)
+// Catálogo genérico de tipos de ofício/peça (espelha o de oficios/novo).
+const OFICIO_TIPOS: { value: string; label: string }[] = [
+  { value: "manifestacao", label: "Manifestação" },
+  { value: "requisitorio", label: "Requisitório" },
+  { value: "solicitacao_providencias", label: "Solicitação de Providências" },
+  { value: "pedido_informacao", label: "Pedido de Informação" },
+  { value: "comunicacao", label: "Comunicação / Informação" },
+  { value: "encaminhamento", label: "Encaminhamento" },
+  { value: "intimacao", label: "Intimação / Notificação" },
+  { value: "representacao", label: "Representação" },
+  { value: "parecer_tecnico", label: "Parecer Técnico" },
+  { value: "resposta_oficio", label: "Resposta a Ofício" },
+  { value: "convite", label: "Convite / Convocação" },
+  { value: "certidao", label: "Certidão" },
+];
+
 const PIPELINE_STAGES: { key: StatusGroup; label: string; short: string }[] = [
   { key: "triagem", label: "Triagem", short: "Triagem" },
   { key: "preparacao", label: "Preparação", short: "Prep." },
@@ -857,6 +881,11 @@ export function DemandaQuickPreview({
   const isProcStub = !processo?.numero || /^SN-/i.test(processo.numero);
   const currentStageIdx = getStageIndex(statusConfig.group);
   const oficioSugerido = sugerirOficio(demanda.ato, demanda.providencias);
+  const oficioHref = (tipo?: string) =>
+    `/admin/oficios/novo?demandaId=${demanda.id}` +
+    (demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : "") +
+    (demanda.processoId ? `&processoId=${demanda.processoId}` : "") +
+    (tipo ? `&tipo=${tipo}` : "");
 
   // ============================================
   // MANIFESTO — corpo do sheet dirigido por seções colapsáveis
@@ -966,31 +995,70 @@ export function DemandaQuickPreview({
       node: <CronologiaSecao demanda={demanda} onPrazoChange={onPrazoChange} />,
     },
     oficio: {
-      label: "Ofício sugerido",
-      temDado: !!oficioSugerido,
-      node: oficioSugerido ? (
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-              <Mail className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
-              Com base no ato &ldquo;{demanda.ato}&rdquo;
-            </span>
-            <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400">
-              {oficioSugerido.tipoLabel}
-            </span>
-          </div>
-          <Link
-            href={`/admin/oficios/novo?demandaId=${demanda.id}${demanda.assistidoId ? `&assistidoId=${demanda.assistidoId}` : ""}${demanda.processoId ? `&processoId=${demanda.processoId}` : ""}&tipo=${oficioSugerido.tipoOficio}`}
-            className="ml-7 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors group/oficio cursor-pointer"
-          >
-            <Sparkles className="w-3 h-3" />
-            Gerar Ofício
-            <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/oficio:opacity-100 group-hover/oficio:translate-x-0 transition-all" />
-          </Link>
+      label: "Ofícios & Peças",
+      temDado: true,
+      node: (
+        <div className="space-y-2.5">
+          {/* Atalho destacado: tipo sugerido pelo ato (quando há). */}
+          {oficioSugerido ? (
+            <Link
+              href={oficioHref(oficioSugerido.tipoOficio)}
+              className="flex items-center gap-2.5 rounded-lg ring-1 ring-inset ring-emerald-200/70 dark:ring-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-2 hover:bg-emerald-100/60 dark:hover:bg-emerald-950/40 transition-colors group/of cursor-pointer"
+            >
+              <div className="w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 leading-tight">
+                  Gerar {oficioSugerido.tipoLabel}
+                </div>
+                <div className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">
+                  Sugerido pelo ato &ldquo;{demanda.ato}&rdquo;
+                </div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-emerald-500 opacity-0 -translate-x-1 group-hover/of:opacity-100 group-hover/of:translate-x-0 transition-all shrink-0" />
+            </Link>
+          ) : (
+            <Link
+              href={oficioHref()}
+              className="flex items-center gap-2.5 rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 px-2.5 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors group/of cursor-pointer"
+            >
+              <div className="w-6 h-6 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                <Mail className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+              </div>
+              <div className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200 flex-1">
+                Gerar peça / ofício
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-400 opacity-0 -translate-x-1 group-hover/of:opacity-100 group-hover/of:translate-x-0 transition-all shrink-0" />
+            </Link>
+          )}
+          {/* Picker de qualquer um dos 12 tipos. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 px-2 py-1 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" />
+                Escolher outro tipo
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[14rem]">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-neutral-400">
+                Tipo de peça
+              </DropdownMenuLabel>
+              {OFICIO_TIPOS.map((t) => (
+                <DropdownMenuItem key={t.value} asChild>
+                  <Link href={oficioHref(t.value)} className="text-[12px] cursor-pointer">
+                    {t.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      ) : null,
+      ),
     },
     autos: {
       label: "Autos & Documentos",
