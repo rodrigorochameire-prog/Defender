@@ -113,6 +113,7 @@ export default function DocumentosPage() {
   const params = useParams();
   const assistidoId = Number(params?.id);
   const [filtro, setFiltro] = useState<Filtro>("todos");
+  const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [busca, setBusca] = useState("");
   const [viewer, setViewer] = useState<{ driveFileId: string; processoId: number | null } | null>(null);
 
@@ -139,11 +140,25 @@ export default function DocumentosPage() {
     return c;
   }, [arquivos]);
 
+  // Tipos de peça presentes (denúncia/sentença/…), com contagem, p/ filtrar.
+  const tiposPresentes = useMemo(() => {
+    const m = new Map<string, { label: string; count: number }>();
+    for (const f of arquivos) {
+      const t = tipoDocumento(f.documentType, f.fileName);
+      if (t.key === "outro") continue;
+      const cur = m.get(t.key) ?? { label: t.label, count: 0 };
+      cur.count++;
+      m.set(t.key, cur);
+    }
+    return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.count - a.count);
+  }, [arquivos]);
+
   // Filtra, resolve tipo, e agrupa por processo.
   const grupos = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     const filtrados = arquivos.filter((f) => {
       if (filtro !== "todos" && categoria(f) !== filtro) return false;
+      if (filtroTipo !== "todos" && tipoDocumento(f.documentType, f.fileName).key !== filtroTipo) return false;
       if (termo && !f.fileName.toLowerCase().includes(termo) && !f.drivePath.toLowerCase().includes(termo)) return false;
       return true;
     });
@@ -165,7 +180,7 @@ export default function DocumentosPage() {
       return (a as number) - (b as number);
     });
     return ordem.map((k) => ({ key: k, arquivos: porProc.get(k)! }));
-  }, [arquivos, filtro, busca]);
+  }, [arquivos, filtro, filtroTipo, busca]);
 
   const abrir = (f: DocFile) => {
     if (isPdf(f.mimeType, f.fileName)) setViewer({ driveFileId: f.driveFileId, processoId: f.processoId });
@@ -209,6 +224,16 @@ export default function DocumentosPage() {
         <FiltroPill ativo={filtro === "imagem"} onClick={() => setFiltro("imagem")} label="Imagens" count={contagem.imagem} />
         <FiltroPill ativo={filtro === "outros"} onClick={() => setFiltro("outros")} label="Outros" count={contagem.outros} />
       </div>
+
+      {/* Filtro por tipo de peça (só aparece quando há tipos reconhecidos) */}
+      {tiposPresentes.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          <FiltroPill ativo={filtroTipo === "todos"} onClick={() => setFiltroTipo("todos")} label="Todos os tipos" count={arquivos.length} />
+          {tiposPresentes.map((t) => (
+            <FiltroPill key={t.key} ativo={filtroTipo === t.key} onClick={() => setFiltroTipo(t.key)} label={t.label} count={t.count} />
+          ))}
+        </div>
+      )}
 
       {totalFiltrado === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
