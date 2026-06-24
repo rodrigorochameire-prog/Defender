@@ -35,13 +35,10 @@ import {
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import {
-  STATUS_CONFIG,
-  SUBTIPO_CONFIG,
-  type AtendimentoListItem,
-} from "./config";
+import { type AtendimentoListItem } from "./config";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { chaveDia, isPendente } from "./agenda-helpers";
+import { AtendimentoStatusBadge, ReadinessBadge, MetadataLine } from "./atendimento-badges";
 
 const SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -266,8 +263,6 @@ export function AtendimentosCalendar({
 }
 
 function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => void }) {
-  const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
-  const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
   // Área/cor derivam da atribuição do processo vinculado (cai no campo do
   // atendimento só quando não há processo).
   const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
@@ -299,13 +294,12 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
           <span className="font-mono text-[11px] font-semibold text-foreground/90">
             {format(new Date(a.dataRegistro), "HH:mm")}
           </span>
-          {pendente ? (
-            <span className="rounded px-1 py-px text-[9px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-              registrar
-            </span>
-          ) : (
-            <span className={cn("rounded px-1 py-px text-[9px] font-medium", status.badge)}>{status.label}</span>
-          )}
+          <AtendimentoStatusBadge
+            status={a.status}
+            dataRegistro={a.dataRegistro}
+            showIcon={false}
+            className="text-[9px] px-1"
+          />
           {/* Ações rápidas — surgem no hover do item, sem disparar o onClick */}
           <PainelQuickAcoes a={a} />
         </div>
@@ -330,9 +324,14 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
             <Copy className="w-2.5 h-2.5 opacity-40 shrink-0" />
           </button>
         )}
-        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-          {areaKey && <span className={cn("rounded px-1 py-px text-[9px] font-medium", areaColors.bgSolid, areaColors.text)}>{areaColors.shortLabel}</span>}
-          {subtipo && <span className={cn("rounded px-1 py-px text-[9px] font-medium", subtipo.badge)}>{subtipo.label}</span>}
+        <div className="flex items-center gap-x-2 gap-y-0.5 mt-1 flex-wrap">
+          <MetadataLine
+            area={a.area}
+            subtipo={a.subtipo}
+            areaLabel={areaKey ? areaColors.label : null}
+            className="text-[10px]"
+          />
+          <ReadinessBadge dossieAtendimento={a.dossieAtendimento} className="text-[10px]" />
         </div>
       </div>
     </div>
