@@ -4,7 +4,7 @@ import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { User, Briefcase, ClipboardList, CalendarDays, FileText, Microscope, Clock, Newspaper, MessageCircle, CalendarPlus } from "lucide-react";
+import { User, Briefcase, ClipboardList, CalendarDays, FileText, Microscope, Contact, Clock, Newspaper, MessageCircle, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { statusConfig } from "../_components/assistido-config";
@@ -18,6 +18,7 @@ const NIVEL_1_TABS = [
   { key: "audiencias",  label: "Audiências",  icon: CalendarDays,  path: "audiencias" },
   { key: "documentos",  label: "Documentos",  icon: FileText,      path: "documentos" },
   { key: "investigacao", label: "Investigação", icon: Microscope,  path: "investigacao" },
+  { key: "pessoas",     label: "Pessoas",     icon: Contact,       path: "pessoas" },
   { key: "timeline",    label: "Timeline",    icon: Clock,         path: "timeline" },
   { key: "radar",       label: "Radar",       icon: Newspaper,     path: "radar" },
 ] as const;
