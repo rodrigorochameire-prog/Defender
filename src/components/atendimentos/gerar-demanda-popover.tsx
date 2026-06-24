@@ -33,6 +33,7 @@ import {
   AREA_TO_ATRIBUICAO_ENUM,
   ATRIBUICAO_DEMANDA_OPTIONS,
 } from "./config";
+import { htmlParaTexto } from "./html-para-texto";
 
 interface GerarDemandaPopoverProps {
   assistido: { id: number; nome: string };
@@ -58,10 +59,15 @@ function montarRegistroDoAtendimento(
   ctx: GerarDemandaPopoverProps["contextoAtendimento"]
 ): string {
   if (!ctx) return "";
+  // Limpa HTML cru (assunto/pedido/relato podem vir com marcação) para o texto
+  // importado não aparecer com tags no textarea.
+  const assunto = htmlParaTexto(ctx.assunto);
+  const pedido = htmlParaTexto(ctx.pedido);
+  const conteudo = htmlParaTexto(ctx.conteudo);
   return [
-    ctx.assunto && `Assunto: ${ctx.assunto}`,
-    ctx.pedido && `Pedido: ${ctx.pedido}`,
-    ctx.conteudo && ctx.conteudo,
+    assunto && `Assunto: ${assunto}`,
+    pedido && `Pedido: ${pedido}`,
+    conteudo || "",
   ]
     .filter(Boolean)
     .join("\n");

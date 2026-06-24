@@ -89,7 +89,7 @@
 ### Fase 5 — Gerar demanda (`GenerateDemandPanel`)
 - 5.1 Promover de popover a superfície nobre (painel/sheet) em 5 blocos (Origem · Definição jurídica · Regime de urgência · Conteúdo inicial · Confirmação) — refatorar `gerar-demanda-popover.tsx`.
 - 5.2 `ProceduralActSelector` premium (busca + agrupamento por atribuição via `getAtosPorAtribuicao`); controles de prazo melhores.
-- 5.3 **Revisar renderização do texto importado** (sanitizar/limpar tags HTML cruas do registro); vínculo da timeline como decisão de continuidade.
+- 5.3 **Revisar renderização do texto importado**: [x] `htmlParaTexto` (puro/testado, 7 testes) limpa tags/entidades HTML do assunto/pedido/relato importado no `gerar-demanda-popover.tsx` — sem mais tags cruas no textarea. _Resta_: vínculo da timeline como decisão de continuidade.
 - 5.4 **Testes**: blocos/etapas; seleção de ato; texto importado limpo; cria demanda + vínculo; CTA final inequívoco.
 
 ### Fase 6 — Mobile
