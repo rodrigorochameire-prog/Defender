@@ -1282,9 +1282,8 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                 }
               }}
               onKeyDown={handleKeyDown}
-              className="rounded-lg border-0 px-3 py-2 text-sm resize-none focus-visible:ring-0"
+              className="border-0 bg-transparent px-3 py-2 text-sm resize-none focus-visible:ring-0"
               style={{
-                backgroundColor: 'var(--wa-bg-inbound)',
                 color: 'var(--wa-text-primary)',
               }}
               rows={1}
