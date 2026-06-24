@@ -108,27 +108,19 @@ describe("EventDetailSheet", () => {
 
   it("renderiza bloco Documentos (novo, com tabs Autos/Assistido)", () => {
     const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    // Verify Documentos section exists in the ToC (o chip usa o label completo "Documentos")
-    const docsToCButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.toUpperCase().trim() === "DOCUMENTOS"
-    );
-    expect(docsToCButton).toBeDefined();
-    // Verify that DocumentosBlock section exists (data-section-id="documentos").
-    // querySelector retorna null quando ausente, então toBeTruthy é a checagem correta.
+    // A nav de seções virou dropdown (menu fechado por padrão, renderizado em
+    // portal só ao abrir), então a checagem canônica é a âncora da seção no
+    // corpo (data-section-id="documentos"). querySelector retorna null quando
+    // ausente, então toBeTruthy é a checagem correta.
     const documentosSection = container.querySelector('[data-section-id="documentos"]');
     expect(documentosSection).toBeTruthy();
   });
 
   it("renderiza bloco Mídia (empty state quando sem mídia)", () => {
     const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    // Verify Mídia section exists in the ToC
-    const midiaToCButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.toUpperCase().trim() === "MÍDIA"
-    );
-    expect(midiaToCButton).toBeDefined();
-    // Verify that MidiaBlock section exists (data-section-id="midia")
+    // Idem Documentos: valida a âncora da seção no corpo (data-section-id="midia").
     const midiaSection = container.querySelector('[data-section-id="midia"]');
-    expect(midiaSection).toBeDefined();
+    expect(midiaSection).toBeTruthy();
   });
 
   it("não mostra mais links externos antigos 'Pasta do Assistido' / 'Autos do Processo' (regressão Fase 2)", () => {

@@ -73,10 +73,21 @@ function SubtipoBanner({ subtipo, processoNum }: { subtipo: ReturnType<typeof de
   const cores = corBadge(cfg.cor);
   const Icon = cfg.icon;
 
+  // Superfície NEUTRA (igual aos demais cards) — a cor do rito sobrevive apenas
+  // como acento: faixa fina à esquerda (cores.bg) + ícone/label (cores.text).
+  // O verde saturado fica reservado à ação "Concluir" no footer. Vale p/ todos
+  // os ritos (amber/rose/sky/violet/emerald) — só muda a cor do acento.
+  const surface =
+    "relative overflow-hidden rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 p-3 pl-3.5 mb-3";
+  const accentBar = (
+    <span className={cn("absolute inset-y-0 left-0 w-[3px]", cores.bg)} aria-hidden />
+  );
+
   // Sessão do Júri → direciona ao Cockpit em vez da preparação padrão.
   if (cfg.direcionaCockpit) {
     return (
-      <div className={cn("rounded-xl border p-3 mb-3", cores.border, cores.bgSubtle)}>
+      <div className={surface}>
+        {accentBar}
         <div className="flex items-start gap-2.5">
           <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", cores.text)} />
           <div className="flex-1 min-w-0">
@@ -98,7 +109,8 @@ function SubtipoBanner({ subtipo, processoNum }: { subtipo: ReturnType<typeof de
   }
 
   return (
-    <div className={cn("rounded-xl border p-3 mb-3", cores.border, cores.bgSubtle)}>
+    <div className={surface}>
+      {accentBar}
       <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-start gap-2.5 text-left cursor-pointer">
         <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", cores.text)} />
         <div className="flex-1 min-w-0">
@@ -1257,8 +1269,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           return (
             <div className={cn(SHEET_STYLE.topBar, "px-3 py-2 flex items-center justify-between gap-2")}>
               <div className="flex items-center gap-2 min-w-0">
-                <span className={cn(SHEET_STYLE.ritoBadge, ritoCores.border, ritoCores.bgSubtle, ritoCores.text)}>
-                  <RitoIcon className="w-3.5 h-3.5 shrink-0" />
+                {/* Pill do rito NEUTRO — superfície zinc; a cor do rito sobrevive
+                    apenas no ícone (ritoCores.text). Emerald fica só na ação. */}
+                <span className={cn(SHEET_STYLE.ritoBadge, "border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 text-neutral-700 dark:text-neutral-200")}>
+                  <RitoIcon className={cn("w-3.5 h-3.5 shrink-0", ritoCores.text)} />
                   <span className="truncate max-w-[210px]">{subtipoCfg.label}</span>
                 </span>
                 {dataHora && (
@@ -1270,9 +1284,10 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   {pill.label}
                 </span>
               </div>
+              {/* Fechar NEUTRO — sem ring/tint emerald; foco reservado à ação. */}
               <button
                 onClick={() => onOpenChange(false)}
-                className={SHEET_STYLE.iconBtn}
+                className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer shrink-0 transition-colors duration-150 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 dark:text-neutral-500 dark:hover:text-neutral-200 dark:hover:bg-neutral-800 outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-700"
                 title="Fechar"
               >
                 <X className="w-3.5 h-3.5" />
