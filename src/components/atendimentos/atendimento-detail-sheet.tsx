@@ -402,11 +402,40 @@ export function AtendimentoDetailSheet({
               </p>
             )}
 
-            {/* Preparação — duas formas distintas: contexto rápido vs. dossiê profundo */}
-            <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-2">
-                Preparação
+          </div>
+
+          <div className="px-3 py-3 space-y-3">
+            {/* Próximos passos — área-mãe: preparar contexto + fechar o ciclo (agenda + Kanban) */}
+            <div className="space-y-2">
+              <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                Próximos passos
               </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onAgendarRetorno(a)}
+                  className="flex-1 h-9 gap-1.5 text-[12px]"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                  Agendar retorno
+                </Button>
+                {a.assistido && (
+                  <GerarDemandaPopover
+                    assistido={{ id: a.assistido.id, nome: a.assistido.nome }}
+                    processo={a.processo ? { numeroAutos: a.processo.numeroAutos } : null}
+                    area={a.area}
+                    contextoAtendimento={{ assunto: a.assunto, pedido: a.pedido, conteudo: a.conteudo }}
+                    atendimentoId={a.id}
+                  >
+                    <Button size="sm" variant="outline" className="flex-1 h-9 gap-1.5 text-[12px]">
+                      <ListPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      Gerar demanda
+                    </Button>
+                  </GerarDemandaPopover>
+                )}
+              </div>
+              {/* Preparação de contexto — duas formas: contexto rápido (OMBUDS) vs. dossiê profundo (autos) */}
               <div className="flex items-center gap-1.5">
                 <Button
                   size="sm"
@@ -440,35 +469,6 @@ export function AtendimentoDetailSheet({
                   Dossiê dos autos
                 </Button>
               </div>
-            </div>
-          </div>
-
-          <div className="px-3 py-3 space-y-3">
-            {/* Próximos passos — fecha o ciclo (agenda + Kanban) */}
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onAgendarRetorno(a)}
-                className="flex-1 h-9 gap-1.5 text-[12px]"
-              >
-                <CalendarPlus className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                Agendar retorno
-              </Button>
-              {a.assistido && (
-                <GerarDemandaPopover
-                  assistido={{ id: a.assistido.id, nome: a.assistido.nome }}
-                  processo={a.processo ? { numeroAutos: a.processo.numeroAutos } : null}
-                  area={a.area}
-                  contextoAtendimento={{ assunto: a.assunto, pedido: a.pedido, conteudo: a.conteudo }}
-                  atendimentoId={a.id}
-                >
-                  <Button size="sm" variant="outline" className="flex-1 h-9 gap-1.5 text-[12px]">
-                    <ListPlus className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    Gerar demanda
-                  </Button>
-                </GerarDemandaPopover>
-              )}
             </div>
 
             {/* Registros — hub de gestão do caso (destaque, no topo) */}
