@@ -833,6 +833,114 @@ export const registrosRouter = router({
   }),
 
   // ────────────────────────────────────────────────────────────────────
+  // atendimentosInsights — painel analítico da página (dados que já existem):
+  //   • por área + taxa de retorno      • produtividade / tempo médio
+  //   • evolução mensal (tendência)     • conversão em demandas
+  // Janela configurável (default 90 dias); evolução sempre nos últimos N meses.
+  // ────────────────────────────────────────────────────────────────────
+  atendimentosInsights: protectedProcedure
+    .input(
+      z
+        .object({
+          dias: z.number().int().min(7).max(730).default(90),
+          meses: z.number().int().min(3).max(24).default(6),
+        })
+        .optional()
+    )
+    .query(async ({ input, ctx }) => {
+      const dias = input?.dias ?? 90;
+      const meses = input?.meses ?? 6;
+
+      const escopo = [eq(registros.tipo, "atendimento")];
+      await pushEscopoDefensor(escopo, ctx.user);
+      const desde = sql`now() - ${`${dias} days`}::interval`;
+      const janela = and(...escopo, gte(registros.dataRegistro, sql`${desde}`));
+
+      // Vínculo a demanda (conversão) via junction atendimento_demandas.
+      const temDemanda = sql`exists (select 1 from atendimento_demandas ad where ad.atendimento_id = ${registros.id})`;
+
+      // 1) Agregados gerais da janela ------------------------------------
+      const [agg] = await db
+        .select({
+          total: sql<number>`count(*)::int`,
+          realizados: sql<number>`count(*) filter (where ${registros.status} = 'realizado')::int`,
+          agendados: sql<number>`count(*) filter (where ${registros.status} = 'agendado')::int`,
+          cancelados: sql<number>`count(*) filter (where ${registros.status} = 'cancelado')::int`,
+          aRegistrar: sql<number>`count(*) filter (where ${registros.status} = 'agendado' and ${registros.dataRegistro} < now())::int`,
+          inicial: sql<number>`count(*) filter (where ${registros.subtipo} = 'inicial')::int`,
+          retorno: sql<number>`count(*) filter (where ${registros.subtipo} = 'retorno')::int`,
+          duracaoMedia: sql<number>`coalesce(round(avg(${registros.duracao}) filter (where ${registros.status} = 'realizado' and ${registros.duracao} is not null)), 0)::int`,
+          comDemanda: sql<number>`count(*) filter (where ${temDemanda})::int`,
+        })
+        .from(registros)
+        .where(janela);
+
+      // 2) Por área ------------------------------------------------------
+      const porArea = await db
+        .select({
+          area: registros.area,
+          total: sql<number>`count(*)::int`,
+          realizados: sql<number>`count(*) filter (where ${registros.status} = 'realizado')::int`,
+          retorno: sql<number>`count(*) filter (where ${registros.subtipo} = 'retorno')::int`,
+        })
+        .from(registros)
+        .where(janela)
+        .groupBy(registros.area)
+        .orderBy(desc(sql`count(*)`));
+
+      // 3) Evolução mensal (últimos `meses`) -----------------------------
+      const mesLocal = sql`to_char(date_trunc('month', ${registros.dataRegistro} AT TIME ZONE 'America/Bahia'), 'YYYY-MM')`;
+      const evolucao = await db
+        .select({
+          mes: sql<string>`${mesLocal}`,
+          total: sql<number>`count(*)::int`,
+          realizados: sql<number>`count(*) filter (where ${registros.status} = 'realizado')::int`,
+        })
+        .from(registros)
+        .where(
+          and(
+            ...escopo,
+            gte(
+              registros.dataRegistro,
+              sql`date_trunc('month', now() AT TIME ZONE 'America/Bahia') - ${`${meses - 1} months`}::interval`
+            )
+          )
+        )
+        .groupBy(sql`${mesLocal}`)
+        .orderBy(asc(sql`${mesLocal}`));
+
+      const total = agg?.total ?? 0;
+      const totalSubtipo = (agg?.inicial ?? 0) + (agg?.retorno ?? 0);
+      const decididos = (agg?.realizados ?? 0) + (agg?.cancelados ?? 0);
+
+      return {
+        dias,
+        janela: agg,
+        retorno: {
+          inicial: agg?.inicial ?? 0,
+          retorno: agg?.retorno ?? 0,
+          taxa: totalSubtipo > 0 ? Math.round(((agg?.retorno ?? 0) / totalSubtipo) * 100) : 0,
+        },
+        produtividade: {
+          realizados: agg?.realizados ?? 0,
+          agendados: agg?.agendados ?? 0,
+          cancelados: agg?.cancelados ?? 0,
+          aRegistrar: agg?.aRegistrar ?? 0,
+          duracaoMediaMin: agg?.duracaoMedia ?? 0,
+          // Comparecimento = realizados / (realizados + cancelados) entre os já decididos.
+          comparecimentoPct: decididos > 0 ? Math.round(((agg?.realizados ?? 0) / decididos) * 100) : 0,
+        },
+        conversao: {
+          comDemanda: agg?.comDemanda ?? 0,
+          total,
+          pct: total > 0 ? Math.round(((agg?.comDemanda ?? 0) / total) * 100) : 0,
+        },
+        porArea,
+        evolucao,
+      };
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
   // atendimentosPendentes — lista enxuta dos atendimentos que já aconteceram
   //                         e seguem sem registro (para o card do dashboard).
   // ────────────────────────────────────────────────────────────────────

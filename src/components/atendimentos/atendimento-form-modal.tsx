@@ -51,6 +51,8 @@ interface AtendimentoFormModalProps {
   editing?: AtendimentoListItem | null;
   /** Cria já preenchido e com o assistido travado (ex.: retorno). */
   prefill?: AtendimentoPrefill | null;
+  /** Data inicial (yyyy-MM-dd) ao criar — ex.: clique num dia da agenda. */
+  initialDate?: string | null;
 }
 
 interface FormState {
@@ -88,7 +90,7 @@ const EMPTY_FORM: FormState = {
   cnjsCitados: [],
 };
 
-export function AtendimentoFormModal({ open, onClose, editing, prefill }: AtendimentoFormModalProps) {
+export function AtendimentoFormModal({ open, onClose, editing, prefill, initialDate }: AtendimentoFormModalProps) {
   const utils = trpc.useUtils();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [cnjDraft, setCnjDraft] = useState("");
@@ -132,14 +134,14 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill }: Atendi
         processoId: prefill.processoId ?? null,
       });
     } else {
-      setForm(EMPTY_FORM);
+      setForm({ ...EMPTY_FORM, ...(initialDate ? { data: initialDate } : {}) });
     }
     setCnjDraft("");
     setRegistrarRealizado(false);
     setRelato("");
     setDesfecho("nenhuma");
     setDesfechoAto("");
-  }, [open, editing, prefill]);
+  }, [open, editing, prefill, initialDate]);
 
   const { data: processosAssistido = [] } = trpc.atendimentos.processosByAssistido.useQuery(
     { assistidoId: form.assistidoId ?? 0 },
