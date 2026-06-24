@@ -717,6 +717,61 @@ export const pessoasRouter = router({
         .orderBy(asc(pessoaRelacoes.grau), asc(pessoaRelacoes.nomeLivre));
     }),
 
+  // Familiares/contatos resolvendo o assistido → seu registro `pessoa`. Junta a
+  // pessoa relacionada (quando vinculada) p/ nome/telefone. Pessoa inexistente
+  // → { pessoaId: null, familiares: [] } (a UI mostra só o contato primário).
+  getFamiliaresByAssistido: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      // `pessoas` não tem assistidoId — o elo é via participações nos processos
+      // do assistido. A pessoa-réu (o próprio assistido no grafo) é quem carrega
+      // os familiares. Resolve os pessoaIds com papel de réu; degrada p/ vazio.
+      const parts = await db
+        .select({ pessoaId: participacoesProcesso.pessoaId, papel: participacoesProcesso.papel })
+        .from(participacoesProcesso)
+        .innerJoin(processos, eq(participacoesProcesso.processoId, processos.id))
+        .where(and(eq(processos.assistidoId, input.assistidoId), isNull(processos.deletedAt)));
+      const reuIds = [
+        ...new Set(
+          parts
+            .filter((r) => /reu|réu|acusad|indiciad|denunciad/i.test(r.papel ?? ""))
+            .map((r) => r.pessoaId)
+            .filter((v): v is number => v != null),
+        ),
+      ];
+      if (reuIds.length === 0) return { pessoaId: null as number | null, familiares: [] };
+
+      const rows = await db
+        .select({
+          id: pessoaRelacoes.id,
+          grau: pessoaRelacoes.grau,
+          nomeLivre: pessoaRelacoes.nomeLivre,
+          telefone: pessoaRelacoes.telefone,
+          endereco: pessoaRelacoes.endereco,
+          confirmado: pessoaRelacoes.confirmado,
+          relacionadaId: pessoaRelacoes.relacionadaPessoaId,
+          relNome: pessoas.nome,
+          relTelefone: pessoas.telefone,
+        })
+        .from(pessoaRelacoes)
+        .leftJoin(pessoas, eq(pessoaRelacoes.relacionadaPessoaId, pessoas.id))
+        .where(inArray(pessoaRelacoes.pessoaId, reuIds))
+        .orderBy(asc(pessoaRelacoes.grau), asc(pessoaRelacoes.nomeLivre));
+
+      return {
+        pessoaId: reuIds[0] as number | null,
+        familiares: rows.map((f) => ({
+          id: f.id,
+          grau: f.grau,
+          nome: f.relNome ?? f.nomeLivre ?? "—",
+          telefone: f.telefone ?? f.relTelefone ?? null,
+          endereco: f.endereco,
+          confirmado: f.confirmado,
+          relacionadaId: f.relacionadaId,
+        })),
+      };
+    }),
+
   addFamiliar: protectedProcedure
     .input(
       z.object({
