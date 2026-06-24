@@ -53,6 +53,7 @@ import {
 } from "lucide-react";
 import { AudioRecorder } from "@/components/atendimentos/audio-recorder";
 import { GerarDemandaPopover } from "./gerar-demanda-popover";
+import { AtendimentoVinculos } from "./atendimento-vinculos";
 import {
   AREA_CONFIG,
   STATUS_CONFIG,
@@ -112,6 +113,7 @@ export function AtendimentoDetailSheet({
     if (d?.historico_relevante && d.historico_relevante.length > 0)
       s.push({ id: "atd-historico", label: "Histórico" });
     if (temProcessos) s.push({ id: "atd-processos", label: "Processos" });
+    s.push({ id: "atd-vinculos", label: "Vínculos" });
     s.push({ id: "atd-documentos", label: "Docs" });
     if (temRecepcao) s.push({ id: "atd-recepcao", label: "Recepção" });
     if (atendimento.conteudo) s.push({ id: "atd-relato", label: "Relato" });
@@ -341,16 +343,18 @@ export function AtendimentoDetailSheet({
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${status.badge}`}>
+                  <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                    <span className={`w-1 h-1 rounded-full ${status.dot}`} />
                     {status.label}
                   </span>
                   {subtipo && (
-                    <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${subtipo.badge}`}>
+                    <span className="rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
                       {subtipo.label}
                     </span>
                   )}
                   {area && (
-                    <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${area.badge}`}>
+                    <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: atribColor }} />
                       {area.label}
                     </span>
                   )}
@@ -609,6 +613,15 @@ export function AtendimentoDetailSheet({
                 </div>
               </CollapsibleSection>
             )}
+
+            {/* Vínculos — ofícios e diligências gerados a partir deste atendimento */}
+            <CollapsibleSection id="atd-vinculos" label="Vínculos (ofícios & investigação)">
+              <AtendimentoVinculos
+                registroId={a.id}
+                assistidoId={a.assistidoId}
+                processoId={a.processoId}
+              />
+            </CollapsibleSection>
 
             {/* Documentos & autos (Drive do processo + do assistido, viewer encaixado) */}
             <CollapsibleSection id="atd-documentos" label="Documentos & autos">

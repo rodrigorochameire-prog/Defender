@@ -81,6 +81,8 @@ const createDiligenciaSchema = z.object({
   assistidoId: z.number().optional(),
   casoId: z.number().optional(),
   personaId: z.number().optional(),
+  // Proveniência: diligência originada de um atendimento (registros).
+  registroId: z.number().optional(),
 
   // Detalhes do alvo
   nomePessoaAlvo: z.string().optional(),
@@ -260,6 +262,27 @@ export const diligenciasRouter = router({
     }),
 
   // ==========================================
+  // DILIGÊNCIAS ORIGINADAS DE UM ATENDIMENTO (proveniência registroId)
+  // ==========================================
+  listByRegistro: protectedProcedure
+    .input(z.object({ registroId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: diligencias.id,
+          titulo: diligencias.titulo,
+          tipo: diligencias.tipo,
+          status: diligencias.status,
+          prioridade: diligencias.prioridade,
+          nomePessoaAlvo: diligencias.nomePessoaAlvo,
+          createdAt: diligencias.createdAt,
+        })
+        .from(diligencias)
+        .where(and(eq(diligencias.registroId, input.registroId), isNull(diligencias.deletedAt)))
+        .orderBy(desc(diligencias.createdAt));
+    }),
+
+  // ==========================================
   // BUSCAR DILIGÊNCIA POR ID
   // ==========================================
   getById: protectedProcedure
@@ -332,6 +355,7 @@ export const diligenciasRouter = router({
         assistidoId: input.assistidoId,
         casoId: input.casoId,
         personaId: input.personaId,
+        registroId: input.registroId,
         nomePessoaAlvo: input.nomePessoaAlvo,
         tipoRelacao: input.tipoRelacao,
         cpfAlvo: input.cpfAlvo,
