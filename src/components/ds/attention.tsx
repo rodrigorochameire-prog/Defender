@@ -18,7 +18,7 @@ import {
   ChevronRight,
   type LucideIcon,
 } from "lucide-react";
-import { COLORS } from "@/lib/config/design-tokens";
+import { COLORS, FOCUS_RING } from "@/lib/config/design-tokens";
 import type { AttentionKind, AttentionSignal, Severity } from "@/lib/assistidos/state";
 
 export const SEV_TONE: Record<Severity, (typeof COLORS)[keyof typeof COLORS]> = {
@@ -64,6 +64,7 @@ export function AttentionSignalRow({ signal, href }: { signal: AttentionSignal; 
         tone.border,
         tone.bg,
         "hover:brightness-[0.98] dark:hover:brightness-125",
+        FOCUS_RING,
       )}
     >
       <Icon className={cn("w-3.5 h-3.5 shrink-0", tone.text)} />
@@ -89,6 +90,7 @@ export function AttentionSignalChip({ signal, href }: { signal: AttentionSignal;
         tone.bg,
         tone.text,
         "hover:brightness-[0.98] dark:hover:brightness-125",
+        FOCUS_RING,
       )}
     >
       <Icon className="w-3 h-3 shrink-0" />

@@ -332,7 +332,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
       {/* ───────── 4. AÇÕES (sticky footer) ───────── */}
       <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-sm">
         <Link href={ctaHref(cta.kind, assistido.id)} className="block">
-          <button className="w-full h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer">
+          <button className="w-full h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
             {cta.label}
             <ChevronRight className="w-4 h-4" />
           </button>

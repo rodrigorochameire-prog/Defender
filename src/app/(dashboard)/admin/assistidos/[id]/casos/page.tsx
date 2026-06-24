@@ -80,7 +80,7 @@ function CriarCasoButton({
       type="button"
       disabled={criar.isPending}
       onClick={() => criar.mutate({ processoId, assistidoId, titulo: tituloSugerido })}
-      className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+      className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer shrink-0 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
     >
       {criar.isPending ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5" />}
       Criar caso
