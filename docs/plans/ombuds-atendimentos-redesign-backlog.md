@@ -72,7 +72,9 @@
 - [x] **3.0 Consistência de badges** (`atendimento-detail-sheet.tsx`): header consome `AtendimentoStatusBadge` (status forte, eleva "A registrar") + `MetadataLine` (área·tipo em texto); `STATUS_CONFIG`/`SUBTIPO_CONFIG` aposentados no arquivo (AREA_CONFIG segue p/ label do processo). Módulo inteiro agora fala a mesma língua semântica.
 - 3.1 `AtendimentoWorkspaceShell` + `AtendimentoSectionPanel`: 5 áreas-mãe (Resumo · Motivo e pedido · Próximos passos · Registros · Contexto jurídico).
   - [x] **Próximos passos consolidado**: os botões de Preparação (Atualizar contexto / Dossiê dos autos) saíram do cartão de identidade e juntaram-se a Agendar retorno / Gerar demanda sob um único grupo rotulado "Próximos passos" no corpo do sheet. Antes estavam partidos entre o header-card e o corpo.
-  - [ ] Rótulos de área-mãe restantes (Motivo e pedido · Registros · Contexto jurídico) + agrupar as seções de contexto (dossiê/situação/histórico/processos/vínculos/autos/anexos) sob "Contexto jurídico".
+  - [x] Rótulos de área-mãe: **Motivo e pedido** (sobre o assunto, no cartão), **Registros** (sobre Registros+Áudio) e **Contexto jurídico** (divisor que agrupa dossiê/situação/histórico/processos/vínculos/documentos/recepção/anexos). Sheet agora legível como 5 áreas-mãe: Resumo (header) · Motivo e pedido · Próximos passos · Registros · Contexto jurídico.
+- 3.2 [x] `NextStepsPanel` — realizado pela consolidação de "Próximos passos".
+- _Resta da Fase 3_: 3.3 `CaseContextPanel` (refino premium do `dossie-atendimento-block.tsx`) e 3.4 `TimelineItemRefined` (cards leves de registro) — polimento, não bloqueiam.
 - 3.2 Protagonismo ao motivo/pedido; `NextStepsPanel` (atualizar contexto/dossiê/agendar retorno/gerar demanda).
 - 3.3 `CaseContextPanel`: contexto OMBUDS como inteligência assistida premium (refinar `dossie-atendimento-block.tsx`); situação processual/processos/vínculos/autos.
 - 3.4 `TimelineItemRefined`: registros em cards leves; ações secundárias em overflow.

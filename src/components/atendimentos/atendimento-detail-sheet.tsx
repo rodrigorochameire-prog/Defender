@@ -397,9 +397,14 @@ export function AtendimentoDetailSheet({
             </div>
 
             {a.assunto && (
-              <p className="mt-3 text-[12.5px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-2.5 leading-snug" style={{ borderColor: `${atribColor}66` }}>
-                {a.assunto}
-              </p>
+              <div className="mt-3">
+                <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-1">
+                  Motivo e pedido
+                </p>
+                <p className="text-[12.5px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-2.5 leading-snug" style={{ borderColor: `${atribColor}66` }}>
+                  {a.assunto}
+                </p>
+              </div>
             )}
 
           </div>
@@ -471,6 +476,9 @@ export function AtendimentoDetailSheet({
               </div>
             </div>
 
+            <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 pt-2 border-t border-neutral-100 dark:border-neutral-800/60">
+              Registros
+            </p>
             {/* Registros — hub de gestão do caso (destaque, no topo) */}
             <CollapsibleSection
               id="atd-registros"
@@ -540,6 +548,9 @@ export function AtendimentoDetailSheet({
               </div>
             </CollapsibleSection>
 
+            <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 pt-2 border-t border-neutral-100 dark:border-neutral-800/60">
+              Contexto jurídico
+            </p>
             {/* Preparação */}
             <CollapsibleSection
               id="atd-preparacao"
