@@ -57,6 +57,7 @@ import {
   Eye,
   CheckSquare,
   Microscope,
+  Pen,
   FileEdit,
   BookOpen,
   Shield,
@@ -601,7 +602,7 @@ export default function DashboardJuriPage() {
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
     assistidoNome: string;
-    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao" | "delegacao" | "ciencia" | "providencia" | "investigacao";
+    tipo: "atendimento" | "diligencia" | "peticao" | "anotacao" | "delegacao" | "ciencia" | "providencia" | "investigacao" | "pesquisa" | "elaboracao" | "busca" | "transferencia";
     descricao: string;
     processoId: number | null;
     local: string;
@@ -694,13 +695,16 @@ export default function DashboardJuriPage() {
   const tiposRegistro = [
     { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
     { id: "diligencia", label: "Diligência", icon: Search, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
-    { id: "informacao", label: "Info", icon: FileText, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "peticao", label: "Petição", icon: FileText, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "anotacao", label: "Nota", icon: PenLine, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "ciencia", label: "Ciência", icon: Eye, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "providencia", label: "Providência", icon: CheckSquare, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "investigacao", label: "Investigação", icon: Microscope, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "pesquisa", label: "Pesquisa", icon: BookOpen, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "elaboracao", label: "Elaboração", icon: Pen, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "busca", label: "Busca", icon: Search, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "transferencia", label: "Transferência", icon: ArrowRightLeft, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
   ] as const;
 
   const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
@@ -1371,12 +1375,15 @@ export default function DashboardJuriPage() {
               <Textarea
                 placeholder={
                   atendimentoRapido.tipo === "atendimento" ? "Descreva o atendimento realizado..." :
-                  atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência ou busca..." :
-                  atendimentoRapido.tipo === "informacao" ? "Registre a informação obtida..." :
+                  atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência realizada..." :
                   atendimentoRapido.tipo === "peticao" ? "Descreva a petição protocolada..." :
                   atendimentoRapido.tipo === "ciencia" ? "Ciência de qual ato? (intimação, decisão, acórdão...)" :
                   atendimentoRapido.tipo === "providencia" ? "Qual providência precisa ser tomada?" :
                   atendimentoRapido.tipo === "investigacao" ? "Linha de investigação, hipótese ou contradição..." :
+                  atendimentoRapido.tipo === "pesquisa" ? "Pesquisa jurídica — jurisprudência, doutrina, tese..." :
+                  atendimentoRapido.tipo === "elaboracao" ? "Rascunho ou peça em elaboração..." :
+                  atendimentoRapido.tipo === "busca" ? "Busca de dados — fontes públicas, redes, cadastros..." :
+                  atendimentoRapido.tipo === "transferencia" ? "Transferência do caso para outro defensor..." :
                   "Adicione sua anotação..."
                 }
                 value={atendimentoRapido.descricao}
