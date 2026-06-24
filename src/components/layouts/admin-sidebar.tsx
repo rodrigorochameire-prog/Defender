@@ -85,8 +85,6 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Objetos", path: "/admin/objetos", icon: "Package" },
   { label: "Delitos", path: "/admin/delitos", icon: "Scale" },
   { label: "Processos", path: "/admin/processos", icon: "Scale" },
-  { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Gavel" },
-  { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
   { label: "Solar", path: "/admin/intimacoes", icon: "Sun" },
   { label: "Mapa", path: "/admin/cadastro/mapa", icon: "Map" },
   { label: "Mapa dos Fatos", path: "/admin/mapa-dos-fatos", icon: "MapPin" },
@@ -180,9 +178,14 @@ const EP_MODULES: AssignmentMenuItem[] = [
   { label: "Execução Penal", path: "/admin/execucao-penal", icon: "Lock" },
 ];
 
-// Wrappers de seção para VVD e EP (sem agrupamento por fase)
+const INST_MODULES: AssignmentMenuItem[] = [
+  { label: "Inst. Superior", path: "/admin/instancia-superior", icon: "Landmark" },
+];
+
+// Wrappers de seção para VVD, EP e Instância Superior (sem agrupamento por fase)
 const VVD_SECTIONS: SidebarSection[] = [{ items: VVD_MODULES }];
 const EP_SECTIONS: SidebarSection[] = [{ items: EP_MODULES }];
+const INST_SECTIONS: SidebarSection[] = [{ items: INST_MODULES }];
 
 // Itens do menu "Mais" (utilidades)
 const MORE_NAV: AssignmentMenuItem[] = [
@@ -1352,7 +1355,7 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 // MENU "ESPECIALIDADES" COLAPSÁVEL - CORES POR TIPO
 // ==========================================
 
-type Especialidade = "JURI" | "VVD" | "EP";
+type Especialidade = "JURI" | "VVD" | "EP" | "INST";
 
 // Cores distintas por especialidade
 const ESPECIALIDADE_COLORS = {
@@ -1376,6 +1379,13 @@ const ESPECIALIDADE_COLORS = {
     ring: "ring-blue-500/30",
     bgHover: "hover:bg-blue-700/30",
     line: "from-blue-500/30"
+  },
+  INST: {
+    bg: "bg-violet-500/20",
+    text: "text-violet-400",
+    ring: "ring-violet-500/30",
+    bgHover: "hover:bg-violet-700/30",
+    line: "from-violet-500/30"
   }
 };
 
@@ -1392,6 +1402,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
       { id: "JURI", label: "Júri", icon: Gavel, colors: ESPECIALIDADE_COLORS.JURI },
       { id: "VVD", label: "VVD", icon: Shield, colors: ESPECIALIDADE_COLORS.VVD },
       { id: "EP", label: "EP", icon: Lock, colors: ESPECIALIDADE_COLORS.EP },
+      { id: "INST", label: "Inst. Sup", icon: Landmark, colors: ESPECIALIDADE_COLORS.INST },
     ];
     if (!availableEspecialidades || availableEspecialidades.length === 0) return allTabs;
     return allTabs.filter(t => availableEspecialidades.includes(t.id));
@@ -1404,9 +1415,10 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
   // Determinar seções baseado na especialidade selecionada
   const sections = especialidade === "JURI" ? JURI_SECTIONS
     : especialidade === "VVD" ? VVD_SECTIONS
-    : EP_SECTIONS;
+    : especialidade === "EP" ? EP_SECTIONS
+    : INST_SECTIONS;
 
-  const hasActiveItem = [...JURI_MODULES, ...VVD_MODULES, ...EP_MODULES].some(
+  const hasActiveItem = [...JURI_MODULES, ...VVD_MODULES, ...EP_MODULES, ...INST_MODULES].some(
     item => item.exactMatch ? pathname === item.path : pathname.startsWith(item.path)
   );
 
@@ -1423,6 +1435,8 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
       setEspecialidade("VVD");
     } else if (pathname.includes('/execucao-penal') && visibleIds.includes("EP")) {
       setEspecialidade("EP");
+    } else if (pathname.includes('/instancia-superior') && visibleIds.includes("INST")) {
+      setEspecialidade("INST");
     }
   }, [hasActiveItem, pathname, visibleTabs]);
 
@@ -1492,6 +1506,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
               "h-1.5 w-1.5 rounded-full shrink-0 ml-1.5 shadow-[0_0_4px]",
               especialidade === "JURI" ? "bg-emerald-400 shadow-emerald-400/50"
                 : especialidade === "VVD" ? "bg-yellow-400 shadow-yellow-400/50"
+                : especialidade === "INST" ? "bg-violet-400 shadow-violet-400/50"
                 : "bg-blue-400 shadow-blue-400/50"
             )} />
           )}
@@ -1573,6 +1588,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                           isActive
                             ? especialidade === "JURI" ? "bg-emerald-500/50"
                               : especialidade === "VVD" ? "bg-yellow-500/50"
+                              : especialidade === "INST" ? "bg-violet-500/50"
                               : "bg-blue-500/50"
                             : "bg-black/[0.06] dark:bg-white/[0.06]"
                         )} />
@@ -1586,6 +1602,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                             "absolute right-0.5 top-1/2 -translate-y-1/2 w-[3px] h-3.5 rounded-full transition-all duration-300",
                             especialidade === "JURI" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]"
                               : especialidade === "VVD" ? "bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.4)]"
+                              : especialidade === "INST" ? "bg-violet-400 shadow-[0_0_6px_rgba(167,139,250,0.4)]"
                               : "bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.4)]"
                           )} />
                         )}
@@ -1626,16 +1643,17 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
   const canSeeVVD = hasArea("VIOLENCIA_DOMESTICA");
   const canSeeCriminal = hasArea("CRIMINAL");
   const canSeeInfancia = hasArea("INFANCIA_JUVENTUDE");
-  const canSeeSpecializedModules = canSeeJuri || canSeeEP || canSeeVVD;
 
-  // Build list of available especialidades for the menu
+  // Build list of available especialidades for the menu.
+  // EP e Inst. Superior são sempre visíveis; Júri/VVD dependem de área atribuída.
   const availableEspecialidades = useMemo(() => {
     const list: string[] = [];
     if (canSeeJuri) list.push("JURI");
     if (canSeeVVD) list.push("VVD");
-    if (canSeeEP) list.push("EP");
+    list.push("EP");
+    list.push("INST");
     return list;
-  }, [canSeeJuri, canSeeVVD, canSeeEP]);
+  }, [canSeeJuri, canSeeVVD]);
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
   const [prevWasDrive, setPrevWasDrive] = useState(false);
@@ -1796,7 +1814,19 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
               />
             </SidebarMenu>
 
-            {/* 3. Documentos (Drive, Modelos, Jurisprudência) - Laranja */}
+            {/* 3. Especialidades (Júri/VVD/EP/Inst. Superior) - logo após Cadastros */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
+              <EspecialidadesMenu
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+                availableEspecialidades={availableEspecialidades}
+              />
+            </SidebarMenu>
+
+            {/* 4. Documentos (Drive, Modelos, Jurisprudência) - Laranja */}
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
               <DocumentosMenu
@@ -1843,22 +1873,6 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
                 isCollapsed={isCollapsed}
               />
             </SidebarMenu>
-
-            {/* 6. Especialidades (Júri/VVD/EP) - Amber */}
-            {canSeeSpecializedModules && (
-              <>
-                <NavDivider collapsed={isCollapsed} />
-                <SidebarMenu className="space-y-0.5">
-                  <EspecialidadesMenu
-                    pathname={pathname}
-                    onNavigate={handleNavigate}
-                    userRole={userRole}
-                    isCollapsed={isCollapsed}
-                    availableEspecialidades={availableEspecialidades}
-                  />
-                </SidebarMenu>
-              </>
-            )}
 
             {/* 7. Mais */}
             <NavDivider collapsed={isCollapsed} />
