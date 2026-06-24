@@ -6,7 +6,7 @@
 // registro inicial — que pode ser escrito na hora e/ou importado do atendimento
 // (assunto/pedido/relato). A peça nasce depois, da demanda, pelo fluxo atual.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
@@ -28,12 +28,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, ListPlus, Loader2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
+import { ProceduralActSelector } from "./procedural-act-selector";
 import {
   AREA_TO_ATRIBUICAO_ENUM,
   ATRIBUICAO_DEMANDA_OPTIONS,
 } from "./config";
-import { montarRegistroDoAtendimento, atribuicaoAtosLabel } from "./gerar-demanda-logic";
+import { montarRegistroDoAtendimento } from "./gerar-demanda-logic";
 
 interface GerarDemandaPopoverProps {
   assistido: { id: number; nome: string };
@@ -110,12 +110,7 @@ export function GerarDemandaPopover({
     }
   }, [open, atribuicaoDefault, contextoAtendimento]);
 
-  // Sugestões de ato seguem a ATRIBUIÇÃO escolhida (não mais a área fixa).
-  const atosLabel = useMemo(() => atribuicaoAtosLabel(atribuicao), [atribuicao]);
-  const sugestoes = useMemo(
-    () => getAtosPorAtribuicao(atosLabel).filter((a) => a.value !== "Todos").slice(0, 8),
-    [atosLabel]
-  );
+  // Sugestões de ato (busca + agrupamento por atribuição) vivem no ProceduralActSelector.
 
   const criar = trpc.demandas.createFromForm.useMutation({
     onSuccess: (data) => {
@@ -208,38 +203,19 @@ export function GerarDemandaPopover({
           )}
         </div>
 
-        {/* Ato — input livre + sugestões pela atribuição */}
+        {/* Ato — seletor premium: busca + sugestões agrupadas, texto livre preservado */}
         <div className="space-y-1">
           <Label htmlFor="gd-ato" className="text-[11px] text-muted-foreground">
             Ato a praticar
           </Label>
-          <Input
+          <ProceduralActSelector
             id="gd-ato"
+            atribuicao={atribuicao}
             value={ato}
-            onChange={(e) => setAto(e.target.value)}
-            placeholder="Ex.: Progressão de regime"
+            onChange={setAto}
             autoFocus
-            className="h-9 text-sm"
+            placeholder="Ex.: Progressão de regime"
           />
-          {sugestoes.length > 0 && (
-            <div className="flex flex-wrap gap-1 pt-0.5">
-              {sugestoes.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => setAto(s.label)}
-                  className={cn(
-                    "rounded-md px-2 py-0.5 text-[11px] transition-colors cursor-pointer",
-                    ato === s.label
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                      : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Prazo + flags */}
