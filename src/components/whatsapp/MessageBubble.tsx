@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { audioBarHeights } from "./ds/audio-waveform";
+import { useLongPress } from "./ds/useLongPress";
 import { MessageActionBar } from "./MessageActionBar";
+import { MessageActionSheet } from "./MessageActionSheet";
 import {
   SaveToProcessModal,
   CreateNoteModal,
@@ -269,6 +271,31 @@ export function MessageBubble({
   const [showSaveToProcess, setShowSaveToProcess] = useState(false);
   const [showCreateNote, setShowCreateNote] = useState(false);
   const [showSaveToDrive, setShowSaveToDrive] = useState(false);
+  // Mobile: long-press opens the action sheet (touch has no hover toolbar)
+  const [showActionSheet, setShowActionSheet] = useState(false);
+
+  // Shared action handlers — used by both the desktop hover toolbar and the
+  // mobile action sheet, so the two stay in sync.
+  const handleSaveToProcess = () => {
+    if (onSaveToProcess) onSaveToProcess(msg);
+    else setShowSaveToProcess(true);
+  };
+  const handleCreateNote = () => {
+    if (onCreateNote) onCreateNote(msg);
+    else setShowCreateNote(true);
+  };
+  const handleSaveToDrive = () => {
+    if (onSaveToDrive) onSaveToDrive(msg);
+    else setShowSaveToDrive(true);
+  };
+  const handleToggleFavorite = () => onToggleFavorite?.(msg);
+  const handleCopy = () => {
+    if (msg.content) onCopy(msg.content);
+  };
+  const handleReply = () => onReply(msg);
+  const handleShowDetails = () => {};
+
+  const longPress = useLongPress(() => setShowActionSheet(true));
 
   // Parse quoted content ("> " prefix lines)
   const hasQuote = msg.content?.startsWith("> ");
@@ -352,37 +379,20 @@ export function MessageBubble({
           isOutbound ? "flex-row" : "flex-row-reverse",
           isSelected && "ring-2 ring-emerald-500/50 rounded-2xl",
         )}
+        {...(!isSelectionMode ? longPress : {})}
       >
-        {/* Hover action bar — replaces old inline reply/copy buttons */}
+        {/* Hover action bar (desktop) — on touch the long-press sheet replaces it */}
         {!isSelectionMode && (
           <MessageActionBar
             isFavorite={isFavorite}
             hasMedia={hasMedia}
-            onSaveToProcess={() => {
-              if (onSaveToProcess) {
-                onSaveToProcess(msg);
-              } else {
-                setShowSaveToProcess(true);
-              }
-            }}
-            onCreateNote={() => {
-              if (onCreateNote) {
-                onCreateNote(msg);
-              } else {
-                setShowCreateNote(true);
-              }
-            }}
-            onSaveToDrive={() => {
-              if (onSaveToDrive) {
-                onSaveToDrive(msg);
-              } else {
-                setShowSaveToDrive(true);
-              }
-            }}
-            onToggleFavorite={() => onToggleFavorite?.(msg)}
-            onCopy={() => { if (msg.content) onCopy(msg.content); }}
-            onReply={() => onReply(msg)}
-            onShowDetails={() => {}}
+            onSaveToProcess={handleSaveToProcess}
+            onCreateNote={handleCreateNote}
+            onSaveToDrive={handleSaveToDrive}
+            onToggleFavorite={handleToggleFavorite}
+            onCopy={handleCopy}
+            onReply={handleReply}
+            onShowDetails={handleShowDetails}
           />
         )}
 
@@ -480,6 +490,19 @@ export function MessageBubble({
             contactId={contactId ?? 0}
             messageIds={[msg.id]}
             mediaFilename={msg.mediaFilename}
+          />
+          <MessageActionSheet
+            open={showActionSheet}
+            onOpenChange={setShowActionSheet}
+            isFavorite={isFavorite}
+            hasMedia={hasMedia}
+            onSaveToProcess={handleSaveToProcess}
+            onCreateNote={handleCreateNote}
+            onSaveToDrive={handleSaveToDrive}
+            onToggleFavorite={handleToggleFavorite}
+            onCopy={handleCopy}
+            onReply={handleReply}
+            onShowDetails={handleShowDetails}
           />
         </>
       )}
