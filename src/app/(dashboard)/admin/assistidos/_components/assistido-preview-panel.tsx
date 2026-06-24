@@ -272,9 +272,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           {/* últimas demandas */}
           {ultimasDemandas.length > 0 && (
             <div className="mt-3 space-y-1.5">
-              {ultimasDemandas.map((d: { id: number; ato?: string | null; tipoAto?: string | null; prazo?: string | null; status?: string }) => {
+              {ultimasDemandas.map((d) => {
                 const prazoD = d.prazo ? getPrazoInfo(d.prazo) : null;
-                const done = d.status === "7_CONCLUIDO" || d.status === "8_ARQUIVADO";
+                const done = d.status === "CONCLUIDO" || d.status === "ARQUIVADO";
                 return (
                   <div key={d.id} className="flex items-center gap-2 py-0.5">
                     <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", done ? "bg-emerald-400" : "bg-amber-400")} />
