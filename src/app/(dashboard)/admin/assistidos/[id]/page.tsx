@@ -27,6 +27,7 @@ import { WhatsappAvisoButton } from "./_components/whatsapp-aviso-button";
 import { DuplicataAlert } from "./_components/duplicata-alert";
 import { FichaCompletude } from "./_components/ficha-completude";
 import { UltimoContato } from "./_components/ultimo-contato";
+import { WhatsappCockpitCard } from "./_components/whatsapp-cockpit-card";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
 function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
@@ -725,6 +726,9 @@ export default function AssistidoHubPage() {
         <div className="space-y-3 md:col-span-2 xl:col-span-1">
           {/* Síntese das análises processuais (geradas via daemon) */}
           <AnaliseResumoCockpit assistidoId={id} casos={casosAgrupados} />
+
+          {/* Comunicação — WhatsApp vinculado (não-lidas, última msg, registrar) */}
+          <WhatsappCockpitCard assistidoId={id} telefone={assistido.telefone} />
 
           {/* Drive recente */}
           {arquivosRecentes.length > 0 && (
