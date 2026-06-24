@@ -880,7 +880,7 @@ export default function DashboardJuriPage() {
         </AnimatePresence>
 
         {/* ===== 1. REGISTRO RÁPIDO (full-width, stacked rows) ===== */}
-        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
           <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
               <Plus className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -1457,6 +1457,56 @@ export default function DashboardJuriPage() {
           </div>
         </Card>
 
+        {/* ===== 1b. PANORAMA — faixa de KPIs (command-center) logo abaixo do
+            Registro Rápido. Números acionáveis, cor por urgência via gradiente;
+            clique abre a lista já filtrada em Demandas. ===== */}
+        <KPIGrid columns={5}>
+          <KPICardPremium
+            title="Vencidos"
+            value={estatisticasPrazos.vencidos}
+            subtitle="prazos"
+            gradient="rose"
+            icon={AlertTriangle}
+            href="/admin/demandas?filtro=vencidos"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Vence hoje"
+            value={estatisticasPrazos.venceHoje}
+            subtitle="prazos"
+            gradient="amber"
+            icon={Clock}
+            href="/admin/demandas?filtro=hoje"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Próx. 7 dias"
+            value={estatisticasPrazos.proximosDias}
+            subtitle="prazos"
+            gradient="blue"
+            icon={CalendarDays}
+            href="/admin/demandas?filtro=prazo"
+            size="sm"
+          />
+          <KPICardPremium
+            title="Réu preso"
+            value={estatisticasPrazos.reuPresoVencido}
+            subtitle="vencidos"
+            gradient="rose"
+            icon={Lock}
+            href="/admin/demandas?filtro=reuPreso"
+            size="sm"
+          />
+          <KPICardPremium
+            title="A registrar"
+            value={atendimentosPendentes.length}
+            subtitle="atendimentos"
+            gradient="violet"
+            icon={PenLine}
+            size="sm"
+          />
+        </KPIGrid>
+
         {/* ===== 2. EQUIPE & COWORK ===== */}
         <EquipeCoworkCard
           delegacoesAtivas={delegacoesAtivas.length}
@@ -1484,7 +1534,7 @@ export default function DashboardJuriPage() {
 
         {/* ===== PENDÊNCIAS SOLAR (condicional) ===== */}
         {solarSync && (solarSync.stats.pending > 0 || solarSync.stats.errors > 0) && (
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
             <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
@@ -1644,7 +1694,7 @@ export default function DashboardJuriPage() {
         <div className={cn("grid gap-6", isDefensorCriminalGeral ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2")}>
 
         {/* PRAZOS COM AÇÃO RÁPIDA */}
-        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+        <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
           <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
@@ -1738,7 +1788,7 @@ export default function DashboardJuriPage() {
 
         {/* PRÓXIMOS JÚRIS — só especializado, só quem tem área JURI */}
         {!isDefensorCriminalGeral && hasArea("JURI") && (
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
             <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
@@ -1848,7 +1898,7 @@ export default function DashboardJuriPage() {
         {/* ===== 6. AUDIÊNCIAS (full-width) ===== */}
         {isDefensorCriminalGeral ? (
           /* Criminal Geral: Minhas Audiências */
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
             <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -1917,7 +1967,7 @@ export default function DashboardJuriPage() {
           </Card>
         ) : (
           /* Especializado: Audiências da Semana */
-          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+          <Card className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
               <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
