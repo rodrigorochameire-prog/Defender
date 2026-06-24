@@ -124,11 +124,11 @@ export function AtribuicaoPills({
           const Icon = ICONS[opt.label];
           const count = counts?.[opt.label];
 
-          // Dark + active: outline-leading — tint mínimo, contorno e ícone fazem o trabalho.
-          // Light + active: mantém o cinza-claro do segmented original.
+          // Dark + active: tint + contorno mais firmes pra a atribuição LIGADA
+          // saltar à vista no switcher iconOnly do header (antes sutil demais).
           const activeStyleDark: React.CSSProperties = {
-            backgroundColor: `${hex}14`,
-            boxShadow: `inset 0 0 0 1px ${hex}66`,
+            backgroundColor: `${hex}26`,
+            boxShadow: `inset 0 0 0 1.5px ${hex}cc`,
             color: "white",
           };
 
