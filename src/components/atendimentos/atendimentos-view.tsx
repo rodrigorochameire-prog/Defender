@@ -31,6 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
+  BarChart3,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
@@ -40,7 +41,9 @@ import {
   FileText,
   Handshake,
   History,
+  LayoutGrid,
   Link2,
+  List,
   Loader2,
   Plus,
   RotateCcw,
@@ -61,6 +64,19 @@ import {
 import { areaHex } from "./area-color";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
+import { AtendimentosCards } from "./atendimentos-cards";
+import { AtendimentosCalendar } from "./atendimentos-calendar";
+import { AtendimentosInsights } from "./atendimentos-insights";
+
+// Visões da pauta de atendimentos — Lista (denso), Cards (grade), Agenda (mês)
+// e Insights (métricas). O alternador fica acima do conteúdo.
+const VISTAS = [
+  { key: "lista", label: "Lista", icon: List },
+  { key: "cards", label: "Cards", icon: LayoutGrid },
+  { key: "calendario", label: "Agenda", icon: CalendarDays },
+  { key: "insights", label: "Insights", icon: BarChart3 },
+] as const;
+type Vista = (typeof VISTAS)[number]["key"];
 import {
   PERIODO_OPTIONS,
   agruparPorDia,
@@ -96,6 +112,8 @@ export default function AtendimentosView() {
   const [retornoPrefill, setRetornoPrefill] = useState<AtendimentoPrefill | null>(null);
   // Deep-link vindo do dashboard: ?abrir=<id> abre o atendimento assim que carregar.
   const [abrirId, setAbrirId] = useState<number | null>(null);
+  const [vista, setVista] = useState<Vista>("lista");
+  const [novoInicialDate, setNovoInicialDate] = useState<string | null>(null);
 
   // Deep-links: ?novo=1 (criar), ?pendentes=1 (filtro a registrar), ?abrir=<id> (sheet)
   useEffect(() => {
@@ -387,8 +405,44 @@ export default function AtendimentosView() {
           </div>
         )}
 
-        {/* Lista agrupada por dia */}
-        {isLoading ? (
+        {/* Alternador de visão */}
+        <div className="flex items-center gap-1 rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-0.5 w-fit shadow-sm">
+          {VISTAS.map((v) => {
+            const Icon = v.icon;
+            const ativa = vista === v.key;
+            return (
+              <button
+                key={v.key}
+                onClick={() => setVista(v.key)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer",
+                  ativa
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Conteúdo conforme a visão */}
+        {vista === "insights" ? (
+          <AtendimentosInsights />
+        ) : vista === "calendario" ? (
+          <AtendimentosCalendar
+            itens={visiveis}
+            onOpen={setDetalhe}
+            onNovoNoDia={(dia) => {
+              setEditando(null);
+              setRetornoPrefill(null);
+              setNovoInicialDate(format(dia, "yyyy-MM-dd"));
+              setModalAberto(true);
+            }}
+          />
+        ) : isLoading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-20 rounded-xl" />
@@ -410,6 +464,8 @@ export default function AtendimentosView() {
               </p>
             </CardContent>
           </Card>
+        ) : vista === "cards" ? (
+          <AtendimentosCards porDia={porDia} onOpen={setDetalhe} />
         ) : (
           porDia.map(({ dia, itens }) => {
             const rotulo = rotuloDia(dia);
@@ -446,9 +502,11 @@ export default function AtendimentosView() {
           setModalAberto(false);
           setEditando(null);
           setRetornoPrefill(null);
+          setNovoInicialDate(null);
         }}
         editing={editando}
         prefill={retornoPrefill}
+        initialDate={novoInicialDate}
       />
     </div>
   );
