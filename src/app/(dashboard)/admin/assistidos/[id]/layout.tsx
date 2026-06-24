@@ -10,6 +10,7 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { statusConfig } from "../_components/assistido-config";
 import { AtendimentoFormModal } from "@/components/atendimentos/atendimento-form-modal";
 import { whatsappUrl } from "@/components/atendimentos/config";
+import { statusPrisionalInfo } from "@/lib/config/tipologia";
 
 const NIVEL_1_TABS = [
   { key: "geral",       label: "Geral",       icon: User,          path: "" },
@@ -59,6 +60,9 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
   const monit = /MONITOR|TORNOZEL|DOMICILIAR/.test(sp);
   const statusLabel =
     statusConfig[assistido?.statusPrisional ?? ""]?.label ?? (preso ? "Preso" : monit ? "Monitorado" : "Solto");
+  // Cores do badge de status vêm da tipologia central (statusPrisionalInfo);
+  // fallback no 3-way preso/monit/solto para valores de status livres.
+  const spInfo = statusPrisionalInfo(assistido?.statusPrisional);
   const zap = whatsappUrl(assistido?.telefone) ?? whatsappUrl(assistido?.telefoneContato);
 
   return (
@@ -74,20 +78,24 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base font-semibold truncate text-neutral-900 dark:text-neutral-100">
+              <h1 className="font-serif text-[17px] font-semibold tracking-tight truncate text-neutral-900 dark:text-neutral-100">
                 {assistido?.nome ?? "Carregando…"}
               </h1>
               {assistido && (
                 <span
                   className={cn(
                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                    preso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
-                    monit && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
-                    !preso && !monit && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                    spInfo
+                      ? cn(spInfo.bg, spInfo.color)
+                      : cn(
+                          preso && "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400",
+                          monit && "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400",
+                          !preso && !monit && "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400",
+                        ),
                   )}
                 >
                   <span className={cn("w-1.5 h-1.5 rounded-full", preso ? "bg-rose-500" : monit ? "bg-amber-500" : "bg-emerald-500")} />
-                  {statusLabel}
+                  {spInfo?.label ?? statusLabel}
                 </span>
               )}
             </div>
