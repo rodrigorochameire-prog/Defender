@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMemo } from "react";
-import { ClipboardList, Scale, Clock, Plus, User } from "lucide-react";
+import { ClipboardList, Scale, Clock, Plus, User, AlertCircle, CalendarClock, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,42 @@ function fmtPrazo(prazo: string): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
 }
 
+// Rótulo humano do status (enum do banco). Map central de Demandas é candidato p/ a spec do módulo.
+const STATUS_LABEL: Record<string, string> = {
+  "2_ATENDER": "Atender",
+  "4_MONITORAR": "Monitorar",
+  "5_TRIAGEM": "Triagem",
+  "7_PROTOCOLADO": "Protocolado",
+  "7_CIENCIA": "Ciência",
+  "7_SEM_ATUACAO": "Sem atuação",
+  URGENTE: "Urgente",
+  CONCLUIDO: "Concluído",
+  ARQUIVADO: "Arquivado",
+};
+function statusLabel(s: string | null): string {
+  if (!s) return "—";
+  return STATUS_LABEL[s] ?? s.replace(/^\d+_/, "").toLowerCase();
+}
+
+type StatTone = "rose" | "amber" | "emerald" | "neutral";
+const STAT_TONE: Record<StatTone, string> = {
+  rose: "text-rose-600 dark:text-rose-400",
+  amber: "text-amber-600 dark:text-amber-400",
+  emerald: "text-emerald-600 dark:text-emerald-400",
+  neutral: "text-neutral-400",
+};
+function StatChip({ label, value, tone, icon: Icon }: { label: string; value: number; tone: StatTone; icon: typeof Clock }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg bg-neutral-50 dark:bg-white/[0.04] border border-neutral-200/70 dark:border-white/[0.06] px-3 py-2 min-w-0">
+      <Icon className={cn("h-4 w-4 shrink-0", STAT_TONE[tone])} />
+      <div className="min-w-0">
+        <div className="text-sm font-bold leading-none tabular-nums text-neutral-800 dark:text-neutral-100">{value}</div>
+        <div className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-neutral-400">{label}</div>
+      </div>
+    </div>
+  );
+}
+
 function DemandaRow({ d, aberta }: { d: Demanda; aberta: boolean }) {
   const dias = d.prazo ? diasAte(d.prazo) : null;
   const venc = dias !== null && dias < 0;
@@ -54,7 +90,9 @@ function DemandaRow({ d, aberta }: { d: Demanda; aberta: boolean }) {
         <span className={cn("h-2 w-2 shrink-0 rounded-full", aberta ? "bg-amber-500" : "bg-neutral-300 dark:bg-neutral-600")} />
         <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/90">{d.ato ?? "Demanda"}</span>
         {d.status && (
-          <span className="shrink-0 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">{d.status}</span>
+          <span className="shrink-0 rounded px-1.5 py-px text-[9px] font-medium text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-white/[0.05]">
+            {statusLabel(d.status)}
+          </span>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-4 text-[9.5px] text-muted-foreground">
@@ -105,6 +143,16 @@ export default function DemandasPage() {
     return { abertas: ab, concluidas: co };
   }, [assistido?.demandas]);
 
+  const resumo = useMemo(() => {
+    const atrasadas = abertas.filter((d) => d.prazo && diasAte(d.prazo) < 0).length;
+    const proximas = abertas.filter((d) => {
+      if (!d.prazo) return false;
+      const x = diasAte(d.prazo);
+      return x >= 0 && x <= 7;
+    }).length;
+    return { atrasadas, emAberto: abertas.length, proximas, concluidas: concluidas.length };
+  }, [abertas, concluidas]);
+
   if (isLoading) {
     return (
       <div className="p-4 sm:p-6 space-y-2">
@@ -135,10 +183,22 @@ export default function DemandasPage() {
         </Link>
       </div>
 
+      {total > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <StatChip label="Atrasadas" value={resumo.atrasadas} tone={resumo.atrasadas > 0 ? "rose" : "neutral"} icon={AlertCircle} />
+          <StatChip label="Em aberto" value={resumo.emAberto} tone={resumo.emAberto > 0 ? "amber" : "neutral"} icon={Clock} />
+          <StatChip label="Próximas 7d" value={resumo.proximas} tone={resumo.proximas > 0 ? "amber" : "neutral"} icon={CalendarClock} />
+          <StatChip label="Concluídas" value={resumo.concluidas} tone="emerald" icon={CheckCircle2} />
+        </div>
+      )}
+
       {total === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
-          <ClipboardList className="h-5 w-5 text-muted-foreground/50" />
-          <p className="text-xs text-muted-foreground">Nenhuma demanda registrada.</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 px-6 py-12 text-center">
+          <ClipboardList className="h-6 w-6 text-muted-foreground/40" />
+          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Nenhuma demanda ainda</p>
+          <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+            Demandas são os atos e prazos do assistido. Crie uma para acompanhar prazos, status e responsáveis aqui.
+          </p>
         </div>
       )}
 

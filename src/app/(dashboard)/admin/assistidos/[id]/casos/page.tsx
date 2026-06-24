@@ -1,12 +1,13 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMemo } from "react";
 import {
   Briefcase, Plus, Gavel, CalendarDays, Clock, ChevronRight,
-  Layers, FileText,
+  Layers, FileText, Loader2, AlertTriangle,
 } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
@@ -53,7 +54,41 @@ function Badge({ info, className }: { info: { label: string; badge: string }; cl
   );
 }
 
-function ProcessoRow({ p }: { p: ProcessoSist }) {
+/** CTA forte: cria um caso JÁ vinculado ao assistido a partir do processo órfão. */
+function CriarCasoButton({
+  processoId,
+  assistidoId,
+  tituloSugerido,
+}: {
+  processoId: number;
+  assistidoId: number;
+  tituloSugerido?: string;
+}) {
+  const router = useRouter();
+  const utils = trpc.useUtils();
+  const criar = trpc.casos.criarDeProcesso.useMutation({
+    onSuccess: (caso) => {
+      toast.success("Caso criado a partir do processo.");
+      utils.casos.getCasosComProcessos.invalidate({ assistidoId });
+      utils.assistidos.getById.invalidate({ id: assistidoId });
+      router.push(`/admin/assistidos/${assistidoId}/caso/${caso.id}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <button
+      type="button"
+      disabled={criar.isPending}
+      onClick={() => criar.mutate({ processoId, assistidoId, titulo: tituloSugerido })}
+      className="inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer shrink-0 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+    >
+      {criar.isPending ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Plus className="h-2.5 w-2.5" />}
+      Criar caso
+    </button>
+  );
+}
+
+function ProcessoRow({ p, criarCasoAssistidoId }: { p: ProcessoSist; criarCasoAssistidoId?: number }) {
   const atrib = getAtribuicaoColors(p.atribuicao ?? p.area);
   const sit = situacaoProcessoInfo(p.situacao);
   const pz = p.proximoPrazo ? diasAte(p.proximoPrazo.data) : null;
@@ -102,6 +137,16 @@ function ProcessoRow({ p }: { p: ProcessoSist }) {
             </span>
           )}
           {p.vara && <span className="truncate">{p.vara}</span>}
+        </div>
+      )}
+
+      {criarCasoAssistidoId !== undefined && (
+        <div className="flex justify-end pt-0.5">
+          <CriarCasoButton
+            processoId={p.id}
+            assistidoId={criarCasoAssistidoId}
+            tituloSugerido={p.assunto ?? undefined}
+          />
         </div>
       )}
     </div>
@@ -153,9 +198,13 @@ export default function CasosListPage() {
       </div>
 
       {casos.length === 0 && semCaso.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
-          <Briefcase className="h-5 w-5 text-muted-foreground/50" />
-          <p className="text-xs text-muted-foreground">Nenhum caso cadastrado.</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 px-6 py-12 text-center">
+          <Briefcase className="h-6 w-6 text-muted-foreground/40" />
+          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Nenhum caso ainda</p>
+          <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+            Casos agrupam processos relacionados do assistido para análise, teoria e estratégia
+            conjuntas. Quando houver processos vinculados, você poderá organizá-los em casos aqui.
+          </p>
         </div>
       )}
 
@@ -201,13 +250,26 @@ export default function CasosListPage() {
       })}
 
       {semCaso.length > 0 && (
-        <section className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm overflow-hidden">
-          <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
-            <Layers className="h-3 w-3" /> Sem caso vinculado
-            <span className="font-normal normal-case text-neutral-400">· {semCaso.length}</span>
+        <section className="rounded-xl bg-amber-50/40 dark:bg-amber-950/10 ring-1 ring-amber-200/60 dark:ring-amber-900/30 shadow-sm overflow-hidden">
+          <div className="flex items-start gap-2 px-3.5 pt-3 pb-2">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                <Layers className="h-3 w-3" /> Sem caso vinculado
+                <span className="font-normal normal-case text-amber-600/70 dark:text-amber-500/70">
+                  · {semCaso.length} processo{semCaso.length !== 1 ? "s" : ""}
+                </span>
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-amber-700/80 dark:text-amber-300/70">
+                Sem um caso, {semCaso.length === 1 ? "este processo fica" : "estes processos ficam"} fora da
+                análise estrutural e da estratégia conjunta. Crie um caso para organizar a atuação.
+              </p>
+            </div>
           </div>
           <div className="space-y-1.5 px-3.5 pb-3">
-            {(semCaso as ProcessoSist[]).map((p) => <ProcessoRow key={p.id} p={p} />)}
+            {(semCaso as ProcessoSist[]).map((p) => (
+              <ProcessoRow key={p.id} p={p} criarCasoAssistidoId={assistidoId} />
+            ))}
           </div>
         </section>
       )}

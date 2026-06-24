@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar, Clock, PenLine, Paperclip, StickyNote, ExternalLink } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { isPrazoUrgente } from "./ds/processo-context";
 
 // =============================================================================
 // TYPES
@@ -61,7 +62,7 @@ export function ContextPanelProcesso({ assistidoId, processoAtivo }: ContextPane
       {/* Scrollable cards area */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {/* Card: Processo Ativo */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3 border-l-2 border-l-emerald-500">
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">
             Processo Ativo
           </p>
@@ -90,9 +91,9 @@ export function ContextPanelProcesso({ assistidoId, processoAtivo }: ContextPane
         {isLoading ? (
           <CardSkeleton />
         ) : (
-          <div className="rounded-lg border border-border bg-muted/30 p-3 border-l-2 border-l-amber-500">
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Calendar className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+              <Calendar className="h-3 w-3 text-muted-foreground" />
               <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                 Próxima Audiência
               </p>
@@ -107,7 +108,7 @@ export function ContextPanelProcesso({ assistidoId, processoAtivo }: ContextPane
                     {data.proximaAudiencia.tipo}
                   </p>
                 )}
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
                   em {data.proximaAudiencia.diasRestantes} dia{data.proximaAudiencia.diasRestantes !== 1 ? "s" : ""}
                 </p>
               </>
@@ -121,18 +122,13 @@ export function ContextPanelProcesso({ assistidoId, processoAtivo }: ContextPane
         {isLoading ? (
           <CardSkeleton />
         ) : (
-          <div className={cn(
-            "rounded-lg border border-border bg-muted/30 p-3 border-l-2",
-            data?.prazoAberto && data.prazoAberto.diasRestantes < 7
-              ? "border-l-red-500"
-              : "border-l-amber-500"
-          )}>
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <Clock className={cn(
                 "h-3 w-3",
-                data?.prazoAberto && data.prazoAberto.diasRestantes < 7
+                isPrazoUrgente(data?.prazoAberto?.diasRestantes)
                   ? "text-red-600 dark:text-red-400"
-                  : "text-amber-600 dark:text-amber-400"
+                  : "text-muted-foreground"
               )} />
               <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                 Prazo Aberto
@@ -150,7 +146,9 @@ export function ContextPanelProcesso({ assistidoId, processoAtivo }: ContextPane
                 </p>
                 <p className={cn(
                   "text-[11px] font-medium mt-0.5",
-                  data.prazoAberto.diasRestantes < 7 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+                  isPrazoUrgente(data.prazoAberto.diasRestantes)
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-muted-foreground"
                 )}>
                   {data.prazoAberto.diasRestantes} dia{data.prazoAberto.diasRestantes !== 1 ? "s" : ""}
                 </p>

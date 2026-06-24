@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, getStageIndex, PIPELINE_STAGES } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
+import { StatusChip } from "./StatusChip";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
@@ -518,18 +519,16 @@ const CompactRow = React.memo(function CompactRow({
 
     // Status — pill with pipeline dropdown
     status: () => {
-      const StatusIcon = statusConfig.icon;
       return (
         <div className="relative" ref={statusCellRef}>
-          <button
-            data-status-trigger
+          <StatusChip
+            status={demanda.status}
             onClick={(e) => { e.stopPropagation(); setShowStatusPipeline(!showStatusPipeline); }}
-            className="inline-flex items-center gap-1.5 text-[10px] font-semibold rounded-full px-2 py-0.5 cursor-pointer hover:ring-1 hover:ring-neutral-300 dark:hover:ring-neutral-600 transition-all"
-            style={{ color: statusColor, backgroundColor: `${statusColor}12` }}
-          >
-            <StatusIcon className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate max-w-[90px]">{statusConfig.label}</span>
-          </button>
+            showIcon
+            truncate
+            size="sm"
+            data-status-trigger
+          />
           {showStatusPipeline && (
             <StatusPipelineSelector
               currentStatus={demanda.status}
@@ -1558,13 +1557,7 @@ export function DemandaCompactView({
                             value={demanda.status}
                             compact
                             displayValue={
-                              <div
-                                className="inline-flex items-center gap-1 text-[9px] font-semibold leading-none rounded-full px-1.5 py-0.5"
-                                style={{ color: statusColor, backgroundColor: `${statusColor}10` }}
-                              >
-                                <StatusIcon className="w-2.5 h-2.5 flex-shrink-0" />
-                                <span className="truncate max-w-[65px]">{statusConfig.label}</span>
-                              </div>
+                              <StatusChip status={demanda.status} showIcon truncate size="sm" />
                             }
                             options={statusOptions}
                             onChange={(v) => onStatusChange(demanda.id, v)}

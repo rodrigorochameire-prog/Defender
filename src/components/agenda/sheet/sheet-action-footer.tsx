@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConcluirDialog } from "./concluir-dialog";
-import { RedesignarDialog } from "./redesignar-dialog";
+import { RedesignarDialog, type RedesignarContexto } from "./redesignar-dialog";
 import { RegistroEditor } from "@/components/registros/registro-editor";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { resolverVinculoRegistro } from "./footer-registro";
@@ -23,6 +23,8 @@ interface Props {
   onDuplicar?: () => void;
   /** Chamado quando o parser detecta evento de audiência na nota recém-salva */
   onDeteccao?: (d: AnotacaoAudienciaParsed) => void;
+  /** Contexto do evento p/ enriquecer o modal de redesignação (identidade + de→para). */
+  redesignarContexto?: RedesignarContexto;
 }
 
 export function SheetActionFooter({
@@ -33,6 +35,7 @@ export function SheetActionFooter({
   onAbrirRegistroCompleto,
   onDuplicar,
   onDeteccao,
+  redesignarContexto,
 }: Props) {
   const [quickNote, setQuickNote] = useState("");
   const [concluirOpen, setConcluirOpen] = useState(false);
@@ -258,6 +261,7 @@ export function SheetActionFooter({
         open={redesignarOpen}
         onOpenChange={setRedesignarOpen}
         isPending={actions.redesignar.isPending}
+        contexto={redesignarContexto}
         onConfirm={(novaData, novoHorario, motivo) => {
           if (!audienciaId) return;
           actions.redesignar.mutate({ audienciaId, novaData, novoHorario, motivo }, {

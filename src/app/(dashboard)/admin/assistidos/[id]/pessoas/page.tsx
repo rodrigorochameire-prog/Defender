@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { Users, Phone, MessageCircle, UserPlus, Home } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -98,7 +99,19 @@ export default function PessoasPage() {
               telefone={assistido.telefoneContato}
             />
           )}
-          {!temContatoPrimario && <p className="text-[12px] italic text-neutral-400">Sem telefone cadastrado.</p>}
+          {!temContatoPrimario && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-950/10">
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                <Phone className="h-3 w-3" /> Sem telefone cadastrado
+              </span>
+              <Link
+                href={`/admin/assistidos/${id}/editar`}
+                className="text-[10px] font-medium text-emerald-600 hover:underline dark:text-emerald-400 cursor-pointer"
+              >
+                Completar contato
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -122,9 +135,14 @@ export default function PessoasPage() {
               ))}
             </div>
           ) : (
-            <p className="text-[12px] italic text-neutral-400">
-              Nenhum familiar vinculado ainda. Vincule parentes que costumam pedir atendimento em nome do assistido.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-1.5 py-6 text-center">
+              <UserPlus className="h-6 w-6 text-muted-foreground/40" />
+              <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Sem rede de apoio cadastrada</p>
+              <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+                Familiares e contatos de referência ajudam a localizar o assistido, confirmar dados e dar
+                andamento à defesa. Vincule quem costuma acompanhar o caso.
+              </p>
+            </div>
           )}
         </div>
       </section>

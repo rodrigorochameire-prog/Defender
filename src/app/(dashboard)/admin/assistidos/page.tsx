@@ -79,8 +79,10 @@ import { AnalyticsTab } from "./_components/analytics-tab";
 import { useRecentAssistidos } from "./_components/use-recent-assistidos";
 import { PhotoUploadDialog } from "./_components/photo-upload-dialog";
 import { AssistidoQuickPreview } from "./_components/assistido-quick-preview";
+import { AssistidoPreviewPanel } from "./_components/assistido-preview-panel";
 import { AssistidoCard } from "./_components/assistido-card";
 import { AssistidoTableView } from "./_components/assistido-table-view";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { ProcessingQueuePanel } from "@/components/drive/ProcessingQueuePanel";
 import { useProcessingQueue } from "@/contexts/processing-queue";
 import { useComarcaVisibilidade } from "@/hooks/use-comarca-visibilidade";
@@ -281,6 +283,8 @@ export default function AssistidosPage() {
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedAssistido, setSelectedAssistido] = useState<AssistidoUI | null>(null);
   const [previewAssistido, setPreviewAssistido] = useState<AssistidoUI | null>(null);
+  // Master-detail: no xl+ o preview vira painel persistente (split-pane); abaixo, slide-over.
+  const isWide = useMediaQuery("(min-width: 1280px)");
 
   // Sticky summary bar
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -1127,8 +1131,10 @@ export default function AssistidosPage() {
 
 
 
+      {/* Master-detail: lista (col 1) + preview persistente xl+ (col 2) */}
+      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_460px] xl:gap-4 xl:items-start">
       {/* Card de Listagem */}
-      <Card className="border border-border bg-card rounded-xl overflow-hidden">
+      <Card className="border border-border bg-card rounded-xl overflow-hidden min-w-0">
         {/* Header — count + sort + view */}
         <div className="px-4 py-2 border-b border-border">
           <div className="flex items-center justify-between">
@@ -1251,6 +1257,22 @@ export default function AssistidosPage() {
       )}
         </div>
       </Card>
+
+      {/* Preview persistente — master-detail no xl+ (mobile/tablet usam o slide-over) */}
+      <aside className="hidden xl:block sticky top-4 h-[calc(100vh-2rem)]">
+        {previewAssistido ? (
+          <div className="h-full rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+            <AssistidoPreviewPanel key={previewAssistido.id} assistido={previewAssistido} />
+          </div>
+        ) : (
+          <div className="h-full rounded-xl border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-2 text-center px-6">
+            <Users className="w-8 h-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">Selecione um assistido</p>
+            <p className="text-xs text-muted-foreground/70">Resumo, atividade, pendências e ações aparecem aqui.</p>
+          </div>
+        )}
+      </aside>
+      </div>
       </>
       )}
 
@@ -1291,9 +1313,9 @@ export default function AssistidosPage() {
         />
       )}
 
-      {/* AssistidoQuickPreview Sheet */}
+      {/* AssistidoQuickPreview Sheet — só fora do xl (no xl+ o painel persistente assume) */}
       <AssistidoQuickPreview
-        assistido={previewAssistido}
+        assistido={isWide ? null : previewAssistido}
         onClose={() => setPreviewAssistido(null)}
         currentIndex={previewAssistido ? filteredAssistidos.findIndex(a => a.id === previewAssistido.id) : undefined}
         totalCount={filteredAssistidos.length}

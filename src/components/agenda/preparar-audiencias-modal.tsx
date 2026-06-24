@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { StatusChip } from "@/components/ds";
+import { kpisPreparacao } from "@/lib/agenda/kpis-preparacao";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
 import { usePrepararAudiencias } from "@/hooks/use-preparar-audiencias";
@@ -55,15 +57,31 @@ interface ProgressItem {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function statusIcon(status: StatusPrep) {
-  switch (status) {
-    case "completo":
-      return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-    case "parcial":
-      return <Clock className="h-4 w-4 text-amber-500" />;
-    case "pendente":
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
-  }
+/** Stat compacto do header do inbox (spec §C). Cor = exceção: só o que pede
+ *  atenção (parciais/pendentes/próximas 24h > 0) recebe tom âmbar. */
+function Kpi({ label, value, attention }: { label: string; value: number; attention?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border px-2.5 py-1.5",
+        attention
+          ? "border-amber-200 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20"
+          : "border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40"
+      )}
+    >
+      <div
+        className={cn(
+          "text-base font-semibold tabular-nums leading-none",
+          attention ? "text-amber-700 dark:text-amber-400" : "text-neutral-700 dark:text-neutral-200"
+        )}
+      >
+        {value}
+      </div>
+      <div className="text-[9px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mt-0.5">
+        {label}
+      </div>
+    </div>
+  );
 }
 
 function progressIcon(status: ProgressItem["status"]) {
@@ -113,6 +131,11 @@ export function PrepararAudienciasModal() {
 
   const pendentes = audiencias?.filter((a) => a.statusPrep !== "completo") ?? [];
   const totalPendentes = pendentes.length;
+  // KPIs do inbox (spec §C) — total/parciais/pendentes/próximas 24h.
+  const kpis = useMemo(
+    () => kpisPreparacao(audiencias ?? [], Date.now()),
+    [audiencias]
+  );
 
   // IDs de processos que estão com status "no-docs" na lista de progresso
   const processoIdsMissing = useMemo(
@@ -492,6 +515,14 @@ export function PrepararAudienciasModal() {
           {/* ================================================================ */}
           {phase === "levantamento" && (
             <div className="space-y-3">
+              {!isLoading && audiencias && audiencias.length > 0 && (
+                <div className="grid grid-cols-4 gap-2">
+                  <Kpi label="Total" value={kpis.total} />
+                  <Kpi label="Parciais" value={kpis.parciais} attention={kpis.parciais > 0} />
+                  <Kpi label="Pendentes" value={kpis.pendentes} attention={kpis.pendentes > 0} />
+                  <Kpi label="Próximas 24h" value={kpis.proximas24h} attention={kpis.proximas24h > 0} />
+                </div>
+              )}
               {isLoading ? (
                 <div className="flex items-center justify-center py-8 text-xs text-zinc-400">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -548,22 +579,11 @@ export function PrepararAudienciasModal() {
                         <td className="px-3 py-2 text-zinc-500">{a.tipo}</td>
                         <td className="px-3 py-2">
                           <div className="flex items-center gap-1.5">
-                            {statusIcon(a.statusPrep)}
-                            <span
-                              className={cn(
-                                "capitalize",
-                                a.statusPrep === "completo" &&
-                                  "text-emerald-600",
-                                a.statusPrep === "parcial" && "text-amber-600",
-                                a.statusPrep === "pendente" && "text-red-600",
-                              )}
-                            >
-                              {a.statusPrep}
-                            </span>
+                            <StatusChip kind="preparo" status={a.statusPrep} size="xs" dot />
                             {a.naoIntimadas > 0 && (
                               <Badge
                                 variant="outline"
-                                className="ml-1 text-[10px] px-1 py-0 border-red-300 text-red-600"
+                                className="ml-0.5 text-[10px] px-1 py-0 border-red-300 text-red-600"
                               >
                                 {a.naoIntimadas} sem intimação
                               </Badge>

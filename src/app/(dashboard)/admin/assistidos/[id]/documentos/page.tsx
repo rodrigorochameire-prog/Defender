@@ -236,12 +236,21 @@ export default function DocumentosPage() {
       )}
 
       {totalFiltrado === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
-          <FolderOpen className="h-5 w-5 text-muted-foreground/50" />
-          <p className="text-xs text-muted-foreground">
-            {arquivos.length === 0 ? "Nenhum documento indexado deste assistido." : "Nenhum arquivo no filtro."}
-          </p>
-        </div>
+        arquivos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 px-6 py-12 text-center dark:border-white/10">
+            <FolderOpen className="h-6 w-6 text-muted-foreground/40" />
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Nenhum documento ainda</p>
+            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+              Autos, peças e anexos do Drive aparecem aqui — agrupados por processo e classificados por tipo
+              conforme são indexados.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 py-12 text-center dark:border-white/10">
+            <FolderOpen className="h-5 w-5 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground">Nenhum arquivo no filtro.</p>
+          </div>
+        )
       ) : (
         <div className="space-y-3">
           {grupos.map((g) => {

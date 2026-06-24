@@ -137,10 +137,13 @@ export function TimelineVivaAssistido({ assistidoId }: TimelineVivaAssistidoProp
 
   if (!data || data.processos.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">Nenhum evento na timeline</p>
-        <p className="text-xs mt-1">Documentos classificados pelo enrichment aparecerao aqui</p>
+      <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
+        <FileText className="h-8 w-8 text-muted-foreground/40" />
+        <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Timeline em construção</p>
+        <p className="max-w-sm text-xs leading-relaxed">
+          À medida que o caso evolui, esta linha do tempo consolida automaticamente documentos, audiências e
+          diligências — em ordem cronológica, por processo. Ainda não há eventos para exibir.
+        </p>
       </div>
     );
   }

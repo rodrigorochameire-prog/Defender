@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMemo } from "react";
-import { CalendarDays, Scale, MapPin, CalendarClock } from "lucide-react";
+import { CalendarDays, Scale, MapPin, CalendarClock, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { statusAudienciaInfo } from "@/lib/config/design-tokens";
@@ -74,6 +74,67 @@ function AudienciaRow({ a, futura }: { a: Audiencia; futura: boolean }) {
   );
 }
 
+/** Briefing da próxima sessão: countdown + dados + ação contextual (doutrina §5). */
+function AudienciaBriefCard({ a }: { a: Audiencia }) {
+  const st = statusAudienciaInfo(a.status);
+  const dias = diasAte(a.dataAudiencia);
+  const countdown =
+    dias < 0 ? `${Math.abs(dias)}d atrás` : dias === 0 ? "Hoje" : dias === 1 ? "Amanhã" : `Em ${dias} dias`;
+  const urgente = dias >= 0 && dias <= 3;
+  return (
+    <section
+      className={cn(
+        "rounded-xl border-l-4 p-4 shadow-sm ring-1",
+        urgente
+          ? "border-l-emerald-500 bg-emerald-50/40 ring-emerald-200/60 dark:bg-emerald-950/10 dark:ring-emerald-900/40"
+          : "border-l-emerald-400 bg-white ring-neutral-200/80 dark:bg-neutral-900 dark:ring-neutral-800",
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            Próxima audiência
+          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-2">
+            <span className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-50">
+              {fmtDataHora(a.dataAudiencia)}
+            </span>
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                urgente
+                  ? "bg-emerald-500 text-white"
+                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+              )}
+            >
+              {countdown}
+            </span>
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+            <span className="font-medium text-foreground/80">{a.tipo ?? "Audiência"}</span>
+            {a.local && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" /> {a.local}
+              </span>
+            )}
+          </div>
+        </div>
+        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-semibold", st.cls)}>{st.label}</span>
+      </div>
+      {a.processoId && (
+        <div className="mt-3">
+          <Link
+            href={`/admin/processos/${a.processoId}`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-neutral-900 px-3 text-xs font-semibold text-white transition-colors hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 cursor-pointer"
+          >
+            Preparar no processo <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function AudienciasPage() {
   const params = useParams();
   const id = Number(params?.id);
@@ -121,16 +182,24 @@ export default function AudienciasPage() {
       </h2>
 
       {total === 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 py-12 text-center">
-          <CalendarClock className="h-5 w-5 text-muted-foreground/50" />
-          <p className="text-xs text-muted-foreground">Nenhuma audiência registrada.</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-neutral-200 dark:border-white/10 px-6 py-12 text-center">
+          <CalendarClock className="h-6 w-6 text-muted-foreground/40" />
+          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Nenhuma audiência ainda</p>
+          <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+            As audiências do assistido aparecem aqui — a próxima sessão vira um briefing com data, countdown e local.
+          </p>
         </div>
       )}
 
       {futuras.length > 0 && (
-        <div className="space-y-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Próximas</p>
-          {futuras.map((a) => <AudienciaRow key={a.id} a={a} futura />)}
+        <div className="space-y-2">
+          <AudienciaBriefCard a={futuras[0]} />
+          {futuras.length > 1 && (
+            <div className="space-y-1.5 pt-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">Outras futuras</p>
+              {futuras.slice(1).map((a) => <AudienciaRow key={a.id} a={a} futura />)}
+            </div>
+          )}
         </div>
       )}
 

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusChip } from "./StatusChip";
+import { DemandaCardActions } from "./DemandaCardActions";
 import {
   Select,
   SelectContent,
@@ -40,7 +42,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
-import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
+import { STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
@@ -166,17 +168,6 @@ export function DemandaCard({
 
   const prazoInfo = calcularPrazo(demanda.prazo);
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao];
-
-  // Status config for current status
-  const statusConf = getStatusConfig(demanda.status);
-
-  // Converter borderColor hex para rgba para efeitos suaves
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
 
   const handleStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -375,18 +366,7 @@ export function DemandaCard({
             </div>
 
             {/* Status Badge */}
-            <button
-              onClick={handleStatusClick}
-              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all hover:scale-105"
-              style={{
-                backgroundColor: hexToRgba(statusConf.color, 0.12),
-                color: statusConf.color,
-                border: `1px solid ${hexToRgba(statusConf.color, 0.3)}`,
-              }}
-            >
-              {statusConf.label}
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
+            <StatusChip status={demanda.status} onClick={handleStatusClick} showIcon className="flex-shrink-0" />
           </div>
 
           {/* Info Grid: Atribuição + Prazo */}
@@ -534,57 +514,15 @@ export function DemandaCard({
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-            <Link href={`/admin/demandas/${demanda.id}`} className="flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-full text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-              >
-                <ChevronRight className="w-3.5 h-3.5 mr-1.5" />
-                Abrir
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(demanda)}
-              className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            >
-              <Edit className="w-3.5 h-3.5 mr-1.5" />
-              Editar
-            </Button>
-            {demanda.arquivado ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onUnarchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-              >
-                <ArchiveRestore className="w-3.5 h-3.5 mr-1.5" />
-                Restaurar
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onArchive(demanda.id)}
-                className="h-8 flex-1 text-[11px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              >
-                <Archive className="w-3.5 h-3.5 mr-1.5" />
-                Arquivar
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(demanda.id)}
-              className="h-8 w-8 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+          {/* Actions — 1 ação principal + overflow (Fase 3) */}
+          <DemandaCardActions
+            href={`/admin/demandas/${demanda.id}`}
+            arquivado={demanda.arquivado}
+            onEdit={() => onEdit(demanda)}
+            onArchive={() => onArchive(demanda.id)}
+            onUnarchive={() => onUnarchive(demanda.id)}
+            onDelete={() => onDelete(demanda.id)}
+          />
 
           {/* Status Pipeline (Mobile) */}
           {showStatusDropdown && (
@@ -663,20 +601,13 @@ export function DemandaCard({
               )}
               {/* Status badge */}
               <div className="relative">
-                <button
+                <StatusChip
                   ref={statusBtnRef}
+                  status={demanda.status}
                   onClick={handleStatusClick}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer"
-                  style={{
-                    backgroundColor: hexToRgba(statusConf.color, 0.1),
-                    color: statusConf.color,
-                    border: `1px solid ${hexToRgba(statusConf.color, 0.25)}`,
-                  }}
+                  showIcon
                   title="Clique para mudar o status"
-                >
-                  {statusConf.label}
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </button>
+                />
                 {showStatusDropdown && (
                   <StatusPipelineSelector
                     currentStatus={demanda.status}

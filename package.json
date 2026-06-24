@@ -4,8 +4,9 @@
   "description": "Sistema de Gestão Jurídica para Defensoria Pública",
   "private": true,
   "scripts": {
-    "dev": "rm -rf .next/cache && next dev --turbopack",
-    "dev:clean": "rm -rf .next && next dev --turbopack",
+    "dev": "rm -rf .next/cache && next dev",
+    "dev:turbo": "rm -rf .next/cache && next dev --turbopack",
+    "dev:clean": "rm -rf .next && next dev",
     "dev:webpack": "next dev",
     "prebuild": "rm -rf .next",
     "build": "next build",

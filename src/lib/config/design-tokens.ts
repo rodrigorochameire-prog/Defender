@@ -210,6 +210,10 @@ export const COLORS = {
   neutral: { border: "border-border", bg: "bg-neutral-50 dark:bg-card", text: "text-neutral-600 dark:text-muted-foreground" },
 } as const;
 
+/** Anel de foco padrão p/ elementos interativos — operabilidade por teclado (a11y §10.8). */
+export const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40";
+
 // ============================================
 // HELPERS
 // ============================================

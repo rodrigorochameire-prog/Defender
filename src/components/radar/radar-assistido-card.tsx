@@ -51,16 +51,22 @@ export function RadarAssistidoCard({ assistidoId }: RadarAssistidoCardProps) {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Radio className="h-4 w-4 text-emerald-500" />
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
             Radar Criminal
+            <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> Monitoramento ativo
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-neutral-400">
-            <Radio className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Nenhuma menção encontrada no radar criminal</p>
-            <p className="text-xs mt-1">O sistema monitora notícias policiais automaticamente</p>
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Radio className="h-8 w-8 text-emerald-500/40" />
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-200">Sem menções até agora</p>
+            <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+              O radar varre notícias policiais automaticamente, cruzando o nome do assistido por confiança de
+              match. Nenhuma ocorrência foi identificada — você será avisado se surgir.
+            </p>
           </div>
         </CardContent>
       </Card>

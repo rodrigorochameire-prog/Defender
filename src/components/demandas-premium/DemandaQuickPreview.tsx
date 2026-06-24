@@ -74,6 +74,8 @@ import { SheetToC } from "@/components/agenda/sheet/sheet-toc";
 import { setAllSections, areAllOpen, nextToggleAll } from "./sheet-sections";
 import { searchCasos, casoLabel } from "./caso-picker";
 import { resolverManifesto, toToCSections, type SecaoId, type SecoesMap } from "./sheet/secoes-manifest";
+import { SheetModeTabs } from "./sheet/SheetModeTabs";
+import { buildSheetModes, type SheetModeKey } from "./sheet/sheet-modes";
 import { calcularPrazoBadge } from "./sheet/prazo-badge";
 import { getAtribuicaoColors } from "@/lib/config/tipologia";
 import {
@@ -486,14 +488,16 @@ export function DemandaQuickPreview({
     try { persisted = JSON.parse(localStorage.getItem(DEMANDAS_SECOES_KEY) || "{}"); } catch { /* ignore */ }
     const def = (id: SecaoId, fallback: boolean) =>
       persisted[id] !== undefined ? persisted[id] : fallback;
+    // Fase 4: dentro de um modo focado, seções abrem por padrão (o usuário
+    // ainda pode recolher; estado persiste).
     return {
       registros: def("registros", true),
       "proxima-audiencia": def("proxima-audiencia", true),
-      identificacao: def("identificacao", false),
-      cronologia: def("cronologia", false),
-      oficio: def("oficio", false),
-      autos: def("autos", false),
-      recursos: def("recursos", false),
+      identificacao: def("identificacao", true),
+      cronologia: def("cronologia", true),
+      oficio: def("oficio", true),
+      autos: def("autos", true),
+      recursos: def("recursos", true),
     };
   });
 
@@ -517,6 +521,9 @@ export function DemandaQuickPreview({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSecao, setActiveSecao] = useState<string | undefined>();
+  // Fase 4: navegação interna por MODOS (Registros/Dados/Autos/Produção).
+  const [activeMode, setActiveMode] = useState<SheetModeKey>("registros");
+  useEffect(() => { setActiveMode("registros"); }, [demanda?.id]);
   // Header dedup (P2): o título "ato · nome" no nav-header só aparece quando o
   // hero (que já mostra ambos) sai de vista no scroll. Handler ligado direto no
   // onScroll do container (abaixo), evitando timing de ref no Sheet do Radix.
@@ -1135,6 +1142,9 @@ export function DemandaQuickPreview({
   const manifesto = resolverManifesto();
   const visibleSections = manifesto.filter((id) => secoesMap[id].temDado);
   const tocSections = toToCSections(manifesto, secoesMap);
+  // Fase 4: modos do sheet derivados do mesmo secoesMap.
+  const sheetModes = buildSheetModes(secoesMap);
+  const modoAtual = sheetModes.find((m) => m.key === activeMode) ?? sheetModes[0];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -1376,7 +1386,7 @@ export function DemandaQuickPreview({
                   {prazoBadge && prazoBadge.cor !== "none" && (
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleJump("cronologia"); }}
+                      onClick={(e) => { e.stopPropagation(); setActiveMode("dados"); }}
                       title={`Prazo: ${demanda.prazo} — clique para ver/editar`}
                       className={cn(
                         "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums transition-colors cursor-pointer",
@@ -1575,13 +1585,18 @@ export function DemandaQuickPreview({
             )}
           </div>
 
-          {/* ===== ToC STICKY — gruda no topo do scroll quando hero+pipeline
-              passam; scroll-spy destaca a seção visível, clique pula-e-abre. ===== */}
-          <SheetToC sections={tocSections} activeId={activeSecao} onJump={handleJump} />
+          {/* ===== MODOS (Fase 4) — navegação interna por abas; cada modo mostra
+              só o seu conteúdo, com rolagem interna. Substitui a ToC scroll-spy. ===== */}
+          <SheetModeTabs
+            modes={sheetModes.map((m) => ({ key: m.key, label: m.label, count: m.count }))}
+            active={activeMode}
+            onChange={(k) => setActiveMode(k as SheetModeKey)}
+          />
 
           {/* ===== CARD SECTIONS — corpo dirigido pelo manifesto ===== */}
           <div className="px-4 sm:px-5 pb-4 space-y-3">
-            {/* Vínculo a Caso/dossiê (follow-up) */}
+            {/* Vínculo a Caso/dossiê — só no modo Dados (Fase 4) */}
+            {activeMode === "dados" && (
             <div className="flex items-center gap-2 text-[11px]">
               <FolderOpen className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
               {casoVinculado ? (
@@ -1643,19 +1658,10 @@ export function DemandaQuickPreview({
                 </button>
               )}
             </div>
+            )}
 
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={toggleTodasSecoes}
-                title={todasAbertas ? "Recolher todas as seções" : "Expandir todas as seções"}
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              >
-                {todasAbertas ? <ChevronsDownUp className="w-3.5 h-3.5" /> : <ChevronsUpDown className="w-3.5 h-3.5" />}
-                {todasAbertas ? "Recolher tudo" : "Expandir tudo"}
-              </button>
-            </div>
-            {visibleSections.map((id) => (
+            {/* Seções do modo ativo (Fase 4) — só o conteúdo do modo selecionado. */}
+            {modoAtual?.secoes.map((id) => (
               <CollapsibleSection
                 key={id}
                 id={id}
@@ -1669,9 +1675,9 @@ export function DemandaQuickPreview({
               </CollapsibleSection>
             ))}
 
-            {/* ===== NOTA PRIVADA (P4) — abaixo das seções; só o defensor vê, não
+            {/* ===== NOTA PRIVADA — modo Produção (Fase 4); só o defensor vê, não
                 entra em ofício. Compacta quando vazia: vira textarea ao clicar. ===== */}
-            {(nota || notaExpanded) ? (
+            {activeMode === "producao" && ((nota || notaExpanded) ? (
               <div className="rounded-lg ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2">
                 <div className="flex items-center gap-1.5 mb-1">
                   <FileText className="w-3 h-3 text-neutral-400" />
@@ -1702,7 +1708,7 @@ export function DemandaQuickPreview({
                 Nota privada
                 <span className="text-[9px] opacity-70 ml-1">só você vê</span>
               </button>
-            )}
+            ))}
 
             {/* ===== AÇÕES RÁPIDAS (fixo — não colapsável) ===== */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">

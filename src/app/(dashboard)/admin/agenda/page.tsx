@@ -137,6 +137,9 @@ import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
+import { StatusChip, EmptyState } from "@/components/ds";
+import { eventoAgendaTipo } from "@/lib/config/tipologia";
+import { cargaDoDia, CARGA_CONFIG } from "@/lib/agenda/carga-dia";
 
 // ==========================================
 // CONSTANTES - DESIGN SUÍÇO PREMIUM
@@ -319,6 +322,10 @@ function EventoDetalhado({
   const atribuicaoConfig = getAtribuicaoColors(evento.atribuicaoKey || "SUBSTITUICAO");
   const solidColor = (atribuicaoConfig as any).color || "#71717a";
   const visual = agendaItemVisual(evento);
+  // Status via registry central (cor = exceção). Oculta o estado-padrão
+  // "Designada" para manter as linhas limpas — só exceções/conclusões aparecem.
+  const statusTone = eventoAgendaTipo(evento.status);
+  const showStatusChip = statusTone.label !== "Designada";
 
   return (
     <div
@@ -355,29 +362,32 @@ function EventoDetalhado({
               {evento.titulo}
             </h4>
           </div>
-          <Badge
-            className="flex-shrink-0 text-[10px] px-1.5 py-0.5 border-0"
-            style={{
-              backgroundColor: `${solidColor}20`,
-              color: solidColor,
-            }}
-          >
-            {atribuicaoConfig.shortLabel}
-          </Badge>
-          {isSessaoPlenario(evento) && (() => {
-            const b = defensorBadge(evento.defensorNome);
-            return b ? (
-              <Badge
-                title={`Júri de ${b.label}`}
-                className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
-              >
-                <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold ${b.badgeClass}`}>
-                  {b.initial}
-                </span>
-                <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>
-              </Badge>
-            ) : null;
-          })()}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {showStatusChip && <StatusChip info={statusTone} size="xs" dot />}
+            <Badge
+              className="text-[10px] px-1.5 py-0.5 border-0"
+              style={{
+                backgroundColor: `${solidColor}20`,
+                color: solidColor,
+              }}
+            >
+              {atribuicaoConfig.shortLabel}
+            </Badge>
+            {isSessaoPlenario(evento) && (() => {
+              const b = defensorBadge(evento.defensorNome);
+              return b ? (
+                <Badge
+                  title={`Júri de ${b.label}`}
+                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 border-0 bg-transparent"
+                >
+                  <span className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[8px] font-bold ${b.badgeClass}`}>
+                    {b.initial}
+                  </span>
+                  <span className={b.text}>{b.label.replace(/^Dr[a]?\. /, "")}</span>
+                </Badge>
+              ) : null;
+            })()}
+          </div>
         </div>
 
         {evento.descricao && (
@@ -408,20 +418,8 @@ function EventoDetalhado({
         </div>
       </div>
       
-      {/* Status indicator + Cowork export */}
+      {/* Ações rápidas (status migrou para o chip no cabeçalho — cor = exceção) */}
       <div className="flex flex-col items-center justify-center gap-1.5">
-        {evento.status === "confirmada" && (
-          <div className="w-2 h-2 rounded-full bg-emerald-500" title="Confirmada" />
-        )}
-        {evento.status === "pendente" && (
-          <div className="w-2 h-2 rounded-full bg-amber-500" title="Pendente" />
-        )}
-        {evento.status === "realizada" && (
-          <div className="w-2 h-2 rounded-full bg-blue-500" title="Realizada" />
-        )}
-        {evento.status === "cancelada" && (
-          <div className="w-2 h-2 rounded-full bg-red-500" title="Cancelada" />
-        )}
         {onExportCowork && evento.fonte === "audiencias" && evento.assistidoId && (
           <button
             onClick={(e) => { e.stopPropagation(); onExportCowork(evento); }}
@@ -2031,17 +2029,11 @@ export default function AgendaPage() {
               {/* Lista de Eventos Agrupada por Dia */}
               <div className="max-h-[600px] overflow-y-auto">
                 {eventosOrdenados.length === 0 ? (
-                  <div className="text-center py-16 px-4">
-                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-4 flex items-center justify-center">
-                      <CalendarIcon className="w-8 h-8 text-neutral-400" />
-                    </div>
-                    <p className="text-base font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                      Nenhum evento encontrado
-                    </p>
-                    <p className="text-sm text-neutral-500">
-                      Ajuste os filtros ou crie um novo evento
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon={CalendarIcon}
+                    title="Nenhum evento na pauta"
+                    description="Nada encontrado para este período e filtros. Ajuste os filtros acima ou crie um novo ato pela ação no cabeçalho."
+                  />
                 ) : (
                   (() => {
                     // Agrupar eventos por data
@@ -2059,11 +2051,12 @@ export default function AgendaPage() {
                       const dataObj = new Date(dataKey + "T12:00:00");
                       const isHoje = isToday(dataObj);
                       const isAmanha = isTomorrow(dataObj);
-                      
-                      const dataLabel = isHoje 
-                        ? "Hoje" 
-                        : isAmanha 
-                          ? "Amanhã" 
+                      const carga = cargaDoDia(eventosDodia);
+
+                      const dataLabel = isHoje
+                        ? "Hoje"
+                        : isAmanha
+                          ? "Amanhã"
                           : format(dataObj, "EEEE, dd 'de' MMMM", { locale: ptBR });
 
                       return (
@@ -2098,10 +2091,10 @@ export default function AgendaPage() {
                                 {format(dataObj, "dd")}
                               </span>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <p className={cn(
                                 "text-sm font-semibold capitalize",
-                                isHoje 
+                                isHoje
                                   ? "text-rose-700 dark:text-rose-400"
                                   : isAmanha
                                     ? "text-amber-700 dark:text-amber-400"
@@ -2109,10 +2102,27 @@ export default function AgendaPage() {
                               )}>
                                 {dataLabel}
                               </p>
-                              <p className="text-xs text-neutral-500">
-                                {eventosDodia.length} evento{eventosDodia.length !== 1 && 's'}
+                              <p className="text-xs text-neutral-500 tabular-nums">
+                                {carga.total} evento{carga.total !== 1 && "s"}
+                                {carga.audiencias > 0 && (
+                                  <span className="text-neutral-400">
+                                    {" · "}{carga.audiencias} audiência{carga.audiencias !== 1 && "s"}
+                                  </span>
+                                )}
                               </p>
                             </div>
+                            {/* Carga do dia — cor = exceção: só ALTA sinaliza */}
+                            {carga.nivel === "alta" && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap shrink-0",
+                                  CARGA_CONFIG.alta.badge
+                                )}
+                              >
+                                <span aria-hidden className={cn("w-1.5 h-1.5 rounded-full", CARGA_CONFIG.alta.dot)} />
+                                {CARGA_CONFIG.alta.label}
+                              </span>
+                            )}
                           </div>
 
                           {/* Eventos do Dia */}

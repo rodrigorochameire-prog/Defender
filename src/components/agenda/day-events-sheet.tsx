@@ -25,6 +25,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { StatusChip } from "@/components/ds";
 import {
   Sheet,
   SheetContent,
@@ -436,8 +437,8 @@ export function DayEventsSheet({
                             </span>
                           )}
                           {cancelado && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-neutral-100 dark:bg-neutral-800 text-neutral-500 font-medium ml-auto shrink-0">
-                              {evento.status}
+                            <span className="ml-auto shrink-0">
+                              <StatusChip kind="audiencia" status={evento.status} size="xs" />
                             </span>
                           )}
                           {/* Indicador "realizado" sutil — só ícone discreto à direita,

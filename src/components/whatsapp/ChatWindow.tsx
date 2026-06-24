@@ -34,6 +34,7 @@ import {
   X,
   Search,
   PanelRight,
+  Scale,
   MessageSquare,
   CheckSquare,
   BookmarkPlus,
@@ -95,6 +96,7 @@ interface ChatWindowProps {
   configId: number;
   onContactUpdate?: () => void;
   onToggleDetails?: () => void;
+  onToggleContext?: () => void;
   onBack?: () => void;
 }
 
@@ -107,6 +109,7 @@ export function ChatWindow({
   configId,
   onContactUpdate,
   onToggleDetails,
+  onToggleContext,
   onBack,
 }: ChatWindowProps) {
   // -- State ----------------------------------------------------------------
@@ -850,6 +853,24 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                 </TooltipContent>
               </Tooltip>
 
+              {/* Juridical context — mobile only (desktop has the 3rd column) */}
+              {onToggleContext && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 md:hidden"
+                      onClick={onToggleContext}
+                      aria-label="Contexto jurídico"
+                    >
+                      <Scale className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Contexto jurídico</TooltipContent>
+                </Tooltip>
+              )}
+
               {/* Details panel toggle — always visible */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1022,14 +1043,11 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
             <div>
               {messageGroups.map((group) => (
                 <div key={group.date}>
-                  {/* Date separator */}
-                  <div className="flex justify-center my-3">
+                  {/* Date separator — sticky, sober translucent pill */}
+                  <div className="flex justify-center my-3 sticky top-2 z-10">
                     <span
-                      className="px-3 py-1 rounded-lg text-xs shadow-sm"
-                      style={{
-                        backgroundColor: 'var(--wa-bg-system)',
-                        color: 'var(--wa-text-primary)',
-                      }}
+                      className="px-3 py-1 rounded-full text-[11px] font-medium shadow-sm backdrop-blur-sm bg-white/85 dark:bg-black/40"
+                      style={{ color: 'var(--wa-text-secondary)' }}
                     >
                       {formatDateHeader(group.date)}
                     </span>
@@ -1285,9 +1303,8 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                 }
               }}
               onKeyDown={handleKeyDown}
-              className="rounded-lg border-0 px-3 py-2 text-sm resize-none focus-visible:ring-0"
+              className="border-0 bg-transparent px-3 py-2 text-sm resize-none focus-visible:ring-0"
               style={{
-                backgroundColor: 'var(--wa-bg-inbound)',
                 color: 'var(--wa-text-primary)',
               }}
               rows={1}
