@@ -36,7 +36,13 @@ import {
   FileText,
   ChevronsDownUp,
   ChevronsUpDown,
+  MoreHorizontal,
+  Send,
+  Share2,
+  ArrowRightLeft,
+  MessageSquare,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
 import { iniciaisNome } from "@/lib/format/iniciais";
 import { DemandaTimelineDrawer } from "@/components/demandas-premium/demanda-timeline-drawer";
@@ -188,6 +194,16 @@ const ATRIBUICAO_OPTIONS = [
 ];
 
 // Pipeline stages for progress bar (mapped from status groups)
+// Modais de colaboração — reaproveitados do fluxo de kanban (lazy).
+const DelegacaoModal = dynamic(
+  () => import("@/components/demandas/delegacao-modal").then((m) => ({ default: m.DelegacaoModal })),
+  { ssr: false },
+);
+const NovoEncaminhamentoModal = dynamic(
+  () => import("@/components/cowork/encaminhamentos/NovoEncaminhamentoModal").then((m) => ({ default: m.NovoEncaminhamentoModal })),
+  { ssr: false },
+);
+
 // Catálogo genérico de tipos de ofício/peça (espelha o de oficios/novo).
 const OFICIO_TIPOS: { value: string; label: string }[] = [
   { value: "manifestacao", label: "Manifestação" },
@@ -517,6 +533,14 @@ export function DemandaQuickPreview({
   }, [setSecaoOpen]);
 
   const [timelineOpen, setTimelineOpen] = useState(false);
+  // Modais de colaboração (delegar / encaminhar / transferir / parecer).
+  const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
+  const [encaminharOpen, setEncaminharOpen] = useState(false);
+  const [encaminharTipo, setEncaminharTipo] = useState<"encaminhar" | "transferir" | "parecer">("encaminhar");
+  const openEncaminhar = useCallback((tipo: "encaminhar" | "transferir" | "parecer") => {
+    setEncaminharTipo(tipo);
+    setEncaminharOpen(true);
+  }, []);
   const [novoRegistroOpen, setNovoRegistroOpen] = useState(!!initialNovoRegistro);
   // Modal "ler os autos lado a lado" — agora é OPT-IN explícito (não abre mais
   // junto do "Adicionar registro", que é o editor enxuto inline).
@@ -870,6 +894,18 @@ export function DemandaQuickPreview({
     color: STATUS_GROUPS[v.group].color,
     group: v.group,
   }));
+
+  // Status agrupado por etapa do pipeline — alimenta o dropdown de status do
+  // rodapé (mover para qualquer status, organizado por grupo).
+  const statusGrupos = PIPELINE_STAGES
+    .map((st) => ({
+      key: st.key,
+      label: st.label,
+      color: STATUS_GROUPS[st.key]?.color || "#A1A1AA",
+      options: statusOptions.filter((o) => o.group === st.key),
+    }))
+    .filter((g) => g.options.length > 0);
+  const statusAtual = demanda.substatus || demanda.status;
 
   // Atos categorizados/ordenados — fonte única em atos-por-atribuicao.ts,
   // compartilhada com os cards do kanban.
@@ -1731,35 +1767,88 @@ export function DemandaQuickPreview({
           </div>
         </div>
 
-        {/* ===== STICKY ACTIONS BOTTOM BAR ===== */}
+        {/* ===== STICKY ACTIONS BOTTOM BAR — Status dropdown + menu de ações ===== */}
         <div className="sticky bottom-0 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border-t border-neutral-200/40 dark:border-neutral-800/60 px-5 py-2.5 flex items-center gap-2">
-          <button
-            onClick={() => { onStatusChange(demanda.id, "resolvido"); onOpenChange(false); }}
-            className="flex-1 h-8 rounded-xl bg-emerald-500 text-white shadow-sm text-[11px] font-semibold hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Check className="w-3.5 h-3.5" />
-            Resolver
-          </button>
-          <button
-            onClick={() => setTimelineOpen(true)}
-            title="Histórico"
-            className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center justify-center"
-          >
-            <History className="w-3 h-3" />
-          </button>
-          <button
-            onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
-            className="h-8 px-3.5 rounded-xl bg-white/[0.08] text-neutral-500 dark:text-neutral-400 ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-[11px] font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all duration-150 cursor-pointer flex items-center gap-1.5"
-          >
-            <Archive className="w-3 h-3" />
-            Arquivar
-          </button>
-          <button
-            onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
-            className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-rose-500 hover:ring-rose-200 dark:hover:ring-rose-800/40 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-150 cursor-pointer flex items-center justify-center"
-          >
-            <Trash2 className="w-3 h-3" />
-          </button>
+          {/* Status — principal: muda a demanda para qualquer status, agrupado por etapa
+              (substitui o antigo "Resolver"; Concluir = status "Resolvido" no grupo Concluída). */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                title="Alterar status"
+                className="flex-1 h-8 rounded-xl ring-1 ring-neutral-200/70 dark:ring-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[11px] font-semibold text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
+                <span className="truncate">{statusConfig.label}</span>
+                <ChevronDown className="w-3 h-3 opacity-50 shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top" sideOffset={8} className="min-w-[15rem] max-h-[55vh] overflow-y-auto">
+              {statusGrupos.map((g) => (
+                <div key={g.key}>
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-neutral-400 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: g.color }} />
+                    {g.label}
+                  </DropdownMenuLabel>
+                  {g.options.map((o) => (
+                    <DropdownMenuItem
+                      key={o.value}
+                      onClick={() => onStatusChange(demanda.id, o.value)}
+                      className="text-[12px] gap-2 cursor-pointer"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: o.color }} />
+                      <span className="flex-1">{o.label}</span>
+                      {statusAtual === o.value && <Check className="w-3 h-3 text-emerald-500 shrink-0" />}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => { onArchive(demanda.id); onOpenChange(false); }}
+                className="text-[12px] gap-2 cursor-pointer text-neutral-500 dark:text-neutral-400"
+              >
+                <Archive className="w-3.5 h-3.5" />
+                Arquivar demanda
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Menu de Ações (⋯) — colaboração + histórico + excluir */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                title="Ações"
+                className="h-8 w-8 rounded-xl ring-1 ring-neutral-200/60 dark:ring-neutral-800/60 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="top" sideOffset={8} className="min-w-[13rem]">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-neutral-400">Colaboração</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setDelegacaoModalOpen(true)} className="text-[12px] gap-2 cursor-pointer">
+                <Send className="w-3.5 h-3.5 text-neutral-500" /> Delegar p/ equipe
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openEncaminhar("encaminhar")} className="text-[12px] gap-2 cursor-pointer">
+                <Share2 className="w-3.5 h-3.5 text-neutral-500" /> Encaminhar p/ ver
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openEncaminhar("transferir")} className="text-[12px] gap-2 cursor-pointer">
+                <ArrowRightLeft className="w-3.5 h-3.5 text-neutral-500" /> Transferir titularidade
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openEncaminhar("parecer")} className="text-[12px] gap-2 cursor-pointer">
+                <MessageSquare className="w-3.5 h-3.5 text-neutral-500" /> Pedir parecer
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setTimelineOpen(true)} className="text-[12px] gap-2 cursor-pointer">
+                <History className="w-3.5 h-3.5 text-neutral-500" /> Histórico
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => { onDelete(demanda.id); onOpenChange(false); }}
+                className="text-[12px] gap-2 cursor-pointer text-rose-600 dark:text-rose-400 focus:text-rose-600 dark:focus:text-rose-400"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Visualizador inline de PDF (autos + PDFs do assistido) — sem sair da plataforma */}
@@ -1808,6 +1897,37 @@ export function DemandaQuickPreview({
         demandaId={typeof demanda.id === "string" ? parseInt(demanda.id, 10) : demanda.id}
         assistidoNome={demanda.assistido}
       />
+
+      {/* Delegar p/ equipe (servidor/estagiário) — reaproveita o modal do kanban. */}
+      {delegacaoModalOpen && (
+        <DelegacaoModal
+          open={delegacaoModalOpen}
+          onOpenChange={setDelegacaoModalOpen}
+          demandaId={Number(demanda.id)}
+          demandaAto={demanda.ato}
+          assistidoId={demanda.assistidoId ?? null}
+          assistidoNome={demanda.assistido}
+          processoId={demanda.processoId ?? null}
+          processoNumero={processo?.numero}
+          showWhatsAppToggle
+          onDelegacaoSucesso={() => setDelegacaoModalOpen(false)}
+        />
+      )}
+
+      {/* Encaminhar / Transferir / Pedir parecer — modal único de encaminhamentos. */}
+      {encaminharOpen && (
+        <NovoEncaminhamentoModal
+          open={encaminharOpen}
+          onOpenChange={setEncaminharOpen}
+          initialTipo={encaminharTipo}
+          contexto={{
+            demandaId: Number(demanda.id),
+            processoId: demanda.processoId ?? undefined,
+            assistidoId: demanda.assistidoId ?? undefined,
+            display: `${demanda.ato || "Demanda"} · ${demanda.assistido || ""}`.trim(),
+          }}
+        />
+      )}
     </Sheet>
   );
 }
