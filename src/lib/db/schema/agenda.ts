@@ -57,6 +57,9 @@ export const audiencias = pgTable("audiencias", {
     ouvidos?: Array<{ nome: string; papel: string | null }>;
     ausencias?: Array<{ nome: string; papel: string | null; motivo: string | null }>;
     parseado_em?: string;
+    // Origem da estruturação: 'ata_pje' (parser de texto colado) ou 'gravacao'
+    // (derivada da transcrição da gravação pelo daemon).
+    origem?: "ata_pje" | "gravacao";
   }>(),
   anotacoesRapidas: jsonb("anotacoes_rapidas").$type<Array<{
     texto: string;
@@ -64,6 +67,19 @@ export const audiencias = pgTable("audiencias", {
     autorId: number;
   }>>().default([]),
   resumoDefesa: text("resumo_defesa"),
+  // Gravação da audiência feita no navegador (mic ou áudio do sistema) → Drive
+  // → transcrição via daemon (claude_code_tasks, skill=transcrever-audiencia).
+  // Espelha os campos de áudio de `registros`.
+  audioUrl: text("audio_url"),
+  audioDriveFileId: varchar("audio_drive_file_id", { length: 100 }),
+  audioMimeType: varchar("audio_mime_type", { length: 50 }),
+  audioFileSize: integer("audio_file_size"),
+  audioDuracao: integer("audio_duracao"),
+  audioFonte: varchar("audio_fonte", { length: 16 }),
+  transcricao: text("transcricao"),
+  transcricaoResumo: text("transcricao_resumo"),
+  transcricaoStatus: varchar("transcricao_status", { length: 20 }),
+  transcricaoIdioma: varchar("transcricao_idioma", { length: 10 }).default("pt-BR"),
   googleCalendarEventId: text("google_calendar_event_id"),
   gerarPrazoApos: boolean("gerar_prazo_apos").default(false),
   prazoGeradoId: integer("prazo_gerado_id"),

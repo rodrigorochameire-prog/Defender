@@ -2504,11 +2504,35 @@ export const audienciasRouter = router({
     .input(z.object({ audienciaId: z.number() }))
     .query(async ({ input }) => {
       const [a] = await db
-        .select({ midias: audiencias.midias, ata: audiencias.ata })
+        .select({
+          midias: audiencias.midias,
+          ata: audiencias.ata,
+          audioUrl: audiencias.audioUrl,
+          audioDriveFileId: audiencias.audioDriveFileId,
+          audioDuracao: audiencias.audioDuracao,
+          audioFonte: audiencias.audioFonte,
+          transcricao: audiencias.transcricao,
+          transcricaoResumo: audiencias.transcricaoResumo,
+          transcricaoStatus: audiencias.transcricaoStatus,
+        })
         .from(audiencias)
         .where(eq(audiencias.id, input.audienciaId))
         .limit(1);
-      return { midias: a?.midias ?? [], ata: a?.ata ?? null };
+      return {
+        midias: a?.midias ?? [],
+        ata: a?.ata ?? null,
+        gravacao: a
+          ? {
+              audioUrl: a.audioUrl,
+              audioDriveFileId: a.audioDriveFileId,
+              audioDuracao: a.audioDuracao,
+              audioFonte: a.audioFonte,
+              transcricao: a.transcricao,
+              transcricaoResumo: a.transcricaoResumo,
+              transcricaoStatus: a.transcricaoStatus,
+            }
+          : null,
+      };
     }),
 
   /** Dry-run do parser de ata (preview no botão "Parsear ata" do sheet). */
