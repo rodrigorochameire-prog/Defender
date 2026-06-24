@@ -137,7 +137,7 @@ import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
-import { StatusChip } from "@/components/agenda/ds";
+import { StatusChip, EmptyState } from "@/components/agenda/ds";
 import { eventoAgendaTipo } from "@/lib/config/tipologia";
 import { cargaDoDia, CARGA_CONFIG } from "@/lib/agenda/carga-dia";
 
@@ -2029,17 +2029,11 @@ export default function AgendaPage() {
               {/* Lista de Eventos Agrupada por Dia */}
               <div className="max-h-[600px] overflow-y-auto">
                 {eventosOrdenados.length === 0 ? (
-                  <div className="text-center py-16 px-4">
-                    <div className="w-16 h-16 rounded-2xl bg-neutral-100 dark:bg-neutral-800 mx-auto mb-4 flex items-center justify-center">
-                      <CalendarIcon className="w-8 h-8 text-neutral-400" />
-                    </div>
-                    <p className="text-base font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                      Nenhum evento encontrado
-                    </p>
-                    <p className="text-sm text-neutral-500">
-                      Ajuste os filtros ou crie um novo evento
-                    </p>
-                  </div>
+                  <EmptyState
+                    icon={CalendarIcon}
+                    title="Nenhum evento na pauta"
+                    description="Nada encontrado para este período e filtros. Ajuste os filtros acima ou crie um novo ato pela ação no cabeçalho."
+                  />
                 ) : (
                   (() => {
                     // Agrupar eventos por data
