@@ -59,6 +59,8 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
+import { ActiveFiltersBar } from "./ActiveFiltersBar";
+import { buildActiveFilterChips } from "./active-filters";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -3195,6 +3197,47 @@ export default function Demandas() {
     </div>
   );
 
+  // Fase 2: chips de filtro ativo + limpeza por chip / tudo (estado filtrado
+  // compreensível e limpável num lance, em qualquer view).
+  const GRUPO_LABELS: Record<string, string> = {
+    triagem: "Triagem", preparacao: "Preparação", diligencias: "Diligências",
+    saida: "Saída", acompanhar: "Acompanhar", concluida: "Concluída", arquivado: "Arquivado",
+  };
+  const activeFilterChips = buildActiveFilterChips(
+    {
+      searchTerm,
+      prazo: selectedPrazoFilter,
+      atribuicoes: selectedAtribuicoes,
+      estadoPrisional: selectedEstadoPrisional,
+      tipoAto: selectedTipoAto,
+      tipoProcesso: selectedTipoProcesso,
+      statusGroup: selectedStatusGroup,
+    },
+    { statusLabel: (g) => GRUPO_LABELS[g] ?? g },
+  );
+  const handleClearFilterChip = (key: string) => {
+    if (key === "search") setSearchTerm("");
+    else if (key === "status") setSelectedStatusGroup(null);
+    else if (key.startsWith("atrib:")) {
+      const v = key.slice("atrib:".length);
+      if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
+      setSelectedAtribuicoes((prev) => prev.filter((a) => a !== v));
+    } else if (key === "prazo") setSelectedPrazoFilter(null);
+    else if (key === "prisional") setSelectedEstadoPrisional(null);
+    else if (key === "ato") setSelectedTipoAto(null);
+    else if (key === "tipoProc") setSelectedTipoProcesso(null);
+  };
+  const handleClearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedStatusGroup(null);
+    if (typeof window !== "undefined") sessionStorage.setItem(SS_EXPLICIT_ALL, "true");
+    setSelectedAtribuicoes([]);
+    setSelectedPrazoFilter(null);
+    setSelectedEstadoPrisional(null);
+    setSelectedTipoAto(null);
+    setSelectedTipoProcesso(null);
+  };
+
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
       <HeaderSlotTitle
@@ -3286,6 +3329,12 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
+        {/* Fase 2: barra de filtros ativos (chips + limpar tudo) — visível em todas as views */}
+        <ActiveFiltersBar
+          chips={activeFilterChips}
+          onClear={handleClearFilterChip}
+          onClearAll={handleClearAllFilters}
+        />
         {activeTab === "planilha" ? (
         <>
         {/* Cockpit de prazos — leitura imediata do que exige ação (Track F) */}
