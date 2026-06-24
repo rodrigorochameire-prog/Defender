@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { derivarStatusOitiva } from "../depoente-status";
+import { derivarStatusOitiva, resumoProvaOral } from "../depoente-status";
 
 describe("derivarStatusOitiva", () => {
   it("marca ouvido na delegacia quando há depoimento_ip", () => {
@@ -80,5 +80,30 @@ describe("derivarStatusOitiva", () => {
   it("certidao é null quando ausente ou vazia", () => {
     expect(derivarStatusOitiva({}).certidao).toBeNull();
     expect(derivarStatusOitiva({ certidao_comunicacao: "   " }).certidao).toBeNull();
+  });
+});
+
+describe("resumoProvaOral", () => {
+  it("conta ouvidos, a ouvir e separa intimados de sem-ciência", () => {
+    const r = resumoProvaOral([
+      { depoimento_juizo: "Confirmou em juízo (Num. 1)." },        // ouvido
+      { intimacao: "intimado" },                                    // a ouvir, intimado
+      { intimacao: "nao_intimado", motivo_nao_intimacao: "nao_localizado" }, // a ouvir, sem ciência
+      { intimacao: "pendente" },                                    // a ouvir, indeterminado
+    ]);
+    expect(r).toEqual({ total: 4, ouvidos: 1, aOuvir: 3, intimados: 1, semCiencia: 1 });
+  });
+
+  it("ouvido em juízo não conta como a ouvir mesmo se não intimado", () => {
+    const r = resumoProvaOral([{ ja_ouvido: { sim: true }, intimacao: "nao_intimado" }]);
+    expect(r.ouvidos).toBe(1);
+    expect(r.aOuvir).toBe(0);
+    expect(r.semCiencia).toBe(0);
+  });
+
+  it("lista vazia / não-array → zeros sem crash", () => {
+    expect(resumoProvaOral([])).toEqual({ total: 0, ouvidos: 0, aOuvir: 0, intimados: 0, semCiencia: 0 });
+    // @ts-expect-error robustez a entrada inválida
+    expect(resumoProvaOral(null).total).toBe(0);
   });
 });

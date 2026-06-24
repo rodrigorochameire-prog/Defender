@@ -15,6 +15,8 @@ import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "
 import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
 import { AreaTabs } from "@/components/agenda/sheet/area-tabs";
 import { computeWorkspaceTabs, type AreaMae } from "@/components/agenda/sheet/areas-mae";
+import { ProvaOralConsole } from "@/components/agenda/sheet/prova-oral-console";
+import { resumoProvaOral } from "@/lib/agenda/depoente-status";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -1486,6 +1488,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
               </div>
+            )}
+
+            {/* Console do modo Prova oral — síntese de oitiva no topo da aba. */}
+            {!isLoading && tabAtiva === "prova-oral" && depoentesStatus.length > 0 && (
+              <ProvaOralConsole resumo={resumoProvaOral(depoentesStatus)} />
             )}
 
             {!isLoading && espinhaDaTab.map((id) => (
