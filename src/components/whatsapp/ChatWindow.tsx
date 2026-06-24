@@ -34,6 +34,7 @@ import {
   X,
   Search,
   PanelRight,
+  Scale,
   MessageSquare,
   CheckSquare,
   BookmarkPlus,
@@ -95,6 +96,7 @@ interface ChatWindowProps {
   configId: number;
   onContactUpdate?: () => void;
   onToggleDetails?: () => void;
+  onToggleContext?: () => void;
   onBack?: () => void;
 }
 
@@ -107,6 +109,7 @@ export function ChatWindow({
   configId,
   onContactUpdate,
   onToggleDetails,
+  onToggleContext,
   onBack,
 }: ChatWindowProps) {
   // -- State ----------------------------------------------------------------
@@ -849,6 +852,24 @@ style={{ backgroundColor: 'var(--wa-unread-badge)', color: '#ffffff' }}>
                   {messageOrder === "oldest" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
                 </TooltipContent>
               </Tooltip>
+
+              {/* Juridical context — mobile only (desktop has the 3rd column) */}
+              {onToggleContext && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 md:hidden"
+                      onClick={onToggleContext}
+                      aria-label="Contexto jurídico"
+                    >
+                      <Scale className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Contexto jurídico</TooltipContent>
+                </Tooltip>
+              )}
 
               {/* Details panel toggle — always visible */}
               <Tooltip>

@@ -45,6 +45,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 export default function WhatsAppChatPage() {
   const searchParams = useSearchParams();
@@ -56,6 +63,9 @@ export default function WhatsAppChatPage() {
   const [filter, setFilter] = useState<"all" | "unread" | "favorites" | "archived">("all");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  // Mobile: juridical context opens as a bottom sheet (defaults closed, opens on tap)
+  const [contextSheetOpen, setContextSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [pendingExpanded, setPendingExpanded] = useState(true);
   const [showContextPanel, setShowContextPanel] = useState(() => {
     if (typeof window !== "undefined") {
@@ -497,6 +507,7 @@ export default function WhatsAppChatPage() {
                   refetchStats();
                 }}
                 onToggleDetails={() => setShowDetails((prev) => !prev)}
+                onToggleContext={() => setContextSheetOpen((prev) => !prev)}
                 onBack={handleBackToList}
               />
             ) : (
@@ -518,15 +529,31 @@ export default function WhatsAppChatPage() {
           )}
         </div>
 
-        {/* Context Panel — 3rd column, desktop only */}
+        {/* Context Panel — 3rd column on desktop */}
         {showContextPanel && selectedContactId && selectedConfigId && (
-          <div className="hidden md:block">
+          <div className="hidden md:flex w-[280px] flex-shrink-0">
             <ContextPanel
               contactId={selectedContactId}
               configId={selectedConfigId}
               onClose={() => setShowContextPanel(false)}
             />
           </div>
+        )}
+
+        {/* Context Panel — bottom sheet on mobile (juridical context) */}
+        {isMobile && selectedContactId && selectedConfigId && (
+          <Sheet open={contextSheetOpen} onOpenChange={setContextSheetOpen}>
+            <SheetContent side="bottom" className="h-[85vh] p-0 gap-0">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Contexto jurídico</SheetTitle>
+              </SheetHeader>
+              <ContextPanel
+                contactId={selectedContactId}
+                configId={selectedConfigId}
+                onClose={() => setContextSheetOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
         )}
       </div>
     </div>
