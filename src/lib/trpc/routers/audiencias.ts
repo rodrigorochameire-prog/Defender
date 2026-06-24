@@ -2535,6 +2535,33 @@ export const audienciasRouter = router({
       };
     }),
 
+  /** Gravação + transcrição (com segmentos) do depoimento de um depoente
+   *  (testemunha) colhido em juízo — lido/polled pelo TranscriptPlayer (F4). */
+  getDepoenteMidia: protectedProcedure
+    .input(z.object({ depoenteId: z.number() }))
+    .query(async ({ input }) => {
+      const [t] = await db
+        .select({
+          audioDriveFileId: testemunhas.depoimentoAudioDriveFileId,
+          audioUrl: testemunhas.depoimentoAudioUrl,
+          transcricao: testemunhas.depoimentoTranscricao,
+          segments: testemunhas.depoimentoSegments,
+          transcricaoStatus: testemunhas.depoimentoTranscricaoStatus,
+          duracao: testemunhas.depoimentoAudioDuracao,
+        })
+        .from(testemunhas)
+        .where(eq(testemunhas.id, input.depoenteId))
+        .limit(1);
+      return {
+        audioDriveFileId: t?.audioDriveFileId ?? null,
+        audioUrl: t?.audioUrl ?? null,
+        transcricao: t?.transcricao ?? null,
+        segments: t?.segments ?? [],
+        transcricaoStatus: t?.transcricaoStatus ?? null,
+        duracao: t?.duracao ?? null,
+      };
+    }),
+
   /** Dry-run do parser de ata (preview no botão "Parsear ata" do sheet). */
   parseAtaPreview: protectedProcedure
     .input(z.object({ texto: z.string() }))

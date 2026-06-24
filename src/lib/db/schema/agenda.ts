@@ -320,6 +320,20 @@ export const testemunhas = pgTable("testemunhas", {
   // cumprido / não localizado / devolvido etc. Populado pela skill de
   // sistematização (ver tasks.md F3 / T3.4). Lido apenas quando presente.
   certidaoComunicacao: text("certidao_comunicacao"),
+  // Gravação + transcrição do depoimento colhido EM JUÍZO, no nível do
+  // depoente (análogo per-testemunha da gravação da audiência). Específicos do
+  // depoimento gravado para não colidir com `audioDriveFileId` (link genérico).
+  // Populados pela rota POST /api/depoentes/[id]/audio + daemon
+  // (claude_code_tasks, skill=transcrever-depoimento → whisper-cli com segmentos).
+  depoimentoAudioDriveFileId: varchar("depoimento_audio_drive_file_id", { length: 100 }),
+  depoimentoAudioUrl: text("depoimento_audio_url"),
+  depoimentoAudioMimeType: varchar("depoimento_audio_mime_type", { length: 50 }),
+  depoimentoAudioDuracao: integer("depoimento_audio_duracao"),
+  depoimentoTranscricao: text("depoimento_transcricao"),
+  depoimentoSegments: jsonb("depoimento_segments").$type<
+    Array<{ start: number; end: number; text: string }>
+  >(),
+  depoimentoTranscricaoStatus: varchar("depoimento_transcricao_status", { length: 20 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -328,6 +342,7 @@ export const testemunhas = pgTable("testemunhas", {
   index("testemunhas_audiencia_id_idx").on(table.audienciaId),
   index("testemunhas_tipo_idx").on(table.tipo),
   index("testemunhas_status_idx").on(table.status),
+  index("testemunhas_depo_transcricao_status_idx").on(table.depoimentoTranscricaoStatus),
 ]);
 
 export type Testemunha = typeof testemunhas.$inferSelect;
