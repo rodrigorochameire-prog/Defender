@@ -133,15 +133,15 @@ export function RecursoRow({ recurso: r, onClick }: { recurso: any; onClick: () 
             {r.dataInterposicao && <><Dot /><span className="font-mono tabular-nums">{format(new Date(r.dataInterposicao), "dd/MM/yy")}</span></>}
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5" title={statusCfg.label}>
             <div className={cn("w-1.5 h-1.5 rounded-full", statusCfg.dot)} />
-            <span className="text-[11px] text-muted-foreground">{statusCfg.label}</span>
+            <span className="hidden sm:inline text-[11px] text-muted-foreground">{statusCfg.label}</span>
           </div>
           {r.resultado !== "PENDENTE" && (
             <>
-              <span className="w-px h-3.5 bg-neutral-200 dark:bg-neutral-700" />
-              <span className={cn("text-[11px] font-semibold", resultadoCfg.color)}>{resultadoCfg.label}</span>
+              <span className="hidden sm:inline w-px h-3.5 bg-neutral-200 dark:bg-neutral-700" />
+              <span className={cn("text-[10px] sm:text-[11px] font-semibold", resultadoCfg.color)}>{resultadoCfg.label}</span>
             </>
           )}
           <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
