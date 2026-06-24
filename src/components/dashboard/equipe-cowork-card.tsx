@@ -89,7 +89,7 @@ export function EquipeCoworkCard({
   ];
 
   return (
-    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] border-2 border-[#414144] dark:border-neutral-500 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:border-[#2d2d30] dark:hover:border-neutral-400 focus-within:shadow-md focus-within:border-[#2d2d30] dark:focus-within:border-neutral-400 transition-all duration-200">
+    <Card className="group/card relative bg-white dark:bg-neutral-900 rounded-xl shadow-sm shadow-black/[0.04] ring-1 ring-neutral-200/70 dark:ring-neutral-800 overflow-hidden hover:shadow-md hover:shadow-black/[0.06] hover:ring-neutral-300/70 dark:hover:ring-neutral-700 focus-within:shadow-md focus-within:ring-neutral-300 dark:focus-within:ring-neutral-700 transition-all duration-200">
       {/* Header */}
       <div className="px-5 py-4 bg-neutral-50/60 dark:bg-neutral-900/40 border-b border-neutral-200/60 dark:border-neutral-800/60 flex items-center justify-between">
         <div className="flex items-center gap-3">
