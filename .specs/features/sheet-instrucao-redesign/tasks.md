@@ -35,11 +35,26 @@ Grupo **Contexto** (colapsado, ao final): `contradicoes, versao, relato-vitima, 
 
 ## F3 — Depoentes (situação + intimação + certidão)
 
-- [ ] **T3.1** ALTER `testemunhas`: `certidao_comunicacao text` (idempotente + schema).
-- [ ] **T3.2 (TDD)** estender `derivarStatusOitiva` p/ expor `intimado:boolean|null` + `certidao:string|null`.
-- [ ] **T3.3** `secoes/DepoentesSecao.tsx` (evolui `PainelDepoentesStatus`): por depoente — tipo, situação (ouvido juízo/IP/não), intimação, e teor da certidão (expandível).
-- [ ] **T3.4** Skill de sistematização: emitir `certidao_comunicacao` por depoente (documentar; população via daemon).
+- [x] **T3.1** ALTER `testemunhas`: `certidao_comunicacao text` (coluna já no Supabase; declarada no schema Drizzle como `certidaoComunicacao`).
+- [x] **T3.2 (TDD)** estender `derivarStatusOitiva` p/ expor `intimado:boolean|null` + `certidao:string|null`.
+- [x] **T3.3** `secoes/DepoentesSecao.tsx` (evolui `PainelDepoentesStatus`): por depoente — tipo, situação (ouvido juízo/IP/não), intimação, e teor da certidão (expandível).
+- [x] **T3.4** Skill de sistematização: emitir `certidao_comunicacao` por depoente (documentar; população via daemon).
 - [ ] **T3.5** Verificação.
+
+### Contrato F3 — `certidao_comunicacao` (skill de sistematização)
+
+A UR de F3 **lê** o teor da certidão de comunicação processual e o exibe (expansível) por depoente; **nada o popula ainda**. A população é responsabilidade da skill de sistematização em `.claude/skills-cowork/` (a que prepara as audiências / classifica o processo) — **não alterada aqui**, só documentada o contrato:
+
+- **Campo**: `testemunhas.certidao_comunicacao` (text, nullable; coluna já existe no Supabase + declarada em `src/lib/db/schema/agenda.ts` como `certidaoComunicacao`).
+- **Granularidade**: 1 valor por depoente (linha de `testemunhas`), casado por `nome` quando vier do `_analise_ia.json` (a UI funde por nome normalizado).
+- **Conteúdo esperado**: o **teor da certidão do oficial de justiça / diligência de comunicação** — texto curto e fiel ao ato, ex.:
+  - mandado *cumprido* (intimação pessoal) — data e quem recebeu;
+  - *não localizado* / endereço inexistente / mudou-se;
+  - **AR** (aviso de recebimento) positivo/negativo;
+  - **mandado devolvido** sem cumprimento (motivo);
+  - precatória expedida/devolvida.
+- **Leitura na UI**: `derivarStatusOitiva(d).certidao` aceita `certidao_comunicacao` (snake) ou `certidaoComunicacao` (camel); ausente/vazio ⇒ não renderiza (sem ruído).
+- **Por que importa**: subsidia arguição de **cerceamento/nulidade de intimação** — o teor literal da certidão é a prova do (não) cumprimento.
 
 ---
 

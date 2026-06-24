@@ -28,6 +28,19 @@ export interface StatusOitiva {
   intimacao: IntimacaoStatus;
   motivoLabel: string | null;
   faltaJuizo: boolean;
+  /**
+   * Síntese booleana da intimação: true (foi intimado), false (explicitamente
+   * não intimado / não localizado), null (desconhecido ou indeterminado —
+   * pendente/dispensada não afirmam nem negam a ciência). Útil para o painel
+   * de depoentes sinalizar cerceamento sem ambiguidade.
+   */
+  intimado: boolean | null;
+  /**
+   * Teor da certidão de comunicação processual (mandado/AR/precatória),
+   * quando presente. Lido de `certidao_comunicacao` (snake) ou
+   * `certidaoComunicacao` (camel). null quando ausente/vazia.
+   */
+  certidao: string | null;
 }
 
 const naoVazio = (v: unknown): v is string => typeof v === "string" && v.trim().length > 0;
@@ -43,5 +56,17 @@ export function derivarStatusOitiva(d: any): StatusOitiva {
     intimacao === "nao_intimado" && d?.motivo_nao_intimacao
       ? MOTIVO_LABEL[d.motivo_nao_intimacao] ?? d.motivo_nao_intimacao
       : null;
-  return { ouvidoDelegacia, ouvidoJuizo, intimacao, motivoLabel, faltaJuizo: !ouvidoJuizo };
+  const intimado =
+    intimacao === "intimado" ? true : intimacao === "nao_intimado" ? false : null;
+  const certidaoRaw = d?.certidao_comunicacao ?? d?.certidaoComunicacao;
+  const certidao = naoVazio(certidaoRaw) ? certidaoRaw.trim() : null;
+  return {
+    ouvidoDelegacia,
+    ouvidoJuizo,
+    intimacao,
+    motivoLabel,
+    faltaJuizo: !ouvidoJuizo,
+    intimado,
+    certidao,
+  };
 }
