@@ -3,6 +3,22 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { DepoenteCardV2 } from "@/components/agenda/sheet/depoente-card-v2";
 
+// F4b: o card passou a consumir tRPC (getDepoenteMidia + sectionsByProcesso).
+// Mock leve do client para os testes de render funcionarem sem provider.
+vi.mock("@/lib/trpc/client", () => ({
+  trpc: {
+    useUtils: () => ({
+      audiencias: { getDepoenteMidia: { invalidate: vi.fn() } },
+    }),
+    audiencias: {
+      getDepoenteMidia: { useQuery: vi.fn(() => ({ data: undefined, isLoading: false })) },
+    },
+    drive: {
+      sectionsByProcesso: { useQuery: vi.fn(() => ({ data: [], isLoading: false })) },
+    },
+  },
+}));
+
 afterEach(() => cleanup());
 
 const noop = () => {};

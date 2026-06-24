@@ -863,6 +863,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                         toast.success("Rolando para o áudio…");
                       }}
                       assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+                      processoId={typeof processoId === "number" ? processoId : null}
                     />
                     {pessoaId && dotLevel !== "none" && (
                       <button
