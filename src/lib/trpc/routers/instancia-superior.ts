@@ -289,15 +289,35 @@ export const instanciaSuperiorRouter = router({
         dataTransito: z.string().nullable().optional(),
         tesesInvocadas: z.array(z.string()).optional(),
         tiposPenais: z.array(z.string()).optional(),
+        relatorNome: z.string().nullable().optional(), // find-or-create em desembargadores
         resumo: z.string().nullable().optional(),
         observacoes: z.string().nullable().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
+      const { id, relatorNome, ...data } = input;
+
+      // Relator por nome → find-or-create (popula a inteligência de relatoria)
+      const patch: Record<string, unknown> = { ...data };
+      if (relatorNome !== undefined) {
+        const nome = relatorNome?.trim();
+        if (!nome) {
+          patch.relatorId = null;
+        } else {
+          const [exist] = await db
+            .select({ id: desembargadores.id })
+            .from(desembargadores)
+            .where(ilike(desembargadores.nome, nome))
+            .limit(1);
+          patch.relatorId = exist
+            ? exist.id
+            : (await db.insert(desembargadores).values({ nome, camara: (data.camara as string) ?? null, area: "CRIMINAL" }).returning({ id: desembargadores.id }))[0].id;
+        }
+      }
+
       const [updated] = await db
         .update(recursos)
-        .set({ ...data, updatedAt: new Date() })
+        .set({ ...patch, updatedAt: new Date() })
         .where(eq(recursos.id, id))
         .returning();
 
@@ -733,6 +753,36 @@ export const instanciaSuperiorRouter = router({
         .groupBy(sql`COALESCE(d.${sql.raw(col)}, '—')`)
         .orderBy(sql`count(*) DESC`)
         .limit(limit);
+    }),
+
+  /**
+   * Ranking de relatoria — inteligência dos tribunais. Para cada
+   * desembargador que figura como relator, agrega total, taxa de
+   * provimento e último julgamento (respeita o escopo).
+   */
+  relatoriasRanking: protectedProcedure
+    .input(z.object({ escopo: escopoInput, limit: z.number().default(40) }).optional())
+    .query(async ({ ctx, input }) => {
+      const scope = buildRecursoScope(ctx.user, input?.escopo);
+      const limit = input?.limit ?? 40;
+      const rows = await db
+        .select({
+          id: desembargadores.id,
+          nome: desembargadores.nome,
+          camara: desembargadores.camara,
+          total: count(),
+          julgados: sql<number>`count(*) FILTER (WHERE ${recursos.resultado} <> 'PENDENTE')::int`,
+          providos: sql<number>`count(*) FILTER (WHERE ${recursos.resultado} IN ('PROVIDO','CONCEDIDO','PARCIALMENTE_PROVIDO','PARCIALMENTE_CONCEDIDO'))::int`,
+          pendentes: sql<number>`count(*) FILTER (WHERE ${recursos.resultado} = 'PENDENTE')::int`,
+          ultimoJulgamento: sql<string | null>`max(${recursos.dataJulgamento})`,
+        })
+        .from(recursos)
+        .innerJoin(desembargadores, eq(recursos.relatorId, desembargadores.id))
+        .where(scope)
+        .groupBy(desembargadores.id, desembargadores.nome, desembargadores.camara)
+        .orderBy(desc(count()))
+        .limit(limit);
+      return rows;
     }),
 
   /** Perfil de atuação de um desembargador */

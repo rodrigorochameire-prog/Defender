@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, Check, Copy, Send } from "lucide-react";
+import { BookOpen, Check, Copy, Send, CalendarClock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +24,8 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
   const [concluirOpen, setConcluirOpen] = useState(false);
   const [redesignarOpen, setRedesignarOpen] = useState(false);
   const actions = useAudienciaStatusActions(audienciaId);
+  const concluirPending = actions.concluir.isPending || actions.aplicarEvento.isPending;
+  const redesignarPending = actions.redesignar.isPending;
 
   const submitNote = () => {
     if (!audienciaId || !quickNote.trim()) return;
@@ -57,41 +59,66 @@ export function SheetActionFooter({ audienciaId, jaConcluida, onAbrirRegistroCom
           </Button>
         </div>
 
-        <div className="flex gap-1.5">
-          <Button
-            size="sm"
-            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs h-9 cursor-pointer"
-            disabled={jaConcluida || !audienciaId}
-            onClick={() => setConcluirOpen(true)}
-          >
-            <Check className="w-3.5 h-3.5 mr-1.5" /> Concluir
-          </Button>
+        {/* Ações — hierarquia: Concluir é a ação primária (dominante);
+            Redesignar e Registrar são secundárias; Duplicar é terciária (ícone).
+            Já concluída → Concluir vira um selo de estado e Registrar ganha foco. */}
+        <div className="flex items-center gap-1.5">
+          {jaConcluida ? (
+            <div
+              className="flex-1 h-9 flex items-center justify-center gap-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium select-none"
+              title="Audiência concluída"
+            >
+              <Check className="w-3.5 h-3.5" /> Concluída
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              className="flex-[1.6] bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium h-9 shadow-sm cursor-pointer"
+              disabled={!audienciaId || concluirPending}
+              onClick={() => setConcluirOpen(true)}
+            >
+              {concluirPending ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Check className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Concluir
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
             className="flex-1 text-xs h-9 cursor-pointer"
-            disabled={!audienciaId}
+            disabled={!audienciaId || redesignarPending}
             onClick={() => setRedesignarOpen(true)}
           >
-            ↷ Redesignar
+            {redesignarPending ? (
+              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <CalendarClock className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Redesignar
           </Button>
+
           <Button
             size="sm"
-            variant="outline"
-            className="flex-1 text-xs h-9 cursor-pointer"
+            variant={jaConcluida ? "default" : "ghost"}
+            className={`flex-1 text-xs h-9 cursor-pointer ${jaConcluida ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" : ""}`}
             disabled={!audienciaId}
             onClick={onAbrirRegistroCompleto}
           >
             <BookOpen className="w-3.5 h-3.5 mr-1.5" /> Registrar
           </Button>
+
           {onDuplicar && (
             <TooltipProvider delayDuration={250}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="text-xs h-9 px-3 cursor-pointer"
+                    variant="ghost"
+                    className="text-xs h-9 px-2.5 cursor-pointer text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
                     onClick={onDuplicar}
                     aria-label="Duplicar"
                   >

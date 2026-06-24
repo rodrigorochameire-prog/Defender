@@ -21,6 +21,8 @@ import {
   Pencil,
   Sparkles,
   Loader2,
+  Scale,
+  TrendingUp,
 } from "lucide-react";
 import { GLASS } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
@@ -108,11 +110,12 @@ const DIMENSOES = [
 ] as const;
 
 type EscopoModo = "meus" | "todos";
-type Tab = "geral" | "recursos" | "institucional";
+type Tab = "geral" | "recursos" | "relatorias" | "institucional";
 
 const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "geral", label: "Visão geral", icon: BarChart3 },
   { key: "recursos", label: "Recursos", icon: Layers },
+  { key: "relatorias", label: "Relatorias", icon: Scale },
   { key: "institucional", label: "Institucional", icon: Building2 },
 ];
 
@@ -130,6 +133,7 @@ export default function InstanciaSuperiorPage() {
   const [filtroCamara, setFiltroCamara] = useState<string | undefined>();
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedDesembId, setSelectedDesembId] = useState<number | null>(null);
 
   const effectiveModo: EscopoModo = podeInstitucional ? escopoModo : "meus";
   const escopo = useMemo(() => ({ modo: effectiveModo }), [effectiveModo]);
@@ -240,11 +244,13 @@ export default function InstanciaSuperiorPage() {
             filterProps={{ filtroTipo, filtroStatus, filtroCamara, setFiltroTipo, setFiltroStatus, setFiltroCamara }}
           />
         )}
+        {tab === "relatorias" && <RelatoriasTab escopo={escopo} onOpen={setSelectedDesembId} />}
         {tab === "institucional" && podeInstitucional && <InstitucionalTab />}
       </div>
 
       <CreateRecursoDialog open={createOpen} onOpenChange={setCreateOpen} />
       <RecursoDetailSheet recursoId={selectedId} onClose={() => setSelectedId(null)} />
+      <DesembargadorSheet desembId={selectedDesembId} onClose={() => setSelectedDesembId(null)} />
     </div>
   );
 }
@@ -714,6 +720,145 @@ function InstitucionalTab() {
   );
 }
 
+// ─── Relatorias Tab (inteligência dos tribunais) ──────────────────────────
+
+function RelatoriasTab({ escopo, onOpen }: { escopo: { modo: EscopoModo }; onOpen: (id: number) => void }) {
+  const { data, isLoading } = trpc.instanciaSuperior.relatoriasRanking.useQuery({ escopo, limit: 40 });
+
+  return (
+    <Card title="Ranking de relatoria" icon={Scale} action={
+      <span className="text-[10px] text-muted-foreground">taxa de provimento por relator</span>
+    }>
+      {isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 rounded" />)}</div>
+      ) : !data?.length ? (
+        <EmptyHint>Nenhum relator vinculado ainda. Defina o relator de um recurso (Editar) para construir a inteligência de relatoria.</EmptyHint>
+      ) : (
+        <div className="space-y-1">
+          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[9px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-2 pb-1">
+            <span>Desembargador</span>
+            <span className="text-right w-12">Recursos</span>
+            <span className="text-right w-12">Julg.</span>
+            <span className="text-right w-20">Provimento</span>
+          </div>
+          {data.map((d: any) => {
+            const taxa = d.julgados > 0 ? Math.round((d.providos / d.julgados) * 100) : null;
+            return (
+              <button key={d.id} onClick={() => onOpen(d.id)}
+                className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-2 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer text-left">
+                <div className="min-w-0">
+                  <span className="text-[13px] text-foreground/90 truncate block">{d.nome}</span>
+                  {d.camara && <span className="text-[10px] text-muted-foreground">{d.camara}</span>}
+                </div>
+                <span className="text-[13px] tabular-nums text-right w-12 font-medium">{d.total}</span>
+                <span className="text-[12px] tabular-nums text-right w-12 text-muted-foreground">{d.julgados}</span>
+                <div className="w-20 flex items-center justify-end gap-2">
+                  {taxa != null ? (
+                    <>
+                      <div className="w-8 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                        <div className={cn("h-full rounded-full", taxa >= 50 ? "bg-emerald-500" : "bg-amber-500")} style={{ width: `${taxa}%` }} />
+                      </div>
+                      <span className={cn("text-[12px] tabular-nums font-semibold w-8 text-right", taxa >= 50 ? "text-emerald-500" : "text-amber-500")}>{taxa}%</span>
+                    </>
+                  ) : <span className="text-[12px] text-muted-foreground/40 w-full text-right">—</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function DesembargadorSheet({ desembId, onClose }: { desembId: number | null; onClose: () => void }) {
+  const { data: p, isLoading } = trpc.instanciaSuperior.perfilDesembargador.useQuery({ id: desembId! }, { enabled: desembId != null });
+
+  return (
+    <Sheet open={desembId != null} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
+        {isLoading || !p ? (
+          <div className="p-6 space-y-4"><Skeleton className="h-8 w-2/3 rounded" /><Skeleton className="h-24 rounded" /></div>
+        ) : (
+          <div className="flex flex-col">
+            <div className="bg-[#414144] dark:bg-neutral-900 px-6 py-5 text-white">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Scale className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-[16px] font-semibold leading-tight">{p.nome}</h2>
+                    <p className="text-[11px] text-white/60 mt-0.5">{p.camara ?? "—"}{p.area ? ` · ${p.area}` : ""}</p>
+                  </div>
+                </div>
+                <button onClick={onClose} className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center cursor-pointer transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-neutral-50 dark:bg-white/[0.03] rounded-xl px-3.5 py-2.5">
+                  <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground block">Como relator</span>
+                  <span className="text-xl font-bold tabular-nums">{p.totalComoRelator}</span>
+                </div>
+                <div className="bg-neutral-50 dark:bg-white/[0.03] rounded-xl px-3.5 py-2.5">
+                  <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground flex items-center gap-1"><TrendingUp className="w-2.5 h-2.5" />Provimento</span>
+                  <span className={cn("text-xl font-bold tabular-nums", p.taxaProvimento != null ? "text-emerald-500" : "text-muted-foreground/40")}>
+                    {p.taxaProvimento != null ? `${p.taxaProvimento}%` : "—"}
+                  </span>
+                </div>
+              </div>
+
+              {p.resultados?.length > 0 && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 block mb-2">Resultados</span>
+                  <div className="space-y-1.5">
+                    {p.resultados.map((r: any) => {
+                      const cfg = RESULTADO_CONFIG[r.resultado] ?? RESULTADO_CONFIG.PENDENTE;
+                      const max = Math.max(...p.resultados.map((x: any) => Number(x.total)));
+                      return (
+                        <div key={r.resultado}>
+                          <div className="flex items-center justify-between text-[11px] mb-0.5">
+                            <span className={cn("font-medium", cfg.color)}>{cfg.label}</span>
+                            <span className="text-muted-foreground tabular-nums">{r.total}</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                            <div className={cn("h-full rounded-full", cfg.color.replace("text-", "bg-"))} style={{ width: `${(Number(r.total) / max) * 100}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {p.ultimosAcordaos?.length > 0 && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-neutral-400 block mb-2">Últimos acórdãos</span>
+                  <div className="space-y-2">
+                    {p.ultimosAcordaos.map((a: any, i: number) => (
+                      <div key={i} className="rounded-lg border border-neutral-200/60 dark:border-neutral-800/40 p-2.5">
+                        <div className="flex items-center justify-between mb-1">
+                          {a.resultado && <span className={cn("text-[10px] font-semibold", (RESULTADO_CONFIG[a.resultado] ?? RESULTADO_CONFIG.PENDENTE).color)}>{(RESULTADO_CONFIG[a.resultado] ?? RESULTADO_CONFIG.PENDENTE).label}</span>}
+                          {a.dataJulgamento && <span className="text-[10px] text-muted-foreground font-mono tabular-nums">{format(new Date(a.dataJulgamento), "dd/MM/yy")}</span>}
+                        </div>
+                        {a.ementa && <p className="text-[11px] text-foreground/70 leading-snug line-clamp-3">{a.ementa}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 // ─── Recurso Detail Sheet ─────────────────────────────────────────────────
 
 function RecursoDetailSheet({ recursoId, onClose }: { recursoId: number | null; onClose: () => void }) {
@@ -815,6 +960,8 @@ function EditRecursoDialog({ open, onOpenChange, recurso: r }: {
   const [status, setStatus] = useState<string>(r.status);
   const [resultado, setResultado] = useState<string>(r.resultado);
   const [tribunal, setTribunal] = useState<string>(r.tribunal ?? "TJBA");
+  const [relator, setRelator] = useState<string>(r.relator?.nome ?? "");
+  const [camara, setCamara] = useState<string>(r.camara ?? "");
   const [dataDistribuicao, setDataDist] = useState<string>(r.dataDistribuicao ?? "");
   const [dataPauta, setDataPauta] = useState<string>(r.dataPauta ?? "");
   const [dataJulgamento, setDataJulg] = useState<string>(r.dataJulgamento ?? "");
@@ -833,6 +980,7 @@ function EditRecursoDialog({ open, onOpenChange, recurso: r }: {
       utils.instanciaSuperior.stats.invalidate();
       utils.instanciaSuperior.mapaPorAssunto.invalidate();
       utils.instanciaSuperior.agendaPauta.invalidate();
+      utils.instanciaSuperior.relatoriasRanking.invalidate();
       onOpenChange(false);
     },
     onError: (e) => toast.error(e.message),
@@ -872,6 +1020,8 @@ function EditRecursoDialog({ open, onOpenChange, recurso: r }: {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            <div><Lbl>Relator</Lbl><Input value={relator} onChange={(e) => setRelator(e.target.value)} placeholder="Nome do desembargador" className="text-[13px] h-9" /></div>
+            <div><Lbl>Câmara</Lbl><Input value={camara} onChange={(e) => setCamara(e.target.value)} placeholder="1ª Câmara Criminal" className="text-[13px] h-9" /></div>
             <div><Lbl>Distribuição</Lbl><Input type="date" value={dataDistribuicao} onChange={(e) => setDataDist(e.target.value)} className="text-[13px] h-9" /></div>
             <div><Lbl>Pauta</Lbl><Input type="date" value={dataPauta} onChange={(e) => setDataPauta(e.target.value)} className="text-[13px] h-9" /></div>
             <div><Lbl>Julgamento</Lbl><Input type="date" value={dataJulgamento} onChange={(e) => setDataJulg(e.target.value)} className="text-[13px] h-9" /></div>
@@ -908,6 +1058,8 @@ function EditRecursoDialog({ open, onOpenChange, recurso: r }: {
               id: r.id,
               tribunal: tribunal as "TJBA" | "STJ" | "STF",
               status, resultado,
+              relatorNome: relator || null,
+              camara: camara || null,
               dataDistribuicao: dataDistribuicao || null,
               dataPauta: dataPauta || null,
               dataJulgamento: dataJulgamento || null,
