@@ -1,0 +1,238 @@
+---
+name: juri
+description: "Gerador de peças jurídicas e análise estratégica para o TRIBUNAL DO JÚRI da Defensoria Pública do Estado da Bahia (DPE-BA), 7ª Regional – Camaçari. Use esta skill SEMPRE que o usuário mencionar: 'júri', 'tribunal do júri', 'plenário', 'jurados', 'sustentação oral', 'quesitos', 'pronúncia', 'impronúncia', 'desclassificação', 'homicídio qualificado', 'dossiê estratégico júri', 'slides do júri', 'preparação de júri', 'apelação pós-júri', 'alegações finais do júri', 'diligências 422 CPP', 'laudo necroscópico', 'laudo de lesões', 'reconstrução visual forense', 'imagem das lesões para plenário', ou qualquer tópico relacionado ao julgamento perante jurados. Inclui geração de peças processuais (.docx) e relatórios de análise estratégica (markdown ou .docx), ambos com formatação institucional DPE-BA."
+---
+
+# Peças Processuais e Análise Estratégica — Tribunal do Júri (DPE-BA, 7ª Regional – Camaçari)
+
+Esta skill gera documentos para a atribuição de **Tribunal do Júri** (judicium), incluindo peças processuais em .docx com padrão institucional e relatórios analíticos detalhados. Cada tipo de peça e análise possui um prompt especializado na pasta `references/`.
+
+## Padrões Obrigatórios de Redação
+
+Consultar **`dpe-ba-pecas/SKILL.md`** → seção "Padrões Obrigatórios" para regras compartilhadas (nome inline, nulidade ≠ ilegalidade, reconhecimento irregular, paragrafação funcional).
+
+### Regras Específicas do Tribunal do Júri
+
+#### Preâmbulo
+Nome do assistido PRIMEIRO, seguido da Defensoria e fundamento constitucional:
+> **[NOME]**, [qualificação], representado pela Defensoria Pública do Estado da Bahia, com fundamento no art. 134 da Constituição da República, por meio do defensor público subscritor, vem respeitosamente perante V. Exa. apresentar as presentes **[NOME DA PEÇA]**, nos termos que seguem:
+
+**Proibido**: "Lei Complementar nº 80/1994", "LC Estadual nº 26/2006", "por intermédio da DEFENSORIA PÚBLICA".
+
+#### Síntese Processual
+- Iniciar: **"A denúncia acusa [NOME]..."** — nunca "devidamente recebida", nunca "o defendido" antes do nome
+- Usar "o fato teria ocorrido" (não "a conduta" — pressupõe autoria)
+- Proibido qualquer valoração: "devidamente", "regularmente", "corretamente"
+
+#### Enquadramento Correto do Procedimento Bifásico
+Nas alegações finais do sumário da culpa, o que está em jogo é **pronúncia ou impronúncia**, não condenação ou absolvição.
+
+✅ Usar: "a prova não é suficiente para ensejar a sujeição de [NOME] ao julgamento pelo Tribunal do Júri" / "impõe-se a impronúncia, nos termos do art. 414 do CPP"
+❌ Nunca: "a prova não é suficiente para ensejar a condenação"
+
+#### Ilegalidade do PROCEDIMENTO de Reconhecimento
+A skill **dpe-ba-pecas** trata desta matéria com maior profundidade (vide seção "Ilegalidade do PROCEDIMENTO de reconhecimento — NUNCA chamar de 'nulidade'"). No contexto do Júri, ressalte que o procedimento de identificação em audiência deve observar rigorosamente o art. 226 CPP, sob pena de contaminar a prova e inviabilizar sua valoração.
+
+**A defesa ataca o PROCEDIMENTO, não "a identificação de [nome]":**
+✅ Usar: "A Defesa suscita a ilegalidade do **procedimento** adotado em audiência para fins de identificação, e a consequente inadmissibilidade probatória do elemento identificatório assim produzido."
+✅ Pedido: "reconhecimento da ilegalidade do **procedimento** adotado, com a inadmissibilidade probatória e impossibilidade de valoração para qualquer fim decisório (arts. 226 e 157 CPP)"
+❌ Nunca: "A Defesa suscita a ilegalidade da identificação de [NOME]" — o sujeito da ilegalidade é o procedimento
+❌ Nunca: "declaração de nulidade do reconhecimento"
+
+Checar nos transcritos: (a) houve reconhecimento formal na delegacia? (b) em audiência foi procedimento formal ou exibição direta de foto do inquérito? (c) testemunha teve contato prévio com imagens via redes sociais? Ver `references/alegacoes_finais_juri.md` para os três cenários completos.
+
+---
+
+## Skills Transversais — Consulta Obrigatória
+
+**ANTES de redigir qualquer peça ou relatório**, consultar OBRIGATORIAMENTE:
+
+### 1. estilo-pecas
+Manual de redação anti-IA. **Aplicar em passagem dedicada de revisão após a minuta inicial** — eliminar hedging cerimonial repetido, prefaciações ("trata-se de", "cumpre observar"), auto-comentário ("esta defesa busca"), paralelismo retórico tríplice ("Primeiro... Segundo... Terceiro"), marcadores (i)(ii)(iii) embutidos no corpo, adjetivação intensificadora redundante (plenamente, expressamente, integralmente). Em sustentação oral pré-plenário, o anti-IA é ainda mais decisivo — leitura formulaica entrega ao MP a oportunidade de explorar a artificialidade.
+
+### 2. linguagem-defensiva
+- "defendido" (NUNCA "acusado" no corpo argumentativo)
+- Modalizadores obrigatórios
+- Em plenário, "defendido" é especialmente importante para jurados leigos
+
+### 3. citacao-depoimentos
+- Identificar quem perguntou (MP, Defesa, Juíza)
+- Timestamps: `(mídia audiovisual, a partir de XXminYYs)`
+- No dossiê estratégico e alegações finais, timestamps são essenciais para sustentação oral
+
+### 4. citacoes-seguras
+- Verificar súmulas no banco verificado antes de citar
+- Buscar jurisprudência nos sites oficiais
+- Marcar com `[VERIFICAR PRECEDENTE]` quando não houver certeza
+
+---
+
+## Integração com Análises Estratégicas
+
+Para **relatórios e dossiês estratégicos** (análise para júri, análise sumariante, dossiê de plenário), a skill `analise-audiencias` é o motor central. Ela identifica que o caso é do Júri, carrega esta skill para conhecimento temático, e gera tripla saída (PDF com paleta Verde + MD + JSON).
+
+Referências de análise exclusivas do Júri (consultadas pela analise-audiencias):
+- `references/analise_estrategica_juri.md`
+- `references/analise_juri_estruturada.md` / `_2.md`
+- `references/analise_preparar_juri_422.md`
+- `references/analise_para_juri.md`
+- `references/analise_dos_jurados.md`
+- `references/fabrica_ideias_defensivas.md`
+- `references/slides_do_juri.md`
+
+---
+
+## Fluxo de Trabalho
+
+1. **Identificar o tipo de demanda** — Veja as tabelas abaixo e pergunte ao usuário se não ficou claro
+2. **Carregar o prompt específico** — Leia o arquivo correspondente em `references/`
+3. **Localizar o processo do assistido** (se disponível) — Busque a pasta do assistido nos diretórios de processos (ver "Pastas de Processos") e leia PDFs, transcrições (.md, .mp4) e documentos para extrair fatos, nomes, datas, depoimentos e argumentos do caso
+   - **Antes de analisar, conferir as mídias/transcrições da instrução** (módulo `preparar-audiencias/references/midias_e_transcricao.md`): com dedup, varrer as atas dos autos por links de mídia (Lifesize/PJe Mídias), baixar para a pasta do assistido (`scripts/baixar_midias_lifesize.py`) e transcrever (`scripts/transcrever_midias.py`) o que ainda não estiver na pasta. Vale tanto para o **relatório estratégico** quanto para a **preparação de 422** (a fase de delegacia não tem mídia; cada AIJ tem a sua). Com a instrução transcrita, citar depoimentos com timestamp (`citacao-depoimentos`), conferindo de ouvido (`conferencia-depoimentos`).
+   - **Antes de analisar, verificar o fracionamento dos autos** (skill `fracionar-autos`): se a pasta não tiver `Processo Sistematizado/Autos Fracionados/`, fracionar o PDF do processo em peças nomeadas (denúncia, recebimento, prisão, termos, AF MP/Defesa, pronúncia, acórdão, laudos por tipo, termos da delegacia por depoente, 422 do MP, etc.); se já tiver, complementar o que faltar. As peças fracionadas são a fonte rápida para NAVEGAR — mas **não confiar cegamente no fracionamento/índice**: durante a análise, conferir o conteúdo real no processo (o rótulo é hipótese a confirmar; pode haver peça mal classificada, dentro de bloco/anexo, ou só referenciada — ex.: laudo necroscópico anexado ao IP).
+4. **Consultar modelos reais similares** — Busque peças/análises do mesmo tipo em "Petições por assunto" (ver "Banco de Modelos") para absorver o padrão argumentativo e estilo do Defensor
+5. **Coletar informações complementares** — Se os autos/documentos não forem suficientes, peça dados adicionais ao usuário
+6. **Gerar a minuta/análise** — Siga o prompt carregado, baseando-se nos fatos do processo e no estilo dos modelos reais
+7. **Passagem dedicada de revisão (estilo-pecas)** — Antes de salvar, percorrer o checklist anti-IA: cortar hedging repetido, prefaciações, auto-comentário, paralelismo tríplice e marcadores (i)(ii)(iii) embutidos no corpo
+8. **Formatar conforme o tipo** — Peças processuais em .docx (python-docx), análises em markdown ou .docx
+9. **Salvar na pasta do usuário**
+
+---
+
+## Banco de Modelos Reais (Petições por Assunto)
+
+Peças anteriores do Defensor, organizadas por tipo. No Tribunal do Júri, praticamente todos os tipos de peça criminal são utilizáveis — desde HC e RESE até alegações finais e apelação. Por isso, todas as subpastas de 1 a 9 são relevantes como banco de conhecimento e referência de estilo.
+
+**Caminho base**: `Meu Drive/1 - Defensoria 9ª DP/4 - Peças/Petições por assunto (DOC)/`
+
+| Subpasta | Relevância para o Júri |
+|---|---|
+| `1 Alegações Finais/` | Alegações finais escritas — base para AF do júri |
+| `2 Apelação/` | Apelações criminais — base para apelação pós-júri |
+| `3 Contrarrazões de Apelação/` | Contrarrazões — quando o MP apela de absolvição no júri |
+| `4 Contrarrazões de RESE/` | Contrarrazões de RESE — impronúncia impugnada pelo MP |
+| `5 Diligências 422/` | Diligências do art. 422 CPP — fase essencial pré-plenário |
+| `6 HC/` | Habeas Corpus — presos aguardando júri, excesso de prazo |
+| `7 Prisão e cautelares/` | Revogação de preventiva, relaxamento — réus presos no júri |
+| `8 RESE/` | Recurso em Sentido Estrito — contra pronúncia |
+| `9 Resposta à acusação/` | RA — primeira defesa nos crimes dolosos contra a vida |
+| `Embargos Declaração/` | Embargos de declaração contra decisões no rito do júri |
+| `Impugnações/` | Impugnações diversas |
+| `Nulidades processuais/` | Nulidades — frequentes em procedimentos do júri |
+| `Incidente insanidade e internação/` | Incidentes de insanidade mental |
+
+**Como usar**: Liste os .docx da subpasta correspondente ao tipo de peça. Identifique 1-3 modelos com tese ou situação similar ao caso. Leia-os para absorver estilo argumentativo, estrutura e linguagem. Adapte ao caso concreto.
+
+---
+
+## Pastas de Processos dos Assistidos
+
+Processos individuais com PDFs dos autos, transcrições de depoimentos, vídeos, relatórios e documentos.
+
+| Atribuição | Caminho da Pasta |
+|---|---|
+| Processos do Júri (principal) | `Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Júri/` |
+| Grupo do Júri (substituições) | `Meu Drive/1 - Defensoria 9ª DP/7 - Júri/Processos - Grupo do juri/` |
+| Plenários Concluídos | `Meu Drive/1 - Defensoria 9ª DP/7 - Júri/Plenarios concluidos/` |
+| Material para Júri | `Meu Drive/1 - Defensoria 9ª DP/7 - Júri/Material para júri/` |
+
+Cada subpasta do assistido pode conter: PDFs do processo (completo ou partes), transcrições de depoimentos (.md), vídeos de entrevistas (.mp4), relatórios estratégicos, imagens e documentos.
+
+**Como usar**: Quando o usuário pedir análise ou peça para um caso do júri (ex: "prepare o dossiê do Adailton Portugal"), busque o nome na pasta de processos. Leia os PDFs dos autos, transcrições de testemunhas e entrevistas, relatórios já existentes. Esse material é a base factual para gerar a peça ou análise estratégica.
+
+---
+
+## SEÇÃO 1: Peças Processuais do Júri
+
+Documentos formais que tramitam no processo perante o tribunal.
+
+| Tipo de Peça | Arquivo de Referência | Quando Usar |
+|---|---|---|
+| Apelação Pós-Júri | `references/apelacao_pos_juri.md` | Recurso contra sentença condenatória do plenário |
+| Alegações Finais do Júri | `references/alegacoes_finais_juri.md` | Memoriais orais/escritos antes do julgamento popular |
+| Diligências 422 CPP | `references/diligencias_422_cpp.md` | Requisição de investigação complementar em fase de pronúncia/impronúncia |
+| Rol de Testemunhas 422 | `references/rol_testemunhas_422.md` | **Regra do rol do 422**: na petição, só qualificação/endereço/telefone/situação de localização (certidão) — nunca "o que a testemunha sabe"; o teor e a racionalidade da seleção (escolhidas e descartadas) vão para documento à parte "Memória de Prova Oral e Seleção do Rol" |
+| Absolvição Sumária / Alibe | `references/absolvicao_sumaria_alibe.md` | Pedido de rejeição da denúncia por prova manifesta de inocência |
+
+> **Nota**: Peças de criminal comum (HC, apelação condenatória geral, resposta à acusação) estão na skill **criminal-comum**. Análises do júri (estratégia, preparação, dossiê) estão abaixo.
+
+---
+
+## SEÇÃO 2: Análise e Preparação do Júri
+
+Relatórios estratégicos, análises técnicas e documentos de preparação para o plenário. Estes podem ser gerados em **markdown (por padrão)** ou em **.docx** caso o usuário solicite formatação formal.
+
+| Tipo de Análise | Arquivo de Referência | Quando Usar |
+|---|---|---|
+| Análise Estratégica (Modelo Avançado) | `references/analise_estrategica_juri.md` | Inteligência defensiva abrangente: prova, estratégia, teatro do júri, gestão de atores |
+| Análise Estruturada Completa | `references/analise_juri_estruturada.md` | Análise profunda: cabeçalho, envolvidos, provas técnicas, testemunhais, estratégia, plenário |
+| Análise Estruturada Alternativa | `references/analise_juri_estruturada_2.md` | Versão alternativa com foco em relatório executivo, lacunas probatórias e teses defensivas |
+| Análise para Preparação de Júri (422 CPP) | `references/analise_preparar_juri_422.md` | Análise direcionada à fase de pronúncia/impronúncia (art. 422 CPP) |
+| Análise Rápida para Júri | `references/analise_para_juri.md` | Versão simplificada/executiva para consultas rápidas |
+| Análise dos Jurados | `references/analise_dos_jurados.md` | Perfil e mapeamento estratégico dos jurados sorteados |
+| Slides do Júri | `references/slides_do_juri.md` | Geração de conteúdo para apresentação visual em plenário (estrutura e tópicos) |
+| Fábrica de Ideias Defensivas | `references/fabrica_ideias_defensivas.md` | Brainstorming de teses, contra-argumentos e linhas defensivas criativas |
+| Medicina Legal (defesa) | `references/medicina_legal.md` | Cheat-sheet médico-legal: tanatologia/cronotanatognose, identificação de ossadas, causa jurídica × médica, cadeia de custódia, lesões/instrumentos, checklist defensivo. Consultar quando houver laudo (necroscópico, cadavérico, tanato, lesões) ou questão de morte/identificação/datação |
+| Reconstrução Visual Forense | `references/reconstrucao_visual_forense.md` | **Quando houver laudo necroscópico/cadavérico ou de lesões nos autos**: perícia de compatibilidade (laudo × narrativa) + descrição e prompt de imagem hiper-realista fiel ao laudo, em documento à parte. Leitura defensiva obrigatória (recurso é, por natureza, acusatório — usar com cautela) |
+
+---
+
+## Como Usar os Prompts de Referência
+
+Cada arquivo em `references/` contém o prompt completo extraído do Gemini Gem correspondente. Ao gerar uma peça ou análise:
+
+1. **Leia o arquivo de referência** correspondente ao tipo solicitado
+2. **Siga as instruções do prompt** como se fossem suas instruções de trabalho
+3. **Adapte com os dados reais** fornecidos pelo usuário
+4. **Aplique a formatação** descrita abaixo:
+   - **Peças processuais**: SEMPRE em .docx com formatação DPE-BA
+   - **Relatórios analíticos**: Por padrão em markdown; em .docx apenas se o usuário pedir
+
+---
+
+## Formatação e Geração de Documentos
+
+A formatação institucional DPE-BA (margens, fonte, cabeçalho, rodapé, assinatura) está definida na skill **dpe-ba-pecas**. Consulte-a para gerar o .docx com `scripts/gerar_docx.py`.
+
+Para **relatórios analíticos**: por padrão, salve em markdown (.md). Se o usuário pedir .docx, aplique a formatação DPE-BA via script.
+
+---
+
+## Importante
+
+- Sempre usar **python-docx** (não a biblioteca npm) para documentos .docx
+- Data gerada automaticamente em português (ex: "10 de março de 2026")
+- **Nome do arquivo para peças processuais**: `[Tipo da Peça] - [Nome do Assistido].docx`
+- **Nome do arquivo para análises**: `[Tipo de Análise] - [Nome do Assistido] - [Data].md` (ou .docx se solicitado)
+- Salvar na pasta do usuário
+- Análises podem ter saída em markdown (não obrigatoriamente .docx)
+
+---
+
+## Contexto Institucional
+
+A Defensoria Pública do Estado da Bahia (DPE-BA) é instituição essencial para a justiça, fornecendo orientação jurídica integral e defesa dos direitos humanos dos necessitados. A 7ª Regional com sede em Camaçari atende o litoral do Recôncavo Baiano. Os documentos produzidos por esta skill seguem rigorosamente os padrões institucionais e éticos da corporação, garantindo qualidade técnica e representação adequada perante órgãos judiciais.
+
+---
+
+## Fluxo de Consulta Rápida
+
+**Usuário diz**: "Preciso de uma análise estratégica para júri"
+
+1. Carregue `references/analise_estrategica_juri.md`
+2. Peça: número do processo, nomes dos réus, resumo dos fatos, provas disponíveis
+3. Siga o prompt de análise estratégica (Relatório Analítico de Combate, Diretrizes, Inteligência, Teatro do Júri)
+4. Forneça em markdown por padrão
+
+**Usuário diz**: "Preciso de alegações finais do júri em .docx"
+
+1. Carregue `references/alegacoes_finais_juri.md`
+2. Peça: dados dos autos, tese principal, qualificadoras imputadas, provas em instrução
+3. Siga o prompt (síntese, materialidade, autoria, desclassificação, qualificadoras)
+4. Gere em .docx com formatação DPE-BA usando python-docx
+5. Salve como: `Alegações Finais do Júri - [Nome Assistido].docx`
+
+## Histórico
+
+| Data | Caso | Lição |
+|---|---|---|
+| 2026-06-10 | Integração mídias + transcrição | Antes de gerar relatório estratégico ou preparação de 422, conferir as mídias/transcrições da instrução: rodar o módulo midias_e_transcricao (preparar-audiencias) com dedup, baixando o que falta para a pasta do assistido e transcrevendo. A fase de delegacia não tem mídia; cada AIJ tem a sua. Citar depoimentos com timestamp (citacao-depoimentos), conferindo de ouvido (conferencia-depoimentos). |
