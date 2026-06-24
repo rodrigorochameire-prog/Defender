@@ -20,6 +20,8 @@ import { RequerimentoDefesaSecao } from "@/components/agenda/sheet/secoes/Requer
 import { ResumoGeralSecao } from "@/components/agenda/sheet/secoes/ResumoGeralSecao";
 import { IntimacaoSecao } from "@/components/agenda/sheet/secoes/IntimacaoSecao";
 import { MedidasVigentesSecao } from "@/components/agenda/sheet/secoes/MedidasVigentesSecao";
+import { DenunciaSecao } from "@/components/agenda/sheet/secoes/DenunciaSecao";
+import { LaudosSecao } from "@/components/agenda/sheet/secoes/LaudosSecao";
 import { CitacaoText } from "@/components/agenda/sheet/CitacaoText";
 import { useSheetWidthResize } from "@/hooks/use-sheet-width-resize";
 import { toast } from "sonner";
@@ -544,6 +546,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // usa SECOES_JUSTIFICACAO; demais ritos = SECOES_DEFAULT). O corpo e o ToC
   // iteram a MESMA fonte, garantindo paridade visual.
   const manifesto = resolverManifesto(SUBTIPO_CONFIG[subtipo]);
+  // Rito de Instrução (AIJ): muda a apresentação de algumas seções (denúncia
+  // verbatim, laudos linkados) e o agrupamento Contexto ao final.
+  const isInstrucao = manifesto === SECOES_INSTRUCAO;
 
   const secoesMap: Record<SecaoId, { label: string; temDado: boolean; count?: number; node: ReactNode }> = {
     "resumo": {
@@ -748,9 +753,21 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       ),
     },
     "fatos": {
-      label: "Fatos (Denúncia)",
+      label: isInstrucao ? "Denúncia" : "Fatos (Denúncia)",
       temDado: true,
-      node: (
+      node: isInstrucao ? (
+        <CollapsibleSection id="fatos" label="Denúncia" defaultOpen>
+          {analyzedAt && (
+            <div className="flex justify-end mb-1">
+              <FreshnessBadge analyzedAt={analyzedAt} />
+            </div>
+          )}
+          <DenunciaSecao
+            processoId={typeof processoId === "number" ? processoId : null}
+            fallbackResumo={fatos ?? fatosLiteral}
+          />
+        </CollapsibleSection>
+      ) : (
         <CollapsibleSection id="fatos" label="Fatos (Denúncia)" defaultOpen>
           {analyzedAt && (
             <div className="flex justify-end mb-1">
@@ -1033,25 +1050,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               <FreshnessBadge analyzedAt={analyzedAt} />
             </div>
           )}
-          <ul className="space-y-1">
-            {laudos.map((l: any, i: number) => (
-              <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                • {typeof l === "string" ? l : l.nome ?? l.titulo ?? JSON.stringify(l)}
-              </li>
-            ))}
-          </ul>
-          {lacunas.length > 0 && (
-            <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/40">
-              <p className="text-[10px] font-medium text-neutral-400 mb-1">Lacunas probatórias</p>
-              <ul className="space-y-1">
-                {lacunas.map((l: any, i: number) => (
-                  <li key={i} className="text-xs text-neutral-600 dark:text-neutral-400">
-                    • {typeof l === "string" ? l : l.descricao ?? JSON.stringify(l)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <LaudosSecao
+            processoId={typeof processoId === "number" ? processoId : null}
+            laudos={laudos}
+            lacunas={lacunas}
+          />
         </CollapsibleSection>
       ),
     },
@@ -1200,7 +1203,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   // Instrução (AIJ): a espinha + preparação ficam como seções de topo e as
   // seções do grupo Contexto colapsam dentro de UM único CollapsibleSection ao
   // final — reduz a poluição sem perder dado. Demais ritos seguem flat.
-  const isInstrucao = manifesto === SECOES_INSTRUCAO;
   const contextoIds: SecaoId[] = isInstrucao
     ? secoesVisiveis.filter((id) => GRUPO_CONTEXTO_INSTRUCAO.includes(id))
     : [];
