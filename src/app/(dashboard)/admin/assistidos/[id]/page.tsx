@@ -238,6 +238,11 @@ export default function AssistidoHubPage() {
     { assistidoId: id },
     { enabled: !isNaN(id) },
   );
+  // Órfãos via FK direto (mesma fonte da aba Casos). getById.processos é M2M e sub-conta. (finding #1)
+  const { data: casosComProc } = trpc.casos.getCasosComProcessos.useQuery(
+    { assistidoId: id },
+    { enabled: !isNaN(id) },
+  );
   const { data: alertas = [] } = trpc.assistidos.getAlertasInteligencia.useQuery(
     { assistidoId: id },
     { enabled: !isNaN(id) },
@@ -327,14 +332,15 @@ export default function AssistidoHubPage() {
             : null,
         },
         {
-          processosSemCaso: countProcessosSemCaso(processos),
+          // FK direto (aba Casos) é a fonte correta; M2M só como fallback durante o load.
+          processosSemCaso: casosComProc?.semCaso?.length ?? countProcessosSemCaso(processos),
           demandaAtrasada: demandasAbertas.some((d) => {
             const dd = diasAte(d.prazo);
             return dd !== null && dd < 0;
           }),
         },
       ),
-    [assistido, proximaAudiencia, processos, demandasAbertas],
+    [assistido, proximaAudiencia, processos, demandasAbertas, casosComProc?.semCaso],
   );
 
   // ── Loading / empty ──────────────────────────────────────────────
