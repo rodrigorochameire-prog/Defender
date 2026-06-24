@@ -34,6 +34,18 @@ export {
   eventoProcessoInfo,
 } from "./evento-processo";
 
+export type {
+  AtendimentoStatusSemantico,
+  AtendimentoTone,
+  AtendimentoStatusVisual,
+  AtendimentoStatusInput,
+} from "./atendimento";
+export {
+  ATENDIMENTO_STATUS_CONFIG,
+  resolveStatusAtendimento,
+  statusAtendimentoInfo,
+} from "./atendimento";
+
 // Atribuição (já centralizada) — re-export para um único ponto de entrada.
 export {
   getAtribuicaoColors,

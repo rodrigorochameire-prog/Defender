@@ -49,11 +49,12 @@
 - [x] 0.2 Inventariar config/helpers/badges/stack de testes + base reutilizável de `demandas-premium`.
 - [x] 0.3 **Baseline**: `e2e/smoke.spec.ts` estendido com bloco `describe.skip` "Atendimentos baseline" (render → trocar view → abrir workspace → agendar retorno/gerar demanda → abrir form). Hook de teste `data-atendimento-card` no card (cards-view) e na list row (view) — convenção espelhada de `data-evento-card`. Rodar manualmente com sessão logada (vide comentário no spec).
 
-### Fase 1 — Sistema semântico e design system local (DoD: badges/cores/metadados testados, sem mudança de layout ainda)
-- 1.1 `StatusBadge`/`ReadinessBadge`: 1 badge forte (status) + 1 sutil (readiness); cor só semântica. Auditar `config.ts` (`STATUS_CONFIG`/`SUBTIPO_CONFIG`/área).
-- 1.2 `MetadataLine`: área + tipo + identificadores em **tipografia secundária** (remover badge de VVD/Júri/Exec./Inicial/Retorno).
-- 1.3 Direção cromática (destaque só p/ A registrar / Cancelado / CTA; tonalidade contida p/ Realizado / Contexto preparado / Agendado).
-- 1.4 **Testes**: render/variantes de `StatusBadge`/`ReadinessBadge`/`MetadataLine`; mapeamento status→cor; ausência de badge forte para taxonomia.
+### Fase 1 — Sistema semântico e design system local (concluída — DoD: badges/cores/metadados testados, sem mudança de layout ainda)
+- [x] 1.1 `AtendimentoStatusBadge`/`ReadinessBadge` (`atendimento-badges.tsx`): 1 forte (status) + 1 sutil (readiness). Status virou **fonte única central** em `lib/config/tipologia/atendimento.ts` (segue o padrão `VisualTipo`+`info()` do registry; `a_registrar` é estado de 1ª classe = agendado vencido).
+- [x] 1.2 `MetadataLine`: área + tipo em **tipografia secundária** (`metadataLine` em `atendimento-semantica.ts`, usando `AREA_CONFIG`/`SUBTIPO_CONFIG`). VVD/Júri/Exec./Inicial/Retorno deixam de ser badge.
+- [x] 1.3 Direção cromática no registry central: **strong** = A registrar (âmbar) + Cancelado (rosa); **soft** = Realizado (esmeralda) + Agendado (sky). Campos `tone`/`strength` tornam a régua testável.
+- [x] 1.4 **Testes**: `__tests__/unit/tipologia-atendimento.test.ts` (resolução de status + tom/força + paleta), `atendimento-semantica.test.ts` (metadataLine + readiness), `__tests__/components/atendimento-badges.test.tsx` (render + 1 só badge forte). 24/24 ✓.
+- **Pendente p/ Fase 2** (rewiring, fora do DoD da Fase 1): consumir os primitivos nas cards/list rows e aposentar `STATUS_CONFIG`/`SUBTIPO_CONFIG`/chip âmbar inline de `config.ts`/`atendimentos-cards.tsx`/`atendimentos-view.tsx`.
 
 ### Fase 2 — Lista / fila operacional
 - 2.1 `AtendimentoModuleHeader` (título + subtítulo + CTA Novo) + `AtendimentoKPICard` operacionais (A registrar · Hoje · 7 dias · Realizados no mês).
