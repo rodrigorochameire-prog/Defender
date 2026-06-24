@@ -311,6 +311,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground">Agendamento</p>
           <div className="space-y-2">
             <Label>Assistido *</Label>
             {assistidoTravado ? (
@@ -380,6 +381,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
             </div>
           </div>
 
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Contexto</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label htmlFor="atd-pedido">Pedido</Label>
@@ -504,6 +506,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
             />
           </div>
 
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Registro complementar</p>
           <div className="space-y-2">
             <Label htmlFor="atd-anotacoes">Anotações da recepção</Label>
             <Textarea
@@ -564,11 +567,9 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
             </div>
           )}
 
+          {/* Footer: uma CTA primária só (o Dialog já fecha por X/overlay/Esc — sem "Cancelar" redundante) */}
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={salvando}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={salvando} className="gap-2">
+            <Button type="submit" disabled={salvando} className="gap-2 w-full sm:w-auto">
               {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {editing ? "Salvar alterações" : registrarRealizado ? "Registrar atendimento" : "Agendar"}
             </Button>

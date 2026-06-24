@@ -81,7 +81,7 @@
 - 3.5 **Testes**: abrir workspace; seções renderizam; próximos passos disparam fluxos; timeline render; vínculo com demanda perceptível.
 
 ### Fase 4 — Agendar retorno (`ScheduleReturnModalRefined`) (em andamento)
-- 4.1 Modular em 4 blocos (Agendamento · Contexto · Registro complementar · Desfecho). _(próxima fatia — restruturação do `atendimento-form-modal.tsx`; ver plano do subagente)_
+- [x] 4.1 Modular em **4 blocos rotulados** (Agendamento · Contexto · Registro complementar · Desfecho) no `atendimento-form-modal.tsx` — divisores área-mãe (mesmo padrão do workspace). Footer **dedup**: removido o "Cancelar" redundante (Dialog fecha por X/overlay/Esc) + CTA full-width no mobile. _Resta_: dar proeminência ao "Processo vinculado" no topo do Contexto + sticky/full-screen mobile (Fase 6).
 - 4.2 `DateTimeFieldRefined`; `ProcessSelector` com relevância visual maior.
 - [x] 4.3 `OutcomeChoiceCardGroup`: desfecho em **cards de escolha acessíveis** (radiogroup de `<button>`, não `<input radio>`), com acento emerald no selecionado. Fonte única `agendar-retorno-logic.ts` (`DESFECHO_OPTIONS` puro/testado). _Resta_: remover redundância Cancelar (Dialog já fecha por X/overlay/Esc).
 - 4.4 **Testes**: [x] `agendar-retorno-logic.test.ts` + `outcome-choice-card-group.test.tsx` (radiogroup, 1 selecionado, onChange, sem input radio cru) — 8 testes. _Resta_: integração do modal (4 blocos) com trpc mockado.
