@@ -2,6 +2,8 @@
 // Funções puras, sem React/DOM. Alvos de TDD: priorização da carteira,
 // subtítulo por modo, validação/máscara do número CNJ, taxa de provimento.
 
+import { STATUS_ORDER, type RecursoStatus } from "./ds";
+
 export type EscopoModo = "meus" | "todos";
 
 /** Subtítulo do cabeçalho conforme o modo de escopo (Contexto — Faixa A). */
@@ -94,6 +96,26 @@ export function kpiRowData(stats: StatsLike | null | undefined): KpiRowData {
     julgados: stats?.julgados ?? 0,
     provimento: stats?.taxaProvimento ?? null,
   };
+}
+
+// ─── Funnel do ciclo recursal (Faixa estratégica) ────────────────────────
+
+export type FunnelSegment = { status: RecursoStatus; count: number; pct: number };
+
+/**
+ * Segmentos do funil na ordem do ciclo (INTERPOSTO→TRANSITADO), com contagem
+ * e percentual sobre o total. Stages ausentes em porStatus contam 0.
+ */
+export function funnelSegments(
+  porStatus: { status: string; total: number }[] | null | undefined,
+  total: number,
+): FunnelSegment[] {
+  const map = new Map((porStatus ?? []).map((s) => [s.status, Number(s.total)]));
+  return STATUS_ORDER.map((status) => {
+    const count = map.get(status) ?? 0;
+    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+    return { status, count, pct };
+  });
 }
 
 // ─── Número CNJ ───────────────────────────────────────────────────────────

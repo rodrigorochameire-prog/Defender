@@ -12,6 +12,7 @@ import {
   formatarNumeroRecurso,
   tribunalCount,
   kpiRowData,
+  funnelSegments,
   type CarteiraRow,
 } from "@/components/instancia-superior/logic";
 
@@ -36,6 +37,30 @@ describe("tribunalCount / kpiRowData", () => {
     expect(kpiRowData(null)).toEqual({
       total: 0, tjba: 0, stj: 0, stf: 0, pendentes: 0, emPauta: 0, julgados: 0, provimento: null,
     });
+  });
+});
+
+describe("funnelSegments", () => {
+  const porStatus = [
+    { status: "INTERPOSTO", total: 5 },
+    { status: "JULGADO", total: 3 },
+    { status: "PAUTADO", total: 2 },
+  ];
+  it("devolve os 6 estágios na ordem do ciclo", () => {
+    const segs = funnelSegments(porStatus, 10);
+    expect(segs.map((s) => s.status)).toEqual([
+      "INTERPOSTO", "DISTRIBUIDO", "CONCLUSO", "PAUTADO", "JULGADO", "TRANSITADO",
+    ]);
+  });
+  it("calcula contagem e percentual; ausentes contam 0", () => {
+    const segs = funnelSegments(porStatus, 10);
+    const byStatus = Object.fromEntries(segs.map((s) => [s.status, s]));
+    expect(byStatus.INTERPOSTO).toMatchObject({ count: 5, pct: 50 });
+    expect(byStatus.PAUTADO).toMatchObject({ count: 2, pct: 20 });
+    expect(byStatus.DISTRIBUIDO).toMatchObject({ count: 0, pct: 0 });
+  });
+  it("pct = 0 quando total é 0 (sem divisão por zero)", () => {
+    expect(funnelSegments([], 0).every((s) => s.pct === 0 && s.count === 0)).toBe(true);
   });
 });
 

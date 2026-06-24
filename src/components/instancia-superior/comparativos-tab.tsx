@@ -8,7 +8,7 @@ import { ACCENT, DIMENSOES, type Dimensao } from "./ds";
 import { Card, EmptyHint } from "./primitives";
 import { taxaProvimento } from "./logic";
 
-export function ComparativosTab() {
+export function ComparativosTab({ onPick }: { onPick?: (dimensao: Dimensao, valor: string) => void }) {
   const [dimensao, setDimensao] = useState<Dimensao>("comarca");
   const { data, isLoading } = trpc.instanciaSuperior.institucional.useQuery({ dimensao, limit: 30 });
   const maxTotal = data?.length ? Math.max(...data.map((d: any) => d.total)) : 1;
@@ -26,7 +26,11 @@ export function ComparativosTab() {
         ))}
       </div>
 
-      <Card title={`Comparativo por ${DIMENSOES.find(d => d.key === dimensao)?.label.toLowerCase()}`} icon={Building2}>
+      <Card
+        title={`Comparativo por ${DIMENSOES.find(d => d.key === dimensao)?.label.toLowerCase()}`}
+        icon={Building2}
+        action={onPick && <span className="text-[10px] text-muted-foreground/70">clique numa linha para abrir a carteira</span>}
+      >
         {isLoading ? (
           <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-10 rounded" />)}</div>
         ) : !data?.length ? (
@@ -43,7 +47,16 @@ export function ComparativosTab() {
             {data.map((row: any) => {
               const taxa = taxaProvimento(row.providos, row.julgados);
               return (
-                <div key={row.grupo} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 items-center px-1">
+                <button
+                  key={row.grupo}
+                  type="button"
+                  disabled={!onPick}
+                  onClick={() => onPick?.(dimensao, row.grupo)}
+                  className={cn(
+                    "w-full grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 items-center px-1 py-1 -mx-1 rounded-lg text-left transition-colors",
+                    onPick ? "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50" : "cursor-default",
+                  )}
+                >
                   <div className="min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[12px] text-foreground/85 truncate">{row.grupo}</span>
@@ -63,7 +76,7 @@ export function ComparativosTab() {
                   <span className={cn("text-[12px] tabular-nums text-right w-16 font-semibold", taxa == null ? "text-muted-foreground/40" : taxa >= 50 ? "text-emerald-500" : "text-amber-500")}>
                     {taxa != null ? `${taxa}%` : "—"}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>

@@ -4,17 +4,20 @@ import { Layers, CalendarClock, Gavel, CheckCircle2, ChevronRight } from "lucide
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { trpc } from "@/lib/trpc/client";
-import { ACCENT, STATUS_ORDER, STATUS_CONFIG, RESULTADO_CONFIG, TIPO_SHORT } from "./ds";
+import { ACCENT, RESULTADO_CONFIG, TIPO_SHORT } from "./ds";
 import { Card, EmptyHint } from "./primitives";
+import { SuperiorFunnel } from "./superior-funnel";
 import { taxaProvimento, type EscopoModo } from "./logic";
 
 export function VisaoGeral({
-  escopo, stats, statsLoading, onOpenRecurso,
+  escopo, stats, statsLoading, onOpenRecurso, onPickStatus, activeStatus,
 }: {
   escopo: { modo: EscopoModo };
   stats: any;
   statsLoading: boolean;
   onOpenRecurso: (id: number) => void;
+  onPickStatus?: (status: string) => void;
+  activeStatus?: string;
 }) {
   const { data: mapa, isLoading: mapaLoading } = trpc.instanciaSuperior.mapaPorAssunto.useQuery({ escopo, limit: 12 });
   const { data: agenda, isLoading: agendaLoading } = trpc.instanciaSuperior.agendaPauta.useQuery({ escopo, limit: 12 });
@@ -82,8 +85,15 @@ export function VisaoGeral({
           )}
         </Card>
 
-        <Card title="Ciclo dos recursos" icon={Gavel}>
-          <DistribuicaoStatus porStatus={stats?.porStatus} total={stats?.total ?? 0} />
+        <Card title="Ciclo dos recursos" icon={Gavel} action={
+          <span className="text-[10px] text-muted-foreground/70">clique para filtrar</span>
+        }>
+          <SuperiorFunnel
+            porStatus={stats?.porStatus}
+            total={stats?.total ?? 0}
+            activeStatus={activeStatus}
+            onPick={onPickStatus}
+          />
         </Card>
 
         <Card title="Resultados dos julgados" icon={CheckCircle2}>
@@ -109,36 +119,6 @@ export function VisaoGeral({
             </div>
           )}
         </Card>
-      </div>
-    </div>
-  );
-}
-
-function DistribuicaoStatus({ porStatus, total }: { porStatus?: { status: string; total: number }[]; total: number }) {
-  if (!porStatus?.length || total === 0) return <EmptyHint>Sem recursos no escopo atual.</EmptyHint>;
-  const map = new Map(porStatus.map(s => [s.status, Number(s.total)]));
-  return (
-    <div className="space-y-3">
-      <div className="flex h-2.5 rounded-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-        {STATUS_ORDER.map(s => {
-          const v = map.get(s) ?? 0;
-          if (!v) return null;
-          return <div key={s} className={cn("h-full", STATUS_CONFIG[s].dot)} style={{ width: `${(v / total) * 100}%` }} title={`${STATUS_CONFIG[s].label}: ${v}`} />;
-        })}
-      </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-        {STATUS_ORDER.map(s => {
-          const v = map.get(s) ?? 0;
-          return (
-            <div key={s} className="flex items-center justify-between text-[11px]">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className={cn("w-1.5 h-1.5 rounded-full", STATUS_CONFIG[s].dot)} />
-                {STATUS_CONFIG[s].label}
-              </span>
-              <span className="tabular-nums font-medium text-foreground/80">{v}</span>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

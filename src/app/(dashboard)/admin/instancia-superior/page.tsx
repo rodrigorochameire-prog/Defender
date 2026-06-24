@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 import { Landmark, Plus, Layers, BarChart3, Scale, Building2 } from "lucide-react";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
-import { ACCENT } from "@/components/instancia-superior/ds";
+import { ACCENT, TIPO_LABELS, STATUS_CONFIG, DIMENSOES, type Dimensao } from "@/components/instancia-superior/ds";
 import { subtituloDoModo, type EscopoModo } from "@/components/instancia-superior/logic";
 import { DarkEscopoSwitch, DarkTribunalPills } from "@/components/instancia-superior/header-controls";
 import { SuperiorKpiRow } from "@/components/instancia-superior/kpi-strip";
+import { CarteiraActiveFilters, type FilterChipItem } from "@/components/instancia-superior/carteira-active-filters";
 import { VisaoGeral } from "@/components/instancia-superior/visao-geral";
 import { RecursosTab } from "@/components/instancia-superior/recursos-tab";
 import { ComparativosTab } from "@/components/instancia-superior/comparativos-tab";
@@ -41,6 +42,8 @@ export default function InstanciaSuperiorPage() {
   const [filtroTipo, setFiltroTipo] = useState<string | undefined>();
   const [filtroStatus, setFiltroStatus] = useState<string | undefined>();
   const [filtroCamara, setFiltroCamara] = useState<string | undefined>();
+  // Recorte institucional vindo do Comparativo (dimensão + valor → carteira).
+  const [dimFilter, setDimFilter] = useState<{ dimensao: Dimensao; valor: string } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedDesembId, setSelectedDesembId] = useState<number | null>(null);
@@ -48,11 +51,19 @@ export default function InstanciaSuperiorPage() {
   const effectiveModo: EscopoModo = podeInstitucional ? escopoModo : "meus";
   const escopo = useMemo(() => ({ modo: effectiveModo }), [effectiveModo]);
 
+  // Escopo da carteira: o recorte do Comparativo (se houver) sobrepõe o modo.
+  const carteiraEscopo = useMemo(
+    () => (dimFilter
+      ? { modo: "institucional" as const, dimensao: dimFilter.dimensao, valor: dimFilter.valor }
+      : escopo),
+    [dimFilter, escopo],
+  );
+
   const { data: stats, isLoading: statsLoading } =
     trpc.instanciaSuperior.stats.useQuery({ escopo });
   const { data: recursosData, isLoading: recursosLoading } =
     trpc.instanciaSuperior.listRecursos.useQuery({
-      escopo, tribunal, tipo: filtroTipo, status: filtroStatus, camara: filtroCamara, limit: 60,
+      escopo: carteiraEscopo, tribunal, tipo: filtroTipo, status: filtroStatus, camara: filtroCamara, limit: 60,
     });
 
   const rows = recursosData?.rows ?? [];
@@ -60,6 +71,32 @@ export default function InstanciaSuperiorPage() {
   const hasFilters = !!(filtroTipo || filtroStatus || filtroCamara);
 
   const visibleTabs = TABS.filter(t => t.key !== "comparativos" || podeInstitucional);
+
+  // ── Ponte analytics → carteira ──────────────────────────────────────────
+  function pickStatus(status: string) {
+    setFiltroStatus((cur) => (cur === status ? undefined : status));
+    setTab("recursos");
+  }
+  function pickGroup(dimensao: Dimensao, valor: string) {
+    setDimFilter({ dimensao, valor });
+    setTab("recursos");
+  }
+  function changeEscopo(v: EscopoModo) {
+    setEscopoModo(v);
+    setDimFilter(null); // recorte institucional não faz sentido ao trocar de modo
+  }
+  function clearAllFilters() {
+    setFiltroTipo(undefined); setFiltroStatus(undefined); setFiltroCamara(undefined);
+    setTribunal(undefined); setDimFilter(null);
+  }
+
+  const carteiraChips: FilterChipItem[] = [
+    tribunal && { id: "tribunal", label: `Tribunal · ${tribunal}`, onRemove: () => setTribunal(undefined) },
+    filtroTipo && { id: "tipo", label: `Tipo · ${TIPO_LABELS[filtroTipo] ?? filtroTipo}`, onRemove: () => setFiltroTipo(undefined) },
+    filtroStatus && { id: "status", label: `Fase · ${STATUS_CONFIG[filtroStatus]?.label ?? filtroStatus}`, onRemove: () => setFiltroStatus(undefined) },
+    filtroCamara && { id: "camara", label: `Câmara · ${filtroCamara}`, onRemove: () => setFiltroCamara(undefined) },
+    dimFilter && { id: "dim", label: `${DIMENSOES.find(d => d.key === dimFilter.dimensao)?.label} · ${dimFilter.valor}`, onRemove: () => setDimFilter(null) },
+  ].filter(Boolean) as FilterChipItem[];
 
   // ── Faixa A — Contexto (Row 1 do charcoal): subtítulo por modo + escopo ──
   const headerContext = (
@@ -109,7 +146,7 @@ export default function InstanciaSuperiorPage() {
 
       {/* Right: escopo + novo */}
       <div className="flex items-center gap-1.5 shrink-0">
-        {podeInstitucional && <DarkEscopoSwitch value={escopoModo} onChange={setEscopoModo} />}
+        {podeInstitucional && <DarkEscopoSwitch value={escopoModo} onChange={changeEscopo} />}
         <button
           onClick={() => setCreateOpen(true)}
           title="Novo recurso"
@@ -167,17 +204,25 @@ export default function InstanciaSuperiorPage() {
         <SuperiorKpiRow stats={stats} loading={statsLoading} />
 
         {tab === "geral" && (
-          <VisaoGeral escopo={escopo} stats={stats} statsLoading={statsLoading} onOpenRecurso={setSelectedId} />
-        )}
-        {tab === "recursos" && (
-          <RecursosTab
-            rows={rows} total={total} loading={recursosLoading} hasFilters={hasFilters}
-            onCreate={() => setCreateOpen(true)} onOpen={setSelectedId}
-            filterProps={{ filtroTipo, filtroStatus, filtroCamara, setFiltroTipo, setFiltroStatus, setFiltroCamara }}
+          <VisaoGeral
+            escopo={escopo} stats={stats} statsLoading={statsLoading}
+            onOpenRecurso={setSelectedId} onPickStatus={pickStatus} activeStatus={filtroStatus}
           />
         )}
+        {tab === "recursos" && (
+          <div className="space-y-2.5">
+            {carteiraChips.length > 0 && (
+              <CarteiraActiveFilters chips={carteiraChips} onClearAll={clearAllFilters} />
+            )}
+            <RecursosTab
+              rows={rows} total={total} loading={recursosLoading} hasFilters={hasFilters}
+              onCreate={() => setCreateOpen(true)} onOpen={setSelectedId}
+              filterProps={{ filtroTipo, filtroStatus, filtroCamara, setFiltroTipo, setFiltroStatus, setFiltroCamara }}
+            />
+          </div>
+        )}
         {tab === "relatorias" && <RelatoriasTab escopo={escopo} onOpen={setSelectedDesembId} />}
-        {tab === "comparativos" && podeInstitucional && <ComparativosTab />}
+        {tab === "comparativos" && podeInstitucional && <ComparativosTab onPick={pickGroup} />}
       </div>
 
       <NewAppealDialog open={createOpen} onOpenChange={setCreateOpen} />
