@@ -79,3 +79,48 @@ export function areaDaSecao(id: SecaoId): AreaMae {
 export function secoesDaArea(area: AreaMae, visiveis: SecaoId[]): SecaoId[] {
   return visiveis.filter((id) => SECAO_TO_AREA[id] === area);
 }
+
+export interface WorkspaceTabState {
+  /** Áreas com ao menos uma seção visível (modos vazios excluídos). */
+  areasComConteudo: AreaMae[];
+  /** Aba efetivamente ativa: a pedida, se tiver conteúdo; senão a 1ª com conteúdo. */
+  tabAtiva: AreaMae;
+  /** Seções de espinha (topo) da aba ativa. */
+  espinhaDaTab: SecaoId[];
+  /** Seções do grupo Contexto (AIJ) da aba ativa. */
+  contextoDaTab: SecaoId[];
+  /** Nº de seções visíveis por área. */
+  areaCounts: Record<AreaMae, number>;
+}
+
+/**
+ * Particiona as seções visíveis do workspace nos 5 modos de trabalho e resolve a
+ * aba ativa. Lógica pura (testável) extraída do EventDetailSheet — preserva o
+ * split espinha/Contexto do AIJ dentro de cada modo.
+ */
+export function computeWorkspaceTabs(args: {
+  secoesVisiveis: SecaoId[];
+  espinhaVisiveis: SecaoId[];
+  contextoIds: SecaoId[];
+  activeTab: AreaMae;
+}): WorkspaceTabState {
+  const { secoesVisiveis, espinhaVisiveis, contextoIds, activeTab } = args;
+
+  const areaCounts = AREA_ORDER.reduce((acc, a) => {
+    acc[a] = secoesVisiveis.filter((id) => SECAO_TO_AREA[id] === a).length;
+    return acc;
+  }, {} as Record<AreaMae, number>);
+
+  const areasComConteudo = AREA_ORDER.filter((a) => areaCounts[a] > 0);
+  const tabAtiva: AreaMae = areasComConteudo.includes(activeTab)
+    ? activeTab
+    : (areasComConteudo[0] ?? "resumo");
+
+  return {
+    areaCounts,
+    areasComConteudo,
+    tabAtiva,
+    espinhaDaTab: espinhaVisiveis.filter((id) => SECAO_TO_AREA[id] === tabAtiva),
+    contextoDaTab: contextoIds.filter((id) => SECAO_TO_AREA[id] === tabAtiva),
+  };
+}

@@ -14,7 +14,7 @@ import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
 import { AreaTabs } from "@/components/agenda/sheet/area-tabs";
-import { AREA_ORDER, SECAO_TO_AREA, type AreaMae } from "@/components/agenda/sheet/areas-mae";
+import { computeWorkspaceTabs, type AreaMae } from "@/components/agenda/sheet/areas-mae";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -1154,19 +1154,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     : secoesVisiveis;
 
   // Modos de trabalho (áreas-mãe, spec §D): particiona as seções visíveis em 5
-  // abas. A aba só aparece se tiver conteúdo; a navegação por dropdown e o corpo
-  // operam SOBRE a aba ativa, preservando o split espinha/Contexto do AIJ dentro
-  // de cada modo.
-  const areaCounts = AREA_ORDER.reduce((acc, a) => {
-    acc[a] = secoesVisiveis.filter((id) => SECAO_TO_AREA[id] === a).length;
-    return acc;
-  }, {} as Record<AreaMae, number>);
-  const areasComConteudo = AREA_ORDER.filter((a) => areaCounts[a] > 0);
-  const tabAtiva: AreaMae = areasComConteudo.includes(activeTab)
-    ? activeTab
-    : (areasComConteudo[0] ?? "resumo");
-  const espinhaDaTab = espinhaVisiveis.filter((id) => SECAO_TO_AREA[id] === tabAtiva);
-  const contextoDaTab = contextoIds.filter((id) => SECAO_TO_AREA[id] === tabAtiva);
+  // abas (lógica pura/testada em areas-mae.ts). A aba só aparece se tiver
+  // conteúdo; a navegação por dropdown e o corpo operam SOBRE a aba ativa,
+  // preservando o split espinha/Contexto do AIJ dentro de cada modo.
+  const { areaCounts, areasComConteudo, tabAtiva, espinhaDaTab, contextoDaTab } =
+    computeWorkspaceTabs({ secoesVisiveis, espinhaVisiveis, contextoIds, activeTab });
 
   const tocSections: ToCSection[] = [
     ...espinhaDaTab.map((id) => ({
