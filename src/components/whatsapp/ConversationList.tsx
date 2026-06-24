@@ -55,6 +55,13 @@ import {
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ConversationTagDot } from "./ds/ConversationTagDot";
+import {
+  tagSurface,
+  tagLabel,
+  PREDEFINED_TAGS as PREDEFINED_TAG_LIST,
+} from "./ds/tag-visual";
+import { formatWhatsAppTime, mediaSnippetLabel } from "./ds/conversation-format";
 
 // Tipos
 interface Contact {
@@ -80,52 +87,11 @@ interface Contact {
   tags?: string[] | null;
 }
 
-// Tag color mapping
-const TAG_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  urgente: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", dot: "bg-red-500" },
-  juri: { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-400", dot: "bg-purple-500" },
-  execucao: { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-700 dark:text-orange-400", dot: "bg-orange-500" },
-  aguardando_documento: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
-  informativo: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-500" },
-  diligencia: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
-};
-
-const TAG_LABELS: Record<string, string> = {
-  urgente: "Urgente",
-  aguardando_documento: "Aguardando Doc",
-  informativo: "Informativo",
-  juri: "Juri",
-  execucao: "Execucao",
-  diligencia: "Diligencia",
-};
-
-const PREDEFINED_TAGS = ["urgente", "aguardando_documento", "informativo", "juri", "execucao", "diligencia"];
-
-function getTagColor(tag: string) {
-  return TAG_COLORS[tag] || { bg: "bg-neutral-100 dark:bg-muted", text: "text-neutral-600 dark:text-muted-foreground", dot: "bg-neutral-400" };
-}
-
-function getTagLabel(tag: string) {
-  return TAG_LABELS[tag] || tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatWhatsAppTime(date: Date): string {
-  const now = new Date();
-  const msgDate = new Date(date);
-  const diffMs = now.getTime() - msgDate.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return msgDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  }
-  if (diffDays === 1) {
-    return "Ontem";
-  }
-  if (diffDays < 7) {
-    return msgDate.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
-  }
-  return msgDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
-}
+// Tag semantics (label, surface colours, predefined list) live in ./ds/tag-visual.
+// Local aliases keep the popover/active-filter markup below readable.
+const PREDEFINED_TAGS = PREDEFINED_TAG_LIST;
+const getTagColor = tagSurface;
+const getTagLabel = tagLabel;
 
 interface ConversationListProps {
   configId: number;
@@ -299,25 +265,6 @@ export function ConversationList({
         return <MapPin className={iconClass} />;
       default:
         return null;
-    }
-  };
-
-  const getMediaLabel = (type: string) => {
-    switch (type) {
-      case "image":
-        return "Foto";
-      case "document":
-        return "Documento";
-      case "audio":
-        return "Audio";
-      case "video":
-        return "Video";
-      case "sticker":
-        return "Sticker";
-      case "location":
-        return "Localizacao";
-      default:
-        return "Mensagem";
     }
   };
 
@@ -622,8 +569,8 @@ export function ConversationList({
                       <Star className="h-3 w-3 fill-amber-400 text-amber-400" style={{ flexShrink: 0 }} />
                     )}
                     <span
-                      className="text-[11px] whitespace-nowrap"
-                      style={{ flexShrink: 0, color: contact.unreadCount > 0 ? 'var(--wa-unread-badge)' : 'var(--wa-text-secondary)' }}
+                      className="text-[11px] whitespace-nowrap tabular-nums"
+                      style={{ flexShrink: 0, color: 'var(--wa-text-secondary)' }}
                     >
                       {contact.lastMessageAt
                         ? formatWhatsAppTime(new Date(contact.lastMessageAt))
@@ -655,7 +602,7 @@ export function ConversationList({
                           !contact.lastMessageContent.trim() ? (
                             <span className="flex items-center gap-1">
                               {renderMediaIcon(contact.lastMessageType)}
-                              <span>{getMediaLabel(contact.lastMessageType)}</span>
+                              <span>{mediaSnippetLabel(contact.lastMessageType)}</span>
                             </span>
                           ) : (
                             <span className="truncate">
@@ -679,15 +626,7 @@ export function ConversationList({
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {contact.tags && contact.tags.length > 0 && (
-                        <span
-                          className={cn(
-                            "inline-flex items-center px-1 py-0 rounded text-[9px] leading-tight font-medium",
-                            getTagColor(contact.tags[0]).bg,
-                            getTagColor(contact.tags[0]).text
-                          )}
-                        >
-                          {getTagLabel(contact.tags[0]).slice(0, 6)}
-                        </span>
+                        <ConversationTagDot tag={contact.tags[0]} />
                       )}
                       {contact.unreadCount > 0 && (
                         <span

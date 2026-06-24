@@ -58,7 +58,7 @@ function ActionButton({
           }}
           className={cn(
             "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-            "bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted/80 transition-colors duration-150",
+            "hover:bg-neutral-100 dark:hover:bg-muted transition-colors duration-150",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
             className,
           )}
@@ -95,25 +95,27 @@ export function MessageActionBar({
         className={cn(
           "absolute top-1 right-1 z-20",
           "flex items-center gap-0.5 p-1",
-          "bg-white dark:bg-card border border-neutral-200 dark:border-border rounded-lg shadow-lg",
+          "bg-white dark:bg-card border border-neutral-200/70 dark:border-border/70 rounded-lg shadow-sm",
           "opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 pointer-events-none group-hover/msg:pointer-events-auto",
         )}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Ícones neutros no repouso — o conjunto lê como um controle único,
+            não como quatro botões coloridos concorrentes. */}
         {/* Salvar no Processo */}
         <ActionButton label="Salvar no Processo" onClick={onSaveToProcess}>
-          <FileUp className="w-[15px] h-[15px] text-emerald-500" />
+          <FileUp className="w-[15px] h-[15px] text-muted-foreground" />
         </ActionButton>
 
         {/* Criar Anotação */}
         <ActionButton label="Criar Anotação" onClick={onCreateNote}>
-          <PenLine className="w-[15px] h-[15px] text-amber-500" />
+          <PenLine className="w-[15px] h-[15px] text-muted-foreground" />
         </ActionButton>
 
         {/* Salvar no Drive — only for media messages */}
         {hasMedia && (
           <ActionButton label="Salvar no Drive" onClick={onSaveToDrive}>
-            <FolderUp className="w-[15px] h-[15px] text-indigo-500" />
+            <FolderUp className="w-[15px] h-[15px] text-muted-foreground" />
           </ActionButton>
         )}
 
@@ -140,7 +142,7 @@ export function MessageActionBar({
                   onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "flex items-center justify-center w-[30px] h-[30px] rounded-md",
-                    "bg-neutral-100 dark:bg-muted hover:bg-neutral-200 dark:hover:bg-muted/80 transition-colors duration-150",
+                    "hover:bg-neutral-100 dark:hover:bg-muted transition-colors duration-150",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
                   )}
                   aria-label="Mais opções"
