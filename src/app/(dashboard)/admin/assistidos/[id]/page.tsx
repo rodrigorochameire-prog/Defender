@@ -24,6 +24,8 @@ import { FeedPorCaso } from "@/components/registros/feed-por-caso";
 import { AnaliseResumoCockpit } from "./_components/analise-resumo-cockpit";
 import { AgruparCasosButton } from "./_components/agrupar-casos-button";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
+import { ImmediateAttentionPanel } from "./_components/immediate-attention-panel";
+import { toSnapshot, countProcessosSemCaso } from "@/lib/assistidos/state";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
 function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
   const [texto, setTexto] = useState(initial ?? "");
@@ -278,6 +280,34 @@ export default function AssistidoHubPage() {
     [driveFiles],
   );
 
+  // Snapshot canônico p/ a zona de Atenção Imediata (mesma lógica do preview/lista).
+  const attentionSnapshot = useMemo(
+    () =>
+      toSnapshot(
+        {
+          cpf: assistido?.cpf,
+          rg: assistido?.rg,
+          dataNascimento: assistido?.dataNascimento ? String(assistido.dataNascimento) : null,
+          nomeMae: assistido?.nomeMae,
+          endereco: assistido?.endereco,
+          telefone: assistido?.telefone,
+          telefoneContato: assistido?.telefoneContato,
+          naturalidade: assistido?.naturalidade,
+          proximaAudiencia: proximaAudiencia?.dataAudiencia
+            ? new Date(proximaAudiencia.dataAudiencia).toISOString()
+            : null,
+        },
+        {
+          processosSemCaso: countProcessosSemCaso(processos),
+          demandaAtrasada: demandasAbertas.some((d) => {
+            const dd = diasAte(d.prazo);
+            return dd !== null && dd < 0;
+          }),
+        },
+      ),
+    [assistido, proximaAudiencia, processos, demandasAbertas],
+  );
+
   // ── Loading / empty ──────────────────────────────────────────────
   if (loadingAssistido || loadingCasos) {
     return (
@@ -306,6 +336,9 @@ export default function AssistidoHubPage() {
   return (
     <div className="p-4 sm:p-6 space-y-4">
       {/* Identidade + ações ficam no header persistente (layout.tsx). */}
+
+      {/* ── ⚡ ATENÇÃO IMEDIATA (CTA contextual + sinais priorizados) ─── */}
+      <ImmediateAttentionPanel assistidoId={id} snapshot={attentionSnapshot} />
 
       {/* ── KPI STRIP ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">

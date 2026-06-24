@@ -27,7 +27,7 @@ import { toast } from "sonner";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
 import { statusPrisionalInfo } from "@/lib/config/tipologia";
-import { COLORS, TYPO } from "@/lib/config/design-tokens";
+import { TYPO } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
 import type { AssistidoUI } from "./assistido-types";
 import { getPrazoInfo, calcularIdade, calcularTempoPreso } from "./assistido-utils";
@@ -37,44 +37,10 @@ import {
   completudeFicha,
   attentionSignals,
   contextualCTA,
-  type AttentionKind,
-  type AttentionSignal,
-  type Severity,
 } from "@/lib/assistidos/state";
+import { AttentionSignalRow, ctaHref } from "@/components/ds/attention";
 
-// ── Mapeamentos de UI para o estado canônico ──
-
-const SEV_TONE: Record<Severity, (typeof COLORS)[keyof typeof COLORS]> = {
-  critical: COLORS.danger,
-  warning: COLORS.warning,
-  info: COLORS.info,
-};
-
-const KIND_ICON: Record<AttentionKind, LucideIcon> = {
-  "demanda-atrasada": AlertCircle,
-  "audiencia-proxima": Calendar,
-  "processo-orfao": Scale,
-  "cadastro-critico": IdCard,
-  "sem-contato": Phone,
-};
-
-function ctaHref(kind: AttentionKind | "ver", id: number): string {
-  switch (kind) {
-    case "demanda-atrasada":
-      return `/admin/demandas?assistido=${id}`;
-    case "audiencia-proxima":
-      return `/admin/assistidos/${id}/audiencias`;
-    case "processo-orfao":
-      return `/admin/assistidos/${id}/casos`;
-    case "cadastro-critico":
-    case "sem-contato":
-      return `/admin/assistidos/${id}/editar`;
-    default:
-      return `/admin/assistidos/${id}`;
-  }
-}
-
-// ── Subcomponentes locais (extrair p/ components/ds na F3, quando o overview reusar) ──
+// ── Subcomponentes locais (StatCell/BlockHeader; sinais de atenção vêm do DS) ──
 
 function BlockHeader({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
@@ -108,29 +74,6 @@ function StatCell({
       <span className="text-base font-bold text-neutral-800 dark:text-neutral-100 tabular-nums">{value}</span>
       <span className="text-[10px] text-neutral-400">{label}</span>
     </Wrapper>
-  );
-}
-
-function PendingRow({ signal, href }: { signal: AttentionSignal; href: string }) {
-  const tone = SEV_TONE[signal.severity];
-  const Icon = KIND_ICON[signal.kind];
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex items-center gap-2.5 px-3 py-2 rounded-lg border-l-2 transition-colors cursor-pointer group",
-        tone.border,
-        tone.bg,
-        "hover:brightness-[0.98] dark:hover:brightness-125",
-      )}
-    >
-      <Icon className={cn("w-3.5 h-3.5 shrink-0", tone.text)} />
-      <span className={cn("text-xs font-medium flex-1 min-w-0 truncate", tone.text)}>{signal.label}</span>
-      <span className="text-[10px] text-muted-foreground group-hover:text-foreground/70 flex items-center gap-0.5 shrink-0">
-        {signal.cta.label}
-        <ChevronRight className="w-3 h-3" />
-      </span>
-    </Link>
   );
 }
 
@@ -357,7 +300,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           ) : (
             <div className="space-y-1.5">
               {sinais.map((s) => (
-                <PendingRow key={s.kind} signal={s} href={ctaHref(s.kind, assistido.id)} />
+                <AttentionSignalRow key={s.kind} signal={s} href={ctaHref(s.kind, assistido.id)} />
               ))}
             </div>
           )}
