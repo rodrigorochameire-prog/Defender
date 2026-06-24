@@ -845,3 +845,28 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+@layer base {
+  /* ===== Baseline de foco por teclado (a11y) =====
+     Centenas de elementos interativos custom (button/div[role]/a com
+     cursor-pointer) não tinham anel de foco visível. Esta regra dá um anel da
+     cor da marca a qualquer interativo em foco POR TECLADO (focus-visible) —
+     nunca aparece no mouse. Usa :where() (especificidade 0) dentro de @layer
+     base, então componentes que gerenciam o próprio foco (shadcn Button,
+     focus-visible:outline-none/ring-*) sobrescrevem sem conflito nem anel duplo. */
+  :where(
+    a[href],
+    button,
+    [role="button"],
+    [role="tab"],
+    [role="menuitem"],
+    [role="option"],
+    [tabindex]:not([tabindex="-1"]),
+    summary,
+    select
+  ):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
