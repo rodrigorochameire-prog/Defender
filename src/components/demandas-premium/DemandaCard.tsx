@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
-import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
+import { STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
@@ -167,17 +167,6 @@ export function DemandaCard({
 
   const prazoInfo = calcularPrazo(demanda.prazo);
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao];
-
-  // Status config for current status
-  const statusConf = getStatusConfig(demanda.status);
-
-  // Converter borderColor hex para rgba para efeitos suaves
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
 
   const handleStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -376,7 +365,7 @@ export function DemandaCard({
             </div>
 
             {/* Status Badge */}
-            <StatusChip status={demanda.status} onClick={handleStatusClick} className="flex-shrink-0" />
+            <StatusChip status={demanda.status} onClick={handleStatusClick} showIcon className="flex-shrink-0" />
           </div>
 
           {/* Info Grid: Atribuição + Prazo */}
@@ -653,20 +642,13 @@ export function DemandaCard({
               )}
               {/* Status badge */}
               <div className="relative">
-                <button
+                <StatusChip
                   ref={statusBtnRef}
+                  status={demanda.status}
                   onClick={handleStatusClick}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-105 cursor-pointer"
-                  style={{
-                    backgroundColor: hexToRgba(statusConf.color, 0.1),
-                    color: statusConf.color,
-                    border: `1px solid ${hexToRgba(statusConf.color, 0.25)}`,
-                  }}
+                  showIcon
                   title="Clique para mudar o status"
-                >
-                  {statusConf.label}
-                  <ChevronDown className="w-3 h-3 opacity-60" />
-                </button>
+                />
                 {showStatusDropdown && (
                   <StatusPipelineSelector
                     currentStatus={demanda.status}

@@ -20,6 +20,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
+import { StatusChip } from "./StatusChip";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
@@ -269,11 +270,7 @@ function Row({
                 value={demanda.status}
                 compact
                 displayValue={
-                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                    style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="truncate max-w-[80px]">{statusLabel}</span>
-                  </div>
+                  <StatusChip status={demanda.status} label={statusLabel} showIcon truncate size="sm" />
                 }
                 options={statusOptions}
                 onChange={(v) => onStatusChange(demanda.id, v)}
@@ -400,11 +397,7 @@ function Row({
                 value={demanda.status}
                 compact
                 displayValue={
-                  <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold"
-                    style={{ backgroundColor: `${statusColor}20`, color: statusColor }}>
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColor }} />
-                    <span className="truncate max-w-[80px]">{statusLabel}</span>
-                  </div>
+                  <StatusChip status={demanda.status} label={statusLabel} showIcon truncate size="sm" />
                 }
                 options={statusOptions}
                 onChange={(v) => onStatusChange(demanda.id, v)}
