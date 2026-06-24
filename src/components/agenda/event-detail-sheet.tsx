@@ -1475,6 +1475,8 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         <SheetActionFooter
           audienciaId={audienciaIdNum}
           jaConcluida={jaConcluida}
+          assistidoId={typeof assistidoId === "number" ? assistidoId : null}
+          processoId={typeof processoId === "number" ? processoId : null}
           onAbrirRegistroCompleto={() => onOpenRegistro?.()}
           onDuplicar={onDuplicate ? () => onDuplicate(evento) : undefined}
           onDeteccao={setDeteccaoPendente}
