@@ -21,6 +21,14 @@ import {
 } from "@/lib/db/schema";
 import { eq, and, isNull, sql, desc, ilike, inArray, or, gte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import {
+  agruparProcessos,
+  validarCasos as validarCasosEngine,
+  tipoEfetivo,
+  tipoEfetivoLabel,
+  rankPrincipalidade,
+  type ProcessoSeed,
+} from "@/lib/casos/agrupamento";
 
 // ==========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -1515,4 +1523,241 @@ export const casosRouter = router({
         .where(eq(processos.id, input.processoId));
       return { ok: true };
     }),
+
+  // ==========================================
+  // AGRUPAMENTO AUTOMÁTICO (principal + associados)
+  // ==========================================
+  /**
+   * Busca os processos do assistido e devolve grupos sugeridos (preview, sem
+   * gravar). Cada grupo tem principal eleito, associados, confiança e título.
+   */
+  sugerirAgrupamento: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const procs = await fetchProcessoSeeds(input.assistidoId);
+      const grupos = agruparProcessos(procs);
+      const byId = new Map(procs.map((p) => [p.id, p]));
+      // Enriquecimento de UI: rótulo do tipo efetivo e nº dos autos por processo.
+      return grupos.map((g) => ({
+        ...g,
+        processos: g.processoIds.map((pid) => {
+          const p = byId.get(pid)!;
+          const tEf = tipoEfetivo(p);
+          return {
+            id: pid,
+            numeroAutos: p.numeroAutos,
+            tipoEfetivo: tEf,
+            tipoLabel: tipoEfetivoLabel(tEf),
+            isPrincipal: pid === g.principalId,
+          };
+        }),
+      }));
+    }),
+
+  /**
+   * Aplica o agrupamento: cria um Caso por grupo, vincula os processos e marca o
+   * principal (isReferencia). Idempotente — só agrupa processos soltos. Aceita
+   * `grupos` explícitos (vindos do preview) ou recomputa; pode filtrar por
+   * confiança mínima.
+   */
+  aplicarAgrupamento: protectedProcedure
+    .input(z.object({
+      assistidoId: z.number(),
+      minConfianca: z.enum(["alta", "media", "baixa"]).default("media"),
+      grupos: z
+        .array(z.object({ principalId: z.number(), processoIds: z.array(z.number()) }))
+        .optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const procs = await fetchProcessoSeeds(input.assistidoId);
+      const byId = new Map(procs.map((p) => [p.id, p]));
+
+      // Assistido preso → prioridade REU_PRESO nos casos criados.
+      const [ass] = await db
+        .select({ statusPrisional: assistidos.statusPrisional })
+        .from(assistidos)
+        .where(eq(assistidos.id, input.assistidoId))
+        .limit(1);
+      const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(
+        String(ass?.statusPrisional ?? "").toUpperCase(),
+      );
+
+      const ordemConf = { alta: 3, media: 2, baixa: 1 } as const;
+      const computados = agruparProcessos(procs);
+
+      // Grupos a aplicar: explícitos (validados contra processos soltos) ou os
+      // computados acima do limiar de confiança.
+      const aplicar = input.grupos
+        ? input.grupos
+            .map((g) => {
+              const ids = g.processoIds.filter((id) => byId.get(id)?.casoId == null);
+              return ids.length > 0 && ids.includes(g.principalId)
+                ? { principalId: g.principalId, processoIds: ids }
+                : null;
+            })
+            .filter((g): g is { principalId: number; processoIds: number[] } => g != null)
+        : computados
+            .filter((g) => ordemConf[g.confianca] >= ordemConf[input.minConfianca])
+            .map((g) => ({ principalId: g.principalId, processoIds: g.processoIds }));
+
+      if (aplicar.length === 0) return { casosCriados: 0, processosVinculados: 0, casoIds: [] as number[] };
+
+      const meta = new Map(computados.map((g) => [g.principalId, g]));
+      const casoIds: number[] = [];
+      let processosVinculados = 0;
+
+      await db.transaction(async (tx) => {
+        for (const grupo of aplicar) {
+          const principal = byId.get(grupo.principalId);
+          if (!principal) continue;
+          const tEf = tipoEfetivo(principal);
+          const sugestao = meta.get(grupo.principalId);
+          const titulo = sugestao?.tituloSugerido ?? `${tipoEfetivoLabel(tEf)}`;
+          const atribuicao = sugestao?.atribuicaoSugerida ?? "SUBSTITUICAO";
+
+          const [novoCaso] = await tx
+            .insert(casos)
+            .values({
+              titulo,
+              atribuicao: atribuicao as any,
+              prioridade: (preso ? "REU_PRESO" : "NORMAL") as any,
+              status: "ativo",
+              assistidoId: input.assistidoId,
+              defensorId: ctx.user?.id,
+            })
+            .returning({ id: casos.id });
+
+          casoIds.push(novoCaso.id);
+
+          await tx
+            .update(processos)
+            .set({ casoId: novoCaso.id, isReferencia: false, updatedAt: new Date() })
+            .where(inArray(processos.id, grupo.processoIds));
+          await tx
+            .update(processos)
+            .set({ isReferencia: true })
+            .where(eq(processos.id, grupo.principalId));
+          processosVinculados += grupo.processoIds.length;
+        }
+      });
+
+      return { casosCriados: casoIds.length, processosVinculados, casoIds };
+    }),
+
+  /**
+   * Valida os casos do assistido (principal único, tipo coerente, processos
+   * soltos) e devolve inconsistências com correção sugerida.
+   */
+  validarCasos: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input }) => {
+      const procs = await fetchProcessoSeeds(input.assistidoId);
+      const soltos = procs.filter((p) => p.casoId == null);
+      const vinculados = procs.filter((p) => p.casoId != null);
+
+      const porCaso = new Map<number, ProcessoSeed[]>();
+      for (const p of vinculados) {
+        const arr = porCaso.get(p.casoId!) ?? [];
+        arr.push(p);
+        porCaso.set(p.casoId!, arr);
+      }
+
+      const casosComProc = [...porCaso.entries()].map(([casoId, processosDoCaso]) => ({
+        casoId,
+        processos: processosDoCaso,
+        referenciaIds: processosDoCaso.filter((p) => p.isReferencia).map((p) => p.id),
+      }));
+
+      return validarCasosEngine(casosComProc, soltos);
+    }),
+
+  /**
+   * Aplica correções automáticas das inconsistências detectadas (define
+   * principal único e ajusta tipoProcesso impreciso). Não cria casos novos —
+   * para processos soltos, usar `aplicarAgrupamento`.
+   */
+  corrigirCasos: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .mutation(async ({ input }) => {
+      const procs = await fetchProcessoSeeds(input.assistidoId);
+      const vinculados = procs.filter((p) => p.casoId != null);
+
+      const porCaso = new Map<number, ProcessoSeed[]>();
+      for (const p of vinculados) {
+        const arr = porCaso.get(p.casoId!) ?? [];
+        arr.push(p);
+        porCaso.set(p.casoId!, arr);
+      }
+
+      let principaisCorrigidos = 0;
+      let tiposCorrigidos = 0;
+
+      await db.transaction(async (tx) => {
+        for (const [casoId, processosDoCaso] of porCaso) {
+          const refs = processosDoCaso.filter((p) => p.isReferencia);
+          if (refs.length !== 1) {
+            // Elege principal de maior rank (desempate por menor id).
+            const principal = [...processosDoCaso].sort((a, b) => {
+              const r = rankPrincipalidade(tipoEfetivo(b)) - rankPrincipalidade(tipoEfetivo(a));
+              return r !== 0 ? r : a.id - b.id;
+            })[0];
+            await tx.update(processos).set({ isReferencia: false }).where(eq(processos.casoId, casoId));
+            await tx.update(processos).set({ isReferencia: true }).where(eq(processos.id, principal.id));
+            principaisCorrigidos++;
+          }
+          // Ajusta tipoProcesso impreciso (declarado AP mas classe diverge).
+          for (const p of processosDoCaso) {
+            const efetivo = tipoEfetivo(p);
+            const declarado = (p.tipoProcesso ?? "AP").trim() || "AP";
+            if (efetivo !== declarado && declarado.toUpperCase() === "AP") {
+              await tx.update(processos).set({ tipoProcesso: efetivo }).where(eq(processos.id, p.id));
+              tiposCorrigidos++;
+            }
+          }
+        }
+      });
+
+      return { principaisCorrigidos, tiposCorrigidos };
+    }),
 });
+
+/* ── Helper: sementes de processo do assistido ───────────────────────────────
+ * Reúne processos do assistido (FK direta + vínculos da tabela M:N), com os
+ * campos mínimos para o motor de agrupamento. */
+async function fetchProcessoSeeds(assistidoId: number): Promise<ProcessoSeed[]> {
+  const vinculadosIds = await db
+    .select({ processoId: assistidosProcessos.processoId })
+    .from(assistidosProcessos)
+    .where(eq(assistidosProcessos.assistidoId, assistidoId));
+  const idsExtra = vinculadosIds.map((r) => r.processoId);
+
+  const rows = await db
+    .select({
+      id: processos.id,
+      numeroAutos: processos.numeroAutos,
+      tipoProcesso: processos.tipoProcesso,
+      classeProcessual: processos.classeProcessual,
+      processoOrigemId: processos.processoOrigemId,
+      comarca: processos.comarca,
+      parteContraria: processos.parteContraria,
+      area: processos.area,
+      atribuicao: processos.atribuicao,
+      isJuri: processos.isJuri,
+      casoId: processos.casoId,
+      isReferencia: processos.isReferencia,
+    })
+    .from(processos)
+    .where(
+      and(
+        isNull(processos.deletedAt),
+        idsExtra.length > 0
+          ? or(eq(processos.assistidoId, assistidoId), inArray(processos.id, idsExtra))
+          : eq(processos.assistidoId, assistidoId),
+      ),
+    );
+
+  return rows.map((r) => ({
+    ...r,
+    isReferencia: r.isReferencia ?? false,
+  })) as (ProcessoSeed & { isReferencia: boolean })[];
+}
