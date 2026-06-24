@@ -360,37 +360,41 @@ export default function WhatsAppChatPage() {
                   onClick={() => setFilter(f)}
                   className={cn(
                     "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    filter === f
-                      ? "text-white"
-                      : ""
+                    filter === f ? "" : "hover:bg-[var(--wa-hover)]"
                   )}
-                  style={filter === f ? { backgroundColor: 'var(--wa-unread-badge)' } : { color: 'var(--wa-text-secondary)' }}
+                  style={
+                    filter === f
+                      ? { backgroundColor: 'var(--wa-text-primary)', color: 'var(--wa-bg-sidebar)' }
+                      : { color: 'var(--wa-text-secondary)' }
+                  }
                 >
                   {{ all: "Todas", unread: "Não lidas", favorites: "Favoritas", archived: "Arquivadas" }[f]}
                 </button>
               ))}
             </div>
 
-          {/* Aguardando Resposta — pending contacts panel */}
+          {/* Aguardando Resposta — pending contacts panel.
+              Surface stays neutral; amber is reserved as a single semantic accent
+              on the count so the section reads as triagem, not an alarm. */}
           {pendingContacts && pendingContacts.length > 0 && filter !== "archived" && (
-            <div className="border-b border-amber-200 dark:border-amber-900/40">
+            <div style={{ borderBottom: '1px solid var(--wa-border)' }}>
               <button
                 onClick={() => setPendingExpanded((v) => !v)}
-                className="w-full flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-3 py-1.5 transition-colors cursor-pointer hover:bg-[var(--wa-hover)]"
               >
                 <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                  <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                    Aguardando Resposta
+                  <Clock className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs font-medium" style={{ color: 'var(--wa-text-secondary)' }}>
+                    Aguardando resposta
                   </span>
-                  <span className="h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-semibold">
+                  <span className="h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-semibold tabular-nums">
                     {pendingContacts.length}
                   </span>
                 </div>
                 {pendingExpanded ? (
-                  <ChevronUp className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
+                  <ChevronUp className="h-3.5 w-3.5" style={{ color: 'var(--wa-text-secondary)' }} />
                 ) : (
-                  <ChevronDown className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
+                  <ChevronDown className="h-3.5 w-3.5" style={{ color: 'var(--wa-text-secondary)' }} />
                 )}
               </button>
               {pendingExpanded && (
