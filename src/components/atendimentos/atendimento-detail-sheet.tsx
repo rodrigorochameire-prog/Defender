@@ -363,7 +363,7 @@ export function AtendimentoDetailSheet({
                       href={driveFolderUrl(a.assistido.driveFolderId)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/60 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
                     >
                       <FolderOpen className="w-3 h-3" /> Drive
                     </a>
@@ -381,7 +381,7 @@ export function AtendimentoDetailSheet({
                   {a.demandaId && (
                     <Link
                       href={`/admin/demandas/${a.demandaId}`}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
                       title="Demanda vinculada a este atendimento"
                     >
                       <ListPlus className="w-3 h-3" /> Demanda vinculada
