@@ -885,14 +885,14 @@ export function DemandaQuickPreview({
                   <span className="hidden md:inline">Com autos</span>
                 </button>
               )}
-              {/* CTA primário — Registros é a ação central do sheet, então o
-                  "Adicionar" ganha peso (emerald filled) em vez de link fantasma. */}
+              {/* CTA de Registros — refinado: soft-emerald (ring + bg suave +
+                  texto emerald) em vez do bloco sólido. Presente sem pesar. */}
               <button
                 type="button"
                 onClick={() => setNovoRegistroOpen(true)}
                 title="Adicionar registro (n)"
                 aria-label="Adicionar registro"
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-colors cursor-pointer px-2 py-1 rounded-md"
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200/70 dark:ring-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer px-2.5 py-1 rounded-lg"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar
@@ -1314,29 +1314,25 @@ export function DemandaQuickPreview({
                         <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
                       </button>
                     )}
-                    {onProcessoNumeroChange && searchProcessosFn ? (
+                    {/* Editar/vincular só aparece quando NÃO há número real (stub):
+                        evita o "Editar / vincular" poluindo o header de uma
+                        demanda já vinculada. Com número, fica só o chip copiável. */}
+                    {isProcStub && onProcessoNumeroChange && searchProcessosFn ? (
                       <InlineAutocomplete
                         value=""
                         valueId={demanda.processoId ?? undefined}
-                        placeholder={isProcStub ? "Adicionar nº do processo" : "Editar / vincular"}
+                        placeholder="Adicionar nº do processo"
                         searchFn={searchProcessosFn}
                         onQueryChange={onProcessoQueryChange}
                         isLoading={loadingProcessoSearch}
                         onSelect={(pid, numero) => onVincularProcesso?.(demanda.id, pid, numero)}
                         onTextChange={(t) => onProcessoNumeroChange(demanda.id, t)}
                         icon="briefcase"
-                        className={cn(
-                          "cursor-pointer rounded-md px-1.5 py-0.5 -ml-1 inline-flex items-center gap-1 transition-colors text-[11px]",
-                          isProcStub
-                            ? "border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-                            : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800/60",
-                        )}
+                        className="cursor-pointer rounded-md px-1.5 py-0.5 -ml-1 inline-flex items-center gap-1 transition-colors text-[11px] border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
                       />
-                    ) : (
-                      isProcStub && (
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">sem número</span>
-                      )
-                    )}
+                    ) : isProcStub ? (
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">sem número</span>
+                    ) : null}
                   </div>
                 )}
               </div>

@@ -54,15 +54,15 @@ export function SheetToC({ sections, activeId, onJump }: Props) {
               type="button"
               onClick={() => onJump(s.id)}
               className={cn(
-                "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150 cursor-pointer flex items-center gap-1.5 motion-reduce:transition-none",
+                "shrink-0 px-2 py-1 rounded-md text-[11px] font-medium transition-colors duration-150 cursor-pointer flex items-center gap-1.5 motion-reduce:transition-none",
                 active
-                  ? "bg-neutral-800 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-800 dark:border-neutral-100"
-                  : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                  ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
               )}
             >
               {s.label}
               {s.count !== undefined && s.count > 0 && (
-                <span className={cn("text-[9px] tabular-nums", active ? "text-background/80" : "text-neutral-400")}>
+                <span className={cn("text-[9px] tabular-nums", active ? "text-neutral-500 dark:text-neutral-400" : "text-neutral-300 dark:text-neutral-600")}>
                   {s.count}
                 </span>
               )}
