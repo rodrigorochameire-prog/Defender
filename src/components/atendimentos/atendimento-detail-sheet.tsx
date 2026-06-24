@@ -62,13 +62,12 @@ import { GerarDemandaPopover } from "./gerar-demanda-popover";
 import { AtendimentoVinculos } from "./atendimento-vinculos";
 import {
   AREA_CONFIG,
-  STATUS_CONFIG,
-  SUBTIPO_CONFIG,
   driveFolderUrl,
   pjeConsultaUrl,
   whatsappUrl,
   type AtendimentoListItem,
 } from "./config";
+import { AtendimentoStatusBadge, MetadataLine } from "./atendimento-badges";
 import { DossieAtendimentoBlock, DOSSIE_PARTS_PREPARACAO } from "./dossie-atendimento-block";
 
 interface AtendimentoDetailSheetProps {
@@ -197,9 +196,6 @@ export function AtendimentoDetailSheet({
 
   const a = atendimento;
   const dt = new Date(a.dataRegistro);
-  const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
-  const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
-  const area = a.area ? AREA_CONFIG[a.area] : null;
   const citados = (a.processosCitados ?? []).filter((p) => p.cnj !== a.processo?.numeroAutos);
   const dossie = a.dossieAtendimento;
   const primeiroNome = (a.assistido?.nome ?? "").split(" ")[0] || "";
@@ -324,10 +320,7 @@ export function AtendimentoDetailSheet({
                 </h2>
                 {/* Identidade primária — dados que importam de relance */}
                 <div className="flex items-center gap-2 flex-wrap mt-1">
-                  <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-                    <span className={`w-1 h-1 rounded-full ${status.dot}`} />
-                    {status.label}
-                  </span>
+                  <AtendimentoStatusBadge status={a.status} dataRegistro={a.dataRegistro} />
                   {a.assistido?.cpf && (
                     <button
                       onClick={() => copy(a.assistido!.cpf!, "cpf")}
@@ -349,18 +342,8 @@ export function AtendimentoDetailSheet({
                   )}
                 </div>
                 {/* Linha secundária — metadados quietos + ações rápidas em ícones */}
-                <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  {subtipo && (
-                    <span className="rounded px-1.5 py-px text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/70" title="Subtipo">
-                      {subtipo.label}
-                    </span>
-                  )}
-                  {area && (
-                    <span className="inline-flex items-center gap-1 rounded px-1.5 py-px text-[9.5px] font-medium text-neutral-400 dark:text-neutral-500 ring-1 ring-inset ring-neutral-200/70 dark:ring-neutral-700/70" title="Atribuição">
-                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: atribColor }} />
-                      {area.label}
-                    </span>
-                  )}
+                <div className="flex items-center gap-x-2 gap-y-1 flex-wrap mt-2">
+                  <MetadataLine area={a.area} subtipo={a.subtipo} />
                   {a.numeroSolar && (
                     <span className="text-[10px] text-neutral-400 font-mono" title="Nº SOLAR">
                       SOLAR {a.numeroSolar}

@@ -68,8 +68,9 @@
 
 > **Fase 2 fecha aqui.** Próximo: Fase 3 — Workspace do atendimento (`atendimento-detail-sheet.tsx`).
 
-### Fase 3 — Workspace do atendimento
-- 3.1 `AtendimentoWorkspaceShell` + `AtendimentoSectionPanel`: 5 áreas-mãe (Resumo · Motivo e pedido · Próximos passos · Registros · Contexto jurídico).
+### Fase 3 — Workspace do atendimento (em andamento)
+- [x] **3.0 Consistência de badges** (`atendimento-detail-sheet.tsx`): header consome `AtendimentoStatusBadge` (status forte, eleva "A registrar") + `MetadataLine` (área·tipo em texto); `STATUS_CONFIG`/`SUBTIPO_CONFIG` aposentados no arquivo (AREA_CONFIG segue p/ label do processo). Módulo inteiro agora fala a mesma língua semântica.
+- 3.1 `AtendimentoWorkspaceShell` + `AtendimentoSectionPanel`: 5 áreas-mãe (Resumo · Motivo e pedido · Próximos passos · Registros · Contexto jurídico). _(reorganização de IA — maior esforço; próxima fatia)_
 - 3.2 Protagonismo ao motivo/pedido; `NextStepsPanel` (atualizar contexto/dossiê/agendar retorno/gerar demanda).
 - 3.3 `CaseContextPanel`: contexto OMBUDS como inteligência assistida premium (refinar `dossie-atendimento-block.tsx`); situação processual/processos/vínculos/autos.
 - 3.4 `TimelineItemRefined`: registros em cards leves; ações secundárias em overflow.
