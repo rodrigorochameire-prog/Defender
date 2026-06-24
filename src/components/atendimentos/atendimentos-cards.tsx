@@ -9,11 +9,14 @@ import { ptBR } from "date-fns/locale";
 import {
   ChevronRight,
   Clock,
+  Copy,
   FileText,
   History,
   Link2,
+  Scale,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONFIG,
@@ -121,28 +124,37 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
         )}
       </div>
 
-      {a.pedido && (
-        <p className="text-[10px] text-muted-foreground/70 mt-2 truncate leading-snug">{a.pedido}</p>
-      )}
-
       <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-neutral-100 dark:border-neutral-800/70 text-[10px] text-muted-foreground flex-wrap">
-        {a.numeroSolar && (
-          <span className="font-mono inline-flex items-center gap-1">
-            <FileText className="w-3 h-3" /> {a.numeroSolar}
-          </span>
-        )}
+        {/* Processo primeiro — copiável, com tooltip */}
         {a.processo?.numeroAutos ? (
-          <span className="font-mono inline-flex items-center gap-1">
-            <Link2 className="w-3 h-3" /> {a.processo.numeroAutos}
-          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard?.writeText(a.processo!.numeroAutos!);
+              toast.success("Nº do processo copiado");
+            }}
+            className="font-mono inline-flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+            title="Processo vinculado — clique para copiar o nº"
+            aria-label={`Copiar processo ${a.processo.numeroAutos}`}
+          >
+            <Scale className="w-3 h-3" /> {a.processo.numeroAutos}
+            <Copy className="w-2.5 h-2.5 opacity-40" />
+          </button>
         ) : citados > 0 ? (
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1" title="Processos citados nas anotações da recepção">
             <Link2 className="w-3 h-3" /> {citados} citado{citados > 1 ? "s" : ""}
           </span>
         ) : null}
+        {/* SOLAR depois do processo */}
+        {a.numeroSolar && (
+          <span className="font-mono inline-flex items-center gap-1" title="Número SOLAR">
+            <FileText className="w-3 h-3" /> {a.numeroSolar}
+          </span>
+        )}
         {a.historicoSolar && a.historicoSolar.length > 0 && (
-          <span className="inline-flex items-center gap-1">
-            <History className="w-3 h-3" /> histórico
+          <span className="inline-flex items-center" title="Possui histórico SOLAR" aria-label="Possui histórico SOLAR">
+            <History className="w-3 h-3" />
           </span>
         )}
         {a.dossieAtendimento && (
