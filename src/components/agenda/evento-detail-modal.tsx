@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusChip } from "@/components/agenda/ds";
+import { StatusChip } from "@/components/ds";
 import { toast } from "sonner";
 import {
   X,

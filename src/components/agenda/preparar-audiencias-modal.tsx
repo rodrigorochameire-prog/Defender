@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { StatusChip } from "@/components/agenda/ds";
+import { StatusChip } from "@/components/ds";
 import { kpisPreparacao } from "@/lib/agenda/kpis-preparacao";
 import { PIPELINE_STEPS } from "@/lib/preparar-audiencia-pipeline";
 import type { PipelineResult } from "@/lib/preparar-audiencia-pipeline";
