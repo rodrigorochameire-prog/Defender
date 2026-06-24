@@ -19,6 +19,8 @@ import { ProvaOralConsole } from "@/components/agenda/sheet/prova-oral-console";
 import { resumoProvaOral } from "@/lib/agenda/depoente-status";
 import { EstrategiaConsole } from "@/components/agenda/sheet/estrategia-console";
 import { resumoEstrategia } from "@/lib/agenda/resumo-estrategia";
+import { ExecucaoConsole } from "@/components/agenda/sheet/execucao-console";
+import { resumoExecucao } from "@/lib/agenda/resumo-execucao";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -1500,6 +1502,11 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
             {/* Painel de inteligência do modo Estratégia — prontidão estratégica. */}
             {!isLoading && tabAtiva === "estrategia" && (
               <EstrategiaConsole resumo={resumoEstrategia({ imputacao, denuncia: fatos, teses, contradicoes })} />
+            )}
+
+            {/* Console do modo Execução — ciclo do ato + pendências/gravações. */}
+            {!isLoading && tabAtiva === "execucao" && (
+              <ExecucaoConsole resumo={resumoExecucao({ jaConcluida, pendencias, midias: allMediaCandidates })} />
             )}
 
             {!isLoading && espinhaDaTab.map((id) => (
