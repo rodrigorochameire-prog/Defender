@@ -2841,25 +2841,7 @@ export default function Demandas() {
         />
       </div>
 
-      {/* Chips de filtros ativos (clique remove) — só em telas grandes */}
-      {pillFilters.size > 0 && (
-        <div className="hidden xl:flex items-center gap-1 max-w-[260px] overflow-x-auto scrollbar-none">
-          {PILL_CONFIG.filter(({ key }) => pillFilters.has(key)).map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => togglePill(key)}
-              title="Remover filtro"
-              className="h-7 pl-2 pr-1.5 rounded-md bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/20 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer shrink-0"
-            >
-              <span>{label}</span>
-              <span className="text-[9px] tabular-nums opacity-80">{pillCounts[key]}</span>
-              <X className="w-3 h-3 opacity-70" />
-            </button>
-          ))}
-        </div>
-      )}
-
+      {/* (chips de pillFilters consolidados na ActiveFiltersBar — fonte única) */}
       {/* Menu ⋯ — visualização + filtros + exportar + ordenação + agrupar + modos + admin */}
       <div className="relative">
         <button
@@ -3212,6 +3194,7 @@ export default function Demandas() {
       tipoAto: selectedTipoAto,
       tipoProcesso: selectedTipoProcesso,
       statusGroup: selectedStatusGroup,
+      pills: PILL_CONFIG.filter((pp) => pillFilters.has(pp.key)).map((pp) => ({ key: pp.key, label: pp.label })),
     },
     { statusLabel: (g) => GRUPO_LABELS[g] ?? g },
   );
@@ -3226,6 +3209,7 @@ export default function Demandas() {
     else if (key === "prisional") setSelectedEstadoPrisional(null);
     else if (key === "ato") setSelectedTipoAto(null);
     else if (key === "tipoProc") setSelectedTipoProcesso(null);
+    else if (key.startsWith("pill:")) togglePill(key.slice("pill:".length));
   };
   const handleClearAllFilters = () => {
     setSearchTerm("");
@@ -3236,6 +3220,7 @@ export default function Demandas() {
     setSelectedEstadoPrisional(null);
     setSelectedTipoAto(null);
     setSelectedTipoProcesso(null);
+    clearPills();
   };
 
   return (
