@@ -7,6 +7,7 @@
 // consolida audiências + atendimentos.
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   addDays,
   addMonths,
@@ -21,7 +22,18 @@ import {
   subMonths,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  ListPlus,
+  Loader2,
+  Plus,
+  Scale,
+} from "lucide-react";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONFIG,
@@ -199,7 +211,9 @@ export function AtendimentosCalendar({
                     </div>
 
                     {lista.length > 3 && (
-                      <span className="text-[9px] font-medium text-muted-foreground mt-0.5">+{lista.length - 3}</span>
+                      <span className="text-[9px] font-medium text-muted-foreground/80 mt-0.5">
+                        +{lista.length - 3} mais
+                      </span>
                     )}
 
                     {doMes && lista.length === 0 && onNovoNoDia && (
@@ -262,10 +276,20 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
   const cancelado = a.status === "cancelado";
 
   return (
-    <button
+    // role=button (não <button>) para permitir controles interativos aninhados
+    // (copiável + ações rápidas) sem botões dentro de botão.
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "w-full text-left rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-2.5 pr-2 py-2 flex items-start gap-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all cursor-pointer",
+        "group w-full text-left rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-2.5 pr-2 py-2 flex items-start gap-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
         cancelado && "opacity-55",
       )}
     >
@@ -282,15 +306,86 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
           ) : (
             <span className={cn("rounded px-1 py-px text-[9px] font-medium", status.badge)}>{status.label}</span>
           )}
+          {/* Ações rápidas — surgem no hover do item, sem disparar o onClick */}
+          <PainelQuickAcoes a={a} />
         </div>
         <p className={cn("text-[12px] font-semibold text-foreground/90 truncate mt-0.5", cancelado && "line-through")}>
           {a.assistido?.nome ?? "Assistido não identificado"}
         </p>
+        {/* Processo vinculado — copiável, mesmo padrão da Lista/Cards */}
+        {a.processo?.numeroAutos && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard?.writeText(a.processo!.numeroAutos!);
+              toast.success("Nº do processo copiado");
+            }}
+            className="font-mono inline-flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer max-w-full"
+            title="Processo vinculado — clique para copiar o nº"
+            aria-label={`Copiar processo ${a.processo.numeroAutos}`}
+          >
+            <Scale className="w-2.5 h-2.5 shrink-0" />
+            <span className="truncate">{a.processo.numeroAutos}</span>
+            <Copy className="w-2.5 h-2.5 opacity-40 shrink-0" />
+          </button>
+        )}
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
           {areaKey && <span className={cn("rounded px-1 py-px text-[9px] font-medium", areaColors.bgSolid, areaColors.text)}>{areaColors.shortLabel}</span>}
           {subtipo && <span className={cn("rounded px-1 py-px text-[9px] font-medium", subtipo.badge)}>{subtipo.label}</span>}
         </div>
       </div>
-    </button>
+    </div>
+  );
+}
+
+// ─── Ações rápidas do painel do dia — cluster no hover, sem abrir o sheet ────
+
+function PainelQuickAcoes({ a }: { a: AtendimentoListItem }) {
+  const utils = trpc.useUtils();
+  const agendado = a.status === "agendado";
+  const assistidoId = a.assistido?.id ?? a.assistidoId;
+
+  const marcarRealizado = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      utils.registros.listAtendimentos.invalidate();
+      utils.registros.atendimentosKpis.invalidate();
+      utils.registros.listAgendados.invalidate();
+      toast.success("Atendimento marcado como realizado");
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return (
+    <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+      {agendado && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            marcarRealizado.mutate({ id: a.id, status: "realizado" });
+          }}
+          disabled={marcarRealizado.isPending}
+          title="Marcar realizado"
+          aria-label="Marcar realizado"
+          className="w-5 h-5 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
+        >
+          {marcarRealizado.isPending ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Check className="w-3 h-3" />
+          )}
+        </button>
+      )}
+      <Link
+        href={`/admin/demandas/nova?assistidoId=${assistidoId}`}
+        onClick={(e) => e.stopPropagation()}
+        title="Gerar demanda"
+        aria-label="Gerar demanda"
+        className="w-5 h-5 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50"
+      >
+        <ListPlus className="w-3 h-3" />
+      </Link>
+    </div>
   );
 }
