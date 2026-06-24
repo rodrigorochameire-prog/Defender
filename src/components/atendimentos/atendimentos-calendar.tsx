@@ -24,12 +24,11 @@ import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  AREA_CONFIG,
   STATUS_CONFIG,
   SUBTIPO_CONFIG,
   type AtendimentoListItem,
 } from "./config";
-import { areaHex } from "./area-color";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { chaveDia, isPendente } from "./agenda-helpers";
 
 const SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -171,7 +170,9 @@ export function AtendimentosCalendar({
                       }}
                     >
                       {lista.slice(0, 3).map((a) => {
-                        const cor = isPendente(a) ? "#f59e0b" : areaHex(a.area);
+                        const cor = isPendente(a)
+                          ? "#f59e0b"
+                          : getAtribuicaoColors(a.processo?.atribuicao || a.processo?.area || a.area || null).color;
                         const cancelado = a.status === "cancelado";
                         return (
                           <span
@@ -253,7 +254,10 @@ export function AtendimentosCalendar({
 function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => void }) {
   const status = STATUS_CONFIG[a.status ?? "agendado"] ?? STATUS_CONFIG.agendado;
   const subtipo = a.subtipo ? SUBTIPO_CONFIG[a.subtipo] : null;
-  const area = a.area ? AREA_CONFIG[a.area] : null;
+  // Área/cor derivam da atribuição do processo vinculado (cai no campo do
+  // atendimento só quando não há processo).
+  const areaKey = a.processo?.atribuicao || a.processo?.area || a.area || null;
+  const areaColors = getAtribuicaoColors(areaKey);
   const pendente = isPendente(a);
   const cancelado = a.status === "cancelado";
 
@@ -265,7 +269,7 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
         cancelado && "opacity-55",
       )}
     >
-      <span className="w-[3px] self-stretch rounded-full shrink-0" style={{ backgroundColor: pendente ? "#f59e0b" : areaHex(a.area) }} />
+      <span className="w-[3px] self-stretch rounded-full shrink-0" style={{ backgroundColor: pendente ? "#f59e0b" : areaColors.color }} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[11px] font-semibold text-foreground/90">
@@ -283,9 +287,8 @@ function PainelItem({ a, onClick }: { a: AtendimentoListItem; onClick: () => voi
           {a.assistido?.nome ?? "Assistido não identificado"}
         </p>
         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-          {area && <span className={cn("rounded px-1 py-px text-[9px] font-medium", area.badge)}>{area.shortLabel}</span>}
+          {areaKey && <span className={cn("rounded px-1 py-px text-[9px] font-medium", areaColors.bgSolid, areaColors.text)}>{areaColors.shortLabel}</span>}
           {subtipo && <span className={cn("rounded px-1 py-px text-[9px] font-medium", subtipo.badge)}>{subtipo.label}</span>}
-          {a.pedido && <span className="text-[10px] text-muted-foreground truncate">{a.pedido}</span>}
         </div>
       </div>
     </button>

@@ -39,6 +39,7 @@ import {
   Check,
   ChevronRight,
   Clock,
+  Copy,
   FileText,
   Handshake,
   History,
@@ -50,6 +51,7 @@ import {
   Loader2,
   Plus,
   RotateCcw,
+  Scale,
   Search,
   SlidersHorizontal,
   Sparkles,
@@ -629,24 +631,37 @@ function AtendimentoCard({
             )}
           </div>
           <div className="flex items-center gap-3 mt-0.5 text-[11px] text-muted-foreground flex-wrap">
+            {/* Processo primeiro — copiável, com tooltip */}
+            {a.processo?.numeroAutos && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard?.writeText(a.processo!.numeroAutos!);
+                  toast.success("Nº do processo copiado");
+                }}
+                className="font-mono inline-flex items-center gap-1 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                title="Processo vinculado — clique para copiar o nº"
+                aria-label={`Copiar processo ${a.processo.numeroAutos}`}
+              >
+                <Scale className="w-3 h-3" /> {a.processo.numeroAutos}
+                <Copy className="w-2.5 h-2.5 opacity-40" />
+              </button>
+            )}
+            {!a.processo && citados > 0 && (
+              <span className="inline-flex items-center gap-1" title="Processos citados nas anotações da recepção">
+                <Link2 className="w-3 h-3" /> {citados} citado{citados > 1 ? "s" : ""}
+              </span>
+            )}
+            {/* SOLAR depois do processo */}
             {a.numeroSolar && (
-              <span className="font-mono inline-flex items-center gap-1">
+              <span className="font-mono inline-flex items-center gap-1" title="Número SOLAR">
                 <FileText className="w-3 h-3" /> {a.numeroSolar}
               </span>
             )}
-            {a.processo?.numeroAutos && (
-              <span className="font-mono inline-flex items-center gap-1">
-                <Link2 className="w-3 h-3" /> {a.processo.numeroAutos}
-              </span>
-            )}
-            {!a.processo && citados > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <Link2 className="w-3 h-3" /> {citados} processo{citados > 1 ? "s" : ""} citado{citados > 1 ? "s" : ""}
-              </span>
-            )}
             {a.historicoSolar && a.historicoSolar.length > 0 && (
-              <span className="inline-flex items-center gap-1">
-                <History className="w-3 h-3" /> histórico
+              <span className="inline-flex items-center" title="Possui histórico SOLAR" aria-label="Possui histórico SOLAR">
+                <History className="w-3 h-3" />
               </span>
             )}
             {a.dossieAtendimento && (
@@ -656,11 +671,6 @@ function AtendimentoCard({
                 aria-label={a.dossieAtendimento.fonte === "skill" ? "Dossiê preparado" : "Contexto preparado"}
               >
                 <Sparkles className="w-3 h-3" />
-              </span>
-            )}
-            {a.pedido && (
-              <span className="truncate text-[10px] text-muted-foreground/70 max-w-[10rem]">
-                {a.pedido}
               </span>
             )}
           </div>
