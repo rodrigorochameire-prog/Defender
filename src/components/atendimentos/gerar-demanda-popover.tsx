@@ -11,10 +11,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -154,22 +158,19 @@ export function GerarDemandaPopover({
   const prazoInfo = prazoPreview(prazo, hojeISO);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        onClick={(e) => e.stopPropagation()}
-        className="w-[22rem] p-3.5 rounded-xl space-y-3"
-      >
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Gerar demanda
-          </p>
-          <p className="text-[13px] font-medium text-foreground/90 truncate">
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col gap-0">
+        {/* Bloco 1 — Origem (resumo fixo no topo) */}
+        <SheetHeader className="px-4 py-3 border-b border-neutral-200/70 dark:border-neutral-800 text-left space-y-0.5">
+          <SheetTitle className="text-[13px] font-semibold text-foreground/90">Gerar demanda</SheetTitle>
+          <SheetDescription className="text-[12px] text-muted-foreground truncate">
             {assistido.nome}
-          </p>
-        </div>
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground">Origem</p>
 
         {/* Processo — seletor dos processos do assistido (evita CNJ errado/duplicado) */}
         <div className="space-y-1">
@@ -194,6 +195,7 @@ export function GerarDemandaPopover({
           )}
         </div>
 
+        <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Definição jurídica</p>
         {/* Atribuição — corrigível (default pela área do atendimento) */}
         <div className="space-y-1">
           <Label className="text-[11px] text-muted-foreground">Atribuição</Label>
@@ -231,6 +233,7 @@ export function GerarDemandaPopover({
           />
         </div>
 
+        <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Regime de urgência</p>
         {/* Prazo — campo + atalhos rápidos + preview do tom */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
@@ -299,6 +302,7 @@ export function GerarDemandaPopover({
           </button>
         </div>
 
+        <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Conteúdo inicial</p>
         {/* Registro inicial — importado do atendimento, editável */}
         <div className="space-y-1">
           <Label htmlFor="gd-registro" className="text-[11px] text-muted-foreground">
@@ -329,7 +333,45 @@ export function GerarDemandaPopover({
           </label>
         )}
 
-        <div className="flex items-center gap-2 pt-0.5">
+        {/* Bloco 5 — Confirmação (recap da decisão jurídica antes de criar) */}
+        <p className="text-[9.5px] font-semibold uppercase tracking-wide text-muted-foreground pt-1 border-t border-neutral-100 dark:border-neutral-800/60">Confirmação</p>
+        <div className="rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 p-2.5 text-[12px] space-y-1">
+          <p>
+            <span className="text-muted-foreground">Ato:</span>{" "}
+            <span className="font-medium text-foreground/90">{ato.trim() || "—"}</span>
+          </p>
+          <p>
+            <span className="text-muted-foreground">Atribuição:</span> {atribuicaoLabel}
+          </p>
+          {prazo && (
+            <p>
+              <span className="text-muted-foreground">Prazo:</span> {prazo}
+              {prazoInfo ? ` · ${prazoInfo.label}` : ""}
+            </p>
+          )}
+          {(reuPreso || urgente) && (
+            <p className="flex items-center gap-1.5 pt-0.5">
+              {reuPreso && (
+                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
+                  Réu preso
+                </span>
+              )}
+              {urgente && (
+                <span className="rounded px-1.5 py-px text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                  Urgente
+                </span>
+              )}
+            </p>
+          )}
+          {atendimentoId && vincular && (
+            <p className="text-[11px] text-muted-foreground pt-0.5">
+              Será vinculada a este atendimento (timeline aparece na demanda).
+            </p>
+          )}
+        </div>
+        </div>
+
+        <SheetFooter className="px-4 py-3 border-t border-neutral-200/70 dark:border-neutral-800 flex-row gap-2 sm:justify-start">
           <Button
             size="sm"
             disabled={!ato.trim() || criar.isPending}
@@ -349,7 +391,7 @@ export function GerarDemandaPopover({
                 ...(atendimentoId && vincular ? { atendimentoId } : {}),
               })
             }
-            className="flex-1 gap-1.5 h-8 text-[12px] bg-emerald-600 hover:bg-emerald-700"
+            className="flex-1 gap-1.5 h-9 text-[12px] bg-emerald-600 hover:bg-emerald-700"
           >
             {criar.isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -358,13 +400,13 @@ export function GerarDemandaPopover({
             )}
             Criar demanda
           </Button>
-          <Button size="sm" variant="ghost" asChild className="h-8 text-[12px] text-muted-foreground">
+          <Button size="sm" variant="ghost" asChild className="h-9 text-[12px] text-muted-foreground">
             <Link href="/admin/demandas" onClick={() => setOpen(false)}>
               Kanban
             </Link>
           </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
