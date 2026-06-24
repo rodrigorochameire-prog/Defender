@@ -86,9 +86,10 @@
 - [x] 4.3 `OutcomeChoiceCardGroup`: desfecho em **cards de escolha acessíveis** (radiogroup de `<button>`, não `<input radio>`), com acento emerald no selecionado. Fonte única `agendar-retorno-logic.ts` (`DESFECHO_OPTIONS` puro/testado). _Resta_: remover redundância Cancelar (Dialog já fecha por X/overlay/Esc).
 - 4.4 **Testes**: [x] `agendar-retorno-logic.test.ts` + `outcome-choice-card-group.test.tsx` (radiogroup, 1 selecionado, onChange, sem input radio cru) — 8 testes. _Resta_: integração do modal (4 blocos) com trpc mockado.
 
-### Fase 5 — Gerar demanda (`GenerateDemandPanel`)
+### Fase 5 — Gerar demanda (`GenerateDemandPanel`) (em andamento)
+- [x] **5.0 Lógica pura extraída** (`gerar-demanda-logic.ts`, 9 testes): `montarRegistroDoAtendimento` (movido do popover, HTML limpo), `atribuicaoAtosLabel`, e `filtrarAtos` (busca acento/caixa-insensível + agrupamento por categoria) — fundação testada do ProceduralActSelector. Popover já consome as duas primeiras. _Pendente_ (na migração popover→painel, onde o tipo do tRPC fica disponível no call-site): extrair `buildCreateFromFormPayload`.
 - 5.1 Promover de popover a superfície nobre (painel/sheet) em 5 blocos (Origem · Definição jurídica · Regime de urgência · Conteúdo inicial · Confirmação) — refatorar `gerar-demanda-popover.tsx`.
-- 5.2 `ProceduralActSelector` premium (busca + agrupamento por atribuição via `getAtosPorAtribuicao`); controles de prazo melhores.
+- 5.2 `ProceduralActSelector` premium (busca + agrupamento — usa `filtrarAtos`); controles de prazo melhores.
 - 5.3 **Revisar renderização do texto importado**: [x] `htmlParaTexto` (puro/testado, 7 testes) limpa tags/entidades HTML do assunto/pedido/relato importado no `gerar-demanda-popover.tsx` — sem mais tags cruas no textarea. _Resta_: vínculo da timeline como decisão de continuidade.
 - 5.4 **Testes**: blocos/etapas; seleção de ato; texto importado limpo; cria demanda + vínculo; CTA final inequívoco.
 

@@ -33,7 +33,7 @@ import {
   AREA_TO_ATRIBUICAO_ENUM,
   ATRIBUICAO_DEMANDA_OPTIONS,
 } from "./config";
-import { htmlParaTexto } from "./html-para-texto";
+import { montarRegistroDoAtendimento, atribuicaoAtosLabel } from "./gerar-demanda-logic";
 
 interface GerarDemandaPopoverProps {
   assistido: { id: number; nome: string };
@@ -52,25 +52,6 @@ interface GerarDemandaPopoverProps {
   atendimentoId?: number;
   /** Botão acionador (asChild). */
   children: React.ReactNode;
-}
-
-/** Compõe um rascunho de registro inicial a partir do que foi colhido no atendimento. */
-function montarRegistroDoAtendimento(
-  ctx: GerarDemandaPopoverProps["contextoAtendimento"]
-): string {
-  if (!ctx) return "";
-  // Limpa HTML cru (assunto/pedido/relato podem vir com marcação) para o texto
-  // importado não aparecer com tags no textarea.
-  const assunto = htmlParaTexto(ctx.assunto);
-  const pedido = htmlParaTexto(ctx.pedido);
-  const conteudo = htmlParaTexto(ctx.conteudo);
-  return [
-    assunto && `Assunto: ${assunto}`,
-    pedido && `Pedido: ${pedido}`,
-    conteudo || "",
-  ]
-    .filter(Boolean)
-    .join("\n");
 }
 
 export function GerarDemandaPopover({
@@ -130,12 +111,7 @@ export function GerarDemandaPopover({
   }, [open, atribuicaoDefault, contextoAtendimento]);
 
   // Sugestões de ato seguem a ATRIBUIÇÃO escolhida (não mais a área fixa).
-  const atosLabel = useMemo(
-    () =>
-      ATRIBUICAO_DEMANDA_OPTIONS.find((o) => o.value === atribuicao)?.atosLabel ??
-      "Criminal Geral",
-    [atribuicao]
-  );
+  const atosLabel = useMemo(() => atribuicaoAtosLabel(atribuicao), [atribuicao]);
   const sugestoes = useMemo(
     () => getAtosPorAtribuicao(atosLabel).filter((a) => a.value !== "Todos").slice(0, 8),
     [atosLabel]
