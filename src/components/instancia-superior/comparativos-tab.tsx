@@ -36,8 +36,9 @@ export function ComparativosTab({ onPick }: { onPick?: (dimensao: Dimensao, valo
         ) : !data?.length ? (
           <EmptyHint>Sem dados institucionais ainda.</EmptyHint>
         ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 text-[9px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-1">
+          <div className="space-y-3 sm:space-y-3">
+            {/* Cabeçalho da tabela — só desktop */}
+            <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 text-[9px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-1">
               <span>{DIMENSOES.find(d => d.key === dimensao)?.label}</span>
               <span className="text-right w-12">Total</span>
               <span className="text-right w-14">Pend.</span>
@@ -46,6 +47,22 @@ export function ComparativosTab({ onPick }: { onPick?: (dimensao: Dimensao, valo
             </div>
             {data.map((row: any) => {
               const taxa = taxaProvimento(row.providos, row.julgados);
+              const provTone = taxa == null ? "text-muted-foreground/40" : taxa >= 50 ? "text-emerald-500" : "text-amber-500";
+              const nomeEBar = (
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[12px] text-foreground/85 truncate">{row.grupo}</span>
+                    {row.defensores > 0 && (
+                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5 ml-2 shrink-0">
+                        <Users className="w-2.5 h-2.5" />{row.defensores}
+                      </span>
+                    )}
+                  </div>
+                  <div className="h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(row.total / maxTotal) * 100}%`, backgroundColor: ACCENT }} />
+                  </div>
+                </div>
+              );
               return (
                 <button
                   key={row.grupo}
@@ -53,29 +70,28 @@ export function ComparativosTab({ onPick }: { onPick?: (dimensao: Dimensao, valo
                   disabled={!onPick}
                   onClick={() => onPick?.(dimensao, row.grupo)}
                   className={cn(
-                    "w-full grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 items-center px-1 py-1 -mx-1 rounded-lg text-left transition-colors",
+                    "w-full block px-1 py-1.5 -mx-1 rounded-lg text-left transition-colors",
                     onPick ? "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50" : "cursor-default",
                   )}
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[12px] text-foreground/85 truncate">{row.grupo}</span>
-                      {row.defensores > 0 && (
-                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5 ml-2 shrink-0">
-                          <Users className="w-2.5 h-2.5" />{row.defensores}
-                        </span>
-                      )}
-                    </div>
-                    <div className="h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${(row.total / maxTotal) * 100}%`, backgroundColor: ACCENT }} />
+                  {/* Desktop: linha de tabela */}
+                  <div className="hidden sm:grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 items-center">
+                    {nomeEBar}
+                    <span className="text-[12px] tabular-nums text-right w-12 font-medium">{row.total}</span>
+                    <span className="text-[12px] tabular-nums text-right w-14 text-amber-500">{row.pendentes}</span>
+                    <span className="text-[12px] tabular-nums text-right w-14 text-muted-foreground">{row.julgados}</span>
+                    <span className={cn("text-[12px] tabular-nums text-right w-16 font-semibold", provTone)}>{taxa != null ? `${taxa}%` : "—"}</span>
+                  </div>
+                  {/* Mobile: card com faixa de stats */}
+                  <div className="sm:hidden">
+                    {nomeEBar}
+                    <div className="flex items-center gap-4 mt-2 text-[11px] tabular-nums">
+                      <MiniStat label="Total" value={row.total} tone="text-foreground/80 font-medium" />
+                      <MiniStat label="Pend." value={row.pendentes} tone="text-amber-500" />
+                      <MiniStat label="Julg." value={row.julgados} tone="text-muted-foreground" />
+                      <MiniStat label="Prov." value={taxa != null ? `${taxa}%` : "—"} tone={provTone} />
                     </div>
                   </div>
-                  <span className="text-[12px] tabular-nums text-right w-12 font-medium">{row.total}</span>
-                  <span className="text-[12px] tabular-nums text-right w-14 text-amber-500">{row.pendentes}</span>
-                  <span className="text-[12px] tabular-nums text-right w-14 text-muted-foreground">{row.julgados}</span>
-                  <span className={cn("text-[12px] tabular-nums text-right w-16 font-semibold", taxa == null ? "text-muted-foreground/40" : taxa >= 50 ? "text-emerald-500" : "text-amber-500")}>
-                    {taxa != null ? `${taxa}%` : "—"}
-                  </span>
                 </button>
               );
             })}
@@ -83,5 +99,14 @@ export function ComparativosTab({ onPick }: { onPick?: (dimensao: Dimensao, valo
         )}
       </Card>
     </div>
+  );
+}
+
+function MiniStat({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
+  return (
+    <span className="flex items-baseline gap-1">
+      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/60">{label}</span>
+      <span className={cn(tone)}>{value}</span>
+    </span>
   );
 }

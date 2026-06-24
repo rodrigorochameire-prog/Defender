@@ -40,23 +40,23 @@ export function RelatoriasTab({ escopo, onOpen }: { escopo: { modo: EscopoModo }
           </EmptyHint>
         ) : (
           <div className="space-y-1">
-            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[9px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-2 pb-1">
+            <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_auto_auto_auto] gap-x-4 text-[9px] uppercase tracking-wider text-muted-foreground/60 font-semibold px-2 pb-1">
               <span>Desembargador</span>
               <span className="text-right w-12">Recursos</span>
-              <span className="text-right w-12">Julg.</span>
+              <span className="hidden sm:block text-right w-12">Julg.</span>
               <span className="text-right w-20">Provimento</span>
             </div>
             {data.map((d: any) => {
               const taxa = taxaProvimento(d.providos, d.julgados);
               return (
                 <button key={d.id} onClick={() => onOpen(d.id)}
-                  className="w-full grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-2 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer text-left">
+                  className="w-full grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_auto_auto_auto] gap-x-4 items-center px-2 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer text-left">
                   <div className="min-w-0">
                     <span className="text-[13px] text-foreground/90 truncate block">{d.nome}</span>
                     {d.camara && <span className="text-[10px] text-muted-foreground">{d.camara}</span>}
                   </div>
                   <span className="text-[13px] tabular-nums text-right w-12 font-medium">{d.total}</span>
-                  <span className="text-[12px] tabular-nums text-right w-12 text-muted-foreground">{d.julgados}</span>
+                  <span className="hidden sm:block text-[12px] tabular-nums text-right w-12 text-muted-foreground">{d.julgados}</span>
                   <div className="w-20 flex items-center justify-end gap-2">
                     {taxa != null ? (
                       <>
