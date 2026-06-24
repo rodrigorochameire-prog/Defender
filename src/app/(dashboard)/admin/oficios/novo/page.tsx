@@ -75,6 +75,10 @@ export default function NovoOficioPage() {
   const preDemandaId = searchParams.get("demandaId")
     ? Number(searchParams.get("demandaId"))
     : undefined;
+  // Proveniência: ofício gerado a partir de um atendimento (registros).
+  const preRegistroId = searchParams.get("registroId")
+    ? Number(searchParams.get("registroId"))
+    : undefined;
   const preTipo = searchParams.get("tipo") || undefined;
 
   // ========================================
@@ -227,6 +231,7 @@ export default function NovoOficioPage() {
         assistidoId,
         processoId,
         demandaId: preDemandaId,
+        registroId: preRegistroId,
       });
     }
   };

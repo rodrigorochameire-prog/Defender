@@ -195,6 +195,26 @@ export const oficiosRouter = router({
         .orderBy(desc(documentosGerados.updatedAt));
     }),
 
+  /** Ofícios gerados a partir de um atendimento (proveniência registroId). */
+  listByRegistro: protectedProcedure
+    .input(z.object({ registroId: z.number() }))
+    .query(async ({ input }) => {
+      return await db
+        .select({
+          id: documentosGerados.id,
+          titulo: documentosGerados.titulo,
+          metadata: documentosGerados.metadata,
+          googleDocUrl: documentosGerados.googleDocUrl,
+          driveFileId: documentosGerados.driveFileId,
+          createdAt: documentosGerados.createdAt,
+          modeloTitulo: documentoModelos.titulo,
+        })
+        .from(documentosGerados)
+        .leftJoin(documentoModelos, eq(documentosGerados.modeloId, documentoModelos.id))
+        .where(eq(documentosGerados.registroId, input.registroId))
+        .orderBy(desc(documentosGerados.createdAt));
+    }),
+
   // ==========================================
   // CRUD DE OFÍCIOS
   // ==========================================
@@ -358,6 +378,7 @@ export const oficiosRouter = router({
         processoId: z.number().optional(),
         demandaId: z.number().optional(),
         casoId: z.number().optional(),
+        registroId: z.number().optional(),
         titulo: z.string().min(1),
         conteudoFinal: z.string().min(1),
         tipoOficio: z.string().default("comunicacao"),
@@ -375,6 +396,7 @@ export const oficiosRouter = router({
           processoId: input.processoId,
           demandaId: input.demandaId,
           casoId: input.casoId,
+          registroId: input.registroId,
           titulo: input.titulo,
           conteudoFinal: input.conteudoFinal,
           valoresVariaveis: input.valoresVariaveis || {},

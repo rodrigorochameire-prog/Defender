@@ -15,6 +15,7 @@ import { relations } from "drizzle-orm";
 import { diligenciaStatusEnum, diligenciaTipoEnum, prioridadeEnum } from "./enums";
 import { users, processos, assistidos, demandas } from "./core";
 import { casos, casePersonas } from "./casos";
+import { registros } from "./agenda";
 
 // ==========================================
 // DILIGÊNCIAS INVESTIGATIVAS
@@ -36,6 +37,8 @@ export const diligencias = pgTable("diligencias", {
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
   casoId: integer("caso_id").references(() => casos.id, { onDelete: "cascade" }),
   personaId: integer("persona_id").references(() => casePersonas.id, { onDelete: "set null" }),
+  // Proveniência: diligência originada de um atendimento (registros).
+  registroId: integer("registro_id").references(() => registros.id, { onDelete: "set null" }),
 
   // Detalhes da pessoa/objeto alvo
   nomePessoaAlvo: varchar("nome_pessoa_alvo", { length: 200 }),
@@ -161,6 +164,8 @@ export const anotacoes = pgTable("anotacoes", {
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "cascade" }),
   demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
   casoId: integer("caso_id").references(() => casos.id, { onDelete: "set null" }),
+  // Proveniência: anotação originada de um atendimento (registros).
+  registroId: integer("registro_id").references(() => registros.id, { onDelete: "set null" }),
 
   // Conteúdo
   conteudo: text("conteudo").notNull(),

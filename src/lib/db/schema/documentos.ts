@@ -14,6 +14,7 @@ import { relations } from "drizzle-orm";
 import { areaEnum, tipoPecaProcessualEnum, modeloCategoriaEnum, oficioAnaliseStatusEnum } from "./enums";
 import { users, processos, assistidos, demandas } from "./core";
 import { casos } from "./casos";
+import { registros } from "./agenda";
 
 // ==========================================
 // DOCUMENTOS (Peças e Anexos)
@@ -333,6 +334,8 @@ export const documentosGerados = pgTable("documentos_gerados", {
   assistidoId: integer("assistido_id").references(() => assistidos.id, { onDelete: "set null" }),
   demandaId: integer("demanda_id").references(() => demandas.id, { onDelete: "set null" }),
   casoId: integer("caso_id").references(() => casos.id, { onDelete: "set null" }),
+  // Proveniência: ofício gerado a partir de um atendimento (registros).
+  registroId: integer("registro_id").references(() => registros.id, { onDelete: "set null" }),
 
   // Conteudo gerado
   titulo: varchar("titulo", { length: 300 }).notNull(),

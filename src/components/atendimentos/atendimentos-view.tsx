@@ -31,6 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertCircle,
+  BarChart3,
   CalendarCheck,
   CalendarDays,
   CalendarRange,
@@ -40,7 +41,9 @@ import {
   FileText,
   Handshake,
   History,
+  LayoutGrid,
   Link2,
+  List,
   Loader2,
   Plus,
   RotateCcw,
@@ -58,8 +61,22 @@ import {
   SUBTIPO_OPTIONS,
   type AtendimentoListItem,
 } from "./config";
+import { areaHex } from "./area-color";
 import { AtendimentoDetailSheet } from "./atendimento-detail-sheet";
 import { AtendimentoFormModal, type AtendimentoPrefill } from "./atendimento-form-modal";
+import { AtendimentosCards } from "./atendimentos-cards";
+import { AtendimentosCalendar } from "./atendimentos-calendar";
+import { AtendimentosInsights } from "./atendimentos-insights";
+
+// Visões da pauta de atendimentos — Lista (denso), Cards (grade), Agenda (mês)
+// e Insights (métricas). O alternador fica acima do conteúdo.
+const VISTAS = [
+  { key: "lista", label: "Lista", icon: List },
+  { key: "cards", label: "Cards", icon: LayoutGrid },
+  { key: "calendario", label: "Agenda", icon: CalendarDays },
+  { key: "insights", label: "Insights", icon: BarChart3 },
+] as const;
+type Vista = (typeof VISTAS)[number]["key"];
 import {
   PERIODO_OPTIONS,
   agruparPorDia,
@@ -95,6 +112,8 @@ export default function AtendimentosView() {
   const [retornoPrefill, setRetornoPrefill] = useState<AtendimentoPrefill | null>(null);
   // Deep-link vindo do dashboard: ?abrir=<id> abre o atendimento assim que carregar.
   const [abrirId, setAbrirId] = useState<number | null>(null);
+  const [vista, setVista] = useState<Vista>("lista");
+  const [novoInicialDate, setNovoInicialDate] = useState<string | null>(null);
 
   // Deep-links: ?novo=1 (criar), ?pendentes=1 (filtro a registrar), ?abrir=<id> (sheet)
   useEffect(() => {
@@ -386,8 +405,44 @@ export default function AtendimentosView() {
           </div>
         )}
 
-        {/* Lista agrupada por dia */}
-        {isLoading ? (
+        {/* Alternador de visão */}
+        <div className="flex items-center gap-1 rounded-lg border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-0.5 w-fit shadow-sm">
+          {VISTAS.map((v) => {
+            const Icon = v.icon;
+            const ativa = vista === v.key;
+            return (
+              <button
+                key={v.key}
+                onClick={() => setVista(v.key)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer",
+                  ativa
+                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
+                    : "text-muted-foreground hover:text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800/50"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Conteúdo conforme a visão */}
+        {vista === "insights" ? (
+          <AtendimentosInsights />
+        ) : vista === "calendario" ? (
+          <AtendimentosCalendar
+            itens={visiveis}
+            onOpen={setDetalhe}
+            onNovoNoDia={(dia) => {
+              setEditando(null);
+              setRetornoPrefill(null);
+              setNovoInicialDate(format(dia, "yyyy-MM-dd"));
+              setModalAberto(true);
+            }}
+          />
+        ) : isLoading ? (
           <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-20 rounded-xl" />
@@ -409,6 +464,8 @@ export default function AtendimentosView() {
               </p>
             </CardContent>
           </Card>
+        ) : vista === "cards" ? (
+          <AtendimentosCards porDia={porDia} onOpen={setDetalhe} />
         ) : (
           porDia.map(({ dia, itens }) => {
             const rotulo = rotuloDia(dia);
@@ -445,9 +502,11 @@ export default function AtendimentosView() {
           setModalAberto(false);
           setEditando(null);
           setRetornoPrefill(null);
+          setNovoInicialDate(null);
         }}
         editing={editando}
         prefill={retornoPrefill}
+        initialDate={novoInicialDate}
       />
     </div>
   );
@@ -483,14 +542,23 @@ function AtendimentoCard({
         }
       }}
       className={cn(
-        "group/card w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 border-l-2 px-3 py-2.5 hover:shadow-sm hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-150 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
-        pendente
-          ? "border-l-amber-500 bg-amber-50/40 dark:bg-amber-900/10"
-          : area?.border ?? "border-l-neutral-300",
+        "group/card relative overflow-hidden w-full text-left rounded-xl border bg-white dark:bg-neutral-900 border-neutral-200/70 dark:border-neutral-800 pl-4 pr-3 py-2.5 hover:shadow-md hover:-translate-y-px hover:border-neutral-300 dark:hover:border-neutral-700 transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50",
         cancelado && "opacity-55"
       )}
     >
-      <div className="flex items-center gap-3">
+      {/* Acento da área — pill arredondado que cresce e ganha brilho no hover */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full opacity-70 transition-all duration-300 group-hover/card:top-1 group-hover/card:bottom-1 group-hover/card:w-1 group-hover/card:opacity-100"
+        style={{ backgroundColor: areaHex(a.area) }}
+      />
+      {/* Wash sutil da cor da área no hover — profundidade sem poluir */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-24 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+        style={{ backgroundImage: `linear-gradient(to right, ${areaHex(a.area)}1f, transparent)` }}
+      />
+      <div className="relative flex items-center gap-3">
         <div className="shrink-0 w-14 text-center">
           <p className="font-mono text-sm font-semibold text-foreground/90">
             {format(dt, "HH:mm")}
@@ -500,7 +568,8 @@ function AtendimentoCard({
               <Clock className="w-2.5 h-2.5" /> registrar
             </span>
           ) : (
-            <span className={`inline-block mt-0.5 rounded px-1.5 py-px text-[10px] font-medium ${status.badge}`}>
+            <span className="inline-flex items-center gap-1 mt-0.5 rounded px-1.5 py-px text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+              <span className={cn("w-1 h-1 rounded-full", status.dot)} />
               {status.label}
             </span>
           )}
@@ -512,12 +581,13 @@ function AtendimentoCard({
               {a.assistido?.nome ?? "Assistido não identificado"}
             </p>
             {subtipo && (
-              <span className={`rounded px-1.5 py-px text-[10px] font-medium ${subtipo.badge}`}>
+              <span className="rounded px-1.5 py-px text-[10px] font-medium bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
                 {subtipo.label}
               </span>
             )}
             {area && (
-              <span className={`rounded px-1.5 py-px text-[10px] font-medium ${area.badge}`}>
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+                <span className="w-1 h-1 rounded-full" style={{ backgroundColor: areaHex(a.area) }} />
                 {area.shortLabel}
               </span>
             )}
@@ -544,7 +614,7 @@ function AtendimentoCard({
               </span>
             )}
             {a.dossieAtendimento && (
-              <span className="inline-flex items-center gap-1 text-violet-500 dark:text-violet-400">
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <Sparkles className="w-3 h-3" />
                 {a.dossieAtendimento.fonte === "skill" ? "dossiê" : "contexto"}
               </span>
