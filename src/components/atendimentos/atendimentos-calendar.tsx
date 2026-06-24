@@ -214,7 +214,7 @@ export function AtendimentosCalendar({
                     )}
 
                     {doMes && lista.length === 0 && onNovoNoDia && (
-                      <Plus className="absolute right-1.5 bottom-1.5 w-3 h-3 text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Plus className="absolute right-1.5 bottom-1.5 w-3 h-3 text-emerald-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                     )}
                   </button>
                 );
@@ -356,7 +356,7 @@ function PainelQuickAcoes({ a }: { a: AtendimentoListItem }) {
   });
 
   return (
-    <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+    <div className="ml-auto flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
       {agendado && (
         <button
           type="button"

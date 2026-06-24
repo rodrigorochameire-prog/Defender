@@ -434,7 +434,8 @@ export default function AtendimentosView() {
         </div>
 
         {/* Stats — barra inline enxuta; "A registrar" alterna o filtro de pendentes */}
-        <div className="flex items-stretch rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-x divide-neutral-200/70 dark:divide-neutral-800 overflow-hidden shadow-sm">
+        {/* KPIs: carrossel curto no mobile (cada card não encolhe → rola na horizontal); barra conectada no sm+ */}
+        <div className="flex items-stretch rounded-xl border border-neutral-200/70 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-x divide-neutral-200/70 dark:divide-neutral-800 overflow-x-auto sm:overflow-hidden shadow-sm">
           {kpiCards.map((s) => {
             const Icon = s.icon;
             const clicavel = !!s.action;
@@ -444,7 +445,7 @@ export default function AtendimentosView() {
                 key={s.key}
                 onClick={s.action}
                 className={cn(
-                  "flex items-center gap-2.5 px-3.5 sm:px-4 py-2.5 flex-1 min-w-0 text-left transition-colors outline-none",
+                  "flex items-center gap-2.5 px-3.5 sm:px-4 py-2.5 min-w-[45%] shrink-0 sm:min-w-0 sm:flex-1 text-left transition-colors outline-none",
                   clicavel && "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/40",
                   s.active && "bg-amber-50/70 dark:bg-amber-900/15"
                 )}
@@ -692,7 +693,7 @@ function QuickAcoes({
   });
 
   return (
-    <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+    <div className="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
       {agendado && (
         <button
           onClick={(e) => {
@@ -773,7 +774,7 @@ function QuickRegistrar({
             "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer",
             destaque
               ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
-              : "text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 opacity-0 group-hover/card:opacity-100 focus:opacity-100"
+              : "text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 focus:opacity-100"
           )}
         >
           <Check className="w-3.5 h-3.5" />
@@ -859,7 +860,7 @@ function QuickReativar({ atendimento: a }: { atendimento: AtendimentoListItem })
       }}
       disabled={atualizar.isPending}
       title="Reativar atendimento"
-      className="shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[11px] font-medium text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer opacity-0 group-hover/card:opacity-100 focus:opacity-100 focus-visible:ring-2 focus-visible:ring-sky-400/50 outline-none"
+      className="shrink-0 inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[11px] font-medium text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 focus:opacity-100 focus-visible:ring-2 focus-visible:ring-sky-400/50 outline-none"
     >
       {atualizar.isPending ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin" />

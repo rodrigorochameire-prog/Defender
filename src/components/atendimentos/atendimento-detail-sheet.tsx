@@ -94,7 +94,7 @@ export function AtendimentoDetailSheet({
   const [copied, setCopied] = useState<string | null>(null);
 
   // Largura ajustável do sheet (alça de arraste à esquerda, persistida).
-  const { sheetW, dragging, startDrag, reset, pct } = useSheetWidthResize({
+  const { sheetW, dragging, startDrag, reset, pct, isMobile } = useSheetWidthResize({
     storageKey: "ombuds_atendimento_sheet_w",
   });
 
@@ -239,7 +239,7 @@ export function AtendimentoDetailSheet({
           "p-0 flex flex-col gap-0 w-full max-w-none sm:max-w-none border-l-0 bg-neutral-50 dark:bg-neutral-950 shadow-2xl [&>button:first-of-type]:hidden",
           !dragging && "transition-[width] duration-300 ease-out"
         )}
-        style={{ width: sheetW }}
+        style={{ width: isMobile ? undefined : sheetW }}
       >
         <SheetTitle className="sr-only">Detalhes do atendimento</SheetTitle>
 

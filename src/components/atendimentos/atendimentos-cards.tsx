@@ -140,7 +140,7 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
         {/* Ações rápidas — surgem no hover do card; cada uma isola o clique */}
         <div className="ml-auto flex items-center gap-0.5">
           <CardQuickAcoes a={a} />
-          <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/card:opacity-100 transition-opacity" />
+          <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 transition-opacity" />
         </div>
       </div>
     </div>
@@ -165,7 +165,7 @@ function CardQuickAcoes({ a }: { a: AtendimentoListItem }) {
   });
 
   return (
-    <div className="flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+    <div className="flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
       {agendado && (
         <button
           type="button"

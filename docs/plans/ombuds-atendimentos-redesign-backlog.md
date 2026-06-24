@@ -94,8 +94,8 @@
 - 5.4 **Testes**: blocos/etapas; seleção de ato; texto importado limpo; cria demanda + vínculo; CTA final inequívoco.
 
 ### Fase 6 — Mobile (em andamento — itens restantes pedem device real)
-- 6.1 `AtendimentoMobileCard` (1 ação dominante; metadados secundários discretos) + `AtendimentoStickyFilters` (KPIs grid 2x2/carrossel; aba "A registrar" acessível). _(carece de verificação em device — ações do card hoje aparecem no hover, sem equivalente touch)_
-- 6.2 Workspace mobile: header sticky · seções navegáveis · `AtendimentoContextSheet` (contexto OMBUDS em sheet/accordion) · `AtendimentoActionSheet` (ações rápidas). _(carece de device)_
+- [x] 6.1 **Ações touch-visíveis**: clusters de ação rápida (Cards/Lista/Calendário) saíram de `opacity-0 group-hover` para `opacity-100 sm:opacity-0 sm:group-hover` — sempre visíveis no toque (<640px), hover-reveal no desktop. **KPIs em carrossel curto** no mobile (cards não encolhem → rolagem horizontal; barra conectada no sm+). _Resta_ (device): `AtendimentoMobileCard` dedicado + refino de alvo de toque.
+- [x] 6.2 **Workspace full-screen no mobile**: bug corrigido — o detail-sheet aplicava a largura px do hook de resize incondicionalmente (~760px, estourava o celular); agora respeita `isMobile` do `useSheetWidthResize` → `w-full`. _Resta_ (device): header sticky + `AtendimentoContextSheet`/`AtendimentoActionSheet` dedicados.
 - [x] 6.3 **Gerar demanda / Agendar retorno full-screen no mobile**: Gerar demanda já é Sheet `w-full` (full-screen no celular); form-modal (Dialog) agora `max-sm:h-[100dvh] max-sm:max-w-none` (full-screen no celular) + CTA full-width. CTAs ancorados (SheetFooter / footer do form).
 - [x] 6.4 **Baseline mobile** (`e2e/smoke.spec.ts`, `describe.skip` viewport 390×844): documenta o contrato — novo atendimento full-screen (altura ~100dvh) + Gerar demanda como Sheet full-width com CTA ancorado. Rodar manualmente/no device. _Resta_: alvo de toque + filtros recolhidos (pedem device).
 
