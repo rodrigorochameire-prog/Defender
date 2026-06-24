@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { User, FileText, Lock, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import {
   STATUS_PRISIONAL_CONFIG,
@@ -22,15 +23,6 @@ const ATRIBUICAO_OPTIONS = [
   { value: "Substituição Criminal", label: "Substituição Criminal" },
   { value: "Curadoria Especial", label: "Curadoria Especial" },
 ];
-
-const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#22c55e",
-  "Grupo Especial do Júri": "#f97316",
-  "Violência Doméstica": "#f59e0b",
-  "Execução Penal": "#3b82f6",
-  "Substituição Criminal": "#8b5cf6",
-  "Curadoria Especial": "#71717a",
-};
 
 interface Props {
   demanda: Demanda;
@@ -54,7 +46,7 @@ export function IdentificacaoSecao({
   const [editingAssistidoNome, setEditingAssistidoNome] = useState(false);
   const [assistidoDraft, setAssistidoDraft] = useState("");
 
-  const atribuicaoColor = ATRIBUICAO_BORDER_COLORS[demanda.atribuicao] || "#71717a";
+  const atribuicaoColor = getAtribuicaoColors(demanda.atribuicao).color;
   const AtribuicaoIcon = atribuicaoIcons?.[demanda.atribuicao];
   const processo = demanda.processos?.[0];
 

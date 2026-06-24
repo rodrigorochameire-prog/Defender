@@ -15,8 +15,8 @@ export const SECOES_DEMANDA: SecaoId[] = [
   "proxima-audiencia",
   "identificacao",
   "cronologia",
-  "oficio",
   "autos",
+  "oficio",
   "recursos",
 ];
 
