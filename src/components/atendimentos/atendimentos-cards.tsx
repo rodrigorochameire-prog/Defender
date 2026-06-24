@@ -4,18 +4,23 @@
 // agrupada por dia (mesma ordenação centrada em hoje da lista). Cada card abre
 // o sheet de detalhe. Complementa a Lista (linhas densas) e a Agenda (mês).
 
+import Link from "next/link";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
+  Check,
   ChevronRight,
   Clock,
   Copy,
   FileText,
   Link2,
+  ListPlus,
+  Loader2,
   Scale,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONFIG,
@@ -160,8 +165,63 @@ function CardAtendimento({ a, onClick }: { a: AtendimentoListItem; onClick: () =
             <Sparkles className="w-3 h-3" />
           </span>
         )}
-        <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 ml-auto opacity-0 group-hover/card:opacity-100 transition-opacity" />
+        {/* Ações rápidas — surgem no hover do card; cada uma isola o clique */}
+        <div className="ml-auto flex items-center gap-0.5">
+          <CardQuickAcoes a={a} />
+          <ChevronRight className="w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/card:opacity-100 transition-opacity" />
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Ações rápidas do card — cluster que surge no hover, sem abrir o sheet ───
+
+function CardQuickAcoes({ a }: { a: AtendimentoListItem }) {
+  const utils = trpc.useUtils();
+  const agendado = a.status === "agendado";
+  const assistidoId = a.assistido?.id ?? a.assistidoId;
+
+  const marcarRealizado = trpc.registros.update.useMutation({
+    onSuccess: () => {
+      utils.registros.listAtendimentos.invalidate();
+      utils.registros.atendimentosKpis.invalidate();
+      utils.registros.listAgendados.invalidate();
+      toast.success("Atendimento marcado como realizado");
+    },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  return (
+    <div className="flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 focus-within:opacity-100 transition-opacity">
+      {agendado && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            marcarRealizado.mutate({ id: a.id, status: "realizado" });
+          }}
+          disabled={marcarRealizado.isPending}
+          title="Marcar realizado"
+          aria-label="Marcar realizado"
+          className="w-6 h-6 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
+        >
+          {marcarRealizado.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Check className="w-3.5 h-3.5" />
+          )}
+        </button>
+      )}
+      <Link
+        href={`/admin/demandas/nova?assistidoId=${assistidoId}`}
+        onClick={(e) => e.stopPropagation()}
+        title="Gerar demanda"
+        aria-label="Gerar demanda"
+        className="w-6 h-6 rounded-md inline-flex items-center justify-center text-neutral-400 hover:text-sky-600 hover:bg-sky-50 dark:hover:text-sky-400 dark:hover:bg-sky-900/20 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50"
+      >
+        <ListPlus className="w-3.5 h-3.5" />
+      </Link>
     </div>
   );
 }
