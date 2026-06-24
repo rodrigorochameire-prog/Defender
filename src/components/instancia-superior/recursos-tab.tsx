@@ -1,6 +1,7 @@
 // ─── Recursos Tab (carteira operacional) ──────────────────────────────────
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Landmark, Plus, Filter, ChevronRight } from "lucide-react";
+import { Landmark, Plus, Filter, ChevronRight, ArrowDownNarrowWide } from "lucide-react";
 import { GLASS } from "@/lib/config/design-tokens";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -8,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { TIPO_LABELS, TIPO_SHORT, STATUS_CONFIG, RESULTADO_CONFIG, CAMARAS } from "./ds";
 import { FilterChip, FilterGroup, Dot } from "./primitives";
+import { ordenarCarteira, prioridadeRecurso } from "./logic";
 
 export function RecursosTab({
   rows, total, loading, hasFilters, onCreate, onOpen, filterProps,
@@ -15,18 +17,25 @@ export function RecursosTab({
   rows: any[]; total: number; loading: boolean; hasFilters: boolean;
   onCreate: () => void; onOpen: (id: number) => void; filterProps: any;
 }) {
+  // Carteira priorizada: em pauta → urgente → aguardando providência → regular.
+  const ordered = useMemo(() => ordenarCarteira(rows), [rows]);
   return (
     <div className="bg-white dark:bg-[#1c1c1f] rounded-xl border border-neutral-200/70 dark:border-white/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.04)] overflow-hidden">
       <div className="flex items-center justify-end gap-2 px-4 py-3 border-b border-neutral-200/60 dark:border-white/[0.04]">
         <span className="text-[11px] text-muted-foreground font-mono tabular-nums mr-auto">
           {total} {total === 1 ? "recurso" : "recursos"}
         </span>
+        {ordered.length > 1 && (
+          <span className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground/70">
+            <ArrowDownNarrowWide className="w-3 h-3" /> prioridade
+          </span>
+        )}
         <FiltersButton {...filterProps} />
       </div>
       <div className="p-4">
         {loading ? (
           <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[72px] rounded-xl" />)}</div>
-        ) : rows.length === 0 ? (
+        ) : ordered.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
               <Landmark className="w-6 h-6 text-neutral-300 dark:text-neutral-600" />
@@ -37,7 +46,7 @@ export function RecursosTab({
             </Button>
           </div>
         ) : (
-          <div className="space-y-1.5">{rows.map((r) => <RecursoRow key={r.id} recurso={r} onClick={() => onOpen(r.id)} />)}</div>
+          <div className="space-y-1.5">{ordered.map((r) => <RecursoRow key={r.id} recurso={r} onClick={() => onOpen(r.id)} />)}</div>
         )}
       </div>
     </div>
@@ -90,8 +99,12 @@ export function RecursoRow({ recurso: r, onClick }: { recurso: any; onClick: () 
   const statusCfg = STATUS_CONFIG[r.status] ?? STATUS_CONFIG.INTERPOSTO;
   const resultadoCfg = RESULTADO_CONFIG[r.resultado] ?? RESULTADO_CONFIG.PENDENTE;
   const tipoShort = TIPO_SHORT[r.tipo] ?? r.tipo;
+  const emPauta = prioridadeRecurso(r) === 0; // PAUTADO ou data de pauta futura
   return (
-    <button onClick={onClick} className={cn(GLASS.cardHover, "p-4 rounded-xl w-full text-left cursor-pointer")}>
+    <button onClick={onClick} className={cn(
+      GLASS.cardHover, "p-4 rounded-xl w-full text-left cursor-pointer",
+      emPauta && "border-l-2 border-l-orange-400/70",
+    )}>
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-lg bg-neutral-800 dark:bg-neutral-700 flex flex-col items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-white tracking-wider leading-none">{tipoShort}</span>
@@ -108,6 +121,11 @@ export function RecursoRow({ recurso: r, onClick }: { recurso: any; onClick: () 
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
+            {emPauta && r.dataPauta && (
+              <span className="inline-flex items-center gap-1 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 font-medium tabular-nums">
+                Em pauta {format(new Date(r.dataPauta), "dd/MM")}
+              </span>
+            )}
             {r.assistidoNome && <span className="truncate max-w-[140px]">{r.assistidoNome}</span>}
             {r.assistidoNome && r.camara && <Dot />}
             {r.camara && <span>{r.camara}</span>}
