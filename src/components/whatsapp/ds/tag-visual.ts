@@ -38,14 +38,14 @@ const NEUTRAL_SURFACE: TagSurface = {
 };
 
 /** Predefined tags, in display order, for the filter popover. */
-export const PREDEFINED_TAGS = [
+export const PREDEFINED_TAGS: string[] = [
   "urgente",
   "aguardando_documento",
   "informativo",
   "juri",
   "execucao",
   "diligencia",
-] as const;
+];
 
 export function tagSurface(tag: string): TagSurface {
   return TAG_SURFACES[tag] ?? NEUTRAL_SURFACE;
