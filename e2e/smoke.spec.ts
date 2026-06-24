@@ -50,3 +50,42 @@ test.describe.skip("Agenda sheet (manual run — requires auth)", () => {
     await expect(page.getByRole("button", { name: /redesignar/i }).first()).toBeVisible();
   });
 });
+
+// Baseline de regressão do módulo Atendimentos (Fase 0.3 do redesign).
+// Rede de segurança ANTES das refatorações das Fases 1–7: garante que a jornada
+// principal (render → trocar view → abrir workspace → abrir form/agendar retorno)
+// continua íntegra. Requer sessão logada — rodar manualmente:
+//   npm run dev   (em um terminal)
+//   npx playwright test e2e/smoke.spec.ts --ui   (após logar pela UI)
+test.describe.skip("Atendimentos baseline (manual run — requires auth)", () => {
+  test("jornada principal: lista → trocar view → workspace → agendar retorno", async ({ page }) => {
+    await page.goto("/admin/atendimentos");
+
+    // Header do módulo: CTA primário e alternância de vistas presentes.
+    await expect(page.getByRole("button", { name: "Novo atendimento" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Lista" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cards" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Agenda" })).toBeVisible();
+
+    // Trocar para a vista Cards e garantir que itens renderizam.
+    await page.getByRole("button", { name: "Cards" }).click();
+    const cards = page.locator("[data-atendimento-card]");
+    await expect(cards.first()).toBeVisible();
+
+    // Abrir o workspace (sheet de detalhe) a partir do primeiro item.
+    await cards.first().click();
+    const sheet = page.getByRole("dialog", { name: /detalhes do atendimento/i });
+    await expect(sheet).toBeVisible();
+
+    // Pontes de continuidade do caso: agendar retorno + gerar demanda.
+    await expect(page.getByRole("button", { name: /agendar retorno/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /gerar demanda/i }).first()).toBeVisible();
+  });
+
+  test("abre o modal de novo atendimento pelo CTA do header", async ({ page }) => {
+    await page.goto("/admin/atendimentos");
+    await page.getByRole("button", { name: "Novo atendimento" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByText("Novo atendimento")).toBeVisible();
+  });
+});

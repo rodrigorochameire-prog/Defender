@@ -47,7 +47,7 @@
 ### Fase 0 — Discovery (concluída)
 - [x] 0.1 Mapear árvore de componentes do módulo.
 - [x] 0.2 Inventariar config/helpers/badges/stack de testes + base reutilizável de `demandas-premium`.
-- [ ] 0.3 **Baseline**: estender `e2e/smoke.spec.ts` cobrindo `admin/atendimentos` (render lista → trocar view → abrir workspace → abrir form/agendar retorno) — rede contra regressão.
+- [x] 0.3 **Baseline**: `e2e/smoke.spec.ts` estendido com bloco `describe.skip` "Atendimentos baseline" (render → trocar view → abrir workspace → agendar retorno/gerar demanda → abrir form). Hook de teste `data-atendimento-card` no card (cards-view) e na list row (view) — convenção espelhada de `data-evento-card`. Rodar manualmente com sessão logada (vide comentário no spec).
 
 ### Fase 1 — Sistema semântico e design system local (DoD: badges/cores/metadados testados, sem mudança de layout ainda)
 - 1.1 `StatusBadge`/`ReadinessBadge`: 1 badge forte (status) + 1 sutil (readiness); cor só semântica. Auditar `config.ts` (`STATUS_CONFIG`/`SUBTIPO_CONFIG`/área).

@@ -569,6 +569,7 @@ function AtendimentoCard({
 
   return (
     <div
+      data-atendimento-card
       role="button"
       tabIndex={0}
       onClick={onClick}
