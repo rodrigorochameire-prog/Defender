@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas, casos } from "@/lib/db/schema";
+import { assistidos, processos, demandas, audiencias, documentos, movimentacoes, anotacoes, driveFiles, assistidosProcessos, users, comarcas, casos, caseFacts, casePersonas } from "@/lib/db/schema";
 import { getAssistidosVisibilityFilter, getComarcaId } from "@/lib/trpc/comarca-scope";
 import { eq, ilike, or, desc, sql, and, isNull, inArray, asc, getTableColumns, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -1561,5 +1561,75 @@ export const assistidosRouter = router({
       const ordem = { red: 0, amber: 1, emerald: 2 } as const;
       alertas.sort((a, b) => ordem[a.nivel] - ordem[b.nivel]);
       return alertas;
+    }),
+
+  // ────────────────────────────────────────────────────────────────────
+  // getInvestigacao — orquestra os sinais investigativos do assistido:
+  //   personas do caso (testemunhas/réus/vítimas), fatos (mapa dos fatos) e
+  //   modus operandi por processo. Escopo por workspace via o assistido.
+  // ────────────────────────────────────────────────────────────────────
+  getInvestigacao: protectedProcedure
+    .input(z.object({ assistidoId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const workspaceId = ctx.user.workspaceId ?? 1;
+      const [dono] = await db
+        .select({ id: assistidos.id })
+        .from(assistidos)
+        .where(and(eq(assistidos.id, input.assistidoId), eq(assistidos.workspaceId, workspaceId)))
+        .limit(1);
+      if (!dono) return { personas: [], fatos: [], modus: [] };
+
+      const casoRows = await db
+        .select({ id: casos.id })
+        .from(casos)
+        .where(and(eq(casos.assistidoId, input.assistidoId), isNull(casos.deletedAt)));
+      const casoIds = casoRows.map((c) => c.id);
+
+      const procRows = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          modusOperandi: processos.modusOperandi,
+        })
+        .from(processos)
+        .where(and(eq(processos.assistidoId, input.assistidoId), isNull(processos.deletedAt)));
+
+      const personas = casoIds.length
+        ? await db
+            .select({
+              id: casePersonas.id,
+              nome: casePersonas.nome,
+              tipo: casePersonas.tipo,
+              status: casePersonas.status,
+              observacoes: casePersonas.observacoes,
+              processoId: casePersonas.processoId,
+              confidence: casePersonas.confidence,
+            })
+            .from(casePersonas)
+            .where(inArray(casePersonas.casoId, casoIds))
+        : [];
+
+      const fatos = casoIds.length
+        ? await db
+            .select({
+              id: caseFacts.id,
+              titulo: caseFacts.titulo,
+              descricao: caseFacts.descricao,
+              tipo: caseFacts.tipo,
+              dataFato: caseFacts.dataFato,
+              severidade: caseFacts.severidade,
+              tags: caseFacts.tags,
+              processoId: caseFacts.processoId,
+            })
+            .from(caseFacts)
+            .where(and(inArray(caseFacts.casoId, casoIds), eq(caseFacts.status, "ativo")))
+            .orderBy(desc(caseFacts.dataFato))
+        : [];
+
+      const modus = procRows
+        .filter((p) => p.modusOperandi)
+        .map((p) => ({ processoId: p.id, numeroAutos: p.numeroAutos, modus: p.modusOperandi }));
+
+      return { personas, fatos, modus };
     }),
 });
