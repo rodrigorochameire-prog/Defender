@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { PriorityBadge, StickyActionFooter } from "@/components/agenda/ds";
+import { PriorityBadge, StickyActionFooter } from "@/components/ds";
 
 /** Contexto opcional do evento — quando presente, dá identidade e consequência à ação. */
 export interface RedesignarContexto {

@@ -137,7 +137,7 @@ import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { defensorBadge } from "@/lib/juri/normalize-defensor";
 import { isSessaoPlenario } from "@/components/agenda/extrair-tipo";
 import { agendaItemVisual } from "@/lib/agenda/agenda-item-visual";
-import { StatusChip, EmptyState } from "@/components/agenda/ds";
+import { StatusChip, EmptyState } from "@/components/ds";
 import { eventoAgendaTipo } from "@/lib/config/tipologia";
 import { cargaDoDia, CARGA_CONFIG } from "@/lib/agenda/carga-dia";
 

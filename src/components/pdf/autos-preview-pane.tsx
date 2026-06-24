@@ -6,7 +6,7 @@ import {
   DocumentPreviewDialog,
   type PreviewFile,
 } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
-import { EmptyState } from "@/components/agenda/ds";
+import { EmptyState } from "@/components/ds";
 
 interface Props {
   /** Lista de PDFs disponíveis (ranqueada: o primeiro é o destaque). */
