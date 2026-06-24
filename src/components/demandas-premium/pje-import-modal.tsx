@@ -26,6 +26,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { calcularPrazoPorAto } from "@/lib/prazo-calculator";
 import { montarReviewRow } from "@/lib/pje-review-row";
 import { PjeReviewTable, type PjeReviewRow } from "./pje-review-table";
+import { PjeWizardStepper } from "./pje-wizard-stepper";
 
 interface PJeImportModalProps {
   isOpen: boolean;
@@ -665,6 +666,7 @@ export function PJeImportModal({
                 {etapa === "revisar" && "Revise antes de importar"}
                 {etapa === "resultado" && "Importação enviada"}
               </DialogDescription>
+              <PjeWizardStepper current={etapa} />
             </div>
           </div>
         </DialogHeader>
