@@ -55,6 +55,8 @@ import {
   UserCheck,
   ArrowRightLeft,
   Eye,
+  CheckSquare,
+  Microscope,
   FileEdit,
   BookOpen,
   Shield,
@@ -599,7 +601,7 @@ export default function DashboardJuriPage() {
   const [atendimentoRapido, setAtendimentoRapido] = useState<{
     assistidoId: number | null;
     assistidoNome: string;
-    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao" | "delegacao";
+    tipo: "atendimento" | "diligencia" | "informacao" | "peticao" | "anotacao" | "delegacao" | "ciencia" | "providencia" | "investigacao";
     descricao: string;
     processoId: number | null;
     local: string;
@@ -696,6 +698,9 @@ export default function DashboardJuriPage() {
     { id: "peticao", label: "Petição", icon: FileText, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "anotacao", label: "Nota", icon: PenLine, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "ciencia", label: "Ciência", icon: Eye, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "providencia", label: "Providência", icon: CheckSquare, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "investigacao", label: "Investigação", icon: Microscope, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
   ] as const;
 
   const [delegacaoModalOpen, setDelegacaoModalOpen] = useState(false);
@@ -1369,6 +1374,9 @@ export default function DashboardJuriPage() {
                   atendimentoRapido.tipo === "diligencia" ? "Descreva a diligência ou busca..." :
                   atendimentoRapido.tipo === "informacao" ? "Registre a informação obtida..." :
                   atendimentoRapido.tipo === "peticao" ? "Descreva a petição protocolada..." :
+                  atendimentoRapido.tipo === "ciencia" ? "Ciência de qual ato? (intimação, decisão, acórdão...)" :
+                  atendimentoRapido.tipo === "providencia" ? "Qual providência precisa ser tomada?" :
+                  atendimentoRapido.tipo === "investigacao" ? "Linha de investigação, hipótese ou contradição..." :
                   "Adicione sua anotação..."
                 }
                 value={atendimentoRapido.descricao}
