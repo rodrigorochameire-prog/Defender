@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { detectarSubtipo, SUBTIPO_CONFIG, corBadge } from "./registro-audiencia/subtipo-audiencia";
 import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { resolverManifesto, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
+import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
 import { normalizarMotivo } from "@/components/agenda/sheet/motivo-designacao";
 import { useMedidasVigentes } from "@/components/mpu/use-medidas-vigentes";
 import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDesignacaoSecao";
@@ -1196,11 +1196,31 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   };
 
   const secoesVisiveis = manifesto.filter((id) => secoesMap[id]?.temDado);
-  const tocSections: ToCSection[] = secoesVisiveis.map((id) => ({
-    id,
-    label: secoesMap[id]!.label,
-    ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
-  }));
+
+  // Instrução (AIJ): a espinha + preparação ficam como seções de topo e as
+  // seções do grupo Contexto colapsam dentro de UM único CollapsibleSection ao
+  // final — reduz a poluição sem perder dado. Demais ritos seguem flat.
+  const isInstrucao = manifesto === SECOES_INSTRUCAO;
+  const contextoIds: SecaoId[] = isInstrucao
+    ? secoesVisiveis.filter((id) => GRUPO_CONTEXTO_INSTRUCAO.includes(id))
+    : [];
+  const espinhaVisiveis = isInstrucao
+    ? secoesVisiveis.filter((id) => !GRUPO_CONTEXTO_INSTRUCAO.includes(id))
+    : secoesVisiveis;
+
+  const tocSections: ToCSection[] = [
+    ...espinhaVisiveis.map((id) => ({
+      id,
+      label: secoesMap[id]!.label,
+      ...(secoesMap[id]!.count !== undefined ? { count: secoesMap[id]!.count } : {}),
+    })),
+    // Grupo Contexto entra como UMA única pill no ToC (a âncora é o wrapper).
+    ...(contextoIds.length > 0 ? [{ id: "contexto", label: "Contexto", count: contextoIds.length }] : []),
+  ];
+
+  // Assinatura estável das âncoras renderizadas — o observer só precisa re-rodar
+  // quando o conjunto de seções (espinha + grupo Contexto) muda, não a cada render.
+  const ancorasKey = [...espinhaVisiveis, ...(contextoIds.length > 0 ? ["contexto"] : [])].join("|");
 
   useEffect(() => {
     if (!open || !scrollContainerRef.current) return;
@@ -1217,7 +1237,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
     const nodes = root.querySelectorAll("[data-section-id]");
     nodes.forEach((n) => observer.observe(n));
     return () => observer.disconnect();
-  }, [open, tocSections]);
+  }, [open, ancorasKey]);
 
   const handleJump = (id: string) => {
     const root = scrollContainerRef.current;
@@ -1296,6 +1316,14 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           const RitoIcon = subtipoCfg.icon;
           const ritoCores = corBadge(subtipoCfg.cor);
           const st = statusAudienciaInfo((ctx as any)?.audiencia?.status ?? evento.status);
+          // UM único pill de status. Quando a audiência está concluída e há
+          // resultado registrado, o resultado prevalece sobre o status genérico
+          // ("Realizada") — é a informação mais útil. Caso contrário, mostra o
+          // status derivado. (Apresentação: não muda dados nem lógica.)
+          const resultadoTexto = (((ctx as any)?.audiencia?.resultado ?? "") as string).trim();
+          const pill = jaConcluida && resultadoTexto
+            ? { label: resultadoTexto, cls: st.cls }
+            : st;
           return (
             <div className={cn(SHEET_STYLE.topBar, "px-3 py-2 flex items-center justify-between gap-2")}>
               <div className="flex items-center gap-2 min-w-0">
@@ -1308,7 +1336,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     {format(dataHora, "dd/MM · HH:mm", { locale: ptBR })}
                   </span>
                 )}
-                <span className={cn(SHEET_STYLE.statusPill, st.cls)}>{st.label}</span>
+                <span className={cn(SHEET_STYLE.statusPill, pill.cls, "max-w-[160px] truncate")} title={pill.label}>
+                  {pill.label}
+                </span>
               </div>
               <button
                 onClick={() => onOpenChange(false)}
@@ -1496,9 +1526,20 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </div>
             )}
 
-            {!isLoading && secoesVisiveis.map((id) => (
+            {!isLoading && espinhaVisiveis.map((id) => (
               <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
             ))}
+
+            {/* Instrução: grupo Contexto colapsado (uma âncora única no ToC). */}
+            {!isLoading && contextoIds.length > 0 && (
+              <CollapsibleSection id="contexto" label="Contexto" count={contextoIds.length} defaultOpen={false}>
+                <div className="space-y-3">
+                  {contextoIds.map((id) => (
+                    <Fragment key={id}>{secoesMap[id]!.node}</Fragment>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            )}
           </div>
         </div>
 
