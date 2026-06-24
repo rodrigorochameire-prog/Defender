@@ -174,7 +174,7 @@ export default function DocumentosPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-2">
+      <div className="p-4 sm:p-6 space-y-2">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-11 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-900" />
         ))}
@@ -185,20 +185,20 @@ export default function DocumentosPage() {
   const totalFiltrado = grupos.reduce((n, g) => n + g.arquivos.length, 0);
 
   return (
-    <div className="p-6 space-y-3">
+    <div className="p-4 sm:p-6 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
           <FileText className="h-4 w-4 text-neutral-500" />
           Documentos
           <span className="text-[11px] font-normal text-neutral-400">{arquivos.length}</span>
         </h2>
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar arquivo…"
-            className="h-7 w-56 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent pl-7 pr-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="h-7 w-full sm:w-56 rounded-lg border border-neutral-200 dark:border-white/10 bg-transparent pl-7 pr-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </div>
       </div>

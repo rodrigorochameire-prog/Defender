@@ -126,7 +126,7 @@ export default function CasosListPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-3">
+      <div className="p-4 sm:p-6 space-y-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="h-28 animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-900" />
         ))}
@@ -135,7 +135,7 @@ export default function CasosListPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
           <Briefcase className="h-4 w-4 text-neutral-500" />

@@ -79,7 +79,7 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           {assistido && (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full sm:w-auto shrink-0 items-center justify-end gap-2 flex-wrap">
               {zap && (
                 <a
                   href={zap}

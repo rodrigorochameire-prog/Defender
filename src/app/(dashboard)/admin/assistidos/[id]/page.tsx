@@ -275,9 +275,9 @@ export default function AssistidoHubPage() {
   // ── Loading / empty ──────────────────────────────────────────────
   if (loadingAssistido || loadingCasos) {
     return (
-      <div className="p-6 space-y-3">
+      <div className="p-4 sm:p-6 space-y-3">
         <div className="h-20 rounded-xl bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-14 rounded-lg bg-neutral-100 dark:bg-neutral-900 animate-pulse" />
           ))}
@@ -298,11 +298,11 @@ export default function AssistidoHubPage() {
   const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(sp);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       {/* Identidade + ações ficam no header persistente (layout.tsx). */}
 
       {/* ── KPI STRIP ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         <KpiPill
           label={`Caso${casosAgrupados.length !== 1 ? "s" : ""}`}
           value={casosAgrupados.length || casos.length}

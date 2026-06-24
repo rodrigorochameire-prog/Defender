@@ -63,7 +63,7 @@ export default function PessoasPage() {
 
   if (loadingA || loadingF) {
     return (
-      <div className="p-6 space-y-2">
+      <div className="p-4 sm:p-6 space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-14 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-900" />
         ))}
@@ -75,7 +75,7 @@ export default function PessoasPage() {
   const temContatoPrimario = !!(assistido?.telefone || assistido?.telefoneContato);
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 sm:p-6 space-y-4">
       <h2 className="flex items-center gap-2 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
         <Users className="h-4 w-4 text-neutral-500" />
         Pessoas
