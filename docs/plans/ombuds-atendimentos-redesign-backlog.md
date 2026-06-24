@@ -80,11 +80,11 @@
 - 3.4 `TimelineItemRefined`: registros em cards leves; ações secundárias em overflow.
 - 3.5 **Testes**: abrir workspace; seções renderizam; próximos passos disparam fluxos; timeline render; vínculo com demanda perceptível.
 
-### Fase 4 — Agendar retorno (`ScheduleReturnModalRefined`)
-- 4.1 Modular em 4 blocos (Agendamento · Contexto · Registro complementar · Desfecho).
+### Fase 4 — Agendar retorno (`ScheduleReturnModalRefined`) (em andamento)
+- 4.1 Modular em 4 blocos (Agendamento · Contexto · Registro complementar · Desfecho). _(próxima fatia — restruturação do `atendimento-form-modal.tsx`; ver plano do subagente)_
 - 4.2 `DateTimeFieldRefined`; `ProcessSelector` com relevância visual maior.
-- 4.3 `OutcomeChoiceCardGroup`: desfecho em cards de escolha (não radios); remover redundância Cancelar/Fechar.
-- 4.4 **Testes**: blocos presentes; seleção de desfecho; processo vinculado; mobile full-screen/CTA fixo.
+- [x] 4.3 `OutcomeChoiceCardGroup`: desfecho em **cards de escolha acessíveis** (radiogroup de `<button>`, não `<input radio>`), com acento emerald no selecionado. Fonte única `agendar-retorno-logic.ts` (`DESFECHO_OPTIONS` puro/testado). _Resta_: remover redundância Cancelar (Dialog já fecha por X/overlay/Esc).
+- 4.4 **Testes**: [x] `agendar-retorno-logic.test.ts` + `outcome-choice-card-group.test.tsx` (radiogroup, 1 selecionado, onChange, sem input radio cru) — 8 testes. _Resta_: integração do modal (4 blocos) com trpc mockado.
 
 ### Fase 5 — Gerar demanda (`GenerateDemandPanel`)
 - 5.1 Promover de popover a superfície nobre (painel/sheet) em 5 blocos (Origem · Definição jurídica · Regime de urgência · Conteúdo inicial · Confirmação) — refatorar `gerar-demanda-popover.tsx`.

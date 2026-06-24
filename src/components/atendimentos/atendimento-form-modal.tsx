@@ -33,6 +33,7 @@ import {
   AREA_TO_ATRIBUICAO_ENUM,
   type AtendimentoListItem,
 } from "./config";
+import { OutcomeChoiceCardGroup } from "./outcome-choice-card-group";
 
 /** Pré-preenchimento para criar (ex.: agendar retorno a partir de outro atendimento). */
 export interface AtendimentoPrefill {
@@ -551,25 +552,7 @@ export function AtendimentoFormModal({ open, onClose, editing, prefill, initialD
           {!editing && (
             <div className="rounded-lg border border-neutral-200/70 dark:border-neutral-800 p-3 space-y-2">
               <Label className="text-xs font-medium">Desfecho do atendimento</Label>
-              <div className="space-y-1.5">
-                {([
-                  { v: "nenhuma", label: "Só atendimento", hint: "não gera demanda" },
-                  { v: "demanda", label: "Gerar demanda", hint: "há providência a fazer" },
-                  { v: "orientacao", label: "Atendimento e orientação", hint: "registra no cadastro, sem providência" },
-                ] as const).map((o) => (
-                  <label key={o.v} className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                    <input
-                      type="radio"
-                      name="desfecho"
-                      checked={desfecho === o.v}
-                      onChange={() => setDesfecho(o.v)}
-                      className="accent-emerald-600 cursor-pointer"
-                    />
-                    <span className="font-medium">{o.label}</span>
-                    <span className="text-[11px] text-muted-foreground">({o.hint})</span>
-                  </label>
-                ))}
-              </div>
+              <OutcomeChoiceCardGroup value={desfecho} onChange={setDesfecho} />
               {desfecho === "demanda" && (
                 <Input
                   value={desfechoAto}
