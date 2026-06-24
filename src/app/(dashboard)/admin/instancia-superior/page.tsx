@@ -108,7 +108,7 @@ export default function InstanciaSuperiorPage() {
       </div>
       {podeInstitucional && (
         <span className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] ring-1 ring-white/[0.06] px-2 py-1 text-[10px] font-medium text-white/70">
-          <span className={cn("w-1.5 h-1.5 rounded-full", effectiveModo === "todos" ? "bg-[#9aa7bb]" : "bg-emerald-400/70")} />
+          <span className={cn("w-1.5 h-1.5 rounded-full", effectiveModo === "todos" ? "bg-slate-400/80" : "bg-emerald-400/70")} />
           {effectiveModo === "todos" ? "Visão institucional" : "Meus recursos"}
         </span>
       )}
