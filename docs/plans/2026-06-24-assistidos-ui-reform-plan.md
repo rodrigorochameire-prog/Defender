@@ -110,3 +110,28 @@ Breakpoints reais, sticky actions, microcopy, QA final (Definition of Premium Do
 ## 7. Decisões abertas
 1. Local exato do DS compartilhado (`components/ds/` vs promover `agenda/ds`) — resolver na F3.
 2. Limpeza do branch antigo `feat/assistidos-ui-reform` (poluído com 1 commit demandas do daemon) — não urgente.
+
+---
+
+## 8. Conclusão — F1–F7 entregues (2026-06-24)
+
+**Branch `feat/assistidos-redesign` · 9 commits · typecheck 0 erros · 23 testes verdes · QA visual feito (light/dark/mobile, dados reais de prod).**
+
+| Fase | Commit | Entregue |
+|---|---|---|
+| F1+F2 | `ddf66394` | state engine (state.ts) + preview master-detail 4 blocos + split-pane |
+| F3 | `9456d4b0` | zona Atenção Imediata + DS `components/ds/attention.tsx` |
+| fix | `d2c7aa2f` | tipo/status de demanda no preview (CONCLUIDO/ARQUIVADO, não 7_/8_) |
+| F4 | `a7cf9081` | processo-órfão (Casos) + `casos.criarDeProcesso` |
+| F5 | `d8051c9f` `c4caf471` | Demandas (resumo+status humano) · Audiências (briefing) · Nova Demanda (etapas+SmartDeadlinePanel) |
+| F6 | `5b0f742b` | empty-states Pessoas/Radar/Timeline/Documentos (Radar = monitoramento ativo) |
+| F7 | `536aceb7` | foco visível por teclado (FOCUS_RING); reduced-motion já global |
+
+**QA visual verificado:** preview 4 blocos, split-pane, Atenção Imediata (CTA contextual), callout de órfão + "Criar caso", Demandas (faixa+status), Audiências (briefing), Nova Demanda (eyebrows), dark/light parity, mobile 375 (reflow 2×2).
+
+**Pendências (não bloqueiam; ver memória `assistidos-ui-reform-branch`):**
+1. **Finding #1** — overview `processo-orfao` lê fonte M2M (`assistidos_processos`); sub-conta vs aba Casos (FK direto `processos.assistido_id`). Alinhar ao FK direto.
+2. **`criarDeProcesso`** validado só por tipo — INSERT precisa de smoke test em branch DB (worktree aponta pra PROD).
+3. Touch targets <44px em micro-botões (trade-off densidade) + adoção do `EmptyState` compartilhado — deferidos.
+
+**Não feito de propósito:** push/PR (ação explícita do @devops). Branch pronto para merge quando solicitado.
