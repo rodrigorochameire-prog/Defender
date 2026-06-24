@@ -22,6 +22,7 @@ import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { FeedPorCaso } from "@/components/registros/feed-por-caso";
 import { AnaliseResumoCockpit } from "./_components/analise-resumo-cockpit";
+import { AgruparCasosButton } from "./_components/agrupar-casos-button";
 import { HistoricoPenalBlock } from "@/components/assistidos/historico-penal-block";
 /** Editor inline de nota privada (auto-contido — não depende de componente externo). */
 function NotaPrivadaInline({ assistidoId, initial }: { assistidoId: number; initial?: string }) {
@@ -628,6 +629,9 @@ export default function AssistidoHubPage() {
             ) : (
               <p className="text-[12px] italic text-neutral-400">Nenhum caso agrupado.</p>
             )}
+
+            {/* Agrupar processos soltos em casos (principal + associados) */}
+            <AgruparCasosButton assistidoId={id} />
           </CardShell>
         </div>
 
