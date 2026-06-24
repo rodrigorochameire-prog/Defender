@@ -506,9 +506,9 @@ export default function WhatsAppChatPage() {
             )}
           </div>
 
-          {/* Contact details panel — hidden on mobile */}
+          {/* Contact details panel — full-screen overlay on mobile, side column on desktop */}
           {showDetails && selectedContactId && selectedConfigId && (
-            <div className="hidden md:block">
+            <div className="fixed inset-0 z-40 md:static md:z-auto md:inset-auto">
               <ContactDetailsPanel
                 contactId={selectedContactId}
                 configId={selectedConfigId}

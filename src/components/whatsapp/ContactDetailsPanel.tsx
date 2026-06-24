@@ -211,7 +211,7 @@ export function ContactDetailsPanel({
 
   if (isLoading) {
     return (
-      <div className="w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
+      <div className="w-full md:w-80 h-full border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
         <div className="flex items-center justify-center flex-1">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -221,7 +221,7 @@ export function ContactDetailsPanel({
 
   if (!contact) {
     return (
-      <div className="w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
+      <div className="w-full md:w-80 h-full border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <span className="text-sm font-semibold text-foreground">
             Detalhes do Contato
@@ -244,7 +244,7 @@ export function ContactDetailsPanel({
   return (
     <div
       className={cn(
-        "w-80 border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200"
+        "w-full md:w-80 h-full border-l border-border bg-white dark:bg-card flex flex-col overflow-hidden transition-all duration-200"
       )}
     >
       {/* ===== HEADER ===== */}
