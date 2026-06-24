@@ -305,8 +305,8 @@ export function AtendimentoDetailSheet({
             <SheetToC sections={tocSections} activeId={activeSection} onJump={handleJump} />
           )}
           {/* Cartão de identidade */}
-          <div className="mx-3 mt-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
-            <div className="flex items-start gap-3.5">
+          <div className="mx-3 mt-3 px-4 py-4 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
+            <div className="flex items-start gap-3">
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                 style={{
@@ -367,7 +367,7 @@ export function AtendimentoDetailSheet({
                     </span>
                   )}
                   {(a.assistido?.driveFolderId || zap || a.demandaId) && (
-                    <span className="flex items-center gap-1 ml-auto">
+                    <span className="flex items-center gap-1.5 ml-auto">
                       {a.assistido?.driveFolderId && (
                         <a
                           href={driveFolderUrl(a.assistido.driveFolderId)}
@@ -406,7 +406,7 @@ export function AtendimentoDetailSheet({
                   )}
                 </div>
                 {(a.pedido || a.local) && (
-                  <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-1.5 truncate">
+                  <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 mt-2 truncate">
                     {[a.pedido, a.local].filter(Boolean).join(" · ")}
                   </p>
                 )}
@@ -414,23 +414,23 @@ export function AtendimentoDetailSheet({
             </div>
 
             {a.assunto && (
-              <p className="mt-2.5 text-[12.5px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-2.5 leading-snug" style={{ borderColor: `${atribColor}66` }}>
+              <p className="mt-3 text-[12.5px] text-neutral-600 dark:text-neutral-300 border-l-2 pl-2.5 leading-snug" style={{ borderColor: `${atribColor}66` }}>
                 {a.assunto}
               </p>
             )}
 
             {/* Preparação — duas formas distintas: contexto rápido vs. dossiê profundo */}
             <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-              <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-1.5">
+              <p className="text-[9.5px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500 mb-2">
                 Preparação
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => preparar.mutate({ id: a.id })}
                   disabled={preparar.isPending}
-                  className="h-7 gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-300"
+                  className="h-7 px-2 gap-1.5 text-[11px] text-neutral-600 dark:text-neutral-300"
                   title="Contexto rápido — monta o dossiê com dados já no OMBUDS (processos, audiências, demandas, medidas)"
                 >
                   {preparar.isPending ? (
@@ -446,7 +446,7 @@ export function AtendimentoDetailSheet({
                   variant="ghost"
                   onClick={() => prepararCompleto.mutate({ id: a.id })}
                   disabled={prepararCompleto.isPending}
-                  className="h-7 gap-1.5 text-[11px] text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                  className="h-7 px-2 gap-1.5 text-[11px] text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
                   title="Dossiê profundo — worker local lê os autos no PJe e grava o dossiê completo (demora)"
                 >
                   {prepararCompleto.isPending ? (
@@ -460,7 +460,7 @@ export function AtendimentoDetailSheet({
             </div>
           </div>
 
-          <div className="px-3 py-3 space-y-2.5">
+          <div className="px-3 py-3 space-y-3">
             {/* Próximos passos — fecha o ciclo (agenda + Kanban) */}
             <div className="flex items-center gap-2">
               <Button
@@ -493,7 +493,7 @@ export function AtendimentoDetailSheet({
               id="atd-registros"
               label="Registros do caso"
               defaultOpen
-              className="ring-1 ring-emerald-500/25 border-emerald-500/30 dark:border-emerald-500/20"
+              className="ring-1 ring-emerald-500/20 border-emerald-500/25 dark:border-emerald-500/15"
             >
               <div className="space-y-3">
                 {novoRegistro ? (
@@ -779,7 +779,7 @@ export function AtendimentoDetailSheet({
         )}
 
         {/* Footer de ações */}
-        <div className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5 flex items-center gap-1.5 flex-wrap">
+        <div className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5 flex items-center gap-2 flex-wrap">
           {/* "Marcar realizado" permanece como ação primária — abre o composer de relato */}
           {a.status === "agendado" && !mostrandoRelato && (
             <Button
@@ -870,7 +870,7 @@ export function AtendimentoDetailSheet({
               }
             }}
             disabled={excluir.isPending}
-            className="h-8 gap-1.5 text-[12px] text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+            className="h-8 gap-1.5 text-[12px] text-rose-500/80 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Excluir
