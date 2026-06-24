@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NextLink from "next/link";
 import { X, Link as LinkIcon, Loader2, Scale } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -39,7 +40,7 @@ export function ContextPanel({ contactId, configId, onClose }: ContextPanelProps
   );
 
   return (
-    <div className="hidden md:flex w-[280px] flex-shrink-0 border-l border-neutral-200 dark:border-border bg-white dark:bg-card flex-col h-full">
+    <div className="flex w-full h-full flex-col border-l border-neutral-200 dark:border-border bg-white dark:bg-card">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-200 dark:border-border">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -80,7 +81,7 @@ export function ContextPanel({ contactId, configId, onClose }: ContextPanelProps
             className={cn(
               "flex-1 py-2 text-[11px] font-medium transition-colors cursor-pointer",
               activeTab === key
-                ? "text-neutral-900 dark:text-foreground border-b-2 border-emerald-500"
+                ? "text-neutral-900 dark:text-foreground border-b-2 border-neutral-900 dark:border-foreground"
                 : "text-neutral-500 hover:text-neutral-700 dark:hover:text-foreground/80 border-b-2 border-transparent"
             )}
           >
@@ -107,9 +108,13 @@ export function ContextPanel({ contactId, configId, onClose }: ContextPanelProps
                 Vincule este contato a um assistido para ver o contexto jurídico
               </p>
             </div>
-            <button className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium cursor-pointer">
+            <NextLink
+              href="/admin/whatsapp/vincular"
+              className="inline-flex items-center gap-1.5 rounded-md border border-emerald-600/30 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer"
+            >
+              <LinkIcon className="h-3.5 w-3.5" />
               Vincular a assistido
-            </button>
+            </NextLink>
           </div>
         ) : (
           /* Tabs content */

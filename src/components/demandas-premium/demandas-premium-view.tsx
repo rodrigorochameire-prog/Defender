@@ -59,6 +59,8 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
+import { ActiveFiltersBar } from "./ActiveFiltersBar";
+import { buildActiveFilterChips } from "./active-filters";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -2839,25 +2841,7 @@ export default function Demandas() {
         />
       </div>
 
-      {/* Chips de filtros ativos (clique remove) — só em telas grandes */}
-      {pillFilters.size > 0 && (
-        <div className="hidden xl:flex items-center gap-1 max-w-[260px] overflow-x-auto scrollbar-none">
-          {PILL_CONFIG.filter(({ key }) => pillFilters.has(key)).map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => togglePill(key)}
-              title="Remover filtro"
-              className="h-7 pl-2 pr-1.5 rounded-md bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/20 hover:bg-amber-400/25 transition-colors flex items-center gap-1 text-[10.5px] font-medium cursor-pointer shrink-0"
-            >
-              <span>{label}</span>
-              <span className="text-[9px] tabular-nums opacity-80">{pillCounts[key]}</span>
-              <X className="w-3 h-3 opacity-70" />
-            </button>
-          ))}
-        </div>
-      )}
-
+      {/* (chips de pillFilters consolidados na ActiveFiltersBar — fonte única) */}
       {/* Menu ⋯ — visualização + filtros + exportar + ordenação + agrupar + modos + admin */}
       <div className="relative">
         <button
@@ -3195,6 +3179,50 @@ export default function Demandas() {
     </div>
   );
 
+  // Fase 2: chips de filtro ativo + limpeza por chip / tudo (estado filtrado
+  // compreensível e limpável num lance, em qualquer view).
+  const GRUPO_LABELS: Record<string, string> = {
+    triagem: "Triagem", preparacao: "Preparação", diligencias: "Diligências",
+    saida: "Saída", acompanhar: "Acompanhar", concluida: "Concluída", arquivado: "Arquivado",
+  };
+  const activeFilterChips = buildActiveFilterChips(
+    {
+      searchTerm,
+      prazo: selectedPrazoFilter,
+      atribuicoes: selectedAtribuicoes,
+      estadoPrisional: selectedEstadoPrisional,
+      tipoAto: selectedTipoAto,
+      tipoProcesso: selectedTipoProcesso,
+      statusGroup: selectedStatusGroup,
+      pills: PILL_CONFIG.filter((pp) => pillFilters.has(pp.key)).map((pp) => ({ key: pp.key, label: pp.label })),
+    },
+    { statusLabel: (g) => GRUPO_LABELS[g] ?? g },
+  );
+  const handleClearFilterChip = (key: string) => {
+    if (key === "search") setSearchTerm("");
+    else if (key === "status") setSelectedStatusGroup(null);
+    else if (key.startsWith("atrib:")) {
+      const v = key.slice("atrib:".length);
+      if (typeof window !== "undefined") sessionStorage.removeItem(SS_EXPLICIT_ALL);
+      setSelectedAtribuicoes((prev) => prev.filter((a) => a !== v));
+    } else if (key === "prazo") setSelectedPrazoFilter(null);
+    else if (key === "prisional") setSelectedEstadoPrisional(null);
+    else if (key === "ato") setSelectedTipoAto(null);
+    else if (key === "tipoProc") setSelectedTipoProcesso(null);
+    else if (key.startsWith("pill:")) togglePill(key.slice("pill:".length));
+  };
+  const handleClearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedStatusGroup(null);
+    if (typeof window !== "undefined") sessionStorage.setItem(SS_EXPLICIT_ALL, "true");
+    setSelectedAtribuicoes([]);
+    setSelectedPrazoFilter(null);
+    setSelectedEstadoPrisional(null);
+    setSelectedTipoAto(null);
+    setSelectedTipoProcesso(null);
+    clearPills();
+  };
+
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
       <HeaderSlotTitle
@@ -3286,6 +3314,12 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
+        {/* Fase 2: barra de filtros ativos (chips + limpar tudo) — visível em todas as views */}
+        <ActiveFiltersBar
+          chips={activeFilterChips}
+          onClear={handleClearFilterChip}
+          onClearAll={handleClearAllFilters}
+        />
         {activeTab === "planilha" ? (
         <>
         {/* Cockpit de prazos — leitura imediata do que exige ação (Track F) */}

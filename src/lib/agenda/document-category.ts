@@ -51,3 +51,30 @@ export function categorizeDocument(file: FileLike): DocumentCategory {
 
   return "outros";
 }
+
+export interface GrupoCategoria<T> {
+  category: DocumentCategory;
+  label: string;
+  files: T[];
+}
+
+/**
+ * Agrupa arquivos por categoria documental (taxonomia §F: "biblioteca processual
+ * refinada"), na ordem canônica CATEGORY_ORDER. Só retorna grupos não-vazios e
+ * preserva a ordem de entrada dentro de cada grupo.
+ */
+export function agruparPorCategoria<T extends FileLike>(files: T[]): GrupoCategoria<T>[] {
+  if (!Array.isArray(files) || files.length === 0) return [];
+  const buckets = new Map<DocumentCategory, T[]>();
+  for (const f of files) {
+    const c = categorizeDocument(f);
+    const arr = buckets.get(c);
+    if (arr) arr.push(f);
+    else buckets.set(c, [f]);
+  }
+  return CATEGORY_ORDER.filter((c) => buckets.has(c)).map((c) => ({
+    category: c,
+    label: CATEGORY_LABEL[c],
+    files: buckets.get(c)!,
+  }));
+}

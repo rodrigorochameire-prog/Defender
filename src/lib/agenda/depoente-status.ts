@@ -70,3 +70,38 @@ export function derivarStatusOitiva(d: any): StatusOitiva {
     certidao,
   };
 }
+
+/** Síntese da prova oral para o "console" do modo Prova oral (spec §D). */
+export interface ResumoProvaOral {
+  total: number;
+  /** Já ouvidos em juízo. */
+  ouvidos: number;
+  /** Ainda a ouvir em juízo (faltaJuizo). */
+  aOuvir: number;
+  /** Entre os a ouvir: com ciência confirmada (intimado). */
+  intimados: number;
+  /** Entre os a ouvir: NÃO intimados — risco de cerceamento. */
+  semCiencia: number;
+}
+
+/**
+ * Agrega o status de oitiva de uma lista de depoentes. Base do console de ação
+ * do modo Prova oral: total, ouvidos, a ouvir e — sinal de cerceamento — quantos
+ * dos pendentes seguem sem ciência (não intimados).
+ */
+export function resumoProvaOral(depoentes: unknown[]): ResumoProvaOral {
+  const r: ResumoProvaOral = { total: 0, ouvidos: 0, aOuvir: 0, intimados: 0, semCiencia: 0 };
+  if (!Array.isArray(depoentes)) return r;
+  r.total = depoentes.length;
+  for (const d of depoentes) {
+    const s = derivarStatusOitiva(d);
+    if (s.ouvidoJuizo) {
+      r.ouvidos++;
+      continue;
+    }
+    r.aOuvir++;
+    if (s.intimado === true) r.intimados++;
+    else if (s.intimado === false) r.semCiencia++;
+  }
+  return r;
+}

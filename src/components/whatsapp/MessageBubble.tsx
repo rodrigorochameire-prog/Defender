@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format } from "date-fns";
 import {
   Check,
@@ -8,10 +8,14 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Mic,
+  Play,
+  Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { audioBarHeights } from "./ds/audio-waveform";
+import { useLongPress } from "./ds/useLongPress";
 import { MessageActionBar } from "./MessageActionBar";
+import { MessageActionSheet } from "./MessageActionSheet";
 import {
   SaveToProcessModal,
   CreateNoteModal,
@@ -147,7 +151,7 @@ function MediaImage({ url }: { url: string }) {
     <img
       src={url}
       alt="Imagem"
-      className="max-w-full rounded-xl mb-1.5 cursor-pointer hover:opacity-95 transition-opacity"
+      className="max-w-full rounded-xl mb-1.5 cursor-pointer hover:opacity-95 transition-opacity border border-black/5 dark:border-white/5"
       loading="lazy"
     />
   );
@@ -182,38 +186,57 @@ function MediaDocument({
   );
 }
 
+const AUDIO_BARS = audioBarHeights(28);
+
 function MediaAudio({ url }: { url: string | null }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) audio.play();
+    else audio.pause();
+  };
+
   return (
     <div className="flex items-center gap-3 py-1.5 px-1 min-w-[240px]">
       <button
+        type="button"
+        aria-label={playing ? "Pausar áudio" : "Reproduzir áudio"}
         className="h-8 w-8 rounded-full flex items-center justify-center shrink-0"
         style={{ backgroundColor: 'var(--wa-unread-badge)' }}
-        onClick={(e) => {
-          e.stopPropagation();
-          const audio = e.currentTarget.parentElement?.querySelector('audio');
-          if (audio) {
-            if (audio.paused) audio.play();
-            else audio.pause();
-          }
-        }}
+        onClick={togglePlay}
       >
-        <Mic className="h-4 w-4 text-white" />
+        {playing ? (
+          <Pause className="h-4 w-4 text-white" />
+        ) : (
+          <Play className="h-4 w-4 text-white translate-x-px" />
+        )}
       </button>
       <div className="flex items-end gap-[2px] h-5 flex-1">
-        {Array.from({ length: 28 }).map((_, i) => (
+        {AUDIO_BARS.map((h, i) => (
           <div
             key={i}
             className="wa-audio-bar"
             style={{
-              height: `${Math.max(3, Math.random() * 16)}px`,
+              height: `${h}px`,
               animationDelay: `${i * 0.05}s`,
-              animationPlayState: 'paused',
+              animationPlayState: playing ? 'running' : 'paused',
             }}
           />
         ))}
       </div>
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio src={url || undefined} className="hidden" />
+      <audio
+        ref={audioRef}
+        src={url || undefined}
+        className="hidden"
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
     </div>
   );
 }
@@ -248,6 +271,31 @@ export function MessageBubble({
   const [showSaveToProcess, setShowSaveToProcess] = useState(false);
   const [showCreateNote, setShowCreateNote] = useState(false);
   const [showSaveToDrive, setShowSaveToDrive] = useState(false);
+  // Mobile: long-press opens the action sheet (touch has no hover toolbar)
+  const [showActionSheet, setShowActionSheet] = useState(false);
+
+  // Shared action handlers — used by both the desktop hover toolbar and the
+  // mobile action sheet, so the two stay in sync.
+  const handleSaveToProcess = () => {
+    if (onSaveToProcess) onSaveToProcess(msg);
+    else setShowSaveToProcess(true);
+  };
+  const handleCreateNote = () => {
+    if (onCreateNote) onCreateNote(msg);
+    else setShowCreateNote(true);
+  };
+  const handleSaveToDrive = () => {
+    if (onSaveToDrive) onSaveToDrive(msg);
+    else setShowSaveToDrive(true);
+  };
+  const handleToggleFavorite = () => onToggleFavorite?.(msg);
+  const handleCopy = () => {
+    if (msg.content) onCopy(msg.content);
+  };
+  const handleReply = () => onReply(msg);
+  const handleShowDetails = () => {};
+
+  const longPress = useLongPress(() => setShowActionSheet(true));
 
   // Parse quoted content ("> " prefix lines)
   const hasQuote = msg.content?.startsWith("> ");
@@ -331,37 +379,20 @@ export function MessageBubble({
           isOutbound ? "flex-row" : "flex-row-reverse",
           isSelected && "ring-2 ring-emerald-500/50 rounded-2xl",
         )}
+        {...(!isSelectionMode ? longPress : {})}
       >
-        {/* Hover action bar — replaces old inline reply/copy buttons */}
+        {/* Hover action bar (desktop) — on touch the long-press sheet replaces it */}
         {!isSelectionMode && (
           <MessageActionBar
             isFavorite={isFavorite}
             hasMedia={hasMedia}
-            onSaveToProcess={() => {
-              if (onSaveToProcess) {
-                onSaveToProcess(msg);
-              } else {
-                setShowSaveToProcess(true);
-              }
-            }}
-            onCreateNote={() => {
-              if (onCreateNote) {
-                onCreateNote(msg);
-              } else {
-                setShowCreateNote(true);
-              }
-            }}
-            onSaveToDrive={() => {
-              if (onSaveToDrive) {
-                onSaveToDrive(msg);
-              } else {
-                setShowSaveToDrive(true);
-              }
-            }}
-            onToggleFavorite={() => onToggleFavorite?.(msg)}
-            onCopy={() => { if (msg.content) onCopy(msg.content); }}
-            onReply={() => onReply(msg)}
-            onShowDetails={() => {}}
+            onSaveToProcess={handleSaveToProcess}
+            onCreateNote={handleCreateNote}
+            onSaveToDrive={handleSaveToDrive}
+            onToggleFavorite={handleToggleFavorite}
+            onCopy={handleCopy}
+            onReply={handleReply}
+            onShowDetails={handleShowDetails}
           />
         )}
 
@@ -459,6 +490,19 @@ export function MessageBubble({
             contactId={contactId ?? 0}
             messageIds={[msg.id]}
             mediaFilename={msg.mediaFilename}
+          />
+          <MessageActionSheet
+            open={showActionSheet}
+            onOpenChange={setShowActionSheet}
+            isFavorite={isFavorite}
+            hasMedia={hasMedia}
+            onSaveToProcess={handleSaveToProcess}
+            onCreateNote={handleCreateNote}
+            onSaveToDrive={handleSaveToDrive}
+            onToggleFavorite={handleToggleFavorite}
+            onCopy={handleCopy}
+            onReply={handleReply}
+            onShowDetails={handleShowDetails}
           />
         </>
       )}

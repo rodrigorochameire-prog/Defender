@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { DocumentosItem, type DriveFileLite } from "./documentos-item";
 import { DropZone } from "./drop-zone";
 import { fileToBase64 } from "@/lib/agenda/file-to-base64";
+import { agruparPorCategoria } from "@/lib/agenda/document-category";
 import { DocumentPreviewDialog } from "@/components/agenda/registro-audiencia/shared/document-preview-dialog";
 import { DocumentCompareModal } from "@/components/drive/DocumentCompareModal";
 import { SectionsViewer } from "@/components/drive/SectionsViewer";
@@ -288,14 +289,17 @@ export function DocumentosBlock({ processoId, assistidoId, onExpandLeft }: Props
             </p>
           )}
           {activeList.length > 0 && (
-            <div className="space-y-1.5">
-              {activeList.map((f) => (
-                <DocumentosItem
-                  key={f.driveFileId}
-                  file={f}
-                  isOpen={openId === f.driveFileId}
-                  onToggle={() => setOpenId(openId === f.driveFileId ? null : f.driveFileId)}
+            // Biblioteca processual (§F): agrupa por taxonomia documental.
+            <div className="space-y-2">
+              {agruparPorCategoria(activeList).map((g) => (
+                <GrupoAutos
+                  key={g.category}
+                  titulo={g.label}
+                  files={g.files}
+                  openId={openId}
+                  setOpenId={setOpenId}
                   onExpand={openExpand}
+                  defaultOpen
                 />
               ))}
             </div>
