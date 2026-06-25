@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -31,8 +31,18 @@ export function IntimacoesImportModal({
   const [until, setUntil] = useState("");
   const [limit, setLimit] = useState(80);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSelecionadas(["VVD_CAMACARI"]);
+      setSince("");
+      setUntil("");
+      setLimit(80);
+    }
+  }, [isOpen]);
+
   const criar = trpc.intimacoes.criarImportJob.useMutation({
     onSuccess: (res) => {
+      toast.success("Importação iniciada com sucesso");
       onClose();
       router.push(`/admin/demandas/importar/${res.taskId}`);
     },

@@ -103,6 +103,7 @@ export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onI
               </button>
             )}
             {onImportIntimacoesPJe && (
+              // NOTE: este componente não é renderizado no view atual; o dropdown ativo é o portal inline em demandas-premium-view.tsx
               <button
                 onClick={handleIntimacoesClick}
                 className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm"
