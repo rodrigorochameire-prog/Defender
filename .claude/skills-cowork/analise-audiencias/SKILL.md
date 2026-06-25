@@ -27,7 +27,7 @@ Esta skill gera análises processuais estruturadas e documentos estratégicos pa
 
 Peças anteriores do Defensor servem como base de conhecimento para gerar análises mais precisas — o estilo argumentativo, as teses utilizadas e a estrutura das peças informam a análise estratégica.
 
-**Caminho base**: `Meu Drive 2/1 - Defensoria 9ª DP/Petições por assunto (DOC)/`
+**Caminho base** (ABSOLUTO): `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/4 - Peças/Petições por assunto (DOC)/`
 
 | Subpasta | Utilidade para Análises |
 |---|---|
@@ -49,18 +49,30 @@ Peças anteriores do Defensor servem como base de conhecimento para gerar análi
 
 ## Pastas de Processos dos Assistidos
 
-Os processos individuais são a fonte primária de dados para gerar as análises. Organizados por atribuição:
+Os processos individuais são a fonte primária de dados para gerar as análises. Organizados por atribuição.
 
-| Atribuição | Caminho da Pasta |
+> **IMPORTANTE — caminhos ABSOLUTOS.** Esta skill roda headless (daemon `claude -p`)
+> com cwd em `~/Defender/Defender`, NÃO na raiz do Drive. Use SEMPRE os caminhos
+> absolutos abaixo. A base do Drive é:
+> `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/`
+> Se esse mount não existir nesta máquina, resolva por glob:
+> `ls -d ~/Library/CloudStorage/GoogleDrive-*/"Meu Drive/1 - Defensoria 9ª DP/3 - Casos"`.
+
+| Atribuição | Caminho ABSOLUTO da Pasta |
 |---|---|
-| Criminal Comum | `Meu Drive 2/1 - Defensoria 9ª DP/Processos/` |
-| Júri | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Júri/` |
-| VVD | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - VVD/` |
-| Execução Penal | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Execução Penal/` |
-| Substituição Criminal | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Substituição criminal/` |
-| Grupo do Júri | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Grupo do juri/` |
+| Criminal Comum | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos/` |
+| Júri | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Júri/` |
+| VVD (Criminal) | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - VVD (Criminal)/` |
+| VVD (MPU) | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - VVD (MPU)/` |
+| Execução Penal | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Execução Penal/` |
+| Substituição Criminal | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Substituição criminal/` |
+| Grupo do Júri | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Grupo do Juri/` |
 
-**Como usar**: Quando o usuário pedir análise de um caso específico, busque o nome do assistido nas pastas de processos. Leia PDFs dos autos, transcrições de depoimentos e documentos. Essa é a matéria-prima factual para a análise estratégica.
+**Como usar**: Quando o usuário pedir análise de um caso específico, liste a pasta da
+atribuição (`ls`) e busque a subpasta/arquivos do assistido pelo NOME ou pelo número do
+processo (CNJ). Leia os PDFs dos autos, transcrições de depoimentos e documentos. Essa é
+a matéria-prima factual para a análise estratégica. Se NÃO encontrar os autos do assistido,
+diga isso explicitamente em vez de inventar (a análise factual depende dos autos reais).
 
 ---
 
