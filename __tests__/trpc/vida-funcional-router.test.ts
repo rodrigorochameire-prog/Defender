@@ -83,6 +83,48 @@ describe("vidaFuncional CRUD + isolamento", { timeout: 30000 }, () => {
     }
   });
 
+  it("estagiário lê (escopo delegado) mas NÃO escreve na vida funcional do supervisor", async () => {
+    const a = await makeDefensor("a-owner");
+    const [e] = await db.insert(users).values({
+      name: "VF Estagiário E",
+      email: `vf-estagiario-${Date.now()}-${Math.random()}@test.local`,
+      role: "estagiario",
+      supervisorId: a.id,
+      workspaceId: 1,
+    } as any).returning();
+    let evId: number | undefined;
+    try {
+      // A (titular) cria evento
+      const ev = await createCaller(mkCtx(a)).vidaFuncional.createEvento({
+        tipo: "FERIAS", titulo: "Férias do titular", dataEvento: "2026-07-01",
+      });
+      evId = ev.id;
+
+      // E pode LER (escopo delegado: estagiário vê supervisor)
+      const fetched = await createCaller(mkCtx(e)).vidaFuncional.getEvento({ id: ev.id });
+      expect(fetched.id).toBe(ev.id);
+      const list = await createCaller(mkCtx(e)).vidaFuncional.listEventos({});
+      expect(list.some((x) => x.id === ev.id)).toBe(true);
+
+      // E NÃO pode ESCREVER (owner-only)
+      await expect(
+        createCaller(mkCtx(e)).vidaFuncional.updateEvento({ id: ev.id, titulo: "hackeado" })
+      ).rejects.toThrow();
+      await expect(
+        createCaller(mkCtx(e)).vidaFuncional.deleteEvento({ id: ev.id })
+      ).rejects.toThrow();
+      await expect(
+        createCaller(mkCtx(e)).vidaFuncional.createEvento({
+          tipo: "FERIAS", titulo: "y", dataEvento: "2026-07-01", defensorId: a.id,
+        })
+      ).rejects.toThrow();
+    } finally {
+      if (evId) await db.delete(vidaFuncionalEventos).where(eq(vidaFuncionalEventos.id, evId));
+      await cleanupUser(e.id); // E primeiro: referencia A via supervisorId
+      await cleanupUser(a.id);
+    }
+  });
+
   it("soft-delete remove da listagem", async () => {
     const a = await makeDefensor("a4");
     try {

@@ -24,9 +24,9 @@ const createInput = z.object({
   tipo: tipoSchema,
   titulo: z.string().min(1).max(500),
   descricao: z.string().optional(),
-  dataEvento: z.string(), // ISO date (YYYY-MM-DD)
-  dataFim: z.string().optional(),
-  prazo: z.string().optional(),
+  dataEvento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)"),
+  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").optional(),
+  prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").optional(),
   status: statusSchema.optional(),
   valorCents: z.number().int().optional(),
   driveFolderId: z.string().max(100).optional(),
@@ -79,14 +79,14 @@ export const vidaFuncionalRouter = router({
       return row;
     }),
 
-  /** Cria um evento. defensorId default = usuário; se informado, deve estar no escopo. */
+  /** Cria um evento. defensorId default = usuário; só o próprio defensor pode criar. */
   createEvento: protectedProcedure
     .input(createInput)
     .mutation(async ({ ctx, input }) => {
-      const scope = getVidaFuncionalScope(ctx.user);
+      // Leitura é delegada (getVidaFuncionalScope); escrita é do titular (defensorId === ctx.user.id).
       const defensorId = input.defensorId ?? ctx.user.id;
-      if (!scope.includes(defensorId)) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Fora do seu escopo de vida funcional" });
+      if (defensorId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só o próprio defensor pode registrar na sua vida funcional" });
       }
       const cluster = tipoToCluster(input.tipo as VfTipo);
       const [created] = await db
@@ -120,12 +120,13 @@ export const vidaFuncionalRouter = router({
       return created;
     }),
 
-  /** Atualiza campos de um evento dentro do escopo. */
+  /** Atualiza campos de um evento. Visibilidade delegada; escrita restrita ao titular. */
   updateEvento: protectedProcedure
     .input(
       z.object({ id: z.number().int() }).and(createInput.partial())
     )
     .mutation(async ({ ctx, input }) => {
+      // Leitura é delegada (getVidaFuncionalScope); escrita é do titular (defensorId === ctx.user.id).
       const scope = getVidaFuncionalScope(ctx.user);
       const { id, defensorId: _ignore, ...patch } = input;
       const [existing] = await db
@@ -135,6 +136,9 @@ export const vidaFuncionalRouter = router({
         .limit(1);
       if (!existing || !scope.includes(existing.defensorId)) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado" });
+      }
+      if (existing.defensorId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só o próprio defensor pode alterar a sua vida funcional" });
       }
       const values: Record<string, unknown> = { ...patch, updatedAt: new Date() };
       if (patch.tipo) values.cluster = tipoToCluster(patch.tipo as VfTipo);
@@ -155,10 +159,11 @@ export const vidaFuncionalRouter = router({
       return updated;
     }),
 
-  /** Soft-delete de um evento dentro do escopo. */
+  /** Soft-delete de um evento. Visibilidade delegada; escrita restrita ao titular. */
   deleteEvento: protectedProcedure
     .input(z.object({ id: z.number().int() }))
     .mutation(async ({ ctx, input }) => {
+      // Leitura é delegada (getVidaFuncionalScope); escrita é do titular (defensorId === ctx.user.id).
       const scope = getVidaFuncionalScope(ctx.user);
       const [existing] = await db
         .select()
@@ -167,6 +172,9 @@ export const vidaFuncionalRouter = router({
         .limit(1);
       if (!existing || !scope.includes(existing.defensorId)) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado" });
+      }
+      if (existing.defensorId !== ctx.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Só o próprio defensor pode alterar a sua vida funcional" });
       }
       await db
         .update(vidaFuncionalEventos)
