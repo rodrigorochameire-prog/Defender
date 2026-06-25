@@ -129,7 +129,7 @@ jobId             text          -- último job que tocou
 
 Badge resultante: `NOVA` (passou A e B) · `JÁ IMPORTADA` (ledger imported) · `DUPLICADA` (ledger dup ou B-exato) · `POSSÍVEL DUP` (B-fuzzy). Só `NOVA` é pré-marcada.
 
-**Subtileza:** nem todo expediente expõe `pjeDocumentoId` limpo no DOM — por isso `contentHash` é a chave única de fallback, para o dedup nunca falhar "aberto".
+**Subtileza:** nem todo expediente expõe `pjeDocumentoId` limpo no DOM — por isso `contentHash` é a chave única de fallback, para o dedup nunca falhar "aberto". O `contentHash` é sempre calculado a partir dos campos normalizados (`processo + pjeDocumentoId + conteudo_normalizado`), inclusive quando `pjeDocumentoId` está ausente (componente nulo/vazio) — só passa a ser usado **como chave única** quando `pjeDocumentoId IS NULL`.
 
 ## 6. Worker de scraping (`pje_intimacoes_import.py`, browser lane)
 
@@ -162,7 +162,7 @@ Modelado em `varredura_triagem.py` (já resolve CDP attach, navegação PJe, esc
   - **Filtros:** mostrar/ocultar duplicadas, filtrar por atribuição.
 - **[Confirmar importação]** → `intimacoes.confirmarImport({ jobId, selectedIds, edits })`:
   1. Monta rows dos itens selecionados (+ edições) e chama `importarDemandas()` → demandas em `5_TRIAGEM` com `importBatchId = jobId`.
-  2. Upsert no ledger para **todo** item staged: selecionado→`imported` (+`demandaId`), desmarcado-conhecido→`skipped`, dups→`duplicate`.
+  2. Upsert no ledger para **todo** item staged: selecionado→`imported` (+`demandaId`); **qualquer item não selecionado** (inclusive uma `NOVA` desmarcada de propósito)→`skipped`, para parar de reaparecer; dups→`duplicate`. (Regra: o que o usuário viu e não importou fica registrado como `skipped` — nunca ressurge como NOVA no próximo scrape.)
   3. Marca job concluído; toast de resultado (`12 importadas, 3 puladas`).
 
 **Após o import:** as novas demandas entram no fluxo normal de triagem — `varredura-triagem` classifica fase/ato como hoje. Esta feature é dona de *trazê-las limpas e sem duplicidade*; a classificação permanece onde já vive.
