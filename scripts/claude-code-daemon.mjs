@@ -80,6 +80,12 @@ const PAID_API_KEYS = [
 function buildMaxOnlyEnv() {
   const e = { ...process.env }
   for (const k of PAID_API_KEYS) delete e[k]
+  // ANTI FORK-BOMB: o daemon roda com OMBUDS_ROLE=daemon e spawna `claude -p` no
+  // PROJECT_DIR, onde o SessionStart hook (.claude/settings.json) dispara
+  // m4-bootstrap. Em modo daemon o bootstrap faria `claude -p "responda apenas: OK"`,
+  // que reabre sessão → re-dispara o hook → recursão infinita. Esta marca diz ao
+  // m4-bootstrap p/ NÃO rodar o probe nos filhos de tarefa. Ver verifyMaxAuth().
+  e.OMBUDS_NO_BOOTSTRAP = '1'
   return e
 }
 
