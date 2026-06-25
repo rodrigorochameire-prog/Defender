@@ -37,7 +37,7 @@
     --accent-foreground: 0 0% 12%;
 
     /* ===== SEMANTIC COLORS ===== */
-    --success: 162 63% 35%;
+    --success: 152 60% 40%; /* Verde de estado (distinto de --primary/marca) */
     --success-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -124,7 +124,7 @@
     --muted-foreground: 0 0% 64%;
     --accent: 162 55% 20%;
     --accent-foreground: 162 60% 88%;
-    --success: 162 70% 50%;
+    --success: 152 55% 48%; /* Verde de estado (distinto de --primary/marca) */
     --success-foreground: 0 0% 8%;
     --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 100%;

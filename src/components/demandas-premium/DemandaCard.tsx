@@ -417,7 +417,7 @@ export function DemandaCard({
                 <span className="inline-flex items-center px-2 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-xs font-bold text-neutral-700 dark:text-neutral-300 flex-shrink-0">
                   {proc.tipo}
                 </span>
-                <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400 truncate flex-1 min-w-0">
+                <p className="text-xs font-mono text-muted-foreground truncate flex-1 min-w-0">
                   {proc.numero}
                 </p>
                 <CopyProcessButton processo={proc.numero} />
@@ -709,7 +709,7 @@ export function DemandaCard({
                 <span className="px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded text-[10px] font-bold text-neutral-600 dark:text-neutral-400 flex-shrink-0">
                   {demanda.processos[0].tipo}
                 </span>
-                <span className="font-mono text-neutral-500 dark:text-neutral-400 truncate">
+                <span className="font-mono text-muted-foreground truncate">
                   {demanda.processos[0].numero}
                 </span>
                 <CopyProcessButton processo={demanda.processos[0].numero} />
