@@ -23,6 +23,11 @@ class TestPureHelpers(unittest.TestCase):
         self.assertEqual(decide_layer_a("DOC1", "h", ledger), "ja_importada")
         self.assertEqual(decide_layer_a(None, "HASH2", ledger), "duplicada")
         self.assertEqual(decide_layer_a("DOCX", "hx", ledger), "nova")
+        # by_hash com decisao "imported" deve retornar "ja_importada" (não "duplicada")
+        self.assertEqual(
+            decide_layer_a(None, "HASH3", {"by_hash": {"HASH3": "imported"}}),
+            "ja_importada",
+        )
 
 
 if __name__ == "__main__":

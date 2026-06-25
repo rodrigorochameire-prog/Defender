@@ -26,6 +26,7 @@ import hashlib
 import os
 import re
 import sys
+from datetime import datetime, timezone
 
 CDP_URL = "http://127.0.0.1:9222"
 PJE_BASE = "https://pje.tjba.jus.br/pje"
@@ -95,14 +96,31 @@ def decide_layer_a(
 # ─── Supabase helpers (usam SupabaseExt criado dentro de run()) ───────────────
 
 def load_ledger_index(sb) -> dict:
-    """Lê pje_intimacoes_ledger e indexa por doc_id e por hash."""
-    rows = sb.select("pje_intimacoes_ledger", "pje_documento_id,content_hash,decisao") or []
+    """Lê TODOS os rows de pje_intimacoes_ledger e indexa por doc_id e por hash.
+
+    PostgREST limita respostas a ~1000 rows por padrão — sem paginação explícita
+    o índice de dedup seria silenciosamente incompleto depois de 1000 entradas,
+    causando reinserção falsa como 'nova' de docs já vistos. Paginamos via
+    limit/offset até receber uma página curta (< PAGE), garantindo cobertura total.
+    """
+    PAGE = 1000
     idx: dict = {"by_doc": {}, "by_hash": {}}
-    for r in rows:
-        if r.get("pje_documento_id"):
-            idx["by_doc"][r["pje_documento_id"]] = r["decisao"]
-        if r.get("content_hash"):
-            idx["by_hash"][r["content_hash"]] = r["decisao"]
+    offset = 0
+    while True:
+        rows = sb._req(
+            "GET",
+            f"/rest/v1/pje_intimacoes_ledger"
+            f"?select=pje_documento_id,content_hash,decisao"
+            f"&limit={PAGE}&offset={offset}",
+        ) or []
+        for r in rows:
+            if r.get("pje_documento_id"):
+                idx["by_doc"][r["pje_documento_id"]] = r["decisao"]
+            if r.get("content_hash"):
+                idx["by_hash"][r["content_hash"]] = r["decisao"]
+        if len(rows) < PAGE:
+            break  # última (ou única) página
+        offset += PAGE
     return idx
 
 
@@ -116,7 +134,7 @@ def _bump_ledger_last_seen(sb, doc_id: str | None, content_hash: str, job_id: in
         if doc_id
         else {"content_hash": "eq.%s" % content_hash}
     )
-    sb.update("pje_intimacoes_ledger", flt, {"last_seen_at": "now()", "job_id": job_id})
+    sb.update("pje_intimacoes_ledger", flt, {"last_seen_at": datetime.now(timezone.utc).isoformat(), "job_id": job_id})
 
 
 # ─── JS constants para navegação DOM ─────────────────────────────────────────
@@ -565,13 +583,20 @@ def main(argv=None) -> None:
 
             env = load_env()
             sb = _SBExt(env["NEXT_PUBLIC_SUPABASE_URL"], env["SUPABASE_SERVICE_ROLE_KEY"])
+            # Se o erro veio do caminho CDP-off / login falhou, a spec exige
+            # que `etapa` seja exatamente essa frase (lida pelo daemon/UI).
+            etapa_falha = (
+                "Abra o PJe logado ou configure credenciais"
+                if "Abra o PJe logado" in str(e)
+                else "Falha na importação"
+            )
             sb.update(
                 "claude_code_tasks",
                 {"id": "eq.%d" % args.job_id},
                 {
                     "status": "failed",
                     "erro": str(e)[:500],
-                    "etapa": "Falha na importação",
+                    "etapa": etapa_falha,
                 },
             )
         except Exception as e2:
