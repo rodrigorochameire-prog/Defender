@@ -60,7 +60,7 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { getOfflineAssistidos } from "@/lib/offline/queries";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 import {
   ATRIBUICAO_OPTIONS,
   getAtribuicaoColors,

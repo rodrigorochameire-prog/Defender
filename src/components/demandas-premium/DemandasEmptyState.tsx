@@ -1,7 +1,7 @@
 "use client";
 
 import { ListTodo, Search, Plus, Archive } from "lucide-react";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 
 interface DemandasEmptyStateProps {
   /** Há filtros ativos? Muda a mensagem e oferece "Limpar filtros". */

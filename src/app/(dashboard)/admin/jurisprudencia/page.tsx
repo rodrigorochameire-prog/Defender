@@ -74,7 +74,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Componentes estruturais
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 
 // ==========================================
 // TIPOS

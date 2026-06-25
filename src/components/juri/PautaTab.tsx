@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PautaImportModal, type SessaoParsed } from "./pauta-parser";
+import { DistribuicaoBar } from "./distribuicao-bar";
 import { normalizeDefensor, parseAuxilio } from "@/lib/juri/normalize-defensor";
 
 // ==========================================
@@ -181,52 +182,26 @@ export default function PautaTab({ ano }: PautaTabProps) {
         </button>
       </div>
 
-      {/* Parity Bar - Compact */}
+      {/* Parity Bar - Compact (extraído para DistribuicaoBar reutilizável) */}
       <div className="mb-3">
-        <div className="flex items-center gap-4 p-3 rounded-xl bg-card border border-border">
-          {/* Rodrigo */}
-          <div className="flex items-center gap-2.5 flex-1">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-white text-xs font-bold">R</div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-foreground">Dr. Rodrigo</span>
-                <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">{totalRodrigo}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${(totalRodrigo / maxCount) * 100}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Balance indicator */}
-          <div className="flex flex-col items-center shrink-0 px-3">
-            <span className={cn(
-              "text-base font-semibold tabular-nums",
-              balance === 0 ? "text-muted-foreground/50" : Math.abs(balance) <= 1 ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400/70"
-            )}>
-              {balance === 0 ? "=" : balance > 0 ? `+${balance}` : balance}
-            </span>
-            <span className="text-[9px] uppercase tracking-wider text-muted-foreground/50">
-              {balance === 0 ? "Paridade" : "Diferença"}
-            </span>
-          </div>
-
-          {/* Juliane */}
-          <div className="flex items-center gap-2.5 flex-1">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold tabular-nums text-violet-600 dark:text-violet-400">{totalJuliane}</span>
-                <span className="text-xs font-semibold text-foreground">Dra. Juliane</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-violet-500 transition-all duration-500 ml-auto" style={{ width: `${(totalJuliane / maxCount) * 100}%` }} />
-              </div>
-            </div>
-            <div className="w-7 h-7 rounded-lg bg-violet-500 flex items-center justify-center text-white text-xs font-bold">J</div>
-          </div>
-
-          {/* Pending — shown in parent page header only */}
-        </div>
+        <DistribuicaoBar
+          entries={[
+            {
+              label: "Dr. Rodrigo",
+              value: totalRodrigo,
+              colorClass: "bg-emerald-500",
+              initial: "R",
+              countClass: "text-emerald-700 dark:text-emerald-400",
+            },
+            {
+              label: "Dra. Juliane",
+              value: totalJuliane,
+              colorClass: "bg-violet-500",
+              initial: "J",
+              countClass: "text-violet-600 dark:text-violet-400",
+            },
+          ]}
+        />
 
         {/* Grupo do Júri (auxílio) — fora da paridade Rodrigo×Juliane */}
         {totalGrupo > 0 && (
