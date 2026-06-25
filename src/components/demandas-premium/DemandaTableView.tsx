@@ -26,6 +26,7 @@ import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
+import { calcularPrazo as calcularPrazoCanonico } from "@/lib/prazo";
 
 // ============================================
 // TIPOS
@@ -77,28 +78,25 @@ interface DemandaTableViewProps {
 // HELPERS
 // ============================================
 
+// Prazo via fonte única (escala de litígio). A faixa 8–30d recebe um tom
+// próprio ("yellow") apenas para apresentação na tabela; tudo o mais segue o
+// mapeamento canônico (red/amber/green/gray).
 function calcularPrazo(prazoStr: string) {
-  if (!prazoStr) return { texto: "", cor: "none", dias: null };
-
-  try {
-    const [dia, mes, ano] = prazoStr.split("/").map(Number);
-    const prazo = new Date(2000 + ano, mes - 1, dia);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    prazo.setHours(0, 0, 0, 0);
-
-    const diffTime = prazo.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return { texto: `${Math.abs(diffDays)}d atrás`, cor: "red", dias: diffDays };
-    if (diffDays === 0) return { texto: "Hoje", cor: "red", dias: 0 };
-    if (diffDays === 1) return { texto: "Amanhã", cor: "amber", dias: 1 };
-    if (diffDays <= 7) return { texto: `${diffDays}d`, cor: "amber", dias: diffDays };
-    if (diffDays <= 30) return { texto: `${diffDays}d`, cor: "yellow", dias: diffDays };
-    return { texto: prazoStr, cor: "gray", dias: diffDays };
-  } catch {
-    return { texto: prazoStr, cor: "gray", dias: null };
-  }
+  const sev = calcularPrazoCanonico(prazoStr);
+  if (!sev) return { texto: prazoStr || "", cor: prazoStr ? "gray" : "none", dias: null };
+  const { dias, cor } = sev;
+  let texto: string;
+  if (dias < 0) texto = `${Math.abs(dias)}d atrás`;
+  else if (dias === 0) texto = "Hoje";
+  else if (dias === 1) texto = "Amanhã";
+  else if (dias > 30) texto = prazoStr;
+  else texto = `${dias}d`;
+  // Refino de apresentação na tabela: 4–7d (green canônico) mantém-se "amber"
+  // (próximo do prazo); 8–30d (gray canônico) vira "yellow".
+  let corTabela = cor;
+  if (cor === "green") corTabela = "amber";
+  else if (cor === "gray" && dias <= 30) corTabela = "yellow";
+  return { texto, cor: corTabela, dias };
 }
 
 function formatarData(dataStr: string) {

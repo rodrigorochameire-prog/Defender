@@ -73,6 +73,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { format, differenceInDays, parseISO, addDays } from "date-fns";
+import { prazoSeveridade, ESCALA_MPU } from "@/lib/prazo";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -235,6 +236,9 @@ export default function MonitoramentoMPUPage() {
         </Badge>
       );
     }
+    // Escala de monitoramento de MPU (≤7 crítico, ≤30 alerta, 31+ tranquilo).
+    // Severidade da fonte única; vencido tem texto/ícone próprios (Reanálise).
+    const cor = prazoSeveridade(diasRestantes, ESCALA_MPU).cor;
     if (diasRestantes < 0) {
       return (
         <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">
@@ -243,7 +247,7 @@ export default function MonitoramentoMPUPage() {
         </Badge>
       );
     }
-    if (diasRestantes <= 7) {
+    if (cor === "red") {
       return (
         <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400 animate-pulse">
           <AlertTriangle className="w-3 h-3 mr-1" />
@@ -251,7 +255,7 @@ export default function MonitoramentoMPUPage() {
         </Badge>
       );
     }
-    if (diasRestantes <= 30) {
+    if (cor === "amber") {
       return (
         <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">
           <Clock className="w-3 h-3 mr-1" />
