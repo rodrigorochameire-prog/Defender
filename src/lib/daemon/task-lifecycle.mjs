@@ -10,9 +10,12 @@
 
 /**
  * Tarefa presa em `processing` por mais que isto é tratada como zumbi.
- * 15 min dá folga sobre o timeout de 10 min do `claude` CLI (ver runClaude).
+ * DEVE ser MAIOR que o timeout por tarefa do daemon (DAEMON_TASK_TIMEOUT_MS,
+ * default 30 min em runClaude) — senão o reaper periódico (a cada 5 min) mataria
+ * uma análise legítima ainda em andamento. 35 min dá folga sobre os 30 min.
+ * Se você aumentar DAEMON_TASK_TIMEOUT_MS além de 35 min, aumente isto também.
  */
-export const ZOMBIE_TIMEOUT_MS = 15 * 60 * 1000;
+export const ZOMBIE_TIMEOUT_MS = 35 * 60 * 1000;
 
 /**
  * @typedef {Object} TaskLifecycleRow

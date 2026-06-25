@@ -33,13 +33,13 @@ describe("isZombie", () => {
   });
 
   it("processing além do timeout é zumbi", () => {
-    const task = { id: 3, status: "processing", startedAt: minsAgo(20) };
+    const task = { id: 3, status: "processing", startedAt: minsAgo(40) };
     expect(isZombie(task, NOW)).toBe(true);
   });
 
   it("usa createdAt como fallback quando startedAt é nulo", () => {
     const recente = { id: 4, status: "processing", startedAt: null, createdAt: minsAgo(5) };
-    const antiga = { id: 5, status: "processing", startedAt: null, createdAt: minsAgo(20) };
+    const antiga = { id: 5, status: "processing", startedAt: null, createdAt: minsAgo(40) };
     expect(isZombie(recente, NOW)).toBe(false);
     expect(isZombie(antiga, NOW)).toBe(true);
   });
@@ -70,8 +70,8 @@ describe("activeBlockers / selectZombieIds", () => {
   const tasks = [
     { id: 1, status: "pending", createdAt: minsAgo(2) }, // bloqueia (na fila)
     { id: 2, status: "processing", startedAt: minsAgo(5) }, // bloqueia (vivo)
-    { id: 3, status: "processing", startedAt: minsAgo(30) }, // zumbi
-    { id: 4, status: "processing", startedAt: null, createdAt: minsAgo(40) }, // zumbi (fallback)
+    { id: 3, status: "processing", startedAt: minsAgo(40) }, // zumbi (> 35 min)
+    { id: 4, status: "processing", startedAt: null, createdAt: minsAgo(50) }, // zumbi (fallback)
   ];
 
   it("activeBlockers retorna só os que ainda bloqueiam", () => {
