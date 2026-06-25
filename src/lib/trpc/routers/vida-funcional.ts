@@ -150,7 +150,7 @@ export const vidaFuncionalRouter = router({
         entityType: "vida_funcional_evento",
         entityId: id,
         action: "update",
-        changes: diffFields(existing as any, updated as any, ["titulo", "status", "prazo", "tipo"]),
+        changes: diffFields(existing as any, updated as any, ["titulo", "status", "prazo", "tipo"]) ?? undefined,
       });
       return updated;
     }),
