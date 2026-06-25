@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { StatusChip } from "./StatusChip";
+import { DemandasEmptyState } from "./DemandasEmptyState";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
@@ -577,6 +578,8 @@ export function DemandaTableView({
   isSelectMode,
   selectedIds,
   onToggleSelect,
+  hasActiveFilters,
+  onClearFilters,
 }: DemandaTableViewProps) {
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden">
@@ -633,10 +636,7 @@ export function DemandaTableView({
 
       {/* Empty State */}
       {demandas.length === 0 && (
-        <div className="py-16 text-center text-neutral-400 dark:text-neutral-500">
-          <p className="text-sm font-medium">Nenhuma demanda encontrada</p>
-          <p className="text-xs mt-1">Ajuste os filtros ou crie uma nova demanda</p>
-        </div>
+        <DemandasEmptyState hasActiveFilters={hasActiveFilters} onClearFilters={onClearFilters} />
       )}
 
       {/* Footer */}

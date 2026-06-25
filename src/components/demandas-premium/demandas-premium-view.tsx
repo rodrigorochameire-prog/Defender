@@ -3370,6 +3370,8 @@ export default function Demandas() {
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
                   demandas={demandasOrdenadas}
+                  hasActiveFilters={activeFilterChips.length > 0}
+                  onClearFilters={handleClearAllFilters}
                   atribuicaoIcons={atribuicaoIcons}
                   atribuicaoColors={atribuicaoColors}
                   onStatusChange={handleStatusChange}
@@ -3439,6 +3441,8 @@ export default function Demandas() {
                 /* ========== MODO COMPACTO - PLANILHA EDITÁVEL ========== */
                 <DemandaCompactView
                   demandas={demandasOrdenadas}
+                  hasActiveFilters={activeFilterChips.length > 0}
+                  onClearFilters={handleClearAllFilters}
                   atribuicaoIcons={atribuicaoIcons}
                   atribuicaoColors={ATRIBUICAO_BORDER_COLORS}
                   onStatusChange={handleStatusChange}
