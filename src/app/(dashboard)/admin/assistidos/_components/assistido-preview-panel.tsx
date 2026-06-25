@@ -214,7 +214,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               />
             </div>
             <span className="text-[10px] text-neutral-400 tabular-nums font-medium">
-              Cadastro {comp.pct}%
+              Ficha {comp.pct}%
             </span>
           </div>
           {comp.faltam.length > 0 && (
