@@ -49,9 +49,10 @@ Esse conhecimento já existe, mas vive disperso em pastas do Google Drive (`1 - 
 
 ### 3.2 Privacidade e escopo
 
-**Modelo de acesso — fonte única da verdade desta spec.** Vida Funcional é **privada ao defensor**. O escopo de leitura/escrita é `{ o próprio defensor }` mais, quando aplicável, o defensor ao qual um estagiário/servidor está **vinculado** (delegação de apoio: estagiário vê o do `supervisorId`; servidor, os de `defensoresVinculados`). **Diferente das demandas, `admin` NÃO recebe visão cross-defensor** da vida funcional — não há god-view, dado o caráter sensível dos dados. Em nenhum papel há visão agregada institucional.
+**Modelo de acesso — fonte única da verdade desta spec.** Vida Funcional é **privada ao defensor**. O escopo de **leitura** é `{ o próprio defensor }` mais, quando aplicável, o defensor ao qual um estagiário/servidor está **vinculado** (delegação de apoio à leitura: estagiário vê o do `supervisorId`; servidor, os de `defensoresVinculados`). A **escrita (criar/editar/excluir) é exclusiva do defensor titular** — `defensorId === ctx.user.id`: estagiário/servidor podem **ver**, mas não mutar a vida funcional alheia. **Diferente das demandas, `admin` NÃO recebe visão cross-defensor** da vida funcional — não há god-view, dado o caráter sensível dos dados. Em nenhum papel há visão agregada institucional.
 
-- Implementação: um helper dedicado `getVidaFuncionalScope(user)` (derivado de `defensor-scope.ts`, **sem** o ramo `admin → "all"`), aplicado em **todas** as procedures do router.
+- Implementação: um helper dedicado `getVidaFuncionalScope(user)` (derivado de `defensor-scope.ts`, **sem** o ramo `admin → "all"`) governa a **leitura** em todas as procedures. As **mutações** (`createEvento`/`updateEvento`/`deleteEvento`) checam primeiro a visibilidade de leitura (`NOT_FOUND` se fora do escopo) e depois a **titularidade** (`FORBIDDEN` se visível mas `defensorId !== ctx.user.id`).
+- Validação: campos de data (`dataEvento`/`dataFim`/`prazo`) são restritos a ISO `AAAA-MM-DD` no input Zod (evita 500 do banco).
 - Mutações bloqueadas em modo "view-as-peer" pelo middleware `blockWhenViewingAsPeerCheck` (`src/lib/trpc/middlewares/block-when-viewing-as-peer.ts`).
 
 ### 3.3 Modelo de dados — tabela polimórfica
