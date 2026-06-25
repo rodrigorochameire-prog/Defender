@@ -86,6 +86,11 @@ function buildMaxOnlyEnv() {
 // Ambiente saneado usado em TODO spawn de `claude` (sem chaves pagas).
 const CHILD_ENV = buildMaxOnlyEnv()
 
+// Timeout por tarefa. A análise de autos completos (ler PDFs + gerar relatório)
+// frequentemente passa de 10min — o default antigo (600s) matava o `claude -p`
+// com SIGTERM (exit 143) na última etapa. 30min cobre o caso real; configurável.
+const TASK_TIMEOUT_MS = Number(ENV.DAEMON_TASK_TIMEOUT_MS || process.env.DAEMON_TASK_TIMEOUT_MS || 1_800_000)
+
 // Fail-closed contra cobrança: avisa (e, em modo estrito, recusa iniciar) se
 // houver chave paga no ambiente. As chaves são sempre removidas do filho — o
 // aviso existe para você limpá-las na raiz (.env/shell).
@@ -203,7 +208,7 @@ function runClaude(skillPath, prompt) {
       cwd: PROJECT_DIR,
       env: CHILD_ENV, // sem chaves pagas → claude usa a conta Max
       maxBuffer: 10 * 1024 * 1024,
-      timeout: 600_000,
+      timeout: TASK_TIMEOUT_MS,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     activeChild = child
