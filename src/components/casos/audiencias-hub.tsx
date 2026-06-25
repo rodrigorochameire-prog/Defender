@@ -69,6 +69,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toTitleCasePtBr } from "@/lib/format/title-case";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc/client";
 import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { PrisonerIndicator, StatusPrisionalDot } from "@/components/shared/prisoner-indicator";
 import { format, isToday, isTomorrow, isPast, differenceInDays, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
@@ -778,6 +779,19 @@ function AudienciaSidePeek({
   const [anotacoes, setAnotacoes] = useState(audiencia?.anotacoes || "");
   const [isSaving, setIsSaving] = useState(false);
 
+  // "Preparar com IA": enfileira a preparação real da audiência pelo daemon
+  // (skill roteada por atribuição), em vez do antigo stub "Em breve".
+  const prepararMutation = trpc.audiencias.prepararAudiencia.useMutation({
+    onSuccess: (r) => {
+      const queued = (r as { jobQueued?: unknown })?.jobQueued;
+      toast.success(
+        queued ? "Preparação enfileirada — o daemon vai analisar" : "Audiência preparada",
+        { description: "Acompanhe o progresso no histórico de IA / em /admin/daemon." },
+      );
+    },
+    onError: (e) => toast.error(`Não deu para preparar: ${e.message}`),
+  });
+
   if (!audiencia) return null;
 
   const tipoConfig = TIPOS_AUDIENCIA[audiencia.tipo as keyof typeof TIPOS_AUDIENCIA] || TIPOS_AUDIENCIA.OUTRA;
@@ -967,13 +981,12 @@ function AudienciaSidePeek({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-purple-200 text-purple-600 hover:bg-purple-50"
-                onClick={() => {
-                  toast.info("Em breve: preparação de audiência com IA");
-                }}
+                disabled={prepararMutation.isPending}
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 disabled:opacity-50"
+                onClick={() => prepararMutation.mutate({ audienciaId: audiencia.id })}
               >
                 <Brain className="w-4 h-4 mr-1" />
-                Preparar com IA
+                {prepararMutation.isPending ? "Preparando…" : "Preparar com IA"}
               </Button>
             </div>
           </div>
