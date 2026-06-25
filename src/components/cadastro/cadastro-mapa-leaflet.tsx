@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
@@ -36,24 +37,38 @@ interface MarkerCluster {
   getAllChildMarkers: () => L.Marker[];
 }
 
-// ─── Color system — pastel fill + dark border (mirrors radar palette) ──────
-const ATRIBUICAO_FILLS: Record<string, string> = {
-  JURI_CAMACARI:    "#4ade80",  // green-400
-  GRUPO_JURI:       "#86efac",  // green-300
-  VVD_CAMACARI:     "#fbbf24",  // amber-400
-  EXECUCAO_PENAL:   "#60a5fa",  // blue-400
-  SUBSTITUICAO:     "#fb923c",  // orange-400
-  SUBSTITUICAO_CIVEL: "#a78bfa", // violet-400
-};
+// ─── Color system — pastel fill (registry) + dark border derivada ──────────
+// A cor de atribuição vem do registry central (F1): getAtribuicaoHex.
+// A borda é o MESMO matiz escurecido (stroke do marcador), derivado em runtime —
+// não há mais paleta de atribuição local nem hexes divergentes.
+// Chaves de atribuição conhecidas neste mapa. Fora delas, cai no neutro local.
+const KNOWN_ATRIB_KEYS = new Set([
+  "JURI_CAMACARI",
+  "GRUPO_JURI",
+  "VVD_CAMACARI",
+  "EXECUCAO_PENAL",
+  "SUBSTITUICAO",
+  "SUBSTITUICAO_CIVEL",
+]);
 
-const ATRIBUICAO_BORDERS: Record<string, string> = {
-  JURI_CAMACARI:    "#166534",  // green-800
-  GRUPO_JURI:       "#166534",  // green-800
-  VVD_CAMACARI:     "#78350f",  // amber-900
-  EXECUCAO_PENAL:   "#1e3a8a",  // blue-900
-  SUBSTITUICAO:     "#7c2d12",  // orange-900
-  SUBSTITUICAO_CIVEL: "#4c1d95", // violet-900
-};
+function fillFor(key: string): string {
+  return KNOWN_ATRIB_KEYS.has(key) ? getAtribuicaoHex(key) : FALLBACK_FILL;
+}
+
+/** Escurece um hex multiplicando cada canal por `factor` (0–1). */
+function darkenHex(hex: string, factor = 0.45): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const r = Math.round(((n >> 16) & 0xff) * factor);
+  const g = Math.round(((n >> 8) & 0xff) * factor);
+  const b = Math.round((n & 0xff) * factor);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
+function borderFor(key: string): string {
+  return KNOWN_ATRIB_KEYS.has(key) ? darkenHex(fillFor(key)) : FALLBACK_BORDER;
+}
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Tribunal do Júri",
@@ -147,8 +162,8 @@ function createMarkerIcon(
   atribuicao: string,
   createdAt?: Date | string | null
 ): L.DivIcon {
-  const fill   = ATRIBUICAO_FILLS[atribuicao]   || FALLBACK_FILL;
-  const border = ATRIBUICAO_BORDERS[atribuicao] || FALLBACK_BORDER;
+  const fill   = fillFor(atribuicao);
+  const border = borderFor(atribuicao);
 
   // ── JÚRI: círculo fill pastel + borda escura + anel externo + pulse ──
   if (JURY_ATRIBUICOES.has(atribuicao)) {
@@ -208,7 +223,7 @@ function createMarkerIcon(
 
 // ─── Focused marker icon (colored fill + double pulsing rings) ────────────
 function createFocusedMarkerIcon(atribuicao: string): L.DivIcon {
-  const fill = ATRIBUICAO_FILLS[atribuicao] || FALLBACK_FILL;
+  const fill = fillFor(atribuicao);
   const isDiamond = DIAMOND_ATRIBUICOES.has(atribuicao);
   const dotSize = 20;
   const wrapSize = 56;
@@ -270,7 +285,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
 
   // Single type → solid donut
   if (types.length === 1) {
-    const fill = ATRIBUICAO_FILLS[types[0]] || FALLBACK_FILL;
+    const fill = fillFor(types[0]);
     return L.divIcon({
       html: `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="${filterId}"><feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-opacity="0.12"/></filter></defs>
@@ -291,7 +306,7 @@ function createDonutIcon(cluster: MarkerCluster): L.DivIcon {
   for (const [atrib, typeCount] of Object.entries(atribCounts)) {
     const sliceDeg = (typeCount / count) * 360;
     const endAngle = currentAngle + sliceDeg;
-    const fill = ATRIBUICAO_FILLS[atrib] || FALLBACK_FILL;
+    const fill = fillFor(atrib);
     paths.push(`<path d="${arcPath(cx, cx, r, currentAngle, endAngle)}" fill="${fill}"/>`);
     currentAngle = endAngle;
   }
@@ -324,8 +339,8 @@ function buildLegendHTML(): string {
       ? `<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#a3a3a3;margin-bottom:4px;margin-top:2px;">${label}</div>`
       : "";
     const items = keys.map((k) => {
-      const fill   = ATRIBUICAO_FILLS[k]   || FALLBACK_FILL;
-      const border = ATRIBUICAO_BORDERS[k] || FALLBACK_BORDER;
+      const fill   = fillFor(k);
+      const border = borderFor(k);
       const isVVD  = DIAMOND_ATRIBUICOES.has(k);
       const isJury = JURY_ATRIBUICOES.has(k);
       let dot: string;
@@ -653,8 +668,8 @@ export default function CadastroMapaLeaflet({ processos, showProcessos, showHeat
 
       const atribuicaoKey   = point.atribuicao ?? "";
       const atribuicaoLabel = ATRIBUICAO_LABELS[atribuicaoKey] || atribuicaoKey || "Sem atribuição";
-      const fill            = ATRIBUICAO_FILLS[atribuicaoKey]  || FALLBACK_FILL;
-      const border          = ATRIBUICAO_BORDERS[atribuicaoKey] || FALLBACK_BORDER;
+      const fill            = fillFor(atribuicaoKey);
+      const border          = borderFor(atribuicaoKey);
 
       const icon = createMarkerIcon(atribuicaoKey, point.createdAt);
       const marker = L.marker([lat, lng], { icon, atribuicao: atribuicaoKey } as MarkerOptionsWithAtribuicao);

@@ -77,6 +77,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
@@ -216,16 +217,21 @@ const atribuicaoColors: Record<string, string> = {
 };
 
 // Cores HEX para bordas de atribuição (usadas nos cards)
-const ATRIBUICAO_BORDER_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#22c55e",        // Verde
-  "Grupo Especial do Júri": "#f97316",  // Laranja
-  "Violência Doméstica": "#f59e0b",     // Âmbar/Amarelo
-  "Execução Penal": "#3b82f6",          // Azul
-  "Substituição Criminal": "#8b5cf6",   // Roxo
-  "Curadoria Especial": "#71717a",      // Cinza
-  "Mutirão (TJBA Protege)": "#a855f7",  // Violeta
-  MUTIRAO_PROTEGE: "#a855f7",           // Violeta
-};
+// Cor de borda de atribuição — derivada do registry central (F1).
+// Mantém o shape `Record<label, hex>` consumido aqui e por <DemandaCompactView>,
+// mas a cor vem de getAtribuicaoHex (fonte única), sem hexes divergentes locais.
+const ATRIBUICAO_BORDER_COLORS: Record<string, string> = Object.fromEntries(
+  [
+    "Tribunal do Júri",
+    "Grupo Especial do Júri",
+    "Violência Doméstica",
+    "Execução Penal",
+    "Substituição Criminal",
+    "Curadoria Especial",
+    "Mutirão (TJBA Protege)",
+    "MUTIRAO_PROTEGE",
+  ].map((k) => [k, getAtribuicaoHex(k)]),
+);
 
 // Background suave para atribuição
 const ATRIBUICAO_BG_COLORS: Record<string, string> = {

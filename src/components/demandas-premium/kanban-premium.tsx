@@ -55,7 +55,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ATRIBUICAO_COLORS } from "./AtribuicaoPills";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import { EventLine, type EventoLine } from "@/components/demanda-eventos/event-line";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
@@ -735,7 +735,7 @@ function KanbanCard({
             <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0" />
           )}
           {showAtribBadge && demanda.atribuicao && (() => {
-            const atribColor = ATRIBUICAO_COLORS[demanda.atribuicao as string] || "#71717a";
+            const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";
             return (
               <span
                 className="text-[7px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shrink-0"

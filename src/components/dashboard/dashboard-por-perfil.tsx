@@ -40,6 +40,22 @@ import {
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { format, parseISO, isToday, isTomorrow, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { prazoSeveridade, type PrazoCor } from "@/lib/prazo";
+
+// Severidade (cor canônica do módulo de prazo) → classes Tailwind locais.
+// A escada de dias→cor NÃO vive aqui: vem de prazoSeveridade (F2).
+const PRAZO_DOT_CLASS: Record<PrazoCor, string> = {
+  red: "bg-rose-500",
+  amber: "bg-amber-500",
+  green: "bg-neutral-400",
+  gray: "bg-neutral-400",
+};
+const PRAZO_BADGE_CLASS: Record<PrazoCor, string> = {
+  red: "bg-rose-100 text-rose-600",
+  amber: "bg-amber-100 text-amber-600",
+  green: "bg-neutral-100 text-neutral-500",
+  gray: "bg-neutral-100 text-neutral-500",
+};
 
 // ============================================
 // TIPOS
@@ -801,26 +817,19 @@ function DashboardDefensorCriminal({
               .map((demanda: any) => {
                 const prazo = new Date(demanda.prazoFinal || demanda.prazo);
                 const diasRestantes = differenceInDays(prazo, new Date());
-                
+                const sevCor = prazoSeveridade(diasRestantes).cor;
+
                 return (
                   <Link href={`/admin/demandas/${demanda.id}`} key={demanda.id}>
                     <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-muted/50 transition-colors">
-                      <div className={`w-2 h-2 rounded-full ${
-                        diasRestantes <= 0 ? "bg-rose-500" :
-                        diasRestantes <= 3 ? "bg-amber-500" :
-                        "bg-neutral-400"
-                      }`} />
+                      <div className={`w-2 h-2 rounded-full ${PRAZO_DOT_CLASS[sevCor]}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-neutral-800 dark:text-foreground truncate">
                           {demanda.assistido?.nome || demanda.assistidoNome || "Sem assistido"}
                         </p>
                         <p className="text-[11px] text-neutral-400 truncate">{demanda.ato}</p>
                       </div>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                        diasRestantes <= 0 ? "bg-rose-100 text-rose-600" :
-                        diasRestantes <= 3 ? "bg-amber-100 text-amber-600" :
-                        "bg-neutral-100 text-neutral-500"
-                      }`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded ${PRAZO_BADGE_CLASS[sevCor]}`}>
                         {diasRestantes <= 0 ? "Vencido" :
                          diasRestantes === 1 ? "Amanhã" :
                          format(prazo, "dd/MM")}

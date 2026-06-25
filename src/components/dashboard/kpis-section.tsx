@@ -44,6 +44,7 @@ import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { useDefensor } from "@/contexts/defensor-context";
 import { cn } from "@/lib/utils";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 
 // ---------------------------------------------------------------------------
 // Design tokens LOCAIS — harmônicos com page header (mesma família neutral)
@@ -87,15 +88,12 @@ const ATRIB_LABEL: Record<string, string> = {
   SEM_PROCESSO: "Sem processo",
 };
 
-const ATRIB_COLOR: Record<string, string> = {
-  JURI_CAMACARI: "#10b981",
-  GRUPO_JURI: "#059669",
-  VVD_CAMACARI: "#f59e0b",
-  EXECUCAO_PENAL: "#0ea5e9",
-  SUBSTITUICAO: "#a1a1aa",
-  SUBSTITUICAO_CIVEL: "#71717a",
-  SEM_PROCESSO: "#52525b",
-};
+// Cor de atribuição vem do registry central (F1). `SEM_PROCESSO` não é
+// atribuição — cai no neutro explícito.
+function atribHex(key: string): string {
+  if (key === "SEM_PROCESSO") return "#52525b";
+  return getAtribuicaoHex(key);
+}
 
 const STATUS_LABEL: Record<string, string> = {
   "2_ATENDER": "Atender",
@@ -903,7 +901,7 @@ export function KpisSection({ onClose }: { onClose?: () => void }) {
                       </span>
                       <span
                         className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider text-white shrink-0"
-                        style={{ backgroundColor: ATRIB_COLOR[p.atribuicao] ?? "#52525b" }}
+                        style={{ backgroundColor: atribHex(p.atribuicao) }}
                       >
                         {ATRIB_LABEL[p.atribuicao] ?? p.atribuicao}
                       </span>
