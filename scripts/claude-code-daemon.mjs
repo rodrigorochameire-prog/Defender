@@ -21,6 +21,7 @@ import { resolve, dirname, join } from 'path'
 import { tmpdir } from 'os'
 import { fileURLToPath } from 'url'
 import { selectZombieIds, ZOMBIE_TIMEOUT_MS } from '../src/lib/daemon/task-lifecycle.mjs'
+import { resolveModel } from '../src/lib/daemon/model-routing.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_DIR = resolve(__dirname, '..')
@@ -231,7 +232,7 @@ function releaseSlot() {
 const activeChildren = new Set()
 
 // --- Spawn claude -p and return { code, stdout, stderr } ---
-async function runClaude(skillPath, prompt) {
+async function runClaude(skillPath, prompt, model) {
   await acquireSlot()
   try {
     return await new Promise((resolvePromise) => {
@@ -244,11 +245,15 @@ async function runClaude(skillPath, prompt) {
       // --exclude-dynamic-system-prompt-sections: tira as seções voláteis (cwd, env,
       //   git status) do system prompt → prefixo estável → melhor cache de prompt
       //   entre invocações da mesma skill (TTL ~5 min no servidor da Anthropic).
+      // --model (opt-in por skill, resolveModel): roteia skills simples p/ haiku
+      // (mais rápido) e mantém as complexas em opus. Sem mapeamento → sem flag →
+      // default da conta Max. Sempre conta Max (firewall remove chaves pagas).
       const args = [
         '-p',
         '--system-prompt-file', skillPath,
         '--strict-mcp-config',
         '--exclude-dynamic-system-prompt-sections',
+        ...(model ? ['--model', model] : []),
         '--permission-mode', 'bypassPermissions',
         prompt,
       ]
@@ -368,7 +373,7 @@ async function processTask(task) {
 
   try {
     // --- Attempt 1 ---
-    let result = await runClaude(skillPath, basePrompt)
+    let result = await runClaude(skillPath, basePrompt, resolveModel(skillDir))
 
     if (result.code !== 0) {
       // stderr costuma estar vazio em falha do `claude -p` — anexa a cauda do
@@ -404,7 +409,7 @@ IMPORTANTE — RETRY: A resposta anterior não pôde ser parseada como JSON (${p
 Retorne EXCLUSIVAMENTE um objeto JSON válido, sem blocos \`\`\`json, sem texto antes ou depois, sem comentários.
 A primeira caractere da resposta deve ser { e o último deve ser }.`
 
-      result = await runClaude(skillPath, retryPrompt)
+      result = await runClaude(skillPath, retryPrompt, resolveModel(skillDir))
 
       if (result.code !== 0) {
         const errorMsg =

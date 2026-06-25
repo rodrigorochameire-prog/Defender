@@ -28,6 +28,15 @@ import { resolve, join } from "node:path";
 const ARGS = new Set(process.argv.slice(2));
 const FIX = ARGS.has("--fix");
 const SESSION = ARGS.has("--session");
+
+// ANTI FORK-BOMB (defesa máxima): o daemon spawna `claude -p` no PROJECT_DIR com
+// OMBUDS_NO_BOOTSTRAP=1; esse claude re-dispara o SessionStart hook → este script.
+// Se reentrarmos com a marca, saímos IMEDIATAMENTE — zero probe, zero trabalho de
+// bootstrap nos filhos de tarefa do daemon (corta a recursão na raiz e o overhead
+// por-tarefa). O guard em verifyMaxAuth permanece como segunda linha de defesa.
+if (process.env.OMBUDS_NO_BOOTSTRAP === "1") {
+  process.exit(0);
+}
 const REPO = resolve(process.cwd());
 const HOME = homedir();
 const MARKER = join(HOME, ".ombuds-daemon-host");
