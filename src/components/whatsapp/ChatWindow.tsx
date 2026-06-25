@@ -50,6 +50,7 @@ import {
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatTelefone as formatPhone } from "@/lib/format/apresentacao";
 import { TemplatePickerPopover } from "./TemplatePickerPopover";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { SelectionActionModals } from "./SelectionActionModals";
@@ -596,17 +597,6 @@ export function ChatWindow({
   );
 
   // -- Helpers --------------------------------------------------------------
-
-  const formatPhone = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, "");
-    if (cleaned.length === 13) {
-      return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
-    }
-    if (cleaned.length === 12) {
-      return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
-    }
-    return phone;
-  };
 
   const getContactDisplayName = (c: Contact) =>
     c.name || c.pushName || formatPhone(c.phone);

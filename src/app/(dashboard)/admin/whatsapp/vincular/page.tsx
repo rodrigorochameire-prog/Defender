@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
+import { formatTelefone as formatPhone } from "@/lib/format/apresentacao";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,18 +38,6 @@ import { cn } from "@/lib/utils";
 // ==========================================
 // HELPERS
 // ==========================================
-
-function formatPhone(phone: string): string {
-  if (!phone) return "";
-  const cleaned = phone.replace(/\D/g, "");
-  if (cleaned.length === 13) {
-    return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 9)}-${cleaned.slice(9)}`;
-  }
-  if (cleaned.length === 12) {
-    return `(${cleaned.slice(2, 4)}) ${cleaned.slice(4, 8)}-${cleaned.slice(8)}`;
-  }
-  return phone;
-}
 
 function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "");
