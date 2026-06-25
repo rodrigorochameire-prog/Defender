@@ -9,9 +9,9 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
-import { claudeCodeTasks, casos } from "@/lib/db/schema/casos";
+import { claudeCodeTasks, casos, analisesCowork } from "@/lib/db/schema/casos";
 import { processos, assistidos } from "@/lib/db/schema/core";
-import { eq, and, or, isNull, inArray } from "drizzle-orm";
+import { eq, and, or, isNull, inArray, desc } from "drizzle-orm";
 import { activeBlockers } from "@/lib/daemon/task-lifecycle.mjs";
 
 // ==========================================
@@ -336,5 +336,29 @@ export const analiseRouter = router({
       }
 
       return processo;
+    }),
+
+  /**
+   * getAnaliseCoworkDoProcesso — Retorna a analise estruturada (analises_cowork)
+   * mais recente de um processo, escrita pelo back-office (_analise_ia.json).
+   *
+   * Diferente de getAnaliseDoProcesso (que le processos.analysisData, JSONB de
+   * scan/acordao), esta le a tabela dedicada com campos estruturados
+   * (resumoFato, teseDefesa, estrategiaAtual, crimePrincipal, pontosCriticos).
+   *
+   * Retorna `null` quando o processo ainda nao tem analise importada — a
+   * ausencia e estado normal (o cockpit cai no fallback / empty state), nao erro.
+   */
+  getAnaliseCoworkDoProcesso: protectedProcedure
+    .input(z.object({ processoId: z.number() }))
+    .query(async ({ input }) => {
+      const [analise] = await db
+        .select()
+        .from(analisesCowork)
+        .where(eq(analisesCowork.processoId, input.processoId))
+        .orderBy(desc(analisesCowork.importadoEm))
+        .limit(1);
+
+      return analise ?? null;
     }),
 });
