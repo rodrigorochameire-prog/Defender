@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { matchSkill } from "@/lib/skills/matcher";
 import { entityFromPathname } from "@/lib/skills/palette-context";
 import { PaletteAiActions } from "@/components/shared/palette-ai-actions";
+import { PaletteHojeCard } from "@/components/shared/palette-hoje-card";
 import { initializeSkills, getAllSkills } from "@/lib/skills/registry";
 import { executeSkill, type ExecutionCallback } from "@/lib/skills/executor";
 import type { MatchResult } from "@/lib/skills/types";
@@ -244,6 +245,16 @@ export function CommandPalette() {
           onValueChange={setSearch}
         />
         <CommandList>
+          {/* Card "Hoje" — audiências do dia, visível na abertura (busca vazia) */}
+          {!search && (
+            <PaletteHojeCard
+              onSelect={(processoId) => {
+                router.push(`/admin/processos/${processoId}`);
+                setOpen(false);
+                setSearch("");
+              }}
+            />
+          )}
           <CommandEmpty>
             {isSearching ? (
               <div className="flex items-center justify-center gap-2 py-2 text-neutral-500">
