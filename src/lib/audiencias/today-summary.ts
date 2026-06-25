@@ -10,6 +10,17 @@ export interface HearingLike {
   tipo?: string | null;
   horario?: string | null;
   assistido?: { nome?: string | null } | null;
+  processo?: { id?: number | null } | null;
+}
+
+export interface TodayHearingItem {
+  id: number;
+  processoId: number | null;
+  hora: string;
+  tipo: string;
+  assistidoNome: string | null;
+  /** True se ainda não passou (relativo a `now`). */
+  upcoming: boolean;
 }
 
 export interface TodaySummary {
@@ -59,4 +70,27 @@ export function summarizeToday(
   ].filter(Boolean);
 
   return { count: ofToday.length, proximaLabel: partes.join(" · ") };
+}
+
+/**
+ * Lista as audiências de hoje (ordenadas por horário) como itens prontos para o
+ * card "Hoje" do ⌘K. Cada item leva ao processo (quando há). Puro.
+ */
+export function hearingsToday(
+  hearings: HearingLike[] | null | undefined,
+  now: number,
+): TodayHearingItem[] {
+  const today = new Date(now);
+  return (hearings ?? [])
+    .map((h) => ({ h, d: toDate(h.dataHora) }))
+    .filter((x): x is { h: HearingLike; d: Date } => x.d != null && sameLocalDay(x.d, today))
+    .sort((a, b) => a.d.getTime() - b.d.getTime())
+    .map(({ h, d }) => ({
+      id: h.id,
+      processoId: h.processo?.id ?? null,
+      hora: fmtHora(d, h.horario),
+      tipo: h.tipo?.trim() || "Audiência",
+      assistidoNome: h.assistido?.nome?.trim() || null,
+      upcoming: d.getTime() >= now,
+    }));
 }
