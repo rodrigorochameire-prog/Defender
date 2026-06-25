@@ -3,6 +3,7 @@
 
 import { cn } from "@/lib/utils";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { VarrerTriagemButton } from "@/components/shared/varrer-triagem-button";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
@@ -3111,6 +3112,12 @@ export default function Demandas() {
           )}
         </button>
       )}
+
+      {/* Varrer triagem (lane browser) — migra o varredura_triagem.py p/ a UI */}
+      <VarrerTriagemButton
+        iconOnly
+        atribuicao={selectedAtribuicoes.length === 1 ? selectedAtribuicoes[0] : undefined}
+      />
 
       {/* Importar */}
       <div className="relative">

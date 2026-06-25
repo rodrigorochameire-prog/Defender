@@ -170,6 +170,102 @@ export const analiseRouter = router({
       return { success: true };
     }),
 
+  /**
+   * retryTask — Re-enfileira uma task que falhou (ou ficou em revisão manual),
+   * voltando-a para `pending` e limpando o estado de execução. O daemon a
+   * repesca pelo mesmo prompt/skill já gravado na linha. Removido o atrito de
+   * "abrir o Claude Code de novo" quando uma análise falha por algo transitório.
+   */
+  retryTask: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ input }) => {
+      const result = await db
+        .update(claudeCodeTasks)
+        .set({
+          status: "pending",
+          erro: null,
+          etapa: null,
+          startedAt: null,
+          completedAt: null,
+        })
+        .where(
+          and(
+            eq(claudeCodeTasks.id, input.taskId),
+            inArray(claudeCodeTasks.status, ["failed", "needs_review"]),
+          ),
+        )
+        .returning({ id: claudeCodeTasks.id });
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task nao encontrada ou nao esta num estado re-tentavel (failed/needs_review)",
+        });
+      }
+
+      return { success: true, taskId: result[0].id };
+    }),
+
+  /**
+   * enqueueVarredura — Dispara a varredura de triagem (lane browser) a partir da
+   * interface, em vez de rodar `varredura_triagem.py` no Claude Code. A task é
+   * self-contained (escreve no banco); não tem entidade. Dedup: não enfileira se
+   * já houver uma varredura pendente/processando (evita varreduras empilhadas).
+   */
+  enqueueVarredura: protectedProcedure
+    .input(
+      z.object({
+        atribuicao: z.string().optional(),
+        since: z.string().optional(),
+        limit: z.number().int().min(1).max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const emAndamento = await db
+        .select({ id: claudeCodeTasks.id })
+        .from(claudeCodeTasks)
+        .where(
+          and(
+            eq(claudeCodeTasks.skill, "varredura-triagem"),
+            inArray(claudeCodeTasks.status, ["pending", "processing"]),
+          ),
+        )
+        .limit(1);
+
+      if (emAndamento.length > 0) {
+        return {
+          success: true,
+          existing: true,
+          taskId: emAndamento[0].id,
+          message: "Ja ha uma varredura em andamento",
+        };
+      }
+
+      const meta: Record<string, unknown> = { modo: "cdp" };
+      if (input.atribuicao) meta.atribuicao = input.atribuicao;
+      if (input.since) meta.since = input.since;
+      if (input.limit) meta.limit = input.limit;
+
+      const [task] = await db
+        .insert(claudeCodeTasks)
+        .values({
+          skill: "varredura-triagem",
+          lane: "browser",
+          prompt: `Varredura de triagem${input.atribuicao ? ` — ${input.atribuicao}` : ""} (lane browser)`,
+          instrucaoAdicional: JSON.stringify(meta),
+          status: "pending",
+          createdBy: ctx.user.id,
+        })
+        .returning({ id: claudeCodeTasks.id });
+
+      return {
+        success: true,
+        existing: false,
+        taskId: task.id,
+        message: "Varredura enfileirada",
+      };
+    }),
+
   // ==========================================
   // QUERIES
   // ==========================================
