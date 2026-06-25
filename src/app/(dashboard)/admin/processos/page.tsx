@@ -112,7 +112,7 @@ import { PageHeader } from "@/components/shared/section-header";
 import { FilterTab, FilterTabsGroup } from "@/components/shared/filter-tabs";
 import { StatsCard, StatsGrid } from "@/components/shared/stats-card";
 import { SearchToolbar, FilterSelect } from "@/components/shared/search-toolbar";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
 import {
   PageContainer,

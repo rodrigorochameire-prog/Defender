@@ -51,7 +51,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Componentes estruturais
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { PageHeader } from "@/components/shared/section-header";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 
 // ==========================================
 // TIPOS

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Check, ExternalLink, Users } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyState } from "@/components/ds/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
