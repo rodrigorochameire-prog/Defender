@@ -170,6 +170,42 @@ export const analiseRouter = router({
       return { success: true };
     }),
 
+  /**
+   * retryTask — Re-enfileira uma task que falhou (ou ficou em revisão manual),
+   * voltando-a para `pending` e limpando o estado de execução. O daemon a
+   * repesca pelo mesmo prompt/skill já gravado na linha. Removido o atrito de
+   * "abrir o Claude Code de novo" quando uma análise falha por algo transitório.
+   */
+  retryTask: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ input }) => {
+      const result = await db
+        .update(claudeCodeTasks)
+        .set({
+          status: "pending",
+          erro: null,
+          etapa: null,
+          startedAt: null,
+          completedAt: null,
+        })
+        .where(
+          and(
+            eq(claudeCodeTasks.id, input.taskId),
+            inArray(claudeCodeTasks.status, ["failed", "needs_review"]),
+          ),
+        )
+        .returning({ id: claudeCodeTasks.id });
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task nao encontrada ou nao esta num estado re-tentavel (failed/needs_review)",
+        });
+      }
+
+      return { success: true, taskId: result[0].id };
+    }),
+
   // ==========================================
   // QUERIES
   // ==========================================

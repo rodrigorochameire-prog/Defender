@@ -75,3 +75,22 @@ describe("analiseRouter.recentForEntity", () => {
     expect(schema.safeParse({ processoId: 1, limit: 0 }).success).toBe(false);
   });
 });
+
+// ─── retryTask + cancelarTask — structure + input ─────────────────────────
+
+describe("analiseRouter retry/cancel", () => {
+  const procs = analiseRouter._def.procedures as Record<string, unknown>;
+
+  it("exposes retryTask and cancelarTask", () => {
+    expect(procs.retryTask).toBeDefined();
+    expect(procs.cancelarTask).toBeDefined();
+  });
+
+  it("retryTask requires a numeric taskId", () => {
+    const schema = getInputSchema((analiseRouter as any)._def.procedures.retryTask);
+    expect(schema).toBeTruthy();
+    expect(schema.safeParse({}).success).toBe(false);
+    expect(schema.safeParse({ taskId: 10 }).success).toBe(true);
+    expect(schema.safeParse({ taskId: "10" }).success).toBe(false);
+  });
+});

@@ -7,7 +7,8 @@
  * SkillLauncher. Lê de `analise.recentForEntity`; formatação em `task-history`.
  */
 
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCcw, X } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { toHistoryItems, type HistoryTone } from "@/lib/skills/task-history";
@@ -39,10 +40,28 @@ export function SkillTaskHistory({
   const hasEntity =
     assistidoId != null || processoId != null || casoId != null;
 
+  const utils = trpc.useUtils();
   const { data, isLoading } = trpc.analise.recentForEntity.useQuery(
     { assistidoId, processoId, casoId, limit },
     { enabled: hasEntity, refetchOnWindowFocus: false },
   );
+
+  const refresh = () => utils.analise.recentForEntity.invalidate();
+  const retry = trpc.analise.retryTask.useMutation({
+    onSuccess: () => {
+      toast.success("Skill re-enfileirada");
+      refresh();
+    },
+    onError: (e) => toast.error(`Não deu para re-tentar: ${e.message}`),
+  });
+  const cancel = trpc.analise.cancelarTask.useMutation({
+    onSuccess: () => {
+      toast.info("Skill cancelada");
+      refresh();
+    },
+    onError: (e) => toast.error(`Não deu para cancelar: ${e.message}`),
+  });
+  const busy = retry.isPending || cancel.isPending;
 
   if (!hasEntity) return null;
 
@@ -96,6 +115,28 @@ export function SkillTaskHistory({
             <span className="shrink-0 text-[10px] tabular-nums text-neutral-400">
               {item.when}
             </span>
+            {(item.status === "failed" || item.status === "needs_review") && (
+              <button
+                type="button"
+                title="Tentar de novo"
+                disabled={busy}
+                onClick={() => retry.mutate({ taskId: item.id })}
+                className="shrink-0 rounded p-0.5 text-neutral-400 transition-colors hover:text-emerald-600 disabled:opacity-50 dark:hover:text-emerald-400"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+            )}
+            {item.status === "pending" && (
+              <button
+                type="button"
+                title="Cancelar"
+                disabled={busy}
+                onClick={() => cancel.mutate({ taskId: item.id })}
+                className="shrink-0 rounded p-0.5 text-neutral-400 transition-colors hover:text-rose-600 disabled:opacity-50 dark:hover:text-rose-400"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
           {item.summary && (
             <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
