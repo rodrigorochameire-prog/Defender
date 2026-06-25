@@ -9,7 +9,14 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
-import { and, eq, inArray } from "drizzle-orm";
+import { pjeImportStaging, pjeIntimacoesLedger, demandas } from "@/lib/db/schema";
+import { and, eq, inArray, isNull } from "drizzle-orm";
+import {
+  enrichStagingWithLiveDedup,
+  stagingRowToImportRow,
+  buildLedgerUpserts,
+} from "@/lib/services/pje-intimacoes-import";
+import { importarDemandas } from "@/lib/services/pje-import";
 
 // ==========================================
 // INTIMACOES ROUTER
@@ -73,5 +80,123 @@ export const intimacoesRouter = router({
         .returning({ id: claudeCodeTasks.id });
 
       return { success: true, existing: false, taskId: task.id };
+    }),
+
+  /**
+   * listStaging — Retorna status do job + linhas staged, enriquecidas com Layer-B.
+   * Layer-B rebaixa 'nova' → 'incerta' para linhas que batem com demandas vivas.
+   */
+  listStaging: protectedProcedure
+    .input(z.object({ jobId: z.number().int() }))
+    .query(async ({ input }) => {
+      const [task] = await db
+        .select({ status: claudeCodeTasks.status, etapa: claudeCodeTasks.etapa })
+        .from(claudeCodeTasks)
+        .where(eq(claudeCodeTasks.id, input.jobId))
+        .limit(1);
+
+      const stagingRows = await db
+        .select()
+        .from(pjeImportStaging)
+        .where(eq(pjeImportStaging.jobId, input.jobId));
+
+      // Layer-B: dedup fuzzy contra demandas vivas (nao deletadas).
+      const demandasVivas = await db
+        .select()
+        .from(demandas)
+        .where(isNull(demandas.deletedAt));
+
+      const rows = enrichStagingWithLiveDedup(stagingRows, demandasVivas);
+      return { status: task?.status ?? "pending", etapa: task?.etapa ?? null, rows };
+    }),
+
+  /**
+   * confirmarImport — Aplica edições do usuário, importa as linhas selecionadas
+   * via importarDemandas, e grava o ledger permanente para TODAS as linhas staged.
+   *
+   * Ledger upsert: usa SELECT-then-UPDATE/INSERT para contornar a limitação do
+   * Drizzle com onConflictDoUpdate em partial unique indexes.
+   *
+   * Nota: importarDemandas retorna apenas contadores agregados (imported/updated/
+   * skipped/errors), sem IDs por linha. Por isso demandaId fica null no ledger —
+   * não temos como vincular per-row sem refatorar importarDemandas.
+   */
+  confirmarImport: protectedProcedure
+    .input(
+      z.object({
+        jobId: z.number().int(),
+        selectedIds: z.array(z.number().int()),
+        edits: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const stagingRows = await db
+        .select()
+        .from(pjeImportStaging)
+        .where(eq(pjeImportStaging.jobId, input.jobId));
+
+      const selectedSet = new Set(input.selectedIds);
+
+      // Aplica edições da página (revisao) antes de mapear.
+      const withEdits = stagingRows.map((r) => {
+        const e = input.edits?.[String(r.id)];
+        return e ? { ...r, revisao: { ...(r.revisao ?? {}), ...e } } : r;
+      });
+
+      const rowsToImport = withEdits.filter((r) => selectedSet.has(r.id));
+      const importRows = rowsToImport.map(stagingRowToImportRow);
+
+      const result = await importarDemandas(importRows, ctx.user.id, false);
+
+      // Ledger: grava TODOS os itens staged (imported/skipped/duplicate).
+      // Usa SELECT-then-UPDATE/INSERT para contornar partial-index onConflict.
+      const upserts = buildLedgerUpserts(withEdits, selectedSet, input.jobId);
+      let ledgerWritten = 0;
+
+      for (const u of upserts) {
+        let existing: { id: number } | undefined;
+
+        if (u.pjeDocumentoId) {
+          // Busca pela chave forte: pje_documento_id
+          [existing] = await db
+            .select({ id: pjeIntimacoesLedger.id })
+            .from(pjeIntimacoesLedger)
+            .where(eq(pjeIntimacoesLedger.pjeDocumentoId, u.pjeDocumentoId))
+            .limit(1);
+        } else {
+          // Fallback: content_hash único onde pje_documento_id IS NULL
+          [existing] = await db
+            .select({ id: pjeIntimacoesLedger.id })
+            .from(pjeIntimacoesLedger)
+            .where(
+              and(
+                eq(pjeIntimacoesLedger.contentHash, u.contentHash),
+                isNull(pjeIntimacoesLedger.pjeDocumentoId),
+              ),
+            )
+            .limit(1);
+        }
+
+        if (existing) {
+          await db
+            .update(pjeIntimacoesLedger)
+            .set({ decisao: u.decisao, lastSeenAt: new Date(), jobId: u.jobId })
+            .where(eq(pjeIntimacoesLedger.id, existing.id));
+        } else {
+          await db.insert(pjeIntimacoesLedger).values({
+            pjeDocumentoId: u.pjeDocumentoId,
+            contentHash: u.contentHash,
+            processoNumero: u.processoNumero,
+            atribuicao: u.atribuicao as never,
+            decisao: u.decisao,
+            jobId: u.jobId,
+            // demandaId: null — importarDemandas não retorna IDs por linha.
+          });
+        }
+
+        ledgerWritten++;
+      }
+
+      return { ...result, ledgerWritten };
     }),
 });
