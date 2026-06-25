@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { matchSkill } from "@/lib/skills/matcher";
+import { entityFromPathname } from "@/lib/skills/palette-context";
+import { PaletteAiActions } from "@/components/shared/palette-ai-actions";
 import { initializeSkills, getAllSkills } from "@/lib/skills/registry";
 import { executeSkill, type ExecutionCallback } from "@/lib/skills/executor";
 import type { MatchResult } from "@/lib/skills/types";
@@ -44,6 +46,8 @@ type CommandItemData = {
 
 export function CommandPalette() {
   const router = useRouter();
+  const pathname = usePathname();
+  const focusedEntity = entityFromPathname(pathname);
   const { modules } = useAssignment();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -277,6 +281,15 @@ export function CommandPalette() {
               ))}
             </CommandGroup>
           )}
+
+          {/* Ações de IA — skills do daemon p/ a entidade em foco (rota atual) */}
+          <PaletteAiActions
+            entity={focusedEntity}
+            onDone={() => {
+              setOpen(false);
+              setSearch("");
+            }}
+          />
 
           {/* Skeleton enquanto busca */}
           {isSearching && (
