@@ -6,6 +6,7 @@
  */
 
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
@@ -95,6 +96,8 @@ export const intimacoesRouter = router({
         .where(eq(claudeCodeTasks.id, input.jobId))
         .limit(1);
 
+      if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Job de importação não encontrado" });
+
       const stagingRows = await db
         .select()
         .from(pjeImportStaging)
@@ -107,7 +110,7 @@ export const intimacoesRouter = router({
         .where(isNull(demandas.deletedAt));
 
       const rows = enrichStagingWithLiveDedup(stagingRows, demandasVivas);
-      return { status: task?.status ?? "pending", etapa: task?.etapa ?? null, rows };
+      return { status: task.status, etapa: task.etapa ?? null, rows };
     }),
 
   /**
@@ -150,52 +153,55 @@ export const intimacoesRouter = router({
 
       // Ledger: grava TODOS os itens staged (imported/skipped/duplicate).
       // Usa SELECT-then-UPDATE/INSERT para contornar partial-index onConflict.
+      // Wrapped em transaction para garantir atomicidade: ou grava tudo ou nada.
       const upserts = buildLedgerUpserts(withEdits, selectedSet, input.jobId);
       let ledgerWritten = 0;
 
-      for (const u of upserts) {
-        let existing: { id: number } | undefined;
+      await db.transaction(async (tx) => {
+        for (const u of upserts) {
+          let existing: { id: number } | undefined;
 
-        if (u.pjeDocumentoId) {
-          // Busca pela chave forte: pje_documento_id
-          [existing] = await db
-            .select({ id: pjeIntimacoesLedger.id })
-            .from(pjeIntimacoesLedger)
-            .where(eq(pjeIntimacoesLedger.pjeDocumentoId, u.pjeDocumentoId))
-            .limit(1);
-        } else {
-          // Fallback: content_hash único onde pje_documento_id IS NULL
-          [existing] = await db
-            .select({ id: pjeIntimacoesLedger.id })
-            .from(pjeIntimacoesLedger)
-            .where(
-              and(
-                eq(pjeIntimacoesLedger.contentHash, u.contentHash),
-                isNull(pjeIntimacoesLedger.pjeDocumentoId),
-              ),
-            )
-            .limit(1);
+          if (u.pjeDocumentoId) {
+            // Busca pela chave forte: pje_documento_id
+            [existing] = await tx
+              .select({ id: pjeIntimacoesLedger.id })
+              .from(pjeIntimacoesLedger)
+              .where(eq(pjeIntimacoesLedger.pjeDocumentoId, u.pjeDocumentoId))
+              .limit(1);
+          } else {
+            // Fallback: content_hash único onde pje_documento_id IS NULL
+            [existing] = await tx
+              .select({ id: pjeIntimacoesLedger.id })
+              .from(pjeIntimacoesLedger)
+              .where(
+                and(
+                  eq(pjeIntimacoesLedger.contentHash, u.contentHash),
+                  isNull(pjeIntimacoesLedger.pjeDocumentoId),
+                ),
+              )
+              .limit(1);
+          }
+
+          if (existing) {
+            await tx
+              .update(pjeIntimacoesLedger)
+              .set({ decisao: u.decisao, lastSeenAt: new Date(), jobId: u.jobId })
+              .where(eq(pjeIntimacoesLedger.id, existing.id));
+          } else {
+            await tx.insert(pjeIntimacoesLedger).values({
+              pjeDocumentoId: u.pjeDocumentoId,
+              contentHash: u.contentHash,
+              processoNumero: u.processoNumero,
+              atribuicao: u.atribuicao as never,
+              decisao: u.decisao,
+              jobId: u.jobId,
+              // demandaId: null — importarDemandas não retorna IDs por linha.
+            });
+          }
+
+          ledgerWritten++;
         }
-
-        if (existing) {
-          await db
-            .update(pjeIntimacoesLedger)
-            .set({ decisao: u.decisao, lastSeenAt: new Date(), jobId: u.jobId })
-            .where(eq(pjeIntimacoesLedger.id, existing.id));
-        } else {
-          await db.insert(pjeIntimacoesLedger).values({
-            pjeDocumentoId: u.pjeDocumentoId,
-            contentHash: u.contentHash,
-            processoNumero: u.processoNumero,
-            atribuicao: u.atribuicao as never,
-            decisao: u.decisao,
-            jobId: u.jobId,
-            // demandaId: null — importarDemandas não retorna IDs por linha.
-          });
-        }
-
-        ledgerWritten++;
-      }
+      });
 
       return { ...result, ledgerWritten };
     }),
