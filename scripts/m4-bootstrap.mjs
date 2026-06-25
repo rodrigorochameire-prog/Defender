@@ -53,8 +53,17 @@ function isDaemonHost() {
 
 /** Roda `claude -p` com TODAS as chaves pagas removidas — testa o login Max. */
 function verifyMaxAuth(claudeBin) {
+  // GUARD ANTI FORK-BOMB: este script roda como SessionStart hook (.claude/settings.json).
+  // Se ele spawnar `claude -p`, esse claude reabre uma sessão → re-dispara o hook →
+  // m4-bootstrap → claude -p → ... recursão infinita (empilha processos, queima cota Max).
+  // Marcamos o env do filho com OMBUDS_NO_BOOTSTRAP=1; quando o hook reentra com essa
+  // marca, pulamos o probe. Assim a cadeia para na profundidade 1.
+  if (process.env.OMBUDS_NO_BOOTSTRAP === "1") {
+    return { code: 0, ok: true, stdout: "(probe pulado: reentrância OMBUDS_NO_BOOTSTRAP)", stderr: "", skipped: true };
+  }
   const env = { ...process.env };
   for (const k of PAID_KEYS) delete env[k];
+  env.OMBUDS_NO_BOOTSTRAP = "1"; // o claude -p filho NÃO re-dispara o bootstrap (anti fork-bomb)
   // A primeira resposta do `claude -p` (warmup do modelo na conta Max) leva
   // ~90-100s. O timeout antigo (90s) dava SIGTERM (exit 143) e reportava um
   // FALSO "login FALHOU". 180s cobre a latência real com folga.
