@@ -94,10 +94,10 @@ Quando o documento institucional se refere a um assistido específico (ex: ofíc
 
 | Atribuição | Caminho da Pasta |
 |---|---|
-| Criminal Comum | `Meu Drive 2/1 - Defensoria 9ª DP/Processos/` |
-| Júri | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Júri/` |
-| VVD | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - VVD/` |
-| Execução Penal | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Execução Penal/` |
+| Criminal Comum | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos/` |
+| Júri | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Júri/` |
+| VVD | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - VVD (Criminal)/` |
+| Execução Penal | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Execução Penal/` |
 
 ---
 

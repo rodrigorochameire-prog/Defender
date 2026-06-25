@@ -132,7 +132,7 @@ Megaparágrafos são admissíveis apenas quando os raciocínios são verdadeiram
 
 Peças anteriores do Defensor em violência doméstica, organizadas por tipo. Use como referência de estilo, tom e estrutura argumentativa.
 
-**Caminho base**: `Meu Drive 2/1 - Defensoria 9ª DP/Petições por assunto (DOC)/`
+**Caminho base**: `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/4 - Peças/Petições por assunto (DOC)/`
 
 | Subpasta | Relevância para VVD |
 |---|---|
@@ -156,9 +156,9 @@ Peças anteriores do Defensor em violência doméstica, organizadas por tipo. Us
 
 | Atribuição | Caminho da Pasta |
 |---|---|
-| VVD | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - VVD/` |
+| VVD | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - VVD (Criminal)/` |
 
-Relatórios VVD: `Meu Drive 2/1 - Defensoria 9ª DP/vvd_reports_final/` e `Meu Drive 2/1 - Defensoria 9ª DP/Relatórios (VVD)/`
+Relatórios VVD: `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/11 - Arquivo & sistema/Docs/vvd_reports_final/` e `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/11 - Arquivo & sistema/Docs/vvd_reports_final/`
 
 ---
 
@@ -176,6 +176,7 @@ Relatórios VVD: `Meu Drive 2/1 - Defensoria 9ª DP/vvd_reports_final/` e `Meu D
 | Contrarrazões a RESE | `references/vvd_contrarrazoes_rese.md` | Resposta a RESE em VVD |
 | Contrarrazões a Embargos | `references/vvd_contrarrazoes_embargos_declaracao.md` | Resposta aos embargos |
 | Revogação de MPU | `references/vvd_requerimento_revogacao_mpu.md` | Petição para revogar medida protetiva |
+| Audiência de Justificação (MPU) | `references/vvd_requerimento_audiencia_justificacao_mpu.md` | MPU com conflito familiar (pensão/convivência/filho): pede audiência de justificação + revogação/modulação + família; inclui curadoria de mídia |
 | Atualização de Endereço | `references/rq_atualizacao_endereco_vvd.md` | Atualizar endereço processual |
 | Cota de Juntada de Áudios | `references/vvd_cota_juntada_audios.md` | Juntar mídias audiovisuais |
 
