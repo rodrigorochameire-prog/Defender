@@ -31,6 +31,7 @@ import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { InlineAutocomplete } from "@/components/shared/inline-autocomplete";
+import { calcularPrazo as calcularPrazoCanonico } from "@/lib/prazo";
 import {
   Tooltip,
   TooltipTrigger,
@@ -202,27 +203,22 @@ const ATRIBUICAO_OPTIONS = [
 // HELPERS
 // ============================================
 
+// Prazo via fonte única (escala de litígio). Refino de apresentação: 4–7d
+// (green) mantém-se "amber" (próximo do prazo) e 8–30d (gray) vira "yellow".
 function calcularPrazo(prazoStr: string) {
-  if (!prazoStr) return { texto: "", cor: "none", dias: null };
-  try {
-    const [dia, mes, ano] = prazoStr.split("/").map(Number);
-    const fullYear = ano < 100 ? 2000 + ano : ano;
-    const prazo = new Date(fullYear, mes - 1, dia);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    prazo.setHours(0, 0, 0, 0);
-    const diffTime = prazo.getTime() - hoje.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return { texto: `${Math.abs(diffDays)}d atrás`, cor: "red", dias: diffDays };
-    if (diffDays === 0) return { texto: "Hoje", cor: "red", dias: 0 };
-    if (diffDays === 1) return { texto: "Amanhã", cor: "amber", dias: 1 };
-    if (diffDays <= 7) return { texto: `${diffDays}d`, cor: "amber", dias: diffDays };
-    if (diffDays <= 30) return { texto: `${diffDays}d`, cor: "yellow", dias: diffDays };
-    return { texto: prazoStr, cor: "gray", dias: diffDays };
-  } catch {
-    return { texto: prazoStr, cor: "gray", dias: null };
-  }
+  const sev = calcularPrazoCanonico(prazoStr);
+  if (!sev) return { texto: prazoStr || "", cor: prazoStr ? "gray" : "none", dias: null };
+  const { dias, cor } = sev;
+  let texto: string;
+  if (dias < 0) texto = `${Math.abs(dias)}d atrás`;
+  else if (dias === 0) texto = "Hoje";
+  else if (dias === 1) texto = "Amanhã";
+  else if (dias > 30) texto = prazoStr;
+  else texto = `${dias}d`;
+  let corCompact = cor;
+  if (cor === "green") corCompact = "amber";
+  else if (cor === "gray" && dias <= 30) corCompact = "yellow";
+  return { texto, cor: corCompact, dias };
 }
 
 function getRowTSV(demanda: Demanda): string {

@@ -35,8 +35,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { format, differenceInDays, isToday, isTomorrow, isPast } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calcularPrazo } from "@/lib/prazo";
 
 // ==========================================
 // ATRIBUICAO CONFIG — CORES FUNCIONAIS
@@ -119,25 +120,22 @@ const ATRIBUICAO_CONFIG: Record<string, {
 // ==========================================
 
 function getPrazoInfo(prazoStr: string) {
-  if (!prazoStr) return { text: "-", dias: 0, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
+  const sev = calcularPrazo(prazoStr);
+  if (!sev) return { text: prazoStr || "-", dias: 0, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
 
-  // Parse DD/MM/YYYY or YYYY-MM-DD
-  let prazoDate: Date;
+  // Data formatada para prazos distantes (8+ dias) — preserva a exibição original.
+  let dataLonge = prazoStr;
   if (prazoStr.includes("/")) {
-    const [dia, mes, ano] = prazoStr.split("/").map(Number);
-    const fullYear = ano < 100 ? 2000 + ano : ano;
-    prazoDate = new Date(fullYear, mes - 1, dia);
+    const [d, m, a] = prazoStr.split("/").map(Number);
+    const fullYear = a < 100 ? 2000 + a : a;
+    const dt = new Date(fullYear, m - 1, d);
+    if (!isNaN(dt.getTime())) dataLonge = format(dt, "dd/MM", { locale: ptBR });
   } else {
-    prazoDate = new Date(prazoStr + "T12:00:00");
+    const dt = new Date(prazoStr + "T12:00:00");
+    if (!isNaN(dt.getTime())) dataLonge = format(dt, "dd/MM", { locale: ptBR });
   }
 
-  if (isNaN(prazoDate.getTime())) return { text: prazoStr, dias: 0, className: "text-muted-foreground bg-neutral-100", icon: Calendar, urgent: false };
-
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  prazoDate.setHours(0, 0, 0, 0);
-  const dias = differenceInDays(prazoDate, hoje);
-
+  const { dias } = sev;
   if (dias < 0) {
     return { text: `${Math.abs(dias)}d atrás`, dias, className: "text-rose-700 bg-rose-100 dark:bg-rose-900/30 dark:text-rose-400", icon: AlertOctagon, urgent: true };
   }
@@ -147,13 +145,14 @@ function getPrazoInfo(prazoStr: string) {
   if (dias === 1) {
     return { text: "Amanhã", dias: 1, className: "text-amber-700 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400", icon: Clock, urgent: true };
   }
-  if (dias <= 3) {
+  // sev.cor: amber (≤3) | green (4–7) | gray (8+)
+  if (sev.cor === "amber") {
     return { text: `${dias}d`, dias, className: "text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400", icon: Clock, urgent: false };
   }
-  if (dias <= 7) {
+  if (sev.cor === "green") {
     return { text: `${dias}d`, dias, className: "text-sky-600 bg-sky-50 dark:bg-sky-900/20 dark:text-sky-400", icon: Calendar, urgent: false };
   }
-  return { text: format(prazoDate, "dd/MM", { locale: ptBR }), dias, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
+  return { text: dataLonge, dias, className: "text-muted-foreground bg-neutral-100 dark:bg-muted", icon: Calendar, urgent: false };
 }
 
 // ==========================================

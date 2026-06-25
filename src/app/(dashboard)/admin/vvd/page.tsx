@@ -35,6 +35,7 @@ import {
   Users,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
+import { prazoSeveridade, ESCALA_MPU } from "@/lib/prazo";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -118,6 +119,8 @@ export default function VVDPage() {
     return dias;
   };
 
+  // Escala de monitoramento de MPU (≤7 crítico, ≤30 alerta, 31+ tranquilo).
+  // Severidade vem da fonte única; aqui só mapeamos cor canônica → classes.
   const getStatusBadge = (diasRestantes: number | null) => {
     if (diasRestantes === null) {
       return <Badge variant="outline">Sem prazo</Badge>;
@@ -125,10 +128,11 @@ export default function VVDPage() {
     if (diasRestantes < 0) {
       return <Badge variant="danger">Vencida ({Math.abs(diasRestantes)} dias)</Badge>;
     }
-    if (diasRestantes <= 7) {
+    const cor = prazoSeveridade(diasRestantes, ESCALA_MPU).cor;
+    if (cor === "red") {
       return <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">Vence em {diasRestantes} dias</Badge>;
     }
-    if (diasRestantes <= 30) {
+    if (cor === "amber") {
       return <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">Vence em {diasRestantes} dias</Badge>;
     }
     return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;
@@ -243,14 +247,15 @@ export default function VVDPage() {
                       .slice(0, 10)
                       .map((processo) => {
                         const diasRestantes = getDiasRestantes(processo.dataVencimentoMPU);
+                        const corMpu = diasRestantes === null ? null : prazoSeveridade(diasRestantes, ESCALA_MPU).cor;
                         return (
                           <div
                             key={processo.id}
                             className={cn(
                               "p-3 rounded-lg border",
-                              diasRestantes !== null && diasRestantes <= 7
+                              corMpu === "red"
                                 ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30"
-                                : diasRestantes !== null && diasRestantes <= 30
+                                : corMpu === "amber"
                                 ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
                                 : "border-neutral-200 dark:border-neutral-800"
                             )}

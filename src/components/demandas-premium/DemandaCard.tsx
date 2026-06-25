@@ -43,6 +43,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
 import { STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
+import { calcularPrazo, prazoTextoCurto } from "@/lib/prazo";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
@@ -142,31 +143,11 @@ export function DemandaCard({
   const menuRef = useRef<HTMLDivElement>(null);
   const statusBtnRef = useRef<HTMLButtonElement>(null);
 
-  const calcularPrazo = (prazoStr: string) => {
-    if (!prazoStr) return { texto: "", cor: "gray" };
-    
-    try {
-      const [dia, mes, ano] = prazoStr.split('/').map(Number);
-      const prazo = new Date(2000 + ano, mes - 1, dia);
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      prazo.setHours(0, 0, 0, 0);
-      
-      const diffTime = prazo.getTime() - hoje.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) return { texto: "Vencido", cor: "red" };
-      if (diffDays === 0) return { texto: "Hoje", cor: "red" };
-      if (diffDays === 1) return { texto: "Amanhã", cor: "red" };
-      if (diffDays <= 3) return { texto: `${diffDays} dias`, cor: "yellow" };
-      if (diffDays <= 7) return { texto: `${diffDays} dias`, cor: "yellow" };
-      return { texto: `${diffDays} dias`, cor: "gray" };
-    } catch {
-      return { texto: prazoStr, cor: "gray" };
-    }
-  };
-
-  const prazoInfo = calcularPrazo(demanda.prazo);
+  // Severidade de prazo via fonte única (escala de litígio). cor: red|amber|green|gray.
+  const prazoSev = calcularPrazo(demanda.prazo);
+  const prazoInfo = prazoSev
+    ? { texto: prazoSev.dias < 0 ? "Vencido" : prazoTextoCurto(prazoSev.dias), cor: prazoSev.cor as string }
+    : { texto: "", cor: "gray" as string };
   const AtribuicaoIcon = atribuicaoIcons[demanda.atribuicao];
 
   const handleStatusClick = (e: React.MouseEvent) => {
@@ -387,15 +368,19 @@ export function DemandaCard({
                 <Clock className={`w-4 h-4 flex-shrink-0 ${
                   prazoInfo.cor === "red"
                     ? "text-red-500 dark:text-red-400"
-                    : prazoInfo.cor === "yellow"
+                    : prazoInfo.cor === "amber"
                     ? "text-amber-500 dark:text-amber-400"
+                    : prazoInfo.cor === "green"
+                    ? "text-emerald-500 dark:text-emerald-400"
                     : "text-neutral-400 dark:text-neutral-500"
                 }`} />
                 <span className={`text-xs font-medium ${
                   prazoInfo.cor === "red"
                     ? "text-red-600 dark:text-red-400"
-                    : prazoInfo.cor === "yellow"
+                    : prazoInfo.cor === "amber"
                     ? "text-amber-600 dark:text-amber-400"
+                    : prazoInfo.cor === "green"
+                    ? "text-emerald-600 dark:text-emerald-400"
                     : "text-neutral-600 dark:text-neutral-400"
                 }`}>
                   {prazoInfo.texto}
@@ -591,8 +576,10 @@ export function DemandaCard({
                 <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${
                   prazoInfo.cor === "red"
                     ? "text-red-600 dark:text-red-400"
-                    : prazoInfo.cor === "yellow"
+                    : prazoInfo.cor === "amber"
                     ? "text-amber-600 dark:text-amber-400"
+                    : prazoInfo.cor === "green"
+                    ? "text-emerald-600 dark:text-emerald-400"
                     : "text-neutral-500 dark:text-neutral-400"
                 }`}>
                   <Clock className="w-3 h-3" />

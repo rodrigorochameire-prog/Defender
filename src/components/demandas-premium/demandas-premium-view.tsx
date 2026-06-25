@@ -49,6 +49,7 @@ import { getStatusConfig, getDemandaGroup, STATUS_GROUPS, DEMANDA_STATUS, UI_STA
 import { getAtosPorAtribuicao, getTodosAtosUnicos, ATOS_POR_ATRIBUICAO, ATO_PRIORITY } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { copyToClipboard } from "@/lib/clipboard";
+import { calcularPrazo, prazoTextoCurto } from "@/lib/prazo";
 import React, { useState, useMemo, useEffect, useCallback, useRef, Fragment } from "react";
 import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -489,27 +490,15 @@ function DemandaGridCard({
   const StatusIcon = getStatusIcon(demanda.substatus || demanda.status);
 
   // Calcular prazo
-  const calcularPrazo = (prazoStr: string) => {
-    if (!prazoStr) return null;
-    try {
-      const [dia, mes, ano] = prazoStr.split('/').map(Number);
-      const prazo = new Date(2000 + ano, mes - 1, dia);
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-      prazo.setHours(0, 0, 0, 0);
-      const diffDays = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-
-      if (diffDays < 0) return { text: "Vencido", urgent: true };
-      if (diffDays === 0) return { text: "Hoje", urgent: true };
-      if (diffDays === 1) return { text: "Amanhã", urgent: true };
-      if (diffDays <= 3) return { text: `${diffDays}d`, urgent: true };
-      return { text: `${diffDays}d`, urgent: false };
-    } catch {
-      return null;
-    }
-  };
-
-  const prazoInfo = calcularPrazo(demanda.prazo);
+  // Severidade de prazo via fonte única (escala de litígio).
+  // urgente = nível crítico/alerta (red/amber); tranquilo (green/gray) não urge.
+  const prazoSev = calcularPrazo(demanda.prazo);
+  const prazoInfo = prazoSev
+    ? {
+        text: prazoSev.dias < 0 ? "Vencido" : prazoTextoCurto(prazoSev.dias),
+        urgent: prazoSev.nivel !== "tranquilo",
+      }
+    : null;
   const isPreso = demanda.estadoPrisional && demanda.estadoPrisional !== "Solto";
 
   return (

@@ -37,6 +37,7 @@ import {
   Shield,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
+import { prazoSeveridade, ESCALA_INTIMACAO } from "@/lib/prazo";
 import { ptBR } from "date-fns/locale";
 import {
   Dialog,
@@ -134,6 +135,8 @@ export default function IntimacoesVVDPage() {
     return dias;
   };
 
+  // Escala de intimação (≤2 crítico, ≤5 alerta, 6+ tranquilo).
+  // Severidade da fonte única; aqui só mapeamos cor canônica → classes.
   const getPrazoBadge = (prazo: string | null) => {
     const diasRestantes = getDiasRestantes(prazo);
     if (diasRestantes === null) {
@@ -142,10 +145,11 @@ export default function IntimacoesVVDPage() {
     if (diasRestantes < 0) {
       return <Badge variant="danger">Vencido ({Math.abs(diasRestantes)} dias)</Badge>;
     }
-    if (diasRestantes <= 2) {
+    const cor = prazoSeveridade(diasRestantes, ESCALA_INTIMACAO).cor;
+    if (cor === "red") {
       return <Badge variant="outline" className="border-rose-300 text-rose-600 dark:border-rose-700 dark:text-rose-400">Urgente ({diasRestantes}d)</Badge>;
     }
-    if (diasRestantes <= 5) {
+    if (cor === "amber") {
       return <Badge variant="outline" className="border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">{diasRestantes} dias</Badge>;
     }
     return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;

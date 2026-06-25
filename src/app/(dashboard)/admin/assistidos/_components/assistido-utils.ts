@@ -1,5 +1,14 @@
 import { differenceInDays, differenceInYears, parseISO } from "date-fns";
 import { AssistidoUI } from "./assistido-types";
+import { calcularPrazo, prazoTextoCurto, type PrazoCor } from "@/lib/prazo";
+
+/** Classes de cor/fundo por severidade canônica (escala de litígio). */
+const PRAZO_CLASSES: Record<PrazoCor, { color: string; bgColor: string }> = {
+  red: { color: "text-rose-600", bgColor: "bg-rose-50" },
+  amber: { color: "text-amber-600", bgColor: "bg-amber-50" },
+  green: { color: "text-sky-600", bgColor: "bg-sky-50/50" },
+  gray: { color: "text-muted-foreground", bgColor: "" },
+};
 
 /** Compute completude score (0-100) for a single assistido */
 export function computeCompletude(a: AssistidoUI): number {
@@ -14,14 +23,15 @@ export function computeCompletude(a: AssistidoUI): number {
 }
 
 export function getPrazoInfo(prazoStr: string | null) {
-  if (!prazoStr) return null;
-  const dias = differenceInDays(parseISO(prazoStr), new Date());
-  if (dias < 0) return { text: "Vencido", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
-  if (dias === 0) return { text: "Hoje", urgent: true, color: "text-rose-600", bgColor: "bg-rose-50" };
-  if (dias === 1) return { text: "Amanha", urgent: true, color: "text-amber-600", bgColor: "bg-amber-50" };
-  if (dias <= 3) return { text: `${dias}d`, urgent: true, color: "text-amber-500", bgColor: "bg-amber-50/50" };
-  if (dias <= 7) return { text: `${dias}d`, urgent: false, color: "text-sky-600", bgColor: "bg-sky-50/50" };
-  return { text: `${dias}d`, urgent: false, color: "text-muted-foreground", bgColor: "" };
+  const sev = calcularPrazo(prazoStr);
+  if (!sev) return null;
+  const { color, bgColor } = PRAZO_CLASSES[sev.cor];
+  return {
+    text: sev.dias < 0 ? "Vencido" : prazoTextoCurto(sev.dias),
+    urgent: sev.nivel !== "tranquilo",
+    color,
+    bgColor,
+  };
 }
 
 export function calcularIdade(dataNascimento: string | null | undefined) {
