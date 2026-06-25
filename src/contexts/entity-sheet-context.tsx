@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/client";
 import Link from "next/link";
+import { ProcessoSheet } from "@/components/processo/sheet/processo-sheet";
 
-type EntityType = "pessoa" | "caso" | "documento" | "fato";
+type EntityType = "pessoa" | "caso" | "documento" | "fato" | "processo";
 
 export interface EntitySheetData {
   type: EntityType;
@@ -75,10 +76,21 @@ export function EntitySheetProvider({ children }: { children: React.ReactNode })
     []
   );
 
+  const isProcesso = entity?.type === "processo";
+
   return (
     <EntitySheetContext.Provider value={value}>
       {children}
-      <Sheet open={!!entity} onOpenChange={(open) => !open && setEntity(null)}>
+
+      {/* Processo tem sheet próprio (sheet-mestre), aberto sem tirar o contexto. */}
+      <ProcessoSheet
+        processoId={isProcesso ? entityId : null}
+        open={isProcesso}
+        onOpenChange={(open) => !open && setEntity(null)}
+      />
+
+      {/* Sheet genérico (pessoa/caso/documento/fato) — não cobre processo. */}
+      <Sheet open={!!entity && !isProcesso} onOpenChange={(open) => !open && setEntity(null)}>
         <SheetContent side="right" className="w-[380px] sm:w-[420px]">
           <SheetHeader>
             <SheetTitle className="text-base font-semibold">Contexto da Entidade</SheetTitle>

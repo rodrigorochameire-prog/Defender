@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
+import { useEntitySheet } from "@/contexts/entity-sheet-context";
 import { cn } from "@/lib/utils";
 import {
   statusCasoInfo, prioridadeCasoInfo, pesoPrioridadeCaso,
@@ -93,17 +94,30 @@ function ProcessoRow({ p, criarCasoAssistidoId }: { p: ProcessoSist; criarCasoAs
   const sit = situacaoProcessoInfo(p.situacao);
   const pz = p.proximoPrazo ? diasAte(p.proximoPrazo.data) : null;
   const pzCor = pz === null ? "" : pz <= 3 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground";
+  // Abre o ProcessoSheet sem tirar o usuário do contexto do assistido.
+  // Fallback: sem provider (ex.: SSR/teste), o número vira link para a página.
+  const entitySheet = useEntitySheet();
 
   return (
     <div className="flex flex-col gap-1 rounded-lg border border-neutral-200/70 dark:border-white/[0.06] bg-neutral-50/60 dark:bg-white/[0.03] px-2.5 py-2">
       <div className="flex items-center gap-2">
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: atrib.color }} title={atrib.label} />
-        <Link
-          href={`/admin/processos/${p.id}`}
-          className="font-mono text-[11px] tabular-nums text-foreground/90 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate"
-        >
-          {p.numeroAutos}
-        </Link>
+        {entitySheet ? (
+          <button
+            type="button"
+            onClick={() => entitySheet.openEntity({ type: "processo", id: p.id, name: p.numeroAutos })}
+            className="text-left font-mono text-[11px] tabular-nums text-foreground/90 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate cursor-pointer"
+          >
+            {p.numeroAutos}
+          </button>
+        ) : (
+          <Link
+            href={`/admin/processos/${p.id}`}
+            className="font-mono text-[11px] tabular-nums text-foreground/90 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate"
+          >
+            {p.numeroAutos}
+          </Link>
+        )}
         {p.isJuri && <Gavel className="h-3 w-3 shrink-0 text-emerald-500" aria-label="Júri" />}
         <span className="ml-auto flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 text-[9.5px] font-medium" style={{ color: atrib.color }}>
