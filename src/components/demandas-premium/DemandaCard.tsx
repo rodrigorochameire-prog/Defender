@@ -325,7 +325,7 @@ export function DemandaCard({
               </div>
 
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <div className="flex items-center gap-2 mb-1 flex-wrap flex-1 min-w-0">
                   {demanda.assistidoId ? (
                     <Link href={`/admin/assistidos/${demanda.assistidoId}`}>
                       <h4 className="text-base font-bold text-neutral-900 dark:text-neutral-50 hover:text-primary transition-colors break-words">
