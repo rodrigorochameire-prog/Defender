@@ -3,6 +3,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { PrazosAlertChip } from "@/components/shared/prazos-alert-chip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ConflictBadge } from "@/components/conflict-badge";
@@ -70,6 +71,7 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
 
         {/* Controls */}
         <div className="flex items-center gap-1">
+          <PrazosAlertChip className="mr-1 hidden sm:inline-flex" />
           <CommandPalette />
           <ThemeToggle />
           <NotificationsPopover />
