@@ -110,6 +110,7 @@ Detalhes: `/tool-selection`
 | "vamos pensar", "explorar ideia", "como fazer X" | `brainstorming` |
 | "criar nova skill" | `skill-creator` |
 | "criar diagrama", "mapa mental", "visualizar caso" | `excalidraw-diagram` |
+| "configura o M4", "prepara o daemon", "deixa o daemon funcional", "bootstrap do M4", "faz as configurações dessa máquina" | `/m4-setup` (rodar no Mac mini M4) |
 
 ## Skills Globais (instaladas via npx skills)
 
