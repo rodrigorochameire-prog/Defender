@@ -2362,6 +2362,97 @@ export const dispatchEncaminhamentoNotificacaoFn = inngest.createFunction(
   },
 );
 
+/**
+ * Push periódico banco → planilha. Cobre o caso "SQL direto bypass do
+ * pushDemanda": qualquer demanda com `updated_at > synced_at` é re-enviada
+ * em até 15 min. Limita a 100 por execução para previsibilidade de custo.
+ * Complementa `syncSheetPollingFn` (planilha → banco, 5 min).
+ */
+export const pushStaleDemandasFn = inngest.createFunction(
+  { id: "push-stale-demandas", name: "Push Stale Demandas → Planilha (15min)" },
+  { cron: "*/15 * * * *" },
+  async ({ step }) => {
+    return await step.run("push-stale", async () => {
+      const { db } = await import("@/lib/db");
+      const { demandas, processos, assistidos, users: usersTbl } =
+        await import("@/lib/db/schema");
+      const { eq, isNull, and, sql, or, inArray } = await import("drizzle-orm");
+      const { pushDemanda } = await import("@/lib/services/google-sheets");
+
+      const rows = await db
+        .select({
+          id: demandas.id,
+          status: demandas.status,
+          substatus: demandas.substatus,
+          reuPreso: demandas.reuPreso,
+          dataEntrada: demandas.dataEntrada,
+          dataExpedicao: demandas.dataExpedicao,
+          ato: demandas.ato,
+          prazo: demandas.prazo,
+          assistidoNome: assistidos.nome,
+          numeroAutos: processos.numeroAutos,
+          atribuicao: processos.atribuicao,
+          delegadoNome: usersTbl.name,
+        })
+        .from(demandas)
+        .leftJoin(assistidos, eq(demandas.assistidoId, assistidos.id))
+        .leftJoin(processos, eq(demandas.processoId, processos.id))
+        .leftJoin(usersTbl, eq(demandas.delegadoParaId, usersTbl.id))
+        .where(
+          and(
+            isNull(demandas.deletedAt),
+            or(
+              isNull(demandas.syncedAt),
+              sql`${demandas.updatedAt} > ${demandas.syncedAt}`,
+            ),
+          ),
+        )
+        .limit(100);
+
+      const stats = { found: rows.length, pushed: 0, conflicts: 0, errors: 0 };
+      const pushedIds: number[] = [];
+
+      for (const r of rows) {
+        try {
+          const result = await pushDemanda({
+            id: r.id,
+            status: r.status,
+            substatus: r.substatus ?? null,
+            reuPreso: r.reuPreso,
+            dataEntrada: r.dataEntrada,
+            dataExpedicao: r.dataExpedicao,
+            ato: r.ato,
+            prazo: r.prazo,
+            // demandas.providencias foi removida do schema; o Sheets recebe vazio.
+            providencias: null,
+            assistidoNome: r.assistidoNome ?? "",
+            numeroAutos: r.numeroAutos ?? "",
+            atribuicao: r.atribuicao ?? "SUBSTITUICAO",
+            delegadoNome: r.delegadoNome ?? null,
+          });
+          if (result.pushed) {
+            stats.pushed++;
+            pushedIds.push(r.id);
+          }
+          if (result.conflict) stats.conflicts++;
+        } catch (err) {
+          stats.errors++;
+          console.error(`[push-stale] id=${r.id}:`, err);
+        }
+      }
+
+      if (pushedIds.length > 0) {
+        await db
+          .update(demandas)
+          .set({ syncedAt: new Date() })
+          .where(inArray(demandas.id, pushedIds));
+      }
+
+      return stats;
+    });
+  },
+);
+
 export const functions = [
   sendWhatsAppMessageFn,
   notifyPrazoFn,
@@ -2389,6 +2480,7 @@ export const functions = [
   driveWatchdogFn,
   intelligenceConsolidateFn,
   syncSheetPollingFn,
+  pushStaleDemandasFn,
   sheetsReorderDebouncedFn,
   coworkImportAnalysisFn,
   dispatchEncaminhamentoNotificacaoFn,
