@@ -28,7 +28,7 @@ Esse conhecimento já existe, mas vive disperso em pastas do Google Drive (`1 - 
 | Estrutura de trabalho | Um grupo de navegação ("Carreira"), **dois subsistemas em sequência**: Vida Funcional primeiro, Observatório depois. Cada um com spec→plano→implementação própria. |
 | Valor da interface | **Três camadas**: Linha do Tempo (base) + Radar de prazos (topo) + Produtividade (aba). |
 | Integração com Drive | **Navegação embutida + indexação ativa**: a UI lista/preview os arquivos da pasta; o daemon indexa e **propõe** eventos (nunca auto-cria). |
-| Privacidade | **Estritamente privada por defensor** (`defensorId`); cada um vê só o seu; sem visão agregada no MVP. |
+| Privacidade | **Privada ao defensor** (`defensorId`); estagiário/servidor vinculado podem apoiar; **admin sem god-view**; sem visão agregada. Modelo detalhado em §3.2 (fonte única da verdade). |
 | Modelo de dados | **Eventos polimórficos** — uma tabela única com `tipo` + `dados jsonb`. Produtividade é *view* sobre tabelas existentes. |
 | Nome do grupo | **"Carreira"** (3º grupo de sidebar, após Cadastros). |
 | Layout da home | **Bento híbrido**: Radar no topo → Trajetória (card/aba, peso igual) → domínios operacionais como cards de ação em **4 clusters**. |
@@ -49,9 +49,10 @@ Esse conhecimento já existe, mas vive disperso em pastas do Google Drive (`1 - 
 
 ### 3.2 Privacidade e escopo
 
-- Toda leitura/escrita filtra por `defensorId = ctx.user.id` via os helpers de `src/lib/trpc/defensor-scope.ts`.
-- Regra: `getDefensoresVisiveis(user)` **não se aplica** aqui no sentido de compartilhamento — Vida Funcional é sempre `[user.id]`, mesmo para `servidor`/`estagiario`? **Decisão:** no MVP, segue a mesma semântica das demandas (estagiário vê do supervisor; servidor conforme `defensoresVinculados`; admin vê tudo). Isso mantém consistência com o resto do app e atende ao caso de servidor que ajuda o defensor a organizar a vida funcional. *Não* há visão agregada/cross-defensor de leitura institucional.
-- Mutações bloqueadas em modo "view-as-peer" (middleware `blockWhenViewingAsPeer` já existente).
+**Modelo de acesso — fonte única da verdade desta spec.** Vida Funcional é **privada ao defensor**. O escopo de leitura/escrita é `{ o próprio defensor }` mais, quando aplicável, o defensor ao qual um estagiário/servidor está **vinculado** (delegação de apoio: estagiário vê o do `supervisorId`; servidor, os de `defensoresVinculados`). **Diferente das demandas, `admin` NÃO recebe visão cross-defensor** da vida funcional — não há god-view, dado o caráter sensível dos dados. Em nenhum papel há visão agregada institucional.
+
+- Implementação: um helper dedicado `getVidaFuncionalScope(user)` (derivado de `defensor-scope.ts`, **sem** o ramo `admin → "all"`), aplicado em **todas** as procedures do router.
+- Mutações bloqueadas em modo "view-as-peer" pelo middleware `blockWhenViewingAsPeerCheck` (`src/lib/trpc/middlewares/block-when-viewing-as-peer.ts`).
 
 ### 3.3 Modelo de dados — tabela polimórfica
 
@@ -167,7 +168,7 @@ Janelas legais derivam de `src/config/legislacao/data/lce26-bahia.ts` e das reso
 ## 5. Drive — navegação embutida + indexação ativa
 
 - **Navegação embutida:** cada evento/domínio guarda `drive_folder_id`/`drive_file_id`; a UI lista e pré-visualiza os arquivos da pasta dentro do app, reusando a infraestrutura de `/admin/drive`. O Drive permanece a **fonte da verdade** dos documentos.
-- **Indexação ativa (daemon):** um job periódico no daemon (host M4) varre as pastas mapeadas de cada domínio; para cada arquivo novo, gera uma **sugestão** em uma fila (`vida_funcional_sugestoes` ou linhas com `status='pendente_sugestao'` — decidir no plano) com `{ driveFileId, pastaOrigem, tipoSugerido, tituloSugerido, dataSugerida }`.
+- **Indexação ativa (daemon):** um job periódico no daemon (host M4) varre as pastas mapeadas de cada domínio; para cada arquivo novo, grava uma **sugestão** numa **tabela própria** `vida_funcional_sugestoes` `{ id, defensor_id, drive_file_id, pasta_origem, tipo_sugerido, titulo_sugerido, data_sugerida, status: pendente|confirmada|ignorada, evento_id?, created_at }`. Tabela separada (não um status na tabela de eventos) para manter o enum `vf_status` limpo e a fila auditável.
 - **Confirmação obrigatória:** sugestões aparecem no topo da tela de domínio. Só viram evento (`origem='indexador'`) com **✓ Confirmar** (ou Editar→Confirmar). **Nunca auto-criam.** Ignorar remove a sugestão e registra para não re-sugerir o mesmo arquivo.
 - Mapa pasta→tipo inicial (configurável): `Promoção por merecimento`→PROMOCAO; `CEPRO`→CEPRO(2ª leva); `DPBA - Corregedoria`→CORREGEDORIA(2ª leva); `DPBA - Convocações`→CONVOCACAO; `Cooperações`→COOPERACAO; `DPBA - Histórico funcional Rodrigo`→POSSE/REMOCAO/TITULARIDADE (heurística por nome); `Substituições e gratificações`→GRATIFICACAO.
 
@@ -216,8 +217,8 @@ Todos os domínios entram como eventos desde o passo 1 (a tabela é "grátis"); 
 
 | Risco | Mitigação |
 |---|---|
-| Escopo grande (11 tipos) | Tabela polimórfica torna novos tipos baratos; lógica fina é incremental; CEPRO/Corregedoria adiados. |
+| Escopo grande (18 tipos no MVP) | Tabela polimórfica torna novos tipos baratos; lógica fina é incremental; CEPRO/Corregedoria adiados. |
 | Indexador gerar ruído | Sugestões sempre com confirmação; registro de "ignorado" evita re-sugerir. |
-| Vazamento de dado privado | Escopo `defensorId` em todas as procedures; sem visão agregada; segue padrão já auditado das demandas. |
+| Vazamento de dado privado | Helper `getVidaFuncionalScope` em todas as procedures; **admin sem visão cross-defensor**; sem agregação institucional. |
 | Duplicar a skill de gratificação | Linkar, não reimplementar; Produtividade chama o pipeline existente. |
 | Acoplar regras do Radar à lei | Parâmetros configuráveis derivados de `lce26-bahia.ts`, não hard-coded. |
