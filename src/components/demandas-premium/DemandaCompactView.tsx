@@ -25,6 +25,7 @@ import {
 import { getStatusConfig, STATUS_GROUPS, DEMANDA_STATUS, getStageIndex, PIPELINE_STAGES } from "@/config/demanda-status";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
 import { StatusChip } from "./StatusChip";
+import { DemandasEmptyState } from "./DemandasEmptyState";
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { EditableTextInline } from "@/components/shared/editable-text-inline";
@@ -866,6 +867,8 @@ export function DemandaCompactView({
   onToggleGroupCollapse,
   focusedRowIndex,
   onRegisterRowRef,
+  hasActiveFilters,
+  onClearFilters,
 }: DemandaCompactViewProps) {
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: number } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1118,13 +1121,7 @@ export function DemandaCompactView({
         {/* Desktop: Table */}
         <div ref={scrollContainerRef} className="hidden md:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-220px)]">
           {demandas.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-3">
-                <Scale className="w-5 h-5 text-neutral-400" />
-              </div>
-              <p className="text-sm text-neutral-500 font-medium">Nenhuma demanda encontrada</p>
-              <p className="text-xs text-neutral-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
-            </div>
+            <DemandasEmptyState hasActiveFilters={hasActiveFilters} onClearFilters={onClearFilters} />
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={demandas.map(d => d.id)} strategy={verticalListSortingStrategy}>
@@ -1303,13 +1300,7 @@ export function DemandaCompactView({
         {/* Mobile: Compact card rows (2 lines per demanda) */}
         <div className="md:hidden">
           {demandas.length === 0 ? (
-            <div className="text-center py-20 px-6">
-              <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-3">
-                <Scale className="w-5 h-5 text-neutral-400" />
-              </div>
-              <p className="text-sm text-neutral-500 font-medium">Nenhuma demanda encontrada</p>
-              <p className="text-xs text-neutral-400 mt-1">Ajuste os filtros ou crie uma nova demanda</p>
-            </div>
+            <DemandasEmptyState hasActiveFilters={hasActiveFilters} onClearFilters={onClearFilters} />
           ) : (
             <div className="divide-y divide-neutral-100/80 dark:divide-neutral-800/60">
               {demandas.map((demanda, idx) => {
