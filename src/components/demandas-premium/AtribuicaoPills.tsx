@@ -1,21 +1,33 @@
 "use client";
 
 import React from "react";
-import { X, LayoutGrid, Users } from "lucide-react";
+import { X, LayoutGrid, UsersRound } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// Ícones por atribuição
-const ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+// Glifo canônico do Mutirão (grupo) — distinto do `Users` genérico de
+// pessoa/lista/testemunha usado em outras superfícies (F5 dedupe).
+export const MUTIRAO_PROTEGE_ICON = UsersRound;
+
+// Ícones por atribuição.
+export const ATRIBUICAO_PILL_ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   "Tribunal do Júri": Gavel,
   "Grupo Especial do Júri": Target,
   "Violência Doméstica": Home,
   "Execução Penal": Lock,
   "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
-  "Mutirão": Users,
+  "Mutirão": MUTIRAO_PROTEGE_ICON,
 };
+
+const ICONS = ATRIBUICAO_PILL_ICONS;
 
 // Re-export do master config para compatibilidade com consumers existentes
 export const ATRIBUICAO_COLORS: Record<string, string> = {
@@ -81,7 +93,7 @@ export function AtribuicaoPills({
     }
   };
 
-  return (
+  const content = (
     <div className={className ?? "flex items-center gap-1"}>
       {/* Cluster — sem moldura no dark (vive sobre charcoal); segmented no light. */}
       <div
@@ -96,10 +108,11 @@ export function AtribuicaoPills({
           const allOption = options.find((o) => o.value === "all" || o.value === "Todas" || o.label === "Todas");
           if (!allOption) return null;
           const isAllActive = selectedValues.includes("all") || selectedValues.includes("Todas") || selectedValues.length === 0;
-          return (
+          const allBtn = (
             <button
               onClick={() => onClear()}
               title={allOption.label}
+              aria-label={allOption.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                 iconOnly ? "p-1.5" : "px-2.5 py-1",
@@ -115,6 +128,15 @@ export function AtribuicaoPills({
             >
               {iconOnly ? <LayoutGrid className="w-[17px] h-[17px]" /> : allOption.label}
             </button>
+          );
+          // Só-ícone: tooltip visual no hover/foco reaproveitando o rótulo.
+          return iconOnly ? (
+            <Tooltip>
+              <TooltipTrigger asChild>{allBtn}</TooltipTrigger>
+              <TooltipContent side="bottom">{allOption.label}</TooltipContent>
+            </Tooltip>
+          ) : (
+            allBtn
           );
         })()}
 
@@ -132,11 +154,11 @@ export function AtribuicaoPills({
             color: "white",
           };
 
-          return (
+          const pillBtn = (
             <button
-              key={opt.value}
               onClick={() => handleClick(opt.value)}
               title={opt.label}
+              aria-label={opt.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
                 iconOnly ? "p-1.5" : isActive ? "px-2.5 py-1" : "px-2 py-1",
@@ -183,6 +205,16 @@ export function AtribuicaoPills({
               )}
             </button>
           );
+
+          // Só-ícone: tooltip visual no hover/foco reaproveitando o rótulo.
+          return iconOnly ? (
+            <Tooltip key={opt.value}>
+              <TooltipTrigger asChild>{pillBtn}</TooltipTrigger>
+              <TooltipContent side="bottom">{opt.label}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <React.Fragment key={opt.value}>{pillBtn}</React.Fragment>
+          );
         })}
       </div>
 
@@ -200,4 +232,10 @@ export function AtribuicaoPills({
       {children}
     </div>
   );
+
+  // No modo só-ícone os botões viram tooltips (Radix). Auto-provê o
+  // TooltipProvider para o componente funcionar em qualquer superfície
+  // (ex.: toolbar de Demandas, que não monta um provider próprio) sem
+  // exigir que o consumidor o envolva.
+  return iconOnly ? <TooltipProvider delayDuration={150}>{content}</TooltipProvider> : content;
 }

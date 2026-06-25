@@ -951,9 +951,14 @@ export default function AssistidosPage() {
                 <XCircle className="w-3 h-3" />
               </button>
             )}
-            <Link href="/admin/whatsapp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
-              <MessageCircle className="w-3.5 h-3.5" />
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/admin/whatsapp" aria-label="WhatsApp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">WhatsApp</TooltipContent>
+            </Tooltip>
             </div>
 
             {/* Right cluster: busca + ações + Novo (migrou do row 1) */}
@@ -973,20 +978,40 @@ export default function AssistidosPage() {
                   </p>
                 )}
               </div>
-              <Link href="/admin/inteligencia">
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência">
-                  <Brain className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
-                <Download className="w-3.5 h-3.5" />
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
-                {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
-              </Button>
-              <Button variant="ghost" size="sm" className={cn("h-7 w-7 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
-                <Sun className="w-3.5 h-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/admin/inteligencia">
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência" aria-label="Inteligência">
+                      <Brain className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Inteligência</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" aria-label="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
+                    <Download className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Exportar CSV</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" aria-label="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
+                    {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Vincular pastas Drive</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className={cn("h-7 w-7 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" aria-label="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
+                    <Sun className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Exportar ao Solar</TooltipContent>
+              </Tooltip>
               {batchSelectMode && (
                 <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-white/15">
                   <span className="text-[10px] text-white/60 tabular-nums">{batchSelectedIds.size} sel.</span>
