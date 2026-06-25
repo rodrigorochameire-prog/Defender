@@ -95,6 +95,7 @@ import { execucaoRouter } from "./execucao";
 import { objetosRouter } from "./objetos";
 import { promocaoRouter } from "./promocao";
 import { vidaFuncionalRouter } from "./vida-funcional";
+import { intimacoesRouter } from "./intimacoes";
 
 
 export const appRouter = router({
@@ -447,6 +448,10 @@ export const appRouter = router({
   // VIDA FUNCIONAL — CRUD escopado por defensor (privado)
   // ==========================================
   vidaFuncional: vidaFuncionalRouter,
+  // ==========================================
+  // INTIMACOES — importação de intimações PJe (lane browser)
+  // ==========================================
+  intimacoes: intimacoesRouter,
 });
 
 export type AppRouter = typeof appRouter;
