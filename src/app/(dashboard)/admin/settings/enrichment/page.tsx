@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -36,51 +37,24 @@ import Link from "next/link";
 // COLOR MAP
 // ==========================================
 
-const ATRIBUICAO_COLORS: Record<string, { bg: string; bar: string; text: string; label: string }> = {
-  JURI_CAMACARI: {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    bar: "bg-emerald-500",
-    text: "text-emerald-700 dark:text-emerald-400",
-    label: "Júri",
-  },
-  VVD_CAMACARI: {
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    bar: "bg-amber-500",
-    text: "text-amber-700 dark:text-amber-400",
-    label: "VVD",
-  },
-  EXECUCAO_PENAL: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    bar: "bg-blue-500",
-    text: "text-blue-700 dark:text-blue-400",
-    label: "Exec. Penal",
-  },
-  SUBSTITUICAO: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    bar: "bg-purple-500",
-    text: "text-purple-700 dark:text-purple-400",
-    label: "Substituicao",
-  },
-  SUBSTITUICAO_CIVEL: {
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    bar: "bg-rose-500",
-    text: "text-rose-700 dark:text-rose-400",
-    label: "Subst. Cível",
-  },
-  GRUPO_JURI: {
-    bg: "bg-cyan-100 dark:bg-cyan-900/30",
-    bar: "bg-cyan-500",
-    text: "text-cyan-700 dark:text-cyan-400",
-    label: "Grupo Júri",
-  },
+// Cores de atribuição: registry central (consolidação F1). Rótulos curtos
+// locais com acentos consolidados (F4).
+const ATRIB_LABELS: Record<string, string> = {
+  JURI_CAMACARI: "Júri",
+  VVD_CAMACARI: "VVD",
+  EXECUCAO_PENAL: "Exec. Penal",
+  SUBSTITUICAO: "Substituição",
+  SUBSTITUICAO_CIVEL: "Subst. Cível",
+  GRUPO_JURI: "Grupo Júri",
 };
 
 function getAtribColor(key: string | null) {
-  return ATRIBUICAO_COLORS[key || ""] || {
-    bg: "bg-neutral-100 dark:bg-neutral-800",
-    bar: "bg-neutral-400",
-    text: "text-neutral-600 dark:text-neutral-400",
-    label: key || "Sem atribuicao",
+  const colors = getAtribuicaoColors(key);
+  return {
+    bg: colors.bgSolid,
+    bar: colors.indicator,
+    text: colors.text,
+    label: ATRIB_LABELS[key || ""] || key || "Sem atribuicao",
   };
 }
 

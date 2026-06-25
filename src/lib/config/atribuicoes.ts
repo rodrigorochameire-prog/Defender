@@ -467,6 +467,14 @@ export function getAvatarGradient(atribuicao?: string | null) {
   return AVATAR_GRADIENT_MAP[normalized] || AVATAR_GRADIENT_MAP.all;
 }
 
+// Helper para obter a cor sólida hexadecimal de uma atribuição.
+// Fonte única: SOLID_COLOR_MAP (mesma base usada por getAtribuicaoColors().color).
+// Para consumidores não-Tailwind (charts Recharts, mapa Leaflet) que precisam de hex puro.
+export function getAtribuicaoHex(atribuicao: string | undefined | null): string {
+  if (!atribuicao) return SOLID_COLOR_MAP.all;
+  return SOLID_COLOR_MAP[atribuicao] || SOLID_COLOR_MAP.all;
+}
+
 // Função helper para obter cores de uma atribuição
 export function getAtribuicaoColors(atribuicao: string | undefined | null) {
   if (!atribuicao) {

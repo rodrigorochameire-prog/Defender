@@ -52,6 +52,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { toTitleCasePtBr } from "@/lib/format/title-case";
 import { format, formatDistanceToNow, differenceInDays, isToday, isTomorrow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -167,39 +168,10 @@ export interface CaseCardProps {
 // CONSTANTES
 // ==========================================
 
-const ATRIBUICAO_COLORS: Record<string, { border: string; bg: string; text: string }> = {
-  JURI_CAMACARI: { 
-    border: "border-l-emerald-600 dark:border-l-emerald-500", 
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-700 dark:text-emerald-400"
-  },
-  VVD_CAMACARI: { 
-    border: "border-l-violet-600 dark:border-l-violet-500",
-    bg: "bg-violet-100 dark:bg-violet-900/30",
-    text: "text-violet-700 dark:text-violet-400"
-  },
-  EXECUCAO_PENAL: { 
-    border: "border-l-blue-600 dark:border-l-blue-500",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400"
-  },
-  SUBSTITUICAO: { 
-    border: "border-l-rose-600 dark:border-l-rose-500",
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    text: "text-rose-700 dark:text-rose-400"
-  },
-  GRUPO_JURI: { 
-    border: "border-l-orange-600 dark:border-l-orange-500",
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    text: "text-orange-700 dark:text-orange-400"
-  },
-  SUBSTITUICAO_CIVEL: { 
-    border: "border-l-purple-600 dark:border-l-purple-500",
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    text: "text-purple-700 dark:text-purple-400"
-  },
-};
+// Cores de atribuição: registry central (getAtribuicaoColors) — borda lateral,
+// fundo sólido e texto do badge. Sem paleta local (consolidação F1).
 
+// Rótulos curtos próprios do card (mantidos; vocabulário é escopo de F4).
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Júri",
   VVD_CAMACARI: "V.D.",
@@ -219,7 +191,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
   const [isOpen, setIsOpen] = useState(false);
   const [copiedCNJ, setCopiedCNJ] = useState<string | null>(null);
 
-  const themeColors = ATRIBUICAO_COLORS[data.atribuicao] || ATRIBUICAO_COLORS.SUBSTITUICAO;
+  const themeColors = getAtribuicaoColors(data.atribuicao);
   const atribuicaoLabel = ATRIBUICAO_LABELS[data.atribuicao] || data.atribuicao;
 
   // Calcular se tem audiência hoje ou amanhã
@@ -269,7 +241,7 @@ export function CaseCard({ data }: { data: CaseCardProps }) {
                   variant="secondary" 
                   className={cn(
                     "text-xs sm:text-sm font-mono tracking-wide uppercase px-2 py-0.5",
-                    themeColors.bg, themeColors.text
+                    themeColors.bgSolid, themeColors.text
                   )}
                 >
                   {atribuicaoLabel}

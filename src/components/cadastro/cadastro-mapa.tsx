@@ -9,26 +9,25 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { MapPin, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 
-// Pastel fills — synchronized with cadastro-mapa-leaflet.tsx
-const ATRIBUICAO_COLORS: Record<string, string> = {
-  JURI_CAMACARI:    "#4ade80",
-  GRUPO_JURI:       "#86efac",
-  VVD_CAMACARI:     "#fbbf24",
-  EXECUCAO_PENAL:   "#60a5fa",
-  SUBSTITUICAO:     "#fb923c",
-  SUBSTITUICAO_CIVEL: "#a78bfa",
-};
+// Ordem de exibição das atribuições no mapa (chaves do registry central).
+// As CORES vêm do registry via getAtribuicaoHex — fonte única; aqui só a ordem.
+const ATRIBUICAO_ORDER = [
+  "JURI_CAMACARI",
+  "GRUPO_JURI",
+  "VVD_CAMACARI",
+  "EXECUCAO_PENAL",
+  "SUBSTITUICAO",
+  "SUBSTITUICAO_CIVEL",
+] as const;
 
-// Dark borders for chip dots
-const ATRIBUICAO_BORDERS: Record<string, string> = {
-  JURI_CAMACARI:    "#166534",
-  GRUPO_JURI:       "#166534",
-  VVD_CAMACARI:     "#78350f",
-  EXECUCAO_PENAL:   "#1e3a8a",
-  SUBSTITUICAO:     "#7c2d12",
-  SUBSTITUICAO_CIVEL: "#4c1d95",
-};
+// Preenchimento do marcador: cor de atribuição do registry central.
+const atribFill = (key: string): string => getAtribuicaoHex(key);
+// Contorno do marcador: outline neutro escuro único para contraste sobre o mapa.
+// Não carrega identidade (a identidade está no preenchimento) — por isso é um
+// único valor, evitando uma segunda paleta de atribuição.
+const MARKER_OUTLINE = "#3f3f46"; // zinc-700
 
 const ATRIBUICAO_LABELS: Record<string, string> = {
   JURI_CAMACARI: "Tribunal do Júri",
@@ -44,7 +43,7 @@ const DIAMOND_ATRIBUICOES = new Set(["VVD_CAMACARI"]);
 // Júri usa anel externo
 const JURY_ATRIBUICOES = new Set(["JURI_CAMACARI", "GRUPO_JURI"]);
 
-const ALL_ATRIBUICOES = Object.keys(ATRIBUICAO_COLORS);
+const ALL_ATRIBUICOES = [...ATRIBUICAO_ORDER];
 
 const LeafletMap = dynamic(() => import("./cadastro-mapa-leaflet"), {
   ssr: false,
@@ -247,7 +246,7 @@ export function CadastroMapa() {
                   totalComCoordenadas > 0
                     ? Math.round((count / totalComCoordenadas) * 100)
                     : 0;
-                const cor = ATRIBUICAO_COLORS[atribuicao] || "#737373";
+                const cor = atribFill(atribuicao);
                 const label = ATRIBUICAO_LABELS[atribuicao] || atribuicao;
                 return (
                   <div key={atribuicao}>
@@ -359,7 +358,7 @@ export function CadastroMapa() {
           {ALL_ATRIBUICOES.map((atribuicao) => {
             const ativo = atribuicoesVisiveis.includes(atribuicao);
             const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === atribuicao;
-            const cor = ATRIBUICAO_COLORS[atribuicao] || "#737373";
+            const cor = atribFill(atribuicao);
             const label = ATRIBUICAO_LABELS[atribuicao] || atribuicao;
             const count = contagens[atribuicao] ?? 0;
             const isDiamond = DIAMOND_ATRIBUICOES.has(atribuicao);
@@ -387,7 +386,7 @@ export function CadastroMapa() {
                       className="w-3 h-3"
                       style={{
                         backgroundColor: ativo ? cor : "#d4d4d4",
-                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
+                        border: `1.5px solid ${ativo ? MARKER_OUTLINE : "#a3a3a3"}`,
                         transform: "rotate(45deg)",
                         borderRadius: "1px",
                       }}
@@ -405,7 +404,7 @@ export function CadastroMapa() {
                         className="w-2 h-2 rounded-full"
                         style={{
                           backgroundColor: ativo ? cor : "#d4d4d4",
-                          border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
+                          border: `1.5px solid ${ativo ? MARKER_OUTLINE : "#a3a3a3"}`,
                         }}
                       />
                     </>
@@ -414,7 +413,7 @@ export function CadastroMapa() {
                       className="w-2.5 h-2.5 rounded-full"
                       style={{
                         backgroundColor: ativo ? cor : "#d4d4d4",
-                        border: `1.5px solid ${ativo ? (ATRIBUICAO_BORDERS[atribuicao] || "#525252") : "#a3a3a3"}`,
+                        border: `1.5px solid ${ativo ? MARKER_OUTLINE : "#a3a3a3"}`,
                       }}
                     />
                   )}
@@ -448,8 +447,8 @@ export function CadastroMapa() {
       {topAtribuicoes.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap px-3 py-2 border-b border-border bg-background">
           {topAtribuicoes.map(({ atribuicao: a, count }) => {
-            const fill   = ATRIBUICAO_COLORS[a]  || "#a3a3a3";
-            const border = ATRIBUICAO_BORDERS[a] || "#525252";
+            const fill   = atribFill(a);
+            const border = MARKER_OUTLINE;
             const label  = ATRIBUICAO_LABELS[a]  || a;
             const isDiamondA = DIAMOND_ATRIBUICOES.has(a);
             const isIsolated = atribuicoesVisiveis.length === 1 && atribuicoesVisiveis[0] === a;

@@ -57,6 +57,7 @@ export {
 // Atribuição (já centralizada) — re-export para um único ponto de entrada.
 export {
   getAtribuicaoColors,
+  getAtribuicaoHex,
   getAtribuicaoIcon,
   normalizeAreaToFilter,
   areaMatchesFilter,
