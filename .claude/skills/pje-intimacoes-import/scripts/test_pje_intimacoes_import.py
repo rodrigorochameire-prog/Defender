@@ -1,5 +1,8 @@
 import unittest
-from pje_intimacoes_import import normalize_conteudo, compute_content_hash, decide_layer_a
+from pje_intimacoes_import import (
+    normalize_conteudo, compute_content_hash, decide_layer_a,
+    _pje_datetime_to_iso, _pje_prazo_to_date,
+)
 
 
 class TestPureHelpers(unittest.TestCase):
@@ -28,6 +31,47 @@ class TestPureHelpers(unittest.TestCase):
             decide_layer_a(None, "HASH3", {"by_hash": {"HASH3": "imported"}}),
             "ja_importada",
         )
+
+
+class TestDateHelpers(unittest.TestCase):
+    """Testes para _pje_datetime_to_iso e _pje_prazo_to_date (Fix 1)."""
+
+    # _pje_datetime_to_iso ──────────────────────────────────────────────
+
+    def test_datetime_iso_date_only(self):
+        """DD/MM/YYYY → YYYY-MM-DDTHH:MM:00"""
+        self.assertEqual(_pje_datetime_to_iso("15/03/2025"), "2025-03-15T00:00:00")
+
+    def test_datetime_iso_with_time(self):
+        """DD/MM/YYYY HH:MM → YYYY-MM-DDTHH:MM:00"""
+        self.assertEqual(_pje_datetime_to_iso("15/03/2025 14:30"), "2025-03-15T14:30:00")
+
+    def test_datetime_iso_empty_returns_none(self):
+        """Entrada vazia/None → None"""
+        self.assertIsNone(_pje_datetime_to_iso(""))
+        self.assertIsNone(_pje_datetime_to_iso(None))
+        self.assertIsNone(_pje_datetime_to_iso("   "))
+
+    def test_datetime_iso_non_date_returns_none(self):
+        """String não-data (número de dias, texto livre) → None"""
+        self.assertIsNone(_pje_datetime_to_iso("10"))
+        self.assertIsNone(_pje_datetime_to_iso("texto"))
+        self.assertIsNone(_pje_datetime_to_iso("2025-03-15"))  # ISO direto não suportado
+
+    # _pje_prazo_to_date ────────────────────────────────────────────────
+
+    def test_prazo_date_converts(self):
+        """DD/MM/YYYY → YYYY-MM-DD"""
+        self.assertEqual(_pje_prazo_to_date("30/03/2025"), "2025-03-30")
+
+    def test_prazo_number_returns_none(self):
+        """Número de dias → None (não fabrica prazo)"""
+        self.assertIsNone(_pje_prazo_to_date("10"))
+        self.assertIsNone(_pje_prazo_to_date("30"))
+
+    def test_prazo_empty_returns_none(self):
+        self.assertIsNone(_pje_prazo_to_date(""))
+        self.assertIsNone(_pje_prazo_to_date(None))
 
 
 if __name__ == "__main__":

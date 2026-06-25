@@ -32,6 +32,7 @@ export function stagingRowToImportRow(row: PjeImportStaging): ImportRow {
     tipoDocumento: row.tipoDocumento ?? undefined,
     idDocumentoPje: row.pjeDocumentoId ?? undefined,
     assistidoMatchId: pick<number | undefined>("assistidoMatchId", undefined),
+    importBatchId: String(row.jobId),
   };
 }
 

@@ -137,6 +137,7 @@ describe("stagingRowToImportRow", () => {
     expect(out.atribuicao).toBe("VVD_CAMACARI");
     expect(out.tipoDocumento).toBe("INTIM");
     expect(out.idDocumentoPje).toBe("DOC999");                            // idDocumentoPje ← pjeDocumentoId
+    expect(out.importBatchId).toBe("10");                                 // spec §3/§7: importBatchId = jobId
   });
 
   it("revisao override: revisao['assistidoNome'] wins over row.assistidoNome", () => {

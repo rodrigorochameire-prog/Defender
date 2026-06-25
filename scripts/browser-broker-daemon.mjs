@@ -113,7 +113,7 @@ const SKILL_REGISTRY = {
     }),
   },
 
-  // Importação de intimações PJe para staging (pje_intimações_pendentes).
+  // Importação de intimações PJe para staging (pje_import_staging).
   // Requer --job-id (id da claude_code_tasks), --atribuicoes CSV e flags opcionais.
   'pje-intimacoes-import': {
     label: 'Importar intimações PJe (staging)',

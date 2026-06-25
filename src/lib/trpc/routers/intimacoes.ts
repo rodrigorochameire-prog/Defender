@@ -103,14 +103,21 @@ export const intimacoesRouter = router({
         .from(pjeImportStaging)
         .where(eq(pjeImportStaging.jobId, input.jobId));
 
-      // Layer-B: dedup fuzzy contra demandas vivas (nao deletadas).
-      const demandasVivas = await db
-        .select()
-        .from(demandas)
-        .where(isNull(demandas.deletedAt));
-
-      const rows = enrichStagingWithLiveDedup(stagingRows, demandasVivas);
-      return { status: task.status, etapa: task.etapa ?? null, rows };
+      // Layer-B: dedup fuzzy contra demandas vivas — só quando o job está concluído.
+      // Durante pending/processing as linhas ainda estão sendo escritas; rodar Layer-B
+      // seria parcial e desperdiçaria um full-scan de demandas a cada heartbeat.
+      // Nota: demandas não tem coluna processoNumero (usa processoId FK → processos),
+      // portanto o scope por número de processo exigiria um join adicional.
+      // O gate completed-only cobre o caso principal e já elimina o hot-path.
+      if (task.status === "completed") {
+        const demandasVivas = await db
+          .select()
+          .from(demandas)
+          .where(isNull(demandas.deletedAt));
+        const rows = enrichStagingWithLiveDedup(stagingRows, demandasVivas);
+        return { status: task.status, etapa: task.etapa ?? null, rows };
+      }
+      return { status: task.status, etapa: task.etapa ?? null, rows: stagingRows };
     }),
 
   /**

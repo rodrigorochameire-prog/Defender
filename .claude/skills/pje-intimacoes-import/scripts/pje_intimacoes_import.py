@@ -188,7 +188,9 @@ JS_EXTRACT_ALL_ROWS = r"""() => {
     // pjeDocumentoId: extraído do onclick (?nd=xxx) ou do índice da linha
     // ASSUMPTION: o nd= na URL dos autos digitais corresponde ao ID do doc PJe.
     const ndMatch = onclick.match(/[?&]nd=([0-9]+)/);
-    const pjeDocumentoId = ndMatch ? ndMatch[1] : rowIdx;
+    // pjeDocumentoId: null quando nd= ausente — fallback correto via content_hash (spec §5).
+    // Usar rowIdx como chave forte corrompia o ledger (diferentes docs têm o mesmo índice).
+    const pjeDocumentoId = ndMatch ? ndMatch[1] : null;
 
     // Células por posição (índices ASSUMPTION — verificar)
     const cells = Array.from(row.querySelectorAll('td'));
@@ -204,7 +206,11 @@ JS_EXTRACT_ALL_ROWS = r"""() => {
       prazo: cellText(6),
       pjeDocumentoId,
       autosUrl,
-      conteudo: '',  // Preenchido opcionalmente por _read_conteudo_if_needed
+      // ASSUMPTION: conteúdo construído a partir das células disponíveis sem abrir o
+      // documento (barato/live-safe). Sinal estável por expediente para dedup hash
+      // quando pjeDocumentoId está ausente (chave fallback §5). Usa tipoDocumento
+      // (col3), dataExpedicao(col4), dataIntimacao(col5), prazo(col6).
+      conteudo: [cellText(3), cellText(4), cellText(5), cellText(6)].filter(Boolean).join(' | '),
     });
   }
   return rows;
@@ -297,6 +303,53 @@ def _iso_to_pje_date(iso_date: str | None) -> str | None:
         return f"{d}/{m}/{y}"
     except Exception:
         return iso_date  # pass-through se já está em outro formato
+
+
+def _pje_datetime_to_iso(s: str | None) -> str | None:
+    """Converte string de data/hora do PJe para ISO compatível com colunas timestamp.
+
+    Formatos aceitos:
+      "DD/MM/YYYY"       → "YYYY-MM-DDTHH:MM:00" (meia-noite local)
+      "DD/MM/YYYY HH:MM" → "YYYY-MM-DDTHH:MM:00"
+
+    Retorna None para entrada vazia, None ou não parseável. Nunca levanta exceção.
+    """
+    if not s:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    # Tenta com hora primeiro
+    try:
+        dt = datetime.strptime(s, "%d/%m/%Y %H:%M")
+        return dt.strftime("%Y-%m-%dT%H:%M:00")
+    except ValueError:
+        pass
+    # Tenta só data
+    try:
+        dt = datetime.strptime(s, "%d/%m/%Y")
+        return dt.strftime("%Y-%m-%dT00:00:00")
+    except ValueError:
+        pass
+    return None
+
+
+def _pje_prazo_to_date(s: str | None) -> str | None:
+    """Converte célula de prazo para ISO date (YYYY-MM-DD) se for DD/MM/YYYY.
+
+    Se a célula contiver um número de dias (ex: "10", "30") ou qualquer valor
+    que não seja uma data reconhecível, retorna None — NUNCA fabrica um prazo.
+    Isso evita inserir datas falsas na coluna `date` do banco.
+    """
+    if not s:
+        return None
+    s = s.strip()
+    try:
+        dt = datetime.strptime(s, "%d/%m/%Y")
+        return dt.strftime("%Y-%m-%d")
+    except ValueError:
+        # Número de dias ou formato desconhecido — descarta
+        return None
 
 
 # ─── Live scraper (Playwright — importado lazily) ─────────────────────────────
@@ -524,12 +577,14 @@ def run(args) -> None:
         )
 
         for exp in expedientes:
+            # Trata pjeDocumentoId vazio/null como None para chave forte do ledger (spec §5).
+            pje_doc_id = exp.get("pjeDocumentoId") or None
             ch = compute_content_hash(
                 exp.get("processoNumero") or "",
-                exp.get("pjeDocumentoId"),
-                exp.get("conteudo", ""),
+                pje_doc_id,
+                exp.get("conteudo") or "",
             )
-            decisao = decide_layer_a(exp.get("pjeDocumentoId"), ch, ledger_index)
+            decisao = decide_layer_a(pje_doc_id, ch, ledger_index)
             sb.insert(
                 "pje_import_staging",
                 {
@@ -539,11 +594,14 @@ def run(args) -> None:
                     "assistido_nome": exp.get("assistidoNome"),
                     "ato": exp.get("ato"),
                     "tipo_documento": exp.get("tipoDocumento"),
-                    "data_expedicao": exp.get("dataExpedicao"),
-                    "data_intimacao": exp.get("dataIntimacao"),
-                    "prazo": exp.get("prazo"),
+                    # Converte datas PJe (DD/MM/YYYY) para ISO antes de inserir no Postgres.
+                    # Colunas timestamp rejeitam o formato brasileiro; None insere NULL.
+                    "data_expedicao": _pje_datetime_to_iso(exp.get("dataExpedicao")),
+                    "data_intimacao": _pje_datetime_to_iso(exp.get("dataIntimacao")),
+                    # Coluna date: converte DD/MM/YYYY → YYYY-MM-DD ou NULL se for nº de dias.
+                    "prazo": _pje_prazo_to_date(exp.get("prazo")),
                     "conteudo": exp.get("conteudo") or "",
-                    "pje_documento_id": exp.get("pjeDocumentoId"),
+                    "pje_documento_id": pje_doc_id,
                     "content_hash": ch,
                     "decisao": decisao,
                     "selected": decisao == "nova",
@@ -551,7 +609,7 @@ def run(args) -> None:
             )
             # Bump last_seen_at no ledger se já existe (Layer-A hit)
             if decisao != "nova":
-                _bump_ledger_last_seen(sb, exp.get("pjeDocumentoId"), ch, args.job_id)
+                _bump_ledger_last_seen(sb, pje_doc_id, ch, args.job_id)
             total += 1
 
     sb.update(
