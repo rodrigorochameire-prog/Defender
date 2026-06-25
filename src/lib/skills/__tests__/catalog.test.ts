@@ -30,6 +30,11 @@ describe("familiaDeAtribuicao", () => {
     expect(familiaDeAtribuicao("SUBSTITUICAO_CIVEL")).toEqual([]);
   });
 
+  it("degrades gracefully for an unknown/null attribution (no throw, no families)", () => {
+    expect(familiaDeAtribuicao("" as never)).toEqual([]);
+    expect(familiaDeAtribuicao("WHATEVER_UNKNOWN" as never)).toEqual([]);
+  });
+
   it("treats integral criminal varas as multi-family", () => {
     const itaparica = familiaDeAtribuicao("CRIMINAL_ITAPARICA");
     expect(itaparica).toEqual(

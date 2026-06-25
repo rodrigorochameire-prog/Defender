@@ -90,4 +90,6 @@ Monta `<SkillLauncher>` no cockpit/sheet do processo (`ProcessoSheet` / processo
 - Branch `feat/skills-launcher-ui`; commits atômicos por story; PR para revisão (não merge direto em `main`).
 
 ## Log de progresso
-- 2026-06-25: spec criado; baseline medido (tsc 0 erros, suíte verde); catálogo iniciado.
+- 2026-06-25: spec criado; baseline medido (tsc 0 erros, suíte verde sob `CI=1`: 257 arq/1943 testes); catálogo iniciado.
+- 2026-06-25: **Stories 1–5 concluídas.** Catálogo + view-model + componente `SkillLauncher` + superfície no `ProcessoSheet` (via prop `iaLauncher`, body mantido puro). `familiaDeAtribuicao` degrada com segurança para atribuição desconhecida/nula. Gate verde: `tsc` 0 · `CI=1 vitest` 261 arq/**1971** testes (0 falhas; +28 meus) · `next lint` 0 erros. Commits: `feat(skills) F1-3` + `feat(skills) F4-5`.
+- Próximos (fora desta sessão): command palette ⌘K (plano 2026-03-27), histórico de tasks por entidade, superfície no sheet de assistido, migração de references (`skills-defensoria-refactor`).

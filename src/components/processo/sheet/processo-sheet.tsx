@@ -8,6 +8,8 @@ import { trpc } from "@/lib/trpc/client";
 import { onlyDigits } from "@/lib/format/cnj";
 import { formatProcesso } from "@/lib/format/apresentacao";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { SkillLauncher } from "@/components/shared/skill-launcher";
+import type { Atribuicao } from "@/lib/skills/catalog";
 import { ProcessoSheetBody, type ProcessoSheetData } from "./processo-sheet-body";
 
 interface Props {
@@ -143,6 +145,22 @@ export function ProcessoSheet({ processoId, open, onOpenChange, onVincularCaso }
       }
     : undefined;
 
+  // Launcher de skills de IA — montado aqui (tem ids reais); o body apenas o
+  // renderiza. Assistido principal alimenta o assistidoId exigido pelo daemon.
+  const principalId =
+    processo?.assistidos?.find((a) => a.isPrincipal)?.id ??
+    processo?.assistidos?.[0]?.id ??
+    undefined;
+  const iaLauncher =
+    processo && data ? (
+      <SkillLauncher
+        entity="processo"
+        atribuicao={(processo.atribuicao ?? "") as Atribuicao}
+        assistidoId={principalId}
+        processoId={processo.id}
+      />
+    ) : undefined;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -162,6 +180,7 @@ export function ProcessoSheet({ processoId, open, onOpenChange, onVincularCaso }
             onVincularCaso={handleVincularCaso}
             onAbrirPje={handleAbrirPje}
             slots={slots}
+            iaLauncher={iaLauncher}
           />
         )}
         {!isLoading && !data && (

@@ -105,11 +105,10 @@ export function familiaDeAtribuicao(
       return ["CRIMINAL", "JURI", "EXECUCAO_PENAL"];
     case "SUBSTITUICAO_CIVEL":
       return [];
-    default: {
-      // Exhaustiveness guard — novo valor do enum força revisão aqui.
-      const _never: never = atribuicao;
-      return _never;
-    }
+    default:
+      // Valor desconhecido/nulo (a coluna é texto livre): degrada para nenhuma
+      // família penal — só skills `ANY` aparecem. Nunca lança.
+      return [];
   }
 }
 
