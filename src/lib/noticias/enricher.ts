@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { assertGeminiApiAllowed } from "@/lib/services/paid-api-guard";
 import { db } from "@/lib/db";
 import { noticiasJuridicas } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -15,6 +16,7 @@ function getGeminiClient(): GoogleGenerativeAI {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY não está configurada para enrichment de notícias");
   }
+  assertGeminiApiAllowed("noticias.enricher");
   if (!geminiClient) {
     geminiClient = new GoogleGenerativeAI(GEMINI_API_KEY);
   }

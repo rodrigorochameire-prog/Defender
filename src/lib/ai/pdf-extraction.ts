@@ -12,6 +12,7 @@ import {
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
+import { assertGeminiApiAllowed } from "@/lib/services/paid-api-guard";
 
 // ==========================================
 // CONFIGURACAO
@@ -45,6 +46,7 @@ let client: GoogleGenerativeAI | null = null;
 
 function getClient(): GoogleGenerativeAI {
   if (!GEMINI_API_KEY) throw new Error("Gemini API key não configurada");
+  assertGeminiApiAllowed("pdf-extraction.client");
   if (!client) client = new GoogleGenerativeAI(GEMINI_API_KEY);
   return client;
 }

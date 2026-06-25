@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { assertGeminiApiAllowed } from "./paid-api-guard";
 import { db } from "@/lib/db";
 import { jurisprudenciaJulgados } from "@/lib/db/schema";
 import { eq, sql, desc, and, or, ilike } from "drizzle-orm";
@@ -7,13 +8,27 @@ import { eq, sql, desc, and, or, ilike } from "drizzle-orm";
 // CONFIGURAÇÃO DO GEMINI
 // ==========================================
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
+// Inicialização LAZY + guard: nada de cliente Gemini no load do módulo. Cada
+// acesso passa pelo firewall de custo (assertGeminiApiAllowed) — sem flag
+// ALLOW_GEMINI_API, qualquer chamada paga é bloqueada.
+let _genAI: GoogleGenerativeAI | null = null;
+function getGenAI(): GoogleGenerativeAI {
+  assertGeminiApiAllowed("jurisprudencia-ai");
+  if (!_genAI) {
+    _genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
+  }
+  return _genAI;
+}
 
 // Modelo para processamento de texto
-const textModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+function getTextModel() {
+  return getGenAI().getGenerativeModel({ model: "gemini-2.5-flash" });
+}
 
 // Modelo para embeddings (busca semântica)
-const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+function getEmbeddingModel() {
+  return getGenAI().getGenerativeModel({ model: "text-embedding-004" });
+}
 
 // ==========================================
 // TIPOS
@@ -111,7 +126,7 @@ Foque em:
 - Questões processuais relevantes`;
 
   try {
-    const result = await textModel.generateContent(prompt);
+    const result = await getTextModel().generateContent(prompt);
     const response = result.response.text();
 
     // Parse JSON da resposta
@@ -135,7 +150,7 @@ Foque em:
     }
 
     // Gerar embedding para busca semântica
-    const embeddingResult = await embeddingModel.embedContent(
+    const embeddingResult = await getEmbeddingModel().embedContent(
       `${julgado.tribunal} ${julgado.numeroProcesso || ""} ${parsed.resumo} ${parsed.pontosChave?.join(" ") || ""}`
     );
     const embedding = embeddingResult.embedding.values;
@@ -175,7 +190,7 @@ export async function searchJulgadosWithAI(
 
   try {
     // Gerar embedding da query
-    const embeddingResult = await embeddingModel.embedContent(query);
+    const embeddingResult = await getEmbeddingModel().embedContent(query);
     const queryEmbedding = embeddingResult.embedding.values;
 
     // Buscar julgados com embedding
@@ -351,7 +366,7 @@ Formato da resposta:
 Retorne sua resposta em texto normal (não JSON).`;
 
   try {
-    const result = await textModel.generateContent(prompt);
+    const result = await getTextModel().generateContent(prompt);
     const resposta = result.response.text();
 
     // Formatar precedentes para copiar/colar
@@ -408,7 +423,7 @@ export async function extractTextFromPDF(
   try {
     const base64Data = fileBuffer.toString("base64");
 
-    const result = await textModel.generateContent([
+    const result = await getTextModel().generateContent([
       {
         inlineData: {
           mimeType,
@@ -464,7 +479,7 @@ Retorne APENAS um JSON válido (sem markdown) com:
 Se algum campo não for encontrado, use null.`;
 
   try {
-    const result = await textModel.generateContent(prompt);
+    const result = await getTextModel().generateContent(prompt);
     const response = result.response.text();
 
     // Parse JSON

@@ -64,6 +64,46 @@ try {
 // --- Supabase client ---
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
+// --- FIREWALL DE CUSTO (conta Max, NUNCA API paga) ---
+// O OMBUDS deve usar EXCLUSIVAMENTE a assinatura Max via `claude -p` (login
+// claude.ai), que não bilheta por token. Se `ANTHROPIC_API_KEY` (ou chaves de
+// Gemini/OpenAI) estiverem no ambiente, o `claude` as usa com PRECEDÊNCIA sobre
+// o login Max — e passa a COBRAR a API. Isso foi a causa de cobrança real.
+// Removemos essas chaves do ambiente do processo-filho para garantir, por
+// construção, que `claude -p` só autentique pela conta Max.
+const PAID_API_KEYS = [
+  'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN',
+  'GEMINI_API_KEY', 'GOOGLE_GEMINI_API_KEY', 'GOOGLE_AI_API_KEY', 'GOOGLE_API_KEY',
+  'OPENAI_API_KEY',
+]
+
+function buildMaxOnlyEnv() {
+  const e = { ...process.env }
+  for (const k of PAID_API_KEYS) delete e[k]
+  return e
+}
+
+// Ambiente saneado usado em TODO spawn de `claude` (sem chaves pagas).
+const CHILD_ENV = buildMaxOnlyEnv()
+
+// Fail-closed contra cobrança: avisa (e, em modo estrito, recusa iniciar) se
+// houver chave paga no ambiente. As chaves são sempre removidas do filho — o
+// aviso existe para você limpá-las na raiz (.env/shell).
+const LEAKED_KEYS = PAID_API_KEYS.filter((k) => process.env[k])
+if (LEAKED_KEYS.length > 0) {
+  console.warn(
+    `${LOG_PREFIX} ⚠ Chaves de API paga presentes no ambiente: ${LEAKED_KEYS.join(', ')}. ` +
+    `Foram REMOVIDAS do claude -p (forçando a conta Max, sem custo). ` +
+    `Remova-as do .env/shell para eliminar o risco na raiz.`,
+  )
+  if (ENV.DAEMON_STRICT_NO_API === 'true' || process.env.DAEMON_STRICT_NO_API === 'true') {
+    console.error(`${LOG_PREFIX} DAEMON_STRICT_NO_API=true e há chave paga no ambiente — abortando.`)
+    process.exit(1)
+  }
+} else {
+  console.log(`${LOG_PREFIX} ✓ Firewall de custo ativo — claude -p usará a conta Max (sem API paga).`)
+}
+
 // --- Skill aliases: UI-facing skill names → directory in .claude/skills-cowork/ ---
 // Loaded from SKILL_ALIASES.json (versioned) with fallback to hardcoded defaults.
 // Any skill name not in the map is tried directly as a directory name.
@@ -161,6 +201,7 @@ function runClaude(skillPath, prompt) {
     const args = ['-p', '--system-prompt-file', skillPath, '--permission-mode', 'bypassPermissions', prompt]
     const child = spawn(CLAUDE_BIN, args, {
       cwd: PROJECT_DIR,
+      env: CHILD_ENV, // sem chaves pagas → claude usa a conta Max
       maxBuffer: 10 * 1024 * 1024,
       timeout: 600_000,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -274,7 +315,12 @@ async function processTask(task) {
     let result = await runClaude(skillPath, basePrompt)
 
     if (result.code !== 0) {
-      const errorMsg = result.stderr || `Process exited with code ${result.code}`
+      // stderr costuma estar vazio em falha do `claude -p` — anexa a cauda do
+      // stdout para o erro deixar de ser um "exit 1" cego e mostrar a causa real.
+      const errorMsg =
+        (result.stderr && result.stderr.trim()) ||
+        (result.stdout && result.stdout.trim().slice(-1500)) ||
+        `Process exited with code ${result.code}`
       await supabase.from('claude_code_tasks').update({
         status: 'failed',
         erro: errorMsg.slice(0, 2000),
@@ -305,7 +351,10 @@ A primeira caractere da resposta deve ser { e o último deve ser }.`
       result = await runClaude(skillPath, retryPrompt)
 
       if (result.code !== 0) {
-        const errorMsg = result.stderr || `Retry exited with code ${result.code}`
+        const errorMsg =
+          (result.stderr && result.stderr.trim()) ||
+          (result.stdout && result.stdout.trim().slice(-1500)) ||
+          `Retry exited with code ${result.code}`
         await supabase.from('claude_code_tasks').update({
           status: 'failed',
           erro: `Retry failed: ${errorMsg.slice(0, 1900)}`,

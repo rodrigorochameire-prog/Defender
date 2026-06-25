@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertOpenAiApiAllowed } from "@/lib/services/paid-api-guard";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
         { status: 503 }
       );
     }
+
+    assertOpenAiApiAllowed("strategy-advisor");
 
     const system = [
       MASTER_PROMPT,

@@ -12,6 +12,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { assertClaudeApiAllowed } from "./claude-api-guard";
+import { assertGeminiApiAllowed } from "./paid-api-guard";
 
 // ==========================================
 // CONFIGURACAO
@@ -543,6 +544,7 @@ async function classifyWithGemini(
   startPage: number,
   endPage: number
 ): Promise<ClassificationResult> {
+  assertGeminiApiAllowed("pdf-classifier.classifyWithGemini");
   // Lazy-import to avoid loading @google/generative-ai when using Claude
   const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = await import("@google/generative-ai");
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { assertGeminiApiAllowed } from "@/lib/services/paid-api-guard";
 
 const SUMMARY_PROMPT = `Você é um assistente jurídico especializado em Defensoria Pública.
 Receberá a transcrição de um atendimento ou áudio relacionado a um caso.
@@ -27,6 +28,8 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
+
+  assertGeminiApiAllowed("summarize-transcript");
 
   const body = await request.json();
   const transcript =

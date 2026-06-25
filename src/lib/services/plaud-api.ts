@@ -21,6 +21,7 @@ import {
 import { eq, and, desc, isNull } from "drizzle-orm";
 import { uploadFileBuffer } from "./google-drive";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { assertGeminiApiAllowed } from "./paid-api-guard";
 import { enrichmentClient } from "@/lib/services/enrichment-client";
 
 // ==========================================
@@ -983,6 +984,7 @@ export async function extractKeyPointsWithAI(
       return null;
     }
 
+    assertGeminiApiAllowed("plaud.extractTranscriptKeywords");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
