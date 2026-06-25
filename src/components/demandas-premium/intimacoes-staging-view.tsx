@@ -70,31 +70,8 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     onError: (e) => toast.error("Erro: " + e.message),
   });
 
-  // Handle NOT_FOUND error gracefully (missing job)
-  if (query.error) {
-    const isNotFound =
-      query.error.data?.code === "NOT_FOUND" ||
-      query.error.message?.toLowerCase().includes("não encontrado");
-
-    return (
-      <div className="p-6">
-        <div className="flex flex-col items-center justify-center min-h-[30vh] gap-4 text-center">
-          <p className="text-neutral-500 text-sm">
-            {isNotFound
-              ? "Job não encontrado. O import pode ter sido removido ou o link está incorreto."
-              : `Erro ao carregar: ${query.error.message}`}
-          </p>
-          <Link
-            href="/admin/demandas"
-            className="text-sm text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
-          >
-            Voltar para Demandas
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
+  // Derived values — computed unconditionally so hooks always run in the same order.
+  // When query.error is set, rows is [] and resumo/grupos compute harmlessly.
   const rows = query.data?.rows ?? [];
   const status = query.data?.status ?? "pending";
   const running = status === "pending" || status === "processing";
@@ -121,6 +98,31 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     }
     return [...m.entries()];
   }, [rows]);
+
+  // Handle NOT_FOUND error gracefully (missing job) — conditional returns AFTER all hooks.
+  if (query.error) {
+    const isNotFound =
+      query.error.data?.code === "NOT_FOUND" ||
+      query.error.message?.toLowerCase().includes("não encontrado");
+
+    return (
+      <div className="p-6">
+        <div className="flex flex-col items-center justify-center min-h-[30vh] gap-4 text-center">
+          <p className="text-neutral-500 text-sm">
+            {isNotFound
+              ? "Job não encontrado. O import pode ter sido removido ou o link está incorreto."
+              : `Erro ao carregar: ${query.error.message}`}
+          </p>
+          <Link
+            href="/admin/demandas"
+            className="text-sm text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
+          >
+            Voltar para Demandas
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const toggle = (id: number) =>
     setSelected((s) => {
@@ -173,6 +175,13 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
         </div>
       )}
 
+      {/* Empty state when job finished with zero rows */}
+      {!running && rows.length === 0 && (
+        <div className="mt-8 text-center text-sm text-neutral-400 dark:text-neutral-500">
+          Nenhuma intimação encontrada.
+        </div>
+      )}
+
       {/* Grouped review table */}
       {grupos.map(([atrib, lista]) => (
         <section key={atrib} className="mt-6">
@@ -209,6 +218,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                           checked={selected.has(r.id)}
                           disabled={isDisabled}
                           onChange={() => toggle(r.id)}
+                          aria-label={`Selecionar intimação ${r.processoNumero ?? r.id}`}
                           className="h-3.5 w-3.5 rounded border-neutral-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed"
                         />
                       </td>
