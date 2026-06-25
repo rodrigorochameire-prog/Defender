@@ -42,6 +42,11 @@ import Link from "next/link";
 import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
 import { toast } from "sonner";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
+import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+
+// Acento de atribuição VVD (âmbar) — registry src/lib/config/atribuicoes.ts
+const VVD_ACCENT = "#f59e0b";
 
 // Opções de atribuição para o modal (apenas VVD pré-selecionado)
 const atribuicaoOptions = [
@@ -140,38 +145,32 @@ export default function VVDPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Header Secundário (página especial) */}
-      <div className="px-4 md:px-6 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+      <HeaderSlotTitle icon={Shield} title="Violência Doméstica" accentHex={VVD_ACCENT} />
+      <CollapsiblePageHeader title="Violência Doméstica" icon={Shield} seamless>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center shadow-lg shrink-0">
-              <Shield className="w-5 h-5 text-white dark:text-neutral-900" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight">Violência Doméstica</h1>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">Controle de Medidas Protetivas de Urgência</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => {
-              refetchStats();
-              refetchProcessos();
-              refetchIntimacoes();
-            }} className="h-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
-              <RefreshCw className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Atualizar</span>
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setIsPJeImportModalOpen(true)}
-              className="h-8 px-3 bg-neutral-800 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-xs font-medium rounded-md transition-colors"
+          <p className="text-[12px] text-white/55 truncate">Controle de Medidas Protetivas de Urgência</p>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              title="Atualizar"
+              onClick={() => {
+                refetchStats();
+                refetchProcessos();
+                refetchIntimacoes();
+              }}
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
             >
-              <Upload className="h-3.5 w-3.5 mr-1" />
+              <RefreshCw className="w-[15px] h-[15px]" />
+            </button>
+            <button
+              onClick={() => setIsPJeImportModalOpen(true)}
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+            >
+              <Upload className="w-3.5 h-3.5" />
               Importar PJe
-            </Button>
+            </button>
           </div>
         </div>
-      </div>
+      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
