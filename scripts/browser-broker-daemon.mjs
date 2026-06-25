@@ -117,19 +117,22 @@ const SKILL_REGISTRY = {
   // Requer --job-id (id da claude_code_tasks), --atribuicoes CSV e flags opcionais.
   'pje-intimacoes-import': {
     label: 'Importar intimações PJe (staging)',
-    build: (meta) => ({
-      interpreter: VENV_PYTHON,
-      argv: [
-        resolve(PROJECT_DIR, '.claude/skills/pje-intimacoes-import/scripts/pje_intimacoes_import.py'),
-        '--job-id', String(meta.jobId),
-        '--atribuicoes', (meta.atribuicoes || []).join(','),
-        ...(meta.since  ? ['--since',  String(meta.since)]  : []),
-        ...(meta.until  ? ['--until',  String(meta.until)]  : []),
-        ...(meta.limit  ? ['--limit',  String(meta.limit)]  : []),
-        '--modo', meta.modo || 'cdp',
-      ],
-      timeoutMs: 30 * 60_000,
-    }),
+    build: (meta) => {
+      if (!meta.atribuicoes?.length) throw new Error('meta.atribuicoes é obrigatório para pje-intimacoes-import');
+      return {
+        interpreter: VENV_PYTHON,
+        argv: [
+          resolve(PROJECT_DIR, '.claude/skills/pje-intimacoes-import/scripts/pje_intimacoes_import.py'),
+          '--job-id', String(meta.jobId),
+          '--atribuicoes', meta.atribuicoes.join(','),
+          ...(meta.since  ? ['--since',  String(meta.since)]  : []),
+          ...(meta.until  ? ['--until',  String(meta.until)]  : []),
+          ...(meta.limit  ? ['--limit',  String(meta.limit)]  : []),
+          '--modo', meta.modo || 'cdp',
+        ],
+        timeoutMs: 30 * 60_000,
+      };
+    },
   },
 
   // Smoke test da lane — não abre browser. Prova queue→spawn→result sem credenciais.
