@@ -90,6 +90,11 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Mapa dos Fatos", path: "/admin/mapa-dos-fatos", icon: "MapPin" },
 ];
 
+// Carreira - Vida Funcional
+const CARREIRA_NAV: AssignmentMenuItem[] = [
+  { label: "Vida Funcional", path: "/admin/carreira/vida-funcional", icon: "Briefcase" },
+];
+
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
 const DOCUMENTOS_NAV: AssignmentMenuItem[] = [
   { label: "Distribuição", path: "/admin/distribuicao", icon: "FolderInput" },
@@ -1118,6 +1123,110 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
 }
 
 // ==========================================
+// MENU "CARREIRA" COLAPSÁVEL
+// ==========================================
+
+function CarreiraMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
+  items: AssignmentMenuItem[];
+  pathname: string;
+  onNavigate: () => void;
+  userRole?: UserRole;
+  isCollapsed: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const hasActiveItem = items.some(item => pathname.startsWith(item.path));
+
+  useEffect(() => {
+    if (hasActiveItem && !expanded) setExpanded(true);
+  }, [hasActiveItem]);
+
+  if (isCollapsed) {
+    return (
+      <SidebarPopoverMenu
+        items={items}
+        pathname={pathname}
+        onNavigate={onNavigate}
+        userRole={userRole}
+        label="Carreira"
+        icon={Briefcase}
+        theme="cowork"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <SidebarMenuItem>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className={cn(
+            "w-full h-10 transition-all duration-300 rounded-xl flex items-center px-3 group/item",
+            hasActiveItem
+              ? "bg-emerald-600/15 text-emerald-400"
+              : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+          )}
+        >
+          <div className="mr-2.5 transition-all duration-200">
+            <Briefcase className={cn(
+              "h-[18px] w-[18px] transition-all duration-200",
+              hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
+            )} />
+          </div>
+          <span className="text-[13px] font-medium">Carreira</span>
+          {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
+          <ChevronDown className={cn(
+            "h-4 w-4 ml-auto transition-transform duration-300",
+            expanded && "rotate-180"
+          )} />
+        </button>
+      </SidebarMenuItem>
+
+      <div className={cn(
+        "overflow-hidden transition-all duration-300 ease-in-out",
+        expanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+      )}>
+        <div className="relative pl-4 space-y-0.5">
+          <div className="absolute left-[22px] top-1 bottom-1 w-px bg-gradient-to-b from-emerald-500/20 via-black/[0.06] dark:via-white/[0.06] to-transparent" />
+          {items.map((item) => {
+            if (item.requiredRoles && userRole && !item.requiredRoles.includes(userRole)) {
+              return null;
+            }
+            const Icon = iconMap[item.icon] || Briefcase;
+            const isActive = pathname.startsWith(item.path);
+            return (
+              <SidebarMenuItem key={item.path}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 transition-all duration-300 rounded-lg group/subitem relative",
+                    isActive
+                      ? "bg-emerald-500/15 text-emerald-400 font-medium"
+                      : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  )}
+                >
+                  <Link href={item.path} prefetch={true} onClick={onNavigate}>
+                    <div className={cn(
+                      "absolute left-[-12px] w-2 h-px transition-all duration-200",
+                      isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
+                    )} />
+                    <Icon className={cn(
+                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
+                    )} />
+                    <span className="text-[12px] truncate">{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
 // MENU "DOCUMENTOS" COLAPSÁVEL - LARANJA
 // ==========================================
 
@@ -1814,7 +1923,19 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
               />
             </SidebarMenu>
 
-            {/* 3. Especialidades (Júri/VVD/EP/Inst. Superior) - logo após Cadastros */}
+            {/* 3. Carreira - Vida Funcional */}
+            <NavDivider collapsed={isCollapsed} />
+            <SidebarMenu className="space-y-0.5">
+              <CarreiraMenu
+                items={CARREIRA_NAV}
+                pathname={pathname}
+                onNavigate={handleNavigate}
+                userRole={userRole}
+                isCollapsed={isCollapsed}
+              />
+            </SidebarMenu>
+
+            {/* 4. Especialidades (Júri/VVD/EP/Inst. Superior) - logo após Cadastros */}
             <NavDivider collapsed={isCollapsed} />
             <SidebarMenu className="space-y-0.5">
               <EspecialidadesMenu

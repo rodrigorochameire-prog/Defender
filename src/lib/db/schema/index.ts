@@ -11,6 +11,7 @@ export * from "./enums";
 // Core tables (users, assistidos, processos, demandas, etc.)
 export * from "./core";
 export * from "./funcional";
+export * from "./vida-funcional";
 
 // Comarcas (multi-comarca expansion)
 export * from "./comarcas";

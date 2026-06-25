@@ -94,6 +94,7 @@ import { cautelaresRouter } from "./cautelares";
 import { execucaoRouter } from "./execucao";
 import { objetosRouter } from "./objetos";
 import { promocaoRouter } from "./promocao";
+import { vidaFuncionalRouter } from "./vida-funcional";
 
 
 export const appRouter = router({
@@ -441,6 +442,11 @@ export const appRouter = router({
   // PROMOÇÃO — camada de promoção de pessoas (case_personas + analysisData → catálogo)
   // ==========================================
   promocao: promocaoRouter,
+
+  // ==========================================
+  // VIDA FUNCIONAL — CRUD escopado por defensor (privado)
+  // ==========================================
+  vidaFuncional: vidaFuncionalRouter,
 });
 
 export type AppRouter = typeof appRouter;
