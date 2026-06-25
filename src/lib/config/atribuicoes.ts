@@ -433,6 +433,7 @@ export const SOLID_COLOR_MAP: Record<string, string> = {
   CRIMINAL: "#fb7185",
   "Criminal Geral": "#fb7185",
   Substituição: "#fb7185",
+  "Substituição Criminal": "#fb7185",
   SUBSTITUICAO_CIVEL: "#fb923c", // orange-400
   CIVEL: "#fb923c",
   FAMILIA: "#fb923c",

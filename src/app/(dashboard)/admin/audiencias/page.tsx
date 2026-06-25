@@ -33,8 +33,9 @@ import { trpc } from "@/lib/trpc/client";
 // CONSTANTES - DESIGN SUÍÇO
 // ==========================================
 
-// Cores de atribuição NEUTRAS para reduzir poluição visual
-const ATRIBUICAO_COLORS: Record<string, { 
+// Estilo de linha NEUTRO por atribuição (desaturado de propósito p/ reduzir poluição
+// visual nesta lista). NÃO é paleta de atribuição — cor de área vem do registry (F1).
+const AUDIENCIA_NEUTRAL_STYLE: Record<string, { 
   border: string; 
   bg: string; 
   text: string;
@@ -253,7 +254,7 @@ export default function AudienciasPage() {
   }
 
   // Configuração visual da atribuição selecionada
-  const atribuicaoColors = ATRIBUICAO_COLORS[areaFilter] || ATRIBUICAO_COLORS.all;
+  const atribuicaoColors = AUDIENCIA_NEUTRAL_STYLE[areaFilter] || AUDIENCIA_NEUTRAL_STYLE.all;
 
   return (
     <TooltipProvider>
@@ -285,7 +286,7 @@ export default function AudienciasPage() {
             <div className="flex gap-1 sm:gap-1.5 min-w-max border-b border-neutral-200 dark:border-border pb-px">
               {ATRIBUICAO_OPTIONS.map((option) => {
                 const isActive = areaFilter === option.value;
-                const optionColors = ATRIBUICAO_COLORS[option.value] || ATRIBUICAO_COLORS.all;
+                const optionColors = AUDIENCIA_NEUTRAL_STYLE[option.value] || AUDIENCIA_NEUTRAL_STYLE.all;
                 const count = option.value === "all" 
                   ? audiencias.length 
                   : 0; // Em produção, filtrar por area

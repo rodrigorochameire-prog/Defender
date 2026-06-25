@@ -4,7 +4,7 @@ import React from "react";
 import { X, LayoutGrid, UsersRound } from "lucide-react";
 import { Gavel, Target, Home, Lock, RefreshCw, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import { SOLID_COLOR_MAP, getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import {
   Tooltip,
   TooltipContent,
@@ -28,17 +28,6 @@ export const ATRIBUICAO_PILL_ICONS: Record<string, React.ComponentType<{ classNa
 };
 
 const ICONS = ATRIBUICAO_PILL_ICONS;
-
-// Re-export do master config para compatibilidade com consumers existentes
-export const ATRIBUICAO_COLORS: Record<string, string> = {
-  "Tribunal do Júri": SOLID_COLOR_MAP["Tribunal do Júri"] || SOLID_COLOR_MAP.JURI,
-  "Grupo Especial do Júri": SOLID_COLOR_MAP["Grupo Especial do Júri"] || SOLID_COLOR_MAP.GRUPO_JURI,
-  "Violência Doméstica": SOLID_COLOR_MAP["Violência Doméstica"] || SOLID_COLOR_MAP.VVD,
-  "Execução Penal": SOLID_COLOR_MAP["Execução Penal"] || SOLID_COLOR_MAP.EXECUCAO,
-  "Substituição Criminal": SOLID_COLOR_MAP.SUBSTITUICAO,
-  "Curadoria Especial": SOLID_COLOR_MAP["Curadoria Especial"] || SOLID_COLOR_MAP.CURADORIA,
-  "Mutirão": SOLID_COLOR_MAP["Mutirão"] || "#a855f7",
-};
 
 const DEFAULT_HEX = SOLID_COLOR_MAP.all || "#71717a";
 
@@ -142,7 +131,7 @@ export function AtribuicaoPills({
 
         {filtered.map((opt) => {
           const isActive = selectedValues.includes(opt.value);
-          const hex = ATRIBUICAO_COLORS[opt.label] || DEFAULT_HEX;
+          const hex = getAtribuicaoHex(opt.label) || DEFAULT_HEX;
           const Icon = ICONS[opt.label];
           const count = counts?.[opt.label];
 
