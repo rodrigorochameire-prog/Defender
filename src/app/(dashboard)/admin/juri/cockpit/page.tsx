@@ -106,6 +106,11 @@ import { AvaliacaoInline, AvaliacaoLiveFeed } from "@/components/juri/cockpit/av
 import { EncerrarSessaoButton } from "@/components/juri/cockpit/encerrar-sessao";
 import { SessaoContexto } from "@/components/juri/cockpit/sessao-contexto";
 import { BriefingJuradoButton } from "@/components/juri/cockpit/briefing-jurado";
+import {
+  plenarioContainerClass,
+  EntrarModoPlenarioButton,
+  CockpitPlenarioBar,
+} from "@/components/juri/cockpit/cockpit-plenario";
 
 // ============================================
 // CONFIGURAÇÃO DAS FASES
@@ -864,6 +869,8 @@ function PlenarioCockpitContent() {
   const [searchJurado, setSearchJurado] = useState("");
   const [showRecusados, setShowRecusados] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  // F2-A — Modo plenário (full-screen focus): opt-in overlay, sem mexer no layout/rota
+  const [modoPlenario, setModoPlenario] = useState(false);
 
   // Buscar jurados do banco de dados
   const { data: juradosDB, isLoading: isLoadingJurados } = trpc.jurados.list.useQuery({
@@ -1370,9 +1377,33 @@ function PlenarioCockpitContent() {
     ? "rounded-xl border border-neutral-800/80 bg-neutral-900"
     : "rounded-xl border border-neutral-200/80 bg-white";
 
+  // Nome legível da sessão para a barra mínima do modo plenário
+  const sessaoNome = sessaoJuriId ? `Sessão do Júri #${sessaoJuriId}` : "Sessão do Júri";
+
   return (
     <TooltipProvider>
-      <div className={containerClass}>
+      <div className={cn(containerClass, plenarioContainerClass(modoPlenario))}>
+        {/* Barra mínima — só no modo plenário: nome + cronômetro + Encerrar + Sair */}
+        {modoPlenario && (
+          <CockpitPlenarioBar
+            sessaoNome={sessaoNome}
+            cronometro={formatTime(isStopwatchMode ? elapsedTime : timeLeft)}
+            autoSalvo={isLoaded}
+            onSairModo={() => setModoPlenario(false)}
+            encerrarSlot={
+              <EncerrarSessaoButton
+                sessaoJuriId={sessaoJuriId}
+                isDarkMode={isDarkMode}
+                conselhoSentenca={conselhoSentenca}
+                anotacoes={anotacoes}
+                onSucessoEncerramento={() => router.push("/admin/juri")}
+              />
+            }
+          />
+        )}
+
+        {/* Page-header normal — escondido enquanto em modo plenário */}
+        {!modoPlenario && (
         <CollapsiblePageHeader title="Cockpit do Júri" icon={Target}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -1438,6 +1469,11 @@ function PlenarioCockpitContent() {
 
               <div className="w-px h-5 bg-white/[0.08]" />
 
+              {/* Entrar em modo plenário (full-screen focus) */}
+              <EntrarModoPlenarioButton onEntrar={() => setModoPlenario(true)} />
+
+              <div className="w-px h-5 bg-white/[0.08]" />
+
               {/* Encerrar Sessão */}
               <EncerrarSessaoButton
                 sessaoJuriId={sessaoJuriId}
@@ -1459,6 +1495,7 @@ function PlenarioCockpitContent() {
             </div>
           </div>
         </CollapsiblePageHeader>
+        )}
 
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4 pb-24">
           {/* Contexto da sessão (banco): defendido, processo, comarca, tese, depoentes — diferencia grupo do júri */}
@@ -1478,7 +1515,7 @@ function PlenarioCockpitContent() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Select value={faseAtual} onValueChange={setFaseAtual}>
-                  <SelectTrigger className={cn("w-[180px] h-9", isDarkMode ? "bg-neutral-800 border-neutral-700" : "")}>
+                  <SelectTrigger className={cn("w-[180px] h-9", modoPlenario && "min-h-[44px]", isDarkMode ? "bg-neutral-800 border-neutral-700" : "")}>
                     <SelectValue placeholder="Fase" />
                   </SelectTrigger>
                   <SelectContent className={isDarkMode ? "bg-neutral-900 border-neutral-800" : ""}>
@@ -1513,6 +1550,7 @@ function PlenarioCockpitContent() {
                   onClick={() => setIsRunning((prev) => !prev)}
                   className={cn(
                     "min-w-[100px]",
+                    modoPlenario && "min-h-[44px] min-w-[120px]",
                     isRunning
                       ? "bg-amber-500 hover:bg-amber-600"
                       : "bg-emerald-600 hover:bg-emerald-700"
@@ -1524,7 +1562,7 @@ function PlenarioCockpitContent() {
                 <Button
                   variant="outline"
                   onClick={() => setTimeLeft(totalTime)}
-                  className={isDarkMode ? "border-neutral-700" : ""}
+                  className={cn(modoPlenario && "min-h-[44px]", isDarkMode ? "border-neutral-700" : "")}
                 >
                   <Timer className="h-4 w-4 mr-2" />
                   Reset
@@ -1564,7 +1602,10 @@ function PlenarioCockpitContent() {
           )}
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-neutral-200/80 dark:border-neutral-800/80 pb-2 overflow-x-auto scrollbar-thin">
+          <div className={cn(
+            "flex items-center gap-1 border-b border-neutral-200/80 dark:border-neutral-800/80 pb-2 overflow-x-auto scrollbar-thin",
+            modoPlenario && "[&_button]:min-h-[44px]",
+          )}>
             {cockpitMode === "registro" ? (
               <>
                 {([
