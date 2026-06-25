@@ -28,6 +28,15 @@ import { resolve, join } from "node:path";
 const ARGS = new Set(process.argv.slice(2));
 const FIX = ARGS.has("--fix");
 const SESSION = ARGS.has("--session");
+
+// ANTI FORK-BOMB (defesa máxima): o daemon spawna `claude -p` no PROJECT_DIR com
+// OMBUDS_NO_BOOTSTRAP=1; esse claude re-dispara o SessionStart hook → este script.
+// Se reentrarmos com a marca, saímos IMEDIATAMENTE — zero probe, zero trabalho de
+// bootstrap nos filhos de tarefa do daemon (corta a recursão na raiz e o overhead
+// por-tarefa). O guard em verifyMaxAuth permanece como segunda linha de defesa.
+if (process.env.OMBUDS_NO_BOOTSTRAP === "1") {
+  process.exit(0);
+}
 const REPO = resolve(process.cwd());
 const HOME = homedir();
 const MARKER = join(HOME, ".ombuds-daemon-host");
@@ -53,8 +62,17 @@ function isDaemonHost() {
 
 /** Roda `claude -p` com TODAS as chaves pagas removidas — testa o login Max. */
 function verifyMaxAuth(claudeBin) {
+  // GUARD ANTI FORK-BOMB: este script roda como SessionStart hook (.claude/settings.json).
+  // Se ele spawnar `claude -p`, esse claude reabre uma sessão → re-dispara o hook →
+  // m4-bootstrap → claude -p → ... recursão infinita (empilha processos, queima cota Max).
+  // Marcamos o env do filho com OMBUDS_NO_BOOTSTRAP=1; quando o hook reentra com essa
+  // marca, pulamos o probe. Assim a cadeia para na profundidade 1.
+  if (process.env.OMBUDS_NO_BOOTSTRAP === "1") {
+    return { code: 0, ok: true, stdout: "(probe pulado: reentrância OMBUDS_NO_BOOTSTRAP)", stderr: "", skipped: true };
+  }
   const env = { ...process.env };
   for (const k of PAID_KEYS) delete env[k];
+  env.OMBUDS_NO_BOOTSTRAP = "1"; // o claude -p filho NÃO re-dispara o bootstrap (anti fork-bomb)
   // A primeira resposta do `claude -p` (warmup do modelo na conta Max) leva
   // ~90-100s. O timeout antigo (90s) dava SIGTERM (exit 143) e reportava um
   // FALSO "login FALHOU". 180s cobre a latência real com folga.
