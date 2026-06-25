@@ -145,7 +145,7 @@ export default function AtendimentosView() {
     () => rangeFromPreset(apenasPendentes ? "passados" : periodo),
     [periodo, apenasPendentes]
   );
-  const { data: atendimentos = [], isLoading } = trpc.registros.listAtendimentos.useQuery({
+  const { data: atendimentos = [], isLoading, isError, refetch } = trpc.registros.listAtendimentos.useQuery({
     ...(statusFiltro !== "todos" ? { status: [statusFiltro as "agendado" | "realizado" | "cancelado"] } : {}),
     ...(subtipoFiltro !== "todos" ? { subtipo: subtipoFiltro as "inicial" | "retorno" } : {}),
     ...(areaFiltro !== "todas"
@@ -481,7 +481,23 @@ export default function AtendimentosView() {
         {mostrarInsights && <AtendimentosInsights />}
 
         {/* Conteúdo conforme a visão */}
-        {vista === "calendario" ? (
+        {isError ? (
+          <Card className="border-dashed border-rose-300/60 dark:border-rose-900/50">
+            <CardContent className="text-center py-16">
+              <div className="mx-auto w-14 h-14 rounded-full bg-rose-100/70 dark:bg-rose-900/20 flex items-center justify-center mb-4">
+                <AlertCircle className="w-7 h-7 text-rose-500" />
+              </div>
+              <h3 className="text-base font-medium text-foreground/80 mb-1">Não foi possível carregar os atendimentos</h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+                Verifique sua conexão e tente novamente.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
+                <RotateCcw className="w-3.5 h-3.5" />
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        ) : vista === "calendario" ? (
           <AtendimentosCalendar
             itens={visiveis}
             onOpen={setDetalhe}

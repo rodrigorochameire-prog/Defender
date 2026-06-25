@@ -99,8 +99,10 @@
 - [x] 6.3 **Gerar demanda / Agendar retorno full-screen no mobile**: Gerar demanda já é Sheet `w-full` (full-screen no celular); form-modal (Dialog) agora `max-sm:h-[100dvh] max-sm:max-w-none` (full-screen no celular) + CTA full-width. CTAs ancorados (SheetFooter / footer do form).
 - [x] 6.4 **Baseline mobile** (`e2e/smoke.spec.ts`, `describe.skip` viewport 390×844): documenta o contrato — novo atendimento full-screen (altura ~100dvh) + Gerar demanda como Sheet full-width com CTA ancorado. Rodar manualmente/no device. _Resta_: alvo de toque + filtros recolhidos (pedem device).
 
-### Fase 7 — QA final + estados especiais
-- 7.1 Skeletons coerentes por área. 7.2 Empty states (lista/registros/autos/contexto). 7.3 Erro + sucesso contextual. 7.4 A11y final (badges/filtros/campos/CTAs). 7.5 QA visual desktop/mobile; densidade final; consistência lista↔workspace↔fluxos.
+### Fase 7 — QA final + estados especiais (em andamento)
+- 7.1 Skeletons (lista já tem; cards/calendário pendentes). 7.2 Empty states (lista já tem; registros/autos/contexto pendentes).
+- [x] 7.3 **Estado de erro** da lista: `listAtendimentos` agora expõe `isError`/`refetch`; render mostra card de erro (ícone rosa + "Tentar novamente") em vez de cair no empty-state enganoso. Sucesso já é via toast nos fluxos.
+- 7.4 A11y: primitivos têm rótulo textual + `aria-pressed` nos modos/KPIs; _resta_ auditoria fina (foco/contraste — device). 7.5 QA visual desktop/mobile — **device/olhos**.
 
 ## Ordem recomendada
 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7, mergeando cada fase completa+testada na main. Fase 1 (semântica de badges/cores) destrava o ganho visual mais barato; Fases 3 e 5 (workspace e gerar demanda) são as de maior valor.
