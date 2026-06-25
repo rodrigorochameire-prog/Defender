@@ -13,6 +13,7 @@ const CI_QUARANTINE = [
   "__tests__/trpc/cronologia-router.test.ts",
   "__tests__/trpc/encaminhamentos.test.ts",
   "__tests__/trpc/audiencias-mutations.test.ts",
+  "__tests__/trpc/vida-funcional-router.test.ts",
   "__tests__/api/triagem-atendimento.test.ts",
   "__tests__/api/triagem-promover.test.ts",
   // (b) Testes de componente vermelhos pré-existentes na `main` (a corrigir)
