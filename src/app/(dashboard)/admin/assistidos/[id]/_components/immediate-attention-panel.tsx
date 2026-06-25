@@ -46,7 +46,7 @@ export function ImmediateAttentionPanel({
           ))}
         </div>
         <Link href={ctaHref(cta.kind, assistidoId)} className="shrink-0">
-          <button className="w-full sm:w-auto h-9 inline-flex items-center justify-center gap-1.5 px-4 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+          <button className="w-full sm:w-auto h-11 sm:h-9 inline-flex items-center justify-center gap-1.5 px-4 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
             {cta.label}
             <ChevronRight className="w-4 h-4" />
           </button>

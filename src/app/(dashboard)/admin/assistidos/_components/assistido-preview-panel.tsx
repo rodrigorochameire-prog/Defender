@@ -332,31 +332,31 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
       {/* ───────── 4. AÇÕES (sticky footer) ───────── */}
       <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-sm">
         <Link href={ctaHref(cta.kind, assistido.id)} className="block">
-          <button className="w-full h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+          <button className="w-full h-11 sm:h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
             {cta.label}
             <ChevronRight className="w-4 h-4" />
           </button>
         </Link>
         <div className="flex items-center gap-2 mt-2">
           <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
-            <button className="w-full h-8 flex items-center justify-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-300 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer">
+            <button className="w-full h-11 sm:h-8 flex items-center justify-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-300 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer">
               <ExternalLink className="w-3.5 h-3.5" />
               Abrir perfil
             </button>
           </Link>
           <Link href={`/admin/assistidos/${assistido.id}/editar`}>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="Editar">
+            <button className="h-11 w-11 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="Editar">
               <Pencil className="w-3.5 h-3.5" />
             </button>
           </Link>
           <Link href={`/admin/demandas/nova?assistido=${assistido.id}`}>
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="Nova demanda">
+            <button className="h-11 w-11 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="Nova demanda">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </Link>
           {whatsappUrl && (
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="WhatsApp">
+              <button className="h-11 w-11 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="WhatsApp">
                 <MessageCircle className="w-3.5 h-3.5" />
               </button>
             </a>
