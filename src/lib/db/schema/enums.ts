@@ -604,3 +604,18 @@ export const demandaOrigemEnum = pgEnum("demanda_origem", [
   "enrichment",
   "manual",
 ]);
+
+// Importação de intimações do PJe — decisão de dedup na staging
+export const stagingDecisaoEnum = pgEnum("staging_decisao", [
+  "nova",
+  "duplicada",
+  "ja_importada",
+  "incerta",
+]);
+
+// Importação de intimações do PJe — decisão registrada no ledger permanente
+export const ledgerDecisaoEnum = pgEnum("ledger_decisao", [
+  "imported",
+  "skipped",
+  "duplicate",
+]);
