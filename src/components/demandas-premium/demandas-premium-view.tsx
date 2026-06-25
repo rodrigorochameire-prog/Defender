@@ -80,7 +80,7 @@ import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
-import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
+import { AtribuicaoPills, MUTIRAO_PROTEGE_ICON } from "@/components/demandas-premium/AtribuicaoPills";
 import { arrayMove } from "@dnd-kit/sortable";
 // KPICardPremium/KPIGrid removed — stats now inline in charcoal header
 import { useProfissional } from "@/contexts/profissional-context";
@@ -166,8 +166,9 @@ const atribuicaoIcons: Record<string, React.ComponentType<{ className?: string }
   "Execução Penal": Lock,
   "Substituição Criminal": RefreshCw,
   "Curadoria Especial": Shield,
-  "Mutirão (TJBA Protege)": Users,
-  MUTIRAO_PROTEGE: Users,
+  // Mutirão usa UsersRound (grupo) — distinto do `Users` genérico (F5 dedupe).
+  "Mutirão (TJBA Protege)": MUTIRAO_PROTEGE_ICON,
+  MUTIRAO_PROTEGE: MUTIRAO_PROTEGE_ICON,
 };
 
 // Stable empty array to prevent useEffect infinite loop from inline `= []` default
@@ -286,8 +287,9 @@ const getAtoIcon = (ato: string): LucideIcon => {
   if (atoLower.includes("quesito")) return HelpCircle;
   // Incidente de insanidade
   if (atoLower.includes("insanidade") || atoLower.includes("incidente")) return AlertTriangle;
-  // Desaforamento
-  if (atoLower.includes("desaforamento")) return Target;
+  // Desaforamento — Send (remessa a outra comarca); Target fica reservado à
+  // atribuição "Grupo Especial do Júri" para não colidir o glifo (F5 dedupe).
+  if (atoLower.includes("desaforamento")) return Send;
   // Prosseguimento do feito
   if (atoLower.includes("prosseguimento")) return Inbox;
   // Restituição
@@ -358,7 +360,7 @@ const atribuicaoOptions = [
   { value: "Substituição Criminal", label: "Substituição Criminal", icon: RefreshCw },
   { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri", icon: Target },
   { value: "Curadoria Especial", label: "Curadoria Especial", icon: Shield },
-  { value: "Mutirão (TJBA Protege)", label: "Mutirão", icon: Users },
+  { value: "Mutirão (TJBA Protege)", label: "Mutirão", icon: MUTIRAO_PROTEGE_ICON },
 ];
 
 // Mapeia chaves da coluna `users.areasPrincipais` (jsonb) para os labels
