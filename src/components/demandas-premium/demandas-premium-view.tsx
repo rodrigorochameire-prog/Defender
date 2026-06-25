@@ -63,6 +63,7 @@ import { ActiveFiltersBar } from "./ActiveFiltersBar";
 import { buildActiveFilterChips } from "./active-filters";
 import { DemandasEmptyState } from "./DemandasEmptyState";
 import { DemandasListSkeleton } from "./DemandasListSkeleton";
+import { DemandasConnectionBanner } from "./DemandasConnectionBanner";
 import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
@@ -853,10 +854,12 @@ export default function Demandas() {
   const demandasQuery = trpc.demandas.list.useQuery({
     defensorId: selectedDefensorId ?? undefined,
   });
-  const { data: demandasDB = EMPTY_DEMANDAS, isLoading: loadingDemandas } = useOfflineQuery(
-    demandasQuery,
-    getOfflineDemandas,
-  );
+  const {
+    data: demandasDB = EMPTY_DEMANDAS,
+    isLoading: loadingDemandas,
+    isOffline: demandasOffline,
+    isFromCache: demandasFromCache,
+  } = useOfflineQuery(demandasQuery, getOfflineDemandas);
 
   const utils = trpc.useUtils();
 
@@ -3316,6 +3319,8 @@ export default function Demandas() {
 
       {/* Conteúdo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">
+        {/* Fase 7.3: aviso de conexão/cache (offline-first) */}
+        <DemandasConnectionBanner isOffline={demandasOffline} isFromCache={demandasFromCache} />
         {/* Fase 2: barra de filtros ativos (chips + limpar tudo) — visível em todas as views */}
         <ActiveFiltersBar
           chips={activeFilterChips}
