@@ -193,36 +193,81 @@ function tryParseResult(stdout) {
   }
 }
 
-// Child `claude` em execução (no máximo 1 — processamento é serial). Rastreado para
-// poder ser morto no shutdown, evitando processo órfão após SIGTERM/SIGINT.
-let activeChild = null
+// --- Limitador de concorrência ---
+// O processamento era estritamente serial (1 `claude -p` por vez), então um backlog
+// de N tarefas levava ~N × (tempo de cada análise Opus). Agora processamos até
+// DAEMON_CONCURRENCY em paralelo. O lock otimista em processTask já garante que a
+// mesma task não seja processada duas vezes; o semáforo abaixo é o teto GLOBAL de
+// processos `claude` simultâneos (cobre tanto o catch-up quanto o caminho Realtime).
+// Default conservador (2) p/ respeitar os limites da assinatura Max.
+const MAX_CONCURRENCY = Math.max(
+  1,
+  parseInt(ENV.DAEMON_CONCURRENCY || process.env.DAEMON_CONCURRENCY || '2', 10) || 2,
+)
+let runningSlots = 0
+const slotWaiters = []
+function acquireSlot() {
+  if (runningSlots < MAX_CONCURRENCY) {
+    runningSlots++
+    return Promise.resolve()
+  }
+  return new Promise((res) => slotWaiters.push(res))
+}
+function releaseSlot() {
+  const next = slotWaiters.shift()
+  if (next) next() // transfere o slot ao próximo (mantém o teto, não decrementa)
+  else runningSlots--
+}
+
+// Children `claude` em execução. Rastreados para serem mortos no shutdown, evitando
+// processos órfãos após SIGTERM/SIGINT. Antes era um único `activeChild`, o que sob
+// concorrência (ou rajada de INSERTs do Realtime) só matava o último.
+const activeChildren = new Set()
 
 // --- Spawn claude -p and return { code, stdout, stderr } ---
-function runClaude(skillPath, prompt) {
-  return new Promise((resolvePromise) => {
-    // bypassPermissions: worker headless precisa rodar Bash autônomo (rclone,
-    // ffmpeg, whisper-cli, node) sem diálogo de aprovação. 'auto'/'acceptEdits'
-    // bloqueiam Bash e a skill de transcrição (entre outras) nunca conclui.
-    const args = ['-p', '--system-prompt-file', skillPath, '--permission-mode', 'bypassPermissions', prompt]
-    const child = spawn(CLAUDE_BIN, args, {
-      cwd: PROJECT_DIR,
-      env: CHILD_ENV, // sem chaves pagas → claude usa a conta Max
-      maxBuffer: 10 * 1024 * 1024,
-      timeout: TASK_TIMEOUT_MS,
-      stdio: ['ignore', 'pipe', 'pipe'],
+async function runClaude(skillPath, prompt) {
+  await acquireSlot()
+  try {
+    return await new Promise((resolvePromise) => {
+      // bypassPermissions: worker headless precisa rodar Bash autônomo (rclone,
+      // ffmpeg, whisper-cli, node) sem diálogo de aprovação. 'auto'/'acceptEdits'
+      // bloqueiam Bash e a skill de transcrição (entre outras) nunca conclui.
+      // --strict-mcp-config: nenhuma skill do daemon usa ferramentas MCP (mcp__),
+      //   então NÃO subimos os servidores supabase/jira de .claude/mcp.json a cada
+      //   invocação — corta o cold-start de conectar 2 MCPs por tarefa.
+      // --exclude-dynamic-system-prompt-sections: tira as seções voláteis (cwd, env,
+      //   git status) do system prompt → prefixo estável → melhor cache de prompt
+      //   entre invocações da mesma skill (TTL ~5 min no servidor da Anthropic).
+      const args = [
+        '-p',
+        '--system-prompt-file', skillPath,
+        '--strict-mcp-config',
+        '--exclude-dynamic-system-prompt-sections',
+        '--permission-mode', 'bypassPermissions',
+        prompt,
+      ]
+      const child = spawn(CLAUDE_BIN, args, {
+        cwd: PROJECT_DIR,
+        env: CHILD_ENV, // sem chaves pagas → claude usa a conta Max
+        maxBuffer: 10 * 1024 * 1024,
+        timeout: TASK_TIMEOUT_MS, // #265: 30min cobre análise de autos completos
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+      activeChildren.add(child)
+      let stdout = ''
+      let stderr = ''
+      const done = (payload) => {
+        activeChildren.delete(child)
+        resolvePromise(payload)
+      }
+      child.stdout.on('data', (chunk) => { stdout += chunk.toString() })
+      child.stderr.on('data', (chunk) => { stderr += chunk.toString() })
+      child.on('close', (code) => done({ code, stdout, stderr }))
+      child.on('error', (err) => done({ code: -1, stdout: '', stderr: err.message }))
     })
-    activeChild = child
-    let stdout = ''
-    let stderr = ''
-    const done = (payload) => {
-      if (activeChild === child) activeChild = null
-      resolvePromise(payload)
-    }
-    child.stdout.on('data', (chunk) => { stdout += chunk.toString() })
-    child.stderr.on('data', (chunk) => { stderr += chunk.toString() })
-    child.on('close', (code) => done({ code, stdout, stderr }))
-    child.on('error', (err) => done({ code: -1, stdout: '', stderr: err.message }))
-  })
+  } finally {
+    releaseSlot()
+  }
 }
 
 // --- Ingestão de classificação (#4): skill classify-document ---
@@ -416,11 +461,23 @@ async function catchUp(reason = 'manual') {
     }
 
     if (tasks.length > 0) {
-      console.log(`${LOG_PREFIX} Catch-up (${reason}): found ${tasks.length} pending task(s).`)
+      console.log(`${LOG_PREFIX} Catch-up (${reason}): found ${tasks.length} pending task(s). Concorrência: ${MAX_CONCURRENCY}.`)
     }
-    for (const task of tasks) {
-      await processTask(task)
-    }
+    // Pool limitado: até MAX_CONCURRENCY tarefas em voo. Antes era serial (for await),
+    // o que tornava um backlog ~N× mais lento que o necessário. O semáforo em
+    // runClaude é o teto global real; este pool evita disparar todos os processTask
+    // (e seus temp-files / intervals de etapa) de uma vez.
+    let cursor = 0
+    const workers = Array.from(
+      { length: Math.min(MAX_CONCURRENCY, tasks.length) },
+      async () => {
+        while (cursor < tasks.length) {
+          const task = tasks[cursor++]
+          await processTask(task)
+        }
+      },
+    )
+    await Promise.all(workers)
   } finally {
     catchUpRunning = false
   }
@@ -579,11 +636,11 @@ function shutdown() {
   clearInterval(heartbeatInterval)
   clearInterval(catchUpInterval)
   clearInterval(reaperInterval)
-  // Mata o `claude` em execução para não deixar processo órfão após o exit.
-  if (activeChild) {
-    try { activeChild.kill('SIGTERM') } catch {}
-    activeChild = null
+  // Mata os `claude` em execução para não deixar processos órfãos após o exit.
+  for (const child of activeChildren) {
+    try { child.kill('SIGTERM') } catch {}
   }
+  activeChildren.clear()
   if (channel) supabase.removeChannel(channel)
   process.exit(0)
 }
