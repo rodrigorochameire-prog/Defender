@@ -45,21 +45,13 @@ export function isValidPhone(phone: string): boolean {
 }
 
 /**
- * Formata telefone para exibição
+ * Formata telefone para exibição.
+ *
+ * Reexporta a camada central de apresentação (`formatTelefone`), que cobre os
+ * mesmos comprimentos (10/11 dígitos) e ainda normaliza DDI 55. Mantido aqui
+ * sob o nome legado `formatPhone` para compatibilidade da API pública.
  */
-export function formatPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, "");
-
-  if (cleaned.length === 11) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-  }
-
-  if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-  }
-
-  return phone;
-}
+export { formatTelefone as formatPhone } from "@/lib/format/apresentacao";
 
 /**
  * Rate limiter simples em memória
