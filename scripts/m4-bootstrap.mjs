@@ -55,8 +55,11 @@ function isDaemonHost() {
 function verifyMaxAuth(claudeBin) {
   const env = { ...process.env };
   for (const k of PAID_KEYS) delete env[k];
+  // A primeira resposta do `claude -p` (warmup do modelo na conta Max) leva
+  // ~90-100s. O timeout antigo (90s) dava SIGTERM (exit 143) e reportava um
+  // FALSO "login FALHOU". 180s cobre a latência real com folga.
   const r = spawnSync(claudeBin, ["-p", "responda apenas: OK"], {
-    env, encoding: "utf-8", timeout: 90_000,
+    env, encoding: "utf-8", timeout: 180_000,
   });
   return {
     code: r.status,
@@ -65,6 +68,21 @@ function verifyMaxAuth(claudeBin) {
     stderr: (r.stderr || "").trim().slice(0, 300),
   };
 }
+
+// PATH determinístico do daemon. Antes usávamos process.env.PATH, que varia por
+// sessão (o VS Code injeta paths do Copilot) — isso fazia o plist mudar a cada
+// run e o serviço reiniciar a cada sessão do Claude Code (matando tarefas em
+// curso). Fixo e mínimo: claude (~/.local/bin) + node/git (homebrew) + sistema.
+const DAEMON_PATH = [
+  join(HOME, ".local", "bin"),
+  "/opt/homebrew/bin",
+  "/opt/homebrew/sbin",
+  "/usr/local/bin",
+  "/usr/bin",
+  "/bin",
+  "/usr/sbin",
+  "/sbin",
+].join(":");
 
 function buildPlist(claudeBin, nodeBin) {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -84,7 +102,7 @@ function buildPlist(claudeBin, nodeBin) {
   <key>StandardErrorPath</key><string>${join(HOME, "Library", "Logs", "ombuds-daemon.err.log")}</string>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PATH</key><string>${process.env.PATH || "/usr/bin:/bin:/usr/local/bin"}</string>
+    <key>PATH</key><string>${DAEMON_PATH}</string>
     <key>OMBUDS_ROLE</key><string>daemon</string>
     <key>DAEMON_STRICT_NO_API</key><string>true</string>
   </dict>
@@ -123,9 +141,12 @@ else {
   mark("warn");
 }
 
-// 3) login Max funcional (o teste decisivo)
-if (claudeBin) {
-  log(`${C.fix} testando login Max (claude -p, chaves pagas removidas)…`);
+// 3) login Max funcional (o teste decisivo) — só em runs explícitos.
+// NÃO no hook --session: o `claude -p` leva ~90-100s e travaria o início de
+// TODA sessão do Claude Code. No host, a liveness do daemon (passo 4) já é
+// sinal suficiente; o teste decisivo roda em `--fix` ou run manual.
+if (claudeBin && !SESSION) {
+  log(`${C.fix} testando login Max (claude -p, chaves pagas removidas; ~90s)…`);
   const v = verifyMaxAuth(claudeBin);
   if (v.ok) { log(`${C.ok} login Max OK — claude -p respondeu sem API paga.`); mark("pass"); }
   else {
@@ -135,6 +156,8 @@ if (claudeBin) {
     log(`    AÇÃO MANUAL: rode \`claude\` neste Mac e faça /login na conta Max.`);
     mark("fail");
   }
+} else if (claudeBin && SESSION) {
+  log(`${C.ok} login Max não testado no hook (evita travar a sessão ~90s); liveness do daemon abaixo.`);
 }
 
 // 4) daemon rodando?
@@ -161,8 +184,12 @@ if (doFix && claudeBin) {
     report.fixes.push("marcador ~/.ombuds-daemon-host criado");
   }
 
-  // instala/atualiza o launchd plist
-  const nodeBin = process.execPath;
+  // instala/atualiza o launchd plist. Prefere o symlink estável do node
+  // (/opt/homebrew/bin/node) ao caminho versionado do Cellar (process.execPath),
+  // que some quando o brew atualiza o node e quebraria o daemon.
+  const nodeBin = existsSync("/opt/homebrew/bin/node")
+    ? "/opt/homebrew/bin/node"
+    : process.execPath;
   const desired = buildPlist(claudeBin, nodeBin);
   const current = hasPlist ? readFileSync(PLIST, "utf-8") : "";
   if (current !== desired) {

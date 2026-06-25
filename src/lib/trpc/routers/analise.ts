@@ -361,4 +361,51 @@ export const analiseRouter = router({
 
       return analise ?? null;
     }),
+
+  /**
+   * recentForEntity — Histórico recente de skill tasks de uma entidade
+   * (processo / assistido / caso). Alimenta o SkillTaskHistory na UI para que o
+   * Defensor veja as execuções passadas das skills (status + resultado), não só
+   * o progresso ao vivo. Pelo menos um id é obrigatório.
+   */
+  recentForEntity: protectedProcedure
+    .input(
+      z
+        .object({
+          assistidoId: z.number().optional(),
+          processoId: z.number().optional(),
+          casoId: z.number().optional(),
+          limit: z.number().int().min(1).max(50).default(5),
+        })
+        .refine(
+          (v) =>
+            v.assistidoId != null || v.processoId != null || v.casoId != null,
+          { message: "Informe ao menos uma entidade (assistido/processo/caso)" },
+        ),
+    )
+    .query(async ({ input }) => {
+      const conditions = [];
+      if (input.processoId != null)
+        conditions.push(eq(claudeCodeTasks.processoId, input.processoId));
+      if (input.casoId != null)
+        conditions.push(eq(claudeCodeTasks.casoId, input.casoId));
+      if (input.assistidoId != null)
+        conditions.push(eq(claudeCodeTasks.assistidoId, input.assistidoId));
+
+      return db
+        .select({
+          id: claudeCodeTasks.id,
+          skill: claudeCodeTasks.skill,
+          status: claudeCodeTasks.status,
+          etapa: claudeCodeTasks.etapa,
+          erro: claudeCodeTasks.erro,
+          resultado: claudeCodeTasks.resultado,
+          createdAt: claudeCodeTasks.createdAt,
+          completedAt: claudeCodeTasks.completedAt,
+        })
+        .from(claudeCodeTasks)
+        .where(and(...conditions))
+        .orderBy(desc(claudeCodeTasks.createdAt))
+        .limit(input.limit);
+    }),
 });

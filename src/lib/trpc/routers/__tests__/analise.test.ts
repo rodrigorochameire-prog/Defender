@@ -41,3 +41,37 @@ describe("analiseRouter.getAnaliseCoworkDoProcesso input", () => {
     expect(schema.safeParse({ processoId: "7" }).success).toBe(false);
   });
 });
+
+// ─── recentForEntity — structure + input (skill task history) ─────────────
+
+describe("analiseRouter.recentForEntity", () => {
+  it("is exposed", () => {
+    const procs = analiseRouter._def.procedures as Record<string, unknown>;
+    expect(procs.recentForEntity).toBeDefined();
+  });
+
+  const schema = getInputSchema(
+    (analiseRouter as any)._def.procedures.recentForEntity,
+  );
+
+  it("requires at least one entity id", () => {
+    expect(schema).toBeTruthy();
+    expect(schema.safeParse({}).success).toBe(false);
+  });
+
+  it("accepts a processoId alone", () => {
+    expect(schema.safeParse({ processoId: 7 }).success).toBe(true);
+  });
+
+  it("accepts an assistidoId alone", () => {
+    expect(schema.safeParse({ assistidoId: 3 }).success).toBe(true);
+  });
+
+  it("defaults limit to 5 and caps it at 50", () => {
+    const ok = schema.safeParse({ processoId: 1 });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.limit).toBe(5);
+    expect(schema.safeParse({ processoId: 1, limit: 51 }).success).toBe(false);
+    expect(schema.safeParse({ processoId: 1, limit: 0 }).success).toBe(false);
+  });
+});

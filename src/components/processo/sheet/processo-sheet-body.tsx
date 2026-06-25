@@ -51,6 +51,8 @@ interface Props {
   onAbrirPje: () => void;
   /** Conteúdo real das abas (renderizado pelo wrapper). Sem conteúdo → EmptyState. */
   slots?: Partial<Record<SecaoKey, React.ReactNode>>;
+  /** Launcher de skills de IA (montado pelo wrapper com ids reais). */
+  iaLauncher?: React.ReactNode;
 }
 
 type SecaoKey = "registros" | "documentos" | "partes" | "vinculados";
@@ -104,7 +106,7 @@ function fmtAudiencia(d: string | Date): string {
  * urgência (fase + próxima audiência + PrazoBadge) e abas (Registros/Documentos/
  * Partes/Vinculados). Cada aba sem dado cai no EmptyState canônico.
  */
-export function ProcessoSheetBody({ data, onVincularCaso, onAbrirPje, slots }: Props) {
+export function ProcessoSheetBody({ data, onVincularCaso, onAbrirPje, slots, iaLauncher }: Props) {
   const [active, setActive] = useState<SecaoKey>("registros");
 
   const numeroFmt = data.numeroAutos ? formatProcesso(data.numeroAutos) : "Sem número";
@@ -186,6 +188,13 @@ export function ProcessoSheetBody({ data, onVincularCaso, onAbrirPje, slots }: P
           )}
         </div>
       </div>
+
+      {/* ── Ações de IA (skills) ── */}
+      {iaLauncher && (
+        <div className="border-b border-neutral-200/60 px-4 py-3 dark:border-neutral-800/60">
+          {iaLauncher}
+        </div>
+      )}
 
       {/* ── Abas/seções ── */}
       <SheetModeTabs modes={tabs} active={active} onChange={(k) => setActive(k as SecaoKey)} />
