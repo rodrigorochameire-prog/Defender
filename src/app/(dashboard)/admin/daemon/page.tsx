@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { trpc } from "@/lib/trpc/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, XCircle, Clock, AlertTriangle, Activity, RefreshCw, Globe } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { skillLabel } from "@/lib/skills/catalog";
 
 export default function DaemonPage() {
   const { data, isLoading, refetch } = trpc.system.daemonStatus.useQuery(undefined, {
@@ -232,6 +234,7 @@ export default function DaemonPage() {
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="py-2 pr-3 font-medium">#</th>
                     <th className="py-2 pr-3 font-medium">Skill</th>
+                    <th className="py-2 pr-3 font-medium">Entidade</th>
                     <th className="py-2 pr-3 font-medium">Status</th>
                     <th className="py-2 pr-3 font-medium">Etapa</th>
                     <th className="py-2 pr-3 font-medium">Criada</th>
@@ -252,10 +255,29 @@ export default function DaemonPage() {
                       <tr key={t.id} className="border-b last:border-0">
                         <td className="py-2 pr-3 font-mono">{t.id}</td>
                         <td className="py-2 pr-3">
-                          <span className="inline-flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1.5" title={t.skill}>
                             <LaneBadge lane={t.lane} />
-                            {t.skill}
+                            {skillLabel(t.skill)}
                           </span>
+                        </td>
+                        <td className="py-2 pr-3">
+                          {t.processoId ? (
+                            <Link
+                              href={`/admin/processos/${t.processoId}`}
+                              className="text-emerald-600 hover:underline dark:text-emerald-400"
+                            >
+                              Processo #{t.processoId}
+                            </Link>
+                          ) : t.assistidoId ? (
+                            <Link
+                              href={`/admin/assistidos/${t.assistidoId}`}
+                              className="text-emerald-600 hover:underline dark:text-emerald-400"
+                            >
+                              Assistido #{t.assistidoId}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </td>
                         <td className="py-2 pr-3">
                           <StatusBadge status={t.status} />

@@ -4,7 +4,7 @@
  * (label da skill via catálogo, status legível + tom de cor, tempo relativo,
  * resumo curto). Sem dependência de React/DOM — testável em isolamento.
  */
-import { SKILL_CATALOG } from "./catalog";
+import { skillLabel } from "./catalog";
 
 export type TaskStatus =
   | "pending"
@@ -43,8 +43,6 @@ const STATUS_META: Record<string, { label: string; tone: HistoryTone }> = {
   failed: { label: "Falhou", tone: "danger" },
   needs_review: { label: "Revisar", tone: "warning" },
 };
-
-const LABEL_BY_SLUG = new Map(SKILL_CATALOG.map((s) => [s.slug, s.label]));
 
 const MAX_SUMMARY = 160;
 
@@ -103,7 +101,7 @@ export function toHistoryItems(rows: RawTaskRow[], now: number): HistoryItem[] {
     const meta = STATUS_META[row.status] ?? { label: row.status, tone: "muted" as HistoryTone };
     return {
       id: row.id,
-      skillLabel: LABEL_BY_SLUG.get(row.skill) ?? row.skill,
+      skillLabel: skillLabel(row.skill),
       status: row.status,
       statusLabel: meta.label,
       tone: meta.tone,

@@ -260,6 +260,16 @@ export const SKILL_CATALOG: CatalogSkill[] = [
   },
 ];
 
+const LABEL_BY_SLUG = new Map(SKILL_CATALOG.map((s) => [s.slug, s.label]));
+
+/**
+ * Rótulo amigável de uma skill a partir do slug do daemon. Cai no próprio slug
+ * quando a skill não está no catálogo (ex.: skills só-daemon como classify-document).
+ */
+export function skillLabel(slug: string): string {
+  return LABEL_BY_SLUG.get(slug) ?? slug;
+}
+
 export interface SkillContext {
   entity: SkillEntity;
   atribuicao: Atribuicao;

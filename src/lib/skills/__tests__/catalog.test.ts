@@ -3,6 +3,7 @@ import {
   SKILL_CATALOG,
   skillsForContext,
   familiaDeAtribuicao,
+  skillLabel,
   type CatalogSkill,
 } from "../catalog";
 
@@ -111,5 +112,17 @@ describe("SKILL_CATALOG integrity (shape)", () => {
   it("has unique slugs", () => {
     const all = SKILL_CATALOG.map((s) => s.slug);
     expect(new Set(all).size).toBe(all.length);
+  });
+});
+
+describe("skillLabel", () => {
+  it("returns the catalog label for a known slug", () => {
+    expect(skillLabel("juri")).toMatch(/júri/i);
+    expect(skillLabel("vvd")).toMatch(/vvd|maria da penha/i);
+  });
+
+  it("falls back to the slug for an unknown/daemon-only skill", () => {
+    expect(skillLabel("classify-document")).toBe("classify-document");
+    expect(skillLabel("gerar-peca")).toBe("gerar-peca");
   });
 });
