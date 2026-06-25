@@ -24,26 +24,15 @@ import {
   Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 
 // ==========================================
 // CONFIGURAÇÕES
 // ==========================================
 
-const TIPO_CONFIG: Record<string, { label: string; color: string }> = {
-  progressao: { label: "Progressão", color: "text-blue-600" },
-  livramento: { label: "Livramento", color: "text-emerald-600" },
-  saida_temporaria: { label: "Saída Temporária", color: "text-amber-600" },
-  indulto: { label: "Indulto", color: "text-violet-600" },
-  remicao: { label: "Remição", color: "text-teal-600" },
-};
-
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  elegivel: { label: "Elegível", color: "text-emerald-600" },
-  aguardando: { label: "Aguardando", color: "text-amber-600" },
-  requerido: { label: "Requerido", color: "text-blue-600" },
-  deferido: { label: "Deferido", color: "text-emerald-600" },
-  indeferido: { label: "Indeferido", color: "text-rose-600" },
-};
+// Benefícios é o painel de Execução Penal — o acento azul é a cor de atribuição EP,
+// servida pelo registry central (consolidação F1).
+const EP = getAtribuicaoColors("EXECUCAO_PENAL");
 
 export default function BeneficiosPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -64,8 +53,8 @@ export default function BeneficiosPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border border-blue-200 dark:border-blue-800">
-              <Award className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-border", EP.bgSolid)}>
+              <Award className={cn("w-4 h-4", EP.text)} />
             </div>
             <div>
               <h1 className="text-sm font-semibold text-foreground">Painel de Benefícios</h1>
@@ -73,7 +62,11 @@ export default function BeneficiosPage() {
             </div>
           </div>
           
-          <Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white">
+          <Button
+            size="sm"
+            className="h-8 text-xs text-white"
+            style={{ backgroundColor: EP.color }}
+          >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
             Novo Pedido
           </Button>
@@ -85,7 +78,7 @@ export default function BeneficiosPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { label: "Elegíveis", value: 0, icon: TrendingUp, color: "text-emerald-600" },
-            { label: "Requeridos", value: 0, icon: FileText, color: "text-blue-600" },
+            { label: "Requeridos", value: 0, icon: FileText, color: EP.text },
             { label: "Aguardando", value: 0, icon: Clock, color: "text-amber-600" },
             { label: "Deferidos", value: 0, icon: CheckCircle2, color: "text-emerald-600" },
           ].map((stat, idx) => {
@@ -163,7 +156,11 @@ export default function BeneficiosPage() {
                   Calculadora SEEU
                 </Button>
               </Link>
-              <Button size="sm" className="h-9 bg-blue-600 hover:bg-blue-700 text-white">
+              <Button
+                size="sm"
+                className="h-9 text-white"
+                style={{ backgroundColor: EP.color }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Cadastrar Pedido
               </Button>

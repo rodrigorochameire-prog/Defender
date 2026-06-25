@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -41,36 +42,21 @@ import Link from "next/link";
 // COLOR MAP FOR ATRIBUICOES
 // ==========================================
 
-const ATRIBUICAO_COLORS: Record<string, { bg: string; bar: string; text: string }> = {
-  JURI: {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    bar: "bg-emerald-500",
-    text: "text-emerald-700 dark:text-emerald-400",
-  },
-  VVD: {
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    bar: "bg-amber-500",
-    text: "text-amber-700 dark:text-amber-400",
-  },
-  EP: {
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    bar: "bg-blue-500",
-    text: "text-blue-700 dark:text-blue-400",
-  },
-  SUBSTITUICAO: {
-    bg: "bg-rose-100 dark:bg-rose-900/30",
-    bar: "bg-rose-500",
-    text: "text-rose-700 dark:text-rose-400",
-  },
-  GRUPO_JURI: {
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    bar: "bg-orange-500",
-    text: "text-orange-700 dark:text-orange-400",
-  },
+// Cores de atribuição: registry central (consolidação F1). As chaves curtas do
+// dashboard (JURI/VVD/EP/...) são normalizadas para as chaves canônicas do registry.
+const ATRIB_KEY_ALIAS: Record<string, string> = {
+  JURI: "JURI",
+  VVD: "VVD",
+  EP: "EXECUCAO_PENAL",
+  SUBSTITUICAO: "SUBSTITUICAO",
+  GRUPO_JURI: "GRUPO_JURI",
 };
 
 function getAtribuicaoColor(key: string) {
-  return ATRIBUICAO_COLORS[key] || ATRIBUICAO_COLORS.SUBSTITUICAO;
+  // Fallback histórico desta tela = Substituição (rose), não o neutro do registry.
+  const canonical = ATRIB_KEY_ALIAS[key] || "SUBSTITUICAO";
+  const colors = getAtribuicaoColors(canonical);
+  return { bg: colors.bgSolid, bar: colors.indicator, text: colors.text };
 }
 
 function getRateColor(rate: number) {

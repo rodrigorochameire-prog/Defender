@@ -2,31 +2,23 @@
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import { getStatusConfig, STATUS_GROUPS } from "@/config/demanda-status";
+import { getAtribuicaoHex, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
 
-// Paleta de cores premium suaves e sofisticadas (tons pastel equilibrados)
+// Paleta de fallback para séries categóricas genéricas (gráfico de "atos") e
+// para o índice de cor quando não há mapeamento. NÃO é paleta de atribuição —
+// a cor de atribuição vem sempre do registry via getAtribuicaoHex (fonte única).
 const PREMIUM_COLORS = [
   "#6B7280", // Gray 500 - cinza neutro principal
-  "#5CB87A", // Verde firme
-  "#6A9EC5", // Azul com peso
-  "#9B84B8", // Lilás presente
-  "#C48A50", // Laranja definido
-  "#E8A4B8", // Rosa suave pastel
   "#94A3B8", // Slate 400 - cinza azulado
   "#A7C4BC", // Verde-água suave
   "#C9B8A4", // Bege suave
   "#9EB3C2", // Azul acinzentado
+  "#E8A4B8", // Rosa suave pastel
+  "#A1A1AA", // Zinc 400
+  "#B8A4C9", // Lavanda suave
+  "#C4B89E", // Caqui suave
+  "#9EC4B8", // Verde-menta suave
 ];
-
-// Cores suaves das atribuições (tons pastel harmonizados)
-const ATRIBUICAO_COLORS: Record<string, string> = {
-  "Tribunal do Júri": "#5CB87A",       // Verde firme
-  "Grupo Especial do Júri": "#C48A50", // Laranja definido
-  "Violência Doméstica": "#D4A84A",    // Amber quente
-  "Execução Penal": "#6A9EC5",         // Azul com peso
-  "Criminal Geral": "#D4A4A4",         // Rosa/vermelho pastel
-  "Substituição": "#9B84B8",           // Lilás presente
-  "Curadoria Especial": "#94A3B8",     // Slate pastel
-};
 
 interface DynamicChartProps {
   type: string;
@@ -145,10 +137,16 @@ export function DynamicChart({ type, demandas, visualizationType }: DynamicChart
         return acc;
       }, {})
     )
-      .map(([name, value], index) => ({ 
-        name, 
+      .map(([name, value], index) => ({
+        name,
         value,
-        color: ATRIBUICAO_COLORS[name] || PREMIUM_COLORS[index % PREMIUM_COLORS.length]
+        // Cor de atribuição vem do registry central (getAtribuicaoHex).
+        // Para chave desconhecida o registry retorna a cor neutra ("all");
+        // nesse caso usamos a paleta categórica genérica por índice.
+        color:
+          getAtribuicaoHex(name) !== SOLID_COLOR_MAP.all
+            ? getAtribuicaoHex(name)
+            : PREMIUM_COLORS[index % PREMIUM_COLORS.length],
       }))
       .sort((a, b) => b.value - a.value);
 

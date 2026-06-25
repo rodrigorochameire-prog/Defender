@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import {
   ListTodo,
   User,
@@ -26,31 +27,25 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Atribuição palette — Padrão Defender v5
-const JURI  = { bar: "#059669", tint: "#05966910", time: "#047857" };
-const VVD   = { bar: "#f59e0b", tint: "#f59e0b10", time: "#b45309" };
-const EP    = { bar: "#0284c7", tint: "#0284c710", time: "#0369a1" };
-const ZINC  = { bar: "#3f3f46", tint: "#3f3f4610", time: "#52525b" };
+// Atribuição: cores derivadas do registry central (uma fonte, formatos derivados).
+// bar/time = hex sólido do registry; tint = mesmo hex com alpha (~6%).
+type AtribColor = { bar: string; tint: string; time: string };
+const fromHex = (hex: string): AtribColor => ({ bar: hex, tint: `${hex}10`, time: hex });
 
-const ATRIBUICAO_COLORS: Record<string, typeof JURI> = {
-  JURI_CAMACARI:              JURI,
-  GRUPO_JURI:                 JURI,
-  VVD_CAMACARI:               VVD,
-  EXECUCAO_PENAL:             EP,
-  CRIMINAL_CAMACARI:          ZINC,
-  CRIMINAL_SIMOES_FILHO:      ZINC,
-  CRIMINAL_LAURO_DE_FREITAS:  ZINC,
-  CRIMINAL_CANDEIAS:          ZINC,
-  CRIMINAL_ITAPARICA:         ZINC,
-  SUBSTITUICAO:               ZINC,
-  SUBSTITUICAO_CIVEL:         ZINC,
-};
+const JURI = fromHex(getAtribuicaoHex("JURI"));
+const VVD  = fromHex(getAtribuicaoHex("VVD"));
+const EP   = fromHex(getAtribuicaoHex("EXECUCAO_PENAL"));
+const ZINC = fromHex(getAtribuicaoHex(null)); // neutro "all"
 
-const DEFAULT_COLOR = { bar: "#a1a1aa", tint: "#a1a1aa10", time: "#52525b" };
+const DEFAULT_COLOR = ZINC;
 
-function getAtribuicaoColor(atribuicao?: string | null) {
+// Mapeia a atribuição bruta do processo para o bucket de cor (Júri/VVD/EP/Outros).
+function getAtribuicaoColor(atribuicao?: string | null): AtribColor {
   if (!atribuicao) return DEFAULT_COLOR;
-  return ATRIBUICAO_COLORS[atribuicao] || DEFAULT_COLOR;
+  if (atribuicao === "JURI_CAMACARI" || atribuicao === "GRUPO_JURI") return JURI;
+  if (atribuicao === "VVD_CAMACARI") return VVD;
+  if (atribuicao === "EXECUCAO_PENAL") return EP;
+  return ZINC;
 }
 
 // Camadas de prioridade (ordem de urgência)
