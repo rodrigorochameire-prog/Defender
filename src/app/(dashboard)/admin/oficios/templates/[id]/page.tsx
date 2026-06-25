@@ -55,13 +55,13 @@ const TIPOS_OFICIO = [
 ];
 
 const AREAS = [
-  { value: "JURI", label: "Juri" },
-  { value: "EXECUCAO_PENAL", label: "Execucao Penal" },
+  { value: "JURI", label: "Júri" },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal" },
   { value: "VIOLENCIA_DOMESTICA", label: "VVD" },
   { value: "SUBSTITUICAO", label: "Substituicao" },
   { value: "CURADORIA", label: "Curadoria" },
-  { value: "FAMILIA", label: "Familia" },
-  { value: "CIVEL", label: "Civel" },
+  { value: "FAMILIA", label: "Família" },
+  { value: "CIVEL", label: "Cível" },
   { value: "FAZENDA_PUBLICA", label: "Fazenda Publica" },
 ];
 

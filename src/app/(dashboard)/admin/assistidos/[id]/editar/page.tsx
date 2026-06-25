@@ -30,12 +30,12 @@ const STATUS_PRISIONAL_OPTIONS = [
 ] as const;
 
 const ATRIBUICAO_PRIMARIA_OPTIONS = [
-  { value: "JURI_CAMACARI", label: "Tribunal do Juri" },
+  { value: "JURI_CAMACARI", label: "Tribunal do Júri" },
   { value: "VVD_CAMACARI", label: "Violencia Domestica" },
-  { value: "EXECUCAO_PENAL", label: "Execucao Penal" },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal" },
   { value: "SUBSTITUICAO", label: "Substituicao Criminal" },
   { value: "SUBSTITUICAO_CIVEL", label: "Substituicao Nao Penal" },
-  { value: "GRUPO_JURI", label: "Grupo Especial do Juri" },
+  { value: "GRUPO_JURI", label: "Grupo Especial do Júri" },
 ] as const;
 
 const PRESOS = [
