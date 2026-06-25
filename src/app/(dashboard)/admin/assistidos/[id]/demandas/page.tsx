@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { ClipboardList, Scale, Clock, Plus, User, AlertCircle, CalendarClock, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { getStatusConfig } from "@/config/demanda-status";
 
 type Demanda = {
   id: number;
@@ -33,21 +34,11 @@ function fmtPrazo(prazo: string): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
 }
 
-// Rótulo humano do status (enum do banco). Map central de Demandas é candidato p/ a spec do módulo.
-const STATUS_LABEL: Record<string, string> = {
-  "2_ATENDER": "Atender",
-  "4_MONITORAR": "Monitorar",
-  "5_TRIAGEM": "Triagem",
-  "7_PROTOCOLADO": "Protocolado",
-  "7_CIENCIA": "Ciência",
-  "7_SEM_ATUACAO": "Sem atuação",
-  URGENTE: "Urgente",
-  CONCLUIDO: "Concluído",
-  ARQUIVADO: "Arquivado",
-};
+// Rótulo humano do status — delega ao dicionário central de Demandas (getStatusConfig),
+// evitando duplicar o mapeamento e o vazamento do enum cru.
 function statusLabel(s: string | null): string {
   if (!s) return "—";
-  return STATUS_LABEL[s] ?? s.replace(/^\d+_/, "").toLowerCase();
+  return getStatusConfig(s).label;
 }
 
 type StatTone = "rose" | "amber" | "emerald" | "neutral";

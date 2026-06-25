@@ -14,12 +14,12 @@ import {
 
 const AREA_INFO: Record<string, { label: string; color: string; desc: string }> = {
   CRIMINAL: { label: "Criminal", color: "bg-red-600", desc: "Delitos tipificados, calculo de beneficios (ANPP, sursis, transacao)" },
-  JURI: { label: "Juri", color: "bg-purple-600", desc: "Cockpit de sessao, jurados, quesitos, teses defensivas" },
-  EXECUCAO_PENAL: { label: "Execucao Penal", color: "bg-orange-600", desc: "Progressao de regime, calculo de penas" },
+  JURI: { label: "Júri", color: "bg-purple-600", desc: "Cockpit de sessao, jurados, quesitos, teses defensivas" },
+  EXECUCAO_PENAL: { label: "Execução Penal", color: "bg-orange-600", desc: "Progressao de regime, calculo de penas" },
   VIOLENCIA_DOMESTICA: { label: "VVD", color: "bg-rose-600", desc: "Medidas protetivas, acompanhamento MPU" },
   INFANCIA_JUVENTUDE: { label: "Infancia", color: "bg-amber-600", desc: "Atos infracionais, medidas socioeducativas, remissao" },
-  CIVEL: { label: "Civel", color: "bg-blue-600", desc: "Processos e demandas civeis" },
-  FAMILIA: { label: "Familia", color: "bg-cyan-600", desc: "Processos de familia" },
+  CIVEL: { label: "Cível", color: "bg-blue-600", desc: "Processos e demandas civeis" },
+  FAMILIA: { label: "Família", color: "bg-cyan-600", desc: "Processos de familia" },
   FAZENDA_PUBLICA: { label: "Fazenda", color: "bg-teal-600", desc: "Fazenda publica" },
 };
 

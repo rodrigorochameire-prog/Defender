@@ -31,13 +31,13 @@ import {
 } from "lucide-react";
 
 const AREA_OPTIONS = [
-  { value: "JURI", label: "Tribunal do Juri" },
-  { value: "EXECUCAO_PENAL", label: "Execucao Penal" },
+  { value: "JURI", label: "Tribunal do Júri" },
+  { value: "EXECUCAO_PENAL", label: "Execução Penal" },
   { value: "VIOLENCIA_DOMESTICA", label: "Violencia Domestica" },
   { value: "SUBSTITUICAO", label: "Substituicao" },
   { value: "CURADORIA", label: "Curadoria" },
-  { value: "FAMILIA", label: "Familia" },
-  { value: "CIVEL", label: "Civel" },
+  { value: "FAMILIA", label: "Família" },
+  { value: "CIVEL", label: "Cível" },
   { value: "FAZENDA_PUBLICA", label: "Fazenda Publica" },
 ];
 

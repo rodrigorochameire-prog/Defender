@@ -41,7 +41,7 @@ const ATRIBUICAO_COLORS: Record<string, { bg: string; bar: string; text: string;
     bg: "bg-emerald-100 dark:bg-emerald-900/30",
     bar: "bg-emerald-500",
     text: "text-emerald-700 dark:text-emerald-400",
-    label: "Juri",
+    label: "Júri",
   },
   VVD_CAMACARI: {
     bg: "bg-amber-100 dark:bg-amber-900/30",
@@ -65,13 +65,13 @@ const ATRIBUICAO_COLORS: Record<string, { bg: string; bar: string; text: string;
     bg: "bg-rose-100 dark:bg-rose-900/30",
     bar: "bg-rose-500",
     text: "text-rose-700 dark:text-rose-400",
-    label: "Subst. Civel",
+    label: "Subst. Cível",
   },
   GRUPO_JURI: {
     bg: "bg-cyan-100 dark:bg-cyan-900/30",
     bar: "bg-cyan-500",
     text: "text-cyan-700 dark:text-cyan-400",
-    label: "Grupo Juri",
+    label: "Grupo Júri",
   },
 };
 
