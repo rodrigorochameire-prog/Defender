@@ -9,6 +9,7 @@ import { onlyDigits } from "@/lib/format/cnj";
 import { formatProcesso } from "@/lib/format/apresentacao";
 import { RegistrosTimeline } from "@/components/registros/registros-timeline";
 import { SkillLauncher } from "@/components/shared/skill-launcher";
+import { SkillTaskHistory } from "@/components/shared/skill-task-history";
 import type { Atribuicao } from "@/lib/skills/catalog";
 import { ProcessoSheetBody, type ProcessoSheetData } from "./processo-sheet-body";
 
@@ -153,12 +154,15 @@ export function ProcessoSheet({ processoId, open, onOpenChange, onVincularCaso }
     undefined;
   const iaLauncher =
     processo && data ? (
-      <SkillLauncher
-        entity="processo"
-        atribuicao={(processo.atribuicao ?? "") as Atribuicao}
-        assistidoId={principalId}
-        processoId={processo.id}
-      />
+      <div className="space-y-3">
+        <SkillLauncher
+          entity="processo"
+          atribuicao={(processo.atribuicao ?? "") as Atribuicao}
+          assistidoId={principalId}
+          processoId={processo.id}
+        />
+        <SkillTaskHistory processoId={processo.id} />
+      </div>
     ) : undefined;
 
   return (

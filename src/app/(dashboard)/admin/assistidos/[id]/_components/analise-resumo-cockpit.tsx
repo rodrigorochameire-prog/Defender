@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { SkillLauncher } from "@/components/shared/skill-launcher";
+import { SkillTaskHistory } from "@/components/shared/skill-task-history";
+import type { Atribuicao } from "@/lib/skills/catalog";
 import { AnaliseButton } from "./analise-button";
 
 /** Subconjunto de `casosAgrupados` (assistidos.getById) usado aqui. */
@@ -176,6 +179,21 @@ export function AnaliseResumoCockpit({
             ))}
           </div>
         )}
+
+        {/* ── Ações de IA do assistido + histórico de execuções ── */}
+        <div className="mt-3 space-y-3 border-t border-neutral-200/60 pt-3 dark:border-neutral-800/60">
+          <SkillLauncher
+            entity="assistido"
+            assistidoId={assistidoId}
+            atribuicao={(casoAlvo?.atribuicao ?? "") as Atribuicao}
+          />
+          <div>
+            <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+              Histórico de IA
+            </h3>
+            <SkillTaskHistory assistidoId={assistidoId} />
+          </div>
+        </div>
       </div>
     </section>
   );
