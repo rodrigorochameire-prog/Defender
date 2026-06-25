@@ -37,6 +37,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 
 // ============================================
 // TYPES
@@ -346,7 +347,8 @@ export default function CosmovisaoPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Cosmovisão do Júri" icon={Globe}>
+      <HeaderSlotTitle icon={Globe} title="Cosmovisão do Júri" />
+      <CollapsiblePageHeader title="Cosmovisão do Júri" icon={Globe} seamless>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <Link href="/admin/juri">
@@ -354,13 +356,7 @@ export default function CosmovisaoPage() {
                 <ArrowLeft className="w-3.5 h-3.5" />
               </button>
             </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Globe className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Cosmovisão do Júri</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">Analytics completo do Tribunal do Júri</p>
-            </div>
+            <p className="text-[12px] text-white/55 hidden sm:block truncate">Analytics completo do Tribunal do Júri</p>
           </div>
 
           {/* Period filter — inline in header */}

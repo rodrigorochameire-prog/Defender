@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 
 // ==========================================
 // COMPONENTES
@@ -668,9 +669,19 @@ export default function WhatsAppPage() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-background">
+      <HeaderSlotTitle
+        icon={MessageCircle}
+        title="WhatsApp"
+        stats={
+          <span className="text-white/55">
+            {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"}
+          </span>
+        }
+      />
       <CollapsiblePageHeader
         title="WhatsApp"
         icon={MessageCircle}
+        seamless
         collapsedStats={
           primaryConfig && whatsappStats ? (
             <>
@@ -719,21 +730,11 @@ export default function WhatsAppPage() {
           </div>
         ) : undefined}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">WhatsApp</h1>
-              <div className="mt-0.5">
-                <span className="text-[10px] text-white/55 tabular-nums">
-                  {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[12px] text-white/55 tabular-nums truncate">
+            {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
+          </p>
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               title="Atualizar"
               className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
