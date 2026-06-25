@@ -117,7 +117,7 @@ Megaparágrafos são admissíveis apenas quando os raciocínios são verdadeiram
 
 Peças anteriores do Defensor, organizadas por tipo. No Tribunal do Júri, praticamente todos os tipos de peça criminal são utilizáveis — desde HC e RESE até alegações finais e apelação. Por isso, todas as subpastas de 1 a 9 são relevantes como banco de conhecimento e referência de estilo.
 
-**Caminho base**: `Meu Drive 2/1 - Defensoria 9ª DP/Petições por assunto (DOC)/`
+**Caminho base**: `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/4 - Peças/Petições por assunto (DOC)/`
 
 | Subpasta | Relevância para o Júri |
 |---|---|
@@ -145,10 +145,10 @@ Processos individuais com PDFs dos autos, transcrições de depoimentos, vídeos
 
 | Atribuição | Caminho da Pasta |
 |---|---|
-| Processos do Júri (principal) | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Júri/` |
-| Grupo do Júri (substituições) | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Grupo do juri/` |
-| Plenários Concluídos | `Meu Drive 2/1 - Defensoria 9ª DP/Plenarios concluidos/` |
-| Material para Júri | `Meu Drive 2/1 - Defensoria 9ª DP/Material para júri/` |
+| Processos do Júri (principal) | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Júri/` |
+| Grupo do Júri (substituições) | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Grupo do Juri/` |
+| Plenários Concluídos | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/7 - Júri/Plenarios concluidos/` |
+| Material para Júri | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/7 - Júri/Material para júri/` |
 
 Cada subpasta do assistido pode conter: PDFs do processo (completo ou partes), transcrições de depoimentos (.md), vídeos de entrevistas (.mp4), relatórios estratégicos, imagens e documentos.
 

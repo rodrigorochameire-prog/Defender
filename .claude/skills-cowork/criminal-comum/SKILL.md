@@ -95,7 +95,7 @@ Megaparágrafos são admissíveis apenas quando os raciocínios são verdadeiram
 
 Peças anteriores já produzidas pelo Defensor, organizadas por tipo. Use-as como referência de estilo, tom e estrutura argumentativa ao gerar qualquer peça nova.
 
-**Caminho base**: `Meu Drive 2/1 - Defensoria 9ª DP/Petições por assunto (DOC)/`
+**Caminho base**: `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/4 - Peças/Petições por assunto (DOC)/`
 
 | Tipo de Peça | Subpasta de Modelos |
 |---|---|
@@ -124,8 +124,8 @@ Processos individuais com PDFs dos autos, transcrições de depoimentos, anális
 
 | Atribuição | Caminho da Pasta |
 |---|---|
-| Criminal Comum (geral) | `Meu Drive 2/1 - Defensoria 9ª DP/Processos/` |
-| Substituição Criminal | `Meu Drive 2/1 - Defensoria 9ª DP/Processos - Substituição criminal/` |
+| Criminal Comum (geral) | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos/` |
+| Substituição Criminal | `~/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP/3 - Casos/Processos - Substituição criminal/` |
 
 Cada subpasta é nomeada com o nome do assistido e pode conter: PDFs dos autos completos ou partes, transcrições de depoimentos (.md, .mp4), relatórios de análise (.pdf, .md), documentos diversos.
 
