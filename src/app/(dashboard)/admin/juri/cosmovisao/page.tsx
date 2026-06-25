@@ -85,13 +85,13 @@ function getPeriodoDates(periodo: Periodo, customInicio?: string, customFim?: st
 
 function formatTipoPenal(tipo: string) {
   const map: Record<string, string> = {
-    homicidio_simples: "Homicidio Simples",
-    homicidio_qualificado: "Homicidio Qualificado",
-    homicidio_privilegiado: "Homicidio Privilegiado",
-    homicidio_privilegiado_qualificado: "Homicidio Priv./Qualif.",
-    homicidio_tentado: "Homicidio Tentado",
-    feminicidio: "Feminicidio",
-    nao_informado: "Nao informado",
+    homicidio_simples: "Homicídio Simples",
+    homicidio_qualificado: "Homicídio Qualificado",
+    homicidio_privilegiado: "Homicídio Privilegiado",
+    homicidio_privilegiado_qualificado: "Homicídio Priv./Qualif.",
+    homicidio_tentado: "Homicídio Tentado",
+    feminicidio: "Feminicídio",
+    nao_informado: "Não informado",
   };
   return map[tipo] || tipo.replace(/_/g, " ");
 }
@@ -111,9 +111,9 @@ function calcDelta(atual: number, anterior: number): { value: number; positive: 
 function getTendenciaBadge(tendencia: string) {
   switch (tendencia) {
     case "absolutorio":
-      return { label: "Absolutorio", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" };
+      return { label: "Absolutório", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" };
     case "condenatorio":
-      return { label: "Condenatorio", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400" };
+      return { label: "Condenatório", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400" };
     case "neutro":
       return { label: "Neutro", className: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400" };
     default:
@@ -290,16 +290,16 @@ function EmptyState() {
         <BarChart3 className="w-8 h-8 text-neutral-400" />
       </div>
       <h2 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-1">
-        Ainda sem dados de sessoes
+        Ainda sem dados de sessões
       </h2>
       <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mb-6">
-        Registre o resultado das sessoes de juri para ver estatisticas,
-        padroes e insights automaticos aqui.
+        Registre o resultado das sessões de júri para ver estatísticas,
+        padrões e insights automáticos aqui.
       </p>
       <Link href="/admin/juri">
         <Button variant="outline" size="sm" className="text-xs">
           <Gavel className="w-3.5 h-3.5 mr-1.5" />
-          Ir para Sessoes
+          Ir para Sessões
         </Button>
       </Link>
     </div>
@@ -417,21 +417,21 @@ export default function CosmovisaoPage() {
             {/* KPI Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <KPICard
-                label="Total de Sessoes"
+                label="Total de Sessões"
                 value={panorama.total}
                 previousValue={panorama.periodoAnterior.total}
                 icon={Gavel}
                 color="zinc"
               />
               <KPICard
-                label="Absolvicoes"
+                label="Absolvições"
                 value={panorama.absolvicoes}
                 previousValue={panorama.periodoAnterior.absolvicoes}
                 icon={ShieldCheck}
                 color="emerald"
               />
               <KPICard
-                label="Condenacoes"
+                label="Condenações"
                 value={panorama.condenacoes}
                 previousValue={panorama.periodoAnterior.condenacoes}
                 icon={Lock}
@@ -439,7 +439,7 @@ export default function CosmovisaoPage() {
                 invertDelta
               />
               <KPICard
-                label="Taxa Absolvicao"
+                label="Taxa Absolvição"
                 value={`${taxaAbs}%`}
                 previousValue={`${taxaAbsAnterior}`}
                 icon={TrendingUp}
@@ -451,7 +451,7 @@ export default function CosmovisaoPage() {
             {loadingTimeline ? (
               <Skeleton className="h-56 rounded-xl" />
             ) : timeline && timeline.length > 0 ? (
-              <SectionCard title="Evolucao Mensal" icon={BarChart3}>
+              <SectionCard title="Evolução Mensal" icon={BarChart3}>
                 <div className="flex items-end gap-1.5 overflow-x-auto pb-2 scrollbar-none">
                   {timeline.map((month: TimelineMonth) => {
                     const max = Math.max(...timeline.map((m: TimelineMonth) => m.total), 1);
@@ -475,17 +475,17 @@ export default function CosmovisaoPage() {
                           <div
                             className="bg-emerald-500 transition-all duration-500"
                             style={{ height: `${(absPercent / 100) * totalH}px` }}
-                            title={`Absolvicoes: ${month.absolvicoes}`}
+                            title={`Absolvições: ${month.absolvicoes}`}
                           />
                           <div
                             className="bg-rose-500 transition-all duration-500"
                             style={{ height: `${(condPercent / 100) * totalH}px` }}
-                            title={`Condenacoes: ${month.condenacoes}`}
+                            title={`Condenações: ${month.condenacoes}`}
                           />
                           <div
                             className="bg-amber-500 transition-all duration-500"
                             style={{ height: `${(descPercent / 100) * totalH}px` }}
-                            title={`Desclassificacoes/Nulidades: ${month.desclassificacoes + month.nulidades}`}
+                            title={`Desclassificações/Nulidades: ${month.desclassificacoes + month.nulidades}`}
                           />
                         </div>
                         <span className="text-[10px] text-neutral-500 dark:text-neutral-400">{formatMes(month.mes)}</span>
@@ -497,11 +497,11 @@ export default function CosmovisaoPage() {
                 <div className="flex items-center gap-4 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
-                    <span className="text-[10px] text-neutral-500">Absolvicao</span>
+                    <span className="text-[10px] text-neutral-500">Absolvição</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-rose-500" />
-                    <span className="text-[10px] text-neutral-500">Condenacao</span>
+                    <span className="text-[10px] text-neutral-500">Condenação</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-amber-500" />
@@ -554,7 +554,7 @@ export default function CosmovisaoPage() {
               </SectionCard>
 
               {/* Duracao */}
-              <SectionCard title="Por Duracao" icon={Timer}>
+              <SectionCard title="Por Duração" icon={Timer}>
                 {loadingDuracao ? (
                   <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-6" />)}</div>
                 ) : duracao && duracao.length > 0 ? (
@@ -569,12 +569,12 @@ export default function CosmovisaoPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de duracao</p>
+                  <p className="text-xs text-neutral-400 py-4 text-center">Sem dados de duração</p>
                 )}
               </SectionCard>
 
               {/* Perfil */}
-              <SectionCard title="Perfil do Reu" icon={UserCheck}>
+              <SectionCard title="Perfil do Réu" icon={UserCheck}>
                 {loadingPerfil ? (
                   <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-6" />)}</div>
                 ) : perfil ? (
@@ -617,7 +617,7 @@ export default function CosmovisaoPage() {
             </div>
 
             {/* Actors Section */}
-            <SectionCard title="Atores do Juri" icon={Users}>
+            <SectionCard title="Atores do Júri" icon={Users}>
               {/* Tabs */}
               <div className="flex items-center gap-1 p-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg w-fit mb-4 -mt-1">
                 {(["jurados", "juizes", "promotores"] as const).map((tab) => (
@@ -631,7 +631,7 @@ export default function CosmovisaoPage() {
                         : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
                     )}
                   >
-                    {tab === "jurados" ? "Jurados" : tab === "juizes" ? "Juizes" : "Promotores"}
+                    {tab === "jurados" ? "Jurados" : tab === "juizes" ? "Juízes" : "Promotores"}
                   </button>
                 ))}
               </div>
@@ -663,7 +663,7 @@ export default function CosmovisaoPage() {
                                   <Badge className={cn("text-[10px] border-0", badge.className)}>
                                     {badge.label}
                                   </Badge>
-                                  <span className="text-[10px] text-neutral-400">{jurado.totalSessoes} sessoes</span>
+                                  <span className="text-[10px] text-neutral-400">{jurado.totalSessoes} sessões</span>
                                 </div>
                                 {/* Voting bar */}
                                 {totalVotos > 0 && (
@@ -672,12 +672,12 @@ export default function CosmovisaoPage() {
                                       <div
                                         className="h-full bg-emerald-500"
                                         style={{ width: `${pctAbs}%` }}
-                                        title={`Absolvicao: ${pctAbs}%`}
+                                        title={`Absolvição: ${pctAbs}%`}
                                       />
                                       <div
                                         className="h-full bg-rose-500"
                                         style={{ width: `${pctCond}%` }}
-                                        title={`Condenacao: ${pctCond}%`}
+                                        title={`Condenação: ${pctCond}%`}
                                       />
                                     </div>
                                     <span className="text-[10px] font-mono text-neutral-400">
@@ -706,7 +706,7 @@ export default function CosmovisaoPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{juiz.nome}</p>
-                              <p className="text-[10px] text-neutral-400">{juiz.total} sessoes presididas</p>
+                              <p className="text-[10px] text-neutral-400">{juiz.total} sessões presididas</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
@@ -736,7 +736,7 @@ export default function CosmovisaoPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{promotor.nome}</p>
-                              <p className="text-[10px] text-neutral-400">{promotor.total} sessoes</p>
+                              <p className="text-[10px] text-neutral-400">{promotor.total} sessões</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
@@ -767,7 +767,7 @@ export default function CosmovisaoPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Lightbulb className="w-4 h-4 text-violet-500" />
-                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Insights Automaticos</h3>
+                  <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Insights Automáticos</h3>
                 </div>
                 {insights.map((insight, idx) => (
                   <div
@@ -779,7 +779,7 @@ export default function CosmovisaoPage() {
                       <div>
                         <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{insight.insight}</p>
                         <p className="text-[10px] text-neutral-500 mt-1">
-                          Confianca: {Math.round(insight.confianca)}% &middot; n={insight.n} sessoes
+                          Confiança: {Math.round(insight.confianca)}% &middot; n={insight.n} sessões
                         </p>
                       </div>
                     </div>

@@ -177,7 +177,7 @@ export function attentionSignals(
     signals.push({
       kind: "cadastro-critico",
       severity: "warning",
-      label: `Cadastro ${comp.pct}%`,
+      label: `Ficha ${comp.pct}%`,
       cta: { kind: "cadastro-critico", label: "Completar cadastro" },
     });
   }
