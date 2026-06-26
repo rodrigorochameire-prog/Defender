@@ -73,9 +73,9 @@ type Edit = { assistidoNome?: string; ato?: string; prazo?: string };
 
 // Preferências de triagem persistidas (ordem + filtros). Seleção/expandido NÃO
 // são persistidos (são estado efêmero de cada revisão).
-const PREFS_KEY = "intim-review-prefs";
+const PREFS_KEY = "intim-review-prefs-v2";
 type Prefs = {
-  ordenar: "pje" | "antigo" | "prazo" | "assistido";
+  ordenar: "pje" | "recente" | "antigo" | "prazo" | "assistido";
   fDecisao: "todas" | "nova" | "incerta" | "dup";
   fTipo: "todos" | "mpu" | "demais";
   fCrime: string;
@@ -101,7 +101,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   const [fDecisao, setFDecisao] = useState<"todas" | "nova" | "incerta" | "dup">("todas");
   const [fCrime, setFCrime] = useState<string>("");
   const [fTipo, setFTipo] = useState<"todos" | "mpu" | "demais">("todos");
-  const [ordenar, setOrdenar] = useState<"pje" | "antigo" | "prazo" | "assistido">("pje");
+  const [ordenar, setOrdenar] = useState<"pje" | "recente" | "antigo" | "prazo" | "assistido">("recente");
   const seeded = useRef(false);
   const lastClicked = useRef<number | null>(null);
   const prefsLoaded = useRef(false);
@@ -232,6 +232,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     const exped = (r: Row) => (r.dataExpedicao ? new Date(r.dataExpedicao).getTime() : 0);
     return [...rows].sort((a, b) => {
       if (ordenar === "prazo") return dias(a) - dias(b);
+      if (ordenar === "recente") return exped(b) - exped(a);
       if (ordenar === "antigo") return exped(a) - exped(b);
       return (a.assistidoParsed ?? a.assistidoNome ?? "").localeCompare(
         b.assistidoParsed ?? b.assistidoNome ?? "",
@@ -416,8 +417,9 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
               onChange={(e) => setOrdenar(e.target.value as typeof ordenar)}
               className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] text-neutral-600 outline-none focus:border-emerald-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="pje">Ordem do PJe (recente→antigo)</option>
+              <option value="recente">Mais recente → antigo</option>
               <option value="antigo">Mais antigo → recente</option>
+              <option value="pje">Como no painel do PJe</option>
               <option value="prazo">Prazo (urgência)</option>
               <option value="assistido">Assistido (A→Z)</option>
             </select>
