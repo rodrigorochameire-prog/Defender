@@ -60,7 +60,7 @@ export const vidaFuncionalRouter = router({
       if (input?.cluster) conditions.push(eq(vidaFuncionalEventos.cluster, input.cluster));
       if (input?.status) conditions.push(eq(vidaFuncionalEventos.status, input.status));
       if (input?.marcosOnly) {
-        conditions.push(inArray(vidaFuncionalEventos.tipo, MARCO_TIPOS as unknown as string[]));
+        conditions.push(inArray(vidaFuncionalEventos.tipo, [...MARCO_TIPOS]));
       }
 
       return await db
