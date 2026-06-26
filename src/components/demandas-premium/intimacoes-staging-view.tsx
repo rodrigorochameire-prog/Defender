@@ -31,6 +31,21 @@ const fmtData = (d: string | Date | null | undefined) => {
     : dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 };
 
+// Hora "HH:MM" da expedição. Lê direto da string ISO (à prova de fuso) — o
+// timestamp do PJe vem sem timezone; converter via Date arriscaria deslocar a hora.
+// "" quando não há hora real (00:00) ou formato inesperado.
+const horaDe = (d: string | Date | null | undefined): string => {
+  if (!d) return "";
+  if (typeof d === "string") {
+    const m = d.match(/T(\d{2}):(\d{2})/);
+    if (!m) return "";
+    return m[1] === "00" && m[2] === "00" ? "" : `${m[1]}:${m[2]}`;
+  }
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return hh === "00" && mm === "00" ? "" : `${hh}:${mm}`;
+};
+
 // Urgência a partir da data-limite (relativo a hoje). Cor só quando há problema:
 // vermelho = vencido/hoje, âmbar = ≤3 dias, neutro = resto.
 function prazo(dataLimite: string | null | undefined) {
@@ -232,8 +247,9 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     const exped = (r: Row) => (r.dataExpedicao ? new Date(r.dataExpedicao).getTime() : 0);
     return [...rows].sort((a, b) => {
       if (ordenar === "prazo") return dias(a) - dias(b);
-      if (ordenar === "recente") return exped(b) - exped(a);
-      if (ordenar === "antigo") return exped(a) - exped(b);
+      // Desempate por id (= ordem do painel do PJe) quando o minuto é idêntico.
+      if (ordenar === "recente") return exped(b) - exped(a) || b.id - a.id;
+      if (ordenar === "antigo") return exped(a) - exped(b) || a.id - b.id;
       return (a.assistidoParsed ?? a.assistidoNome ?? "").localeCompare(
         b.assistidoParsed ?? b.assistidoNome ?? "",
       );
@@ -540,7 +556,12 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                         )}
                         <td className="px-3 py-2.5 text-neutral-600 dark:text-neutral-400">{r.crime ?? "—"}</td>
                         <td className="px-3 py-2.5 text-[11px] text-neutral-400 whitespace-nowrap">{r.tipoProcesso ?? "—"}</td>
-                        <td className="px-3 py-2.5 text-[11px] tabular-nums text-neutral-400 whitespace-nowrap">{fmtData(r.dataExpedicao)}</td>
+                        <td className="px-3 py-2.5 text-[11px] tabular-nums text-neutral-400 whitespace-nowrap">
+                          {fmtData(r.dataExpedicao)}
+                          {horaDe(r.dataExpedicao) && (
+                            <span className="ml-1 text-neutral-300 dark:text-neutral-600">{horaDe(r.dataExpedicao)}</span>
+                          )}
+                        </td>
                         <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
                           <div className={p.cls}>{p.label}</div>
                           {r.prazoDefensoria && (
