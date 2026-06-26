@@ -93,7 +93,23 @@ const baseCte = `
     GROUP BY assistido_id
     HAVING assistido_id NOT IN (
       SELECT assistido_id FROM claude_code_tasks
-      WHERE status IN ('pending','processing') AND assistido_id IS NOT NULL
+      WHERE assistido_id IS NOT NULL AND (
+        -- qualquer task em voo (qualquer skill): não empilha trabalho no assistido
+        status IN ('pending','processing')
+        -- OU análise analise-autos CONCLUÍDA que conta como "coberta":
+        OR (status = 'completed' AND skill = 'analise-autos' AND (
+            -- (a) tem CONTEÚDO real → pronto, nunca re-analisar
+            (    resultado::text NOT ILIKE '%DADOS_INSUFICIENTES%'
+             AND resultado::text NOT ILIKE '%não foram fornecidos%'
+             AND resultado::text NOT ILIKE '%não pôde ser concluída%'
+             AND resultado::text NOT ILIKE '%não localizados%'
+             AND resultado::text NOT ILIKE '%Sem acesso%' )
+            -- (b) OU foi tentada nas últimas 12h (mesmo vazia) → guard anti-loop
+            --     (autos faltando re-analisaria vazio infinitamente). Reabre após 12h.
+            OR completed_at >= now() - interval '12 hours'
+        ))
+        -- 'failed' NÃO entra → segue elegível p/ retry.
+      )
     )
     ${PRIORITY ? "AND (bool_or(preso) OR bool_or(aud_30d))" : ""}
   )
