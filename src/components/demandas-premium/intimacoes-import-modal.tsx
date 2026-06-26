@@ -40,6 +40,22 @@ export function IntimacoesImportModal({
     }
   }, [isOpen]);
 
+  // Última importação concluída — para o usuário saber de onde continuar.
+  const { data: ultima } = trpc.intimacoes.ultimaImportacao.useQuery(undefined, {
+    enabled: isOpen,
+  });
+
+  const rotulo = (v: string) =>
+    ATRIBUICOES.find((a) => a.value === v)?.label ?? v;
+  const fmtData = (iso: string) =>
+    new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   const criar = trpc.intimacoes.criarImportJob.useMutation({
     onSuccess: (res) => {
       toast.success("Importação iniciada com sucesso");
@@ -67,6 +83,33 @@ export function IntimacoesImportModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Última importação — referência de onde continuar */}
+          {ultima?.finishedAt && (
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/40 border border-neutral-200/60 dark:border-neutral-800/60 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300">
+                  Última importação: {fmtData(ultima.finishedAt)}
+                </p>
+                <p className="text-[10px] text-neutral-400 dark:text-neutral-500 truncate">
+                  {ultima.totalRaspadas != null
+                    ? `${ultima.totalRaspadas} expediente(s)`
+                    : "concluída"}
+                  {ultima.atribuicoes.length > 0
+                    ? ` · ${ultima.atribuicoes.map(rotulo).join(", ")}`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSince(ultima.finishedAt!.slice(0, 10))}
+                title="Define o início do intervalo a partir da última importação"
+                className="shrink-0 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline cursor-pointer"
+              >
+                Continuar daqui
+              </button>
+            </div>
+          )}
+
           {/* Atribuições */}
           <div className="space-y-1.5">
             <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">

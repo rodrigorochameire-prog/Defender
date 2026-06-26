@@ -11,7 +11,7 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { pjeImportStaging, pjeIntimacoesLedger, demandas } from "@/lib/db/schema";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import {
   enrichStagingWithLiveDedup,
   stagingRowToImportRow,
@@ -119,6 +119,42 @@ export const intimacoesRouter = router({
       }
       return { status: task.status, etapa: task.etapa ?? null, rows: stagingRows };
     }),
+
+  /**
+   * ultimaImportacao — Retorna a última importação concluída (para a UI saber de
+   * onde continuar na próxima). Lê o último job completed da skill, com a data de
+   * conclusão, total raspado e atribuições cobertas.
+   */
+  ultimaImportacao: protectedProcedure.query(async () => {
+    const [job] = await db
+      .select({
+        id: claudeCodeTasks.id,
+        completedAt: claudeCodeTasks.completedAt,
+        createdAt: claudeCodeTasks.createdAt,
+        resultado: claudeCodeTasks.resultado,
+      })
+      .from(claudeCodeTasks)
+      .where(
+        and(
+          eq(claudeCodeTasks.skill, "pje-intimacoes-import"),
+          eq(claudeCodeTasks.status, "completed"),
+        ),
+      )
+      .orderBy(desc(claudeCodeTasks.id))
+      .limit(1);
+
+    if (!job) return null;
+    const r = (job.resultado ?? {}) as {
+      raspadas?: number;
+      atribuicoes?: string[];
+    };
+    return {
+      jobId: job.id,
+      finishedAt: (job.completedAt ?? job.createdAt)?.toISOString() ?? null,
+      totalRaspadas: typeof r.raspadas === "number" ? r.raspadas : null,
+      atribuicoes: Array.isArray(r.atribuicoes) ? r.atribuicoes : [],
+    };
+  }),
 
   /**
    * confirmarImport — Aplica edições do usuário, importa as linhas selecionadas
