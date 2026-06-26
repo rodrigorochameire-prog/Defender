@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ombuds.browser-broker.local</string>
+
+  <!-- Broker INTERATIVO da MÁQUINA DO DEFENSOR: roda skills de login manual
+       (pje-intimacoes-import, varredura-triagem) adotando o Chromium logado em
+       :9222. Distinto do com.ombuds.browser-broker do Mac Mini (servidor,
+       BROWSER_INTERACTIVE ausente → pula skills interativas). -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/node</string>
+    <string>/Users/rodrigorochameire/Projetos/Defender/scripts/browser-broker-daemon.mjs</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/rodrigorochameire/Projetos/Defender</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/rodrigorochameire</string>
+    <key>BROWSER_INTERACTIVE</key>
+    <string>true</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/rodrigorochameire/Projetos/Defender/logs/browser-broker-local.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/rodrigorochameire/Projetos/Defender/logs/browser-broker-local-error.log</string>
+</dict>
+</plist>
