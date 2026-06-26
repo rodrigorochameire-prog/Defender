@@ -10,7 +10,12 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
-import { pjeImportStaging, pjeIntimacoesLedger, demandas } from "@/lib/db/schema";
+import {
+  pjeImportStaging,
+  pjeIntimacoesLedger,
+  demandas,
+  assistidos,
+} from "@/lib/db/schema";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import {
   enrichStagingWithLiveDedup,
@@ -18,7 +23,79 @@ import {
   buildLedgerUpserts,
   parseStagingRow,
 } from "@/lib/services/pje-intimacoes-import";
+import {
+  calcularPrazoDefensoria,
+  normalizarNome,
+  ASSISTIDO_A_IDENTIFICAR,
+} from "@/lib/pje-parser";
 import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
+
+/**
+ * Índice em memória: nome-de-assistido normalizado → ids[] dos assistidos vivos.
+ * Construído UMA vez por `listStaging` (1 query) e reusado no match por linha,
+ * evitando N queries. >1 id no mesmo nome ⇒ homônimos ("multiplo").
+ */
+type AssistidoIndex = Map<string, number[]>;
+
+/**
+ * Classifica o nome de um assistido contra o índice:
+ *   0 ids → "novo"; 1 → "vinculado" (+id); >1 → "multiplo".
+ * Nome vazio, marker "a identificar" ou réu não-identificado ⇒ sempre "novo".
+ */
+function classificarAssistidoMatch(
+  nome: string | null | undefined,
+  naoIdentificado: boolean,
+  index: AssistidoIndex,
+): {
+  assistidoMatch: "novo" | "vinculado" | "multiplo";
+  matchedAssistidoId: number | null;
+} {
+  if (
+    !nome ||
+    naoIdentificado ||
+    nome === ASSISTIDO_A_IDENTIFICAR
+  ) {
+    return { assistidoMatch: "novo", matchedAssistidoId: null };
+  }
+  const norm = normalizarNome(nome);
+  if (!norm) return { assistidoMatch: "novo", matchedAssistidoId: null };
+  const ids = index.get(norm);
+  if (!ids || ids.length === 0) {
+    return { assistidoMatch: "novo", matchedAssistidoId: null };
+  }
+  if (ids.length === 1) {
+    return { assistidoMatch: "vinculado", matchedAssistidoId: ids[0] };
+  }
+  return { assistidoMatch: "multiplo", matchedAssistidoId: null };
+}
+
+/**
+ * Prazo da Defensoria (10 dias corridos de leitura + prazo EM DOBRO em dias úteis)
+ * via `calcularPrazoDefensoria`, que espera "DD/MM/YYYY" (sem hora) + dias. Retorna
+ * ISO "YYYY-MM-DD" ou null se faltar dado / o cálculo falhar. NUNCA lança.
+ */
+function calcularPrazoDefensoriaISO(
+  dataExpedicao: string | null | undefined,
+  prazoDias: number | null | undefined,
+): string | null {
+  try {
+    if (
+      !dataExpedicao ||
+      typeof prazoDias !== "number" ||
+      !Number.isFinite(prazoDias)
+    ) {
+      return null;
+    }
+    // O parser entrega "DD/MM/YYYY HH:MM"; a função só quer a data → tira a hora.
+    const dataSemHora = dataExpedicao.split(" ")[0];
+    const ddmmyy = calcularPrazoDefensoria(dataSemHora, prazoDias); // "DD/MM/YY"
+    const m = ddmmyy.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+    if (!m) return null;
+    return `20${m[3]}-${m[2]}-${m[1]}`;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Enriquece linhas de staging com os campos SEMÂNTICOS do parser canônico
@@ -37,17 +114,32 @@ function extrairDataLimite(conteudo: string | null): string | null {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
 }
 
-function comCamposParseados(rows: PjeImportStaging[]) {
+function comCamposParseados(
+  rows: PjeImportStaging[],
+  assistidoIndex: AssistidoIndex,
+) {
   return rows.map((r) => {
     const int = parseStagingRow(r)?.int;
+    const assistidoParsed = int?.assistido ?? null;
+    const { assistidoMatch, matchedAssistidoId } = classificarAssistidoMatch(
+      assistidoParsed ?? r.assistidoNome,
+      Boolean(int?.assistidoNaoIdentificado),
+      assistidoIndex,
+    );
     return {
       ...r,
       crime: int?.crime ?? null,
       tipoProcesso: int?.tipoProcesso ?? null,
       vara: int?.vara ?? null,
       isMPU: Boolean(int?.isMPU),
-      assistidoParsed: int?.assistido ?? null,
+      assistidoParsed,
       dataLimite: extrairDataLimite(r.conteudo),
+      assistidoMatch,
+      matchedAssistidoId,
+      prazoDefensoria: calcularPrazoDefensoriaISO(
+        int?.dataExpedicao,
+        int?.prazo,
+      ),
     };
   });
 }
@@ -140,6 +232,21 @@ export const intimacoesRouter = router({
         .where(eq(pjeImportStaging.jobId, input.jobId))
         .orderBy(pjeImportStaging.id);
 
+      // Feature 1: índice nome→ids dos assistidos vivos, construído UMA vez (1 query)
+      // e reusado no match em memória de cada linha (evita N queries no map).
+      const assistidosVivos = await db
+        .select({ id: assistidos.id, nome: assistidos.nome })
+        .from(assistidos)
+        .where(isNull(assistidos.deletedAt));
+      const assistidoIndex: AssistidoIndex = new Map();
+      for (const a of assistidosVivos) {
+        const norm = normalizarNome(a.nome ?? "");
+        if (!norm) continue;
+        const arr = assistidoIndex.get(norm);
+        if (arr) arr.push(a.id);
+        else assistidoIndex.set(norm, [a.id]);
+      }
+
       // Layer-B: dedup fuzzy contra demandas vivas — só quando o job está concluído.
       // Durante pending/processing as linhas ainda estão sendo escritas; rodar Layer-B
       // seria parcial e desperdiçaria um full-scan de demandas a cada heartbeat.
@@ -153,13 +260,14 @@ export const intimacoesRouter = router({
           .where(isNull(demandas.deletedAt));
         const rows = comCamposParseados(
           enrichStagingWithLiveDedup(stagingRows, demandasVivas),
+          assistidoIndex,
         );
         return { status: task.status, etapa: task.etapa ?? null, rows };
       }
       return {
         status: task.status,
         etapa: task.etapa ?? null,
-        rows: comCamposParseados(stagingRows),
+        rows: comCamposParseados(stagingRows, assistidoIndex),
       };
     }),
 

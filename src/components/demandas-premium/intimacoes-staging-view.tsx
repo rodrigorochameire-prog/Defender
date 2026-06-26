@@ -63,9 +63,32 @@ type Row = {
   dataExpedicao: string | Date | null;
   dataLimite: string | null;
   conteudo?: string | null;
+  // Contrato v3 (preenchido pelo backend em runtime):
+  assistidoMatch?: "novo" | "vinculado" | "multiplo";
+  matchedAssistidoId?: number | null;
+  prazoDefensoria?: string | null;
 };
 
 type Edit = { assistidoNome?: string; ato?: string; prazo?: string };
+
+// Preferências de triagem persistidas (ordem + filtros). Seleção/expandido NÃO
+// são persistidos (são estado efêmero de cada revisão).
+const PREFS_KEY = "intim-review-prefs";
+type Prefs = {
+  ordenar: "pje" | "antigo" | "prazo" | "assistido";
+  fDecisao: "todas" | "nova" | "incerta" | "dup";
+  fTipo: "todos" | "mpu" | "demais";
+  fCrime: string;
+};
+function loadPrefs(): Partial<Prefs> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Prefs>) : {};
+  } catch {
+    return {};
+  }
+}
 
 export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   const utils = trpc.useUtils();
@@ -81,6 +104,31 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   const [ordenar, setOrdenar] = useState<"pje" | "antigo" | "prazo" | "assistido">("pje");
   const seeded = useRef(false);
   const lastClicked = useRef<number | null>(null);
+  const prefsLoaded = useRef(false);
+
+  // Restaura preferências do client após o mount (evita mismatch de hidratação:
+  // o 1º render no server/client usa os defaults; só então aplicamos o localStorage).
+  useEffect(() => {
+    const p = loadPrefs();
+    if (p.ordenar) setOrdenar(p.ordenar);
+    if (p.fDecisao) setFDecisao(p.fDecisao);
+    if (p.fTipo) setFTipo(p.fTipo);
+    if (p.fCrime != null) setFCrime(p.fCrime);
+    prefsLoaded.current = true;
+  }, []);
+
+  // Persiste preferências quando mudam (só depois de restaurar, p/ não sobrescrever).
+  useEffect(() => {
+    if (!prefsLoaded.current || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        PREFS_KEY,
+        JSON.stringify({ ordenar, fDecisao, fTipo, fCrime } satisfies Prefs),
+      );
+    } catch {
+      /* localStorage indisponível (modo privado/quota) — ignora */
+    }
+  }, [ordenar, fDecisao, fTipo, fCrime]);
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -124,6 +172,17 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     const s = new Set<string>();
     for (const r of allRows) if (r.crime) s.add(r.crime);
     return [...s].sort();
+  }, [allRows]);
+
+  // Quantos expedientes por processo (sobre TODAS as rows). Usado para alertar
+  // discretamente quando o mesmo caso aparece em várias linhas.
+  const processoCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of allRows) {
+      const k = r.processoNumero?.trim();
+      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
   }, [allRows]);
 
   const atribuicoes = useMemo(
@@ -184,6 +243,20 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   const visibleSelectableIds = useMemo(
     () => visible.filter((r) => isSelectable(r.decisao)).map((r) => r.id),
     [visible],
+  );
+
+  // Importáveis com prazo vencido ou ≤3 dias (varre TODAS as rows, não só as visíveis,
+  // para não deixar passar urgência escondida por filtro).
+  const urgenteIds = useMemo(
+    () =>
+      allRows
+        .filter((r) => {
+          if (!isSelectable(r.decisao)) return false;
+          const d = prazo(r.dataLimite).dias;
+          return d != null && d <= 3;
+        })
+        .map((r) => r.id),
+    [allRows],
   );
 
   if (query.error) {
@@ -349,6 +422,14 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
               <option value="assistido">Assistido (A→Z)</option>
             </select>
             <div className="ml-auto flex items-center gap-2 text-[11px] text-neutral-500">
+              {urgenteIds.length > 0 && (
+                <button
+                  onClick={() => setSelected(new Set(urgenteIds))}
+                  className="rounded-md px-2 py-1 font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 cursor-pointer"
+                >
+                  Selecionar urgentes ({urgenteIds.length})
+                </button>
+              )}
               <button onClick={() => setSelected(new Set(visibleSelectableIds))} className="rounded-md px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 cursor-pointer">
                 Selecionar visíveis ({visibleSelectableIds.length})
               </button>
@@ -369,10 +450,14 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
 
         {/* Tabela */}
         {allRows.length > 0 && (
-          <div className="mt-3 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm shadow-black/[0.03] dark:border-neutral-800 dark:bg-neutral-900">
+          // Sem overflow-hidden: um ancestral com overflow!=visible vira scroll
+          // container e quebra o `sticky` do thead relativo à viewport.
+          <div className="mt-3 rounded-xl border border-neutral-200 bg-white shadow-sm shadow-black/[0.03] dark:border-neutral-800 dark:bg-neutral-900">
             <table className="w-full text-[12px]">
               <thead>
-                <tr className="border-b border-neutral-100 bg-neutral-50 text-left text-[10px] font-medium text-neutral-400 dark:border-neutral-800 dark:bg-neutral-900/60">
+                {/* Cabeçalho fixo: cada th é sticky (mais compatível que thead sticky),
+                    com fundo sólido + borda/sombra sutil ao rolar as 80+ linhas. */}
+                <tr className="text-left text-[10px] font-medium text-neutral-400 [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:border-b [&>th]:border-neutral-200 [&>th]:bg-neutral-50 [&>th]:shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:[&>th]:border-neutral-700 dark:[&>th]:bg-neutral-900">
                   <th className="w-9 px-3 py-2"></th>
                   <th className="px-3 py-2">Assistido</th>
                   {multiAtrib && <th className="px-3 py-2">Atribuição</th>}
@@ -412,7 +497,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                           />
                         </td>
                         <td className="px-3 py-2.5">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <span className="font-semibold text-neutral-800 dark:text-neutral-100">
                               {ed.assistidoNome ?? r.assistidoParsed ?? r.assistidoNome ?? "—"}
                             </span>
@@ -421,9 +506,31 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                                 MPU
                               </span>
                             )}
+                            {/* Marca só a EXCEÇÃO: "novo" (caso comum) não exibe nada. */}
+                            {r.assistidoMatch === "vinculado" && r.matchedAssistidoId != null && (
+                              <Link
+                                href={`/admin/assistidos/${r.matchedAssistidoId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="rounded px-1 text-[9px] font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400 cursor-pointer"
+                              >
+                                já cadastrado
+                              </Link>
+                            )}
+                            {r.assistidoMatch === "multiplo" && (
+                              <span className="rounded bg-amber-50 px-1 text-[9px] font-medium text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                homônimos
+                              </span>
+                            )}
                           </div>
-                          <div className="font-mono text-[10px] text-neutral-400">
-                            {r.processoNumero ?? "—"}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] text-neutral-400">
+                              {r.processoNumero ?? "—"}
+                            </span>
+                            {r.processoNumero && (processoCount.get(r.processoNumero.trim()) ?? 0) > 1 && (
+                              <span className="rounded bg-neutral-100 px-1 text-[9px] font-medium text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                                {processoCount.get(r.processoNumero.trim())} no mesmo processo
+                              </span>
+                            )}
                           </div>
                         </td>
                         {multiAtrib && (
@@ -432,7 +539,14 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                         <td className="px-3 py-2.5 text-neutral-600 dark:text-neutral-400">{r.crime ?? "—"}</td>
                         <td className="px-3 py-2.5 text-[11px] text-neutral-400 whitespace-nowrap">{r.tipoProcesso ?? "—"}</td>
                         <td className="px-3 py-2.5 text-[11px] tabular-nums text-neutral-400 whitespace-nowrap">{fmtData(r.dataExpedicao)}</td>
-                        <td className={`px-3 py-2.5 whitespace-nowrap tabular-nums ${p.cls}`}>{p.label}</td>
+                        <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
+                          <div className={p.cls}>{p.label}</div>
+                          {r.prazoDefensoria && (
+                            <div className="text-[10px] font-normal text-neutral-400 dark:text-neutral-500">
+                              Defensoria: {fmtData(r.prazoDefensoria)}
+                            </div>
+                          )}
+                        </td>
                         <td className="px-3 py-2.5 text-right">
                           {exc ? (
                             <span className={`rounded px-1.5 py-0.5 text-[9px] font-medium ${exc.cls}`}>{exc.label}</span>
