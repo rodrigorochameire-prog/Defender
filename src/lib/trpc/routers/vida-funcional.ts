@@ -5,7 +5,7 @@ import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { vidaFuncionalEventos } from "@/lib/db/schema";
 import { getVidaFuncionalScope } from "../vida-funcional-scope";
-import { tipoToCluster, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
+import { tipoToCluster, type VfTipo, MARCO_TIPOS } from "@/lib/vida-funcional/tipo-cluster";
 import { logAudit, diffFields } from "@/lib/audit";
 
 const TIPO_VALUES = [
@@ -41,6 +41,7 @@ export const vidaFuncionalRouter = router({
     .input(
       z.object({
         tipo: tipoSchema.optional(),
+        tipos: z.array(tipoSchema).optional(),
         cluster: z.enum(["progressao", "ausencias", "contraprestacao", "administrativo"]).optional(),
         status: statusSchema.optional(),
         marcosOnly: z.boolean().optional(),
@@ -53,8 +54,14 @@ export const vidaFuncionalRouter = router({
         inArray(vidaFuncionalEventos.defensorId, scope),
       ];
       if (input?.tipo) conditions.push(eq(vidaFuncionalEventos.tipo, input.tipo));
+      if (input?.tipos && input.tipos.length > 0) {
+        conditions.push(inArray(vidaFuncionalEventos.tipo, input.tipos));
+      }
       if (input?.cluster) conditions.push(eq(vidaFuncionalEventos.cluster, input.cluster));
       if (input?.status) conditions.push(eq(vidaFuncionalEventos.status, input.status));
+      if (input?.marcosOnly) {
+        conditions.push(inArray(vidaFuncionalEventos.tipo, MARCO_TIPOS as unknown as string[]));
+      }
 
       return await db
         .select()

@@ -141,3 +141,26 @@ describe("vidaFuncional CRUD + isolamento", { timeout: 30000 }, () => {
     }
   });
 });
+
+describe("vidaFuncional listEventos — filtros tipos[]/marcosOnly", { timeout: 30000 }, () => {
+  it("filtra por tipos[] e por marcosOnly", async () => {
+    const a = await makeDefensor("filt");
+    try {
+      const caller = createCaller(mkCtx(a));
+      await caller.vidaFuncional.createEvento({ tipo: "PROMOCAO", titulo: "marco", dataEvento: "2026-01-01" });
+      await caller.vidaFuncional.createEvento({ tipo: "FERIAS", titulo: "ferias", dataEvento: "2026-02-01" });
+      await caller.vidaFuncional.createEvento({ tipo: "DIARIA", titulo: "diaria", dataEvento: "2026-03-01" });
+
+      const soFerias = await caller.vidaFuncional.listEventos({ tipos: ["FERIAS"] });
+      expect(soFerias.every((e) => e.tipo === "FERIAS")).toBe(true);
+      expect(soFerias.length).toBe(1);
+
+      const marcos = await caller.vidaFuncional.listEventos({ marcosOnly: true });
+      expect(marcos.every((e) => e.tipo === "PROMOCAO")).toBe(true); // único marco criado
+      expect(marcos.some((e) => e.tipo === "FERIAS")).toBe(false);
+    } finally {
+      await db.delete(vidaFuncionalEventos).where(eq(vidaFuncionalEventos.defensorId, a.id));
+      await cleanupUser(a.id);
+    }
+  });
+});
