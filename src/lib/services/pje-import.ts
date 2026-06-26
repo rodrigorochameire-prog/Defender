@@ -448,7 +448,11 @@ export async function importarDemandas(
         ? (STATUS_TO_DB[statusKey] || "5_TRIAGEM")
         : "5_TRIAGEM";
       const reuPreso = row.estadoPrisional === "preso";
-      const substatus = statusKey || null;
+      // O kanban roteia a COLUNA por substatus (precedência sobre status). Um item
+      // que entra em 5_TRIAGEM precisa de substatus NULL para cair na coluna
+      // "Triagem" — senão substatus="analisar" o jogaria em "Em Andamento". O
+      // defensor define o substatus quando tira da triagem.
+      const substatus = dbStatus === "5_TRIAGEM" ? null : (statusKey || null);
 
       // 6. Atualizar existente ou inserir novo
       //
