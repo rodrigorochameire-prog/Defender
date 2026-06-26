@@ -8,7 +8,7 @@ import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-hea
 import { trpc } from "@/lib/trpc/client";
 import { dominiosByCluster } from "@/lib/vida-funcional/dominios";
 import { isMarco, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
-import { computeRadar, type Severidade } from "@/lib/vida-funcional/radar";
+import { computeRadar } from "@/lib/vida-funcional/radar";
 import { COLORS } from "@/lib/config/design-tokens";
 import { vfIcon } from "./icon-map";
 import { TrajetoriaTimeline } from "./trajetoria-timeline";
@@ -31,7 +31,7 @@ export function VidaFuncionalView() {
     return m;
   }, [eventos]);
 
-  const radar = useMemo(() => computeRadar(eventos as any, new Date()), [eventos]);
+  const radar = useMemo(() => computeRadar(eventos, new Date()), [eventos]);
 
   const marcosCount = eventos.filter((e) => isMarco(e.tipo as VfTipo)).length;
 

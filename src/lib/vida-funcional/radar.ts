@@ -62,18 +62,20 @@ export function computeRadar(eventos: RadarEventoInput[], today: Date): RadarAle
     const vencimento = str(dados.vencimento);
     if (tipo === "FOLGA" && vencimento && ativo(e.status)) {
       const dias = daysUntil(vencimento, today);
-      if (dias >= -1 && dias <= 60) {
+      if (dias >= -3 && dias <= 60) {
         alerts.push({ eventoId: e.id, tipo, severidade: sevByDias(dias), titulo: e.titulo, prazo: vencimento, motivo: dias < 0 ? "folga vencida" : `folga vence em ${dias}d`, dominioKey: dom });
         continue;
       }
     }
 
+    // intencional: a obrigação (requerer diária / enviar ofício ao SEI) independe do status do evento
     // DIARIA a requerer
     if (tipo === "DIARIA" && str(dados.status) === "a_requerer") {
       alerts.push({ eventoId: e.id, tipo, severidade: "atencao", titulo: e.titulo, prazo: e.prazo, motivo: "diária a requerer", dominioKey: dom });
       continue;
     }
 
+    // intencional: a obrigação (requerer diária / enviar ofício ao SEI) independe do status do evento
     // GRATIFICACAO/SUBSTITUICAO com SEI pendente e período encerrado
     const seiStatus = str(dados.seiStatus);
     if ((tipo === "GRATIFICACAO" || tipo === "SUBSTITUICAO") && seiStatus && seiStatus !== "enviado") {
