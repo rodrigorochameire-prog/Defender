@@ -77,7 +77,8 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   const [busca, setBusca] = useState("");
   const [fDecisao, setFDecisao] = useState<"todas" | "nova" | "incerta" | "dup">("todas");
   const [fCrime, setFCrime] = useState<string>("");
-  const [ordenar, setOrdenar] = useState<"prazo" | "expedicao" | "assistido">("prazo");
+  const [fTipo, setFTipo] = useState<"todos" | "mpu" | "demais">("todos");
+  const [ordenar, setOrdenar] = useState<"pje" | "antigo" | "prazo" | "assistido">("pje");
   const seeded = useRef(false);
   const lastClicked = useRef<number | null>(null);
 
@@ -148,11 +149,13 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
 
   const visible = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    let rows = allRows.filter((r) => {
+    const rows = allRows.filter((r) => {
       if (fDecisao === "nova" && r.decisao !== "nova") return false;
       if (fDecisao === "incerta" && r.decisao !== "incerta") return false;
       if (fDecisao === "dup" && !(r.decisao === "duplicada" || r.decisao === "ja_importada"))
         return false;
+      if (fTipo === "mpu" && !r.isMPU) return false;
+      if (fTipo === "demais" && r.isMPU) return false;
       if (fCrime && r.crime !== fCrime) return false;
       if (q) {
         const nome = (r.assistidoParsed ?? r.assistidoNome ?? "").toLowerCase();
@@ -161,22 +164,21 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
       }
       return true;
     });
+    // "Ordem do PJe" = ordem de raspagem (id asc, já vinda do backend) — não reordena.
+    if (ordenar === "pje") return rows;
     const dias = (r: Row) => {
       const d = prazo(r.dataLimite).dias;
       return d == null ? Number.POSITIVE_INFINITY : d;
     };
-    rows = [...rows].sort((a, b) => {
+    const exped = (r: Row) => (r.dataExpedicao ? new Date(r.dataExpedicao).getTime() : 0);
+    return [...rows].sort((a, b) => {
       if (ordenar === "prazo") return dias(a) - dias(b);
-      if (ordenar === "assistido")
-        return (a.assistidoParsed ?? a.assistidoNome ?? "").localeCompare(
-          b.assistidoParsed ?? b.assistidoNome ?? "",
-        );
-      const da = a.dataExpedicao ? new Date(a.dataExpedicao).getTime() : 0;
-      const db = b.dataExpedicao ? new Date(b.dataExpedicao).getTime() : 0;
-      return db - da;
+      if (ordenar === "antigo") return exped(a) - exped(b);
+      return (a.assistidoParsed ?? a.assistidoNome ?? "").localeCompare(
+        b.assistidoParsed ?? b.assistidoNome ?? "",
+      );
     });
-    return rows;
-  }, [allRows, busca, fDecisao, fCrime, ordenar]);
+  }, [allRows, busca, fDecisao, fTipo, fCrime, ordenar]);
 
   const isSelectable = (d: string) => d !== "ja_importada" && d !== "duplicada";
   const visibleSelectableIds = useMemo(
@@ -313,6 +315,17 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
             <Seg id="nova" label="Novas" n={resumo.nova} />
             {resumo.incerta > 0 && <Seg id="incerta" label="Poss. dup" n={resumo.incerta} />}
             {resumo.dup > 0 && <Seg id="dup" label="Duplicadas" n={resumo.dup} />}
+            {allRows.some((r) => r.isMPU) && (
+              <select
+                value={fTipo}
+                onChange={(e) => setFTipo(e.target.value as typeof fTipo)}
+                className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] text-neutral-600 outline-none focus:border-violet-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
+              >
+                <option value="todos">MPU + demais</option>
+                <option value="mpu">Só MPU</option>
+                <option value="demais">Só demais</option>
+              </select>
+            )}
             {crimes.length > 1 && (
               <select
                 value={fCrime}
@@ -330,9 +343,10 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
               onChange={(e) => setOrdenar(e.target.value as typeof ordenar)}
               className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] text-neutral-600 outline-none focus:border-emerald-400 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
             >
-              <option value="prazo">Ordenar: prazo</option>
-              <option value="expedicao">Ordenar: expedição</option>
-              <option value="assistido">Ordenar: assistido</option>
+              <option value="pje">Ordem do PJe (recente→antigo)</option>
+              <option value="antigo">Mais antigo → recente</option>
+              <option value="prazo">Prazo (urgência)</option>
+              <option value="assistido">Assistido (A→Z)</option>
             </select>
             <div className="ml-auto flex items-center gap-2 text-[11px] text-neutral-500">
               <button onClick={() => setSelected(new Set(visibleSelectableIds))} className="rounded-md px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 cursor-pointer">
@@ -403,7 +417,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
                               {ed.assistidoNome ?? r.assistidoParsed ?? r.assistidoNome ?? "—"}
                             </span>
                             {r.isMPU && (
-                              <span className="rounded border border-neutral-200 px-1 text-[9px] text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+                              <span className="rounded bg-violet-100 px-1 text-[9px] font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
                                 MPU
                               </span>
                             )}

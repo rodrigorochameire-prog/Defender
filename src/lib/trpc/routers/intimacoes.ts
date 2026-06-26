@@ -132,10 +132,13 @@ export const intimacoesRouter = router({
 
       if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Job de importação não encontrado" });
 
+      // orderBy(id) = ordem de raspagem = ordem do painel do PJe (o worker insere
+      // os expedientes na sequência em que aparecem). É a ordenação padrão da UI.
       const stagingRows = await db
         .select()
         .from(pjeImportStaging)
-        .where(eq(pjeImportStaging.jobId, input.jobId));
+        .where(eq(pjeImportStaging.jobId, input.jobId))
+        .orderBy(pjeImportStaging.id);
 
       // Layer-B: dedup fuzzy contra demandas vivas — só quando o job está concluído.
       // Durante pending/processing as linhas ainda estão sendo escritas; rodar Layer-B
