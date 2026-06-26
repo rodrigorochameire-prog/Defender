@@ -109,6 +109,9 @@ const SKILL_REGISTRY = {
   // Supabase REST. Modo CDP anexa a um Chromium logado em :9222 (preferido).
   'varredura-triagem': {
     label: 'Varredura de triagem (PJe)',
+    // Exige PJe logado (CDP :9222) — só roda no broker interativo (máquina do
+    // defensor). Sem isto, o Mac Mini (servidor) rouba o job e roda sem sessão.
+    interactive: true,
     build: (meta) => ({
       interpreter: VENV_PYTHON,
       argv: [
