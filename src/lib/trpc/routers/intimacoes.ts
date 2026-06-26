@@ -258,8 +258,24 @@ export const intimacoesRouter = router({
           .select()
           .from(demandas)
           .where(isNull(demandas.deletedAt));
+        // Layer-A forte: se o pjeDocumentoId já é uma demanda viva, marca
+        // "ja_importada" ANTES de o defensor confirmar — é a MESMA chave que a
+        // importação usa pra deduplicar, então a tela passa a refletir o que de
+        // fato vai acontecer (sem a surpresa de tudo aparecer como "nova").
+        const docidsExistentes = new Set(
+          demandasVivas
+            .map((d) => d.pjeDocumentoId)
+            .filter((x): x is string => !!x),
+        );
+        const stagingDedup: PjeImportStaging[] = stagingRows.map((r) =>
+          r.decisao === "nova" &&
+          r.pjeDocumentoId &&
+          docidsExistentes.has(r.pjeDocumentoId)
+            ? { ...r, decisao: "ja_importada" }
+            : r,
+        );
         const rows = comCamposParseados(
-          enrichStagingWithLiveDedup(stagingRows, demandasVivas),
+          enrichStagingWithLiveDedup(stagingDedup, demandasVivas),
           assistidoIndex,
         );
         return { status: task.status, etapa: task.etapa ?? null, rows };
