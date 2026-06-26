@@ -262,31 +262,38 @@ def _parse_row(raw: dict) -> dict:
         tokens = prefix_c2.split()
         tipo_processo = tokens[0] if tokens else None
 
-    # assistidoNome: polo passivo = parte APÓS o último " X " em cell2
+    def _collapse(s: str | None) -> str | None:
+        if not s:
+            return None
+        return " ".join(s.split()) or None
+
+    # assistidoNome: polo passivo = parte APÓS o último " X " em cell2.
+    # A célula é multilinha ("NOME\n/VARA...\nÚltimo movimento:..."); só a
+    # PRIMEIRA linha é o nome — as demais são órgão e último movimento.
     assistido_nome: str | None = None
     if " X " in cell2:
-        assistido_nome = cell2.rsplit(" X ", 1)[1].strip() or None
-    # Fallback: primeiras palavras de cell1 antes do tipo-ato (aproximado)
-    if not assistido_nome and row_id and f"({row_id})" in cell1:
-        before_id = cell1[: cell1.index(f"({row_id})")].strip()
-        # sem referência de polo passivo, usa tudo antes do "(rowId)" como nome
-        assistido_nome = before_id or None
+        passivo = cell2.rsplit(" X ", 1)[1]
+        assistido_nome = _collapse(passivo.split("\n", 1)[0])
+    # Fallback: 1ª linha de cell1 (intimado), quando não há polo passivo.
+    if not assistido_nome and cell1:
+        assistido_nome = _collapse(cell1.split("\n", 1)[0])
 
-    # ato / tipoDocumento: texto entre o assistido e "({rowId})" em cell1.
-    # Algoritmo: corta cell1 em "({rowId})", strip, remove prefixo do polo passivo.
+    # ato / tipoDocumento: o tipo do expediente em cell1.
+    # cell1 = "{NOME}\n{TipoAto} ({rowId}) {Meio} ({data})". O segmento antes de
+    # "({rowId})" é "NOME\n{TipoAto}"; removendo a 1ª linha (nome) sobra o tipo.
     ato: str | None = None
     if row_id and f"({row_id})" in cell1:
-        before_id = cell1[: cell1.index(f"({row_id})")].strip()
-        # Tenta remover o prefixo do assistido (polo passivo de cell2)
-        pole = assistido_nome if (" X " in cell2 and assistido_nome) else None
-        if pole and before_id.startswith(pole):
-            ato = before_id[len(pole) :].strip() or None
+        before_id = cell1[: cell1.index(f"({row_id})")]
+        if "\n" in before_id:
+            ato = _collapse(before_id.split("\n", 1)[1])  # descarta a linha do nome
         else:
-            # Ambíguo: usa o segmento inteiro pré-"(rowId)"
-            ato = before_id or None
+            pole = assistido_nome if (" X " in cell2 and assistido_nome) else None
+            seg = before_id
+            if pole and _collapse(seg) and _collapse(seg).startswith(pole):
+                seg = _collapse(seg)[len(pole):]
+            ato = _collapse(seg)
     else:
-        # rowId ausente ou padrão não encontrado — usa cell1 completa
-        ato = cell1 or None
+        ato = _collapse(cell1)
 
     tipo_documento = ato
 

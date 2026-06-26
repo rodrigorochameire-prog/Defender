@@ -1,7 +1,7 @@
 import unittest
 from pje_intimacoes_import import (
     normalize_conteudo, compute_content_hash, decide_layer_a,
-    _pje_datetime_to_iso, _pje_prazo_to_date,
+    _pje_datetime_to_iso, _pje_prazo_to_date, _parse_row,
 )
 
 
@@ -72,6 +72,33 @@ class TestDateHelpers(unittest.TestCase):
     def test_prazo_empty_returns_none(self):
         self.assertIsNone(_pje_prazo_to_date(""))
         self.assertIsNone(_pje_prazo_to_date(None))
+
+
+class TestParseRow(unittest.TestCase):
+    """Parsing das células reais do EXPEDIENTES (layout multilinha verificado ao vivo)."""
+
+    def test_parse_reu_passivo(self):
+        r = _parse_row({
+            "rowId": "68649347", "cell0": "RESPONDER",
+            "cell1": "VALDECI SANTOS DA SILVA\nAto Ordinatório (68649347) Expedição eletrônica (12/06/2026 13:18)",
+            "cell2": "APSum 8011440-16.2023.8.05.0039 Ministério Público do Estado da Bahia X VALDECI SANTOS DA SILVA\n/VARA DE VIOLÊNCIA DOMÉSTICA\nÚltimo movimento: 16/06/2026 19:00 - Publicado Intimação.",
+        })
+        self.assertEqual(r["assistidoNome"], "VALDECI SANTOS DA SILVA")
+        self.assertEqual(r["ato"], "Ato Ordinatório")
+        self.assertEqual(r["processoNumero"], "8011440-16.2023.8.05.0039")
+        self.assertEqual(r["dataExpedicao"], "12/06/2026 13:18")
+        self.assertEqual(r["pjeDocumentoId"], "68649347")
+
+    def test_parse_intimado_dpe_uses_passivo_as_assistido(self):
+        # Quando o intimado é a Defensoria, o assistido deve ser o réu (polo passivo de cell2).
+        r = _parse_row({
+            "rowId": "68689705", "cell0": "RESPONDER",
+            "cell1": "DEFENSORIA PÚBLICA DO ESTADO DA BAHIA\nIntimação (68689705) Diário Eletrônico (15/06/2026 05:30)",
+            "cell2": "MPUMPCrim 8011975-42.2023.8.05.0039 Ministério Público X ANTONIO DANILO SANTANA BARBOSA\n/VARA\nÚltimo movimento: 15/06/2026",
+        })
+        self.assertEqual(r["assistidoNome"], "ANTONIO DANILO SANTANA BARBOSA")
+        self.assertEqual(r["ato"], "Intimação")
+        self.assertEqual(r["pjeDocumentoId"], "68689705")
 
 
 if __name__ == "__main__":
