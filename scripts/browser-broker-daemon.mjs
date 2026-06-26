@@ -120,6 +120,7 @@ const SKILL_REGISTRY = {
         ...(meta.atribuicao ? ['--atribuicao', String(meta.atribuicao)] : []),
         ...(meta.since ? ['--since', String(meta.since)] : []),
         ...(meta.limit ? ['--limit', String(meta.limit)] : []),
+        ...(meta.defensorId ? ['--defensor-id', String(meta.defensorId)] : []),
       ],
       timeoutMs: 30 * 60_000,
     }),

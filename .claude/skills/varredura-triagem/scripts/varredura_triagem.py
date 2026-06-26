@@ -960,7 +960,15 @@ def main():
     parser.add_argument("--limit", type=int, default=80)
     parser.add_argument("--modo", choices=["cdp", "direct", "manual-review"], default="cdp",
                         help="cdp=anexa Chromium aberto pelo usuário; direct=launcha headless; manual-review=só registra diligência")
+    parser.add_argument("--defensor-id", type=int, default=None,
+                        help="ID do defensor (filtro + autor dos registros). Default: DEFENSOR_ID do módulo.")
     args = parser.parse_args()
+
+    # Defensor do job (vem do ctx.user.id pela UI) — sobrepõe o default hardcoded,
+    # senão o filtro defensor_id ignora as demandas de outro defensor.
+    global DEFENSOR_ID
+    if args.defensor_id:
+        DEFENSOR_ID = args.defensor_id
 
     env = load_env()
     sb_url = env.get("NEXT_PUBLIC_SUPABASE_URL")

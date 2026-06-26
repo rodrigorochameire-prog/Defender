@@ -500,6 +500,7 @@ export const intimacoesRouter = router({
               since: input.since,
               limit,
               modo: "cdp",
+              defensorId: ctx.user.id, // filtra as demandas do defensor logado
             }),
             status: "pending",
             createdBy: ctx.user.id,
