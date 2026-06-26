@@ -89,6 +89,17 @@ export const encaminhamentos = pgTable("encaminhamentos", {
   concluidoPorId: integer("concluido_por_id").references(() => users.id),
   motivoRecusa: text("motivo_recusa"),
 
+  // IN 01/2026-CGD — encaminhamento ao defensor natural (outra comarca/UF).
+  // Quando tipo = 'pet_interno' (outra comarca, mesma UF) ou 'pet_integrado' (outra UF),
+  // o destino é uma Coordenação externa (e-mail), não um usuário interno.
+  regime: varchar("regime", { length: 12 }), // 'interno' | 'integrado' | null (encaminhamento de equipe)
+  coordenacaoId: integer("coordenacao_id").references(() => coordenacoesDestino.id),
+  comarcaDestino: varchar("comarca_destino", { length: 120 }),
+  coordenacaoEmail: varchar("coordenacao_email", { length: 120 }),
+  prazoUrgente: boolean("prazo_urgente").notNull().default(false), // itens 10-12 da IN 01
+  dataLimite: timestamp("data_limite", { mode: "date" }), // prazo processual em curso
+  enviadoEm: timestamp("enviado_em"), // quando o e-mail foi enviado à Coordenação
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -162,6 +173,35 @@ export const demandasAcompanhantes = pgTable("demandas_acompanhantes", {
 ]);
 
 export type DemandaAcompanhante = typeof demandasAcompanhantes.$inferSelect;
+
+// ==========================================
+// IN 01/2026-CGD — CATÁLOGO DE COORDENAÇÕES (defensor natural)
+// Destino dos encaminhamentos de peticionamento interno (outra comarca, mesma UF)
+// e integrado (outra UF). E-mails vêm do Anexo Único da Instrução Normativa.
+// ==========================================
+
+export const coordenacoesDestino = pgTable("coordenacoes_destino", {
+  id: serial("id").primaryKey(),
+  workspaceId: integer("workspace_id").notNull().default(1),
+  regime: varchar("regime", { length: 12 }).notNull().default("interno"), // 'interno' | 'integrado'
+  nivel: varchar("nivel", { length: 16 }).notNull().default("regional"), // 'regional' | 'especializada'
+  nome: varchar("nome", { length: 200 }).notNull(), // ex.: "Coordenação da 7ª Regional — Camaçari"
+  comarca: varchar("comarca", { length: 120 }),
+  uf: varchar("uf", { length: 2 }).notNull().default("BA"),
+  email: varchar("email", { length: 120 }).notNull(),
+  telefone: varchar("telefone", { length: 30 }),
+  observacao: text("observacao"),
+  ativo: boolean("ativo").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("coord_destino_regime_idx").on(table.regime),
+  index("coord_destino_uf_idx").on(table.uf),
+  index("coord_destino_ativo_idx").on(table.ativo),
+]);
+
+export type CoordenacaoDestino = typeof coordenacoesDestino.$inferSelect;
+export type InsertCoordenacaoDestino = typeof coordenacoesDestino.$inferInsert;
 
 // ==========================================
 // RELACOES - Cowork

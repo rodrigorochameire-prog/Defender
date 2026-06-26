@@ -39,8 +39,10 @@ import {
   UserPlus,
   Forward,
   NotebookPen,
+  Landmark,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { EncaminharDefensorNaturalModal } from "@/components/cowork/encaminhamentos/EncaminharDefensorNaturalModal";
 import { NovoEncaminhamentoModal } from "@/components/cowork/encaminhamentos/NovoEncaminhamentoModal";
 import { STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { calcularPrazo, prazoTextoCurto } from "@/lib/prazo";
@@ -137,6 +139,7 @@ export function DemandaCard({
   const [showAtoDropdown, setShowAtoDropdown] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showEncaminharModal, setShowEncaminharModal] = useState(false);
+  const [showDefensorNaturalModal, setShowDefensorNaturalModal] = useState(false);
   const [showAtribuicaoDropdown, setShowAtribuicaoDropdown] = useState(false);
   const [isEditingProvidencias, setIsEditingProvidencias] = useState(false);
   const [providenciasTemp, setProvidenciasTemp] = useState(demanda.providencias || "");
@@ -643,6 +646,13 @@ export function DemandaCard({
                       Encaminhar
                     </button>
                     <button
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); setShowDefensorNaturalModal(true); }}
+                      className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-sky-50 dark:hover:bg-sky-950/20 text-sky-600 dark:text-sky-400 transition-colors"
+                    >
+                      <Landmark className="w-3.5 h-3.5" />
+                      Defensor natural (IN 01)
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(demanda); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors"
                     >
@@ -818,6 +828,16 @@ export function DemandaCard({
           display: `${demanda.assistido} · ${demanda.ato ?? "Demanda"}`,
         }}
       />
+      {showDefensorNaturalModal && (
+        <EncaminharDefensorNaturalModal
+          open={showDefensorNaturalModal}
+          onOpenChange={setShowDefensorNaturalModal}
+          demandaId={Number(demanda.id)}
+          processoId={demanda.processoId ?? undefined}
+          assistidoId={demanda.assistidoId ?? undefined}
+          display={`${demanda.assistido} · ${demanda.ato ?? "Demanda"}`}
+        />
+      )}
     </div>
   );
 }
