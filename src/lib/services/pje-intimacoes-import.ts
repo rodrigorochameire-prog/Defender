@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import type { ImportRow } from "@/lib/services/pje-import";
 import {
   verificarDuplicatas,
-  parsePJeIntimacoesCompleto,
+  parseIntimacoesUnificado,
   intimacaoToDemanda,
+  intimacaoSEEUToDemanda,
   ASSISTIDO_A_IDENTIFICAR,
   type IntimacaoPJeSimples,
+  type IntimacaoSEEU,
 } from "@/lib/pje-parser";
 import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
 
@@ -22,16 +24,25 @@ export function computeContentHash(
   return createHash("sha256").update(payload, "utf8").digest("hex");
 }
 
+export type ParsedStaging = {
+  int: IntimacaoPJeSimples;
+  sistema: "PJe" | "SEEU";
+};
+
 /**
- * Re-parseia o `conteudo` CRU de uma staging row (texto da célula DOM capturado
- * pelo worker) com o parser canônico do PJe — a FONTE ÚNICA de verdade para
- * semântica (assistido com taxonomia de polos + title-case, crime, tipoProcesso,
- * vara, MPU). Retorna a 1ª intimação, ou null se o conteúdo não for parseável.
+ * Re-parseia o `conteudo` CRU de uma staging row (texto capturado do DOM) com o
+ * parser canônico — a FONTE ÚNICA de verdade para semântica (assistido com
+ * taxonomia de polos + title-case, crime, tipoProcesso, vara, MPU). Usa
+ * `parseIntimacoesUnificado`, que auto-detecta PJe vs SEEU pelo conteúdo, de
+ * modo que blocos do SEEU (Mesa do Defensor) são roteados sozinhos. Retorna a 1ª
+ * intimação + o sistema detectado, ou null se o conteúdo não for parseável.
  */
-export function parseStagingRow(row: PjeImportStaging): IntimacaoPJeSimples | null {
+export function parseStagingRow(row: PjeImportStaging): ParsedStaging | null {
   if (!row.conteudo) return null;
   try {
-    return parsePJeIntimacoesCompleto(row.conteudo).intimacoes[0] ?? null;
+    const r = parseIntimacoesUnificado(row.conteudo);
+    const int = r.intimacoes[0];
+    return int ? { int, sistema: r.sistema } : null;
   } catch {
     return null;
   }
@@ -39,14 +50,20 @@ export function parseStagingRow(row: PjeImportStaging): IntimacaoPJeSimples | nu
 
 /**
  * Mapeia uma intimação já parseada → ImportRow. Mesma conversão usada pelo
- * endpoint /api/cron/pje-import, centralizada aqui para haver UMA só.
+ * endpoint /api/cron/pje-import (centralizada aqui para haver UMA só). Roteia o
+ * construtor de demanda pelo `sistema`: PJe → intimacaoToDemanda; SEEU (execução
+ * penal) → intimacaoSEEUToDemanda (ambos retornam o mesmo formato de demanda).
  */
 export function intimacaoToImportRow(
   int: IntimacaoPJeSimples,
   atribuicao: string,
   importBatchId: string,
+  sistema: "PJe" | "SEEU" = "PJe",
 ): ImportRow {
-  const demanda = intimacaoToDemanda(int, atribuicao);
+  const demanda =
+    sistema === "SEEU"
+      ? intimacaoSEEUToDemanda(int as IntimacaoSEEU)
+      : intimacaoToDemanda(int, atribuicao);
   return {
     assistido: demanda.assistido,
     processoNumero: demanda.processos?.[0]?.numero,
@@ -57,7 +74,9 @@ export function intimacaoToImportRow(
     dataInclusao: demanda.dataInclusao || undefined,
     status: demanda.status || "analisar",
     estadoPrisional: demanda.estadoPrisional || "Solto",
-    atribuicao,
+    // SEEU traz providências úteis (classe - assunto); PJe segue como o cron (vazio).
+    providencias: sistema === "SEEU" ? demanda.providencias || undefined : undefined,
+    atribuicao: demanda.atribuicao || atribuicao,
     importBatchId,
     ordemOriginal: int.ordemOriginal,
     tipoDocumento: int.tipoDocumento,
@@ -87,9 +106,9 @@ export function stagingRowToImportRow(row: PjeImportStaging): ImportRow {
 
   const atrib = (row.atribuicao as string | null) ?? "";
 
-  const int = parseStagingRow(row);
-  const base: ImportRow = int
-    ? intimacaoToImportRow(int, atrib, String(row.jobId))
+  const parsed = parseStagingRow(row);
+  const base: ImportRow = parsed
+    ? intimacaoToImportRow(parsed.int, atrib, String(row.jobId), parsed.sistema)
     : {
         assistido: row.assistidoNome ?? "",
         processoNumero: row.processoNumero ?? undefined,

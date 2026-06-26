@@ -233,3 +233,34 @@ describe("stagingRowToImportRow — parse path", () => {
     expect(out.crime).toBe("Ameaça");
   });
 });
+
+// ---------------------------------------------------------------------------
+// stagingRowToImportRow — caminho SEEU (auto-detectado por parseIntimacoesUnificado)
+// Um bloco da "Mesa do Defensor" do SEEU é roteado sozinho p/ o parser SEEU e
+// p/ intimacaoSEEUToDemanda — atribuição EXECUCAO_PENAL, preso, prazo do último
+// dia. Mesmo a staging row vindo marcada como VVD, o sistema detectado manda.
+// ---------------------------------------------------------------------------
+const BLOCO_SEEU = [
+  "Mesa do Defensor",
+  "Manifestação (1)",
+  "123  0500286-85.2020.8.05.0039",
+  "Execução da Pena (Pena Privativa de Liberdade)",
+  "Executado:",
+  "JOAO PEDRO DA SILVA",
+  "10/06/2026 - 16/06/2026",
+  "6 dias corridos",
+  "Pré-Análise: Livre",
+].join("\n");
+
+describe("stagingRowToImportRow — SEEU path", () => {
+  it("bloco do SEEU é roteado p/ execução penal (preso, prazo do último dia)", () => {
+    const row = mkRow({ conteudo: BLOCO_SEEU, atribuicao: "VVD_CAMACARI" });
+    const out = stagingRowToImportRow(row);
+    expect(out.assistido).toBe("Joao Pedro da Silva");        // toTitleCase do parser SEEU
+    expect(out.processoNumero).toBe("0500286-85.2020.8.05.0039");
+    expect(out.atribuicao).toBe("EXECUCAO_PENAL");            // sistema SEEU força a atribuição
+    expect(out.estadoPrisional).toBe("Preso");
+    expect(out.ato).toBe("Manifestação");
+    expect(out.prazo).toBe("2026-06-16");                     // último dia → ISO
+  });
+});

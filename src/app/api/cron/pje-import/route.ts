@@ -20,8 +20,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { parsePJeIntimacoesCompleto, intimacaoToDemanda, ASSISTIDO_A_IDENTIFICAR } from "@/lib/pje-parser";
+import { parsePJeIntimacoesCompleto } from "@/lib/pje-parser";
 import { importarDemandas, type ImportRow } from "@/lib/services/pje-import";
+import { intimacaoToImportRow } from "@/lib/services/pje-intimacoes-import";
 import { db } from "@/lib/db";
 import { processos, demandas } from "@/lib/db/schema/core";
 import { processosVVD } from "@/lib/db/schema/vvd";
@@ -50,30 +51,10 @@ async function processarTexto(
 
   const batchId = randomUUID();
 
-  const rows: ImportRow[] = resultado.intimacoes.map((int) => {
-    const demanda = intimacaoToDemanda(int, atribuicao);
-    return {
-      assistido: demanda.assistido,
-      processoNumero: demanda.processos?.[0]?.numero,
-      ato: demanda.ato || "Ciência",
-      prazo: demanda.prazo || undefined,
-      dataEntrada: demanda.data?.split("T")[0] || undefined,
-      dataExpedicaoCompleta: demanda.data || undefined,
-      dataInclusao: demanda.dataInclusao || undefined,
-      status: demanda.status || "analisar",
-      estadoPrisional: demanda.estadoPrisional || "Solto",
-      atribuicao,
-      importBatchId: batchId,
-      ordemOriginal: int.ordemOriginal,
-      tipoDocumento: int.tipoDocumento,
-      crime: int.crime,
-      tipoProcesso: int.tipoProcesso,
-      vara: int.vara,
-      idDocumentoPje: int.idDocumento,
-      atribuicaoDetectada: int.atribuicaoDetectada,
-      assistidoNaoIdentificado: int.assistidoNaoIdentificado || int.assistido === ASSISTIDO_A_IDENTIFICAR,
-    };
-  });
+  // Mesma conversão usada pela promoção staging → demandas (fonte única).
+  const rows: ImportRow[] = resultado.intimacoes.map((int) =>
+    intimacaoToImportRow(int, atribuicao, batchId),
+  );
 
   return importarDemandas(rows, defensorId, false);
 }

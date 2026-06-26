@@ -32,10 +32,18 @@ Worker autônomo de **captura** (não de interpretação) que:
 **Arquitetura de parsing (fonte única):** o worker NÃO interpreta semântica. Ele
 grava o `conteudo` cru; o significado (assistido com taxonomia de polos +
 title-case, crime, tipoProcesso, vara, MPU) é extraído pela camada TS ao promover
-staging → demandas, via `parsePJeIntimacoesCompleto` (`src/lib/pje-parser.ts`) em
-`stagingRowToImportRow`. Assim há UM só parser, batível por testes e reaproveitado
-com a importação manual (cópia-colagem). O `_parse_row` em Python preenche apenas
-colunas best-effort (assistido/ato/processo) para exibição na tela de revisão.
+staging → demandas, via `parseIntimacoesUnificado` (`src/lib/pje-parser.ts`) em
+`stagingRowToImportRow`. O parser unificado **auto-detecta PJe vs SEEU** pelo
+conteúdo, então blocos do SEEU (Mesa do Defensor / execução penal) são roteados
+sozinhos para `intimacaoSEEUToDemanda`. Assim há UM só parser, batível por testes
+e reaproveitado com a importação manual (cópia-colagem) e com o cron
+`/api/cron/pje-import`. O `_parse_row` em Python preenche apenas colunas
+best-effort (assistido/ato/processo) para exibição na tela de revisão.
+
+**Atribuições validadas ao vivo (Camaçari):** `VVD_CAMACARI` (Vara de Violência
+Doméstica) e `JURI_CAMACARI` (Vara do Júri e Execuções Penais — Júri **e** EP
+compartilham a mesma vara no PJe Camaçari). Para uma nova atribuição/comarca,
+basta uma linha em `ATRIB_UNIDADE` + a palavra-chave da vara na estabilização.
 
 **Regra inviolável:** este worker NUNCA escreve na tabela `demandas`. A
 promoção staging → demandas é feita pela API (`confirmarImport`).
