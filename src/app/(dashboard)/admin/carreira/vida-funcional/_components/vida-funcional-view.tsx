@@ -6,8 +6,8 @@ import { Briefcase, Milestone, CalendarClock, type LucideIcon } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
-import { DOMINIOS, dominiosByCluster } from "@/lib/vida-funcional/dominios";
-import { isMarco } from "@/lib/vida-funcional/tipo-cluster";
+import { dominiosByCluster } from "@/lib/vida-funcional/dominios";
+import { isMarco, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
 import { vfIcon } from "./icon-map";
 import { TrajetoriaTimeline } from "./trajetoria-timeline";
 
@@ -37,7 +37,7 @@ export function VidaFuncionalView() {
       .slice(0, 4);
   }, [eventos]);
 
-  const marcosCount = eventos.filter((e) => isMarco(e.tipo as any)).length;
+  const marcosCount = eventos.filter((e) => isMarco(e.tipo as VfTipo)).length;
 
   const tabs: { key: Tab; label: string; icon: LucideIcon }[] = [
     { key: "visao", label: "Visão geral", icon: Briefcase },

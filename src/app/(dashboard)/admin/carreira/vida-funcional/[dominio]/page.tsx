@@ -3,9 +3,9 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
 import { getDominio } from "@/lib/vida-funcional/dominios";
+import { type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
 import { vfIcon } from "../_components/icon-map";
 import { DrivePanel } from "./_components/drive-panel";
 
@@ -15,7 +15,7 @@ export default function DominioPage({ params }: { params: Promise<{ dominio: str
   const [openId, setOpenId] = useState<number | null>(null);
 
   const { data: eventos = [], isLoading } = trpc.vidaFuncional.listEventos.useQuery(
-    { tipos: cfg?.tipos as any },
+    { tipos: cfg?.tipos as VfTipo[] | undefined },
     { enabled: !!cfg },
   );
 
