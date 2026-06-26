@@ -26,6 +26,7 @@ import hashlib
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 
 CDP_URL = "http://127.0.0.1:9222"
@@ -354,6 +355,68 @@ def _pje_prazo_to_date(s: str | None) -> str | None:
 
 # ─── Live scraper (Playwright — importado lazily) ─────────────────────────────
 
+# Tempo máximo de espera pelo login manual do usuário na janela do Chromium.
+LOGIN_WAIT_TIMEOUT_S = 8 * 60
+
+
+async def _is_logged_in(page) -> bool:
+    """Inspeciona a página ATUAL (sem navegar) e decide se há sessão PJe ativa.
+    Logado = não está na tela de login e não há campo de usuário visível."""
+    try:
+        url = page.url or ""
+        if "login.seam" in url:
+            return False
+        # O formulário de login expõe input[name=username]; ausência => logado.
+        return await page.query_selector("input[name=username]") is None
+    except Exception:
+        return False
+
+
+async def _ensure_logged_in(ctx, status_cb):
+    """Modo CDP: garante uma página logada no PJe. Se não houver sessão, abre a
+    tela de login na janela do Chromium gerenciado e ESPERA o usuário logar,
+    detectando automaticamente quando a sessão fica ativa. Retorna a página."""
+    page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+    try:
+        await page.bring_to_front()
+    except Exception:
+        pass
+
+    # Checagem rápida: tenta o painel; se já logado, segue direto.
+    try:
+        await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+    except Exception:
+        pass
+    if await _is_logged_in(page):
+        return page
+
+    # Sem sessão: leva o usuário para o login e aguarda (auto-detecção).
+    if status_cb:
+        status_cb("Aguardando login no PJe… faça login na janela do Chromium")
+    try:
+        await page.goto(f"{PJE_BASE}/login.seam", wait_until="domcontentloaded", timeout=30000)
+        await page.bring_to_front()
+    except Exception:
+        pass
+
+    deadline = time.monotonic() + LOGIN_WAIT_TIMEOUT_S
+    while time.monotonic() < deadline:
+        await asyncio.sleep(3)
+        if await _is_logged_in(page):
+            if status_cb:
+                status_cb("Login detectado — iniciando importação…")
+            try:
+                await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+            except Exception:
+                pass
+            return page
+
+    raise RuntimeError(
+        "Abra o PJe logado ou configure credenciais "
+        "(tempo de espera pelo login esgotado)"
+    )
+
+
 async def _async_scrape_expedientes(
     env: dict,
     atribuicao: str,
@@ -362,6 +425,7 @@ async def _async_scrape_expedientes(
     limit: int,
     modo: str,
     heartbeat,
+    status_cb=None,
 ) -> list[dict]:
     """Navega o painel do PJe via CDP ou login direto e extrai linhas de
     EXPEDIENTES para a atribuição informada.
@@ -392,18 +456,10 @@ async def _async_scrape_expedientes(
                     f"Abra o PJe logado ou configure credenciais (CDP erro: {e})"
                 )
             ctx = browser.contexts[0]
-            # Procura página do painel; aceita qualquer aba do PJe como fallback
-            page = next(
-                (pg for pg in ctx.pages if "advogado.seam" in pg.url),
-                next((pg for pg in ctx.pages if "pje.tjba.jus.br" in pg.url), None),
-            )
-            if not page:
-                raise RuntimeError(
-                    "Abra o PJe logado ou configure credenciais "
-                    "(nenhuma aba PJe encontrada no Chromium CDP)"
-                )
+            # Abre o PJe na janela gerenciada e espera o usuário logar (auto-detecta).
+            page = await _ensure_logged_in(ctx, status_cb)
             print(
-                f"[cdp] attached — {len(ctx.pages)} abas, painel: {page.url[:70]}",
+                f"[cdp] sessão ativa — painel: {page.url[:70]}",
                 flush=True,
             )
         else:  # direct
@@ -503,11 +559,14 @@ def scrape_expedientes(
     limit: int,
     modo: str,
     heartbeat,
+    status_cb=None,
 ) -> list[dict]:
     """Wrapper síncrono. Fail-loud: se CDP off E login falhar, levanta exceção
     com 'Abra o PJe logado ou configure credenciais'."""
     return asyncio.run(
-        _async_scrape_expedientes(env, atribuicao, since, until, limit, modo, heartbeat)
+        _async_scrape_expedientes(
+            env, atribuicao, since, until, limit, modo, heartbeat, status_cb
+        )
     )
 
 
@@ -574,6 +633,7 @@ def run(args) -> None:
             heartbeat=lambda n, a=atrib: set_etapa(
                 sb, args.job_id, f"{a}: {n} expedientes…"
             ),
+            status_cb=lambda msg: set_etapa(sb, args.job_id, msg),
         )
 
         for exp in expedientes:
