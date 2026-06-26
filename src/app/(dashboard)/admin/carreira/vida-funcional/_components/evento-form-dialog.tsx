@@ -99,13 +99,13 @@ export function EventoFormDialog({
     const base = {
       tipo: tipo as any,
       titulo: titulo.trim(),
-      descricao: descricao.trim() || undefined,
+      descricao: descricao.trim() || null,
       dataEvento,
-      dataFim: dataFim || undefined,
-      prazo: prazo || undefined,
+      dataFim: dataFim || null,
+      prazo: prazo || null,
       status: status as any,
-      valorCents: valorReais ? Math.round(parseFloat(valorReais) * 100) : undefined,
-      driveFolderId: driveFolderId.trim() || undefined,
+      valorCents: valorReais ? Math.round(parseFloat(valorReais) * 100) : null,
+      driveFolderId: driveFolderId.trim() || null,
       dados: buildDados(),
     };
     if (editing) updateM.mutate({ id: evento!.id, ...base });
