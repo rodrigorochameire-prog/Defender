@@ -792,6 +792,55 @@ async def navigate_to_unidade(page: "Page", atribuicao: str) -> bool:
     return True
 
 
+LOGIN_WAIT_TIMEOUT_S = 8 * 60
+
+
+async def _is_logged_in(page) -> bool:
+    """Sessão ativa = não está no login e sem campo de usuário visível."""
+    try:
+        if "login.seam" in (page.url or ""):
+            return False
+        return await page.query_selector("input[name=username]") is None
+    except Exception:
+        return False
+
+
+async def _ensure_logged_in(ctx) -> "Page":
+    """Garante uma aba logada no painel. Sem sessão, ABRE o login do PJe na janela
+    do Chromium e AGUARDA o usuário logar (auto-detecta), depois volta ao painel.
+    Facilita o login local em vez de exigir que já esteja logado/no painel."""
+    page = next((pg for pg in ctx.pages if "advogado.seam" in (pg.url or "")), None)
+    page = page or (ctx.pages[0] if ctx.pages else await ctx.new_page())
+    try:
+        await page.bring_to_front()
+    except Exception:
+        pass
+    try:
+        await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+    except Exception:
+        pass
+    if await _is_logged_in(page):
+        return page
+    log("Aguardando login no PJe… faça login na janela do Chromium")
+    try:
+        await page.goto(f"{PJE_BASE}/login.seam", wait_until="domcontentloaded", timeout=30000)
+        await page.bring_to_front()
+    except Exception:
+        pass
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + LOGIN_WAIT_TIMEOUT_S
+    while loop.time() < deadline:
+        await asyncio.sleep(3)
+        if await _is_logged_in(page):
+            log("Login detectado — iniciando varredura…")
+            try:
+                await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+            except Exception:
+                pass
+            return page
+    sys.exit("ERRO: tempo de espera pelo login esgotado — logue no PJe no Chromium :9222")
+
+
 async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str, str], atribuicao: str | None = None):
     if async_playwright is None:
         sys.exit("ERRO: patchright não instalado — ative .venv do enrichment-engine")
@@ -805,19 +854,8 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 browser = await p.chromium.connect_over_cdp(CDP_URL)
                 ctx = browser.contexts[0]
                 # Procurar a página do painel
-                page = next((pg for pg in ctx.pages if "advogado.seam" in pg.url), None)
-                if not page:
-                    # Sem aba no painel — adota uma aba e navega até lá. O broker
-                    # pode anexar com o Chromium em qualquer página; não exigir que
-                    # o usuário deixe o painel aberto (como faz o worker de import).
-                    page = ctx.pages[0] if ctx.pages else await ctx.new_page()
-                    try:
-                        await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
-                        await asyncio.sleep(2)
-                    except Exception:
-                        pass
-                    if "advogado.seam" not in page.url:
-                        sys.exit("ERRO: não consegui abrir o painel do PJe em :9222. Verifique se o Chromium está LOGADO no PJe.")
+                # Garante sessão logada — abre o login e espera se necessário.
+                page = await _ensure_logged_in(ctx)
                 log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
             except Exception as e:
                 sys.exit(f"ERRO CDP: {e}\nDica: lance Chromium com --remote-debugging-port=9222")

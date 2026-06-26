@@ -65,7 +65,7 @@ export async function probeCdp(port = DEFAULT_CDP_PORT, fetchImpl = fetch) {
  * que reduzem ruído/popups. Headed por padrão (gov system: menos detectável e
  * permite login manual 2FA quando a sessão cai); headless opcional p/ CI/teste.
  */
-export function chromiumArgs({ port = DEFAULT_CDP_PORT, profileDir, headless = false } = {}) {
+export function chromiumArgs({ port = DEFAULT_CDP_PORT, profileDir, headless = false, initialUrl = '' } = {}) {
   return [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profileDir}`,
@@ -74,6 +74,9 @@ export function chromiumArgs({ port = DEFAULT_CDP_PORT, profileDir, headless = f
     '--disable-popup-blocking',
     '--remote-allow-origins=*',
     ...(headless ? ['--headless=new'] : []),
+    // Abre já numa URL inicial (ex.: painel do PJe) p/ facilitar o login manual
+    // quando o broker lança um Chromium novo (perfil sem sessão).
+    ...(initialUrl ? [initialUrl] : []),
   ]
 }
 
@@ -90,11 +93,12 @@ export class BrowserSession {
    * @param {boolean} [opts.headless]
    * @param {(msg:string)=>void} [opts.log]
    */
-  constructor({ chromiumBin, profileDir, port = DEFAULT_CDP_PORT, headless = false, log = () => {} }) {
+  constructor({ chromiumBin, profileDir, port = DEFAULT_CDP_PORT, headless = false, initialUrl = '', log = () => {} }) {
     this.chromiumBin = chromiumBin
     this.profileDir = profileDir
     this.port = port
     this.headless = headless
+    this.initialUrl = initialUrl
     this.log = log
     this.child = null // processo lançado por nós (null se adotado/ausente)
     this.adopted = false
@@ -130,7 +134,7 @@ export class BrowserSession {
 
   _launch() {
     if (this.shuttingDown) return
-    const args = chromiumArgs({ port: this.port, profileDir: this.profileDir, headless: this.headless })
+    const args = chromiumArgs({ port: this.port, profileDir: this.profileDir, headless: this.headless, initialUrl: this.initialUrl })
     this.log(`Lançando Chromium gerenciado: ${this.chromiumBin} ${args.join(' ')}`)
     const child = spawn(this.chromiumBin, args, { stdio: 'ignore', detached: false })
     this.child = child

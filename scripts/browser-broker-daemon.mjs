@@ -94,6 +94,10 @@ const session = new BrowserSession({
   profileDir: PROFILE_DIR,
   port: CDP_PORT,
   headless: HEADLESS,
+  // Ao LANÇAR um Chromium novo, abre já no painel do PJe p/ facilitar o login
+  // manual (perfil sem sessão). Adoção de Chromium existente não é afetada.
+  initialUrl: ENV.BROWSER_INITIAL_URL || process.env.BROWSER_INITIAL_URL
+    || 'https://pje.tjba.jus.br/pje/Painel/painel_usuario/advogado.seam',
   log: (m) => console.log(`${LOG_PREFIX} [browser] ${m}`),
 })
 
