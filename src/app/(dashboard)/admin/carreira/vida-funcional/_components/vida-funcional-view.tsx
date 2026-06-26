@@ -8,6 +8,8 @@ import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-hea
 import { trpc } from "@/lib/trpc/client";
 import { dominiosByCluster } from "@/lib/vida-funcional/dominios";
 import { isMarco, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
+import { computeRadar } from "@/lib/vida-funcional/radar";
+import { COLORS } from "@/lib/config/design-tokens";
 import { vfIcon } from "./icon-map";
 import { TrajetoriaTimeline } from "./trajetoria-timeline";
 
@@ -29,13 +31,7 @@ export function VidaFuncionalView() {
     return m;
   }, [eventos]);
 
-  const proximosPrazos = useMemo(() => {
-    const now = Date.now();
-    return eventos
-      .filter((e) => e.prazo && new Date(e.prazo).getTime() >= now - 86400000)
-      .sort((a, b) => new Date(a.prazo!).getTime() - new Date(b.prazo!).getTime())
-      .slice(0, 4);
-  }, [eventos]);
+  const radar = useMemo(() => computeRadar(eventos, new Date()), [eventos]);
 
   const marcosCount = eventos.filter((e) => isMarco(e.tipo as VfTipo)).length;
 
@@ -82,19 +78,32 @@ export function VidaFuncionalView() {
       <div className="px-5 md:px-8 py-4 space-y-6">
         {tab === "visao" && (
           <>
-            {/* Radar-lite */}
+            {/* Radar */}
             <section>
-              <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-500 mb-2">Próximos prazos</p>
-              {proximosPrazos.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem prazos próximos.</p>
+              <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-500 mb-2">
+                Radar {radar.length > 0 && <span className="text-neutral-400">· {radar.length}</span>}
+              </p>
+              {radar.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum alerta. Em dia.</p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {proximosPrazos.map((e) => (
-                    <div key={e.id} className="p-3 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/10">
-                      <p className="text-[11px] text-amber-700 dark:text-amber-400 font-mono">{e.prazo}</p>
-                      <p className="text-sm font-medium truncate">{e.titulo}</p>
-                    </div>
-                  ))}
+                  {radar.map((a) => {
+                    const c = a.severidade === "critico" ? COLORS.danger : a.severidade === "atencao" ? COLORS.warning : COLORS.info;
+                    const inner = (
+                      <div className={cn("p-3 rounded-xl border h-full", c.border, c.bg)}>
+                        <p className={cn("text-[11px] font-mono", c.text)}>{a.prazo ?? a.motivo}</p>
+                        <p className="text-sm font-medium truncate">{a.titulo}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{a.motivo}</p>
+                      </div>
+                    );
+                    return a.dominioKey ? (
+                      <Link key={a.eventoId} href={`/admin/carreira/vida-funcional/${a.dominioKey}`} className="cursor-pointer">
+                        {inner}
+                      </Link>
+                    ) : (
+                      <div key={a.eventoId}>{inner}</div>
+                    );
+                  })}
                 </div>
               )}
             </section>
