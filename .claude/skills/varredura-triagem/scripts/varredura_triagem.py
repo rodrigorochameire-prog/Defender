@@ -894,13 +894,14 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                     log(f"  ⚠ navegação falhou ({str(e)[:90]}) — docs podem cair em manual-review")
 
         for i, d in enumerate(demandas):
-            doc_id = d.get("pje_documento_id") or d.get("enrichment_data", {}).get("id_documento_pje")
-            doc_id = str(doc_id) if doc_id else None
-            assistido = d["assistidos"]["nome"][:30]
-            numero = d["processos"]["numero_autos"]
-            log(f"[{i+1}/{len(demandas)}] {assistido} | {numero}")
-
             try:
+                # `or {}` (não default do .get): a coluna pode vir presente-mas-None.
+                doc_id = d.get("pje_documento_id") or (d.get("enrichment_data") or {}).get("id_documento_pje")
+                doc_id = str(doc_id) if doc_id else None
+                assistido = ((d.get("assistidos") or {}).get("nome") or "?")[:30]
+                numero = (d.get("processos") or {}).get("numero_autos") or "?"
+                log(f"[{i+1}/{len(demandas)}] {assistido} | {numero}")
+
                 autos_url = await find_in_panel(page, doc_id, numero)
                 if not autos_url:
                     log(f"  ⚠ não encontrado no painel — fallback manual-review")
