@@ -807,7 +807,17 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Procurar a página do painel
                 page = next((pg for pg in ctx.pages if "advogado.seam" in pg.url), None)
                 if not page:
-                    sys.exit(f"ERRO: nenhuma aba aberta em {PANEL_URL} no Chromium CDP. Abra o painel do PJe primeiro.")
+                    # Sem aba no painel — adota uma aba e navega até lá. O broker
+                    # pode anexar com o Chromium em qualquer página; não exigir que
+                    # o usuário deixe o painel aberto (como faz o worker de import).
+                    page = ctx.pages[0] if ctx.pages else await ctx.new_page()
+                    try:
+                        await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+                        await asyncio.sleep(2)
+                    except Exception:
+                        pass
+                    if "advogado.seam" not in page.url:
+                        sys.exit("ERRO: não consegui abrir o painel do PJe em :9222. Verifique se o Chromium está LOGADO no PJe.")
                 log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
             except Exception as e:
                 sys.exit(f"ERRO CDP: {e}\nDica: lance Chromium com --remote-debugging-port=9222")
