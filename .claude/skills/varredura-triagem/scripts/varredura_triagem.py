@@ -351,6 +351,31 @@ def _decide_by_titulo(titulo: str, text: str) -> dict | None:
             return {"ato": "Ciência designação de audiência", "prioridade": "NORMAL", "prazo_dias": None,
                     "registro_tipo": "ciencia", "side_effects": ["agendar_audiencia"], "extras": {}}
         return None  # despacho genérico — fallback texto
+    # ─── Tipos que dispensam leitura de corpo (classificados pelo TÍTULO) ──────
+    # Em geral PDFs/atos informativos cujo corpo não é legível como texto. Sem o
+    # corpo, o título é o sinal possível — Ciência coarse; o defensor revisa no
+    # card e abre os autos se precisar agir. Melhor que manual-review cego.
+    if "ata da audiencia" in t or t.startswith("ata "):
+        return {"ato": "Ciência de ata de audiência", "prioridade": "NORMAL", "prazo_dias": None,
+                "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+    if "ato ordinat" in t:
+        return {"ato": "Cumprir ato ordinatório", "prioridade": "NORMAL", "prazo_dias": None,
+                "registro_tipo": "diligencia", "side_effects": [], "extras": {}}
+    if "edital" in t:
+        return {"ato": "Ciência de edital", "prioridade": "BAIXA", "prazo_dias": None,
+                "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+    if "mandado" in t:
+        return {"ato": "Ciência de mandado", "prioridade": "BAIXA", "prazo_dias": None,
+                "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
+    if "certid" in t:
+        return {"ato": "Ciência", "prioridade": "BAIXA", "prazo_dias": None,
+                "registro_tipo": "anotacao", "side_effects": [], "extras": {}}
+    if "peticao" in t:
+        return {"ato": "Ciência de petição", "prioridade": "BAIXA", "prazo_dias": None,
+                "registro_tipo": "anotacao", "side_effects": [], "extras": {}}
+    if "intima" in t:
+        return {"ato": "Ciência", "prioridade": "BAIXA", "prazo_dias": None,
+                "registro_tipo": "ciencia", "side_effects": [], "extras": {}}
     return None  # outros tipos: fallback texto
 
 
@@ -528,7 +553,9 @@ async def find_in_panel(page: Page, doc_id: str | None, processo_numero: str) ->
     return None
 
 
-PRIORITY_TIMELINE = ["acordao", "acórdão", "sentenc", "decis", "despac", "manifesta", "intima"]
+PRIORITY_TIMELINE = ["acordao", "acórdão", "sentenc", "decis", "despac", "manifesta",
+                     "intima", "ata", "ato ordin", "edital", "mandado", "oficio",
+                     "certid", "peticao", "petição"]
 
 
 async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
@@ -541,13 +568,21 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
         await asyncio.sleep(4)
 
         async def read_iframe() -> str:
+            """Lê o MELHOR frame: prefere o doc HTML (frameHtml/downloadBinario)
+            quando tem conteúdo real; senão cai para o maior frame de texto (o
+            frame principal de detalhe do processo, ~4KB). Antes só olhava
+            frameHtml — PDFs (framePdf) e o frame principal davam 0b."""
+            doc_text, biggest = "", ""
             for f in autos.frames:
-                if f.name == "frameHtml" or "downloadBinario" in (f.url or ""):
-                    try:
-                        return await f.evaluate("() => document.body ? document.body.innerText : ''")
-                    except Exception:
-                        return ""
-            return ""
+                try:
+                    t = await f.evaluate("() => document.body ? document.body.innerText : ''")
+                except Exception:
+                    t = ""
+                if (f.name == "frameHtml" or "downloadBinario" in (f.url or "")) and len(t) > len(doc_text):
+                    doc_text = t
+                if len(t) > len(biggest):
+                    biggest = t
+            return doc_text if len(doc_text) > 200 else biggest
 
         default_text = await read_iframe()
         timeline = await autos.evaluate(JS_READ_TIMELINE)
@@ -579,6 +614,9 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
             "default_len": len(default_text),
             "best_len": len(best_text),
             "best_id": best_id,
+            # Título do doc de MAIOR prioridade da timeline (sinal pro classify
+            # mesmo quando o corpo é PDF ilegível e best_id ficou None).
+            "top_titulo": candidates[0]["titulo"] if candidates else None,
             "timeline": timeline[:8],
         }
     finally:
@@ -690,17 +728,34 @@ async def navigate_to_unidade(page: "Page", atribuicao: str) -> bool:
         await exp_tab.click()
         await _wait_text(page, "Pendentes de ciência", timeout=20)
 
-    sit_loc = await _wait_text(page, SITUACAO_PADRAO, timeout=20)
-    if sit_loc is None:
-        raise RuntimeError(f"situação '{SITUACAO_PADRAO}' não encontrada")
-    await sit_loc.click()
-
-    com_loc = await _wait_text(page, comarca, timeout=20)
+    # Situação + Comarca com RETRY: o clique na situação é um toggle do accordion —
+    # se o nó já estava aberto, o 1º clique COLAPSA (comarca some). Re-clicamos até
+    # a comarca aparecer (intermitência de estado do painel entre execuções).
+    com_loc = None
+    last_attempt = 0
+    for last_attempt in range(4):
+        sit_loc = await _wait_text(page, SITUACAO_PADRAO, timeout=15)
+        if sit_loc is None:
+            raise RuntimeError(f"situação '{SITUACAO_PADRAO}' não encontrada")
+        await sit_loc.click()
+        com_loc = await _wait_text(page, comarca, timeout=8)
+        if com_loc is not None:
+            break
+        await asyncio.sleep(1)
     if com_loc is None:
-        raise RuntimeError(f"comarca '{comarca}' não encontrada")
+        raise RuntimeError(f"comarca '{comarca}' não encontrada após {last_attempt + 1} tentativas")
     await com_loc.click()
 
-    vara_loc = await _wait_text(page, unidade_txt, timeout=20)
+    # Vara com RETRY (mesma lógica de toggle): se não aparecer, re-clica a comarca.
+    vara_loc = None
+    for _ in range(4):
+        vara_loc = await _wait_text(page, unidade_txt, timeout=8)
+        if vara_loc is not None:
+            break
+        cl = await _wait_text(page, comarca, timeout=8)
+        if cl:
+            await cl.click()
+        await asyncio.sleep(1)
     if vara_loc is None:
         raise RuntimeError(f"unidade '{unidade_txt}' não encontrada")
     await vara_loc.click()
@@ -807,8 +862,8 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
                 content = await read_doc_content(ctx, autos_url)
                 # Buscar título do "best item" da timeline pra classify
-                best_titulo = None
-                if content.get("best_id"):
+                best_titulo = content.get("top_titulo")
+                if not best_titulo and content.get("best_id"):
                     for it in content.get("timeline", []):
                         if it.get("id") == content["best_id"]:
                             best_titulo = it.get("titulo")
