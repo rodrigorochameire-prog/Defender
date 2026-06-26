@@ -30,6 +30,8 @@ export function IntimacoesImportModal({
   const [since, setSince] = useState("");
   const [until, setUntil] = useState("");
   const [limit, setLimit] = useState(80);
+  // O usuário já mexeu no campo "De"? Trava o pré-preenchimento automático.
+  const [sinceTocado, setSinceTocado] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -37,6 +39,7 @@ export function IntimacoesImportModal({
       setSince("");
       setUntil("");
       setLimit(80);
+      setSinceTocado(false);
     }
   }, [isOpen]);
 
@@ -44,6 +47,14 @@ export function IntimacoesImportModal({
   const { data: ultima } = trpc.intimacoes.ultimaImportacao.useQuery(undefined, {
     enabled: isOpen,
   });
+
+  // Pré-preenche "De" com a sugestão do backend (maior expedição já importada),
+  // só enquanto o usuário não digitou nem usou "Continuar daqui".
+  useEffect(() => {
+    if (isOpen && ultima?.proximoSince && !sinceTocado && since === "") {
+      setSince(ultima.proximoSince);
+    }
+  }, [isOpen, ultima?.proximoSince, sinceTocado, since]);
 
   const rotulo = (v: string) =>
     ATRIBUICOES.find((a) => a.value === v)?.label ?? v;
@@ -55,6 +66,11 @@ export function IntimacoesImportModal({
       hour: "2-digit",
       minute: "2-digit",
     });
+  // ISO YYYY-MM-DD → DD/MM (sem Date, evita deslocamento de fuso).
+  const fmtDiaMes = (iso: string) => {
+    const [, m, d] = iso.slice(0, 10).split("-");
+    return d && m ? `${d}/${m}` : iso;
+  };
 
   const criar = trpc.intimacoes.criarImportJob.useMutation({
     onSuccess: (res) => {
@@ -101,7 +117,10 @@ export function IntimacoesImportModal({
               </div>
               <button
                 type="button"
-                onClick={() => setSince(ultima.finishedAt!.slice(0, 10))}
+                onClick={() => {
+                  setSinceTocado(true);
+                  setSince(ultima.finishedAt!.slice(0, 10));
+                }}
                 title="Define o início do intervalo a partir da última importação"
                 className="shrink-0 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline cursor-pointer"
               >
@@ -144,9 +163,18 @@ export function IntimacoesImportModal({
               <input
                 type="date"
                 value={since}
-                onChange={(e) => setSince(e.target.value)}
+                onChange={(e) => {
+                  setSinceTocado(true);
+                  setSince(e.target.value);
+                }}
                 className="rounded-lg border border-neutral-300 dark:border-neutral-700 px-2 py-1.5 text-sm bg-white dark:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              {ultima?.maxExpedicaoImportada && (
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                  importado até {fmtDiaMes(ultima.maxExpedicaoImportada)} · começa
+                  daqui
+                </span>
+              )}
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">

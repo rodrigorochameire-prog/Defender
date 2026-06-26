@@ -16,7 +16,7 @@ import {
   demandas,
   assistidos,
 } from "@/lib/db/schema";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, isNotNull, sql } from "drizzle-orm";
 import {
   enrichStagingWithLiveDedup,
   stagingRowToImportRow,
@@ -169,6 +169,31 @@ export function buildJobMeta(input: CriarImportJobInput) {
   };
 }
 
+/**
+ * maxExpedicaoImportadaISO — maior data de EXPEDIÇÃO já importada (o "de onde
+ * partir" na próxima importação). Considera apenas demandas vivas (deletedAt null)
+ * que tenham pjeDocumentoId não-nulo — i.e., demandas de fato originadas de
+ * intimações PJe. Retorna ISO "YYYY-MM-DD" ou null se não houver dado.
+ * NUNCA lança: 1 query agregada com max(); qualquer falha vira null.
+ */
+async function maxExpedicaoImportadaISO(): Promise<string | null> {
+  try {
+    const [row] = await db
+      // ::text garante string "YYYY-MM-DD HH:MM:SS" (evita Date e fuso); pegamos a data.
+      .select({ max: sql<string | null>`max(${demandas.dataExpedicao})::text` })
+      .from(demandas)
+      .where(
+        and(isNull(demandas.deletedAt), isNotNull(demandas.pjeDocumentoId)),
+      );
+    const v = row?.max ?? null;
+    if (!v) return null;
+    const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export const intimacoesRouter = router({
   /**
    * criarImportJob — Enfileira importacao de intimacoes PJe (lane browser).
@@ -315,11 +340,16 @@ export const intimacoesRouter = router({
       raspadas?: number;
       atribuicoes?: string[];
     };
+    // Watermark de período: "de onde partir" na próxima importação = maior data
+    // de expedição já importada. Mesma data serve para exibição ("importado até").
+    const proximoSince = await maxExpedicaoImportadaISO();
     return {
       jobId: job.id,
       finishedAt: (job.completedAt ?? job.createdAt)?.toISOString() ?? null,
       totalRaspadas: typeof r.raspadas === "number" ? r.raspadas : null,
       atribuicoes: Array.isArray(r.atribuicoes) ? r.atribuicoes : [],
+      proximoSince,
+      maxExpedicaoImportada: proximoSince,
     };
   }),
 

@@ -206,6 +206,28 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
   );
   const multiAtrib = atribuicoes.length > 1;
 
+  // Relatório pós-importação (feature 1). Quando há `confirmar.data`, a tabela
+  // dá lugar a um painel-resultado. A quebra do "não importadas" vem dos dados
+  // já no cliente (linhas selecionadas), não de nova ida ao backend.
+  const importResult = confirmar.data;
+  const showResult = confirmar.isSuccess && importResult != null;
+  const resultBreakdown = useMemo(() => {
+    if (!importResult) return { atribuicoesJob: [] as string[], jaImportadas: 0, colapso: 0 };
+    const sel = allRows.filter((r) => selected.has(r.id));
+    const atribuicoesJob = [...new Set(sel.map((r) => r.atribuicao ?? "—"))];
+    const jaImportadas = sel.filter((r) => r.decisao === "ja_importada").length;
+    // Colapso: linhas selecionadas que dividem processo com outra selecionada —
+    // o backend funde num único card, então as excedentes (count − 1) entram aqui.
+    const porProc = new Map<string, number>();
+    for (const r of sel) {
+      const k = r.processoNumero?.trim();
+      if (k) porProc.set(k, (porProc.get(k) ?? 0) + 1);
+    }
+    let colapso = 0;
+    for (const c of porProc.values()) if (c > 1) colapso += c - 1;
+    return { atribuicoesJob, jaImportadas, colapso };
+  }, [importResult, allRows, selected]);
+
   // Resumo de urgência (sobre novas/incertas — o que se importa).
   const resumo = useMemo(() => {
     let nova = 0, incerta = 0, dup = 0, vencidas = 0, breve = 0;
@@ -390,8 +412,74 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
           </div>
         </div>
 
+        {/* Relatório pós-importação — substitui a tabela (anti-poluição:
+            número grande + 2-3 linhas, sem re-renderizar a tabela). */}
+        {showResult && importResult && (
+          <div className="mt-4 rounded-xl border border-neutral-200 bg-white shadow-sm shadow-black/[0.03] dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="px-6 py-8 sm:px-10 sm:py-10">
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  {importResult.imported}
+                </span>
+                <div>
+                  <div className="text-[15px] font-medium text-neutral-800 dark:text-neutral-100">
+                    importada{importResult.imported === 1 ? "" : "s"} → coluna{" "}
+                    <span className="text-emerald-700 dark:text-emerald-400">Triagem</span>
+                  </div>
+                  {resultBreakdown.atribuicoesJob.length > 0 && (
+                    <div className="mt-0.5 text-[12px] text-neutral-400">
+                      {resultBreakdown.atribuicoesJob.join(" · ")}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {importResult.skipped > 0 && (
+                <p className="mt-4 text-[13px] text-neutral-500 dark:text-neutral-400">
+                  <b className="text-neutral-700 dark:text-neutral-200">{importResult.skipped}</b>{" "}
+                  não importada{importResult.skipped === 1 ? "" : "s"}
+                  {(resultBreakdown.jaImportadas > 0 || resultBreakdown.colapso > 0) && (
+                    <span className="text-neutral-400">
+                      {" — "}
+                      {[
+                        resultBreakdown.jaImportadas > 0 &&
+                          `${resultBreakdown.jaImportadas} já no sistema`,
+                        resultBreakdown.colapso > 0 &&
+                          `${resultBreakdown.colapso} do mesmo processo (agrupada${resultBreakdown.colapso === 1 ? "" : "s"})`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  )}
+                </p>
+              )}
+
+              {(importResult.errors?.length ?? 0) > 0 && (
+                <p className="mt-2 text-[11px] text-neutral-400 dark:text-neutral-500">
+                  {importResult.errors.length} com erro durante a gravação.
+                </p>
+              )}
+
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/admin/demandas"
+                  className="rounded-lg bg-emerald-600 px-5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-emerald-700"
+                >
+                  Ir ao Kanban → Triagem
+                </Link>
+                <Link
+                  href="/admin/demandas"
+                  className="text-[13px] text-neutral-500 transition-colors hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                >
+                  Nova importação
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Toolbar de triagem */}
-        {allRows.length > 0 && (
+        {!showResult && allRows.length > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[180px] max-w-[280px]">
               <input
@@ -459,15 +547,15 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
         )}
 
         {/* Empty / loading */}
-        {running && allRows.length === 0 && (
+        {!showResult && running && allRows.length === 0 && (
           <div className="mt-10 text-center text-sm text-neutral-400">Aguardando resultados da raspagem…</div>
         )}
-        {!running && allRows.length === 0 && (
+        {!showResult && !running && allRows.length === 0 && (
           <div className="mt-10 text-center text-sm text-neutral-400">Nenhuma intimação encontrada.</div>
         )}
 
         {/* Tabela */}
-        {allRows.length > 0 && (
+        {!showResult && allRows.length > 0 && (
           // Sem overflow-hidden: um ancestral com overflow!=visible vira scroll
           // container e quebra o `sticky` do thead relativo à viewport.
           <div className="mt-3 rounded-xl border border-neutral-200 bg-white shadow-sm shadow-black/[0.03] dark:border-neutral-800 dark:bg-neutral-900">
@@ -641,7 +729,7 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
       </div>
 
       {/* Barra de confirmar fixa */}
-      {allRows.length > 0 && (
+      {!showResult && allRows.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 backdrop-blur px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.05)] dark:border-neutral-800 dark:bg-neutral-900/95">
           <div className="mx-auto flex max-w-6xl items-center gap-3">
             <span className="text-[12px] text-neutral-500">
