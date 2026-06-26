@@ -65,6 +65,16 @@ RELOGIN_EVERY = 8
 CDP_URL = "http://127.0.0.1:9222"
 PAGE_LIMIT = 8
 
+# Navegação em árvore do painel (situação → comarca → vara), portada do worker de
+# import (pje_intimacoes_import.py) — validada ao vivo. find_in_panel SÓ acha os
+# docs se o painel estiver navegado até a vara; por isso navegamos antes do loop.
+SITUACAO_PADRAO = "Pendentes de ciência ou de resposta"
+ATRIB_UNIDADE: dict[str, tuple[str, str]] = {
+    "VVD_CAMACARI":  ("CAMAÇARI", "Vara de Violência doméstica"),
+    "JURI_CAMACARI": ("CAMAÇARI", "Vara do Júri e Execuções Penais"),
+    "EXECUCAO_PENAL": ("CAMAÇARI", "Vara do Júri e Execuções Penais"),
+}
+
 
 def load_env() -> dict[str, str]:
     env: dict[str, str] = {}
@@ -646,7 +656,88 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
     })
 
 
-async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str, str]):
+async def _wait_text(page: "Page", txt: str, timeout: float = 20):
+    """Aguarda um elemento com texto `txt` ficar visível. Retorna Locator ou None."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        loc = page.get_by_text(txt, exact=False).first
+        try:
+            if await loc.count() > 0 and await loc.is_visible():
+                return loc
+        except Exception:
+            pass
+        await asyncio.sleep(0.5)
+    return None
+
+
+async def navigate_to_unidade(page: "Page", atribuicao: str) -> bool:
+    """Drill-down por TEXTO: aba Expedientes → situação → comarca → vara, com
+    estabilização da tabela (contagem estável + palavra-chave da vara). Portado do
+    worker de import. Retorna True se navegou, False se a atribuição não é mapeada.
+    Levanta RuntimeError se um passo de navegação falhar."""
+    mapping = ATRIB_UNIDADE.get(atribuicao)
+    if mapping is None:
+        log(f"  ⚠ atribuição '{atribuicao}' sem mapa de vara — pulando navegação")
+        return False
+    comarca, unidade_txt = mapping
+
+    sentinel = await _wait_text(page, "Pendentes de ciência", timeout=3)
+    if sentinel is None:
+        exp_tab = await _wait_text(page, "Expedientes", timeout=20)
+        if exp_tab is None:
+            raise RuntimeError("aba 'Expedientes' não encontrada no painel")
+        await exp_tab.click()
+        await _wait_text(page, "Pendentes de ciência", timeout=20)
+
+    sit_loc = await _wait_text(page, SITUACAO_PADRAO, timeout=20)
+    if sit_loc is None:
+        raise RuntimeError(f"situação '{SITUACAO_PADRAO}' não encontrada")
+    await sit_loc.click()
+
+    com_loc = await _wait_text(page, comarca, timeout=20)
+    if com_loc is None:
+        raise RuntimeError(f"comarca '{comarca}' não encontrada")
+    await com_loc.click()
+
+    vara_loc = await _wait_text(page, unidade_txt, timeout=20)
+    if vara_loc is None:
+        raise RuntimeError(f"unidade '{unidade_txt}' não encontrada")
+    await vara_loc.click()
+
+    # Estabiliza: contagem de linhas estável por 2 ciclos + texto da vara presente.
+    vara_kw = None
+    u = unidade_txt.upper()
+    if "VIOL" in u:
+        vara_kw = "VIOLÊNCIA DOMÉSTICA"
+    elif "JÚRI" in u or "JURI" in u:
+        vara_kw = "JÚRI"
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + 30
+    prev_count, stable = -1, 0
+    while loop.time() < deadline:
+        stat = await page.evaluate(
+            f"""() => {{
+              const tbody = document.getElementById('{TBODY_ID}');
+              if (!tbody) return {{ n: 0, txt: '' }};
+              return {{ n: tbody.querySelectorAll('tr.rich-table-row').length,
+                        txt: (tbody.innerText || '').toUpperCase() }};
+            }}"""
+        )
+        n = stat.get("n", 0) or 0
+        kw_ok = (vara_kw is None) or (vara_kw in (stat.get("txt") or ""))
+        if n > 0 and n == prev_count and kw_ok:
+            stable += 1
+            if stable >= 2:
+                break
+        else:
+            stable = 0
+        prev_count = n
+        await asyncio.sleep(0.8)
+    return True
+
+
+async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str, str], atribuicao: str | None = None):
     if async_playwright is None:
         sys.exit("ERRO: patchright não instalado — ative .venv do enrichment-engine")
 
@@ -680,6 +771,24 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
             # rodar o script. Modo direct não faz isso automaticamente ainda.
             log(f"  ⚠ modo direct: navegue manualmente até EXPEDIENTES > Vara")
             await asyncio.sleep(5)
+
+        # Navega o painel até a vara da atribuição ANTES de localizar os docs —
+        # find_in_panel só acha o expediente na tabela populada da vara correta.
+        if modo in ("cdp", "direct"):
+            atrib_alvo = atribuicao or (
+                demandas[0].get("processos", {}).get("atribuicao") if demandas else None
+            )
+            if atrib_alvo:
+                try:
+                    # Recarrega o painel p/ estado limpo da árvore (a aba pode estar
+                    # num nó/vara anterior de uso prévio) — como faz o worker de import.
+                    await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+                    await asyncio.sleep(2)
+                    if await navigate_to_unidade(page, atrib_alvo):
+                        uni = ATRIB_UNIDADE.get(atrib_alvo)
+                        log(f"painel navegado → {uni[0]} ▸ {uni[1]}" if uni else "painel navegado")
+                except Exception as e:
+                    log(f"  ⚠ navegação falhou ({str(e)[:90]}) — docs podem cair em manual-review")
 
         for i, d in enumerate(demandas):
             doc_id = d.get("pje_documento_id") or d.get("enrichment_data", {}).get("id_documento_pje")
@@ -768,7 +877,7 @@ def main():
     if args.modo == "direct" and (not env.get("PJE_CPF") or not env.get("PJE_SENHA")):
         sys.exit("ERRO: modo direct precisa PJE_CPF/PJE_SENHA no .env.local")
 
-    asyncio.run(varredura(sb, demandas, args.modo, env))
+    asyncio.run(varredura(sb, demandas, args.modo, env, args.atribuicao))
 
 
 if __name__ == "__main__":
