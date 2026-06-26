@@ -150,7 +150,8 @@ describe("stagingRowToImportRow", () => {
     expect(out.assistido).toBe("Nome Corrigido via Revisão");
   });
 
-  it("dataExpedicaoCompleta, tipoDocumento, idDocumentoPje are NOT overridable via revisao", () => {
+  it("dataExpedicaoCompleta, tipoDocumento, idDocumentoPje are NOT overridable via revisao (fallback path)", () => {
+    // conteudo "x" não é parseável → cai no fallback das colunas do worker.
     // These three fields bypass pick() — they read directly from the staging row
     const expedicao = new Date("2025-01-01T00:00:00.000Z");
     const row = mkRow({
@@ -167,5 +168,68 @@ describe("stagingRowToImportRow", () => {
     expect(out.dataExpedicaoCompleta).toBe(expedicao.toISOString());
     expect(out.tipoDocumento).toBe("INTIM");
     expect(out.idDocumentoPje).toBe("DOC123");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stagingRowToImportRow — caminho de PARSE (fonte única: pje-parser)
+// Quando `conteudo` é o bloco CRU do expediente (texto da célula DOM), os campos
+// semânticos vêm do parser canônico, não das colunas best-effort do worker.
+// ---------------------------------------------------------------------------
+const BLOCO_CRIMINAL = [
+  "DEFENSORIA PÚBLICA DO ESTADO DA BAHIA",
+  "Intimação (68806346)",
+  "Expedição eletrônica (16/06/2026 14:56)",
+  "Prazo:5 dias",
+  "Data limite prevista para ciência: 26/06/2026 23:59",
+  "APOrd 8000475-76.2023.8.05.0039 Ameaça",
+  "Ministério Público do Estado da Bahia X UANDERSON DANTAS DE SOUZA",
+  "/VARA DE VIOLÊNCIA DOMÉSTICA FAM CONTRA A MULHER DE CAMAÇARI",
+].join("\n");
+
+const BLOCO_MPU = [
+  "DEFENSORIA PÚBLICA DO ESTADO DA BAHIA",
+  "Intimação (68689709)",
+  "Expedição eletrônica (15/06/2026 05:34)",
+  "Prazo:5 dias",
+  "MPUMPCrim 8002063-50.2025.8.05.0039 Ameaça",
+  "ROSANGELA FERNANDES DE ARAUJO X Mario Viana dos Santos",
+  "/VARA DE VIOLÊNCIA DOMÉSTICA FAM CONTRA A MULHER DE CAMAÇARI",
+].join("\n");
+
+describe("stagingRowToImportRow — parse path", () => {
+  it("criminal MP×réu: assistido title-cased, crime e tipoProcesso vêm do parser", () => {
+    // colunas do worker propositalmente 'erradas' p/ provar que o parse vence
+    const row = mkRow({
+      conteudo: BLOCO_CRIMINAL,
+      assistidoNome: "ERRADO DO WORKER",
+      ato: "errado",
+      pjeDocumentoId: "ROWID_IGNORADO",
+    });
+    const out = stagingRowToImportRow(row);
+    expect(out.assistido).toBe("Uanderson Dantas de Souza"); // title-case do parser
+    expect(out.crime).toBe("Ameaça");
+    expect(out.tipoProcesso).toBe("APOrd");
+    expect(out.processoNumero).toBe("8000475-76.2023.8.05.0039");
+    expect(out.idDocumentoPje).toBe("68806346"); // id do doc parseado, não o rowId
+  });
+
+  it("MPU vítima×agressor: assistido é o requerido (polo passivo)", () => {
+    const row = mkRow({ conteudo: BLOCO_MPU });
+    const out = stagingRowToImportRow(row);
+    expect(out.assistido).toBe("Mario Viana dos Santos");
+    expect(out.tipoProcesso).toBe("MPUMPCrim");
+    expect(out.crime).toBe("Ameaça");
+  });
+
+  it("revisao vence o parse", () => {
+    const row = mkRow({
+      conteudo: BLOCO_CRIMINAL,
+      revisao: { assistidoNome: "Nome Corrigido na Revisão" },
+    });
+    const out = stagingRowToImportRow(row);
+    expect(out.assistido).toBe("Nome Corrigido na Revisão");
+    // demais campos do parse permanecem
+    expect(out.crime).toBe("Ameaça");
   });
 });

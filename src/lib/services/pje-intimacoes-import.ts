@@ -1,6 +1,12 @@
 import { createHash } from "node:crypto";
 import type { ImportRow } from "@/lib/services/pje-import";
-import { verificarDuplicatas } from "@/lib/pje-parser";
+import {
+  verificarDuplicatas,
+  parsePJeIntimacoesCompleto,
+  intimacaoToDemanda,
+  ASSISTIDO_A_IDENTIFICAR,
+  type IntimacaoPJeSimples,
+} from "@/lib/pje-parser";
 import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
 
 export function normalizeConteudo(s: string): string {
@@ -16,23 +22,97 @@ export function computeContentHash(
   return createHash("sha256").update(payload, "utf8").digest("hex");
 }
 
+/**
+ * Re-parseia o `conteudo` CRU de uma staging row (texto da célula DOM capturado
+ * pelo worker) com o parser canônico do PJe — a FONTE ÚNICA de verdade para
+ * semântica (assistido com taxonomia de polos + title-case, crime, tipoProcesso,
+ * vara, MPU). Retorna a 1ª intimação, ou null se o conteúdo não for parseável.
+ */
+export function parseStagingRow(row: PjeImportStaging): IntimacaoPJeSimples | null {
+  if (!row.conteudo) return null;
+  try {
+    return parsePJeIntimacoesCompleto(row.conteudo).intimacoes[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mapeia uma intimação já parseada → ImportRow. Mesma conversão usada pelo
+ * endpoint /api/cron/pje-import, centralizada aqui para haver UMA só.
+ */
+export function intimacaoToImportRow(
+  int: IntimacaoPJeSimples,
+  atribuicao: string,
+  importBatchId: string,
+): ImportRow {
+  const demanda = intimacaoToDemanda(int, atribuicao);
+  return {
+    assistido: demanda.assistido,
+    processoNumero: demanda.processos?.[0]?.numero,
+    ato: demanda.ato || "Ciência",
+    prazo: demanda.prazo || undefined,
+    dataEntrada: demanda.data?.split("T")[0] || undefined,
+    dataExpedicaoCompleta: demanda.data || undefined,
+    dataInclusao: demanda.dataInclusao || undefined,
+    status: demanda.status || "analisar",
+    estadoPrisional: demanda.estadoPrisional || "Solto",
+    atribuicao,
+    importBatchId,
+    ordemOriginal: int.ordemOriginal,
+    tipoDocumento: int.tipoDocumento,
+    crime: int.crime,
+    tipoProcesso: int.tipoProcesso,
+    vara: int.vara,
+    idDocumentoPje: int.idDocumento,
+    atribuicaoDetectada: int.atribuicaoDetectada,
+    assistidoNaoIdentificado:
+      int.assistidoNaoIdentificado || int.assistido === ASSISTIDO_A_IDENTIFICAR,
+  };
+}
+
+/**
+ * Converte uma staging row → ImportRow para importação.
+ *
+ * Fonte única de parsing: re-parseia o `conteudo` cru (capturado do DOM) com o
+ * parser canônico — daí saem assistido (title-case + taxonomia de polos), crime,
+ * tipoProcesso e vara. Se o conteúdo não for parseável, cai para as colunas
+ * best-effort que o worker gravou. Edições do usuário (`revisao`) têm
+ * precedência sobre o parse e o fallback.
+ */
 export function stagingRowToImportRow(row: PjeImportStaging): ImportRow {
   const rev = (row.revisao ?? {}) as Record<string, unknown>;
   const pick = <T>(k: string, fallback: T): T =>
     (rev[k] as T | undefined) ?? fallback;
+
+  const atrib = (row.atribuicao as string | null) ?? "";
+
+  const int = parseStagingRow(row);
+  const base: ImportRow = int
+    ? intimacaoToImportRow(int, atrib, String(row.jobId))
+    : {
+        assistido: row.assistidoNome ?? "",
+        processoNumero: row.processoNumero ?? undefined,
+        ato: row.ato ?? "",
+        prazo: row.prazo ?? undefined,
+        dataExpedicaoCompleta: row.dataExpedicao
+          ? row.dataExpedicao.toISOString()
+          : undefined,
+        atribuicao: atrib || undefined,
+        tipoDocumento: row.tipoDocumento ?? undefined,
+        idDocumentoPje: row.pjeDocumentoId ?? undefined,
+        importBatchId: String(row.jobId),
+      };
+
+  // Edições do usuário (revisao) vencem o parse e o fallback.
   return {
-    assistido: pick("assistidoNome", row.assistidoNome ?? ""),
-    processoNumero: pick("processoNumero", row.processoNumero ?? undefined),
-    ato: pick("ato", row.ato ?? ""),
-    prazo: pick("prazo", row.prazo ?? undefined),
-    dataExpedicaoCompleta: row.dataExpedicao
-      ? row.dataExpedicao.toISOString()
-      : undefined,
-    atribuicao: pick("atribuicao", row.atribuicao ?? undefined),
-    tipoDocumento: row.tipoDocumento ?? undefined,
-    idDocumentoPje: row.pjeDocumentoId ?? undefined,
+    ...base,
+    assistido: pick("assistidoNome", base.assistido),
+    processoNumero: pick("processoNumero", base.processoNumero),
+    ato: pick("ato", base.ato),
+    prazo: pick("prazo", base.prazo),
+    atribuicao: pick("atribuicao", base.atribuicao),
     assistidoMatchId: pick<number | undefined>("assistidoMatchId", undefined),
-    importBatchId: String(row.jobId),
   };
 }
 

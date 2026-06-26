@@ -239,6 +239,17 @@ def _pje_prazo_to_date(s: str | None) -> str | None:
 
 # ─── Parsing de linha bruta extraída pelo JS ─────────────────────────────────
 
+# Intimados institucionais NÃO são o assistido — quando o nome acima do tipo de
+# documento é um órgão (Defensoria, MP, polícia, ente público), caímos para o
+# polo passivo (réu/agressor). Validado ao vivo no painel VVD de Camaçari.
+_INSTITUCIONAL_RE = re.compile(
+    r"DEFENSORIA|MINIST[ÉE]RIO\s+P[ÚU]BLICO|MINISTERIO\s+PUBLICO|"
+    r"\bPOL[ÍI]CIA\b|DELEGACIA|\bDEAM\b|ESTADO\s+DA\s+BAHIA|"
+    r"UNI[ÃA]O\s+FEDERAL|FAZENDA\s+(NACIONAL|P[ÚU]BLICA)|MUNIC[ÍI]PIO|JU[ÍI]ZO",
+    re.IGNORECASE,
+)
+
+
 def _parse_row(raw: dict) -> dict:
     """Converte dict bruto {rowId, cell0, cell1, cell2} em dict com as chaves
     esperadas por run(): processoNumero, assistidoNome, ato, tipoDocumento,
@@ -267,16 +278,26 @@ def _parse_row(raw: dict) -> dict:
             return None
         return " ".join(s.split()) or None
 
-    # assistidoNome: polo passivo = parte APÓS o último " X " em cell2.
-    # A célula é multilinha ("NOME\n/VARA...\nÚltimo movimento:..."); só a
-    # PRIMEIRA linha é o nome — as demais são órgão e último movimento.
-    assistido_nome: str | None = None
+    # ─── assistido ────────────────────────────────────────────────────────────
+    # Regra (validada ao vivo + decisão do defensor):
+    #  1. O INTIMADO nomeado (1ª linha de cell1, acima do tipo de documento) é o
+    #     assistido — é a pessoa por quem a Defensoria foi intimada. Cobre corréu
+    #     (intimado ≠ 1º nome do polo) e órgão no polo passivo (ESTADO/UNIÃO), em
+    #     que o polo passivo NÃO é o assistido (ex.: "...X ESTADO DA BAHIA" mas
+    #     intimado = EDSON BORGES → assistido = EDSON).
+    #  2. Quando o intimado é institucional ("DEFENSORIA PÚBLICA…", MP, polícia),
+    #     não é nome de pessoa — cai para o POLO PASSIVO (réu/agressor). Cobre os
+    #     criminais comuns e as MPUs ("vítima X agressor" → agressor).
+    # Cada célula é multilinha; só a PRIMEIRA linha de cada lado é o nome.
+    intimado = _collapse(cell1.split("\n", 1)[0]) if cell1 else None
+    passivo = None
     if " X " in cell2:
-        passivo = cell2.rsplit(" X ", 1)[1]
-        assistido_nome = _collapse(passivo.split("\n", 1)[0])
-    # Fallback: 1ª linha de cell1 (intimado), quando não há polo passivo.
-    if not assistido_nome and cell1:
-        assistido_nome = _collapse(cell1.split("\n", 1)[0])
+        passivo = _collapse(cell2.rsplit(" X ", 1)[1].split("\n", 1)[0])
+
+    if intimado and not _INSTITUCIONAL_RE.search(intimado):
+        assistido_nome = intimado
+    else:
+        assistido_nome = passivo or intimado
 
     # ato / tipoDocumento: o tipo do expediente em cell1.
     # cell1 = "{NOME}\n{TipoAto} ({rowId}) {Meio} ({data})". O segmento antes de
@@ -287,10 +308,9 @@ def _parse_row(raw: dict) -> dict:
         if "\n" in before_id:
             ato = _collapse(before_id.split("\n", 1)[1])  # descarta a linha do nome
         else:
-            pole = assistido_nome if (" X " in cell2 and assistido_nome) else None
-            seg = before_id
-            if pole and _collapse(seg) and _collapse(seg).startswith(pole):
-                seg = _collapse(seg)[len(pole):]
+            seg = _collapse(before_id) or ""
+            if passivo and seg.startswith(passivo):
+                seg = seg[len(passivo):]
             ato = _collapse(seg)
     else:
         ato = _collapse(cell1)
@@ -301,8 +321,12 @@ def _parse_row(raw: dict) -> dict:
     date_match = re.search(r"\d{2}/\d{2}/\d{4}(?: \d{2}:\d{2})?", cell1)
     data_expedicao = date_match.group(0) if date_match else None
 
-    # conteudo: cell1 + " | " + cell2 (sinal real para o hash)
-    conteudo = f"{cell1} | {cell2}" if cell2 else cell1
+    # conteudo: bloco CRU de cell1 (com newlines preservadas). É o texto do
+    # expediente no MESMO formato que uma cópia-colagem do painel — a camada TS
+    # (parsePJeIntimacoesCompleto) re-parseia isto como fonte única de verdade
+    # (assistido/crime/tipoProcesso/vara). NÃO colapsar: o parser depende das
+    # quebras de linha. Também é o sinal do content_hash de dedup.
+    conteudo = cell1 or cell2 or ""
 
     return {
         "processoNumero": processo_numero,
@@ -494,20 +518,42 @@ async def _navigate_to_unidade(page, atribuicao: str, situacao: str, status_cb) 
         )
     await vara_loc.click()
 
-    # Aguarda tabela de expedientes ser populada (até 25s)
+    # Aguarda a tabela ESTABILIZAR e corresponder à vara selecionada (até 30s).
+    # RichFaces troca o conteúdo por AJAX: ao clicar a vara, a tabela do nó
+    # ANTERIOR fica visível por instantes antes do swap. Ler cedo demais captura
+    # linhas transitórias/erradas (ex.: processo de outra vara/comarca). Por isso
+    # exigimos, antes de prosseguir: (a) contagem de linhas estável por 2 ciclos
+    # e (b) o texto da tabela conter a palavra-chave da vara.
+    vara_kw = None
+    u = unidade_txt.upper()
+    if "VIOL" in u:
+        vara_kw = "VIOLÊNCIA DOMÉSTICA"
+    elif "JÚRI" in u or "JURI" in u:
+        vara_kw = "JÚRI"
     loop = asyncio.get_running_loop()
-    deadline = loop.time() + 25
+    deadline = loop.time() + 30
+    prev_count = -1
+    stable_hits = 0
     while loop.time() < deadline:
-        has_rows = await page.evaluate(
+        stat = await page.evaluate(
             f"""() => {{
               const tbody = document.getElementById('{TBODY_ID}');
-              return !!(tbody && tbody.querySelectorAll('tr.rich-table-row').length > 0);
+              if (!tbody) return {{ n: 0, txt: '' }};
+              const rows = tbody.querySelectorAll('tr.rich-table-row');
+              return {{ n: rows.length, txt: (tbody.innerText || '').toUpperCase() }};
             }}"""
         )
-        if has_rows:
-            break
-        await asyncio.sleep(0.5)
-    # Se tabela ainda vazia não levantamos exceção — pode ser que não haja expedientes.
+        n = stat.get("n", 0) or 0
+        kw_ok = (vara_kw is None) or (vara_kw in (stat.get("txt") or ""))
+        if n > 0 and n == prev_count and kw_ok:
+            stable_hits += 1
+            if stable_hits >= 2:
+                break
+        else:
+            stable_hits = 0
+        prev_count = n
+        await asyncio.sleep(0.8)
+    # Tabela vazia após o timeout não é erro — pode não haver expedientes.
 
 
 # ─── Scraper principal ────────────────────────────────────────────────────────
@@ -591,15 +637,39 @@ async def _async_scrape_expedientes(
         await page.evaluate(JS_RESET_TO_PAGE_1)
         await asyncio.sleep(2.5)
 
+        async def _first_row_id() -> str | None:
+            return await page.evaluate(
+                f"""() => {{
+                  const tbody = document.getElementById('{TBODY_ID}');
+                  if (!tbody) return null;
+                  const row = tbody.querySelector('tr.rich-table-row');
+                  if (!row) return null;
+                  const m = row.innerHTML.match(/formExpedientes:tbExpedientes:(\\d+):/);
+                  return m ? m[1] : null;
+                }}"""
+            )
+
         raw_results: list[dict] = []
+        seen_row_ids: set[str] = set()
         for pg_num in range(1, page_limit + 1):
             raw_rows = await page.evaluate(JS_EXTRACT_ROWS)
             if not raw_rows:
                 print(f"  → pág {pg_num}: tabela vazia ou não encontrada", flush=True)
                 break
 
-            print(f"  → pág {pg_num}: {len(raw_rows)} linhas", flush=True)
-            raw_results.extend(raw_rows)
+            # Guarda anti-duplicação: a paginação RichFaces às vezes não troca a
+            # página a tempo e re-lemos AS MESMAS linhas. Filtra rowIds já vistos
+            # e, se a página inteira repetir, encerra (fim real ou paginador
+            # travado — nunca inventa páginas novas com dados velhos).
+            novos = [r for r in raw_rows if (r.get("rowId") or "") not in seen_row_ids]
+            if not novos:
+                print(f"  → pág {pg_num}: linhas repetidas — encerrando", flush=True)
+                break
+            for r in novos:
+                seen_row_ids.add(r.get("rowId") or "")
+
+            print(f"  → pág {pg_num}: {len(novos)} linha(s) nova(s)", flush=True)
+            raw_results.extend(novos)
 
             if heartbeat:
                 heartbeat(len(raw_results))
@@ -608,11 +678,18 @@ async def _async_scrape_expedientes(
                 raw_results = raw_results[:limit]
                 break
 
-            # Próxima página
+            # Próxima página: clica e ESPERA a 1ª linha mudar antes de re-extrair.
+            before = await _first_row_id()
             ok = await page.evaluate(JS_GOTO_PAGE, pg_num + 1)
             if not ok:
                 break  # última página
-            await asyncio.sleep(2.5)
+            pg_loop = asyncio.get_running_loop()
+            pg_deadline = pg_loop.time() + 12
+            while pg_loop.time() < pg_deadline:
+                await asyncio.sleep(0.5)
+                if (await _first_row_id()) != before:
+                    break
+            await asyncio.sleep(0.8)  # folga p/ o corpo da tabela assentar
 
         # ── Parsing em Python ──────────────────────────────────────────────
         results = [_parse_row(r) for r in raw_results]

@@ -15,19 +15,30 @@ triggers:
 
 ## Propósito
 
-Worker autônomo que:
+Worker autônomo de **captura** (não de interpretação) que:
 1. Abre o Painel do Defensor no PJe TJBA (via CDP ou login direto)
-2. Navega para a aba EXPEDIENTES, filtra por atribuição + intervalo de datas
-3. Extrai todos os expedientes linha a linha (com paginação)
+2. Navega para a aba EXPEDIENTES por drill-down em ÁRVORE: situação → comarca →
+   vara (clicando por TEXTO; IDs JSF são instáveis e NUNCA são usados)
+3. Extrai todos os expedientes linha a linha (com paginação RichFaces),
+   capturando por linha: `rowId` (= `pje_documento_id`, chave estável) e o
+   **texto cru da célula** (bloco do expediente, com quebras de linha)
 4. Aplica deduplicação Layer-A: compara contra `pje_intimacoes_ledger` pelo
    `pje_documento_id` e pelo `content_hash`
-5. Grava cada expediente em `pje_import_staging` com flag `selected=true` se
-   `decisao=nova`, ou `selected=false` se `duplicada`/`ja_importada`
+5. Grava cada expediente em `pje_import_staging` (`conteudo` = bloco cru) com
+   `selected=true` se `decisao=nova`, ou `false` se `duplicada`/`ja_importada`
 6. Faz bump de `last_seen_at` no ledger para hits Layer-A
 7. Atualiza `claude_code_tasks` com status/progresso/resultado
 
+**Arquitetura de parsing (fonte única):** o worker NÃO interpreta semântica. Ele
+grava o `conteudo` cru; o significado (assistido com taxonomia de polos +
+title-case, crime, tipoProcesso, vara, MPU) é extraído pela camada TS ao promover
+staging → demandas, via `parsePJeIntimacoesCompleto` (`src/lib/pje-parser.ts`) em
+`stagingRowToImportRow`. Assim há UM só parser, batível por testes e reaproveitado
+com a importação manual (cópia-colagem). O `_parse_row` em Python preenche apenas
+colunas best-effort (assistido/ato/processo) para exibição na tela de revisão.
+
 **Regra inviolável:** este worker NUNCA escreve na tabela `demandas`. A
-promoção staging → demandas é feita pela API (Task 3).
+promoção staging → demandas é feita pela API (`confirmarImport`).
 
 ## CLI
 
@@ -86,42 +97,40 @@ apontar para `.claude/skills/varredura-triagem/scripts/`. Os helpers puros
 no topo do módulo sem imports pesados, para que o módulo de testes possa
 importá-los sem Playwright.
 
-## Selectors PJe (ASSUMPTION — verificar ao vivo)
+## Navegação e extração (VALIDADO ao vivo — Camaçari VVD)
 
-Os seguintes selectors foram inferidos dos padrões de varredura_triagem.py e
-estrutura RichFaces típica do PJe TJBA. **Devem ser verificados** inspecionando
-o DOM real antes de uso em produção:
-
-| O quê | Selector / Padrão | Status |
-|-------|-------------------|--------|
-| Tabela de expedientes | `#formExpedientes:tbExpedientes:tb` | Confirmado (varredura) |
-| Linhas da tabela | `tr.rich-table-row` dentro do tbody | Confirmado (varredura) |
-| Link Autos Digitais | `a[title="Autos Digitais"]` | Confirmado (varredura) |
-| pjeDocumentoId | `?nd=XXX` no onclick do link | **ASSUMPTION** |
-| Col 1 (processo) | `td:nth-child(2)` texto | **ASSUMPTION** |
-| Col 2 (assistido) | `td:nth-child(3)` texto | **ASSUMPTION** |
-| Col 3 (tipo doc) | `td:nth-child(4)` texto | **ASSUMPTION** |
-| Col 4 (data expedição) | `td:nth-child(5)` texto | **ASSUMPTION** |
-| Col 5 (data intimação) | `td:nth-child(6)` texto | **ASSUMPTION** |
-| Col 6 (prazo) | `td:nth-child(7)` texto | **ASSUMPTION** |
-| Dropdown vara | `select` com option text matching keyword | **ASSUMPTION** |
-| Input data início | `input[id*="dataInicio"]` | **ASSUMPTION** |
-| Input data fim | `input[id*="dataFim"]` | **ASSUMPTION** |
-| Botão pesquisar | `input[type=submit][value*="Pesquisar"]` | **ASSUMPTION** |
-
-## Mapeamento atribuição → keyword de vara
+Navegação por **árvore**, clicando por texto (sem IDs JSF):
+`aba Expedientes` → situação `Pendentes de ciência ou de resposta` → comarca →
+unidade/vara. Mapa em `ATRIB_UNIDADE` no script:
 
 ```python
-ATRIB_VARA_KEYWORDS = {
-    "VVD_CAMACARI":       ["VVD", "Violência Doméstica", ...],
-    "JURI_CAMACARI":      ["Júri", "Juri", ...],
-    "CRIMINAL_CAMACARI":  ["Criminal", "Camaçari"],
-    "EXECUCAO_PENAL":     ["Execução Penal", ...],
+ATRIB_UNIDADE = {
+    "VVD_CAMACARI":  ("CAMAÇARI", "Vara de Violência doméstica"),
+    "JURI_CAMACARI": ("CAMAÇARI", "Vara do Júri e Execuções Penais"),
 }
 ```
 
-Verificar se esses termos aparecem exatamente nos textos de `<option>` do
-dropdown de vara/órgão julgador no painel do defensor.
+Para acrescentar atribuição (EP/Criminal), basta **uma linha** aqui — o parser
+TS já reconhece os padrões de polo dessas varas.
+
+| O quê | Como | Status |
+|-------|------|--------|
+| Tabela de expedientes | `#formExpedientes:tbExpedientes:tb` | Confirmado |
+| Linhas | `tr.rich-table-row` | Confirmado |
+| `pje_documento_id` | `rowId` do innerHTML: `tbExpedientes:(\d+):` | Confirmado |
+| Texto do expediente | `cell[0]`=ação, `cell[1]`=bloco do intimado/ato/data/partes/vara, `cell[2]`=classe+CNJ+polos | Confirmado |
+| `conteudo` gravado | `cell[1]` cru (newlines preservadas) — formato idêntico à cópia-colagem | Confirmado |
+
+**Robustez de timing (RichFaces AJAX é racy — 3 correções validadas):**
+- *Navegação:* só extrai quando a tabela ESTABILIZA (contagem de linhas estável
+  por 2 ciclos) **e** o texto contém a palavra-chave da vara — evita ler a tabela
+  transitória de um nó anterior (já causou ruído: processo de outra vara/comarca).
+- *Paginação:* após clicar "próxima", espera o 1º `rowId` MUDAR antes de
+  re-extrair; um guard `seen_row_ids` descarta linhas repetidas e encerra se uma
+  página inteira repetir — impede duplicação (já gerou 40×2).
+- *Login (CDP):* o worker abre `login.seam` e aguarda (auto-detecta) o login
+  manual na janela do Chromium — contorna o desafio Keycloak JS que quebra login
+  HTTP puro.
 
 ## Hash de conteúdo
 
