@@ -50,7 +50,7 @@ def _patch_varredura_path() -> None:
     varredura_dir = os.path.normpath(
         os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "..", "..", "..", "varredura-triagem", "scripts",
+            "..", "..", "varredura-triagem", "scripts",
         )
     )
     if varredura_dir not in sys.path:
