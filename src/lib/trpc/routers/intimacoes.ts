@@ -26,6 +26,17 @@ import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
  * gravados na importação — para a tela de revisão ficar tão rica quanto o import
  * manual. Parser é puro/regex; barato mesmo em dezenas de linhas.
  */
+// Extrai a "Data limite prevista para ciência/manifestação: [Dia-da-semana,] DD/MM/YYYY"
+// do texto cru do expediente → ISO date (YYYY-MM-DD), ou null. É o prazo que o PJe
+// mostra ao defensor; a urgência (dias restantes) é calculada no cliente.
+function extrairDataLimite(conteudo: string | null): string | null {
+  if (!conteudo) return null;
+  const m = conteudo.match(
+    /Data limite prevista[^:]*:\s*(?:[A-Za-zÀ-ÿ-]+,?\s*)?(\d{2})\/(\d{2})\/(\d{4})/i,
+  );
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+
 function comCamposParseados(rows: PjeImportStaging[]) {
   return rows.map((r) => {
     const int = parseStagingRow(r)?.int;
@@ -36,6 +47,7 @@ function comCamposParseados(rows: PjeImportStaging[]) {
       vara: int?.vara ?? null,
       isMPU: Boolean(int?.isMPU),
       assistidoParsed: int?.assistido ?? null,
+      dataLimite: extrairDataLimite(r.conteudo),
     };
   });
 }
