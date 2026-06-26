@@ -22,6 +22,7 @@ import {
   User,
   AlertTriangle,
   FileEdit,
+  FileText,
   Search,
   FileCheck,
   Upload,
@@ -105,6 +106,8 @@ interface KanbanDemanda {
   prazo?: string | null;
   estadoPrisional?: string | null;
   atribuicao?: string | null;
+  /** Nº de registros (ciência/diligência/anotação) vinculados — populado pela varredura nível 2. */
+  registrosCount?: number | null;
   processos?: Array<{ numero?: string }>;
   delegadoPara?: string | null;
   statusDelegacao?: string | null;
@@ -482,6 +485,11 @@ function KanbanCard({
   const statusDisplay = statusCfg?.label || rawStatus.replace(/^\d+\s*-\s*/, "");
   const processo = demanda.processos?.[0]?.numero || "";
   const isUrgente = demanda.prioridade === "URGENTE" || demanda.prioridade === "REU_PRESO";
+  // ALTA ganha realce âmbar discreto (URGENTE já vira chama rose abaixo);
+  // NORMAL/BAIXA não viram indicador — anti-poluição.
+  const isAlta = !isUrgente && demanda.prioridade === "ALTA";
+  // Registros (ciência/diligência/anotação) criados pela varredura nível 2.
+  const registrosCount = typeof demanda.registrosCount === "number" ? demanda.registrosCount : 0;
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
@@ -765,6 +773,18 @@ function KanbanCard({
           )}
           {isUrgente && (
             <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+          )}
+          {isAlta && (
+            <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" aria-label="Prioridade alta" />
+          )}
+          {registrosCount > 0 && (
+            <span
+              className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500"
+              title={`${registrosCount} registro${registrosCount > 1 ? "s" : ""} (ciência/diligência/anotação)`}
+            >
+              <FileText className="w-2.5 h-2.5" />
+              {registrosCount}
+            </span>
           )}
           {showAtribBadge && demanda.atribuicao && (() => {
             const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";

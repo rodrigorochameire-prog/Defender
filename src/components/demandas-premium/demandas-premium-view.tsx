@@ -28,6 +28,7 @@ const AdminConfigModal = dynamic(() => import("@/components/demandas-premium/adm
 const SheetsImportModal = dynamic(() => import("@/components/demandas-premium/sheets-import-modal").then(m => ({ default: m.SheetsImportModal })), { ssr: false });
 const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu-import-modal").then(m => ({ default: m.SEEUImportModal })), { ssr: false });
 const IntimacoesImportModal = dynamic(() => import("@/components/demandas-premium/intimacoes-import-modal").then(m => ({ default: m.IntimacoesImportModal })), { ssr: false });
+const VarreduraTriggerModal = dynamic(() => import("@/components/demandas-premium/varredura-trigger-modal").then(m => ({ default: m.VarreduraTriggerModal })), { ssr: false });
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
@@ -159,6 +160,7 @@ import {
   List,
   ArrowLeftRight,
   MoreHorizontal,
+  ScanSearch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -764,6 +766,7 @@ export default function Demandas() {
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isIntimacoesImportOpen, setIsIntimacoesImportOpen] = useState(false);
+  const [isVarreduraModalOpen, setIsVarreduraModalOpen] = useState(false);
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
@@ -3122,6 +3125,16 @@ export default function Demandas() {
         atribuicao={selectedAtribuicoes.length === 1 ? selectedAtribuicoes[0] : undefined}
       />
 
+      {/* Analisar triagem (Varredura Nível 2 — leitura profunda dos autos no PJe) */}
+      <button
+        onClick={() => setIsVarreduraModalOpen(true)}
+        className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
+        title="Analisar triagem (leitura profunda no PJe)"
+        aria-label="Analisar triagem"
+      >
+        <ScanSearch className="w-3.5 h-3.5" />
+      </button>
+
       {/* Importar */}
       <div className="relative">
         <button
@@ -3967,6 +3980,10 @@ export default function Demandas() {
       <IntimacoesImportModal
         isOpen={isIntimacoesImportOpen}
         onClose={() => setIsIntimacoesImportOpen(false)}
+      />
+      <VarreduraTriggerModal
+        isOpen={isVarreduraModalOpen}
+        onClose={() => setIsVarreduraModalOpen(false)}
       />
       <ChartConfigModal
         isOpen={isChartConfigModalOpen}

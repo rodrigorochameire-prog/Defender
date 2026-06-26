@@ -445,4 +445,99 @@ export const intimacoesRouter = router({
 
       return { ...result, ledgerWritten };
     }),
+
+  /**
+   * criarVarreduraJob — Enfileira varredura de triagem (lane browser, skill
+   * varredura-triagem). Uma atribuição por job: o worker recebe `--atribuicao`
+   * singular, então `atribuicao` vai no meta no SINGULAR. Se vierem várias,
+   * enfileira uma task por atribuição.
+   *
+   * Dedup: se já houver QUALQUER task da skill varredura-triagem ativa
+   * (pending/processing), retorna os taskIds existentes sem enfileirar de novo
+   * — espelha o dedup de criarImportJob.
+   */
+  criarVarreduraJob: protectedProcedure
+    .input(
+      z.object({
+        atribuicoes: z.array(z.enum(ATRIBUICOES_PERMITIDAS)).min(1),
+        since: z.string().optional(), // YYYY-MM-DD
+        limit: z.number().int().min(1).max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Dedup: não enfileira se já houver varredura ativa — evita concorrência.
+      const emAndamento = await db
+        .select({ id: claudeCodeTasks.id })
+        .from(claudeCodeTasks)
+        .where(
+          and(
+            eq(claudeCodeTasks.skill, "varredura-triagem"),
+            inArray(claudeCodeTasks.status, ["pending", "processing"]),
+          ),
+        );
+
+      if (emAndamento.length > 0) {
+        return {
+          success: true,
+          existing: true,
+          taskIds: emAndamento.map((t) => t.id),
+        };
+      }
+
+      const limit = input.limit ?? 80;
+      const taskIds: number[] = [];
+
+      // Uma task por atribuição (worker recebe --atribuicao singular).
+      for (const atribuicao of input.atribuicoes) {
+        const [task] = await db
+          .insert(claudeCodeTasks)
+          .values({
+            skill: "varredura-triagem",
+            lane: "browser",
+            prompt: `Varredura de triagem — ${atribuicao} (lane browser)`,
+            instrucaoAdicional: JSON.stringify({
+              atribuicao,
+              since: input.since,
+              limit,
+              modo: "cdp",
+            }),
+            status: "pending",
+            createdBy: ctx.user.id,
+          })
+          .returning({ id: claudeCodeTasks.id });
+        taskIds.push(task.id);
+      }
+
+      return { success: true, existing: false, taskIds };
+    }),
+
+  /**
+   * statusVarredura — Status/etapa/resultado de um job de varredura para a UI
+   * acompanhar via poll.
+   */
+  statusVarredura: protectedProcedure
+    .input(z.object({ jobId: z.number().int() }))
+    .query(async ({ input }) => {
+      const [task] = await db
+        .select({
+          status: claudeCodeTasks.status,
+          etapa: claudeCodeTasks.etapa,
+          resultado: claudeCodeTasks.resultado,
+        })
+        .from(claudeCodeTasks)
+        .where(eq(claudeCodeTasks.id, input.jobId))
+        .limit(1);
+
+      if (!task)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Job de varredura não encontrado",
+        });
+
+      return {
+        status: task.status,
+        etapa: task.etapa ?? null,
+        resultado: task.resultado ?? null,
+      };
+    }),
 });
