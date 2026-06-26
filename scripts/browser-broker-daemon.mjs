@@ -84,6 +84,11 @@ const HOME = process.env.HOME || ''
 const CDP_PORT = Number(ENV.BROWSER_CDP_PORT || process.env.BROWSER_CDP_PORT || 9222)
 const PROFILE_DIR = ENV.BROWSER_PROFILE_DIR || process.env.BROWSER_PROFILE_DIR || resolve(HOME || PROJECT_DIR, '.ombuds-browser-profile')
 const HEADLESS = (ENV.BROWSER_HEADLESS || process.env.BROWSER_HEADLESS) === 'true'
+// Broker interativo: roda skills que exigem login manual (2FA no PJe), ou seja,
+// a MÁQUINA DO DEFENSOR, onde ele abre o Chromium e digita senha+código. Brokers
+// de servidor (Mac Mini) deixam INTERACTIVE=false (default) e PULAM essas skills,
+// dando prioridade determinística à máquina local. Ver pje-intimacoes-import.
+const INTERACTIVE = (ENV.BROWSER_INTERACTIVE || process.env.BROWSER_INTERACTIVE) === 'true'
 const session = new BrowserSession({
   chromiumBin: resolveChromiumBin(ENV, HOME),
   profileDir: PROFILE_DIR,
@@ -117,6 +122,9 @@ const SKILL_REGISTRY = {
   // Requer --job-id (id da claude_code_tasks), --atribuicoes CSV e flags opcionais.
   'pje-intimacoes-import': {
     label: 'Importar intimações PJe (staging)',
+    // Exige login manual no PJe (Keycloak + 2FA) → só roda em broker interativo
+    // (máquina do defensor). Brokers de servidor ignoram sem travar o lock.
+    interactive: true,
     build: (meta) => {
       if (!meta.atribuicoes?.length) throw new Error('meta.atribuicoes é obrigatório para pje-intimacoes-import');
       return {
@@ -211,6 +219,15 @@ function buildResultado(stdout) {
 async function processTask(task) {
   // Lane guard: este daemon só processa a lane 'browser'.
   if (task.lane !== LANE) return
+
+  // Gate de skill interativa (ANTES do lock): skills que exigem login manual só
+  // rodam num broker interativo. Um broker não-interativo retorna SEM travar o
+  // lock, deixando a tarefa para a máquina do defensor — prioridade local.
+  const preSkill = resolveSkill(task.skill)
+  if (preSkill.entry?.interactive && !INTERACTIVE) {
+    console.log(`${LOG_PREFIX} Task ${task.id} (skill: ${task.skill}) é interativa e este broker não é interativo — ignorando (prioridade p/ a máquina do defensor)`)
+    return
+  }
 
   console.log(`${LOG_PREFIX} Processing task ${task.id} (skill: ${task.skill})`)
 
@@ -398,6 +415,7 @@ console.log(`${LOG_PREFIX} Project: ${PROJECT_DIR}`)
 console.log(`${LOG_PREFIX} Python: ${VENV_PYTHON}${existsSync(VENV_PYTHON) ? '' : ' (NÃO ENCONTRADO — só __selftest funcionará)'}`)
 console.log(`${LOG_PREFIX} Skills: ${Object.keys(SKILL_REGISTRY).join(', ')}`)
 console.log(`${LOG_PREFIX} CDP port: ${CDP_PORT} | profile: ${PROFILE_DIR} | headless: ${HEADLESS}`)
+console.log(`${LOG_PREFIX} Interativo: ${INTERACTIVE ? 'SIM (roda skills de login manual, ex. pje-intimacoes-import)' : 'não (pula skills interativas — máquina de servidor)'}`)
 
 await reapZombies('startup')
 await session.start()
