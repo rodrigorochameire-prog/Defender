@@ -9,9 +9,10 @@ interface ImportDropdownProps {
   onImportPJe: () => void;
   onImportSheets?: () => void;
   onImportSEEU?: () => void;
+  onImportIntimacoesPJe?: () => void;
 }
 
-export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onImportSEEU }: ImportDropdownProps) {
+export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onImportSEEU, onImportIntimacoesPJe }: ImportDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +47,11 @@ export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onI
   const handleSEEUClick = () => {
     setIsOpen(false);
     onImportSEEU?.();
+  };
+
+  const handleIntimacoesClick = () => {
+    setIsOpen(false);
+    onImportIntimacoesPJe?.();
   };
 
   return (
@@ -94,6 +100,16 @@ export function ImportDropdown({ onImportExcel, onImportPJe, onImportSheets, onI
               >
                 <Gavel className="w-4 h-4 text-amber-600" />
                 <span>SEEU</span>
+              </button>
+            )}
+            {onImportIntimacoesPJe && (
+              // NOTE: este componente não é renderizado no view atual; o dropdown ativo é o portal inline em demandas-premium-view.tsx
+              <button
+                onClick={handleIntimacoesClick}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-sm"
+              >
+                <FileText className="w-4 h-4 text-emerald-600" />
+                <span>Intimações do PJe (automático)</span>
               </button>
             )}
           </div>

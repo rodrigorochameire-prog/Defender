@@ -27,6 +27,7 @@ const PJeImportModal = dynamic(() => import("@/components/demandas-premium/pje-i
 const AdminConfigModal = dynamic(() => import("@/components/demandas-premium/admin-config-modal").then(m => ({ default: m.AdminConfigModal })), { ssr: false });
 const SheetsImportModal = dynamic(() => import("@/components/demandas-premium/sheets-import-modal").then(m => ({ default: m.SheetsImportModal })), { ssr: false });
 const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu-import-modal").then(m => ({ default: m.SEEUImportModal })), { ssr: false });
+const IntimacoesImportModal = dynamic(() => import("@/components/demandas-premium/intimacoes-import-modal").then(m => ({ default: m.IntimacoesImportModal })), { ssr: false });
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
 const DelegacaoBatchModal = dynamic(() => import("@/components/demandas/delegacao-batch-modal").then(m => ({ default: m.DelegacaoBatchModal })), { ssr: false });
@@ -761,6 +762,7 @@ export default function Demandas() {
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
+  const [isIntimacoesImportOpen, setIsIntimacoesImportOpen] = useState(false);
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
@@ -3163,6 +3165,13 @@ export default function Demandas() {
                 <Gavel className="w-3.5 h-3.5 text-neutral-400" />
                 <span>SEEU</span>
               </button>
+              <button
+                onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Intimações do PJe (automático)</span>
+              </button>
             </div>
           </>,
           document.body
@@ -3941,6 +3950,10 @@ export default function Demandas() {
         onImport={handleImportDemandas}
         onUpdate={handleUpdateDemandas}
         demandasExistentes={allDemandas}
+      />
+      <IntimacoesImportModal
+        isOpen={isIntimacoesImportOpen}
+        onClose={() => setIsIntimacoesImportOpen(false)}
       />
       <ChartConfigModal
         isOpen={isChartConfigModalOpen}
