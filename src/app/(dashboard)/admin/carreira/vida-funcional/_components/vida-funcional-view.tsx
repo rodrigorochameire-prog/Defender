@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Briefcase, Milestone, CalendarClock, type LucideIcon } from "lucide-react";
+import { Briefcase, Milestone, CalendarClock, Plus, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { trpc } from "@/lib/trpc/client";
@@ -12,6 +12,8 @@ import { computeRadar } from "@/lib/vida-funcional/radar";
 import { COLORS } from "@/lib/config/design-tokens";
 import { vfIcon } from "./icon-map";
 import { TrajetoriaTimeline } from "./trajetoria-timeline";
+import { Button } from "@/components/ui/button";
+import { EventoFormDialog } from "./evento-form-dialog";
 
 type Tab = "visao" | "timeline" | "produtividade";
 
@@ -23,6 +25,7 @@ const CLUSTERS: { key: "ausencias" | "contraprestacao" | "administrativo"; label
 
 export function VidaFuncionalView() {
   const [tab, setTab] = useState<Tab>("visao");
+  const [novoOpen, setNovoOpen] = useState(false);
   const { data: eventos = [], isLoading } = trpc.vidaFuncional.listEventos.useQuery({});
 
   const countByTipo = useMemo(() => {
@@ -78,6 +81,11 @@ export function VidaFuncionalView() {
       <div className="px-5 md:px-8 py-4 space-y-6">
         {tab === "visao" && (
           <>
+            <div className="flex justify-end">
+              <Button size="sm" className="cursor-pointer" onClick={() => setNovoOpen(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Novo evento
+              </Button>
+            </div>
             {/* Radar */}
             <section>
               <p className="text-[12px] font-semibold uppercase tracking-wide text-neutral-500 mb-2">
@@ -159,6 +167,7 @@ export function VidaFuncionalView() {
           </div>
         )}
       </div>
+      <EventoFormDialog open={novoOpen} onOpenChange={setNovoOpen} />
     </div>
   );
 }

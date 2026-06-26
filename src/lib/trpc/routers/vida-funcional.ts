@@ -23,14 +23,14 @@ const statusSchema = z.enum(STATUS_VALUES);
 const createInput = z.object({
   tipo: tipoSchema,
   titulo: z.string().min(1).max(500),
-  descricao: z.string().optional(),
+  descricao: z.string().nullable().optional(),
   dataEvento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)"),
-  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").optional(),
-  prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").optional(),
+  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").nullable().optional(),
+  prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (use AAAA-MM-DD)").nullable().optional(),
   status: statusSchema.optional(),
-  valorCents: z.number().int().optional(),
-  driveFolderId: z.string().max(100).optional(),
-  driveFileId: z.string().max(100).optional(),
+  valorCents: z.number().int().nullable().optional(),
+  driveFolderId: z.string().max(100).nullable().optional(),
+  driveFileId: z.string().max(100).nullable().optional(),
   dados: z.record(z.string(), z.unknown()).optional(),
   defensorId: z.number().int().optional(), // só se dentro do escopo
 });
