@@ -16,7 +16,29 @@ import {
   enrichStagingWithLiveDedup,
   stagingRowToImportRow,
   buildLedgerUpserts,
+  parseStagingRow,
 } from "@/lib/services/pje-intimacoes-import";
+import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
+
+/**
+ * Enriquece linhas de staging com os campos SEMÂNTICOS do parser canônico
+ * (crime, tipoProcesso, vara, MPU, assistido title-case) — os mesmos que serão
+ * gravados na importação — para a tela de revisão ficar tão rica quanto o import
+ * manual. Parser é puro/regex; barato mesmo em dezenas de linhas.
+ */
+function comCamposParseados(rows: PjeImportStaging[]) {
+  return rows.map((r) => {
+    const int = parseStagingRow(r)?.int;
+    return {
+      ...r,
+      crime: int?.crime ?? null,
+      tipoProcesso: int?.tipoProcesso ?? null,
+      vara: int?.vara ?? null,
+      isMPU: Boolean(int?.isMPU),
+      assistidoParsed: int?.assistido ?? null,
+    };
+  });
+}
 import { importarDemandas } from "@/lib/services/pje-import";
 
 // ==========================================
@@ -114,10 +136,16 @@ export const intimacoesRouter = router({
           .select()
           .from(demandas)
           .where(isNull(demandas.deletedAt));
-        const rows = enrichStagingWithLiveDedup(stagingRows, demandasVivas);
+        const rows = comCamposParseados(
+          enrichStagingWithLiveDedup(stagingRows, demandasVivas),
+        );
         return { status: task.status, etapa: task.etapa ?? null, rows };
       }
-      return { status: task.status, etapa: task.etapa ?? null, rows: stagingRows };
+      return {
+        status: task.status,
+        etapa: task.etapa ?? null,
+        rows: comCamposParseados(stagingRows),
+      };
     }),
 
   /**
