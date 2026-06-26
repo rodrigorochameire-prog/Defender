@@ -6,14 +6,18 @@ import {
   encaminhamentoDestinatarios,
   encaminhamentoRespostas,
   demandasAcompanhantes,
+  coordenacoesDestino,
 } from "@/lib/db/schema/cowork";
-import { demandas, users } from "@/lib/db/schema/core";
+import { demandas, users, processos, assistidos } from "@/lib/db/schema/core";
 import { eq, and, desc, inArray, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { inngest } from "@/lib/inngest/client";
+import { gerarTriagemIN01 } from "@/lib/encaminhamentos/triagem-in01";
 
 const TIPO = z.enum([
   "transferir", "encaminhar", "acompanhar", "anotar", "parecer",
+  // IN 01/2026 — encaminhamento ao defensor natural (destino externo: Coordenação)
+  "pet_interno", "pet_integrado",
 ]);
 
 const SINGLE_DEST_TIPOS = new Set(["transferir", "acompanhar", "parecer"]);
@@ -193,6 +197,131 @@ export const encaminhamentosRouter = router({
         .catch((e) => console.error("[encaminhamentos] inngest send falhou:", e));
 
       return { id: enc.id };
+    }),
+
+  // ===== IN 01/2026 — encaminhamento ao defensor natural =====
+
+  // Gera o corpo do e-mail de triagem a partir da demanda (sem minuta — item 13).
+  gerarTriagem: protectedProcedure
+    .input(z.object({
+      demandaId: z.number(),
+      regime: z.enum(["interno", "integrado"]),
+    }))
+    .query(async ({ input }) => {
+      const [dem] = await db
+        .select({ assistidoId: demandas.assistidoId, processoId: demandas.processoId })
+        .from(demandas)
+        .where(eq(demandas.id, input.demandaId))
+        .limit(1);
+      if (!dem) throw new TRPCError({ code: "NOT_FOUND", message: "Demanda não encontrada." });
+
+      const [proc] = dem.processoId
+        ? await db
+            .select({ numeroAutos: processos.numeroAutos, vara: processos.vara, comarca: processos.comarca })
+            .from(processos)
+            .where(eq(processos.id, dem.processoId))
+            .limit(1)
+        : [undefined];
+      const [ass] = dem.assistidoId
+        ? await db
+            .select({ nome: assistidos.nome })
+            .from(assistidos)
+            .where(eq(assistidos.id, dem.assistidoId))
+            .limit(1)
+        : [undefined];
+
+      const mensagem = gerarTriagemIN01({
+        regime: input.regime,
+        assistidoNome: ass?.nome ?? "(assistido)",
+        numeroAutos: proc?.numeroAutos ?? "",
+        vara: proc?.vara ?? null,
+        comarcaProcesso: proc?.comarca ?? null,
+      });
+
+      return {
+        mensagem,
+        processoId: dem.processoId ?? null,
+        assistidoId: dem.assistidoId ?? null,
+        numeroAutos: proc?.numeroAutos ?? null,
+        comarcaProcesso: proc?.comarca ?? null,
+      };
+    }),
+
+  // Cria o encaminhamento à Coordenação (destino externo) e marca a demanda como
+  // 7_SEM_ATUACAO / encaminhado_natural (nossa unidade não atua — item 13).
+  criarParaDefensorNatural: protectedProcedure
+    .input(z.object({
+      regime: z.enum(["interno", "integrado"]),
+      mensagem: z.string().min(1),
+      titulo: z.string().max(200).optional(),
+      demandaId: z.number().optional(),
+      processoId: z.number().optional(),
+      assistidoId: z.number().optional(),
+      coordenacaoId: z.number().optional(),
+      comarcaDestino: z.string().max(120).optional(),
+      coordenacaoEmail: z.string().email().max(120).optional(),
+      urgencia: z.enum(["normal", "urgente"]).default("normal"),
+      prazoUrgente: z.boolean().default(false),
+      dataLimite: z.string().optional(), // 'YYYY-MM-DD'
+      atualizarDemanda: z.boolean().default(true),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      let coordEmail = input.coordenacaoEmail ?? null;
+      let comarcaDestino = input.comarcaDestino ?? null;
+      if (input.coordenacaoId) {
+        const [coord] = await db
+          .select({ email: coordenacoesDestino.email, comarca: coordenacoesDestino.comarca })
+          .from(coordenacoesDestino)
+          .where(eq(coordenacoesDestino.id, input.coordenacaoId))
+          .limit(1);
+        if (!coord) throw new TRPCError({ code: "NOT_FOUND", message: "Coordenação não encontrada." });
+        coordEmail = coord.email;
+        comarcaDestino = comarcaDestino ?? coord.comarca ?? null;
+      }
+
+      const tipo = input.regime === "interno" ? "pet_interno" : "pet_integrado";
+
+      const enc = await withTransaction(async (tx) => {
+        const [created] = await tx.insert(encaminhamentos).values({
+          workspaceId: ctx.user.workspaceId ?? 1,
+          remetenteId: ctx.user.id,
+          tipo,
+          titulo: input.titulo ?? null,
+          mensagem: input.mensagem,
+          demandaId: input.demandaId ?? null,
+          processoId: input.processoId ?? null,
+          assistidoId: input.assistidoId ?? null,
+          urgencia: input.urgencia,
+          notificarEmail: true,
+          regime: input.regime,
+          coordenacaoId: input.coordenacaoId ?? null,
+          comarcaDestino,
+          coordenacaoEmail: coordEmail,
+          prazoUrgente: input.prazoUrgente,
+          dataLimite: input.dataLimite ? new Date(input.dataLimite) : null,
+        }).returning();
+
+        if (input.atualizarDemanda && input.demandaId) {
+          await tx.update(demandas)
+            .set({ status: "7_SEM_ATUACAO", substatus: "encaminhado_natural", updatedAt: new Date() })
+            .where(eq(demandas.id, input.demandaId));
+        }
+
+        return created;
+      });
+
+      return { id: enc.id, coordenacaoEmail: coordEmail };
+    }),
+
+  // Marca o encaminhamento como enviado à Coordenação (e-mail disparado).
+  marcarEnviado: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertIsRemetente(input.id, ctx.user.id);
+      await db.update(encaminhamentos)
+        .set({ status: "enviado", enviadoEm: new Date(), updatedAt: new Date() })
+        .where(eq(encaminhamentos.id, input.id));
+      return { ok: true };
     }),
 
   obter: protectedProcedure

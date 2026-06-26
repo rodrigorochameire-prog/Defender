@@ -271,6 +271,7 @@ export const DEMANDA_STATUS: Record<string, StatusConfig> = {
   resolvido:          { label: "Resolvido",          group: "concluida", icon: CheckCircle2 },
   constituiu_advogado: { label: "Constituiu advogado", group: "concluida", icon: Scale },
   sem_atuacao:        { label: "Sem atuação",        group: "concluida", icon: XCircle },
+  encaminhado_natural:{ label: "Defensor natural",    group: "concluida", icon: Scale },
 
   // === ARQUIVADO (1) ===
   arquivado: { label: "Arquivado", group: "arquivado", icon: Archive },
@@ -497,6 +498,7 @@ export const UI_STATUS_TO_DB: Record<string, string> = {
   "protocolado": "7_PROTOCOLADO",
   "ciencia": "7_CIENCIA",
   "sem_atuacao": "7_SEM_ATUACAO",
+  "encaminhado_natural": "7_SEM_ATUACAO",
   "constituiu_advogado": "CONCLUIDO",
   "urgente": "URGENTE",
   "resolvido": "CONCLUIDO",
