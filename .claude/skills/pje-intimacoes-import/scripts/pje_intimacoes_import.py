@@ -12,11 +12,18 @@ importa de .claude/skills/varredura-triagem/scripts/. O patch de sys.path
 ocorre DENTRO de run() e main() (lazy), para que as importações puras
 no topo do módulo não arrastem Playwright/patchright.
 
-SELECTORS INFERIDOS (VERIFICAR AO VIVO)
-----------------------------------------
-Selectors marcados com "ASSUMPTION" foram inferidos do código de varredura +
-padrões típicos do PJe TJBA/RichFaces. DEVEM ser verificados contra o DOM
-real do painel do defensor antes de usar em produção.
+NAVEGAÇÃO
+---------
+Usa drill-down em ÁRVORE clicando por TEXTO (IDs JSF são auto-gerados e
+instáveis). Sequência: aba "Expedientes" → Situação → Comarca → Unidade/Vara.
+IDs de JSF NUNCA são usados para navegação.
+
+EXTRAÇÃO
+--------
+Tabela formExpedientes:tbExpedientes:tb, rows tr.rich-table-row.
+rowId extraído do innerHTML como chave estável de expediente (pjeDocumentoId).
+Células: cell[0]=ação, cell[1]=assistido+ato+id+meio+data, cell[2]=classe+CNJ+polos.
+Parsing feito em Python (mais robusto que JS para regex complexos).
 """
 from __future__ import annotations
 
@@ -33,14 +40,12 @@ CDP_URL = "http://127.0.0.1:9222"
 PJE_BASE = "https://pje.tjba.jus.br/pje"
 PANEL_URL = f"{PJE_BASE}/Painel/painel_usuario/advogado.seam"
 
-# ─── Mapeamento atribuição → keywords p/ filtro de vara no painel ────────────
-# ASSUMPTION: esses termos são substrings dos nomes de vara exibidos no
-# dropdown do painel. Verificar contra os textos reais do <option> no PJe.
-ATRIB_VARA_KEYWORDS: dict[str, list[str]] = {
-    "VVD_CAMACARI":       ["VVD", "Violência Doméstica", "Violencia Domestica"],
-    "JURI_CAMACARI":      ["Júri", "Juri", "Tribunal do Júri"],
-    "CRIMINAL_CAMACARI":  ["Criminal", "Camaçari"],
-    "EXECUCAO_PENAL":     ["Execução Penal", "Execucao Penal"],
+# ─── Mapeamento atribuição → (comarca, unidade) para navegação em árvore ─────
+SITUACAO_PADRAO = "Pendentes de ciência ou de resposta"
+
+ATRIB_UNIDADE: dict[str, tuple[str, str]] = {
+    "VVD_CAMACARI":  ("CAMAÇARI", "Vara de Violência doméstica"),
+    "JURI_CAMACARI": ("CAMAÇARI", "Vara do Júri e Execuções Penais"),
 }
 
 
@@ -138,8 +143,8 @@ def _bump_ledger_last_seen(sb, doc_id: str | None, content_hash: str, job_id: in
     sb.update("pje_intimacoes_ledger", flt, {"last_seen_at": datetime.now(timezone.utc).isoformat(), "job_id": job_id})
 
 
-# ─── JS constants para navegação DOM ─────────────────────────────────────────
-# Confirmados pelo varredura_triagem.py (validados 2026-05-04):
+# ─── JS constants para navegação e extração DOM ──────────────────────────────
+# Apenas o ID da tabela e helpers de paginação — confirmados pelo varredura_triagem.py.
 TBODY_ID = "formExpedientes:tbExpedientes:tb"
 
 JS_RESET_TO_PAGE_1 = r"""() => {
@@ -159,152 +164,31 @@ JS_GOTO_PAGE = r"""(target) => {
   return false;
 }"""
 
-# ASSUMPTION: extrai colunas por posição ordinal (td index) de cada tr.rich-table-row.
-# Estrutura inferida de PJe TJBA painel expedientes (layout RichFaces h:dataTable):
-#   col 0: ícone/checkbox
-#   col 1: número do processo (link "Autos Digitais")
-#   col 2: nome da parte/assistido
-#   col 3: tipo/ato do documento
-#   col 4: data de expedição
-#   col 5: data de intimação
-#   col 6: prazo (dias)
-#   col 7: ações
-# VERIFICAR ao vivo inspecionando <tbody id="formExpedientes:tbExpedientes:tb">
-JS_EXTRACT_ALL_ROWS = r"""() => {
+# Extração bruta das células — parsing real feito em Python (_parse_row).
+# rowId extraído do innerHTML como chave estável do expediente (pjeDocumentoId).
+# Layout verificado ao vivo: cell[0]=ação, cell[1]=assistido+ato+id+meio+data,
+# cell[2]=classe+CNJ+polo_ativo+" X "+polo_passivo.
+JS_EXTRACT_ROWS = r"""() => {
   const tbody = document.getElementById('formExpedientes:tbExpedientes:tb');
   if (!tbody) return [];
   const rows = [];
   for (const row of tbody.querySelectorAll('tr.rich-table-row')) {
-    // Índice da linha no ID do elemento
     const m = row.innerHTML.match(/formExpedientes:tbExpedientes:(\d+):/);
-    const rowIdx = m ? m[1] : null;
-
-    // Link dos Autos Digitais → número do processo e URL
-    const autosLink = row.querySelector('a[title="Autos Digitais"]');
-    const processoNumero = autosLink ? autosLink.textContent.trim() : null;
-    const onclick = autosLink ? (autosLink.getAttribute('onclick') || '') : '';
-    const urlMatch = onclick.match(/window\.open\('([^']+)'/);
-    const autosUrl = urlMatch ? urlMatch[1] : null;
-
-    // pjeDocumentoId: extraído do onclick (?nd=xxx) ou do índice da linha
-    // ASSUMPTION: o nd= na URL dos autos digitais corresponde ao ID do doc PJe.
-    const ndMatch = onclick.match(/[?&]nd=([0-9]+)/);
-    // pjeDocumentoId: null quando nd= ausente — fallback correto via content_hash (spec §5).
-    // Usar rowIdx como chave forte corrompia o ledger (diferentes docs têm o mesmo índice).
-    const pjeDocumentoId = ndMatch ? ndMatch[1] : null;
-
-    // Células por posição (índices ASSUMPTION — verificar)
-    const cells = Array.from(row.querySelectorAll('td'));
+    const rowId = m ? m[1] : null;
+    const cells = [...row.children];
     const cellText = i => (cells[i] ? (cells[i].innerText || cells[i].textContent || '').trim() : '');
-
     rows.push({
-      processoNumero: processoNumero || cellText(1),
-      assistidoNome: cellText(2),
-      tipoDocumento: cellText(3),
-      ato: cellText(3),
-      dataExpedicao: cellText(4),
-      dataIntimacao: cellText(5),
-      prazo: cellText(6),
-      pjeDocumentoId,
-      autosUrl,
-      // ASSUMPTION: conteúdo construído a partir das células disponíveis sem abrir o
-      // documento (barato/live-safe). Sinal estável por expediente para dedup hash
-      // quando pjeDocumentoId está ausente (chave fallback §5). Usa tipoDocumento
-      // (col3), dataExpedicao(col4), dataIntimacao(col5), prazo(col6).
-      conteudo: [cellText(3), cellText(4), cellText(5), cellText(6)].filter(Boolean).join(' | '),
+      rowId,
+      cell0: cellText(0),
+      cell1: cellText(1),
+      cell2: cellText(2),
     });
   }
   return rows;
 }"""
 
-# ASSUMPTION: tenta selecionar vara por text-match em <select> ou RichFaces listbox.
-# IDs candidatos inferidos de padrões PJe: formExpedientes:vara, formPainel:vara, etc.
-# VERIFICAR ao vivo o id real do elemento de filtro de vara/órgão julgador.
-JS_SELECT_VARA = r"""(keyword) => {
-  const kw = keyword.toUpperCase();
-  // Tenta <select> nativo
-  const selects = document.querySelectorAll('select');
-  for (const sel of selects) {
-    for (const opt of sel.options) {
-      if (opt.text.toUpperCase().includes(kw)) {
-        sel.value = opt.value;
-        sel.dispatchEvent(new Event('change', {bubbles: true}));
-        // Tenta disparar onchange RichFaces (a4j)
-        if (sel.onchange) sel.onchange();
-        return 'select:' + opt.text;
-      }
-    }
-  }
-  // Tenta RichFaces rich:select ou a4j:commandLink com texto
-  const links = Array.from(document.querySelectorAll('a, span.rf-sel-itm'));
-  for (const el of links) {
-    const txt = (el.textContent || '').toUpperCase();
-    if (txt.includes(kw) && txt.length < 80) {
-      el.click();
-      return 'rf:' + el.textContent.trim();
-    }
-  }
-  return null;
-}"""
-
-# ASSUMPTION: filtro de datas usa inputs com id contendo "dataInicio"/"dataFim"
-# ou "dtInicio"/"dtFim". Datas no formato DD/MM/YYYY (padrão PJe).
-# VERIFICAR ids reais ao vivo.
-JS_SET_DATE_FILTERS = r"""(since, until) => {
-  const startCandidates = [
-    'input[id*="dataInicio"]', 'input[id*="dataExpInicio"]',
-    'input[id*="dtInicio"]', 'input[id*="startDate"]',
-  ];
-  const endCandidates = [
-    'input[id*="dataFim"]', 'input[id*="dataExpFim"]',
-    'input[id*="dtFim"]', 'input[id*="endDate"]',
-  ];
-  const fill = (selectors, val) => {
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el && val) {
-        el.value = val;
-        el.dispatchEvent(new Event('change', {bubbles: true}));
-        el.dispatchEvent(new Event('blur', {bubbles: true}));
-        return el.id || sel;
-      }
-    }
-    return null;
-  };
-  return {
-    startFilled: fill(startCandidates, since),
-    endFilled: fill(endCandidates, until),
-  };
-}"""
-
-# ASSUMPTION: botão de pesquisa/filtro tem type=submit ou texto "Pesquisar"/"Filtrar".
-JS_CLICK_SEARCH_BUTTON = r"""() => {
-  const candidates = [
-    document.querySelector('input[type="submit"][value*="Pesquisar"]'),
-    document.querySelector('input[type="submit"][value*="Filtrar"]'),
-    document.querySelector('a[id*="pesquisar"]'),
-    document.querySelector('a[id*="filtrar"]'),
-    Array.from(document.querySelectorAll('input[type="submit"]')).find(
-      b => /pesquis|filtr/i.test(b.value)
-    ),
-  ].filter(Boolean);
-  if (candidates[0]) { candidates[0].click(); return candidates[0].id || candidates[0].value; }
-  return null;
-}"""
-
 
 # ─── Data helpers ─────────────────────────────────────────────────────────────
-
-def _iso_to_pje_date(iso_date: str | None) -> str | None:
-    """Converte YYYY-MM-DD → DD/MM/YYYY (formato dos inputs PJe)."""
-    if not iso_date:
-        return None
-    try:
-        y, m, d = iso_date.split("-")
-        return f"{d}/{m}/{y}"
-    except Exception:
-        return iso_date  # pass-through se já está em outro formato
-
 
 def _pje_datetime_to_iso(s: str | None) -> str | None:
     """Converte string de data/hora do PJe para ISO compatível com colunas timestamp.
@@ -351,6 +235,110 @@ def _pje_prazo_to_date(s: str | None) -> str | None:
     except ValueError:
         # Número de dias ou formato desconhecido — descarta
         return None
+
+
+# ─── Parsing de linha bruta extraída pelo JS ─────────────────────────────────
+
+def _parse_row(raw: dict) -> dict:
+    """Converte dict bruto {rowId, cell0, cell1, cell2} em dict com as chaves
+    esperadas por run(): processoNumero, assistidoNome, ato, tipoDocumento,
+    dataExpedicao, dataIntimacao, prazo, conteudo, pjeDocumentoId.
+
+    cell1 layout: "{ASSISTIDO} {TipoAto} ({rowId}) {Meio} ({DD/MM/YYYY HH:MM...})"
+    cell2 layout: "{CLASSE} {CNJ} {POLO_ATIVO} X {POLO_PASSIVO}"
+    """
+    row_id = raw.get("rowId") or ""
+    cell1 = (raw.get("cell1") or "").strip()
+    cell2 = (raw.get("cell2") or "").strip()
+
+    # processoNumero: número CNJ de cell2
+    cnj_match = re.search(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}", cell2)
+    processo_numero = cnj_match.group(0) if cnj_match else None
+
+    # tipoProcesso/classe: token(s) de cell2 antes do CNJ
+    tipo_processo = None
+    if cnj_match and cell2:
+        prefix_c2 = cell2[: cnj_match.start()].strip()
+        tokens = prefix_c2.split()
+        tipo_processo = tokens[0] if tokens else None
+
+    # assistidoNome: polo passivo = parte APÓS o último " X " em cell2
+    assistido_nome: str | None = None
+    if " X " in cell2:
+        assistido_nome = cell2.rsplit(" X ", 1)[1].strip() or None
+    # Fallback: primeiras palavras de cell1 antes do tipo-ato (aproximado)
+    if not assistido_nome and row_id and f"({row_id})" in cell1:
+        before_id = cell1[: cell1.index(f"({row_id})")].strip()
+        # sem referência de polo passivo, usa tudo antes do "(rowId)" como nome
+        assistido_nome = before_id or None
+
+    # ato / tipoDocumento: texto entre o assistido e "({rowId})" em cell1.
+    # Algoritmo: corta cell1 em "({rowId})", strip, remove prefixo do polo passivo.
+    ato: str | None = None
+    if row_id and f"({row_id})" in cell1:
+        before_id = cell1[: cell1.index(f"({row_id})")].strip()
+        # Tenta remover o prefixo do assistido (polo passivo de cell2)
+        pole = assistido_nome if (" X " in cell2 and assistido_nome) else None
+        if pole and before_id.startswith(pole):
+            ato = before_id[len(pole) :].strip() or None
+        else:
+            # Ambíguo: usa o segmento inteiro pré-"(rowId)"
+            ato = before_id or None
+    else:
+        # rowId ausente ou padrão não encontrado — usa cell1 completa
+        ato = cell1 or None
+
+    tipo_documento = ato
+
+    # dataExpedicao: primeira ocorrência de DD/MM/YYYY (HH:MM)? em cell1
+    date_match = re.search(r"\d{2}/\d{2}/\d{4}(?: \d{2}:\d{2})?", cell1)
+    data_expedicao = date_match.group(0) if date_match else None
+
+    # conteudo: cell1 + " | " + cell2 (sinal real para o hash)
+    conteudo = f"{cell1} | {cell2}" if cell2 else cell1
+
+    return {
+        "processoNumero": processo_numero,
+        "assistidoNome": assistido_nome,
+        "ato": ato,
+        "tipoDocumento": tipo_documento,
+        "dataExpedicao": data_expedicao,
+        "dataIntimacao": None,
+        "prazo": None,
+        "conteudo": conteudo,
+        "pjeDocumentoId": row_id if row_id else None,
+    }
+
+
+def _filter_by_date(
+    rows: list[dict],
+    since: str | None,
+    until: str | None,
+) -> list[dict]:
+    """Pós-filtra rows por dataExpedicao (DD/MM/YYYY) contra [since, until] (YYYY-MM-DD).
+    Rows sem data parseável são mantidas (conservador).
+    """
+    if not since and not until:
+        return rows
+
+    def _to_iso_date(s: str | None) -> str | None:
+        if not s:
+            return None
+        m = re.match(r"(\d{2})/(\d{2})/(\d{4})", s.strip())
+        return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
+
+    result = []
+    for row in rows:
+        d = _to_iso_date(row.get("dataExpedicao"))
+        if d is None:
+            result.append(row)  # data ausente — mantém (conservador)
+        elif since and d < since:
+            continue
+        elif until and d > until:
+            continue
+        else:
+            result.append(row)
+    return result
 
 
 # ─── Live scraper (Playwright — importado lazily) ─────────────────────────────
@@ -417,6 +405,106 @@ async def _ensure_logged_in(ctx, status_cb):
     )
 
 
+# ─── Navegação em árvore (situação → comarca → vara) ─────────────────────────
+
+async def _wait_text(page, txt: str, timeout: float = 20):
+    """Aguarda até que um elemento com o texto `txt` fique visível na página.
+    Retorna o Locator (.first) se encontrado, ou None em caso de timeout.
+    Usa polling de 0.5s com page.get_by_text(exact=False).
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        loc = page.get_by_text(txt, exact=False).first
+        try:
+            cnt = await loc.count()
+            if cnt > 0 and await loc.is_visible():
+                return loc
+        except Exception:
+            pass
+        await asyncio.sleep(0.5)
+    return None
+
+
+async def _navigate_to_unidade(page, atribuicao: str, situacao: str, status_cb) -> None:
+    """Navega o painel do defensor até a lista de expedientes da unidade mapeada.
+
+    Fluxo (drill-down por texto, sem IDs JSF):
+      1. Aba "Expedientes" — clica se "Pendentes de ciência" não estiver visível.
+      2. Situação — clica em `situacao` (ex: "Pendentes de ciência ou de resposta").
+      3. Comarca — clica no texto da comarca (ex: "CAMAÇARI").
+      4. Unidade/Vara — clica no texto da vara.
+      Aguarda tabela populada (até 25s) antes de retornar.
+
+    Raises RuntimeError se atribuição não mapeada ou qualquer passo falhar.
+    """
+    mapping = ATRIB_UNIDADE.get(atribuicao)
+    if mapping is None:
+        raise RuntimeError(
+            f"atribuição não mapeada para unidade do PJe: {atribuicao}"
+        )
+    comarca, unidade_txt = mapping
+
+    if status_cb:
+        status_cb("Abrindo expedientes…")
+
+    # Passo 1: aba Expedientes
+    sentinel = await _wait_text(page, "Pendentes de ciência", timeout=3)
+    if sentinel is None:
+        exp_tab = await _wait_text(page, "Expedientes", timeout=20)
+        if exp_tab is None:
+            raise RuntimeError(
+                "Aba 'Expedientes' não encontrada no painel — "
+                "verifique se está no painel do defensor (advogado.seam)"
+            )
+        await exp_tab.click()
+        # Aguarda conteúdo da aba aparecer
+        await _wait_text(page, "Pendentes de ciência", timeout=20)
+
+    # Passo 2: Situação
+    sit_loc = await _wait_text(page, situacao, timeout=20)
+    if sit_loc is None:
+        raise RuntimeError(
+            f"Situação '{situacao}' não encontrada após abrir aba Expedientes"
+        )
+    await sit_loc.click()
+
+    # Passo 3: Comarca
+    if status_cb:
+        status_cb(f"{comarca} ▸ {unidade_txt}…")
+    com_loc = await _wait_text(page, comarca, timeout=20)
+    if com_loc is None:
+        raise RuntimeError(
+            f"Comarca '{comarca}' não encontrada após selecionar situação"
+        )
+    await com_loc.click()
+
+    # Passo 4: Vara/Unidade
+    vara_loc = await _wait_text(page, unidade_txt, timeout=20)
+    if vara_loc is None:
+        raise RuntimeError(
+            f"Unidade '{unidade_txt}' não encontrada após selecionar comarca '{comarca}'"
+        )
+    await vara_loc.click()
+
+    # Aguarda tabela de expedientes ser populada (até 25s)
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + 25
+    while loop.time() < deadline:
+        has_rows = await page.evaluate(
+            f"""() => {{
+              const tbody = document.getElementById('{TBODY_ID}');
+              return !!(tbody && tbody.querySelectorAll('tr.rich-table-row').length > 0);
+            }}"""
+        )
+        if has_rows:
+            break
+        await asyncio.sleep(0.5)
+    # Se tabela ainda vazia não levantamos exceção — pode ser que não haja expedientes.
+
+
+# ─── Scraper principal ────────────────────────────────────────────────────────
+
 async def _async_scrape_expedientes(
     env: dict,
     atribuicao: str,
@@ -430,12 +518,10 @@ async def _async_scrape_expedientes(
     """Navega o painel do PJe via CDP ou login direto e extrai linhas de
     EXPEDIENTES para a atribuição informada.
 
-    SELECTORS ASSUMPTIONS (verificar ao vivo):
-    - TBODY_ID 'formExpedientes:tbExpedientes:tb' — confirmado em varredura_triagem.py
-    - Colunas por posição ordinal (ver JS_EXTRACT_ALL_ROWS)
-    - Filtro de vara por text-match em <select> (ver JS_SELECT_VARA)
-    - Filtro de datas em inputs com 'dataInicio'/'dataFim' (ver JS_SET_DATE_FILTERS)
-    - Botão pesquisa com value 'Pesquisar' ou similar (ver JS_CLICK_SEARCH_BUTTON)
+    Navegação: drill-down em árvore por texto (situação→comarca→vara).
+    Extração: JS_EXTRACT_ROWS + _parse_row em Python.
+    Filtro de data: pós-filtro em Python (sem UI de filtro de datas no fluxo).
+    Paginação: RichFaces scroller (JS_RESET_TO_PAGE_1 / JS_GOTO_PAGE).
     """
     try:
         from patchright.async_api import async_playwright  # type: ignore
@@ -444,7 +530,8 @@ async def _async_scrape_expedientes(
             "patchright não instalado — ative o .venv do enrichment-engine"
         )
 
-    page_limit = max(1, (limit // 10) + 2)  # estimativa de páginas a percorrer
+    # Estimativa conservadora de páginas (40 rows/page)
+    page_limit = max(1, (limit // 40) + 2)
     results: list[dict] = []
 
     async with async_playwright() as p:
@@ -484,61 +571,34 @@ async def _async_scrape_expedientes(
             )
             await asyncio.sleep(3)
 
-        # ── Navegação para EXPEDIENTES (se não estiver lá) ─────────────────
+        # ── Garante que estamos no painel ─────────────────────────────────
         if "advogado.seam" not in page.url:
             print(f"  → navegando para painel: {PANEL_URL}", flush=True)
             await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(3)
 
-        # ── Seleciona vara correspondente à atribuição ─────────────────────
-        # ASSUMPTION: atribuição → keywords de texto do dropdown de vara/órgão.
-        keywords = ATRIB_VARA_KEYWORDS.get(atribuicao, [atribuicao])
-        vara_selected = None
-        for kw in keywords:
-            vara_selected = await page.evaluate(JS_SELECT_VARA, kw)
-            if vara_selected:
-                print(f"  → vara selecionada: {vara_selected}", flush=True)
-                await asyncio.sleep(2)
-                break
-        if not vara_selected:
-            print(
-                f"  ⚠ ASSUMPTION: vara '{atribuicao}' não encontrada no dropdown — "
-                "scraping com o filtro atual da página (pre-navegue manualmente se CDP)",
-                flush=True,
-            )
-
-        # ── Aplica filtros de data ──────────────────────────────────────────
-        since_pje = _iso_to_pje_date(since)
-        until_pje = _iso_to_pje_date(until)
-        if since_pje or until_pje:
-            date_result = await page.evaluate(JS_SET_DATE_FILTERS, since_pje, until_pje)
-            print(f"  → datas: {date_result}", flush=True)
-            # Clica em pesquisar se os filtros foram preenchidos
-            if date_result.get("startFilled") or date_result.get("endFilled"):
-                clicked = await page.evaluate(JS_CLICK_SEARCH_BUTTON)
-                if clicked:
-                    print(f"  → botão pesquisa: {clicked}", flush=True)
-                    await asyncio.sleep(3)
+        # ── Navegação em árvore: situação → comarca → vara ─────────────────
+        await _navigate_to_unidade(page, atribuicao, SITUACAO_PADRAO, status_cb)
 
         # ── Extrai linhas paginando ────────────────────────────────────────
         await page.evaluate(JS_RESET_TO_PAGE_1)
         await asyncio.sleep(2.5)
 
+        raw_results: list[dict] = []
         for pg_num in range(1, page_limit + 1):
-            # ASSUMPTION: tabela com TBODY_ID existe em qualquer página do painel
-            rows = await page.evaluate(JS_EXTRACT_ALL_ROWS)
-            if not rows:
+            raw_rows = await page.evaluate(JS_EXTRACT_ROWS)
+            if not raw_rows:
                 print(f"  → pág {pg_num}: tabela vazia ou não encontrada", flush=True)
                 break
 
-            print(f"  → pág {pg_num}: {len(rows)} linhas", flush=True)
-            results.extend(rows)
+            print(f"  → pág {pg_num}: {len(raw_rows)} linhas", flush=True)
+            raw_results.extend(raw_rows)
 
             if heartbeat:
-                heartbeat(len(results))
+                heartbeat(len(raw_results))
 
-            if len(results) >= limit:
-                results = results[:limit]
+            if len(raw_results) >= limit:
+                raw_results = raw_results[:limit]
                 break
 
             # Próxima página
@@ -546,6 +606,15 @@ async def _async_scrape_expedientes(
             if not ok:
                 break  # última página
             await asyncio.sleep(2.5)
+
+        # ── Parsing em Python ──────────────────────────────────────────────
+        results = [_parse_row(r) for r in raw_results]
+
+        # ── Pós-filtro de datas ───────────────────────────────────────────
+        results = _filter_by_date(results, since, until)
+
+        # Trunca ao limite após filtro
+        results = results[:limit]
 
     return results
 
