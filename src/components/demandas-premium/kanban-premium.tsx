@@ -294,12 +294,15 @@ function GroupedByAtoList({
   renderCard,
   storageKey,
   enabled = true,
+  groupByDate = false,
 }: {
   items: KanbanDemanda[];
   renderCard: (d: KanbanDemanda) => React.ReactNode;
   /** Chave única para persistir colapso por coluna em localStorage */
   storageKey: string;
   enabled?: boolean;
+  /** Triagem: agrupa por DIA de entrada (data de importação) em vez de por ato. */
+  groupByDate?: boolean;
 }) {
   // Agrupa por categoria preservando a ordem de chegada (já vem ordenada)
   const groups = useMemo(() => {
@@ -353,8 +356,37 @@ function GroupedByAtoList({
     [storageKey],
   );
 
-  // Se desabilitado ou só 1 categoria, render flat (sem headers)
+  // Se desabilitado ou só 1 categoria, render flat (sem headers) — exceto na
+  // Triagem, onde agrupamos por DIA de entrada (data de importação = createdAt),
+  // do mais recente ao mais antigo, com sub-cabeçalho discreto. O defensor vê
+  // cada "lote" importado separado, para triar um a um sabendo de quando entrou.
   if (!enabled || groups.length <= 1) {
+    if (groupByDate && items.length > 0) {
+      const byDay = new Map<string, KanbanDemanda[]>();
+      for (const d of items) {
+        const dia = ((d.dataInclusao as string | null | undefined) ?? "").slice(0, 10);
+        if (!byDay.has(dia)) byDay.set(dia, []);
+        byDay.get(dia)!.push(d);
+      }
+      const dayGroups = [...byDay.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+      return (
+        <>
+          {dayGroups.map(([dia, cards]) => {
+            const m = dia.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const label = m ? `Importado em ${m[3]}/${m[2]}` : "Sem data";
+            return (
+              <div key={dia || "sem-data"} className="space-y-2">
+                <div className="flex items-center gap-1.5 pt-1 pb-0.5 text-neutral-400 dark:text-neutral-500">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider">{label}</span>
+                  <span className="ml-auto text-[9px] font-mono tabular-nums opacity-70">{cards.length}</span>
+                </div>
+                <div className="space-y-2">{cards.map(renderCard)}</div>
+              </div>
+            );
+          })}
+        </>
+      );
+    }
     return <>{items.map(renderCard)}</>;
   }
 
@@ -2293,6 +2325,7 @@ export function KanbanPremium({
                     items={col === "triagem" ? items : items.slice(0, 100)}
                     storageKey={`kanban:atogroup:col:${col}`}
                     enabled={col !== "triagem"}
+                    groupByDate={col === "triagem"}
                     renderCard={(d) => (
                       <KanbanCard
                         key={d.id}
