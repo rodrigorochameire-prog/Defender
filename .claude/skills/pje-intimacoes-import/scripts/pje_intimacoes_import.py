@@ -516,40 +516,75 @@ async def _poll(page, check, timeout: float = 20.0, interval: float = 1.0) -> bo
     return False
 
 
-async def _distribuir_expedientes(page, status_cb) -> bool:
-    """Clica o ícone "varinha" (sparkles) que DISTRIBUI as intimações da caixa de
-    entrada GERAL para a caixa de cada vara (Família/Júri/VVD de Camaçari) — deixa
-    tudo organizado nas caixas certas ANTES da importação. Requer a aba Expedientes
-    já ativa.
+async def _distribuir_expedientes(page, atribuicao: str, status_cb) -> bool:
+    """Distribui as intimações da caixa GERAL da jurisdição para as caixas das
+    varas, clicando o ícone "varinha" (fa-magic, title "Distribuir expedientes da
+    jurisdição"). O ícone só existe na visão de LISTA da comarca, então navegamos
+    aba Expedientes → situação → comarca antes de clicar. Idempotente: distribuir
+    de novo é inócuo (itens já distribuídos saem da caixa geral).
 
-    Busca o ícone por palavra-chave (title/alt/aria-label/onclick com 'distribu');
-    se NÃO achar, AVISA e segue sem clicar nada (nunca clica um ícone aleatório —
-    distribuir muda estado no PJe). O selector exato deve ser confirmado ao vivo
-    (logado no PJe) e fixado aqui depois."""
+    Selector validado ao vivo (2026-06-27): a.btn-menu-abas > i.fa-magic, onclick
+    A4J.AJAX.Submit('formExpedientes', ..., 'formExpedientes:distribuirExpedient…').
+    Se não achar, AVISA e segue sem clicar nada (distribuir muda estado — nunca
+    clica ícone aleatório)."""
+    mapping = ATRIB_UNIDADE.get(atribuicao)
+    if mapping is None:
+        return False
+    comarca, _unidade = mapping
+    if status_cb:
+        status_cb("Abrindo expedientes para distribuir…")
+    # aba Expedientes
+    await page.evaluate(
+        "() => { const t = document.getElementById('tabExpedientes_shifted'); if (t) t.click(); }"
+    )
+    if not await _poll(page, lambda: _situacoes_carregadas(page), timeout=30, interval=1.0):
+        print("  [distribuir] aba Expedientes não carregou — segui sem distribuir", flush=True)
+        return False
+    # situação → comarca (faz a LISTA + a varinha aparecerem)
+    if not await _js_click_text(page, SITUACAO_PADRAO):
+        print("  [distribuir] situação não encontrada — segui sem distribuir", flush=True)
+        return False
+    if not await _poll(page, lambda: _text_present(page, comarca), timeout=20):
+        print("  [distribuir] comarca não apareceu — segui sem distribuir", flush=True)
+        return False
+    await _js_click_text(page, comarca)
+    # A lista + a varinha aparecem via AJAX ~3-5s depois — esperamos a varinha
+    # surgir (poll) em vez de um sleep fixo, que às vezes media cedo demais.
+    varinha_pronta = await _poll(
+        page,
+        lambda: page.evaluate(
+            "() => !!document.querySelector('i.fa-magic') || "
+            "[...document.querySelectorAll('a,button')].some(e => (e.getAttribute('onclick')||'').includes('distribuirExpedient'))"
+        ),
+        timeout=20,
+        interval=1.0,
+    )
+    if not varinha_pronta:
+        print("  [distribuir] ⚠ varinha não apareceu na lista da comarca — segui sem distribuir", flush=True)
+        if status_cb:
+            status_cb("Varinha não localizada — segui sem distribuir")
+        return False
     if status_cb:
         status_cb("Distribuindo intimações nas caixas das varas (varinha)…")
     clicked = await page.evaluate(
         r"""() => {
-          const norm = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-          for (const el of document.querySelectorAll('a,button,img,span,td')) {
-            const hay = norm([el.getAttribute('title'), el.getAttribute('alt'),
-                              el.getAttribute('aria-label'), el.getAttribute('onclick')].join(' '));
-            if (hay.includes('distribu')) {
+          for (const el of document.querySelectorAll('a, button')) {
+            const oc  = el.getAttribute('onclick') || '';
+            const ttl = (el.getAttribute('title') || '').toLowerCase();
+            const hasMagic = !!el.querySelector('i.fa-magic');
+            if (oc.includes('distribuirExpedient') || ttl.includes('distribuir expediente') || hasMagic) {
               const r = el.getBoundingClientRect();
-              if (r.width > 0 && r.height > 0) {
-                el.click();
-                return (el.tagName + ':' + (el.getAttribute('title') || el.getAttribute('onclick') || '')).slice(0, 70);
-              }
+              if (r.width > 0 && r.height > 0) { el.click(); return (el.getAttribute('title') || 'fa-magic').slice(0, 60); }
             }
           }
           return null;
         }"""
     )
     if clicked:
-        print(f"  [distribuir] clicado: {clicked}", flush=True)
-        await asyncio.sleep(6)  # AJAX de distribuição em lote
+        print(f"  [distribuir] varinha clicada: {clicked}", flush=True)
+        await asyncio.sleep(8)  # distribuição em lote pode demorar
         return True
-    print("  [distribuir] ⚠ ícone da varinha não encontrado — segui SEM distribuir (confirmar selector logado)", flush=True)
+    print("  [distribuir] ⚠ varinha (fa-magic) não encontrada na lista da comarca — segui sem distribuir", flush=True)
     if status_cb:
         status_cb("Varinha não localizada — segui sem distribuir")
     return False
@@ -736,14 +771,10 @@ async def _async_scrape_expedientes(
             await asyncio.sleep(3)
 
         # ── Distribuição opcional (varinha): caixa geral → caixas das varas ─
-        # Roda ANTES de navegar p/ vara, com a aba Expedientes ativa, p/ que os
-        # expedientes já estejam na caixa certa e a navegação os encontre.
+        # Roda ANTES de navegar p/ vara: a varinha distribui os expedientes da
+        # jurisdição nas caixas das varas, p/ que a navegação os encontre.
         if distribuir:
-            await page.evaluate(
-                "() => { const t = document.getElementById('tabExpedientes_shifted'); if (t) t.click(); }"
-            )
-            await _poll(page, lambda: _situacoes_carregadas(page), timeout=30, interval=1.0)
-            await _distribuir_expedientes(page, status_cb)
+            await _distribuir_expedientes(page, atribuicao, status_cb)
 
         # ── Navegação em árvore: situação → comarca → vara ─────────────────
         await _navigate_to_unidade(page, atribuicao, SITUACAO_PADRAO, status_cb)
