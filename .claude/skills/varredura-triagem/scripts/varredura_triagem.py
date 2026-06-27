@@ -170,6 +170,19 @@ class Supabase:
     def insert_registro(self, registro: dict) -> None:
         self._req("POST", "/rest/v1/registros", registro, prefer="return=minimal")
 
+    def registro_exists(self, demanda_id: int, titulo: str) -> bool:
+        """True se já há um registro para esta demanda com este título — evita
+        duplicar quando a varredura roda de novo sobre a mesma triagem
+        (idempotência: a análise NÃO muda o status da demanda, então ela
+        reaparece na lista em reexecuções)."""
+        from urllib.parse import quote
+        rows = self._req(
+            "GET",
+            f"/rest/v1/registros?demanda_id=eq.{demanda_id}"
+            f"&titulo=eq.{quote(titulo)}&select=id&limit=1",
+        )
+        return bool(rows)
+
     def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
 
@@ -564,7 +577,21 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
     full = f"https://pje.tjba.jus.br{autos_url}" if autos_url.startswith("/") else autos_url
     autos = await ctx.new_page()
     try:
-        await autos.goto(full, wait_until="domcontentloaded", timeout=45000)
+        # A página de autos do PJe é lenta e às vezes estoura o timeout de forma
+        # transitória — 1 retry resolve a maioria. Em vez de propagar o erro (que
+        # contava o doc como "erro"), tentamos de novo antes de desistir.
+        last_err = None
+        for attempt in range(2):
+            try:
+                await autos.goto(full, wait_until="domcontentloaded", timeout=60000)
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                if attempt == 0:
+                    await asyncio.sleep(3)
+        if last_err is not None:
+            raise last_err
         await asyncio.sleep(4)
 
         async def read_iframe() -> str:
@@ -641,17 +668,18 @@ def create_manual_review(sb: Supabase, demanda: dict) -> None:
         f"**Link direto (login PJe necessário):** {link}" if link else "**Link direto:** ID do documento não capturado no import — buscar no PJe pelo número do processo",
     ]))
 
-    sb.insert_registro({
-        "assistido_id": demanda["assistido_id"],
-        "processo_id": demanda["processo_id"],
-        "demanda_id": demanda["id"],
-        "data_registro": datetime.now().isoformat(),
-        "tipo": "diligencia",
-        "titulo": "Verificar conteúdo no PJe",
-        "conteudo": conteudo,
-        "status": "agendado",
-        "autor_id": DEFENSOR_ID,
-    })
+    if not sb.registro_exists(demanda["id"], "Verificar conteúdo no PJe"):
+        sb.insert_registro({
+            "assistido_id": demanda["assistido_id"],
+            "processo_id": demanda["processo_id"],
+            "demanda_id": demanda["id"],
+            "data_registro": datetime.now().isoformat(),
+            "tipo": "diligencia",
+            "titulo": "Verificar conteúdo no PJe",
+            "conteudo": conteudo,
+            "status": "agendado",
+            "autor_id": DEFENSOR_ID,
+        })
     sb.update_demanda(demanda["id"], {"revisao_pendente": True})
 
 
@@ -681,17 +709,18 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         except Exception as e:
             log(f"  ⚠ falha ao atualizar processos_vvd (proc_id={proc_id}): {e}")
 
-    sb.insert_registro({
-        "assistido_id": demanda["assistido_id"],
-        "processo_id": demanda["processo_id"],
-        "demanda_id": demanda["id"],
-        "data_registro": datetime.now().isoformat(),
-        "tipo": rule["registro_tipo"],
-        "titulo": rule["ato"],
-        "conteudo": (content[:1500] + ("..." if len(content) > 1500 else "")) or "(sem conteúdo lido)",
-        "status": "realizado" if rule["registro_tipo"] == "ciencia" else "agendado",
-        "autor_id": DEFENSOR_ID,
-    })
+    if not sb.registro_exists(demanda["id"], rule["ato"]):
+        sb.insert_registro({
+            "assistido_id": demanda["assistido_id"],
+            "processo_id": demanda["processo_id"],
+            "demanda_id": demanda["id"],
+            "data_registro": datetime.now().isoformat(),
+            "tipo": rule["registro_tipo"],
+            "titulo": rule["ato"],
+            "conteudo": (content[:1500] + ("..." if len(content) > 1500 else "")) or "(sem conteúdo lido)",
+            "status": "realizado" if rule["registro_tipo"] == "ciencia" else "agendado",
+            "autor_id": DEFENSOR_ID,
+        })
 
 
 async def _wait_text(page: "Page", txt: str, timeout: float = 20):
@@ -709,56 +738,112 @@ async def _wait_text(page: "Page", txt: str, timeout: float = 20):
     return None
 
 
+# JS de navegação no painel (RichFaces). Os nós (aba/situação/comarca/vara)
+# FALHAM no actionability-check do Playwright (repaint/AJAX constante faz o
+# Locator.click pendurar até timeout), mas o onclick inline dispara normalmente
+# via element.click() no contexto da página. Por isso clicamos por JS.
+_NORM_JS = "const norm=s=>(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/\\s+/g,' ').trim();"
+
+
+async def _js_click_text(page: "Page", needle: str) -> bool:
+    """Clica via JS o MENOR elemento visível cujo texto normalizado (sem acento,
+    minúsculo) contém `needle`. Dispara o onclick inline (AJAX A4J) no contexto
+    da página — robusto contra o actionability-check do Playwright."""
+    return await page.evaluate(
+        "(needle) => {" + _NORM_JS + """
+          const n = norm(needle);
+          let best=null, bl=1e9;
+          for (const el of document.querySelectorAll('a,span,td')) {
+            const t = norm(el.textContent);
+            if (t.includes(n)) { const r=el.getBoundingClientRect();
+              if (r.width>0 && r.height>0 && t.length<bl) { best=el; bl=t.length; } }
+          }
+          if (best) { best.click(); return true; }
+          return false;
+        }""",
+        needle,
+    )
+
+
+async def _text_present(page: "Page", needle: str) -> bool:
+    """True se algum elemento visível contém `needle` (normalizado)."""
+    return await page.evaluate(
+        "(needle) => {" + _NORM_JS + """
+          const n = norm(needle);
+          return [...document.querySelectorAll('a,span,td')].some(el =>
+            norm(el.textContent).includes(n) && el.getBoundingClientRect().width>0);
+        }""",
+        needle,
+    )
+
+
+async def _situacoes_carregadas(page: "Page") -> bool:
+    """True quando a aba Expedientes já renderizou a lista de situações (âncoras
+    AJAX do formAbaExpediente visíveis)."""
+    return await page.evaluate(
+        """() => [...document.querySelectorAll('a[onclick]')].some(a =>
+            /formAbaExpediente/i.test(a.getAttribute('onclick')||'') &&
+            a.getBoundingClientRect().width>0)"""
+    )
+
+
+async def _poll(page: "Page", check, timeout: float = 20.0, interval: float = 1.0) -> bool:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        try:
+            if await check():
+                return True
+        except Exception:
+            pass
+        await asyncio.sleep(interval)
+    return False
+
+
 async def navigate_to_unidade(page: "Page", atribuicao: str) -> bool:
-    """Drill-down por TEXTO: aba Expedientes → situação → comarca → vara, com
-    estabilização da tabela (contagem estável + palavra-chave da vara). Portado do
-    worker de import. Retorna True se navegou, False se a atribuição não é mapeada.
-    Levanta RuntimeError se um passo de navegação falhar."""
+    """Drill-down: aba Expedientes → situação → comarca → vara, com estabilização
+    da tabela. Retorna True se navegou, False se a atribuição não é mapeada.
+    Levanta RuntimeError se um passo falhar.
+
+    Cliques via JS (`_js_click_text`): o handler de troca de aba mora no elemento
+    interno `#tabExpedientes_shifted` (o <td>/_lbl NÃO tem onclick) e os nós do
+    accordion sofrem repaint contínuo — `Locator.click` do Playwright pendura."""
     mapping = ATRIB_UNIDADE.get(atribuicao)
     if mapping is None:
         log(f"  ⚠ atribuição '{atribuicao}' sem mapa de vara — pulando navegação")
         return False
     comarca, unidade_txt = mapping
 
-    sentinel = await _wait_text(page, "Pendentes de ciência", timeout=3)
-    if sentinel is None:
-        exp_tab = await _wait_text(page, "Expedientes", timeout=20)
-        if exp_tab is None:
-            raise RuntimeError("aba 'Expedientes' não encontrada no painel")
-        await exp_tab.click()
-        await _wait_text(page, "Pendentes de ciência", timeout=20)
+    # Passo 1: ativa a aba Expedientes via onclick do #tabExpedientes_shifted.
+    # O próprio onclick faz `if(isTabActive) return false`, então clicar com a aba
+    # já ativa é no-op seguro. Depois aguarda a lista de situações carregar (AJAX).
+    await page.evaluate(
+        "() => { const t = document.getElementById('tabExpedientes_shifted'); if (t) t.click(); }"
+    )
+    if not await _poll(page, lambda: _situacoes_carregadas(page), timeout=30, interval=1.0):
+        raise RuntimeError("aba 'Expedientes' não carregou a lista de situações")
 
-    # Situação + Comarca com RETRY: o clique na situação é um toggle do accordion —
-    # se o nó já estava aberto, o 1º clique COLAPSA (comarca some). Re-clicamos até
-    # a comarca aparecer (intermitência de estado do painel entre execuções).
-    com_loc = None
-    last_attempt = 0
-    for last_attempt in range(4):
-        sit_loc = await _wait_text(page, SITUACAO_PADRAO, timeout=15)
-        if sit_loc is None:
-            raise RuntimeError(f"situação '{SITUACAO_PADRAO}' não encontrada")
-        await sit_loc.click()
-        com_loc = await _wait_text(page, comarca, timeout=8)
-        if com_loc is not None:
-            break
-        await asyncio.sleep(1)
-    if com_loc is None:
-        raise RuntimeError(f"comarca '{comarca}' não encontrada após {last_attempt + 1} tentativas")
-    await com_loc.click()
+    # Passo 2: situação (ex.: "Pendentes de ciência ou de resposta").
+    if not await _js_click_text(page, SITUACAO_PADRAO):
+        raise RuntimeError(f"situação '{SITUACAO_PADRAO}' não encontrada")
+    if not await _poll(page, lambda: _text_present(page, comarca), timeout=20):
+        raise RuntimeError(f"comarca '{comarca}' não apareceu após selecionar situação")
 
-    # Vara com RETRY (mesma lógica de toggle): se não aparecer, re-clica a comarca.
-    vara_loc = None
+    # Passo 3: comarca — com RETRY (o clique é toggle do accordion; só re-clica se
+    # a vara não apareceu, evitando colapsar um nó já aberto).
+    vara_ok = False
     for _ in range(4):
-        vara_loc = await _wait_text(page, unidade_txt, timeout=8)
-        if vara_loc is not None:
+        await _js_click_text(page, comarca)
+        if await _poll(page, lambda: _text_present(page, unidade_txt), timeout=8):
+            vara_ok = True
             break
-        cl = await _wait_text(page, comarca, timeout=8)
-        if cl:
-            await cl.click()
         await asyncio.sleep(1)
-    if vara_loc is None:
+    if not vara_ok:
+        raise RuntimeError(f"unidade '{unidade_txt}' não apareceu após comarca '{comarca}'")
+
+    # Passo 4: vara/unidade.
+    if not await _js_click_text(page, unidade_txt):
         raise RuntimeError(f"unidade '{unidade_txt}' não encontrada")
-    await vara_loc.click()
 
     # Estabiliza: contagem de linhas estável por 2 ciclos + texto da vara presente.
     vara_kw = None

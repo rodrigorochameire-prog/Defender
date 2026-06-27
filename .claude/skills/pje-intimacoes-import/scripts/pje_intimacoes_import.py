@@ -457,6 +457,65 @@ async def _wait_text(page, txt: str, timeout: float = 20):
     return None
 
 
+# JS de navegação no painel (RichFaces). Os nós (aba/situação/comarca/vara)
+# FALHAM no actionability-check do Playwright (repaint/AJAX constante faz o
+# Locator.click pendurar até timeout), mas o onclick inline dispara normalmente
+# via element.click() no contexto da página. Por isso clicamos por JS.
+_NORM_JS = "const norm=s=>(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().replace(/\\s+/g,' ').trim();"
+
+
+async def _js_click_text(page, needle: str) -> bool:
+    """Clica via JS o MENOR elemento visível cujo texto normalizado (sem acento,
+    minúsculo) contém `needle`, disparando o onclick inline (AJAX A4J)."""
+    return await page.evaluate(
+        "(needle) => {" + _NORM_JS + """
+          const n = norm(needle);
+          let best=null, bl=1e9;
+          for (const el of document.querySelectorAll('a,span,td')) {
+            const t = norm(el.textContent);
+            if (t.includes(n)) { const r=el.getBoundingClientRect();
+              if (r.width>0 && r.height>0 && t.length<bl) { best=el; bl=t.length; } }
+          }
+          if (best) { best.click(); return true; }
+          return false;
+        }""",
+        needle,
+    )
+
+
+async def _text_present(page, needle: str) -> bool:
+    return await page.evaluate(
+        "(needle) => {" + _NORM_JS + """
+          const n = norm(needle);
+          return [...document.querySelectorAll('a,span,td')].some(el =>
+            norm(el.textContent).includes(n) && el.getBoundingClientRect().width>0);
+        }""",
+        needle,
+    )
+
+
+async def _situacoes_carregadas(page) -> bool:
+    """True quando a aba Expedientes já renderizou a lista de situações."""
+    return await page.evaluate(
+        """() => [...document.querySelectorAll('a[onclick]')].some(a =>
+            /formAbaExpediente/i.test(a.getAttribute('onclick')||'') &&
+            a.getBoundingClientRect().width>0)"""
+    )
+
+
+async def _poll(page, check, timeout: float = 20.0, interval: float = 1.0) -> bool:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout
+    while loop.time() < deadline:
+        try:
+            if await check():
+                return True
+        except Exception:
+            pass
+        await asyncio.sleep(interval)
+    return False
+
+
 async def _navigate_to_unidade(page, atribuicao: str, situacao: str, status_cb) -> None:
     """Navega o painel do defensor até a lista de expedientes da unidade mapeada.
 
@@ -479,44 +538,50 @@ async def _navigate_to_unidade(page, atribuicao: str, situacao: str, status_cb) 
     if status_cb:
         status_cb("Abrindo expedientes…")
 
-    # Passo 1: aba Expedientes
-    sentinel = await _wait_text(page, "Pendentes de ciência", timeout=3)
-    if sentinel is None:
-        exp_tab = await _wait_text(page, "Expedientes", timeout=20)
-        if exp_tab is None:
-            raise RuntimeError(
-                "Aba 'Expedientes' não encontrada no painel — "
-                "verifique se está no painel do defensor (advogado.seam)"
-            )
-        await exp_tab.click()
-        # Aguarda conteúdo da aba aparecer
-        await _wait_text(page, "Pendentes de ciência", timeout=20)
+    # Passo 1: ativa a aba Expedientes via onclick do #tabExpedientes_shifted.
+    # O handler de troca de aba mora nesse elemento interno (o <td>/_lbl NÃO tem
+    # onclick) e checa isTabActive sozinho, então clicar com a aba já ativa é
+    # no-op seguro. Depois aguarda a lista de situações carregar (AJAX).
+    await page.evaluate(
+        "() => { const t = document.getElementById('tabExpedientes_shifted'); if (t) t.click(); }"
+    )
+    if not await _poll(page, lambda: _situacoes_carregadas(page), timeout=30, interval=1.0):
+        raise RuntimeError(
+            "Aba 'Expedientes' não carregou a lista de situações — "
+            "verifique se está no painel do defensor (advogado.seam)"
+        )
 
-    # Passo 2: Situação
-    sit_loc = await _wait_text(page, situacao, timeout=20)
-    if sit_loc is None:
+    # Passo 2: Situação (ex.: "Pendentes de ciência ou de resposta")
+    if not await _js_click_text(page, situacao):
         raise RuntimeError(
             f"Situação '{situacao}' não encontrada após abrir aba Expedientes"
         )
-    await sit_loc.click()
+    if not await _poll(page, lambda: _text_present(page, comarca), timeout=20):
+        raise RuntimeError(
+            f"Comarca '{comarca}' não apareceu após selecionar situação"
+        )
 
-    # Passo 3: Comarca
+    # Passo 3: Comarca — com RETRY (clique é toggle do accordion; só re-clica se
+    # a vara não apareceu, evitando colapsar um nó já aberto).
     if status_cb:
         status_cb(f"{comarca} ▸ {unidade_txt}…")
-    com_loc = await _wait_text(page, comarca, timeout=20)
-    if com_loc is None:
+    vara_ok = False
+    for _ in range(4):
+        await _js_click_text(page, comarca)
+        if await _poll(page, lambda: _text_present(page, unidade_txt), timeout=8):
+            vara_ok = True
+            break
+        await asyncio.sleep(1)
+    if not vara_ok:
         raise RuntimeError(
-            f"Comarca '{comarca}' não encontrada após selecionar situação"
+            f"Unidade '{unidade_txt}' não apareceu após comarca '{comarca}'"
         )
-    await com_loc.click()
 
     # Passo 4: Vara/Unidade
-    vara_loc = await _wait_text(page, unidade_txt, timeout=20)
-    if vara_loc is None:
+    if not await _js_click_text(page, unidade_txt):
         raise RuntimeError(
             f"Unidade '{unidade_txt}' não encontrada após selecionar comarca '{comarca}'"
         )
-    await vara_loc.click()
 
     # Aguarda a tabela ESTABILIZAR e corresponder à vara selecionada (até 30s).
     # RichFaces troca o conteúdo por AJAX: ao clicar a vara, a tabela do nó
