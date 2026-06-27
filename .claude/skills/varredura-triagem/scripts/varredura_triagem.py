@@ -575,6 +575,16 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
     """Abre autos digitais e tenta ler o conteúdo mais informativo. Lê iframe
     default; depois itera candidatos relevantes da timeline e fica com o maior."""
     full = f"https://pje.tjba.jus.br{autos_url}" if autos_url.startswith("/") else autos_url
+    # TRAVA ANTI-CIÊNCIA (protege o prazo de 10 dias de leitura): só lemos os
+    # autos pela visão COMPLETA do processo (listProcessoCompletoAdvogado.seam),
+    # que NÃO efetiva ciência. O popup visualizarExpediente.seam (acionado pelo
+    # botão "TOMAR CIÊNCIA") EFETIVA a ciência — nunca abrir. Qualquer link que
+    # não seja o de autos completos é recusado → cai em manual-review.
+    low = full.lower()
+    if "visualizarexpediente.seam" in low or "tomarciencia" in low or "listprocessocompletoadvogado.seam" not in low:
+        log("  ⚠ link não é o de autos completos — recusado p/ não dar ciência (manual-review)")
+        return {"text": "", "default_len": 0, "best_len": 0, "best_id": None,
+                "top_titulo": None, "timeline": []}
     autos = await ctx.new_page()
     try:
         # A página de autos do PJe é lenta e às vezes estoura o timeout de forma
