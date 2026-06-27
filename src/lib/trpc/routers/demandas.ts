@@ -10,6 +10,7 @@ import { logAudit, diffFields } from "@/lib/audit";
 import { normalizarNome, calcularSimilaridade } from "@/lib/pje-parser";
 import { classificarMatchNome } from "@/lib/assistido-match";
 import { detectarDesignacaoAudiencia } from "@/lib/registros/detectar-designacao-audiencia";
+import { isMpu as deriveIsMpu } from "@/lib/mpu";
 import {
   aplicarDesignacaoAudiencia,
   limparCalendarSupersedidas,
@@ -146,6 +147,7 @@ export const demandasRouter = router({
           createdAt: demandas.createdAt,
           updatedAt: demandas.updatedAt,
           syncedAt: demandas.syncedAt,
+          enrichmentData: demandas.enrichmentData,
           registrosCount: sql<number>`(SELECT count(*)::int FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id})`,
           processo: {
             id: processos.id,
@@ -172,7 +174,20 @@ export const demandasRouter = router({
       if (limit) query = query.limit(limit);
       if (offset) query = query.offset(offset);
 
-      return await query;
+      const rows = await query;
+      // isMpu derivado por demanda (nível da INTIMAÇÃO): a classe da intimação
+      // (enrichmentData.tipo_processo, ex. "MPUMPCrim") captura MPU dentro de
+      // processo AP — o processo.tipoProcesso fica "AP" por design. Fonte única:
+      // helper canônico src/lib/mpu.ts. enrichmentData não vai pro cliente (lean).
+      return rows.map(({ enrichmentData, ...d }) => ({
+        ...d,
+        isMpu: deriveIsMpu({
+          numeroAutos: d.processo?.numeroAutos,
+          processoVvd: { tipoProcesso: d.processo?.tipoProcesso },
+          intimacaoTipoProcesso: (enrichmentData as { tipo_processo?: string } | null)?.tipo_processo,
+          ato: d.ato,
+        }),
+      }));
     }),
 
   // ────────────────────────────────────────────────────────────────────

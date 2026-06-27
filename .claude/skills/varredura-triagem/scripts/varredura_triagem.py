@@ -119,6 +119,10 @@ def _is_mpu(demanda: dict) -> bool:
     numero = proc.get("numero_autos") or ""
     if isinstance(numero, str) and numero.startswith("MPUMP"):
         return True
+    # Classe da INTIMAÇÃO (ex.: "MPUMPCrim") — captura MPU dentro de processo AP.
+    intim = (demanda.get("enrichment_data") or {}).get("tipo_processo") or ""
+    if isinstance(intim, str) and intim.upper().startswith("MPU"):
+        return True
     return False
 
 

@@ -1111,6 +1111,9 @@ export default function Demandas() {
       processos: d.processo?.numeroAutos
         ? [{ tipo: d.processo.tipoProcesso || "", numero: d.processo.numeroAutos }]
         : [],
+      // isMpu derivado no servidor (nível da intimação) — fonte única src/lib/mpu.ts.
+      // Captura MPU (MPUMPCrim) dentro de processo AP, que o chip de classe não mostra.
+      isMpu: d.isMpu ?? false,
       ato: d.ato || d.titulo || "",
       providencias: d.providencias || "",
       providenciaResumo: d.providenciaResumo || "",
@@ -2154,11 +2157,13 @@ export default function Demandas() {
         !selectedTipoAto || demanda.tipoAto === selectedTipoAto;
       const matchTipoProcesso =
         !selectedTipoProcesso || (demanda.processos?.[0]?.tipo === selectedTipoProcesso);
-      const tipoProc = demanda.processos?.[0]?.tipo;
+      // MPU detectado no nível da INTIMAÇÃO (demanda.isMpu, do servidor) — não pela
+      // classe do processo (MPUMPCrim costuma viver dentro de processo AP).
+      const ehMpu = (demanda as { isMpu?: boolean }).isMpu === true;
       const matchMpu =
         mpuFilter === "all" ? true :
-        mpuFilter === "only_mpu" ? tipoProc === "MPU" :
-        /* without_mpu */ tipoProc !== "MPU";
+        mpuFilter === "only_mpu" ? ehMpu :
+        /* without_mpu */ !ehMpu;
       const matchStatusGroup =
         !selectedStatusGroup ||
         selectedStatusGroup.includes(getDemandaGroup(demanda));
@@ -2479,6 +2484,7 @@ export default function Demandas() {
   // chips de facet "AP (X) | MPU (X) | …" só quando há múltiplos tipos.
   const tipoProcessoCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+    let mpu = 0;
     for (const d of demandas) {
       const matchProfissional = isVisaoGeral || d.defensorId === defensorUserId;
       const matchArchived = showArchived ? d.arquivado : !d.arquivado;
@@ -2487,7 +2493,11 @@ export default function Demandas() {
       if (!matchProfissional || !matchArchived || !matchAtribuicao) continue;
       const t = d.processos?.[0]?.tipo;
       if (t) counts[t] = (counts[t] || 0) + 1;
+      if ((d as { isMpu?: boolean }).isMpu === true) mpu++;
     }
+    // MPU = nível da intimação (isMpu), não a classe do processo — o switch MPU
+    // do header usa este número (uma MPUMPCrim dentro de processo AP conta aqui).
+    counts["MPU"] = mpu;
     return counts;
   }, [demandas, selectedAtribuicoes, showArchived, defensorUserId, isVisaoGeral]);
 
