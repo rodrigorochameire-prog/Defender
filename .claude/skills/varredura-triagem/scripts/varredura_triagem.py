@@ -910,7 +910,7 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
     # Registro "Medidas protetivas deferidas" (anotação determinística)
     titulo = "Medidas protetivas deferidas"
     if medidas and not sb.registro_exists(demanda["id"], titulo):
-        linhas = [f"- {m['rotulo']} (art. {m['artigo']})"
+        linhas = [f"- {m['rotulo']} ({m['artigo'] if str(m['artigo']).lower().startswith('art') else 'art. ' + m['artigo']})"
                   + (f" — {m['distancia_metros']}m" if m.get("distancia_metros") else "")
                   for m in medidas]
         corpo = "Medidas deferidas (parsing automático — conferir):\n" + "\n".join(linhas)
