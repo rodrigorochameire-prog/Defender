@@ -96,9 +96,8 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
   const primaryKey = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
     ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
     : (atribuicoesUnicas.map((x) => normalizeAreaToFilter(x)).find((k) => k !== "all") ?? null);
-  const barColor = filterActive
-    ? (SOLID_COLOR_MAP[atribuicaoFilter!] || '#6b7280')
-    : (primaryKey ? SOLID_COLOR_MAP[primaryKey] || '#6b7280' : primaryColor);
+  const displayKey = filterActive ? atribuicaoFilter! : (primaryKey ?? primaryAttrValue ?? undefined);
+  const barColor = displayKey ? (SOLID_COLOR_MAP[displayKey] || '#6b7280') : primaryColor;
 
   const telDigits = telefoneDisplay ? telefoneDisplay.replace(/\D/g, '') : null;
 
@@ -140,7 +139,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
               nome={assistido.nome}
               photoUrl={assistido.photoUrl}
               size="lg"
-              atribuicao={primaryAttrValue}
+              atribuicao={displayKey}
               statusPrisional={assistido.statusPrisional}
               showStatusDot
               onClick={onPhotoClick}

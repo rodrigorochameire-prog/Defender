@@ -25,7 +25,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
-import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP } from "@/lib/config/atribuicoes";
+import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP, normalizeAreaToFilter } from "@/lib/config/atribuicoes";
 import { statusPrisionalInfo } from "@/lib/config/tipologia";
 import { TYPO } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
@@ -119,7 +119,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         norm.includes(o.value.toUpperCase()),
     );
   };
-  const primaryAttr = atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null;
+  // Identidade estável: atribuição primária (não a do processo mais recente).
+  const primaryAttr = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
+    ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
+    : (atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null);
   const primaryAttrHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);

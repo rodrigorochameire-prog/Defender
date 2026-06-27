@@ -32,6 +32,7 @@ import {
   List,
   FileText,
   ChevronRight,
+  ChevronLeft,
   AlertTriangle,
   CheckCircle2,
   Timer,
@@ -954,17 +955,17 @@ export default function AssistidosPage() {
 
             <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
-            {/* Segmented: Lista / Analytics */}
-            <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-              {[
-                { label: "Lista", icon: Users, tab: "lista" as const },
-                { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
-              ].map((opt) => (
-                <button key={opt.tab} onClick={() => setActiveTab(opt.tab)} className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", activeTab === opt.tab ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                  <opt.icon className="w-3 h-3" /> <span className="hidden sm:inline">{opt.label}</span>
-                </button>
-              ))}
-            </div>
+            {/* Analytics — botão único que alterna a visão (volta pela própria toggle ou pelo "Voltar à lista") */}
+            <button
+              onClick={() => setActiveTab(activeTab === "analytics" ? "lista" : "analytics")}
+              title="Analytics"
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-[10px] font-medium transition-all shrink-0 cursor-pointer",
+                activeTab === "analytics" ? "bg-white/[0.12] text-white" : "text-white/45 hover:text-white/75 hover:bg-white/[0.06]",
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Analytics</span>
+            </button>
             </div>
 
             {/* Right cluster: busca + filtros rápidos + ⋯ + Novo */}
@@ -1213,9 +1214,17 @@ export default function AssistidosPage() {
 
       {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
-        <Card className="border border-border bg-card rounded-xl overflow-hidden">
-          <AnalyticsTab assistidos={realAssistidos.filter(a => !isPlaceholderNome(a.nome))} />
-        </Card>
+        <div className="space-y-3">
+          <button
+            onClick={() => setActiveTab("lista")}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" /> Voltar à lista
+          </button>
+          <Card className="border border-border bg-card rounded-xl overflow-hidden">
+            <AnalyticsTab assistidos={realAssistidos.filter(a => !isPlaceholderNome(a.nome))} />
+          </Card>
+        </div>
       )}
 
       {/* Lista Tab Content */}

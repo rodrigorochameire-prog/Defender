@@ -24,7 +24,6 @@ import {
 import { format, differenceInDays, parseISO } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import {
-  ATRIBUICAO_OPTIONS,
   SOLID_COLOR_MAP,
   normalizeAreaToFilter,
 } from "@/lib/config/atribuicoes";
@@ -91,29 +90,17 @@ export function AssistidoTableView({
         const audienciaAmanha = diasAteAudiencia === 1;
 
         const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
-        const primaryAttrOption = atribuicoesUnicas.length > 0
-          ? (() => {
-              const normalizedAttr = atribuicoesUnicas[0].toUpperCase().replace(/_/g, " ");
-              return ATRIBUICAO_OPTIONS.find(
-                (o) =>
-                  o.value.toUpperCase() === normalizedAttr ||
-                  o.label.toUpperCase().includes(normalizedAttr) ||
-                  normalizedAttr.includes(o.value.toUpperCase()),
-              );
-            })()
-          : null;
 
-        // Cor da barra: se há filtro ativo, usa a cor do filtro (lista uniforme);
-        // senão, a atribuição primária estável (não a do processo mais recente).
+        // Identidade unificada: barra E avatar usam a mesma chave de atribuição —
+        // o filtro ativo (lista uniforme) ou a primária estável (não a do processo mais recente).
         const variaKeys = Array.from(
           new Set(atribuicoesUnicas.map((x) => normalizeAreaToFilter(x)).filter((k) => k !== "all")),
         );
         const primaryKey = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
           ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
           : (variaKeys[0] ?? null);
-        const barColor = filterActive
-          ? (SOLID_COLOR_MAP[atribuicaoFilter!] || "#a1a1aa")
-          : (primaryKey ? SOLID_COLOR_MAP[primaryKey] || "#a1a1aa" : "#a1a1aa");
+        const displayKey = filterActive ? atribuicaoFilter! : (primaryKey ?? undefined);
+        const barColor = displayKey ? (SOLID_COLOR_MAP[displayKey] || "#a1a1aa") : "#a1a1aa";
 
         const telefone = assistido.telefone || assistido.telefoneContato;
         const telDigits = telefone ? telefone.replace(/\D/g, "") : null;
@@ -167,7 +154,7 @@ export function AssistidoTableView({
                     nome={assistido.nome}
                     photoUrl={assistido.photoUrl}
                     size="sm"
-                    atribuicao={primaryAttrOption?.value}
+                    atribuicao={displayKey}
                     statusPrisional={assistido.statusPrisional}
                     showStatusDot
                     onClick={() => onPhotoClick(assistido)}
