@@ -103,6 +103,7 @@ logs/
 !.claude/skills-cowork/SKILL_ALIASES.json
 !.claude/skills-cowork/_shared/
 !.claude/skills-cowork/analise-audiencias/
+!.claude/skills-cowork/analise-intimacao/
 !.claude/skills-cowork/citacao-depoimentos/
 !.claude/skills-cowork/citacoes-seguras/
 !.claude/skills-cowork/classify-document/
