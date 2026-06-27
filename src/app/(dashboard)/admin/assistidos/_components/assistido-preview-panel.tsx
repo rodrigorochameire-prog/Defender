@@ -117,17 +117,25 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
     );
   };
   const primaryAttr = atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null;
+  const primaryAttrHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
+  // Completude não é urgência — só emerald (ok) ou amber (a completar).
+  // Vermelho fica reservado para prazos/audiências (urgência real) abaixo.
   const completudeTone =
     comp.tone === "complete" || comp.tone === "good"
       ? "bg-emerald-500"
-      : comp.tone === "warn"
-        ? "bg-amber-500"
-        : "bg-rose-500";
+      : "bg-amber-500";
 
   return (
     <div className="flex flex-col h-full">
+      {/* Acento de identidade — única cor de área, hairline sutil */}
+      {primaryAttrHex && (
+        <div
+          className="h-[3px] shrink-0"
+          style={{ background: `linear-gradient(to right, ${primaryAttrHex}, transparent)` }}
+        />
+      )}
       <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
         {/* ───────── 1. RESUMO ───────── */}
         <section className="px-5 py-4">

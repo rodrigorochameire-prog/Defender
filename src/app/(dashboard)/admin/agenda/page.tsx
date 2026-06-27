@@ -1605,7 +1605,7 @@ export default function AgendaPage() {
                   .filter(o => o.value !== "all")
                   .map(o => [o.label, countByArea[o.value] ?? 0])
               )}
-              compact
+              iconOnly
             />
           </div>
 

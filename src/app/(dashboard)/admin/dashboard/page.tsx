@@ -885,7 +885,7 @@ export default function DashboardJuriPage() {
                   }
                 }}
                 onClear={() => setDashboardAreaFilter([])}
-                compact
+                iconOnly
                 counts={Object.fromEntries(
                   atribuicaoOptions
                     .filter(o => o.value !== "all" && o.value !== "Todas")

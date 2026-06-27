@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState, useMemo, useRef, useCallback, useEffect, Fragment } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
@@ -51,6 +52,7 @@ import {
   MapPin,
   FolderOpen,
   MessageCircle,
+  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAssignment } from "@/contexts/assignment-context";
@@ -116,6 +118,18 @@ function computeAlerts(a: AssistidoUI): Array<{ label: string; color: "rose" | "
   }
 
   return alerts;
+}
+
+/** Placeholder "A identificar" / não identificado criado pela importação do PJe (vai para /pendentes). */
+function isPlaceholderNome(nome: string): boolean {
+  const n = (nome || "").toLowerCase().trim();
+  return (
+    n === "" ||
+    n === "-" ||
+    n.includes("a identificar") ||
+    n.includes("nao identificado") ||
+    n.includes("não identificado")
+  );
 }
 
 /** Export filtered assistidos to CSV */
@@ -257,9 +271,28 @@ export default function AssistidosPage() {
   );
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "status">("none");
   const { activeCount } = useProcessingQueue();
-  const [showNaoIdentificados, setShowNaoIdentificados] = useState(false);
   const [showArquivados, setShowArquivados] = useState(false);
   const [smartPreset, setSmartPreset] = useState<string | null>(searchParams.get("preset") || null);
+
+  // Menu "Mais" (⋯) — agrupa ações secundárias (abrangência, ferramentas, filtros extras).
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const overflowBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Aplica/alterna um smart preset (usado pelos chips inline e pelo menu ⋯).
+  const applyPreset = useCallback((id: string) => {
+    setSmartPreset((current) => {
+      if (current === id) {
+        setStatusFilter("all");
+        setSortBy("nome");
+        return null;
+      }
+      if (id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+      else if (id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
+      else if (id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+      else { setStatusFilter("all"); setSortBy("nome"); }
+      return id;
+    });
+  }, []);
 
   // Busca server-side por numero de processo
   const isProcessoSearch = searchTerm.length > 3 && /\d{4,}/.test(searchTerm) && (searchTerm.includes('-') || searchTerm.includes('.'));
@@ -270,12 +303,7 @@ export default function AssistidosPage() {
 
   // Contagem de nao identificados
   const naoIdentificadosCount = useMemo(() => {
-    return realAssistidos.filter(a =>
-      a.nome.toLowerCase().includes("nao identificado") ||
-      a.nome.toLowerCase().includes("nao identificado") ||
-      a.nome === "" ||
-      a.nome === "-"
-    ).length;
+    return realAssistidos.filter(a => isPlaceholderNome(a.nome)).length;
   }, [realAssistidos]);
 
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
@@ -443,15 +471,8 @@ export default function AssistidosPage() {
 
   const filteredAssistidos = useMemo(() => {
     let result = realAssistidos.filter((a) => {
-      // Verificar se e "Nao Identificado"
-      const isNaoIdentificado =
-        a.nome.toLowerCase().includes("nao identificado") ||
-        a.nome.toLowerCase().includes("nao identificado") ||
-        a.nome === "" ||
-        a.nome === "-";
-
-      if (showNaoIdentificados) return isNaoIdentificado;
-      if (isNaoIdentificado) return false;
+      // Placeholders "A identificar" nunca aparecem na lista — vão para a triagem (/pendentes)
+      if (isPlaceholderNome(a.nome)) return false;
 
       // Expanded search: includes endereco, unidadePrisional, nomeMae
       const term = searchTerm.toLowerCase();
@@ -524,7 +545,7 @@ export default function AssistidosPage() {
     });
 
     return result;
-  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, showNaoIdentificados, smartPreset, processoSearchIds]);
+  }, [realAssistidos, searchTerm, statusFilter, areaFilter, comarcaFilter, sortBy, pinnedIds, showPinnedOnly, atribuicaoFilter, smartPreset, processoSearchIds]);
 
   // Progressive rendering
   const { visibleItems: visibleAssistidos } = useProgressiveList(filteredAssistidos, 24, 24);
@@ -804,6 +825,7 @@ export default function AssistidosPage() {
         hasDuplicates={(potentialDuplicates[a.id]?.length || 0) > 0}
         duplicateCount={potentialDuplicates[a.id]?.length || 0}
         onPreview={() => handlePreview(a)}
+        isSelected={previewAssistido?.id === a.id}
       />
     </div>
   );
@@ -846,49 +868,33 @@ export default function AssistidosPage() {
         seamless
         bottomRow={
           <div className="flex items-center justify-between gap-3 min-w-0">
-            <div className="flex items-center gap-3 min-w-0 overflow-x-auto scrollbar-none">
-            {/* Atribuição pills */}
-            {!showNaoIdentificados && (
-              <AtribuicaoPills
-                variant="dark"
-                options={[
-                  { value: "Tribunal do Júri", label: "Tribunal do Júri" },
-                  { value: "Violência Doméstica", label: "Violência Doméstica" },
-                  { value: "Execução Penal", label: "Execução Penal" },
-                  { value: "Substituição Criminal", label: "Substituição Criminal" },
-                  { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
-                ]}
-                selectedValues={atribuicaoFilter !== "all" ? [(() => {
-                  const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
-                  return map[atribuicaoFilter] || atribuicaoFilter;
-                })()] : []}
-                onToggle={(value) => {
-                  const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
-                  const normalized = reverseMap[value] || value;
-                  setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
-                }}
-                onClear={() => setAtribuicaoFilter("all")}
-                counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
-                singleSelect
-                compact
-              />
-            )}
+            <div className="flex items-center gap-2.5 min-w-0 overflow-x-auto scrollbar-none">
+            {/* Atribuição — switch padrão icon-only (mesmo de Demandas) */}
+            <AtribuicaoPills
+              variant="dark"
+              options={[
+                { value: "Tribunal do Júri", label: "Tribunal do Júri" },
+                { value: "Violência Doméstica", label: "Violência Doméstica" },
+                { value: "Execução Penal", label: "Execução Penal" },
+                { value: "Substituição Criminal", label: "Substituição Criminal" },
+                { value: "Grupo Especial do Júri", label: "Grupo Especial do Júri" },
+              ]}
+              selectedValues={atribuicaoFilter !== "all" ? [(() => {
+                const map: Record<string, string> = { JURI: "Tribunal do Júri", VVD: "Violência Doméstica", EXECUCAO: "Execução Penal", SUBSTITUICAO: "Substituição Criminal", SUBSTITUICAO_CIVEL: "Substituição Criminal", CURADORIA: "Curadoria Especial" };
+                return map[atribuicaoFilter] || atribuicaoFilter;
+              })()] : []}
+              onToggle={(value) => {
+                const reverseMap: Record<string, string> = { "Tribunal do Júri": "JURI", "Violência Doméstica": "VVD", "Execução Penal": "EXECUCAO", "Substituição Criminal": "SUBSTITUICAO", "Grupo Especial do Júri": "JURI", "Curadoria Especial": "CURADORIA" };
+                const normalized = reverseMap[value] || value;
+                setAtribuicaoFilter(atribuicaoFilter === normalized ? "all" : normalized);
+              }}
+              onClear={() => setAtribuicaoFilter("all")}
+              counts={{ "Tribunal do Júri": (atribuicaoCounts["JURI"] || 0), "Violência Doméstica": (atribuicaoCounts["VVD"] || 0), "Execução Penal": (atribuicaoCounts["EXECUCAO"] || 0), "Substituição Criminal": (atribuicaoCounts["SUBSTITUICAO"] || 0), "Grupo Especial do Júri": 0 }}
+              singleSelect
+              iconOnly
+            />
 
-            <div className="flex-1 min-w-2" />
-
-            {/* Segmented: Comarca / RMS */}
-            {!showNaoIdentificados && (
-              <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-                {[
-                  { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
-                  { label: "RMS", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
-                ].map((opt) => (
-                  <button key={opt.label} onClick={opt.onClick} className={cn("px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", opt.active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="w-px h-5 bg-white/[0.10] shrink-0" />
 
             {/* Segmented: Lista / Analytics */}
             <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
@@ -897,80 +903,22 @@ export default function AssistidosPage() {
                 { label: "Analytics", icon: BarChart3, tab: "analytics" as const },
               ].map((opt) => (
                 <button key={opt.tab} onClick={() => setActiveTab(opt.tab)} className={cn("flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-[4px] transition-all", activeTab === opt.tab ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}>
-                  <opt.icon className="w-3 h-3" /> {opt.label}
+                  <opt.icon className="w-3 h-3" /> <span className="hidden sm:inline">{opt.label}</span>
                 </button>
               ))}
             </div>
-
-            <div className="w-px h-4 bg-white/[0.08] shrink-0" />
-
-            {/* Smart presets — ícones compactos */}
-            {!showNaoIdentificados && (
-              <div className="inline-flex items-center bg-black/[0.15] rounded-md p-[2px] shrink-0">
-                {[
-                  { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos },
-                  { id: "audiencias_semana", tip: "Audiências", icon: Calendar, count: stats.audienciasSemana },
-                  { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos },
-                  { id: "sem_drive", tip: "Sem Drive", icon: Link2Off, count: stats.semDrive },
-                  { id: "novos_30d", tip: "Novos 30d", icon: Plus, count: stats.novos30d },
-                ].map((preset) => {
-                  const active = smartPreset === preset.id;
-                  const PresetIcon = preset.icon;
-                  return (
-                    <Tooltip key={preset.id}>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => {
-                            if (active) { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }
-                            else {
-                              setSmartPreset(preset.id);
-                              if (preset.id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
-                              else if (preset.id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
-                              else if (preset.id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
-                              else { setStatusFilter("all"); setSortBy("nome"); }
-                            }
-                          }}
-                          className={cn("relative inline-flex items-center justify-center w-7 h-7 rounded-[4px] transition-all shrink-0 cursor-pointer", active ? "bg-white/[0.12] text-white" : "text-white/40 hover:text-white/60")}
-                        >
-                          <PresetIcon className="w-3 h-3" />
-                          {preset.count > 0 && (
-                            <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : preset.id === "prazos_vencidos" ? "bg-rose-500 text-white" : "bg-white/[0.10] text-white/60")}>
-                              {preset.count}
-                            </span>
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-[10px]">{preset.tip} ({preset.count})</TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            )}
-            {smartPreset && (
-              <button onClick={() => { setSmartPreset(null); setStatusFilter("all"); setSortBy("nome"); }} className="text-white/40 hover:text-white transition-colors shrink-0">
-                <XCircle className="w-3 h-3" />
-              </button>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/admin/whatsapp" aria-label="WhatsApp" className="inline-flex items-center justify-center w-7 h-7 rounded-[4px] text-white/40 hover:text-emerald-400 hover:bg-white/[0.08] transition-colors shrink-0">
-                  <MessageCircle className="w-3.5 h-3.5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">WhatsApp</TooltipContent>
-            </Tooltip>
             </div>
 
-            {/* Right cluster: busca + ações + Novo (migrou do row 1) */}
+            {/* Right cluster: busca + filtros rápidos + ⋯ + Novo */}
             <div className="flex items-center gap-1.5 shrink-0">
-              <div className="relative">
+              <div className="relative hidden sm:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
                 <Input
                   ref={searchInputRef}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Nome, CPF, processo..."
-                  className="pl-8 w-[140px] sm:w-[180px] md:w-[220px] h-7 text-xs bg-black/[0.15] border border-white/[0.08] text-white/90 placeholder:text-white/40 rounded-lg"
+                  className="pl-8 w-[160px] md:w-[220px] h-7 text-xs bg-black/[0.15] border border-white/[0.08] text-white/90 placeholder:text-white/40 rounded-lg"
                 />
                 {isProcessoSearch && (
                   <p className="text-[10px] text-white/50 mt-0.5 absolute left-0 -bottom-4 whitespace-nowrap">
@@ -978,42 +926,42 @@ export default function AssistidosPage() {
                   </p>
                 )}
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href="/admin/inteligencia">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Inteligência" aria-label="Inteligência">
-                      <Brain className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Inteligência</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Exportar CSV" aria-label="Exportar CSV" onClick={() => exportToCSV(filteredAssistidos)}>
-                    <Download className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Exportar CSV</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-white/50 hover:text-emerald-400 hover:bg-white/[0.08] cursor-pointer" title="Vincular pastas Drive" aria-label="Vincular pastas Drive" disabled={backfillDriveMutation.isPending} onClick={() => backfillDriveMutation.mutate({ limit: 50 })}>
-                    {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FolderOpen className="w-3.5 h-3.5" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Vincular pastas Drive</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className={cn("h-7 w-7 p-0 cursor-pointer", batchSelectMode ? "text-amber-400 bg-amber-500/20" : "text-white/50 hover:text-amber-400 hover:bg-white/[0.08]")} title="Exportar ao Solar" aria-label="Exportar ao Solar" onClick={() => setBatchSelectMode(!batchSelectMode)}>
-                    <Sun className="w-3.5 h-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">Exportar ao Solar</TooltipContent>
-              </Tooltip>
+
+              {/* Filtros rápidos inline — só os 2 principais */}
+              {[
+                { id: "meus_presos", tip: "Presos", icon: Lock, count: stats.presos, danger: false },
+                { id: "prazos_vencidos", tip: "Prazos vencidos", icon: AlertCircle, count: stats.prazosVencidos, danger: true },
+              ].map((q) => {
+                const active = smartPreset === q.id;
+                const QIcon = q.icon;
+                return (
+                  <Tooltip key={q.id}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => applyPreset(q.id)}
+                        className={cn("relative inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all shrink-0 cursor-pointer", active ? "bg-white/[0.12] text-white" : "text-white/45 hover:text-white/75 hover:bg-white/[0.06]")}
+                      >
+                        <QIcon className="w-3.5 h-3.5" />
+                        {q.count > 0 && (
+                          <span className={cn("absolute -top-1 -right-1 text-[7px] font-bold tabular-nums min-w-[12px] h-[12px] flex items-center justify-center rounded-full", active ? "bg-emerald-500 text-white" : q.danger ? "bg-rose-500 text-white" : "bg-white/[0.12] text-white/70")}>
+                            {q.count}
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-[10px]">{q.tip} ({q.count})</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+              {smartPreset && (
+                <button onClick={() => applyPreset(smartPreset)} title="Limpar filtro" className="text-white/40 hover:text-white transition-colors shrink-0">
+                  <XCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Barra de seleção do Solar (quando ativa) */}
               {batchSelectMode && (
-                <div className="flex items-center gap-1.5 ml-1 pl-2 border-l border-white/15">
+                <div className="flex items-center gap-1.5 ml-0.5 pl-2 border-l border-white/15 shrink-0">
                   <span className="text-[10px] text-white/60 tabular-nums">{batchSelectedIds.size} sel.</span>
                   <Button size="sm" className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-medium rounded-lg" disabled={batchSelectedIds.size === 0 || exportarBatch.isPending} onClick={() => exportarBatch.mutate({ assistidoIds: Array.from(batchSelectedIds) })}>
                     {exportarBatch.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Exportar"}
@@ -1023,6 +971,90 @@ export default function AssistidosPage() {
                   </button>
                 </div>
               )}
+
+              {/* Menu "Mais" (⋯) — ações secundárias */}
+              <button
+                ref={overflowBtnRef}
+                onClick={() => setIsOverflowOpen((v) => !v)}
+                title="Mais opções"
+                aria-label="Mais opções"
+                className={cn("inline-flex items-center justify-center w-7 h-7 rounded-lg transition-all shrink-0 cursor-pointer", isOverflowOpen ? "bg-white/[0.12] text-white" : "text-white/50 hover:text-white/80 hover:bg-white/[0.06]")}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+              {isOverflowOpen && createPortal(
+                <>
+                  <div className="fixed inset-0 z-[9998]" onClick={() => setIsOverflowOpen(false)} />
+                  <div
+                    className="fixed z-[9999] w-64 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5"
+                    style={(() => {
+                      const r = overflowBtnRef.current?.getBoundingClientRect();
+                      return r ? { top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) } : {};
+                    })()}
+                  >
+                    {/* Filtros */}
+                    <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros rápidos</div>
+                    {[
+                      { id: "audiencias_semana", label: "Audiências na semana", icon: Calendar, count: stats.audienciasSemana },
+                      { id: "sem_drive", label: "Sem pasta no Drive", icon: Link2Off, count: stats.semDrive },
+                      { id: "novos_30d", label: "Novos (últimos 30 dias)", icon: Plus, count: stats.novos30d },
+                    ].map((item) => {
+                      const active = smartPreset === item.id;
+                      const ItemIcon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => { applyPreset(item.id); setIsOverflowOpen(false); }}
+                          className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors", active ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300")}
+                        >
+                          <ItemIcon className="w-3.5 h-3.5 text-neutral-400" />
+                          <span className="flex-1">{item.label}</span>
+                          <span className="text-[10px] tabular-nums text-neutral-400">{item.count}</span>
+                        </button>
+                      );
+                    })}
+
+                    <div className="my-1 h-px bg-neutral-100 dark:bg-neutral-800" />
+                    {/* Abrangência */}
+                    <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Abrangência</div>
+                    <div className="px-3 py-1.5 flex items-center gap-1">
+                      {[
+                        { label: "Comarca", active: !verRMS, onClick: () => verRMS && toggleVerRMS({ verRMS: false }) },
+                        { label: "RMS (região)", active: verRMS, onClick: () => !verRMS && toggleVerRMS({ verRMS: true }) },
+                      ].map((opt) => (
+                        <button
+                          key={opt.label}
+                          onClick={opt.onClick}
+                          className={cn("flex-1 px-2 py-1 text-[11px] font-medium rounded-md transition-all cursor-pointer", opt.active ? "bg-emerald-500 text-white" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300")}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="my-1 h-px bg-neutral-100 dark:bg-neutral-800" />
+                    {/* Ferramentas */}
+                    <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ferramentas</div>
+                    <button onClick={() => { exportToCSV(filteredAssistidos); setIsOverflowOpen(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                      <Download className="w-3.5 h-3.5 text-neutral-400" /> Exportar CSV
+                    </button>
+                    <button disabled={backfillDriveMutation.isPending} onClick={() => { backfillDriveMutation.mutate({ limit: 50 }); setIsOverflowOpen(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 disabled:opacity-50">
+                      {backfillDriveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-400" /> : <FolderOpen className="w-3.5 h-3.5 text-neutral-400" />} Vincular pastas do Drive
+                    </button>
+                    <button onClick={() => { setBatchSelectMode(true); setIsOverflowOpen(false); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                      <Sun className="w-3.5 h-3.5 text-neutral-400" /> Exportar ao Solar
+                    </button>
+                    <Link href="/admin/inteligencia" onClick={() => setIsOverflowOpen(false)} className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                      <Brain className="w-3.5 h-3.5 text-neutral-400" /> Inteligência
+                    </Link>
+                    <Link href="/admin/whatsapp" onClick={() => setIsOverflowOpen(false)} className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                      <MessageCircle className="w-3.5 h-3.5 text-neutral-400" /> WhatsApp
+                    </Link>
+                  </div>
+                </>,
+                document.body,
+              )}
+
               <div className="w-px h-5 bg-white/[0.10] mx-0.5" />
               <Link href="/admin/assistidos/novo">
                 <Button size="sm" className="h-7 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
@@ -1100,56 +1132,27 @@ export default function AssistidosPage() {
       {/* Analytics Tab Content */}
       {activeTab === "analytics" && (
         <Card className="border border-border bg-card rounded-xl overflow-hidden">
-          <AnalyticsTab assistidos={realAssistidos.filter(a => {
-            const isNI = a.nome.toLowerCase().includes("nao identificado") || a.nome === "" || a.nome === "-";
-            return !isNI;
-          })} />
+          <AnalyticsTab assistidos={realAssistidos.filter(a => !isPlaceholderNome(a.nome))} />
         </Card>
       )}
 
       {/* Lista Tab Content */}
       {activeTab === "lista" && (
       <>
-      {/* Alerta de Nao Identificados */}
-      {naoIdentificadosCount > 0 && !showNaoIdentificados && (
-        <button
-          onClick={() => setShowNaoIdentificados(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors text-left group"
+      {/* Triagem de identificação — chip discreto que leva à fila /pendentes */}
+      {naoIdentificadosCount > 0 && (
+        <Link
+          href="/admin/assistidos/pendentes"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors text-left group w-fit"
         >
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-          <span className="text-xs text-amber-700 dark:text-amber-400">
-            {naoIdentificadosCount} sem identificacao
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <span className="text-xs text-amber-700 dark:text-amber-400 tabular-nums">
+            {naoIdentificadosCount} a identificar
           </span>
-          <span className="text-[10px] text-amber-500 dark:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
-            Regularizar
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
+            Triagem <ChevronRight className="w-3 h-3" />
           </span>
-        </button>
-      )}
-
-      {/* Banner modo Nao Identificados */}
-      {showNaoIdentificados && (
-        <div className="flex items-center justify-between p-3 rounded-xl border border-amber-400 dark:border-amber-700 bg-amber-100 dark:bg-amber-900/30">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
-            <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                Modo Regularizacao - Assistidos Nao Identificados
-              </p>
-              <p className="text-xs text-amber-700 dark:text-amber-400">
-                Edite cada registro para adicionar o nome correto do assistido
-              </p>
-            </div>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-amber-500 text-amber-700 hover:bg-amber-200"
-            onClick={() => setShowNaoIdentificados(false)}
-          >
-            <XCircle className="w-3.5 h-3.5 mr-2" />
-            Voltar
-          </Button>
-        </div>
+        </Link>
       )}
 
       {/* Filter bar moved into header bottom row 2 */}
@@ -1278,6 +1281,7 @@ export default function AssistidosPage() {
           sortBy={sortBy}
           onSortChange={(col) => setSortBy(col as "nome" | "prioridade" | "prazo" | "complexidade")}
           onPreview={(a) => handlePreview(a as AssistidoUI)}
+          selectedId={previewAssistido?.id ?? null}
         />
       )}
         </div>

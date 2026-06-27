@@ -110,6 +110,75 @@ export const assistidosRouter = router({
     });
   }),
 
+  // Vincula um placeholder "⚠ A identificar" a um assistido já existente:
+  // reatribui processos/demandas/vínculos do placeholder para o destino e
+  // arquiva (soft-delete) o placeholder. Usado na fila de triagem (/pendentes)
+  // quando o réu não identificado é, na verdade, alguém já cadastrado.
+  vincularPlaceholder: protectedProcedure
+    .input(
+      z.object({
+        placeholderId: z.number().int().positive(),
+        targetId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { placeholderId, targetId } = input;
+      if (placeholderId === targetId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Selecione um assistido diferente do registro pendente." });
+      }
+
+      const placeholder = (await db.select().from(assistidos).where(eq(assistidos.id, placeholderId)).limit(1))[0];
+      const target = (await db.select().from(assistidos).where(eq(assistidos.id, targetId)).limit(1))[0];
+
+      if (!placeholder) throw new TRPCError({ code: "NOT_FOUND", message: "Registro pendente não encontrado." });
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "Assistido de destino não encontrado." });
+      if (target.deletedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Assistido de destino está arquivado." });
+      if (!placeholder.nome.startsWith("⚠ A identificar")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "A origem não é um registro de identificação pendente." });
+      }
+
+      const now = new Date();
+      const result = await db.transaction(async (tx) => {
+        // 1. Processos (vínculo direto de titularidade)
+        const movedProcessos = await tx
+          .update(processos)
+          .set({ assistidoId: targetId, updatedAt: now })
+          .where(eq(processos.assistidoId, placeholderId))
+          .returning({ id: processos.id });
+
+        // 2. Demandas
+        const movedDemandas = await tx
+          .update(demandas)
+          .set({ assistidoId: targetId, updatedAt: now })
+          .where(eq(demandas.assistidoId, placeholderId))
+          .returning({ id: demandas.id });
+
+        // 3. Join assistidos_processos — re-vincula evitando colisão no unique idx
+        //    (assistidoId, processoId, papel)
+        const joinRows = await tx
+          .select({ processoId: assistidosProcessos.processoId, papel: assistidosProcessos.papel })
+          .from(assistidosProcessos)
+          .where(eq(assistidosProcessos.assistidoId, placeholderId));
+        await tx.delete(assistidosProcessos).where(eq(assistidosProcessos.assistidoId, placeholderId));
+        for (const jr of joinRows) {
+          await tx
+            .insert(assistidosProcessos)
+            .values({ assistidoId: targetId, processoId: jr.processoId, papel: jr.papel, isPrincipal: false })
+            .onConflictDoNothing();
+        }
+
+        // 4. Arquiva o placeholder (soft-delete) — some da lista e da fila
+        await tx
+          .update(assistidos)
+          .set({ deletedAt: now, updatedAt: now })
+          .where(eq(assistidos.id, placeholderId));
+
+        return { processos: movedProcessos.length, demandas: movedDemandas.length, vinculos: joinRows.length };
+      });
+
+      return { ...result, targetId, targetNome: target.nome };
+    }),
+
   // Listar assistidos — visibilidade por comarca em 3 camadas (ver comarca-scope.ts)
   list: protectedProcedure
     .input(
@@ -123,8 +192,8 @@ export const assistidosRouter = router({
     .query(async ({ ctx, input }) => {
       const { search, statusPrisional, atribuicaoPrimaria, verRMS } = input || {};
 
-      // Construir condições (assistidos não tem soft delete)
-      const conditions: SQL<unknown>[] = [];
+      // Construir condições — exclui arquivados (soft-delete usado em merge de placeholders)
+      const conditions: SQL<unknown>[] = [isNull(assistidos.deletedAt)];
 
       // Filtro de visibilidade em 3 camadas (comarca própria + RMS opcional + processo local automático)
       if (ctx.user.role !== "admin") {

@@ -10,10 +10,6 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -26,19 +22,15 @@ import {
   MapPin,
   MessageCircle,
   ChevronRight,
-  ChevronDown,
   AlertCircle,
   Clock,
   Calendar,
   Bookmark,
   BookmarkCheck,
-  User,
-  CircleDot,
   Copy,
   CheckCircle2,
   HardDrive,
   Link2Off,
-  ExternalLink,
   Phone,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -59,10 +51,11 @@ export interface AssistidoCardProps {
   hasDuplicates?: boolean;
   duplicateCount?: number;
   onPreview?: () => void;
+  /** Realça o card quando ele é o que está aberto no painel de preview. */
+  isSelected?: boolean;
 }
 
-export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview }: AssistidoCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview, isSelected }: AssistidoCardProps) {
   const [copied, setCopied] = useState(false);
 
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
@@ -98,22 +91,29 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
     : null;
   const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
 
-  const handleCopyProcesso = () => {
+  const handleCopyProcesso = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!assistido.numeroProcesso) return;
     navigator.clipboard.writeText(assistido.numeroProcesso);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
-    <Card className={cn(
-      "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
-      "bg-white dark:bg-neutral-900",
-      "border border-neutral-200/80 dark:border-neutral-800/80",
-      "rounded-lg shadow-sm",
-      "hover:shadow-md hover:-translate-y-0.5",
-      isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30",
-    )}>
+    <Card
+      onClick={() => onPreview?.()}
+      className={cn(
+        "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
+        "bg-white dark:bg-neutral-900",
+        "border border-neutral-200/80 dark:border-neutral-800/80",
+        "rounded-lg shadow-sm cursor-pointer",
+        "hover:shadow-md hover:-translate-y-0.5",
+        isPinned && "ring-2 ring-amber-400/50 dark:ring-amber-500/30",
+        isSelected && "ring-2 ring-emerald-400/50 dark:ring-emerald-500/40 border-emerald-300 dark:border-emerald-700",
+      )}
+    >
       {/* Top accent bar */}
       <div
         className="absolute inset-x-0 top-0 h-0.5"
@@ -123,18 +123,20 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
       <div className="p-3.5 space-y-2.5 relative z-10">
         {/* Header: Avatar + Info */}
         <div className="flex gap-3 items-start">
-          <AssistidoAvatar
-            nome={assistido.nome}
-            photoUrl={assistido.photoUrl}
-            size="lg"
-            atribuicao={primaryAttrValue}
-            statusPrisional={assistido.statusPrisional}
-            showStatusDot
-            onClick={onPhotoClick}
-          />
+          <span onClick={stop} className="shrink-0">
+            <AssistidoAvatar
+              nome={assistido.nome}
+              photoUrl={assistido.photoUrl}
+              size="lg"
+              atribuicao={primaryAttrValue}
+              statusPrisional={assistido.statusPrisional}
+              showStatusDot
+              onClick={onPhotoClick}
+            />
+          </span>
 
           <div className="flex-1 min-w-0">
-            <Link href={`/admin/assistidos/${assistido.id}`}>
+            <Link href={`/admin/assistidos/${assistido.id}`} onClick={stop}>
               <h3 className="font-serif font-semibold text-neutral-900 dark:text-neutral-100 text-sm leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors line-clamp-1">
                 {assistido.nome}
               </h3>
@@ -184,7 +186,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-6 rounded-md flex items-center gap-1 px-1.5 text-zinc-600 dark:text-zinc-300 bg-zinc-100/60 dark:bg-white/[0.04] hover:bg-zinc-200/60 dark:hover:bg-white/[0.08] border border-zinc-200/80 dark:border-white/[0.06] transition-colors"
-                onClick={(e) => e.stopPropagation()}
+                onClick={stop}
               >
                 <HardDrive className="w-3 h-3" />
                 {(assistido.driveFilesCount ?? 0) > 0 && (
@@ -197,7 +199,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
               </div>
             )}
             <button
-              onClick={onTogglePin}
+              onClick={(e) => { stop(e); onTogglePin(); }}
               className={cn(
                 "h-6 w-6 rounded-md flex items-center justify-center transition-colors",
                 isPinned
@@ -248,6 +250,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
         <div className="flex items-center gap-3 text-xs">
           <Link
             href={`/admin/processos?assistido=${assistido.id}`}
+            onClick={stop}
             className="flex items-center gap-1 text-neutral-500 hover:text-emerald-600 transition-colors"
           >
             <Scale className="w-3 h-3" />
@@ -257,6 +260,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
           <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
           <Link
             href={`/admin/demandas?assistido=${assistido.id}`}
+            onClick={stop}
             className={cn(
               "flex items-center gap-1 text-xs transition-colors",
               assistido.demandasAbertas > 0
@@ -333,7 +337,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
       </div>
 
       {/* Footer */}
-      <div className="px-3.5 py-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50">
+      <div className="px-3.5 py-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50 relative z-10">
         <div className="flex items-center gap-1">
           {onPreview && (
             <TooltipProvider>
@@ -346,86 +350,25 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
                     <Eye className="w-3.5 h-3.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-[10px]">Preview</TooltipContent>
+                <TooltipContent side="top" className="text-[10px]">Resumo</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
           {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stop}>
               <button className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all">
                 <MessageCircle className="w-3.5 h-3.5" />
               </button>
             </a>
           )}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all"
-          >
-            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isExpanded && "rotate-180")} />
-          </button>
         </div>
 
-        <Link href={`/admin/assistidos/${assistido.id}`}>
+        <Link href={`/admin/assistidos/${assistido.id}`} onClick={stop}>
           <Button size="sm" className="h-7 text-[10px] px-3 gap-1 bg-neutral-800 hover:bg-zinc-900 dark:bg-neutral-700 dark:hover:bg-zinc-600 text-white rounded-lg">
             Ver Perfil <ChevronRight className="w-3 h-3" />
           </Button>
         </Link>
       </div>
-
-      {/* Expandable details */}
-      <Collapsible open={isExpanded}>
-        <CollapsibleContent>
-          <div className="px-3.5 pb-3.5 pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-            {/* Timeline */}
-            <div className="relative pl-4 space-y-2.5 border-l-2 border-neutral-200 dark:border-neutral-700">
-              {assistido.proximaAudiencia && (
-                <div className="relative">
-                  <div className={cn("absolute -left-[9px] top-0.5 w-4 h-4 rounded-full flex items-center justify-center", "bg-zinc-800 dark:bg-zinc-600")}>
-                    <Calendar className="w-2 h-2 text-white" />
-                  </div>
-                  <div className="ml-3">
-                    <p className={cn("text-xs font-semibold", audienciaHoje ? "text-amber-600" : "text-zinc-700 dark:text-zinc-300")}>
-                      {format(parseISO(assistido.proximaAudiencia), "dd/MM/yyyy 'às' HH:mm")}
-                    </p>
-                    <p className="text-[10px] text-neutral-500">{assistido.tipoProximaAudiencia || "Audiência"}</p>
-                  </div>
-                </div>
-              )}
-              {assistido.ultimoEvento && (
-                <div className="relative">
-                  <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-neutral-400 flex items-center justify-center">
-                    <CircleDot className="w-2 h-2 text-white" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                      {assistido.ultimoEvento.data ? format(parseISO(assistido.ultimoEvento.data), "dd/MM/yyyy") : ""}
-                    </p>
-                    <p className="text-[10px] text-neutral-500">{assistido.ultimoEvento.titulo}</p>
-                  </div>
-                </div>
-              )}
-              <div className="relative">
-                <div className="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full bg-neutral-300 dark:bg-neutral-600 flex items-center justify-center">
-                  <User className="w-2 h-2 text-white" />
-                </div>
-                <p className="ml-3 text-[10px] text-neutral-400">{format(new Date(assistido.createdAt), "dd/MM/yyyy")} &middot; Cadastro</p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <Link href={`/admin/processos?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1"><Scale className="w-3 h-3" />Processos</Button>
-                </Link>
-                <Link href={`/admin/audiencias?assistido=${assistido.id}`}>
-                  <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1"><Calendar className="w-3 h-3" />Audiências</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
     </Card>
   );
 }
