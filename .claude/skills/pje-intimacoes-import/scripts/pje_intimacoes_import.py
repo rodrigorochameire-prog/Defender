@@ -583,6 +583,15 @@ async def _distribuir_expedientes(page, atribuicao: str, status_cb) -> bool:
     if clicked:
         print(f"  [distribuir] varinha clicada: {clicked}", flush=True)
         await asyncio.sleep(8)  # distribuição em lote pode demorar
+        # O PJe abre um modal de confirmação ("Expediente movido para…") que some
+        # sozinho; Esc fecha-o sem efeito colateral (a distribuição já ocorreu).
+        # Nossa navegação por JS-click passa por cima de overlays, então isto é só
+        # higiene — deixa o painel limpo para a navegação seguinte.
+        try:
+            await page.keyboard.press("Escape")
+        except Exception:
+            pass
+        await asyncio.sleep(1)
         return True
     print("  [distribuir] ⚠ varinha (fa-magic) não encontrada na lista da comarca — segui sem distribuir", flush=True)
     if status_cb:
