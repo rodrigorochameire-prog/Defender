@@ -26,6 +26,7 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import {
   ATRIBUICAO_OPTIONS,
   SOLID_COLOR_MAP,
+  normalizeAreaToFilter,
 } from "@/lib/config/atribuicoes";
 import type { AssistidoUI } from "./assistido-types";
 import { statusConfig } from "./assistido-config";
@@ -41,6 +42,8 @@ export interface AssistidoTableViewProps {
   onPreview?: (a: AssistidoUI) => void;
   /** Assistido atualmente exibido no painel de preview — realça a linha. */
   selectedId?: number | null;
+  /** Filtro de atribuição ativo (normalizado) — quando setado, pinta a barra na cor do filtro. */
+  atribuicaoFilter?: string;
 }
 
 export function AssistidoTableView({
@@ -50,6 +53,7 @@ export function AssistidoTableView({
   onTogglePin,
   onPreview,
   selectedId,
+  atribuicaoFilter,
 }: AssistidoTableViewProps) {
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -58,6 +62,8 @@ export function AssistidoTableView({
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
+
+  const filterActive = !!atribuicaoFilter && atribuicaoFilter !== "all";
 
   return (
     <div className="space-y-2">
@@ -89,18 +95,26 @@ export function AssistidoTableView({
               );
             })()
           : null;
-        const primaryColor = primaryAttrOption
-          ? SOLID_COLOR_MAP[primaryAttrOption.value] || "#a1a1aa"
-          : "#a1a1aa";
+
+        // Cor da barra: se há filtro ativo, usa a cor do filtro (lista uniforme);
+        // senão, a atribuição primária estável (não a do processo mais recente).
+        const variaKeys = Array.from(
+          new Set(atribuicoesUnicas.map((x) => normalizeAreaToFilter(x)).filter((k) => k !== "all")),
+        );
+        const primaryKey = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
+          ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
+          : (variaKeys[0] ?? null);
+        const barColor = filterActive
+          ? (SOLID_COLOR_MAP[atribuicaoFilter!] || "#a1a1aa")
+          : (primaryKey ? SOLID_COLOR_MAP[primaryKey] || "#a1a1aa" : "#a1a1aa");
 
         const telefone = assistido.telefone || assistido.telefoneContato;
-        const whatsappUrl = telefone
-          ? `https://wa.me/55${telefone.replace(/\D/g, "")}`
-          : null;
+        const telDigits = telefone ? telefone.replace(/\D/g, "") : null;
 
         return (
           <div
             key={assistido.id}
+            id={`assistido-row-${assistido.id}`}
             className={cn(
               "group relative rounded-xl border transition-all duration-150 cursor-pointer",
               "animate-in fade-in duration-200 fill-mode-both",
@@ -113,10 +127,10 @@ export function AssistidoTableView({
             style={{ animationDelay: `${Math.min(index * 20, 400)}ms` }}
             onClick={() => onPreview?.(assistido)}
           >
-            {/* Color accent bar */}
+            {/* Color accent bar — atribuição do filtro (ou primária) */}
             <div
               className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
-              style={{ backgroundColor: primaryColor }}
+              style={{ backgroundColor: barColor }}
             />
 
             {/* Main row content */}
@@ -164,6 +178,19 @@ export function AssistidoTableView({
                         {tempoPreso}
                       </span>
                     )}
+                    {/* Pontos multi-vara — só quando atua em mais de uma atribuição */}
+                    {variaKeys.length > 1 && (
+                      <span className="flex items-center gap-0.5 ml-0.5">
+                        {variaKeys.slice(0, 4).map((k) => (
+                          <Tooltip key={k}>
+                            <TooltipTrigger asChild>
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SOLID_COLOR_MAP[k] || "#a1a1aa" }} />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-[10px]">{k}</TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -196,41 +223,46 @@ export function AssistidoTableView({
                   ) : null}
                 </div>
                 {telefone && (
-                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <a
-                      href={`tel:${telefone.replace(/\D/g, "")}`}
-                      className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-emerald-600 transition-colors"
-                    >
-                      <Phone className="w-3 h-3" />
-                      {telefone}
-                    </a>
-                    {whatsappUrl && (
-                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-emerald-500 transition-colors">
-                        <MessageCircle className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
+                  <a
+                    href={`tel:${telDigits}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-emerald-600 transition-colors shrink-0"
+                  >
+                    <Phone className="w-3 h-3" />
+                    {telefone}
+                  </a>
                 )}
               </div>
 
-              {/* === RIGHT: Audiência + Drive + Pin === */}
+              {/* === RIGHT: Audiência + WhatsApp + Drive + Pin === */}
               <div className="flex items-center gap-3 shrink-0">
-                {/* Audiência/Prazo */}
+                {/* Audiência/Prazo — clicável (fast-lane) */}
                 {assistido.proximaAudiencia ? (
-                  <div className={cn(
-                    "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap",
-                    audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-                    audienciaAmanha && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-                    !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 7 && "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
-                    !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 7 && "text-neutral-400 dark:text-neutral-500",
-                  )}>
-                    {(audienciaHoje || audienciaAmanha || (diasAteAudiencia !== null && diasAteAudiencia <= 5))
-                      ? <Zap className="w-3 h-3 shrink-0 fill-current" />
-                      : <Calendar className="w-3 h-3 shrink-0" />
-                    }
-                    {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanhã" : `${diasAteAudiencia}d`}
-                    <span className="opacity-60">{format(parseISO(assistido.proximaAudiencia), "dd/MM")}</span>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={`/admin/assistidos/${assistido.id}/audiencias`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition-all hover:brightness-95",
+                          audienciaHoje && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                          audienciaAmanha && "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
+                          !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia <= 7 && "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400",
+                          !audienciaHoje && !audienciaAmanha && diasAteAudiencia !== null && diasAteAudiencia > 7 && "text-neutral-400 dark:text-neutral-500",
+                        )}
+                      >
+                        {(audienciaHoje || audienciaAmanha || (diasAteAudiencia !== null && diasAteAudiencia <= 5))
+                          ? <Zap className="w-3 h-3 shrink-0 fill-current" />
+                          : <Calendar className="w-3 h-3 shrink-0" />
+                        }
+                        {audienciaHoje ? "HOJE" : audienciaAmanha ? "Amanhã" : `${diasAteAudiencia}d`}
+                        <span className="opacity-60">{format(parseISO(assistido.proximaAudiencia), "dd/MM")}</span>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-[10px]">
+                      {assistido.tipoProximaAudiencia || "Audiência"} · {format(parseISO(assistido.proximaAudiencia), "dd/MM HH:mm")}
+                    </TooltipContent>
+                  </Tooltip>
                 ) : prazoInfo ? (
                   <div className={cn(
                     "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap",
@@ -242,6 +274,22 @@ export function AssistidoTableView({
                     {prazoInfo.text}
                   </div>
                 ) : null}
+
+                {/* WhatsApp — abre conversa integrada no OMBUDS */}
+                {telDigits && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={`/admin/whatsapp?phone=${telDigits}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-7 w-7 inline-flex items-center justify-center rounded-md text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-[10px]">Conversa no OMBUDS</TooltipContent>
+                  </Tooltip>
+                )}
 
                 {/* Drive */}
                 <div onClick={(e) => e.stopPropagation()}>

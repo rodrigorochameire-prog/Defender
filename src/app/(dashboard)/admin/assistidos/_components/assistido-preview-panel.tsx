@@ -362,12 +362,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               <Plus className="w-3.5 h-3.5" />
             </button>
           </Link>
-          {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <button className="h-11 w-11 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="WhatsApp">
+          {telefoneDisplay && (
+            <Link href={`/admin/whatsapp?phone=${telefoneDisplay.replace(/\D/g, "")}`}>
+              <button className="h-11 w-11 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg border border-emerald-200 dark:border-emerald-800/50 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer" title="Conversa no OMBUDS">
                 <MessageCircle className="w-3.5 h-3.5" />
               </button>
-            </a>
+            </Link>
           )}
         </div>
       </div>

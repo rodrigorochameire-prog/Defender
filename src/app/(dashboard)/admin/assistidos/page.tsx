@@ -287,8 +287,10 @@ export default function AssistidosPage() {
         return null;
       }
       if (id === "meus_presos") { setStatusFilter("CADEIA_PUBLICA"); setSortBy("prioridade"); }
+      else if (id === "audiencias_hoje") { setStatusFilter("all"); setSortBy("prazo"); }
       else if (id === "audiencias_semana") { setStatusFilter("all"); setSortBy("prazo"); }
       else if (id === "prazos_vencidos") { setStatusFilter("all"); setSortBy("prazo"); }
+      else if (id === "presos_sem_audiencia") { setStatusFilter("all"); setSortBy("prioridade"); }
       else { setStatusFilter("all"); setSortBy("nome"); }
       return id;
     });
@@ -413,44 +415,6 @@ export default function AssistidosPage() {
   }, [activeTab, atribuicaoFilter, viewMode, searchTerm, statusFilter, sortBy, smartPreset]);
 
   // ========================================
-  // KEYBOARD SHORTCUTS
-  // ========================================
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = (document.activeElement as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
-        if (e.key === "Escape") {
-          (document.activeElement as HTMLElement).blur();
-          setSearchTerm("");
-          setPreviewAssistido(null);
-        }
-        return;
-      }
-
-      if (e.key === "/") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      } else if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        router.push("/admin/assistidos/novo");
-      } else if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        setViewMode("grid");
-      } else if (e.key === "t" && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        setViewMode("list");
-      } else if (e.key === "Escape") {
-        setPreviewAssistido(null);
-        setSearchTerm("");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [router]);
-
-  // ========================================
   // DERIVED DATA
   // ========================================
 
@@ -497,7 +461,10 @@ export default function AssistidosPage() {
 
       // Smart preset filters
       let matchesPreset = true;
-      if (smartPreset === "audiencias_semana") {
+      if (smartPreset === "audiencias_hoje") {
+        if (!a.proximaAudiencia) { matchesPreset = false; }
+        else { matchesPreset = differenceInDays(parseISO(a.proximaAudiencia), new Date()) === 0; }
+      } else if (smartPreset === "audiencias_semana") {
         if (!a.proximaAudiencia) { matchesPreset = false; }
         else {
           const dias = differenceInDays(parseISO(a.proximaAudiencia), new Date());
@@ -515,6 +482,10 @@ export default function AssistidosPage() {
         else {
           matchesPreset = differenceInDays(new Date(), parseISO(a.createdAt)) <= 30;
         }
+      } else if (smartPreset === "presos_sem_audiencia") {
+        matchesPreset = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional) && !a.proximaAudiencia;
+      } else if (smartPreset === "inativos") {
+        matchesPreset = !a.proximoPrazo && !a.proximaAudiencia && !!a.createdAt && differenceInDays(new Date(), parseISO(a.createdAt)) >= 60;
       }
 
       return matchesSearch && matchesStatus && matchesArea && matchesPinned && matchesAtribuicao && matchesComarca && matchesPreset;
@@ -549,6 +520,68 @@ export default function AssistidosPage() {
 
   // Progressive rendering
   const { visibleItems: visibleAssistidos } = useProgressiveList(filteredAssistidos, 24, 24);
+
+  // ========================================
+  // KEYBOARD SHORTCUTS (depende de filteredAssistidos)
+  // ========================================
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+        if (e.key === "Escape") {
+          (document.activeElement as HTMLElement).blur();
+          setSearchTerm("");
+          setPreviewAssistido(null);
+        }
+        return;
+      }
+
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/admin/assistidos/novo");
+      } else if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setViewMode("grid");
+      } else if (e.key === "t" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setViewMode("list");
+      } else if (e.key === "ArrowDown" || e.key === "j") {
+        e.preventDefault();
+        if (filteredAssistidos.length === 0) return;
+        const idx = previewAssistido ? filteredAssistidos.findIndex(a => a.id === previewAssistido.id) : -1;
+        const next = filteredAssistidos[Math.min(idx + 1, filteredAssistidos.length - 1)];
+        if (next) {
+          setPreviewAssistido(next);
+          addRecent(next.id);
+          requestAnimationFrame(() => document.getElementById(`assistido-row-${next.id}`)?.scrollIntoView({ block: "nearest" }));
+        }
+      } else if (e.key === "ArrowUp" || e.key === "k") {
+        e.preventDefault();
+        if (filteredAssistidos.length === 0) return;
+        const idx = previewAssistido ? filteredAssistidos.findIndex(a => a.id === previewAssistido.id) : 0;
+        const prev = filteredAssistidos[Math.max(idx - 1, 0)];
+        if (prev) {
+          setPreviewAssistido(prev);
+          addRecent(prev.id);
+          requestAnimationFrame(() => document.getElementById(`assistido-row-${prev.id}`)?.scrollIntoView({ block: "nearest" }));
+        }
+      } else if (e.key === "Enter") {
+        if (previewAssistido) {
+          e.preventDefault();
+          router.push(`/admin/assistidos/${previewAssistido.id}`);
+        }
+      } else if (e.key === "Escape") {
+        setPreviewAssistido(null);
+        setSearchTerm("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [router, filteredAssistidos, previewAssistido, addRecent]);
 
   // Detectar potenciais duplicados
   const potentialDuplicates = useMemo(() => {
@@ -647,6 +680,15 @@ export default function AssistidosPage() {
       return differenceInDays(new Date(), parseISO(a.createdAt)) <= 30;
     }).length;
 
+    // Radar de custódia/abandono
+    const presosSemAudiencia = realAssistidos.filter(a =>
+      ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(a.statusPrisional) && !a.proximaAudiencia
+    ).length;
+
+    const inativos = realAssistidos.filter(a =>
+      !a.proximoPrazo && !a.proximaAudiencia && !!a.createdAt && differenceInDays(new Date(), parseISO(a.createdAt)) >= 60
+    ).length;
+
     // Completude media
     const completudeMedia = total > 0
       ? Math.round(realAssistidos.reduce((sum, a) => sum + computeCompletude(a), 0) / total)
@@ -665,9 +707,24 @@ export default function AssistidosPage() {
       comDemandas,
       semDrive,
       novos30d,
+      presosSemAudiencia,
+      inativos,
       completudeMedia,
     };
   }, [realAssistidos, pinnedIds]);
+
+  // Audiências da próxima semana — alimenta o estado vazio do painel de preview
+  const audienciasDaSemana = useMemo(() => {
+    const hoje = new Date();
+    return realAssistidos
+      .filter((a) => {
+        if (!a.proximaAudiencia) return false;
+        const d = differenceInDays(parseISO(a.proximaAudiencia), hoje);
+        return d >= 0 && d <= 7;
+      })
+      .sort((a, b) => new Date(a.proximaAudiencia!).getTime() - new Date(b.proximaAudiencia!).getTime())
+      .slice(0, 8);
+  }, [realAssistidos]);
 
   // Contagens por atribuição (usando mesma lógica de normalização do filtro)
   const atribuicaoCounts = useMemo(() => {
@@ -826,6 +883,7 @@ export default function AssistidosPage() {
         duplicateCount={potentialDuplicates[a.id]?.length || 0}
         onPreview={() => handlePreview(a)}
         isSelected={previewAssistido?.id === a.id}
+        atribuicaoFilter={atribuicaoFilter}
       />
     </div>
   );
@@ -840,8 +898,8 @@ export default function AssistidosPage() {
         stats={
           <>
             {[
-              { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); }, active: statusFilter === "all" && !showPinnedOnly },
-              { value: stats.presos, label: "presos", onClick: () => { setStatusFilter(statusFilter === "CADEIA_PUBLICA" ? "all" : "CADEIA_PUBLICA"); setShowPinnedOnly(false); }, active: statusFilter === "CADEIA_PUBLICA", danger: stats.presos > 0 },
+              { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); setSmartPreset(null); }, active: statusFilter === "all" && !showPinnedOnly && !smartPreset },
+              ...(stats.audienciasHoje > 0 ? [{ value: stats.audienciasHoje, label: "hoje", onClick: () => applyPreset("audiencias_hoje"), active: smartPreset === "audiencias_hoje", danger: true }] : []),
               { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
             ].map((s) => (
               <button
@@ -1015,6 +1073,28 @@ export default function AssistidosPage() {
                     })}
 
                     <div className="my-1 h-px bg-neutral-100 dark:bg-neutral-800" />
+                    {/* Custódia & abandono */}
+                    <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Custódia &amp; abandono</div>
+                    {[
+                      { id: "presos_sem_audiencia", label: "Presos sem audiência", icon: Lock, count: stats.presosSemAudiencia },
+                      { id: "inativos", label: "Inativos (60d+)", icon: Clock, count: stats.inativos },
+                    ].map((item) => {
+                      const active = smartPreset === item.id;
+                      const ItemIcon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => { applyPreset(item.id); setIsOverflowOpen(false); }}
+                          className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer transition-colors", active ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300")}
+                        >
+                          <ItemIcon className="w-3.5 h-3.5 text-neutral-400" />
+                          <span className="flex-1">{item.label}</span>
+                          <span className="text-[10px] tabular-nums text-neutral-400">{item.count}</span>
+                        </button>
+                      );
+                    })}
+
+                    <div className="my-1 h-px bg-neutral-100 dark:bg-neutral-800" />
                     {/* Abrangência */}
                     <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Abrangência</div>
                     <div className="px-3 py-1.5 flex items-center gap-1">
@@ -1081,7 +1161,9 @@ export default function AssistidosPage() {
                    smartPreset === "audiencias_semana" ? "Audiencias semana" :
                    smartPreset === "prazos_vencidos" ? "Prazos vencidos" :
                    smartPreset === "sem_drive" ? "Sem Drive" :
-                   smartPreset === "novos_30d" ? "Novos 30d" : smartPreset}
+                   smartPreset === "novos_30d" ? "Novos 30d" :
+                   smartPreset === "presos_sem_audiencia" ? "Presos sem audiência" :
+                   smartPreset === "inativos" ? "Inativos 60d+" : smartPreset}
                 </span>
               )}
             </div>
@@ -1282,6 +1364,7 @@ export default function AssistidosPage() {
           onSortChange={(col) => setSortBy(col as "nome" | "prioridade" | "prazo" | "complexidade")}
           onPreview={(a) => handlePreview(a as AssistidoUI)}
           selectedId={previewAssistido?.id ?? null}
+          atribuicaoFilter={atribuicaoFilter}
         />
       )}
         </div>
@@ -1292,6 +1375,45 @@ export default function AssistidosPage() {
         {previewAssistido ? (
           <div className="h-full rounded-xl border border-border bg-card overflow-hidden shadow-sm">
             <AssistidoPreviewPanel key={previewAssistido.id} assistido={previewAssistido} />
+          </div>
+        ) : audienciasDaSemana.length > 0 ? (
+          <div className="h-full rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-violet-500" />
+              <span className="text-sm font-semibold text-foreground/80">Audiências desta semana</span>
+              <span className="ml-auto text-[10px] text-muted-foreground tabular-nums">{audienciasDaSemana.length}</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {audienciasDaSemana.map((a) => {
+                const dias = differenceInDays(parseISO(a.proximaAudiencia!), new Date());
+                const hoje = dias === 0;
+                const amanha = dias === 1;
+                return (
+                  <button
+                    key={a.id}
+                    onClick={() => handlePreview(a)}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 transition-colors text-left cursor-pointer"
+                  >
+                    <div className={cn(
+                      "w-9 shrink-0 text-center rounded-md py-1",
+                      hoje ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400" : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300",
+                    )}>
+                      <div className="text-[9px] font-bold uppercase leading-none">{hoje ? "Hoje" : amanha ? "Amanhã" : `${dias}d`}</div>
+                      <div className="text-[9px] tabular-nums leading-none mt-0.5">{format(parseISO(a.proximaAudiencia!), "dd/MM")}</div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-medium text-foreground truncate">{a.nome}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {format(parseISO(a.proximaAudiencia!), "HH:mm")} · {a.tipoProximaAudiencia || "Audiência"}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="px-4 py-2 border-t border-border text-center">
+              <p className="text-[10px] text-muted-foreground/70">Selecione um assistido para ver o resumo completo</p>
+            </div>
           </div>
         ) : (
           <div className="h-full rounded-xl border border-dashed border-border bg-muted/30 flex flex-col items-center justify-center gap-2 text-center px-6">

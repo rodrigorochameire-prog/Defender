@@ -38,6 +38,7 @@ import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import {
   ATRIBUICAO_OPTIONS,
   SOLID_COLOR_MAP,
+  normalizeAreaToFilter,
 } from "@/lib/config/atribuicoes";
 import type { AssistidoUI } from "./assistido-types";
 import { statusConfig } from "./assistido-config";
@@ -53,9 +54,11 @@ export interface AssistidoCardProps {
   onPreview?: () => void;
   /** Realça o card quando ele é o que está aberto no painel de preview. */
   isSelected?: boolean;
+  /** Filtro de atribuição ativo (normalizado) — pinta o acento na cor do filtro. */
+  atribuicaoFilter?: string;
 }
 
-export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview, isSelected }: AssistidoCardProps) {
+export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, hasDuplicates, duplicateCount, onPreview, isSelected, atribuicaoFilter }: AssistidoCardProps) {
   const [copied, setCopied] = useState(false);
 
   const isPreso = ["CADEIA_PUBLICA", "PENITENCIARIA", "COP", "HOSPITAL_CUSTODIA"].includes(assistido.statusPrisional);
@@ -73,9 +76,6 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
   const audienciaAmanha = diasAteAudiencia === 1;
 
   const telefoneDisplay = assistido.telefone || assistido.telefoneContato;
-  const whatsappUrl = telefoneDisplay
-    ? `https://wa.me/55${telefoneDisplay.replace(/\D/g, '')}`
-    : null;
 
   const atribuicoesUnicas = assistido.atribuicoes || assistido.areas || [];
   const primaryAttrValue = atribuicoesUnicas.length > 0
@@ -91,6 +91,17 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
     : null;
   const primaryColor = primaryAttrValue ? SOLID_COLOR_MAP[primaryAttrValue] || '#6b7280' : '#6b7280';
 
+  // Acento: cor do filtro ativo (lista uniforme) ou atribuição primária estável.
+  const filterActive = !!atribuicaoFilter && atribuicaoFilter !== "all";
+  const primaryKey = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
+    ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
+    : (atribuicoesUnicas.map((x) => normalizeAreaToFilter(x)).find((k) => k !== "all") ?? null);
+  const barColor = filterActive
+    ? (SOLID_COLOR_MAP[atribuicaoFilter!] || '#6b7280')
+    : (primaryKey ? SOLID_COLOR_MAP[primaryKey] || '#6b7280' : primaryColor);
+
+  const telDigits = telefoneDisplay ? telefoneDisplay.replace(/\D/g, '') : null;
+
   const handleCopyProcesso = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!assistido.numeroProcesso) return;
@@ -103,6 +114,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
 
   return (
     <Card
+      id={`assistido-row-${assistido.id}`}
       onClick={() => onPreview?.()}
       className={cn(
         "group relative flex flex-col justify-between overflow-hidden transition-all duration-200",
@@ -117,7 +129,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
       {/* Top accent bar */}
       <div
         className="absolute inset-x-0 top-0 h-0.5"
-        style={{ background: `linear-gradient(to right, transparent, ${isPreso ? '#f43f5e' : primaryColor}, transparent)` }}
+        style={{ background: `linear-gradient(to right, transparent, ${barColor}, transparent)` }}
       />
 
       <div className="p-3.5 space-y-2.5 relative z-10">
@@ -283,16 +295,20 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
           )}
         </div>
 
-        {/* Audiência */}
+        {/* Audiência — clicável (fast-lane) */}
         {assistido.proximaAudiencia && (
-          <div className={cn(
-            "flex items-center gap-2 px-2 py-1.5 rounded-lg border",
-            audienciaHoje
-              ? "bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/60 dark:border-amber-800/40"
-              : audienciaAmanha
-                ? "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]"
-                : "bg-neutral-50/80 dark:bg-neutral-800/40 border-neutral-200/60 dark:border-neutral-700/40",
-          )}>
+          <Link
+            href={`/admin/assistidos/${assistido.id}/audiencias`}
+            onClick={stop}
+            className={cn(
+              "flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-all hover:brightness-95 hover:shadow-sm",
+              audienciaHoje
+                ? "bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/60 dark:border-amber-800/40"
+                : audienciaAmanha
+                  ? "bg-zinc-100/60 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]"
+                  : "bg-neutral-50/80 dark:bg-neutral-800/40 border-neutral-200/60 dark:border-neutral-700/40",
+            )}
+          >
             <div className={cn(
               "w-6 h-6 rounded-md flex items-center justify-center shrink-0",
               audienciaHoje && "bg-amber-500 text-white",
@@ -316,7 +332,7 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
             {(audienciaHoje || audienciaAmanha) && (
               <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", audienciaHoje ? "bg-amber-500 animate-pulse" : "bg-zinc-800 dark:bg-zinc-600")} />
             )}
-          </div>
+          </Link>
         )}
 
         {/* Crime */}
@@ -354,12 +370,12 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
               </Tooltip>
             </TooltipProvider>
           )}
-          {whatsappUrl && (
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={stop}>
+          {telDigits && (
+            <Link href={`/admin/whatsapp?phone=${telDigits}`} onClick={stop} title="Conversa no OMBUDS">
               <button className="h-7 w-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all">
                 <MessageCircle className="w-3.5 h-3.5" />
               </button>
-            </a>
+            </Link>
           )}
         </div>
 

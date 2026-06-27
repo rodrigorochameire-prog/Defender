@@ -24,7 +24,8 @@ import type { AttentionKind, AttentionSignal, Severity } from "@/lib/assistidos/
 export const SEV_TONE: Record<Severity, (typeof COLORS)[keyof typeof COLORS]> = {
   critical: COLORS.danger,
   warning: COLORS.warning,
-  info: COLORS.info,
+  // info fica neutro (calmo) — vermelho/âmbar reservados a urgência real.
+  info: COLORS.neutral,
 };
 
 export const KIND_ICON: Record<AttentionKind, LucideIcon> = {
