@@ -55,6 +55,11 @@ try:
 except ImportError:
     async_playwright = None  # type: ignore
 
+# Parsers determinísticos (mesma pasta; stdlib puro — sem playwright).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from designacao_parse import detectar_designacao_audiencia  # noqa: E402
+from mpu_parse import parse_decisao_mpu  # noqa: E402
+
 # ───── Config ────────────────────────────────────────────────────────────────
 
 ENV_PATH = Path("/Users/rodrigorochameire/Projetos/Defender/.env.local")
@@ -189,6 +194,62 @@ class Supabase:
 
     def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
+
+    def insert_registro_returning(self, registro: dict) -> int | None:
+        """Insere e retorna o id (para vincular audiencia_id no registro base)."""
+        rows = self._req("POST", "/rest/v1/registros", registro, prefer="return=representation")
+        return rows[0]["id"] if isinstance(rows, list) and rows else None
+
+    def link_registro_audiencia(self, registro_id: int, audiencia_id: int) -> None:
+        self._req("PATCH", f"/rest/v1/registros?id=eq.{registro_id}",
+                  {"audiencia_id": audiencia_id}, prefer="return=minimal")
+
+    def audiencia_exists(self, processo_id: int, data_ymd: str, tipo: str) -> bool:
+        """Idempotência: já há audiência do mesmo processo+tipo NO MESMO DIA?
+        Usa range de data (robusto a fuso/hora) em vez de timestamp exato."""
+        from urllib.parse import quote
+        rows = self._req(
+            "GET",
+            f"/rest/v1/audiencias?processo_id=eq.{processo_id}"
+            f"&tipo=eq.{quote(tipo[:50])}"
+            f"&data_audiencia=gte.{data_ymd}T00:00:00&data_audiencia=lte.{data_ymd}T23:59:59"
+            f"&select=id&limit=1",
+        )
+        return bool(rows)
+
+    def insert_audiencia(self, aud: dict) -> int | None:
+        rows = self._req("POST", "/rest/v1/audiencias", aud, prefer="return=representation")
+        return rows[0]["id"] if isinstance(rows, list) and rows else None
+
+    def cancel_audiencias_abertas(self, processo_id: int, tipo: str) -> int:
+        """Redesignação: cancela audiências ABERTAS (agendada) do MESMO tipo do
+        processo — não todas (um processo pode ter várias audiências futuras)."""
+        from urllib.parse import quote
+        rows = self._req(
+            "PATCH",
+            f"/rest/v1/audiencias?processo_id=eq.{processo_id}"
+            f"&tipo=eq.{quote(tipo[:50])}&status=eq.agendada",
+            {"status": "cancelada"}, prefer="return=representation",
+        )
+        return len(rows) if isinstance(rows, list) else 0
+
+    def get_assistido_contato(self, assistido_id: int) -> dict | None:
+        rows = self._req(
+            "GET",
+            f"/rest/v1/assistidos?id=eq.{assistido_id}"
+            "&select=telefone,telefone_contato,nome_contato,parentesco_contato&limit=1",
+        )
+        return rows[0] if isinstance(rows, list) and rows else None
+
+    def enqueue_ai_task(self, skill: str, demanda_ids: list[int], created_by: int) -> int | None:
+        """Enfileira uma task lane=ai (claude_code_tasks) para o daemon Max."""
+        rows = self._req("POST", "/rest/v1/claude_code_tasks", {
+            "skill": skill, "lane": "ai", "status": "pending", "etapa": "Na fila",
+            "created_by": created_by,
+            "prompt": f"Enriquecer análise de {len(demanda_ids)} intimação(ões)",
+            "instrucao_adicional": json.dumps({"demanda_ids": demanda_ids}),
+        }, prefer="return=representation")
+        return rows[0]["id"] if isinstance(rows, list) and rows else None
 
 
 # ───── Classificador ────────────────────────────────────────────────────────
@@ -697,7 +758,16 @@ def create_manual_review(sb: Supabase, demanda: dict) -> None:
     sb.update_demanda(demanda["id"], {"revisao_pendente": True})
 
 
-def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) -> None:
+def _ato_administrativo(rule: dict) -> bool:
+    """Ato de mera ciência administrativa (remessa/juntada/baixa) — sem valor
+    interpretativo, então NÃO vai para a IA (enrichment_status='skipped')."""
+    return bool((rule.get("extras") or {}).get("nota"))
+
+
+def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) -> bool:
+    """Aplica a classificação + executa os side-effects determinísticos
+    (agenda, medidas MPU, contato), persiste o texto p/ a IA e marca o
+    enrichment_status. Retorna True se a demanda deve ir para a fila de IA."""
     fields: dict = {
         "ato": rule["ato"],
         "prioridade": rule["prioridade"],
@@ -707,34 +777,152 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         fields["prazo"] = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
     sb.update_demanda(demanda["id"], fields)
 
-    # Atualiza processos_vvd quando a regra MPU traz fase/motivo (Plano 1 da reforma).
-    # Falha não interrompe — registro principal e demanda já foram salvos.
-    fase = rule.get("fase")
-    motivo = rule.get("motivo")
     proc_id = demanda.get("processo_id")
-    if (fase or motivo) and proc_id:
-        pvvd_fields: dict = {}
-        if fase:
-            pvvd_fields["fase_procedimento"] = fase
-        if motivo:
-            pvvd_fields["motivo_ultima_intimacao"] = motivo
-        try:
-            sb.update_processo_vvd(proc_id, pvvd_fields)
-        except Exception as e:
-            log(f"  ⚠ falha ao atualizar processos_vvd (proc_id={proc_id}): {e}")
+    assistido_id = demanda.get("assistido_id")
+    side_effects = rule.get("side_effects") or []
+    extras = rule.get("extras") or {}
+    is_mpu = _is_mpu(demanda)
 
+    # ── processos_vvd: fase/motivo (regras MPU) ────────────────────────────────
+    fase, motivo = rule.get("fase"), rule.get("motivo")
+    if (fase or motivo) and proc_id:
+        pvvd: dict = {}
+        if fase: pvvd["fase_procedimento"] = fase
+        if motivo: pvvd["motivo_ultima_intimacao"] = motivo
+        try:
+            sb.update_processo_vvd(proc_id, pvvd)
+        except Exception as e:
+            log(f"  ⚠ falha processos_vvd (proc_id={proc_id}): {e}")
+
+    # ── Contato do assistido (resposta à acusação) ─────────────────────────────
+    contato_txt = ""
+    if "resposta" in rule["ato"].lower() and assistido_id:
+        try:
+            c = sb.get_assistido_contato(assistido_id) or {}
+            tel = c.get("telefone") or c.get("telefone_contato")
+            if tel:
+                quem = f" ({c.get('nome_contato')}, {c.get('parentesco_contato')})" if c.get("nome_contato") else ""
+                contato_txt = f"\n\n**Contato do assistido:** {tel}{quem}"
+        except Exception as e:
+            log(f"  ⚠ falha contato assistido: {e}")
+
+    # ── Registro base (ciência/diligência) — guarda texto p/ IA em raw_text ────
+    skip_ai = _ato_administrativo(rule) or not (content or "").strip()
+    enr_status = "skipped" if skip_ai else "pending"
+    base_reg_id = None
     if not sb.registro_exists(demanda["id"], rule["ato"]):
-        sb.insert_registro({
-            "assistido_id": demanda["assistido_id"],
-            "processo_id": demanda["processo_id"],
+        conteudo = ((content[:1500] + ("..." if len(content) > 1500 else "")) or "(sem conteúdo lido)") + contato_txt
+        base_reg_id = sb.insert_registro_returning({
+            "assistido_id": assistido_id,
+            "processo_id": proc_id,
             "demanda_id": demanda["id"],
             "data_registro": datetime.now().isoformat(),
             "tipo": rule["registro_tipo"],
             "titulo": rule["ato"],
-            "conteudo": (content[:1500] + ("..." if len(content) > 1500 else "")) or "(sem conteúdo lido)",
+            "conteudo": conteudo,
             "status": "realizado" if rule["registro_tipo"] == "ciencia" else "agendado",
             "autor_id": DEFENSOR_ID,
+            "enrichment_status": enr_status,
+            "enrichment_data": {"raw_text": (content or "")[:8000]} if not skip_ai else None,
         })
+
+    # ── Side-effect: agendar / reagendar audiência ─────────────────────────────
+    if proc_id and any(fx in ("agendar_audiencia", "reagendar_audiencia") for fx in side_effects):
+        _agendar_audiencia(sb, demanda, rule, content, base_reg_id)
+
+    # ── Side-effect: MPU — medidas deferidas ───────────────────────────────────
+    if is_mpu and proc_id:
+        _aplicar_medidas_mpu(sb, demanda, content)
+
+    return not skip_ai
+
+
+def _agendar_audiencia(sb: Supabase, demanda: dict, rule: dict, content: str, base_reg_id) -> None:
+    """Extrai a designação do texto e insere/atualiza a audiência (idempotente)."""
+    proc_id = demanda["processo_id"]
+    det = detectar_designacao_audiencia(content)
+    if not det:
+        # Sem data detectável → diligência p/ definir manualmente (não inventa data).
+        if not sb.registro_exists(demanda["id"], "Definir data da audiência"):
+            sb.insert_registro({
+                "assistido_id": demanda.get("assistido_id"), "processo_id": proc_id,
+                "demanda_id": demanda["id"], "data_registro": datetime.now().isoformat(),
+                "tipo": "diligencia", "titulo": "Definir data da audiência",
+                "conteudo": "Designação de audiência detectada, mas a data/hora não foi extraída automaticamente — conferir no PJe e agendar.",
+                "status": "agendado", "autor_id": DEFENSOR_ID,
+            })
+        return
+    tipo = det["tipo"]
+    redesig = det["redesignacao"] or "reagendar_audiencia" in (rule.get("side_effects") or [])
+    if redesig:
+        n = sb.cancel_audiencias_abertas(proc_id, tipo)
+        if n:
+            log(f"  ↻ {n} audiência(s) '{tipo}' anterior(es) cancelada(s) (redesignação)")
+    if sb.audiencia_exists(proc_id, det["data"], tipo):
+        log(f"  = audiência '{tipo}' em {det['data']} já existe — não duplica")
+        return
+    assistido = (demanda.get("assistidos") or {}).get("nome") or "Assistido"
+    numero = (demanda.get("processos") or {}).get("numero_autos") or ""
+    aud_id = sb.insert_audiencia({
+        "processo_id": proc_id,
+        "assistido_id": demanda.get("assistido_id"),
+        "defensor_id": DEFENSOR_ID,
+        "data_audiencia": f"{det['data']}T{det['horario']}:00",
+        "horario": det["horario"],
+        "tipo": tipo[:50],
+        "local": det.get("local"),
+        "titulo": f"{tipo} - {assistido} - {numero}".strip(),
+        "descricao": ("Agendada automaticamente pela varredura (designação detectada)."
+                      + (f"\nModalidade: {det['modalidade']}" if det.get("modalidade") else "")
+                      + f"\nTrecho: \"{det['trecho']}\""),
+        "status": "agendada",
+    })
+    if aud_id:
+        log(f"  📅 audiência agendada: {tipo} em {det['data']} {det['horario']}")
+        if base_reg_id:
+            try:
+                sb.link_registro_audiencia(base_reg_id, aud_id)
+            except Exception:
+                pass
+
+
+def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
+    """Parseia medidas deferidas e grava em processos_vvd + registro dedicado."""
+    proc_id = demanda["processo_id"]
+    parsed = parse_decisao_mpu(content)
+    medidas = parsed.get("medidas") or []
+    if not medidas and not parsed.get("revogacao_total"):
+        return
+    if medidas:
+        try:
+            pvvd: dict = {
+                "medidas_deferidas": [m["codigo"] for m in medidas],
+                "mpu_ativa": True,
+            }
+            dist = next((m.get("distancia_metros") for m in medidas if m.get("distancia_metros")), None)
+            if dist:
+                pvvd["distancia_minima"] = dist
+            if parsed.get("prazo_dias"):
+                pvvd["data_decisao_mpu"] = date.today().isoformat()
+            sb.update_processo_vvd(proc_id, pvvd)
+        except Exception as e:
+            log(f"  ⚠ falha ao gravar medidas em processos_vvd: {e}")
+    # Registro "Medidas protetivas deferidas" (anotação determinística)
+    titulo = "Medidas protetivas deferidas"
+    if medidas and not sb.registro_exists(demanda["id"], titulo):
+        linhas = [f"- {m['rotulo']} (art. {m['artigo']})"
+                  + (f" — {m['distancia_metros']}m" if m.get("distancia_metros") else "")
+                  for m in medidas]
+        corpo = "Medidas deferidas (parsing automático — conferir):\n" + "\n".join(linhas)
+        if parsed.get("prazo_dias"):
+            corpo += f"\n\nPrazo: {parsed['prazo_dias']} dias."
+        sb.insert_registro({
+            "assistido_id": demanda.get("assistido_id"), "processo_id": proc_id,
+            "demanda_id": demanda["id"], "data_registro": datetime.now().isoformat(),
+            "tipo": "anotacao", "titulo": titulo, "conteudo": corpo,
+            "status": "realizado", "autor_id": DEFENSOR_ID,
+        })
+        log(f"  🛡 {len(medidas)} medida(s) protetiva(s) registrada(s)")
 
 
 async def _wait_text(page: "Page", txt: str, timeout: float = 20):
@@ -946,6 +1134,7 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
     stats = {"ok": 0, "manual": 0, "not_found": 0, "errors": 0}
     counts: dict[str, int] = {}
+    pending_ai_ids: list[int] = []  # demandas p/ enriquecimento IA (fase 2)
 
     async with async_playwright() as p:
         if modo == "cdp":
@@ -1026,13 +1215,24 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                     stats["manual"] += 1
                     continue
 
-                apply_classification(sb, d, rule, content["text"])
+                pendente_ia = apply_classification(sb, d, rule, content["text"])
+                if pendente_ia:
+                    pending_ai_ids.append(d["id"])
                 counts[rule["ato"]] = counts.get(rule["ato"], 0) + 1
                 stats["ok"] += 1
                 log(f"  ✓ {rule['ato']} ({rule['prioridade']})")
             except Exception as e:
                 log(f"  ✗ erro: {str(e)[:160]}")
                 stats["errors"] += 1
+
+    # Enfileira UMA task de enriquecimento IA (lane=ai) com as demandas analisadas
+    # que têm conteúdo interpretável (pending). O daemon Max (claude -p) consome.
+    if pending_ai_ids:
+        try:
+            task_id = sb.enqueue_ai_task("analise-intimacao", pending_ai_ids, DEFENSOR_ID)
+            log(f"🧠 task IA enfileirada (#{task_id}) p/ {len(pending_ai_ids)} intimação(ões)")
+        except Exception as e:
+            log(f"⚠ falha ao enfileirar task IA: {str(e)[:120]}")
 
     print_report(stats, counts)
 
