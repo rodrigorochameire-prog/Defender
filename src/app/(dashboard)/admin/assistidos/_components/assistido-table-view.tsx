@@ -44,6 +44,10 @@ export interface AssistidoTableViewProps {
   selectedId?: number | null;
   /** Filtro de atribuição ativo (normalizado) — quando setado, pinta a barra na cor do filtro. */
   atribuicaoFilter?: string;
+  /** Modo seleção em lote (exportar Solar) — exibe checkboxes. */
+  batchSelectMode?: boolean;
+  batchSelectedIds?: Set<number>;
+  onToggleBatchSelect?: (id: number, hasCpf: boolean) => void;
 }
 
 export function AssistidoTableView({
@@ -54,6 +58,9 @@ export function AssistidoTableView({
   onPreview,
   selectedId,
   atribuicaoFilter,
+  batchSelectMode,
+  batchSelectedIds,
+  onToggleBatchSelect,
 }: AssistidoTableViewProps) {
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -135,6 +142,24 @@ export function AssistidoTableView({
 
             {/* Main row content */}
             <div className="flex items-center gap-4 px-5 pl-6 py-3">
+              {/* Checkbox de seleção em lote (Solar) */}
+              {batchSelectMode && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleBatchSelect?.(assistido.id, !!assistido.cpf); }}
+                  disabled={!assistido.cpf}
+                  title={!assistido.cpf ? "Sem CPF — não exportável ao Solar" : undefined}
+                  className={cn(
+                    "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                    !assistido.cpf
+                      ? "border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 cursor-not-allowed opacity-40"
+                      : batchSelectedIds?.has(assistido.id)
+                        ? "border-amber-500 bg-amber-500"
+                        : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 hover:border-amber-400",
+                  )}
+                >
+                  {batchSelectedIds?.has(assistido.id) && <CheckCircle2 className="w-3 h-3 text-white" />}
+                </button>
+              )}
               {/* === LEFT: Avatar + Name + Badges === */}
               <div className="flex items-center gap-3 w-[300px] shrink-0 min-w-0">
                 <span onClick={(e) => e.stopPropagation()} className="shrink-0">

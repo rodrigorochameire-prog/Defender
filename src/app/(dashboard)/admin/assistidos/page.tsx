@@ -1365,6 +1365,9 @@ export default function AssistidosPage() {
           onPreview={(a) => handlePreview(a as AssistidoUI)}
           selectedId={previewAssistido?.id ?? null}
           atribuicaoFilter={atribuicaoFilter}
+          batchSelectMode={batchSelectMode}
+          batchSelectedIds={batchSelectedIds}
+          onToggleBatchSelect={toggleBatchSelect}
         />
       )}
         </div>

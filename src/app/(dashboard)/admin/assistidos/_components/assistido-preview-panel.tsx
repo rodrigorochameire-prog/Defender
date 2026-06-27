@@ -86,6 +86,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   );
 
   const ultimasDemandas = (detalhe?.demandas ?? []).slice(0, 3);
+  const processosLista = (detalhe?.processos ?? []).slice(0, 4);
+  const totalProcessos = detalhe?.processos?.length ?? 0;
+  const documentosRecentes = (detalhe?.driveFiles ?? []).filter((f) => !f.isFolder).slice(0, 4);
   const processosSemCaso = detalhe?.processos
     ? countProcessosSemCaso(detalhe.processos as ReadonlyArray<{ casoId?: number | null }>)
     : undefined;
@@ -296,6 +299,71 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
             </div>
           )}
         </section>
+
+        {/* ───────── PROCESSOS ───────── */}
+        {processosLista.length > 0 && (
+          <section className="px-5 py-4">
+            <BlockHeader icon={Scale}>Processos</BlockHeader>
+            <div className="space-y-1.5">
+              {processosLista.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/admin/assistidos/${assistido.id}/casos`}
+                  className="flex items-center gap-2 py-1 group"
+                >
+                  <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-mono tabular-nums text-neutral-700 dark:text-neutral-300 truncate group-hover:text-emerald-600 transition-colors">
+                      {p.numeroAutos || "—"}
+                    </p>
+                    {(p.vara || p.assunto) && (
+                      <p className="text-[10px] text-neutral-400 truncate">{p.vara || p.assunto}</p>
+                    )}
+                  </div>
+                  {p.fase && <span className="text-[9px] text-neutral-400 shrink-0 uppercase">{p.fase}</span>}
+                </Link>
+              ))}
+              {totalProcessos > 4 && (
+                <Link href={`/admin/assistidos/${assistido.id}/casos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
+                  +{totalProcessos - 4} processo(s) →
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ───────── DOCUMENTOS RECENTES ───────── */}
+        {documentosRecentes.length > 0 && (
+          <section className="px-5 py-4">
+            <BlockHeader icon={FileText}>Documentos recentes</BlockHeader>
+            <div className="space-y-1.5">
+              {documentosRecentes.map((f) => (
+                <a
+                  key={f.id}
+                  href={f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-1 group"
+                >
+                  <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate group-hover:text-emerald-600 transition-colors">{f.name}</p>
+                    {(f.documentType || f.categoria) && (
+                      <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[9px] text-neutral-400 tabular-nums shrink-0">
+                    {f.lastModifiedTime && format(new Date(f.lastModifiedTime), "dd/MM")}
+                    <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </a>
+              ))}
+              <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
+                Ver todos os documentos →
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* ───────── 3. PENDÊNCIAS ───────── */}
         <section className="px-5 py-4">
