@@ -16,6 +16,7 @@ import {
   AlertCircle,
   IdCard,
   ChevronRight,
+  Lock,
   type LucideIcon,
 } from "lucide-react";
 import { COLORS, FOCUS_RING } from "@/lib/config/design-tokens";
@@ -30,6 +31,7 @@ export const SEV_TONE: Record<Severity, (typeof COLORS)[keyof typeof COLORS]> = 
 
 export const KIND_ICON: Record<AttentionKind, LucideIcon> = {
   "demanda-atrasada": AlertCircle,
+  "preso-sem-audiencia": Lock,
   "audiencia-proxima": Calendar,
   "processo-orfao": Scale,
   "cadastro-critico": IdCard,
@@ -41,6 +43,7 @@ export function ctaHref(kind: AttentionKind | "ver", id: number): string {
   switch (kind) {
     case "demanda-atrasada":
       return `/admin/demandas?assistidoId=${id}`;
+    case "preso-sem-audiencia":
     case "audiencia-proxima":
       return `/admin/assistidos/${id}/audiencias`;
     case "processo-orfao":

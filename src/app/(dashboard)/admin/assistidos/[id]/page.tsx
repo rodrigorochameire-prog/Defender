@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChevronRight,
   Plus,
+  Lock,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -327,6 +328,7 @@ export default function AssistidoHubPage() {
           telefone: assistido?.telefone,
           telefoneContato: assistido?.telefoneContato,
           naturalidade: assistido?.naturalidade,
+          statusPrisional: assistido?.statusPrisional,
           proximaAudiencia: proximaAudiencia?.dataAudiencia
             ? new Date(proximaAudiencia.dataAudiencia).toISOString()
             : null,
@@ -367,6 +369,8 @@ export default function AssistidoHubPage() {
 
   const sp = String(assistido.statusPrisional ?? "").toUpperCase();
   const preso = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/.test(sp);
+  const monit = /MONITOR|TORNOZEL|DOMICILIAR/.test(sp);
+  const diasPreso = preso && assistido.dataPrisao ? Math.abs(diasAte(assistido.dataPrisao) ?? 0) : null;
 
   return (
     <div className="p-4 sm:p-6 space-y-4">
@@ -376,7 +380,14 @@ export default function AssistidoHubPage() {
       <ImmediateAttentionPanel assistidoId={id} snapshot={attentionSnapshot} />
 
       {/* ── KPI STRIP ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        <KpiPill
+          label={preso ? "Preso há" : "Custódia"}
+          value={preso ? (diasPreso != null ? `${diasPreso}d` : "Preso") : monit ? "Monitorado" : "Solto"}
+          icon={Lock}
+          tone={preso ? "rose" : monit ? "amber" : "emerald"}
+          href={`/admin/assistidos/${id}/editar`}
+        />
         <KpiPill
           label={`Caso${casosAgrupados.length !== 1 ? "s" : ""}`}
           value={casosAgrupados.length || casos.length}

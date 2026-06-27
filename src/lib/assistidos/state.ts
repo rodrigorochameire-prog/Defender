@@ -66,6 +66,7 @@ export function completudeFicha(
 
 export type AttentionKind =
   | "demanda-atrasada"
+  | "preso-sem-audiencia"
   | "audiencia-proxima"
   | "processo-orfao"
   | "cadastro-critico"
@@ -104,6 +105,8 @@ export interface AssistidoSnapshot {
   naturalidade?: string | null;
 
   // operacional
+  /** Status prisional bruto — alimenta o sinal de custódia. */
+  statusPrisional?: string | null;
   /** Quantidade de processos ativos sem caso vinculado. */
   processosSemCaso?: number;
   /** Há ao menos uma demanda vencida? (se omitido, deriva de `proximoPrazo`). */
@@ -120,11 +123,15 @@ export const DIAS_AUDIENCIA_PROXIMA = 7;
 /** Precedência entre sinais — define ordenação e qual vira o CTA primário. */
 const PRECEDENCE: Record<AttentionKind, number> = {
   "demanda-atrasada": 0,
-  "audiencia-proxima": 1,
-  "processo-orfao": 2,
-  "cadastro-critico": 3,
-  "sem-contato": 4,
+  "preso-sem-audiencia": 1,
+  "audiencia-proxima": 2,
+  "processo-orfao": 3,
+  "cadastro-critico": 4,
+  "sem-contato": 5,
 };
+
+/** Regex de status prisional "preso" — alinhado com o perfil/layout. */
+const PRESO_RE = /CADEIA|PENITENC|PRESO|FECHADO|SEMIABERTO|REGIME|COP|HOSPITAL/;
 
 function diffDays(iso: string, now: Date): number {
   return differenceInDays(parseISO(iso), now);
@@ -148,6 +155,16 @@ export function attentionSignals(
       severity: "critical",
       label: "Demanda atrasada",
       cta: { kind: "demanda-atrasada", label: "Tratar demanda atrasada" },
+    });
+  }
+
+  const ehPreso = PRESO_RE.test(String(s.statusPrisional ?? "").toUpperCase());
+  if (ehPreso && !s.proximaAudiencia) {
+    signals.push({
+      kind: "preso-sem-audiencia",
+      severity: "critical",
+      label: "Preso sem audiência marcada",
+      cta: { kind: "preso-sem-audiencia", label: "Verificar audiência / excesso de prazo" },
     });
   }
 
@@ -228,6 +245,7 @@ export function toSnapshot(
     telefone: a.telefone,
     telefoneContato: a.telefoneContato,
     naturalidade: a.naturalidade,
+    statusPrisional: a.statusPrisional,
     processosSemCaso: a.processosSemCaso,
     demandaAtrasada: a.demandaAtrasada,
     proximoPrazo: a.proximoPrazo,

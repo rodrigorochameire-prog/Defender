@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
+  Lock,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -38,7 +40,8 @@ import {
   attentionSignals,
   contextualCTA,
 } from "@/lib/assistidos/state";
-import { AttentionSignalRow, ctaHref } from "@/components/ds/attention";
+import { AttentionSignalRow, ctaHref, SEV_TONE, KIND_ICON } from "@/components/ds/attention";
+import { UltimoContato } from "../[id]/_components/ultimo-contato";
 
 // ── Subcomponentes locais (StatCell/BlockHeader; sinais de atenção vêm do DS) ──
 
@@ -84,6 +87,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
     { id: assistido.id },
     { enabled: !!assistido.id, staleTime: 30_000 },
   );
+  const { data: medidasVigentes = [] } = trpc.assistidos.getMedidasVigentes.useQuery(
+    { assistidoId: assistido.id },
+    { enabled: !!assistido.id, staleTime: 60_000 },
+  );
 
   const ultimasDemandas = (detalhe?.demandas ?? []).slice(0, 3);
   const processosLista = (detalhe?.processos ?? []).slice(0, 4);
@@ -97,6 +104,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const comp = completudeFicha(snap);
   const sinais = attentionSignals(snap);
   const cta = contextualCTA(snap);
+  // Hero "próxima ação": o sinal mais urgente (crítico/aviso) fixado no topo.
+  const topSignal = sinais[0] ?? null;
+  const showActionBanner = !!topSignal && (topSignal.severity === "critical" || topSignal.severity === "warning");
 
   // ── Identidade / derivações visuais ──
   const custodia = statusPrisionalInfo(assistido.statusPrisional);
@@ -142,6 +152,45 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           style={{ background: `linear-gradient(to right, ${primaryAttrHex}, transparent)` }}
         />
       )}
+
+      {/* Banners fixos no topo: custódia + próxima ação */}
+      {(isPreso || showActionBanner) && (
+        <div className="px-4 pt-3 space-y-2 shrink-0">
+          {isPreso && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border-l-[3px] border-rose-400 dark:border-rose-700">
+              <Lock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">
+                Preso{tempoPreso ? ` há ${tempoPreso}` : ""}
+              </span>
+              {assistido.unidadePrisional && (
+                <span className="text-[10px] text-rose-600/80 dark:text-rose-400/70 truncate">· {assistido.unidadePrisional}</span>
+              )}
+            </div>
+          )}
+          {showActionBanner && topSignal && (() => {
+            const tone = SEV_TONE[topSignal.severity];
+            const Icon = KIND_ICON[topSignal.kind];
+            return (
+              <Link
+                href={ctaHref(topSignal.cta.kind, assistido.id)}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-l-[3px] transition-colors hover:brightness-[0.98] dark:hover:brightness-125",
+                  tone.border,
+                  tone.bg,
+                )}
+              >
+                <Icon className={cn("w-4 h-4 shrink-0", tone.text)} />
+                <div className="min-w-0 flex-1">
+                  <p className={cn("text-xs font-semibold truncate", tone.text)}>{topSignal.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{topSignal.cta.label}</p>
+                </div>
+                <ChevronRight className={cn("w-4 h-4 shrink-0", tone.text)} />
+              </Link>
+            );
+          })()}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
         {/* ───────── 1. RESUMO ───────── */}
         <section className="px-5 py-4">
@@ -216,6 +265,16 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                     {maskedCpf}
                   </span>
                 )}
+              </div>
+              {/* último contato + registrar atendimento */}
+              <div className="flex items-center gap-2.5 mt-2 flex-wrap">
+                <UltimoContato assistidoId={assistido.id} />
+                <Link
+                  href={`/admin/atendimentos/novo?assistido=${assistido.id}`}
+                  className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 transition-colors"
+                >
+                  <Plus className="w-3 h-3" /> registrar atendimento
+                </Link>
               </div>
             </div>
           </div>
@@ -302,6 +361,29 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
             </div>
           )}
         </section>
+
+        {/* ───────── MEDIDAS PROTETIVAS (VVD) ───────── */}
+        {medidasVigentes.length > 0 && (
+          <section className="px-5 py-4">
+            <BlockHeader icon={Shield}>Medidas protetivas vigentes</BlockHeader>
+            <div className="space-y-1.5">
+              {medidasVigentes.map((m, i) => (
+                <div key={i} className="flex items-start gap-2 px-2.5 py-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/10 border-l-2 border-amber-300 dark:border-amber-800">
+                  <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300 leading-snug">
+                      {m.literal || m.codigo || m.artigo || "Medida protetiva"}
+                    </p>
+                    <p className="text-[10px] text-amber-700/80 dark:text-amber-400/70">
+                      {m.distanciaMetros ? `${m.distanciaMetros}m · ` : ""}
+                      {m.dataVencimento ? `vence ${format(new Date(m.dataVencimento), "dd/MM/yyyy")}` : "sem vencimento"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ───────── PROCESSOS ───────── */}
         {processosLista.length > 0 && (

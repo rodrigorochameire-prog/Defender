@@ -37,18 +37,30 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
 
   // Contadores por aba (do payload já cacheado do getById): casos, demandas em
   // aberto e audiências futuras — orientação imediata na nav.
-  const contadores = useMemo<Record<string, number>>(() => {
-    if (!assistido) return {} as Record<string, number>;
-    const demandas = (assistido.demandas ?? []).filter(
-      (d) => !STATUS_CONCLUIDO.has(String(d.status ?? "").toUpperCase()),
-    ).length;
+  const contadores = useMemo(() => {
+    if (!assistido) return { casos: 0, demandas: 0, audiencias: 0, demandasAtrasadas: 0, audienciasHoje: 0 };
     const agora = Date.now();
-    const audiencias = (assistido.audiencias ?? []).filter((a) => {
+    const hojeStr = new Date().toDateString();
+    const demandasAbertas = (assistido.demandas ?? []).filter(
+      (d) => !STATUS_CONCLUIDO.has(String(d.status ?? "").toUpperCase()),
+    );
+    const demandasAtrasadas = demandasAbertas.filter(
+      (d) => d.prazo && new Date(d.prazo).getTime() < agora,
+    ).length;
+    const audFuturas = (assistido.audiencias ?? []).filter((a) => {
       const t = new Date(a.dataAudiencia).getTime();
       return t >= agora && !String(a.status ?? "").toLowerCase().includes("cancel");
-    }).length;
-    const casos = (assistido.casosAgrupados ?? []).length;
-    return { casos, demandas, audiencias };
+    });
+    const audienciasHoje = audFuturas.filter(
+      (a) => new Date(a.dataAudiencia).toDateString() === hojeStr,
+    ).length;
+    return {
+      casos: (assistido.casosAgrupados ?? []).length,
+      demandas: demandasAbertas.length,
+      audiencias: audFuturas.length,
+      demandasAtrasadas,
+      audienciasHoje,
+    };
   }, [assistido]);
 
   const base = `/admin/assistidos/${id}`;
@@ -74,6 +86,9 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
         const Icon = t.icon;
         const href = t.path ? `${base}/${t.path}` : base;
         const isActive = activeKey === t.key;
+        const count = t.key === "casos" ? contadores.casos : t.key === "demandas" ? contadores.demandas : t.key === "audiencias" ? contadores.audiencias : 0;
+        const urgente = t.key === "demandas" ? contadores.demandasAtrasadas : t.key === "audiencias" ? contadores.audienciasHoje : 0;
+        const urgenteTone = t.key === "demandas" ? "bg-rose-500/30 text-rose-100" : "bg-amber-500/30 text-amber-100";
         return (
           <Link
             key={t.key}
@@ -87,7 +102,7 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
           >
             <Icon className="w-3 h-3" />
             {t.label}
-            {contadores[t.key] ? (
+            {count ? (
               <span
                 className={cn(
                   "ml-0.5 min-w-[15px] rounded-full px-1 text-center text-[9px] font-semibold tabular-nums",
@@ -96,7 +111,15 @@ export default function AssistidoLayout({ children }: { children: React.ReactNod
                     : "bg-white/[0.08] text-white/55",
                 )}
               >
-                {contadores[t.key]}
+                {count}
+              </span>
+            ) : null}
+            {urgente ? (
+              <span
+                className={cn("min-w-[15px] rounded-full px-1 text-center text-[9px] font-bold tabular-nums", urgenteTone)}
+                title={t.key === "demandas" ? `${urgente} atrasada(s)` : `${urgente} hoje`}
+              >
+                {urgente}
               </span>
             ) : null}
           </Link>
