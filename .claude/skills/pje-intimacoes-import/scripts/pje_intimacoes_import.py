@@ -516,6 +516,45 @@ async def _poll(page, check, timeout: float = 20.0, interval: float = 1.0) -> bo
     return False
 
 
+async def _distribuir_expedientes(page, status_cb) -> bool:
+    """Clica o ícone "varinha" (sparkles) que DISTRIBUI as intimações da caixa de
+    entrada GERAL para a caixa de cada vara (Família/Júri/VVD de Camaçari) — deixa
+    tudo organizado nas caixas certas ANTES da importação. Requer a aba Expedientes
+    já ativa.
+
+    Busca o ícone por palavra-chave (title/alt/aria-label/onclick com 'distribu');
+    se NÃO achar, AVISA e segue sem clicar nada (nunca clica um ícone aleatório —
+    distribuir muda estado no PJe). O selector exato deve ser confirmado ao vivo
+    (logado no PJe) e fixado aqui depois."""
+    if status_cb:
+        status_cb("Distribuindo intimações nas caixas das varas (varinha)…")
+    clicked = await page.evaluate(
+        r"""() => {
+          const norm = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+          for (const el of document.querySelectorAll('a,button,img,span,td')) {
+            const hay = norm([el.getAttribute('title'), el.getAttribute('alt'),
+                              el.getAttribute('aria-label'), el.getAttribute('onclick')].join(' '));
+            if (hay.includes('distribu')) {
+              const r = el.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0) {
+                el.click();
+                return (el.tagName + ':' + (el.getAttribute('title') || el.getAttribute('onclick') || '')).slice(0, 70);
+              }
+            }
+          }
+          return null;
+        }"""
+    )
+    if clicked:
+        print(f"  [distribuir] clicado: {clicked}", flush=True)
+        await asyncio.sleep(6)  # AJAX de distribuição em lote
+        return True
+    print("  [distribuir] ⚠ ícone da varinha não encontrado — segui SEM distribuir (confirmar selector logado)", flush=True)
+    if status_cb:
+        status_cb("Varinha não localizada — segui sem distribuir")
+    return False
+
+
 async def _navigate_to_unidade(page, atribuicao: str, situacao: str, status_cb) -> None:
     """Navega o painel do defensor até a lista de expedientes da unidade mapeada.
 
@@ -632,6 +671,7 @@ async def _async_scrape_expedientes(
     modo: str,
     heartbeat,
     status_cb=None,
+    distribuir: bool = False,
 ) -> list[dict]:
     """Navega o painel do PJe via CDP ou login direto e extrai linhas de
     EXPEDIENTES para a atribuição informada.
@@ -694,6 +734,16 @@ async def _async_scrape_expedientes(
             print(f"  → navegando para painel: {PANEL_URL}", flush=True)
             await page.goto(PANEL_URL, wait_until="domcontentloaded", timeout=30000)
             await asyncio.sleep(3)
+
+        # ── Distribuição opcional (varinha): caixa geral → caixas das varas ─
+        # Roda ANTES de navegar p/ vara, com a aba Expedientes ativa, p/ que os
+        # expedientes já estejam na caixa certa e a navegação os encontre.
+        if distribuir:
+            await page.evaluate(
+                "() => { const t = document.getElementById('tabExpedientes_shifted'); if (t) t.click(); }"
+            )
+            await _poll(page, lambda: _situacoes_carregadas(page), timeout=30, interval=1.0)
+            await _distribuir_expedientes(page, status_cb)
 
         # ── Navegação em árvore: situação → comarca → vara ─────────────────
         await _navigate_to_unidade(page, atribuicao, SITUACAO_PADRAO, status_cb)
@@ -778,12 +828,13 @@ def scrape_expedientes(
     modo: str,
     heartbeat,
     status_cb=None,
+    distribuir: bool = False,
 ) -> list[dict]:
     """Wrapper síncrono. Fail-loud: se CDP off E login falhar, levanta exceção
     com 'Abra o PJe logado ou configure credenciais'."""
     return asyncio.run(
         _async_scrape_expedientes(
-            env, atribuicao, since, until, limit, modo, heartbeat, status_cb
+            env, atribuicao, since, until, limit, modo, heartbeat, status_cb, distribuir
         )
     )
 
@@ -802,6 +853,10 @@ def parse_args(argv=None):
     p.add_argument("--until", default=None, help="YYYY-MM-DD fim do intervalo")
     p.add_argument("--limit", type=int, default=80)
     p.add_argument("--modo", choices=["cdp", "direct"], default="cdp")
+    p.add_argument(
+        "--distribuir", action="store_true",
+        help="Clica a 'varinha' (distribui intimações da caixa geral p/ caixa de cada vara) antes de importar",
+    )
     return p.parse_args(argv)
 
 
@@ -852,6 +907,7 @@ def run(args) -> None:
                 sb, args.job_id, f"{a}: {n} expedientes…"
             ),
             status_cb=lambda msg: set_etapa(sb, args.job_id, msg),
+            distribuir=getattr(args, "distribuir", False),
         )
 
         for exp in expedientes:

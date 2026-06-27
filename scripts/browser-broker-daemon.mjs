@@ -145,6 +145,7 @@ const SKILL_REGISTRY = {
           ...(meta.until  ? ['--until',  String(meta.until)]  : []),
           ...(meta.limit  ? ['--limit',  String(meta.limit)]  : []),
           '--modo', meta.modo || 'cdp',
+          ...(meta.distribuir ? ['--distribuir'] : []),
         ],
         timeoutMs: 30 * 60_000,
       };

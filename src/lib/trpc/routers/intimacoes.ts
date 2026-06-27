@@ -156,6 +156,9 @@ const criarImportJobInput = z.object({
   since: z.string().optional(), // YYYY-MM-DD
   until: z.string().optional(), // YYYY-MM-DD
   limit: z.number().int().min(1).max(500).optional(),
+  // Distribui as intimações da caixa geral para as caixas das varas (ícone
+  // "varinha" no PJe) antes de importar — deixa tudo na caixa certa.
+  distribuir: z.boolean().optional(),
 });
 
 export type CriarImportJobInput = z.infer<typeof criarImportJobInput>;
@@ -166,6 +169,7 @@ export function buildJobMeta(input: CriarImportJobInput) {
     since: input.since,
     until: input.until,
     limit: input.limit ?? 80,
+    distribuir: input.distribuir ?? false,
   };
 }
 

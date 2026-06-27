@@ -30,6 +30,7 @@ export function IntimacoesImportModal({
   const [since, setSince] = useState("");
   const [until, setUntil] = useState("");
   const [limit, setLimit] = useState(80);
+  const [distribuir, setDistribuir] = useState(true);
   // O usuário já mexeu no campo "De"? Trava o pré-preenchimento automático.
   const [sinceTocado, setSinceTocado] = useState(false);
 
@@ -201,6 +202,21 @@ export function IntimacoesImportModal({
               />
             </label>
           </div>
+
+          {/* Distribuir (varinha): caixa geral → caixas das varas, antes de importar */}
+          <label className="mt-3 flex items-start gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={distribuir}
+              onChange={(e) => setDistribuir(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-neutral-300 dark:border-neutral-700 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+            />
+            <span className="text-xs text-neutral-600 dark:text-neutral-400 leading-snug">
+              <span className="font-medium text-neutral-700 dark:text-neutral-300">Distribuir antes de importar</span>
+              {" "}— move as intimações da caixa de entrada geral para a caixa de cada
+              vara (ícone da varinha no PJe), garantindo que nada fique de fora.
+            </span>
+          </label>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
@@ -219,6 +235,7 @@ export function IntimacoesImportModal({
                 since: since || undefined,
                 until: until || undefined,
                 limit,
+                distribuir,
               })
             }
             className="h-9 px-4 text-sm bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
