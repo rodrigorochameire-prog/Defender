@@ -86,6 +86,7 @@ export function DiariasView() {
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <label className="text-xs">Destino<input className={inputCls} value={f.destino} onChange={(e) => set({ destino: e.target.value })} /></label>
               <label className="text-xs">Origem<input className={inputCls} value={f.origem} onChange={(e) => set({ origem: e.target.value })} /></label>
+              <label className="text-xs">Motivo<input className={inputCls} value={f.motivo} onChange={(e) => set({ motivo: e.target.value })} /></label>
               <label className="text-xs">Início<input type="date" className={inputCls} value={f.dataInicio} onChange={(e) => set({ dataInicio: e.target.value })} /></label>
               <label className="text-xs">Fim<input type="date" className={inputCls} value={f.dataFim} onChange={(e) => set({ dataFim: e.target.value })} /></label>
               <label className="text-xs">Qtd<input type="number" step="0.5" min="0.5" className={cn(inputCls, "w-20")} value={f.quantidade} onChange={(e) => set({ quantidade: e.target.value })} /></label>
@@ -107,7 +108,6 @@ export function DiariasView() {
             </div>
           )}
           {criar.error && <p className="mt-2 text-[11px] text-rose-600">{criar.error.message}</p>}
-          {(atualizar.error || remover.error) && <p className="mt-2 text-[11px] text-rose-600">{atualizar.error?.message ?? remover.error?.message}</p>}
         </section>
 
         {/* Lista */}
@@ -117,7 +117,7 @@ export function DiariasView() {
           <EmptyState icon={Banknote} title="Nenhuma diária cadastrada" />
         ) : (
           <section className={cn(CARD_STYLE.base)}>
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {data.map((d) => (
                 <li key={d.id} className="flex items-center justify-between py-2 gap-2">
                   <div className="min-w-0">
@@ -149,6 +149,7 @@ export function DiariasView() {
                 </li>
               ))}
             </ul>
+            {(atualizar.error || remover.error) && <p className="mt-2 text-[11px] text-rose-600">{atualizar.error?.message ?? remover.error?.message}</p>}
           </section>
         )}
       </div>
