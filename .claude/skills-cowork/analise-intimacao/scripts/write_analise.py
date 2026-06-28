@@ -12,14 +12,23 @@ Entrada (stdin): JSON array de resultados, um por demanda:
     "registro_id": 123,         # registro base (ciência/diligência) a marcar done
     "demanda_id": 45,
     "assistido_id": 9, "processo_id": 7,   # p/ os novos registros
-    "resumo_objeto": "...",     # o que é a intimação
-    "o_que_fazer": "...",       # providência objetiva
+    "resumo_objeto": "...",     # **Objeto** — o que é a intimação
+    "o_que_decidido": "...|null",  # **O que foi decidido**
+    "o_que_fazer": "...",       # **Providência/Prazo** — providência objetiva
     "cabe_recurso": "sim|nao|talvez|null",
     "recurso_cabivel": "apelação|RESE|ED|REsp|RE|null",
     "fundamento_recurso": "...|null",
+    "ato_atual": "...|null",       # ato atual da demanda (veio do fetch)
+    "ato_sugerido": "...|null",    # ato do vocabulário canônico da atribuição
+    "ato_confianca": "alta|media|baixa|null",
     "relato_vitima": "...|null",   # só MPU
     "termos_pronuncia": "...|null" # só pronúncia
   }]
+
+Sugestão de ato: aplica `ato_sugerido` em demandas.ato SOMENTE quando
+`ato_confianca='alta'` E o `ato_atual` for genérico (ATO_GENERICO). Nunca
+sobrescreve ato específico já definido. Quando ajusta, anexa ao corpo da anotação a
+linha "Ato ajustado: <antigo> → <novo>".
 
 Idempotente: não recria anotação com o mesmo título na demanda; marca o registro
 base enrichment_status='done'. AUTOR_ID configurável por env DEFENSOR_ID (default 1).
@@ -53,6 +62,13 @@ KEY = ENV.get("SUPABASE_SERVICE_ROLE_KEY")
 AUTOR_ID = int(os.environ.get("DEFENSOR_ID", "1"))
 HDR = {"apikey": KEY, "Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
 
+# Atos genéricos que a IA pode refinar com confiança alta. Ato específico fora
+# desta lista NUNCA é sobrescrito.
+ATO_GENERICO = {
+    "Analisar decisão", "Analisar sentença", "Analisar acórdão",
+    "Ciência", "Cumprir despacho",
+}
+
 
 def req(method, path, body=None, prefer=None):
     h = dict(HDR)
@@ -74,6 +90,11 @@ def insert_registro(reg):
     req("POST", "/rest/v1/registros", reg, prefer="return=minimal")
 
 
+def update_demanda_ato(demanda_id, novo_ato):
+    req("PATCH", f"/rest/v1/demandas?id=eq.{demanda_id}", {"ato": novo_ato},
+        prefer="return=minimal")
+
+
 def main():
     if not URL or not KEY:
         print("ERRO: env Supabase ausente", file=sys.stderr); sys.exit(1)
@@ -85,7 +106,7 @@ def main():
     if not isinstance(resultados, list):
         resultados = [resultados]
 
-    n_anota, n_relato = 0, 0
+    n_anota, n_relato, n_ato = 0, 0, 0
     for r in resultados:
         demanda_id = r.get("demanda_id")
         if not demanda_id:
@@ -95,24 +116,44 @@ def main():
             "demanda_id": demanda_id, "data_registro": datetime.now().isoformat(),
             "autor_id": AUTOR_ID, "status": "realizado",
         }
-        # Anotação principal: resumo + o que fazer (+ recurso, se houver)
+        # --- Sugestão de ato (No Invention; só refina ato genérico c/ confiança alta) ---
+        ato_atual = (r.get("ato_atual") or "").strip()
+        ato_sug = (r.get("ato_sugerido") or "").strip()
+        ato_conf = (r.get("ato_confianca") or "").strip().lower()
+        ato_ajuste = None  # (antigo, novo) quando houver troca
+        if (ato_sug and ato_conf == "alta" and ato_atual in ATO_GENERICO
+                and ato_sug != ato_atual):
+            ato_ajuste = (ato_atual, ato_sug)
+        # --- Anotação principal: resumo ESTRUTURADO (+ recurso preliminar, se houver) ---
         corpo = []
         if r.get("resumo_objeto"):
-            corpo.append(r["resumo_objeto"].strip())
+            corpo.append(f"**Objeto:** {r['resumo_objeto'].strip()}")
+        if r.get("o_que_decidido"):
+            corpo.append(f"**O que foi decidido:** {r['o_que_decidido'].strip()}")
         if r.get("o_que_fazer"):
-            corpo.append(f"\n**O que fazer:** {r['o_que_fazer'].strip()}")
+            corpo.append(f"**Providência/Prazo:** {r['o_que_fazer'].strip()}")
         cr = (r.get("cabe_recurso") or "").lower()
         if cr in ("sim", "talvez"):
             rec = r.get("recurso_cabivel") or "recurso"
             fund = f" — {r['fundamento_recurso'].strip()}" if r.get("fundamento_recurso") else ""
-            corpo.append(f"\n**Cabe recurso? (análise preliminar — revisar):** {cr} · {rec}{fund}")
+            corpo.append(f"**Cabe recurso? (análise preliminar — revisar):** {cr} · {rec}{fund}")
         elif cr == "nao":
-            corpo.append("\n**Cabe recurso? (análise preliminar — revisar):** não")
+            corpo.append("**Cabe recurso? (análise preliminar — revisar):** não")
+        if ato_ajuste:
+            corpo.append(f"Ato ajustado: {ato_ajuste[0]} → {ato_ajuste[1]}")
         titulo = "Resumo e providências"
         if corpo and not registro_exists(demanda_id, titulo):
             insert_registro({**base, "tipo": "anotacao", "titulo": titulo,
                              "conteudo": "\n".join(corpo)})
             n_anota += 1
+            # Aplica a troca do ato junto com a 1ª gravação (idempotente: re-runs
+            # pulam a anotação já existente e, portanto, não re-aplicam).
+            if ato_ajuste:
+                try:
+                    update_demanda_ato(demanda_id, ato_ajuste[1])
+                    n_ato += 1
+                except Exception as e:
+                    print(f"  ⚠ falha ao ajustar ato demanda {demanda_id}: {e}", file=sys.stderr)
         # MPU: relato da suposta vítima (registro separado)
         if r.get("relato_vitima"):
             t2 = "Relato da suposta vítima"
@@ -135,7 +176,8 @@ def main():
             except Exception as e:
                 print(f"  ⚠ falha ao marcar done reg {r['registro_id']}: {e}", file=sys.stderr)
 
-    print(json.dumps({"anotacoes": n_anota, "relatos": n_relato, "total": len(resultados)}, ensure_ascii=False))
+    print(json.dumps({"anotacoes": n_anota, "relatos": n_relato,
+                      "atos_ajustados": n_ato, "total": len(resultados)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

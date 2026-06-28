@@ -7,12 +7,32 @@ Uso:
     python3 fetch_pending.py --ids 101,102,103
 
 Saída (stdout): JSON array de objetos:
-    [{ registro_id, demanda_id, ato, tipo_registro, is_mpu, tipo_intimacao,
-       assistido, processo, raw_text }]
+    [{ registro_id, demanda_id, ato, ato_atual, atribuicao, atribuicao_label,
+       tipo_registro, is_mpu, tipo_intimacao, assistido, processo, raw_text }]
 Só inclui registros com enrichment_status='pending' (idempotente: já-done não volta).
 """
 import argparse, json, re, sys, urllib.request, urllib.error
 from pathlib import Path
+
+
+# Mapa enum-da-atribuição (processos.atribuicao) → rótulo canônico usado em
+# src/config/atos-por-atribuicao.ts. A IA usa o rótulo p/ escolher ato_sugerido
+# do vocabulário certo. Atribuições sem vocabulário criminal → None (sem sugestão).
+ATRIB_LABEL = {
+    "JURI_CAMACARI": "Tribunal do Júri",
+    "GRUPO_JURI": "Grupo Especial do Júri",
+    "VVD_CAMACARI": "Violência Doméstica",
+    "EXECUCAO_PENAL": "Execução Penal",
+    "SUBSTITUICAO": "Substituição Criminal",
+    "SUBSTITUICAO_CIVEL": None,
+    "MUTIRAO_PROTEGE": "Criminal Geral",
+    "CRIMINAL_CAMACARI": "Criminal Geral",
+    "CRIMINAL_SIMOES_FILHO": "Criminal Geral",
+    "CRIMINAL_LAURO_DE_FREITAS": "Criminal Geral",
+    "CRIMINAL_CANDEIAS": "Criminal Geral",
+    "CRIMINAL_ITAPARICA": "Criminal Geral",
+    "CRIMINAL_2_GRAU_SALVADOR": "Criminal Geral",
+}
 
 
 def load_env() -> dict:
@@ -61,7 +81,7 @@ def main():
     # contexto das demandas (assistido, processo, classe da intimação)
     dem = get(
         f"/rest/v1/demandas?id=in.({in_ids})&select=id,ato,enrichment_data,"
-        "assistidos(nome),processos(numero_autos,tipo_processo,"
+        "assistidos(nome),processos(numero_autos,tipo_processo,atribuicao,"
         "processosVvd:processos_vvd(tipo_processo,mpu_ativa))"
     )
     by_dem = {d["id"]: d for d in dem}
@@ -83,10 +103,14 @@ def main():
         d = by_dem.get(r["demanda_id"], {})
         proc = d.get("processos") or {}
         raw = (r.get("enrichment_data") or {}).get("raw_text") or ""
+        atrib = proc.get("atribuicao")
         out.append({
             "registro_id": r["id"],
             "demanda_id": r["demanda_id"],
             "ato": r.get("titulo") or d.get("ato"),
+            "ato_atual": d.get("ato"),
+            "atribuicao": atrib,
+            "atribuicao_label": ATRIB_LABEL.get(atrib),
             "tipo_registro": r.get("tipo"),
             "is_mpu": is_mpu(d),
             "tipo_intimacao": (d.get("enrichment_data") or {}).get("tipo_processo"),

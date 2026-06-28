@@ -281,6 +281,22 @@ class Supabase:
             self._req("POST", "/rest/v1/medidas_mpu", novos, prefer="return=minimal")
         return len(novos)
 
+    def revogar_medidas_mpu(self, processo_vvd_id: int, codigos: list[str] | None = None) -> int:
+        """Marca medidas como `status='revogada'` (+ data_revogacao=hoje) na tabela
+        `medidas_mpu`. Se `codigos` é None → revoga TODAS as medidas ATIVAS do
+        processo_vvd (revogação total). Se é lista → revoga só esses códigos.
+        Idempotente: o filtro `status=eq.ativa` garante que medidas já revogadas
+        NÃO são rebaixadas/retocadas. Retorna o nº de linhas afetadas."""
+        from urllib.parse import quote
+        path = (f"/rest/v1/medidas_mpu?processo_vvd_id=eq.{processo_vvd_id}"
+                "&status=eq.ativa")
+        if codigos:
+            lista = ",".join(quote(str(c)) for c in codigos)
+            path += f"&codigo=in.({lista})"
+        body = {"status": "revogada", "data_revogacao": date.today().isoformat()}
+        rows = self._req("PATCH", path, body, prefer="return=representation")
+        return len(rows) if isinstance(rows, list) else 0
+
     def get_registro_by_titulo(self, demanda_id: int, titulo: str) -> dict | None:
         from urllib.parse import quote
         rows = self._req(
@@ -1000,7 +1016,8 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
     proc_id = demanda["processo_id"]
     parsed = parse_decisao_mpu(content)
     medidas = parsed.get("medidas") or []
-    if not medidas and not parsed.get("revogacao_total"):
+    revogadas = parsed.get("medidas_revogadas") or []
+    if not medidas and not parsed.get("revogacao_total") and not revogadas:
         return
     if medidas:
         pvid = None
@@ -1025,6 +1042,34 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
                     log(f"  🛡 {n} medida(s) gravada(s) em medidas_mpu (painel)")
             except Exception as e:
                 log(f"  ⚠ falha ao gravar medidas_mpu: {e}")
+    # ─── Revogação / modulação: rebaixa medidas ativas para 'revogada'
+    if parsed.get("revogacao_total") or revogadas:
+        try:
+            rpvid = sb.upsert_processo_vvd(proc_id, {})
+            if rpvid:
+                alvo = None if parsed.get("revogacao_total") else revogadas
+                n_rev = sb.revogar_medidas_mpu(rpvid, alvo)
+                if n_rev:
+                    log(f"  ↻ {n_rev} medida(s) revogada(s)")
+                titulo_rev = "Medidas protetivas — revogação"
+                if not sb.registro_exists(demanda["id"], titulo_rev):
+                    if parsed.get("revogacao_total"):
+                        corpo_rev = ("Revogação TOTAL das medidas protetivas (parsing "
+                                     "automático — conferir). Todas as medidas ativas "
+                                     "foram marcadas como revogadas.")
+                    else:
+                        corpo_rev = ("Revogação parcial das medidas protetivas (parsing "
+                                     "automático — conferir). Códigos revogados: "
+                                     + ", ".join(str(c) for c in revogadas) + ".")
+                    sb.insert_registro({
+                        "assistido_id": demanda.get("assistido_id"), "processo_id": proc_id,
+                        "demanda_id": demanda["id"], "data_registro": datetime.now().isoformat(),
+                        "tipo": "anotacao", "titulo": titulo_rev, "conteudo": corpo_rev,
+                        "status": "realizado", "autor_id": DEFENSOR_ID,
+                    })
+        except Exception as e:
+            log(f"  ⚠ falha ao revogar medidas_mpu: {e}")
+
     # Registro "Medidas protetivas deferidas" (anotação determinística)
     titulo = "Medidas protetivas deferidas"
     if medidas and not sb.registro_exists(demanda["id"], titulo):
