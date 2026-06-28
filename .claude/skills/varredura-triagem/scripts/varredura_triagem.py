@@ -415,6 +415,15 @@ RULES_BASE = [
      "Ciência absolvição", "NORMAL", None, "ciencia", [], {}),
     (r"(sentenca|julgo).{0,200}condeno",
      "Ciência condenação", "ALTA", None, "ciencia", [], {}),
+    # ─── 5b. Júri pós-pronúncia (gatilho específico: art. 422 / plenário) ─────
+    #     Valem p/ qualquer atribuição, mas só disparam com keyword específica;
+    #     vêm ANTES das regras genéricas de decisão para não cair em "Analisar
+    #     decisão". Impronúncia NÃO entra aqui (não se força RESE — réu não recorre
+    #     da própria impronúncia; só contrarrazões se o MP recorrer).
+    (r"(preclu|transitad).{0,40}pronuncia|art\.?\s*422|fase.{0,15}422|diligencias.{0,20}(plenario|422)",
+     "Diligências do 422", "ALTA", 5, "diligencia", [], {}),
+    (r"rol.{0,20}testemunhas.{0,20}plenario|prepara.{0,20}plenario",
+     "Diligências do 422", "ALTA", 5, "diligencia", [], {}),
     # ─── 6. Sentença / decisão genérica
     #     Sentença DEVE estar em contexto de 1ª instância (vara, juiz)
     (r"\bsentenca\b(?!\s+da\s+pron)",  # exclui "sentença da pronúncia" — outra regra cobre
@@ -486,6 +495,46 @@ RULES_MPU = [
      "Ciência", "BAIXA", None, "ciencia",
      "manifestacao_pendente", "intimacao_generica",
      [], {}),
+]
+
+
+# ───── Regras Execução Penal (atribuicao = EXECUCAO_PENAL) ───────────────────
+# Mesmo formato de RULES_BASE: (pattern, ato, prioridade, prazo_dias,
+# registro_tipo, side_effects, extras). Texto NORMALIZADO (sem acento, minúsculo).
+# Primeira regra que casa vence. Aplicadas ANTES de RULES_BASE quando a
+# atribuição é Execução Penal; se nenhuma casar → fallback p/ RULES_BASE.
+# Atos espelham src/config/atos-por-atribuicao.ts (Execução Penal). Ver
+# references/fluxo-atos-por-atribuicao.md.
+RULES_EP = [
+    (r"extin(c|ç).{0,20}punibilidade|pena.{0,10}cumprida|prescri(c|ç)",
+     "Extinção da punibilidade", "ALTA", 5, "diligencia", [], {}),
+    (r"reconvers",
+     "Manifestação contra reconversão", "ALTA", 5, "diligencia", [], {}),
+    (r"regress.{0,20}regime|falta grave",
+     "Manifestação contra regressão", "URGENTE", 5, "diligencia", [], {}),
+    (r"rescis.{0,20}anpp|descumpr.{0,20}anpp",
+     "Impugnação à rescisão de ANPP", "URGENTE", 5, "diligencia", [], {}),
+    (r"sursis",
+     "Alteração de condição do SURSIS", "NORMAL", 5, "diligencia", [], {}),
+    (r"livramento condicional",
+     "Livramento condicional", "NORMAL", 5, "diligencia", [], {}),
+    (r"remi(c|ç)",
+     "Remição de pena", "NORMAL", 5, "diligencia", [], {}),
+    (r"progress.{0,20}regime|requisit.{0,20}progress|calculo.{0,15}pena|atestado.{0,15}pena",
+     "Requerimento de progressão", "NORMAL", 5, "diligencia", [], {}),
+    (r"sa(i|í)da tempor",
+     "Saída temporária", "NORMAL", 5, "diligencia", [], {}),
+    (r"permiss.{0,15}sa(i|í)da",
+     "Permissão de saída", "NORMAL", 5, "diligencia", [], {}),
+    (r"prisao domiciliar|domiciliar",
+     "Prisão domiciliar", "URGENTE", 5, "diligencia", [], {}),
+    (r"indulto|comuta(c|ç)",
+     "Indulto", "ALTA", 5, "diligencia", [], {}),
+    (r"transfer.{0,20}(unidade|autos|presidio)",
+     "Transferência de unidade", "NORMAL", 5, "diligencia", [], {}),
+    # fallback EP: decisão genérica de execução → analisar; senão None → RULES_BASE
+    (r"\bdecisao\b",
+     "Analisar decisão", "NORMAL", None, "diligencia", [], {}),
 ]
 
 
@@ -612,11 +661,16 @@ def _decide_by_titulo_mpu(titulo: str, text: str) -> dict | None:
     return None  # fallback para RULES_MPU em classify()
 
 
-def classify(text: str, titulo: str | None = None, is_mpu: bool = False) -> dict | None:
+def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
+             atribuicao: str | None = None) -> dict | None:
     """Classifica usando (a) título do doc + (b) regras textuais como fallback.
 
     Quando is_mpu=True, RULES_MPU vem antes de RULES_BASE — ótica defensiva
     do requerido. Ver references/heuristicas-mpu.md.
+
+    Quando a atribuição é Execução Penal (`"EXECUCAO_PENAL" in atribuicao`),
+    RULES_EP vem antes de RULES_BASE — atos específicos da execução; se nenhuma
+    regra EP casar, faz fallback para o título genérico + RULES_BASE.
     """
     n = normalize(text)
     if is_mpu:
@@ -630,6 +684,14 @@ def classify(text: str, titulo: str | None = None, is_mpu: bool = False) -> dict
                         "registro_tipo": tipo, "fase": fase, "motivo": motivo,
                         "side_effects": fx, "extras": ex}
         # se MPU mas nada matcheou, cai no RULES_BASE como último recurso
+    if "EXECUCAO_PENAL" in (atribuicao or ""):
+        for pat, ato, prio, prazo, tipo, fx, ex in RULES_EP:
+            if re.search(pat, n):
+                return {
+                    "ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                    "registro_tipo": tipo, "side_effects": fx, "extras": ex,
+                }
+        # nenhuma regra EP casou → fallback para título genérico + RULES_BASE
     if titulo:
         r = _decide_by_titulo(titulo, text)
         if r:
@@ -1326,12 +1388,16 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
             log(f"  ⚠ modo direct: navegue manualmente até EXPEDIENTES > Vara")
             await asyncio.sleep(5)
 
+        # Atribuição-alvo da rodada (param explícito ou inferida da 1ª demanda).
+        # Definida fora do bloco de modo para estar SEMPRE em escopo no loop
+        # (passada ao classify p/ ativar RULES_EP quando for Execução Penal).
+        atrib_alvo = atribuicao or (
+            demandas[0].get("processos", {}).get("atribuicao") if demandas else None
+        )
+
         # Navega o painel até a vara da atribuição ANTES de localizar os docs —
         # find_in_panel só acha o expediente na tabela populada da vara correta.
         if modo in ("cdp", "direct"):
-            atrib_alvo = atribuicao or (
-                demandas[0].get("processos", {}).get("atribuicao") if demandas else None
-            )
             if atrib_alvo:
                 try:
                     # Recarrega o painel p/ estado limpo da árvore (a aba pode estar
@@ -1374,7 +1440,8 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
                 # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
                 texto = _clean_decisao_text(content["text"])
-                rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda)
+                rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
+                                atribuicao=atrib_alvo)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)
