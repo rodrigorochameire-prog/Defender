@@ -30,6 +30,8 @@ const ACAO_LABEL: Record<string, string> = {
   cancelada: "Cancelar",
 };
 
+const inputCls = "block border rounded px-2 py-1 text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
+
 export function FeriasView() {
   const utils = trpc.useUtils();
   const { data = [], isLoading } = trpc.ferias.listar.useQuery();
@@ -82,22 +84,28 @@ export function FeriasView() {
               <Plus className="w-4 h-4 mr-1" /> Novo período
             </Button>
           </div>
+          {removerParcela.error && (
+            <p className="mt-2 text-[11px] text-rose-600">{removerParcela.error.message}</p>
+          )}
           {novoPeriodo && (
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <label className="text-xs">Início aquisitivo
-                <input type="date" className="block border rounded px-2 py-1 text-sm" value={pAq.inicio} onChange={(e) => setPAq({ ...pAq, inicio: e.target.value })} />
+                <input type="date" className={inputCls} value={pAq.inicio} onChange={(e) => setPAq({ ...pAq, inicio: e.target.value })} />
               </label>
               <label className="text-xs">Fim aquisitivo
-                <input type="date" className="block border rounded px-2 py-1 text-sm" value={pAq.fim} onChange={(e) => setPAq({ ...pAq, fim: e.target.value })} />
+                <input type="date" className={inputCls} value={pAq.fim} onChange={(e) => setPAq({ ...pAq, fim: e.target.value })} />
               </label>
               <label className="text-xs">Dias de direito
-                <input type="number" className="block border rounded px-2 py-1 text-sm w-24" value={pAq.dias} onChange={(e) => setPAq({ ...pAq, dias: Number(e.target.value) })} />
+                <input type="number" className={cn(inputCls, "w-24")} value={pAq.dias} onChange={(e) => setPAq({ ...pAq, dias: Number(e.target.value) })} />
               </label>
               <Button size="sm" disabled={!pAq.inicio || !pAq.fim || criarPeriodo.isPending}
                 onClick={() => criarPeriodo.mutate({ aquisitivoInicio: pAq.inicio, aquisitivoFim: pAq.fim, diasDireito: pAq.dias }, { onSuccess: () => { setNovoPeriodo(false); setPAq({ inicio: "", fim: "", dias: 30 }); } })}>
                 Salvar
               </Button>
             </div>
+          )}
+          {criarPeriodo.error && (
+            <p className="mt-2 text-[11px] text-rose-600">{criarPeriodo.error.message}</p>
           )}
         </section>
 
@@ -163,13 +171,13 @@ export function FeriasView() {
                 {/* Nova parcela */}
                 <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3">
                   <label className="text-xs">Início
-                    <input type="date" className="block border rounded px-2 py-1 text-sm" value={f.inicio} onChange={(e) => set({ inicio: e.target.value })} />
+                    <input type="date" className={inputCls} value={f.inicio} onChange={(e) => set({ inicio: e.target.value })} />
                   </label>
                   <label className="text-xs">Fim
-                    <input type="date" className="block border rounded px-2 py-1 text-sm" value={f.fim} onChange={(e) => set({ fim: e.target.value })} />
+                    <input type="date" className={inputCls} value={f.fim} onChange={(e) => set({ fim: e.target.value })} />
                   </label>
                   <label className="text-xs">Substituto
-                    <select className="block border rounded px-2 py-1 text-sm" value={f.substitutoId} onChange={(e) => set({ substitutoId: e.target.value })}>
+                    <select className={inputCls} value={f.substitutoId} onChange={(e) => set({ substitutoId: e.target.value })}>
                       <option value="">— nenhum —</option>
                       {colegas.map((c: { id: number; name: string | null }) => (
                         <option key={c.id} value={c.id}>{c.name ?? `#${c.id}`}</option>
@@ -177,7 +185,7 @@ export function FeriasView() {
                     </select>
                   </label>
                   <label className="text-xs">SEI
-                    <input type="text" className="block border rounded px-2 py-1 text-sm w-28" value={f.sei} onChange={(e) => set({ sei: e.target.value })} />
+                    <input type="text" className={cn(inputCls, "w-28")} value={f.sei} onChange={(e) => set({ sei: e.target.value })} />
                   </label>
                   <Button size="sm" disabled={!f.inicio || !f.fim || criarParcela.isPending}
                     onClick={() => criarParcela.mutate({
@@ -190,8 +198,12 @@ export function FeriasView() {
                     Adicionar parcela
                   </Button>
                 </div>
-                {(criarParcela.error || atualizarParcela.error) && (
-                  <p className="mt-2 text-[11px] text-rose-600">{criarParcela.error?.message ?? atualizarParcela.error?.message}</p>
+                {((criarParcela.error && criarParcela.variables?.periodoId === row.periodo.id) ||
+                  (atualizarParcela.error && row.parcelas.some((p) => p.id === atualizarParcela.variables?.id))) && (
+                  <p className="mt-2 text-[11px] text-rose-600">
+                    {(criarParcela.variables?.periodoId === row.periodo.id ? criarParcela.error?.message : undefined) ??
+                      atualizarParcela.error?.message}
+                  </p>
                 )}
               </section>
             );
