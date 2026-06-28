@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarOff, CalendarX, CalendarClock, Ban, Plus } from "lucide-react";
+import { CalendarOff, CalendarX, CalendarClock, CalendarCheck, Plus } from "lucide-react";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,7 @@ export function AusenciasView() {
       <Kpi icon={CalendarX} label="Licenças" value={kpis.licencas} />
       <Kpi icon={CalendarOff} label="Outras" value={kpis.outras} />
       <Kpi icon={CalendarClock} label="Solicitadas" value={kpis.solicitadas} />
-      <Kpi icon={Ban} label="Em vigor" value={kpis.emVigor} />
+      <Kpi icon={CalendarCheck} label="Em vigor" value={kpis.emVigor} />
     </div>
   );
 
@@ -146,6 +146,8 @@ export function AusenciasView() {
               {(["todos", "licenca", "outra_ausencia"] as TipoFiltro[]).map((t) => (
                 <button
                   key={t}
+                  type="button"
+                  aria-pressed={tipoFiltro === t}
                   onClick={() => setTipoFiltro(t)}
                   className={cn(
                     "px-3 py-1 text-xs rounded-full transition-colors",
