@@ -37,7 +37,7 @@ import {
   attentionSignals,
   contextualCTA,
 } from "@/lib/assistidos/state";
-import { AttentionSignalRow, ctaHref, SEV_TONE, KIND_ICON } from "@/components/ds/attention";
+import { AttentionSignalRow, ctaHref } from "@/components/ds/attention";
 import { tipoEfetivo, tipoEfetivoLabel } from "@/lib/casos/agrupamento";
 import { Tag } from "@/components/ds/tag";
 import { CollapsibleSection } from "@/components/ds/collapsible-section";
@@ -125,6 +125,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   // Hero "próxima ação" no topo: só urgência crítica (evita duplicar o CTA do rodapé).
   const topSignal = sinais[0] ?? null;
   const showActionBanner = !!topSignal && topSignal.severity === "critical";
+  // Pendências exclui o sinal já exibido no banner do topo (sem duplicar).
+  const restSignals = showActionBanner ? sinais.filter((s) => s.kind !== topSignal.kind) : sinais;
 
   // ── Identidade / derivações visuais ──
   const custodia = statusPrisionalInfo(assistido.statusPrisional);
@@ -166,30 +168,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
   return (
     <div className="flex flex-col h-full">
-      {/* Banner fixo no topo: próxima ação (sinal mais urgente). Custódia vive no cabeçalho. */}
+      {/* Banner fixo no topo: próxima ação (sinal mais urgente). Mesmo visual das pendências. */}
       {showActionBanner && topSignal && (
         <div className="px-4 pt-3 shrink-0">
-          {(() => {
-            const tone = SEV_TONE[topSignal.severity];
-            const Icon = KIND_ICON[topSignal.kind];
-            return (
-              <Link
-                href={ctaHref(topSignal.cta.kind, assistido.id)}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-l-[3px] transition-colors hover:brightness-[0.98] dark:hover:brightness-125",
-                  tone.border,
-                  tone.bg,
-                )}
-              >
-                <Icon className={cn("w-4 h-4 shrink-0", tone.text)} />
-                <div className="min-w-0 flex-1">
-                  <p className={cn("text-xs font-semibold truncate", tone.text)}>{topSignal.label}</p>
-                  <p className="text-[10px] text-muted-foreground">{topSignal.cta.label}</p>
-                </div>
-                <ChevronRight className={cn("w-4 h-4 shrink-0", tone.text)} />
-              </Link>
-            );
-          })()}
+          <AttentionSignalRow signal={topSignal} href={ctaHref(topSignal.kind, assistido.id)} />
         </div>
       )}
 
@@ -518,21 +500,25 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           </CollapsibleSection>
         )}
 
-        {/* ───────── 3. PENDÊNCIAS ───────── */}
-        <CollapsibleSection id="pendencias" label="Pendências" icon={AlertCircle} count={sinais.length} defaultOpen storageKey="assistido-preview-sections">
-          {sinais.length === 0 ? (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/10 border-l-2 border-emerald-300 dark:border-emerald-800">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-              <span className="text-xs text-emerald-700 dark:text-emerald-400">Sem pendências — cadastro e operação em ordem</span>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              {sinais.map((s) => (
-                <AttentionSignalRow key={s.kind} signal={s} href={ctaHref(s.kind, assistido.id)} />
-              ))}
-            </div>
-          )}
-        </CollapsibleSection>
+        {/* ───────── 3. PENDÊNCIAS (exclui o sinal crítico já no banner) ───────── */}
+        {(restSignals.length > 0 || sinais.length === 0) && (
+          <CollapsibleSection id="pendencias" label="Pendências" icon={AlertCircle} count={restSignals.length} defaultOpen storageKey="assistido-preview-sections">
+            {sinais.length === 0 ? (
+              <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/10 border border-emerald-200/60 dark:border-emerald-900/40">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-white/70 dark:bg-neutral-900/40">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                </span>
+                <span className="text-xs text-emerald-700 dark:text-emerald-400">Sem pendências — cadastro e operação em ordem</span>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {restSignals.map((s) => (
+                  <AttentionSignalRow key={s.kind} signal={s} href={ctaHref(s.kind, assistido.id)} />
+                ))}
+              </div>
+            )}
+          </CollapsibleSection>
+        )}
 
       </div>
 
