@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     pje_cert_password: str = ""  # senha do certificado digital (A3/A1)
     pje_username: str = ""  # login PJe (quando disponível)
 
+    # --- SIGA (CDP — sessão autenticada do defensor) ---
+    siga_cdp_url: str = "http://127.0.0.1:9222"
+    siga_base_url: str = "https://siga.defensoria.ba.def.br"
+    siga_scrape_rate_limit_seconds: float = 1.5
+    siga_scrape_timeout: int = 20_000
+
     # --- Limites ---
     max_text_length: int = 100_000  # chars
     rate_limit_per_minute: int = 100
