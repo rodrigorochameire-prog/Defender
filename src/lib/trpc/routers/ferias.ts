@@ -114,8 +114,8 @@ export const feriasRouter = router({
         const ps = await db.select().from(feriasParcelas)
           .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
         const lite: ParcelaLite[] = ps.map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
-        const usado = computeSaldo(input.diasDireito, lite);
-        if (usado.programados + usado.concluidos > input.diasDireito) {
+        const { programados, concluidos } = computeSaldo(periodo.diasDireito, lite);
+        if (programados + concluidos > input.diasDireito) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "diasDireito menor que os dias já programados/concluídos" });
         }
       }
@@ -134,8 +134,24 @@ export const feriasRouter = router({
         .where(and(eq(feriasPeriodos.id, input.id), isNull(feriasPeriodos.deletedAt))).limit(1);
       if (!periodo) throw new TRPCError({ code: "NOT_FOUND", message: "Período não encontrado" });
       if (periodo.defensorId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "Só o titular altera suas férias" });
-      await db.update(feriasPeriodos).set({ deletedAt: new Date() }).where(eq(feriasPeriodos.id, input.id));
-      return { ok: true };
+
+      return await db.transaction(async (tx) => {
+        await tx.update(feriasPeriodos).set({ deletedAt: new Date() }).where(eq(feriasPeriodos.id, input.id));
+
+        // cascade: soft-delete each parcela + deactivate afastamento + soft-delete evento
+        const parcelas = await tx.select().from(feriasParcelas)
+          .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
+        for (const parcela of parcelas) {
+          await tx.update(feriasParcelas).set({ deletedAt: new Date() }).where(eq(feriasParcelas.id, parcela.id));
+          if (parcela.vidaFuncionalEventoId != null) {
+            await tx.update(vidaFuncionalEventos).set({ deletedAt: new Date() }).where(eq(vidaFuncionalEventos.id, parcela.vidaFuncionalEventoId));
+          }
+          if (parcela.afastamentoId != null) {
+            await tx.update(afastamentos).set({ ativo: false, updatedAt: new Date() }).where(eq(afastamentos.id, parcela.afastamentoId));
+          }
+        }
+        return { ok: true };
+      });
     }),
 
   criarParcela: protectedProcedure
@@ -157,18 +173,20 @@ export const feriasRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Você não pode ser seu próprio substituto" });
       }
 
-      const existentes = await db.select().from(feriasParcelas)
-        .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
-      const lite: ParcelaLite[] = existentes.map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
-      const saldo = computeSaldo(periodo.diasDireito, lite);
       const novos = diasInclusive(input.dataInicio, input.dataFim);
-      if (saldo.disponiveis < novos) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Saldo insuficiente (${saldo.disponiveis} disponíveis, ${novos} solicitados)` });
-      }
-
-      const ordem = existentes.filter((p) => p.dataInicio < input.dataInicio).length + 1;
 
       return await db.transaction(async (tx) => {
+        // saldo guard inside the transaction (serializes check+insert, avoids TOCTOU)
+        const existentes = await tx.select().from(feriasParcelas)
+          .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
+        const lite: ParcelaLite[] = existentes.map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
+        const saldo = computeSaldo(periodo.diasDireito, lite);
+        if (saldo.disponiveis < novos) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: `Saldo insuficiente (${saldo.disponiveis} disponíveis, ${novos} solicitados)` });
+        }
+
+        const ordem = existentes.filter((p) => p.dataInicio < input.dataInicio).length + 1;
+
         let afastamentoId: number | null = null;
         if (input.substitutoId != null) {
           const [af] = await tx.insert(afastamentos).values({
@@ -242,13 +260,15 @@ export const feriasRouter = router({
       if (novaFim < novaInicio) throw new TRPCError({ code: "BAD_REQUEST", message: "dataFim anterior a dataInicio" });
 
       if (input.dataInicio || input.dataFim) {
-        const [periodo] = await db.select().from(feriasPeriodos).where(eq(feriasPeriodos.id, parcela.periodoId)).limit(1);
+        const [periodo] = await db.select().from(feriasPeriodos)
+          .where(and(eq(feriasPeriodos.id, parcela.periodoId), isNull(feriasPeriodos.deletedAt))).limit(1);
+        if (!periodo) throw new TRPCError({ code: "NOT_FOUND", message: "Período não encontrado" });
         const outras = await db.select().from(feriasParcelas)
           .where(and(eq(feriasParcelas.periodoId, parcela.periodoId), isNull(feriasParcelas.deletedAt)));
         const lite: ParcelaLite[] = outras
           .filter((p) => p.id !== parcela.id)
           .map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
-        const saldo = computeSaldo(periodo!.diasDireito, lite);
+        const saldo = computeSaldo(periodo.diasDireito, lite);
         const novos = diasInclusive(novaInicio, novaFim);
         if ((input.status ?? parcela.status) !== "cancelada" && saldo.disponiveis < novos) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Saldo insuficiente para a nova janela" });
