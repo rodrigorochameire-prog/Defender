@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 const ROUTERS = join(process.cwd(), "src/lib/trpc/routers");
+const LIB = join(process.cwd(), "src/lib/ausencias");
 const read = (rel: string) => readFileSync(join(ROUTERS, rel), "utf8");
+const readLib = (rel: string) => readFileSync(join(LIB, rel), "utf8");
 
 describe("ausencias router — contract", () => {
   const src = read("ausencias.ts");
@@ -13,8 +15,11 @@ describe("ausencias router — contract", () => {
   it("gates situação via podeTransicionar", () => { expect(src).toContain("podeTransicionar"); });
   it("wraps writes in a transaction", () => { expect(src).toContain("db.transaction"); });
   it("projects via projecaoEventoDeAusencia with origem manual", () => {
+    // projecaoEventoDeAusencia is used in ausencias.ts (atualizar) and in persist.ts (criar)
     expect(src).toContain("projecaoEventoDeAusencia");
-    expect(src).toMatch(/origem:\s*["']manual["']/);
+    // origem:"manual" moved to persist.ts after Task 5 refactor
+    const persist = readLib("persist.ts");
+    expect(persist).toMatch(/origem:\s*["']manual["']/);
   });
   it("soft-deletes the event on indeferida/cancelada", () => { expect(src).toMatch(/indeferida|cancelada/); });
   it("does NOT reference afastamentos", () => { expect(src).not.toContain("afastamentos"); });
