@@ -147,11 +147,9 @@ export function AssistidoCard({ assistido, onPhotoClick, isPinned, onTogglePin, 
           </span>
 
           <div className="flex-1 min-w-0">
-            <Link href={`/admin/assistidos/${assistido.id}`} onClick={stop}>
-              <h3 className="font-serif font-semibold text-neutral-900 dark:text-neutral-100 text-sm leading-tight hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors line-clamp-1">
-                {assistido.nome}
-              </h3>
-            </Link>
+            <h3 className="font-serif font-semibold text-neutral-900 dark:text-neutral-100 text-sm leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+              {assistido.nome}
+            </h3>
             {assistido.vulgo && (
               <p className="text-[10px] text-neutral-400 italic truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
             )}

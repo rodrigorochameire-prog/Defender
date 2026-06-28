@@ -645,9 +645,36 @@ export const assistidosRouter = router({
         }));
       }
 
+      // Une processos por titularidade (FK direta) com os do vínculo M2M, dedup por id —
+      // garante que processos sem linha em assistidos_processos também apareçam no preview/perfil.
+      const processosFkRows = await db
+        .select({
+          id: processos.id,
+          numeroAutos: processos.numeroAutos,
+          vara: processos.vara,
+          assunto: processos.assunto,
+          fase: processos.fase,
+          situacao: processos.situacao,
+          papel: assistidosProcessos.papel,
+          tipoProcesso: processos.tipoProcesso,
+          casoId: processos.casoId,
+          isReferencia: processos.isReferencia,
+        })
+        .from(processos)
+        .leftJoin(
+          assistidosProcessos,
+          and(eq(assistidosProcessos.processoId, processos.id), eq(assistidosProcessos.assistidoId, input.id)),
+        )
+        .where(and(eq(processos.assistidoId, input.id), isNull(processos.deletedAt)));
+
+      const procMap = new Map<number, (typeof processosRows)[number]>();
+      for (const p of processosRows) procMap.set(p.id, p);
+      for (const p of processosFkRows) if (!procMap.has(p.id)) procMap.set(p.id, p as (typeof processosRows)[number]);
+      const processosMerged = Array.from(procMap.values());
+
       return {
         ...baseRows[0],
-        processos: processosRows,
+        processos: processosMerged,
         audiencias: audienciasRows,
         demandas: demandasRows,
         driveFiles: driveFilesRows,

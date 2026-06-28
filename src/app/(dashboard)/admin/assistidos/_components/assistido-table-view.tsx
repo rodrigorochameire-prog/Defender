@@ -20,6 +20,7 @@ import {
   HardDrive,
   Link2Off,
   Zap,
+  ExternalLink,
 } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
@@ -161,13 +162,9 @@ export function AssistidoTableView({
                   />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/admin/assistidos/${assistido.id}`}
-                    className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate block hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors max-w-[220px]"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate block max-w-[220px] group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                     {assistido.nome}
-                  </Link>
+                  </p>
                   <div className="flex items-center gap-1.5 mt-1">
                     {/* Status badge — neutral for Solto */}
                     <span className={cn(
@@ -341,6 +338,20 @@ export function AssistidoTableView({
                 >
                   {isPinned ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
                 </button>
+
+                {/* Abrir perfil completo (página) — ação explícita; o clique na linha abre o preview */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={`/admin/assistidos/${assistido.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-neutral-300 dark:text-neutral-600 opacity-0 group-hover:opacity-100 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-[10px]">Abrir perfil</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>

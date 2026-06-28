@@ -97,32 +97,6 @@ function BlockHeader({ icon: Icon, children }: { icon: LucideIcon; children: Rea
   );
 }
 
-function StatCell({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: number;
-  href: string;
-}) {
-  const external = href.startsWith("http");
-  const Wrapper: any = external ? "a" : Link;
-  const props = external ? { href, target: "_blank", rel: "noopener noreferrer" } : { href };
-  return (
-    <Wrapper
-      {...props}
-      className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-800 hover:border-emerald-200/50 dark:hover:border-emerald-800/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all cursor-pointer group"
-    >
-      <Icon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-500 transition-colors" />
-      <span className="text-base font-bold text-neutral-800 dark:text-neutral-100 tabular-nums">{value}</span>
-      <span className="text-[10px] text-neutral-400">{label}</span>
-    </Wrapper>
-  );
-}
-
 // ── Painel principal: 4 blocos (Resumo / Atividade / Pendências / Ações) ──
 
 export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI }) {
@@ -138,11 +112,22 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   // Acordeão: um item expandido por vez (processo/demanda/documento) mostra prévia inline.
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const toggle = (k: string) => setExpandedKey((prev) => (prev === k ? null : k));
+  // Categoria ativa de Atividade — contador clicado revela a lista inline (não navega).
+  const [activeCat, setActiveCat] = useState<"processos" | "demandas" | "agenda" | "arquivos" | null>(null);
+  const [fichaOpen, setFichaOpen] = useState(false);
 
-  const ultimasDemandas = (detalhe?.demandas ?? []).slice(0, 3);
-  const processosLista = (detalhe?.processos ?? []).slice(0, 4);
-  const totalProcessos = detalhe?.processos?.length ?? 0;
-  const documentosRecentes = (detalhe?.driveFiles ?? []).filter((f) => !f.isFolder).slice(0, 4);
+  const procsAll = detalhe?.processos ?? [];
+  const demsAll = detalhe?.demandas ?? [];
+  const audsAll = (detalhe?.audiencias ?? []).slice().sort(
+    (a, b) => new Date(b.dataAudiencia).getTime() - new Date(a.dataAudiencia).getTime(),
+  );
+  const docsAll = (detalhe?.driveFiles ?? []).filter((f) => !f.isFolder);
+  const catCounts = {
+    processos: procsAll.length || assistido.processosAtivos || 0,
+    demandas: demsAll.length || assistido.demandasAbertas || 0,
+    agenda: audsAll.length || (assistido.proximaAudiencia ? 1 : 0),
+    arquivos: docsAll.length || assistido.driveFilesCount || 0,
+  };
   const processosSemCaso = detalhe?.processos
     ? countProcessosSemCaso(detalhe.processos as ReadonlyArray<{ casoId?: number | null }>)
     : undefined;
@@ -325,20 +310,39 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               </div>
             </div>
           </div>
-          {/* completude — fonte canônica */}
-          <div className="mt-3.5 flex items-center gap-2">
+          {/* completude — clicável: expande os campos faltantes */}
+          <button
+            onClick={() => setFichaOpen((v) => !v)}
+            className="mt-3.5 w-full flex items-center gap-2 cursor-pointer group"
+          >
             <div className="flex-1 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
               <div
                 className={cn("h-full rounded-full transition-all duration-500", completudeTone)}
                 style={{ width: `${comp.pct}%` }}
               />
             </div>
-            <span className="text-[10px] text-neutral-400 tabular-nums font-medium">
-              Ficha {comp.pct}%
-            </span>
-          </div>
-          {comp.faltam.length > 0 && (
-            <p className="mt-1 text-[10px] text-neutral-400">
+            <span className="text-[10px] text-neutral-400 tabular-nums font-medium">Ficha {comp.pct}%</span>
+            {comp.faltam.length > 0 && (
+              <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform", fichaOpen && "rotate-90")} />
+            )}
+          </button>
+          {fichaOpen && comp.faltam.length > 0 && (
+            <div className="mt-2 px-2.5 py-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/30 space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Faltam {comp.faltam.length} campos</p>
+              <div className="flex flex-wrap gap-1">
+                {comp.faltam.map((f) => (
+                  <span key={f.label} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400">
+                    {f.label}
+                  </span>
+                ))}
+              </div>
+              <Link href={`/admin/assistidos/${assistido.id}/editar`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                Completar cadastro <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+          )}
+          {!fichaOpen && comp.faltam.length > 0 && (
+            <p className="mt-1 text-[10px] text-neutral-400 truncate">
               falta: {comp.faltam.map((f) => f.label).join(", ")}
             </p>
           )}
@@ -347,80 +351,179 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         {/* ───────── 2. ATIVIDADE ───────── */}
         <section className="px-5 py-4">
           <BlockHeader icon={Clock}>Atividade</BlockHeader>
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            <StatCell icon={Scale} label="Processos" value={assistido.processosAtivos || 0} href={`/admin/assistidos/${assistido.id}/casos`} />
-            <StatCell icon={FileText} label="Demandas" value={assistido.demandasAbertas || 0} href={`/admin/assistidos/${assistido.id}/demandas`} />
-            <StatCell icon={Calendar} label="Agenda" value={assistido.proximaAudiencia ? 1 : 0} href={`/admin/assistidos/${assistido.id}/audiencias`} />
-            <StatCell
-              icon={HardDrive}
-              label="Arquivos"
-              value={assistido.driveFilesCount || 0}
-              href={
-                assistido.driveFolderId
-                  ? `https://drive.google.com/drive/folders/${assistido.driveFolderId}`
-                  : `/admin/assistidos/${assistido.id}/documentos`
-              }
-            />
+          {/* contadores = abas: clicar revela a lista aqui mesmo (não navega) */}
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { key: "processos", icon: Scale, label: "Processos" },
+              { key: "demandas", icon: FileText, label: "Demandas" },
+              { key: "agenda", icon: Calendar, label: "Agenda" },
+              { key: "arquivos", icon: HardDrive, label: "Arquivos" },
+            ] as const).map((c) => {
+              const active = activeCat === c.key;
+              const Icon = c.icon;
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setActiveCat((p) => (p === c.key ? null : c.key))}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 p-2 rounded-xl border transition-all cursor-pointer",
+                    active
+                      ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20"
+                      : "border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50 hover:border-emerald-200/60",
+                  )}
+                >
+                  <Icon className={cn("w-3.5 h-3.5", active ? "text-emerald-500" : "text-neutral-400")} />
+                  <span className="text-base font-bold text-neutral-800 dark:text-neutral-100 tabular-nums">{catCounts[c.key]}</span>
+                  <span className="text-[10px] text-neutral-400">{c.label}</span>
+                </button>
+              );
+            })}
           </div>
-          {/* eventos próximos */}
-          {(assistido.proximaAudiencia || assistido.proximoPrazo) && (
-            <div className="space-y-1.5">
+
+          {/* lista da categoria ativa */}
+          {activeCat && (
+            <div className="mt-3 space-y-1.5">
+              {activeCat === "processos" && (procsAll.length === 0 ? (
+                <p className="text-[11px] text-neutral-400 px-1">Nenhum processo vinculado.</p>
+              ) : procsAll.map((p) => {
+                const k = `proc-${p.id}`;
+                const open = expandedKey === k;
+                const auds = audsAll.filter((a) => a.processoId === p.id);
+                const dems = demsAll.filter((d) => d.processoId === p.id);
+                const proxAud = auds
+                  .filter((a) => new Date(a.dataAudiencia).getTime() >= Date.now())
+                  .sort((a, b) => new Date(a.dataAudiencia).getTime() - new Date(b.dataAudiencia).getTime())[0];
+                return (
+                  <div key={p.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
+                      <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-mono tabular-nums text-neutral-700 dark:text-neutral-300 truncate">{p.numeroAutos || "—"}</p>
+                        {(p.vara || p.assunto) && <p className="text-[10px] text-neutral-400 truncate">{p.vara || p.assunto}</p>}
+                      </div>
+                      {p.fase && <span className="text-[9px] text-neutral-400 shrink-0 uppercase">{p.fase}</span>}
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-1.5 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
+                        {p.situacao && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Situação: </span>{p.situacao}</p>}
+                        {p.papel && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Papel: </span>{p.papel}</p>}
+                        {proxAud && <p className="text-[11px] flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300"><Calendar className="w-3 h-3 text-violet-500 shrink-0" />{safeFmt(proxAud.dataAudiencia, "dd/MM HH:mm")} · {proxAud.tipo || "Audiência"}</p>}
+                        <p className="text-[10px] text-neutral-400">{dems.length} demanda(s) · {auds.length} audiência(s)</p>
+                        <Link href={`/admin/processos/${p.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">Abrir processo <ChevronRight className="w-3 h-3" /></Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              }))}
+
+              {activeCat === "demandas" && (demsAll.length === 0 ? (
+                <p className="text-[11px] text-neutral-400 px-1">Nenhuma demanda.</p>
+              ) : demsAll.map((d) => {
+                const k = `dem-${d.id}`;
+                const open = expandedKey === k;
+                const prazoD = d.prazo ? getPrazoInfo(d.prazo) : null;
+                const done = d.status === "CONCLUIDO" || d.status === "ARQUIVADO";
+                const procNum = d.processoId ? procsAll.find((p) => p.id === d.processoId)?.numeroAutos : null;
+                return (
+                  <div key={d.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
+                      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", done ? "bg-emerald-400" : "bg-amber-400")} />
+                      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">{d.ato || d.tipoAto || "Demanda"}</span>
+                      {prazoD && <span className={cn("text-[10px] font-medium shrink-0", prazoD.color)}>{prazoD.text}</span>}
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-1 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
+                        {d.status && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Status: </span>{d.status}</p>}
+                        {d.defensorNome && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Defensor: </span>{d.defensorNome}</p>}
+                        {procNum && <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-mono tabular-nums truncate"><span className="text-neutral-400 font-sans">Processo: </span>{procNum}</p>}
+                        <Link href={`/admin/demandas?assistidoId=${assistido.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">Abrir demanda <ChevronRight className="w-3 h-3" /></Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              }))}
+
+              {activeCat === "agenda" && (audsAll.length === 0 ? (
+                <p className="text-[11px] text-neutral-400 px-1">Nenhuma audiência.</p>
+              ) : audsAll.map((a) => {
+                const futura = new Date(a.dataAudiencia).getTime() >= Date.now();
+                return (
+                  <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-neutral-100 dark:border-neutral-800">
+                    <Calendar className={cn("w-3 h-3 shrink-0", futura ? "text-violet-500" : "text-neutral-300 dark:text-neutral-600")} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{a.tipo || "Audiência"}</p>
+                      {a.local && <p className="text-[10px] text-neutral-400 truncate">{a.local}</p>}
+                    </div>
+                    <span className="text-[10px] font-mono tabular-nums text-neutral-500 shrink-0">{safeFmt(a.dataAudiencia, "dd/MM HH:mm")}</span>
+                  </div>
+                );
+              }))}
+
+              {activeCat === "arquivos" && (docsAll.length === 0 ? (
+                <p className="text-[11px] text-neutral-400 px-1">Nenhum documento.</p>
+              ) : docsAll.slice(0, 12).map((f) => {
+                const k = `doc-${f.id}`;
+                const open = expandedKey === k;
+                const isImg = (f.mimeType ?? "").startsWith("image/");
+                const openUrl = f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`;
+                return (
+                  <div key={f.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
+                      <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{f.name}</p>
+                        {(f.documentType || f.categoria) && <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>}
+                      </div>
+                      <span className="text-[9px] text-neutral-400 tabular-nums shrink-0">{f.lastModifiedTime && safeFmt(f.lastModifiedTime, "dd/MM")}</span>
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-2 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
+                        {isImg && f.driveFileId && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={`https://drive.google.com/thumbnail?id=${f.driveFileId}&sz=w400`} alt={f.name ?? "documento"} loading="lazy" className="w-full max-h-44 object-contain rounded-md border border-neutral-200 dark:border-neutral-700 bg-white" />
+                        )}
+                        <p className="text-[10px] text-neutral-400">{f.mimeType || "arquivo"}{f.lastModifiedTime ? ` · ${safeFmt(f.lastModifiedTime, "dd/MM/yyyy HH:mm")}` : ""}</p>
+                        <a href={openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">Abrir no Drive <ExternalLink className="w-3 h-3" /></a>
+                      </div>
+                    )}
+                  </div>
+                );
+              }))}
+
+              <Link
+                href={
+                  activeCat === "processos" ? `/admin/assistidos/${assistido.id}/casos`
+                  : activeCat === "demandas" ? `/admin/demandas?assistidoId=${assistido.id}`
+                  : activeCat === "agenda" ? `/admin/assistidos/${assistido.id}/audiencias`
+                  : `/admin/assistidos/${assistido.id}/documentos`
+                }
+                className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5"
+              >
+                Abrir página de {activeCat} →
+              </Link>
+            </div>
+          )}
+
+          {/* próximos eventos — visível quando nenhuma categoria aberta (glance) */}
+          {!activeCat && (assistido.proximaAudiencia || assistido.proximoPrazo) && (
+            <div className="mt-3 space-y-1.5">
               {assistido.proximaAudiencia && (
                 <div className="flex items-center gap-2 text-xs">
                   <Calendar className="w-3 h-3 text-violet-500 shrink-0" />
-                  <span className="text-neutral-600 dark:text-neutral-300 flex-1">
-                    {assistido.tipoProximaAudiencia || "Audiência"}
-                  </span>
-                  <span className="font-mono tabular-nums text-neutral-500">
-                    {format(parseISO(assistido.proximaAudiencia), "dd/MM HH:mm")}
-                  </span>
+                  <span className="text-neutral-600 dark:text-neutral-300 flex-1">{assistido.tipoProximaAudiencia || "Audiência"}</span>
+                  <span className="font-mono tabular-nums text-neutral-500">{safeFmt(assistido.proximaAudiencia, "dd/MM HH:mm")}</span>
                 </div>
               )}
               {assistido.proximoPrazo && (
                 <div className="flex items-center gap-2 text-xs">
                   <Timer className={cn("w-3 h-3 shrink-0", prazoInfo?.color)} />
-                  <span className="text-neutral-600 dark:text-neutral-300 flex-1 truncate">
-                    {assistido.atoProximoPrazo || "Prazo"}
-                  </span>
-                  {prazoInfo && (
-                    <span className={cn("font-medium", prazoInfo.color)}>{prazoInfo.text}</span>
-                  )}
+                  <span className="text-neutral-600 dark:text-neutral-300 flex-1 truncate">{assistido.atoProximoPrazo || "Prazo"}</span>
+                  {prazoInfo && <span className={cn("font-medium", prazoInfo.color)}>{prazoInfo.text}</span>}
                 </div>
               )}
-            </div>
-          )}
-          {/* últimas demandas — expansíveis */}
-          {ultimasDemandas.length > 0 && (
-            <div className="mt-3 space-y-1">
-              {ultimasDemandas.map((d) => {
-                const prazoD = d.prazo ? getPrazoInfo(d.prazo) : null;
-                const done = d.status === "CONCLUIDO" || d.status === "ARQUIVADO";
-                const k = `dem-${d.id}`;
-                const open = expandedKey === k;
-                const procNum = d.processoId ? detalhe?.processos?.find((p) => p.id === d.processoId)?.numeroAutos : null;
-                return (
-                  <div key={d.id} className="rounded-lg border border-transparent hover:border-neutral-200/70 dark:hover:border-neutral-800 transition-colors">
-                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-1.5 py-1 text-left cursor-pointer">
-                      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", done ? "bg-emerald-400" : "bg-amber-400")} />
-                      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
-                        {d.ato || d.tipoAto || "Demanda"}
-                      </span>
-                      {prazoD && <span className={cn("text-[10px] font-medium shrink-0", prazoD.color)}>{prazoD.text}</span>}
-                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
-                    </button>
-                    {open && (
-                      <div className="mx-1.5 mb-1.5 px-2.5 py-2 rounded-md bg-neutral-50 dark:bg-neutral-800/30 space-y-1">
-                        {d.status && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Status: </span>{d.status}</p>}
-                        {d.defensorNome && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Defensor: </span>{d.defensorNome}</p>}
-                        {procNum && <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-mono tabular-nums truncate"><span className="text-neutral-400 font-sans">Processo: </span>{procNum}</p>}
-                        <Link href={`/admin/demandas?assistidoId=${assistido.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
-                          Abrir demanda <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )}
         </section>
@@ -444,111 +547,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                   </div>
                 </div>
               ))}
-            </div>
-          </section>
-        )}
-
-        {/* ───────── PROCESSOS ───────── */}
-        {processosLista.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={Scale}>Processos</BlockHeader>
-            <div className="space-y-1.5">
-              {processosLista.map((p) => {
-                const k = `proc-${p.id}`;
-                const open = expandedKey === k;
-                const auds = (detalhe?.audiencias ?? []).filter((a) => a.processoId === p.id);
-                const dems = (detalhe?.demandas ?? []).filter((d) => d.processoId === p.id);
-                const proxAud = auds
-                  .filter((a) => new Date(a.dataAudiencia).getTime() >= Date.now())
-                  .sort((a, b) => new Date(a.dataAudiencia).getTime() - new Date(b.dataAudiencia).getTime())[0];
-                return (
-                  <div key={p.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
-                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
-                      <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-mono tabular-nums text-neutral-700 dark:text-neutral-300 truncate">{p.numeroAutos || "—"}</p>
-                        {(p.vara || p.assunto) && <p className="text-[10px] text-neutral-400 truncate">{p.vara || p.assunto}</p>}
-                      </div>
-                      {p.fase && <span className="text-[9px] text-neutral-400 shrink-0 uppercase">{p.fase}</span>}
-                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
-                    </button>
-                    {open && (
-                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-1.5 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
-                        {p.situacao && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Situação: </span>{p.situacao}</p>}
-                        {p.papel && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Papel: </span>{p.papel}</p>}
-                        {proxAud && (
-                          <p className="text-[11px] flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300">
-                            <Calendar className="w-3 h-3 text-violet-500 shrink-0" />
-                            {safeFmt(proxAud.dataAudiencia, "dd/MM HH:mm")} · {proxAud.tipo || "Audiência"}
-                          </p>
-                        )}
-                        <p className="text-[10px] text-neutral-400">{dems.length} demanda(s) · {auds.length} audiência(s)</p>
-                        <Link href={`/admin/processos/${p.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
-                          Abrir processo <ChevronRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {totalProcessos > 4 && (
-                <Link href={`/admin/assistidos/${assistido.id}/casos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
-                  +{totalProcessos - 4} processo(s) →
-                </Link>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ───────── DOCUMENTOS RECENTES ───────── */}
-        {documentosRecentes.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={FileText}>Documentos recentes</BlockHeader>
-            <div className="space-y-1.5">
-              {documentosRecentes.map((f) => {
-                const k = `doc-${f.id}`;
-                const open = expandedKey === k;
-                const isImg = (f.mimeType ?? "").startsWith("image/");
-                const openUrl = f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`;
-                return (
-                  <div key={f.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
-                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
-                      <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{f.name}</p>
-                        {(f.documentType || f.categoria) && <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>}
-                      </div>
-                      <span className="text-[9px] text-neutral-400 tabular-nums shrink-0">
-                        {f.lastModifiedTime && safeFmt(f.lastModifiedTime, "dd/MM")}
-                      </span>
-                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
-                    </button>
-                    {open && (
-                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-2 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
-                        {isImg && f.driveFileId && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={`https://drive.google.com/thumbnail?id=${f.driveFileId}&sz=w400`}
-                            alt={f.name ?? "documento"}
-                            loading="lazy"
-                            className="w-full max-h-44 object-contain rounded-md border border-neutral-200 dark:border-neutral-700 bg-white"
-                          />
-                        )}
-                        <p className="text-[10px] text-neutral-400">
-                          {f.mimeType || "arquivo"}
-                          {f.lastModifiedTime ? ` · ${safeFmt(f.lastModifiedTime, "dd/MM/yyyy HH:mm")}` : ""}
-                        </p>
-                        <a href={openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
-                          Abrir no Drive <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
-                Ver todos os documentos →
-              </Link>
             </div>
           </section>
         )}
