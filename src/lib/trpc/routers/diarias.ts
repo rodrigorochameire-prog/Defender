@@ -18,7 +18,7 @@ const baseFields = {
   motivo: z.string().nullable().optional(),
   dataInicio: ISO,
   dataFim: ISO,
-  quantidade: z.number().positive(),
+  quantidade: z.number().positive().multipleOf(0.5),
   valorUnitarioCents: z.number().int().min(0),
   seiProtocolo: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
