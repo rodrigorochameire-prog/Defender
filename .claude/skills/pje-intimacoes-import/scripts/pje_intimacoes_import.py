@@ -516,6 +516,75 @@ async def _poll(page, check, timeout: float = 20.0, interval: float = 1.0) -> bo
     return False
 
 
+async def _dismiss_distribuir_modal(page) -> str:
+    """Fecha o modal de resultado da varinha (confirmação ou "Nenhum expediente
+    distribuído…") e confirma que sumiu. Retorna o texto-resumo do modal (para log)
+    ou "" se nenhum modal estava aberto. Estratégia: captura o texto → clica o X /
+    botão de fechar → Escape → poll até o texto sumir."""
+    # captura um trecho do texto do modal (se houver), p/ log/diagnóstico
+    info = ""
+    try:
+        info = await page.evaluate(
+            r"""() => {
+              const re = /nenhum expediente distribu|expediente.{0,20}(movido|distribu)|caixa est[aá] em um per[ií]odo/i;
+              for (const el of document.querySelectorAll('div, p, span, td')) {
+                const t = (el.innerText || '').trim();
+                if (t && t.length < 240 && re.test(t)) {
+                  const r = el.getBoundingClientRect();
+                  if (r.width > 0 && r.height > 0) return t.replace(/\s+/g, ' ').slice(0, 160);
+                }
+              }
+              return '';
+            }"""
+        )
+    except Exception:
+        pass
+    if not info:
+        return ""  # nenhum modal de resultado visível
+    # tenta clicar um botão de fechar (X) visível
+    for _ in range(3):
+        try:
+            await page.evaluate(
+                r"""() => {
+                  const cands = [...document.querySelectorAll('button, a, span, i, [role=button]')];
+                  for (const el of cands) {
+                    const t   = (el.textContent || '').trim();
+                    const cls = (el.className || '') + ' ' + (el.getAttribute('aria-label') || '');
+                    const r   = el.getBoundingClientRect();
+                    if (r.width > 0 && r.height > 0 &&
+                        (t === '×' || t === '✕' || t === 'x' ||
+                         /close|fechar|closethick|ui-dialog-titlebar-close/i.test(cls))) {
+                      el.click(); return true;
+                    }
+                  }
+                  return false;
+                }"""
+            )
+        except Exception:
+            pass
+        try:
+            await page.keyboard.press("Escape")
+        except Exception:
+            pass
+        await asyncio.sleep(0.6)
+        gone = await page.evaluate(
+            r"""() => {
+              const re = /nenhum expediente distribu|expediente.{0,20}(movido|distribu)|caixa est[aá] em um per[ií]odo/i;
+              for (const el of document.querySelectorAll('div, p, span, td')) {
+                const t = (el.innerText || '').trim();
+                if (t && t.length < 240 && re.test(t)) {
+                  const r = el.getBoundingClientRect();
+                  if (r.width > 0 && r.height > 0) return false;
+                }
+              }
+              return true;
+            }"""
+        )
+        if gone:
+            break
+    return info
+
+
 async def _distribuir_expedientes(page, atribuicao: str, status_cb) -> bool:
     """Distribui as intimações da caixa GERAL da jurisdição para as caixas das
     varas, clicando o ícone "varinha" (fa-magic, title "Distribuir expedientes da
@@ -583,15 +652,15 @@ async def _distribuir_expedientes(page, atribuicao: str, status_cb) -> bool:
     if clicked:
         print(f"  [distribuir] varinha clicada: {clicked}", flush=True)
         await asyncio.sleep(8)  # distribuição em lote pode demorar
-        # O PJe abre um modal de confirmação ("Expediente movido para…") que some
-        # sozinho; Esc fecha-o sem efeito colateral (a distribuição já ocorreu).
-        # Nossa navegação por JS-click passa por cima de overlays, então isto é só
-        # higiene — deixa o painel limpo para a navegação seguinte.
-        try:
-            await page.keyboard.press("Escape")
-        except Exception:
-            pass
-        await asyncio.sleep(1)
+        # O PJe abre um modal de resultado — seja de confirmação ("Expediente movido
+        # para…"), seja informativo ("Nenhum expediente distribuído…") quando não há
+        # nada nos filtros. Esse modal NÃO some sozinho e bloqueia a tela do usuário,
+        # então o fechamos explicitamente (X → Escape) e confirmamos que sumiu.
+        info = await _dismiss_distribuir_modal(page)
+        if info:
+            print(f"  [distribuir] {info}", flush=True)
+            if status_cb and "nenhum" in info.lower():
+                status_cb("Nada a distribuir nas caixas (sem expedientes nos filtros)")
         return True
     print("  [distribuir] ⚠ varinha (fa-magic) não encontrada na lista da comarca — segui sem distribuir", flush=True)
     if status_cb:
