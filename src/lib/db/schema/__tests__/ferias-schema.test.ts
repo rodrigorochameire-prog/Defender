@@ -9,4 +9,10 @@ describe("ferias schema", () => {
       "programada", "homologada", "em_fruicao", "concluida", "cancelada",
     ]);
   });
+
+  it("ferias_parcelas has the SIGA alignment columns", () => {
+    for (const col of ["numeroSolicitacao","nSiga","provimento","dataPublicacao","conversaoPecunia","valorAbonoCents","suspensa","situacaoSiga","sigaSyncedAt"]) {
+      expect((feriasParcelas as Record<string, unknown>)[col]).toBeDefined();
+    }
+  });
 });
