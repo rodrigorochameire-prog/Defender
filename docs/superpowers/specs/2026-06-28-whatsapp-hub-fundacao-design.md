@@ -65,7 +65,7 @@ Este spec cobre a **Fundação** do hub: **M0 (infra resiliente) + M1 (tempo rea
 - Padrão estabelecido: 6 lugares usam `postgres_changes` (`use-realtime-demanda-eventos.ts`, `use-realtime-file-status.ts`, etc.).
 - No webhook (`route.ts:256`, onde está o TODO de SSE/WebSocket), a mensagem já é gravada em `whatsapp_chat_messages`. Não é preciso "disparar" nada extra: o Realtime emite o `postgres_changes` automaticamente no INSERT.
 - **Novo hook `use-realtime-whatsapp-messages.ts`** (espelha `use-realtime-demanda-eventos.ts`): assina `whatsapp_chat_messages` (filtro por `contactId`) para a janela de chat, e `whatsapp_contacts` para a lista de conversas. Substitui o polling de 15s em `ChatWindow` e `ConversationList`.
-- **Migration**: adicionar `whatsapp_chat_messages` e `whatsapp_contacts` à publication `supabase_realtime` (as tabelas realtime atuais já estão; estas podem não estar).
+- **Migration**: adicionar `whatsapp_chat_messages` e `whatsapp_contacts` à publication `supabase_realtime` (as tabelas realtime atuais já estão; estas podem não estar). Espelhar o script idempotente existente `scripts/apply-demanda-eventos-migration.ts` → novo `scripts/apply-whatsapp-realtime-migration.ts` com `ALTER PUBLICATION supabase_realtime ADD TABLE ...` guardado por checagem de existência. Deve rodar **antes** do deploy do M1.
 
 ### Vínculo telefone↔assistido
 
@@ -73,7 +73,7 @@ Este spec cobre a **Fundação** do hub: **M0 (infra resiliente) + M1 (tempo rea
 - **Matcher** `matchAssistidoByPhone(phone)`: compara contra `assistidos.telefone` e `assistidos.telefoneContato` (`core.ts:108-109`) usando a chave canônica.
   - **Política de auto-vínculo (decisão do usuário): auto SOMENTE em match único exato normalizado.** Ambiguidade (2+ assistidos batem, ou match parcial) → **não** vincula; vira sugestão na UI `/vincular`. Nunca auto-vincula número compartilhado/família (proteção de sigilo).
 - **Em tempo real**: todo novo contato criado no webhook passa pelo matcher.
-- **Backfill único** (mutation/script idempotente): roda o matcher sobre os 214 contatos órfãos; auto-vincula os únicos, loga a contagem de ambíguos para revisão manual.
+- **Backfill único**: mutation tRPC `whatsappChat.backfillPhoneLinks` (admin-only, idempotente). Varre contatos com `assistidoId IS NULL`, aplica o matcher, auto-vincula os match únicos exatos, e retorna `{ linked, ambiguous, failed }`. Re-rodável sem efeito colateral. Acionável por botão na página `/vincular`.
 - A página `/vincular` reusa o mesmo util (matcher consistente em todo lugar).
 
 ### Componentes M1
@@ -89,12 +89,22 @@ Este spec cobre a **Fundação** do hub: **M0 (infra resiliente) + M1 (tempo rea
 
 Reusa o modelo `registros` (`src/lib/db/schema/agenda.ts:179`), que já tem `assistidoId`, `tipo`, `interlocutor`, `conteudo`, e links opcionais para `processoId`/`casoId`/`demandaId`/`audienciaId`.
 
+### Pré-requisito de schema: coluna `origem` em `registros`
+
+O modelo `registros` (`agenda.ts:179`) **não tem** hoje um campo de origem. É necessário adicioná-lo para chavear o find-or-create e permitir filtrar atendimentos por canal:
+
+- **Migration**: `ALTER TABLE registros ADD COLUMN origem varchar(20) NOT NULL DEFAULT 'manual'`. Valores: `"manual" | "whatsapp" | "solar" | "audio"`.
+- Atualizar o input schema de `registros.create` (`registros.ts:378`) para aceitar `origem` (default `"manual"`), mantendo compatibilidade com o botão manual existente.
+
 ### Conversa → atendimento (regra honesta)
 
 **Gatilho do atendimento automático = o defensor responder, não o assistido pingar.**
 
 - Inbound de assistido vinculado **sem resposta** → **nenhum** `registros` criado. O contato permanece na lista **"Aguardando resposta"** (`listPendingContacts`, já existente) — funcionando como worklist de quem espera. (Semanticamente correto: não houve atendimento.)
-- Primeiro **outbound** do defensor para aquele assistido vinculado no dia → **find-or-create** de um `registros` `tipo:"atendimento"`, `interlocutor:"assistido"`, chaveado por `(assistidoId, dia, origem=whatsapp)`, rolando o conteúdo da conversa do dia. Dois outbounds no mesmo dia **não** criam dois registros (controle de concorrência).
+- **Onde o gatilho roda**: no caminho tRPC `sendMessage` (`whatsapp-chat.ts:861`), **não** no webhook. O evento `SEND_MESSAGE` do webhook é no-op (`route.ts:122`); o outbound real do defensor sempre passa pelo `sendMessage`. Após enviar com sucesso para um contato com `assistidoId != null`, executa o find-or-create.
+- **Definição de "dia"**: fuso **America/Sao_Paulo**. O limite do dia é meia-noite local (normalizar `dataRegistro` para o dia local de SP ao comparar).
+- **Find-or-create** (transacional, para evitar corrida): busca um `registros` com `(assistidoId, origem='whatsapp', dataRegistro no dia local de SP)`. Se não existe, cria `tipo:"atendimento"`, `interlocutor:"assistido"`, `origem:"whatsapp"`, ligado ao `processoId`/`demandaId` ativo do assistido (se houver). Se já existe, **não cria outro** e não faz nada (o segundo+ outbound do dia é no-op para `registros`).
+- **Conteúdo é snapshot, não transcrição**: `conteudo` é definido **uma vez** na criação, como marcador leve (ex.: `"Atendimento via WhatsApp"`), **não** acumula cada mensagem (evita crescimento ilimitado). As mensagens em si vivem em `whatsapp_chat_messages`; o `lastMessageAt` do contato cobre o "última atividade".
 - Reusa `registros.create` (`registros.ts:378`) — o mesmo que o botão manual `whatsapp-cockpit-card.tsx:45` já chama.
 
 ### Ações viram peça do dossiê
@@ -105,8 +115,9 @@ As procedures `saveToCase`, `createNoteFromMessage`, `extractData`/`applyExtract
 
 ### Componentes M2
 
-- Lógica de find-or-create do atendimento (no webhook/handler de envio outbound).
-- Edições nas procedures de ação para gravar `registros` ligados ao processo/demanda.
+- Migration: coluna `origem` em `registros` + atualização do input de `registros.create`.
+- Lógica de find-or-create do atendimento no caminho tRPC `sendMessage` (transacional, fuso SP).
+- Edições nas procedures de ação (`saveToCase`, `createNoteFromMessage`, `applyExtractedData`) para gravar `registros` ligados ao processo/demanda.
 - Reuso: `registros` schema + `registros.create`, `listPendingContacts`, `whatsapp_message_actions`.
 
 ---
@@ -121,6 +132,7 @@ As procedures `saveToCase`, `createNoteFromMessage`, `extractData`/`applyExtract
 - **Alerta sem tempestade**: cron dispara apenas na transição open→down.
 - **Backfill idempotente**: re-rodável; auto-vincula só únicos; loga ambíguos.
 - **Auto-vínculo falso-positivo**: confiança = match único exato normalizado; unlink manual fácil; nunca número compartilhado/família.
+- **Validação do `status`**: opcionalmente adicionar CHECK em `evolution_config.status` (`'connected'|'disconnected'|'connecting'|'error'|'waiting_qr'`) para travar valores no banco (nice-to-have).
 
 ## Estratégia de testes
 
