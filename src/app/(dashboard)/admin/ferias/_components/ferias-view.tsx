@@ -31,6 +31,7 @@ const ACAO_LABEL: Record<string, string> = {
 };
 
 const inputCls = "block border rounded px-2 py-1 text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
+const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export function FeriasView() {
   const utils = trpc.useUtils();
@@ -46,7 +47,7 @@ export function FeriasView() {
 
   const [novoPeriodo, setNovoPeriodo] = useState(false);
   const [pAq, setPAq] = useState({ inicio: "", fim: "", dias: 30 });
-  const [parcelaForm, setParcelaForm] = useState<Record<number, { inicio: string; fim: string; substitutoId: string; sei: string }>>({});
+  const [parcelaForm, setParcelaForm] = useState<Record<number, { inicio: string; fim: string; substitutoId: string; sei: string; provimento: string; numeroSolicitacao: string; conversaoPecunia: boolean; valorAbono: string; suspensa: boolean }>>({});
 
   const kpis = useMemo(() => {
     let disponiveis = 0, programadas = 0, emFruicao = 0, abertos = 0;
@@ -120,7 +121,7 @@ export function FeriasView() {
           <EmptyState icon={Plane} title="Nenhum período de férias cadastrado" />
         ) : (
           data.map((row) => {
-            const f = parcelaForm[row.periodo.id] ?? { inicio: "", fim: "", substitutoId: "", sei: "" };
+            const f = parcelaForm[row.periodo.id] ?? { inicio: "", fim: "", substitutoId: "", sei: "", provimento: "", numeroSolicitacao: "", conversaoPecunia: false, valorAbono: "", suspensa: false };
             const set = (patch: Partial<typeof f>) => setParcelaForm((m) => ({ ...m, [row.periodo.id]: { ...f, ...patch } }));
             const pct = row.saldo.direito > 0 ? Math.max(0, Math.min(100, (row.saldo.disponiveis / row.saldo.direito) * 100)) : 0;
             return (
@@ -158,8 +159,12 @@ export function FeriasView() {
                         <div className="text-sm font-medium truncate">
                           {p.ordem}ª parcela · {p.dataInicio} – {p.dataFim} ({p.dias}d)
                         </div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {p.substitutoNome ? `Substituto: ${p.substitutoNome}` : "Sem substituto"}{p.seiProtocolo ? ` · SEI ${p.seiProtocolo}` : ""}
+                        <div className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-x-1">
+                          <span>{p.substitutoNome ? `Substituto: ${p.substitutoNome}` : "Sem substituto"}{p.seiProtocolo ? ` · SEI ${p.seiProtocolo}` : ""}</span>
+                          {p.conversaoPecunia && <span className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400">abono{p.valorAbonoCents != null ? ` ${brl(p.valorAbonoCents)}` : ""}</span>}
+                          {p.suspensa && <span className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">suspensa</span>}
+                          {p.provimento && <span className="ml-2 text-[10px] text-muted-foreground">prov. {p.provimento}</span>}
+                          {p.situacaoSiga && <span className="ml-2 text-[10px] text-muted-foreground">SIGA: {p.situacaoSiga}</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -202,6 +207,17 @@ export function FeriasView() {
                   <label className="text-xs">SEI
                     <input type="text" className={cn(inputCls, "w-28")} value={f.sei} onChange={(e) => set({ sei: e.target.value })} />
                   </label>
+                  <label className="text-xs">Provimento<input className={inputCls} value={f.provimento ?? ""} onChange={(e) => set({ provimento: e.target.value })} /></label>
+                  <label className="text-xs">Nº Solicitação<input className={inputCls} value={f.numeroSolicitacao ?? ""} onChange={(e) => set({ numeroSolicitacao: e.target.value })} /></label>
+                  <label className="text-xs flex items-center gap-1 mt-4">
+                    <input type="checkbox" checked={!!f.conversaoPecunia} onChange={(e) => set({ conversaoPecunia: e.target.checked })} /> Converter em pecúnia (abono)
+                  </label>
+                  {f.conversaoPecunia && (
+                    <label className="text-xs">Valor abono (R$)<input type="number" step="0.01" min="0" className={cn(inputCls, "w-28")} value={f.valorAbono ?? ""} onChange={(e) => set({ valorAbono: e.target.value })} /></label>
+                  )}
+                  <label className="text-xs flex items-center gap-1 mt-4">
+                    <input type="checkbox" checked={!!f.suspensa} onChange={(e) => set({ suspensa: e.target.checked })} /> Suspensa
+                  </label>
                   <Button size="sm" disabled={!f.inicio || !f.fim || criarParcela.isPending}
                     onClick={() => criarParcela.mutate({
                       periodoId: row.periodo.id,
@@ -209,7 +225,12 @@ export function FeriasView() {
                       dataFim: f.fim,
                       substitutoId: f.substitutoId ? Number(f.substitutoId) : null,
                       seiProtocolo: f.sei || null,
-                    }, { onSuccess: () => set({ inicio: "", fim: "", substitutoId: "", sei: "" }) })}>
+                      provimento: f.provimento || null,
+                      numeroSolicitacao: f.numeroSolicitacao || null,
+                      conversaoPecunia: !!f.conversaoPecunia,
+                      valorAbonoCents: f.conversaoPecunia && f.valorAbono ? Math.round(Number(f.valorAbono) * 100) : null,
+                      suspensa: !!f.suspensa,
+                    }, { onSuccess: () => set({ inicio: "", fim: "", substitutoId: "", sei: "", provimento: "", numeroSolicitacao: "", conversaoPecunia: false, valorAbono: "", suspensa: false }) })}>
                     Adicionar parcela
                   </Button>
                 </div>
