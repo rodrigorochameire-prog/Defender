@@ -60,6 +60,12 @@ createdAt     timestamp
 ### 4.3 `judicial_units` (nova)
 Lista canônica de varas/comarcas. `{ id, comarca, vara, label }`.
 
+### 4.3.1 Vínculo `processos.judicialUnitId` (alteração — chave da Fase 2)
+Para que a visibilidade Nível 1 funcione, **cada processo precisa apontar para uma `judicial_units.id`** (FK), normalizando a vara/comarca hoje em texto livre. É a partir daí que tudo deriva:
+- `defensor_unidades` (§4.4) é auto-populada lendo `processos.judicialUnitId` dos processos do defensor.
+- A query de Nível 1 (§5 Fase 2) é: **assistido → processos → `processos.judicialUnitId` ∈ {minhas unidades}** (nunca match por string de vara/comarca).
+- Migração: rotina de backfill que mapeia os valores textuais existentes de vara/comarca dos processos para `judicial_units` (criando as unidades canônicas no caminho).
+
 ### 4.4 `defensor_unidades` (nova)
 Em quais unidades judiciais cada defensor atua. **Auto-populada** a partir dos processos (cada processo tem vara/comarca → o defensor atua ali) + add/remove manual.
 ```
@@ -135,7 +141,8 @@ Cada fase é entregável de forma independente e agrega valor isolada.
 - **Grupos de Drive:** `drive_groups` + `users.driveGroupId`. Grupo do Rodrigo = pastas atuais. 7ª DP aponta para o do Rodrigo.
 - **Provisionamento:** estender `createUserDriveStructure(userId)` para criar as subpastas por atribuição na raiz `OMBUDS — {nome} — {comarca}` e gravar os IDs em `drive_groups.atribuicaoFolders`. Idempotente.
 - **Onboarding (UI):** card "Conectar Google Drive" → OAuth (`/api/google/callback?userId=…`) → provisiona → mostra a árvore criada.
-- **Convenção + verificador de Drive:** documento da convenção de pastas (baseada na organização que já funciona) + `ombuds-agent check-drive` (implementado na Fase 4) que confere e sugere correções.
+- **Escopo de arquivos por defensor:** `drive_files` / `drive_sync_folders` ganham `userId` (§4.9), aplicado aqui.
+- **Convenção de Drive (documento):** documento da convenção de pastas (baseada na organização que já funciona com o Rodrigo), entregue como guia de onboarding. *O verificador automático (`ombuds-agent check-drive`) é da Fase 4 — esta fase entrega apenas a convenção escrita, satisfeita em isolamento.*
 
 ### Fase 2 — Visibilidade / escopo de assistidos (2 níveis)
 **Entrega:** cada defensor vê primeiro os assistidos da sua atuação; consulta institucional cruzada sob demanda.
@@ -156,6 +163,8 @@ Cada fase é entregável de forma independente e agrega valor isolada.
   - `POST /api/agent/tasks/:id/progress` — atualiza `etapa` (UI ao vivo).
   - `POST /api/agent/tasks/:id/result` — envia `resultado`/`erro`, marca `completed`/`failed`. Rejeita se a tarefa não for do defensor do token.
   - `POST /api/agent/heartbeat` — `{ hostname, agentVersion, claudeMaxOk }` → upsert em `agent_heartbeats`.
+- **Prefixo canônico do token:** `ombuds_agent_sk_<random>` (string fixa, validada igual no instalador e na API).
+- **Validação em isolamento (sem Fase 4):** o daemon refatorado é testável com um `~/.ombuds-agent/config.json` escrito à mão (token + URL da API); o instalador da Fase 4 só automatiza esse provisionamento.
 - **Refactor do daemon:** `claude-code-daemon.mjs` abandona o cliente `service_role` e vira cliente HTTP dos quatro endpoints. **Nenhuma credencial de banco sai da nuvem.** Mantém cost-firewall, semáforo de concorrência e zombie-reaper — operando sobre tarefas vindas do `/claim`. (Realtime push pode voltar depois como otimização; polling do `/claim` a cada N s é a baseline robusta.)
 
 ### Fase 4 — Instalador + skills + heartbeat + admin
@@ -206,7 +215,7 @@ Cada fase é entregável de forma independente e agrega valor isolada.
 
 ## 9. Itens em aberto / a lapidar
 
-- Critério fino de "atuação" para auto-derivar `defensor_unidades` (todos os processos? só ativos? por atribuição?).
-- Frequência de refresh da `unidade_membership`.
+- **(PRÉ-REQUISITO da Fase 2)** Critério fino de "atuação" para auto-derivar `defensor_unidades` (todos os processos? só ativos? por atribuição?). A Fase 2 não pode começar antes de decidido.
+- **(Input de design da Fase 2)** Frequência de refresh / janela de staleness da `unidade_membership` (gatilho: import de processos + agendada).
 - Política de avaliação/rating e moderação no marketplace.
 - Estratégia de versionamento e rollback de skills oficiais.
