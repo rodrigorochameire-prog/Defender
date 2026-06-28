@@ -447,15 +447,16 @@ export const AVATAR_GRADIENT_MAP: Record<string, {
   from: string; to: string; text: string; ring: string;
   darkFrom: string; darkTo: string; darkText: string;
 }> = {
-  // Tint suave (50→100) + iniciais na cor (700) + anel sutil. Identidade sem saturar.
-  all:                 { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-neutral-500', ring: 'ring-neutral-200/70 dark:ring-neutral-700/50', darkFrom: 'dark:from-neutral-800/40', darkTo: 'dark:to-neutral-800/30', darkText: 'dark:text-neutral-300' },
-  VVD:                 { from: 'from-amber-50', to: 'to-amber-100', text: 'text-amber-700', ring: 'ring-amber-200/60 dark:ring-amber-800/40', darkFrom: 'dark:from-amber-900/20', darkTo: 'dark:to-amber-900/10', darkText: 'dark:text-amber-300' },
-  JURI:                { from: 'from-emerald-50', to: 'to-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-200/60 dark:ring-emerald-800/40', darkFrom: 'dark:from-emerald-900/20', darkTo: 'dark:to-emerald-900/10', darkText: 'dark:text-emerald-300' },
-  GRUPO_JURI:          { from: 'from-orange-50', to: 'to-orange-100', text: 'text-orange-700', ring: 'ring-orange-200/60 dark:ring-orange-800/40', darkFrom: 'dark:from-orange-900/20', darkTo: 'dark:to-orange-900/10', darkText: 'dark:text-orange-300' },
-  EXECUCAO:            { from: 'from-blue-50', to: 'to-blue-100', text: 'text-blue-700', ring: 'ring-blue-200/60 dark:ring-blue-800/40', darkFrom: 'dark:from-blue-900/20', darkTo: 'dark:to-blue-900/10', darkText: 'dark:text-blue-300' },
-  SUBSTITUICAO:        { from: 'from-rose-50', to: 'to-rose-100', text: 'text-rose-700', ring: 'ring-rose-200/60 dark:ring-rose-800/40', darkFrom: 'dark:from-rose-900/20', darkTo: 'dark:to-rose-900/10', darkText: 'dark:text-rose-300' },
-  SUBSTITUICAO_CIVEL:  { from: 'from-violet-50', to: 'to-violet-100', text: 'text-violet-700', ring: 'ring-violet-200/60 dark:ring-violet-800/40', darkFrom: 'dark:from-violet-900/20', darkTo: 'dark:to-violet-900/10', darkText: 'dark:text-violet-300' },
-  CURADORIA:           { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-neutral-500', ring: 'ring-neutral-200/70 dark:ring-neutral-700/50', darkFrom: 'dark:from-neutral-800/40', darkTo: 'dark:to-neutral-800/30', darkText: 'dark:text-neutral-300' },
+  // Fundo NEUTRO p/ todos + iniciais na cor (700) + anel na cor. Calibrado p/ máxima
+  // suavidade: a identidade mora nas iniciais e no anel, nunca no fundo.
+  all:                 { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-neutral-500', ring: 'ring-neutral-200/70 dark:ring-neutral-700/50', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-neutral-300' },
+  VVD:                 { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-amber-700', ring: 'ring-amber-300/60 dark:ring-amber-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-amber-300' },
+  JURI:                { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-emerald-700', ring: 'ring-emerald-300/60 dark:ring-emerald-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-emerald-300' },
+  GRUPO_JURI:          { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-orange-700', ring: 'ring-orange-300/60 dark:ring-orange-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-orange-300' },
+  EXECUCAO:            { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-blue-700', ring: 'ring-blue-300/60 dark:ring-blue-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-blue-300' },
+  SUBSTITUICAO:        { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-rose-700', ring: 'ring-rose-300/60 dark:ring-rose-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-rose-300' },
+  SUBSTITUICAO_CIVEL:  { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-violet-700', ring: 'ring-violet-300/60 dark:ring-violet-700/40', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-violet-300' },
+  CURADORIA:           { from: 'from-neutral-50', to: 'to-neutral-100', text: 'text-neutral-500', ring: 'ring-neutral-200/70 dark:ring-neutral-700/50', darkFrom: 'dark:from-neutral-800/50', darkTo: 'dark:to-neutral-800/40', darkText: 'dark:text-neutral-300' },
 };
 
 // Helper para obter gradiente de avatar por atribuição

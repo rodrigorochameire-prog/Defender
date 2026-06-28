@@ -71,7 +71,9 @@ export function AssistidoAvatar({
       <Avatar
         className={cn(
           SIZE_CLASSES[size],
-          "shadow-sm transition-all duration-200",
+          // Anel de atribuição no contêiner — moldura sutil que vale p/ foto E iniciais.
+          "shadow-sm transition-all duration-200 ring-1 ring-inset",
+          gradient.ring,
           onClick && "cursor-pointer hover:scale-105 hover:shadow-md",
         )}
         onClick={onClick}
@@ -85,11 +87,10 @@ export function AssistidoAvatar({
         )}
         <AvatarFallback
           className={cn(
-            "bg-gradient-to-br font-semibold ring-1 ring-inset",
+            "bg-gradient-to-br font-semibold",
             gradient.from,
             gradient.to,
             gradient.text,
-            gradient.ring,
             gradient.darkFrom,
             gradient.darkTo,
             gradient.darkText,
