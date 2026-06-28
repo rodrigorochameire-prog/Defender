@@ -1,0 +1,14 @@
+/** Taxonomia oficial de motivos de licença do SIGA (strings exatas para casar no scraper). */
+export const LICENCA_MOTIVOS = [
+  "ACIDENTE EM SERVIÇO",
+  "CASAMENTO",
+  "CESSÃO",
+  "DOENÇA DE PESSOA DA FAMÍLIA",
+  "EM CARATER ESPECIAL/INTERESSE PARTICULAR",
+  "EXERCER MANDATO ELETIVO",
+  "LUTO",
+  "MATERNIDADE (ABORTO OU NATIMORTO)",
+  "MATERNIDADE (OU ADOTANTE)",
+  "PARA CONCORRER A MANDATO ELETIVO",
+  "PATERNIDADE (OU ADOTANTE)",
+] as const;
