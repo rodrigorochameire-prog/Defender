@@ -156,6 +156,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const isMonit = /MONITOR|TORNOZEL|DOMICILIAR/.test(String(assistido.statusPrisional ?? "").toUpperCase());
   // Classe de texto na cor da atribuição (700/400 — legível), p/ links de ação por área.
   const atribTextCls = primaryAttr ? getAtribuicaoColors(primaryAttr).text : null;
+  // Hex da atribuição — acento de identidade no card-hero (padrão OMBUDS de cards).
+  const atribHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   // Completude não é urgência — só emerald (ok) ou amber (a completar).
@@ -196,7 +198,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
       <div className="flex-1 overflow-y-auto bg-neutral-50/70 dark:bg-neutral-950/30 p-3 space-y-2.5">
         {/* ───────── 1. RESUMO (hero) ───────── */}
-        <section className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4">
+        <section
+          className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4"
+          style={atribHex ? { borderLeftColor: atribHex, borderLeftWidth: "3px" } : undefined}
+        >
           <div className="flex items-start gap-4">
             <AssistidoAvatar
               nome={assistido.nome}
