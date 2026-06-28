@@ -6,11 +6,8 @@ import { cn } from "@/lib/utils";
 import {
   Phone,
   MessageCircle,
-  Scale,
   FileText,
   Calendar,
-  Clock,
-  Timer,
   HardDrive,
   AlertCircle,
   CheckCircle2,
@@ -18,9 +15,7 @@ import {
   Pencil,
   Plus,
   ChevronRight,
-  Copy,
   ExternalLink,
-  Lock,
   Shield,
   MessageSquare,
   Briefcase,
@@ -29,8 +24,7 @@ import {
   Layers,
   type LucideIcon,
 } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { toast } from "sonner";
+import { format } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP, normalizeAreaToFilter } from "@/lib/config/atribuicoes";
 import { statusPrisionalInfo } from "@/lib/config/tipologia";
@@ -102,6 +96,21 @@ function BlockHeader({ icon: Icon, children }: { icon: LucideIcon; children: Rea
   );
 }
 
+// Badge unificado — uma única forma para todos os selos (tipo, análise, autos, grau).
+const TAG_TONE = {
+  neutral: "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+  accent: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400",
+  warn: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400",
+  danger: "bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400",
+} as const;
+function Tag({ tone = "neutral", className, children }: { tone?: keyof typeof TAG_TONE; className?: string; children: React.ReactNode }) {
+  return (
+    <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0", TAG_TONE[tone], className)}>
+      {children}
+    </span>
+  );
+}
+
 // ── Painel principal: 4 blocos (Resumo / Atividade / Pendências / Ações) ──
 
 export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI }) {
@@ -140,9 +149,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const comp = completudeFicha(snap);
   const sinais = attentionSignals(snap);
   const cta = contextualCTA(snap);
-  // Hero "próxima ação": o sinal mais urgente (crítico/aviso) fixado no topo.
+  // Hero "próxima ação" no topo: só urgência crítica (evita duplicar o CTA do rodapé).
   const topSignal = sinais[0] ?? null;
-  const showActionBanner = !!topSignal && (topSignal.severity === "critical" || topSignal.severity === "warning");
+  const showActionBanner = !!topSignal && topSignal.severity === "critical";
 
   // ── Identidade / derivações visuais ──
   const custodia = statusPrisionalInfo(assistido.statusPrisional);
@@ -189,21 +198,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         />
       )}
 
-      {/* Banners fixos no topo: custódia + próxima ação */}
-      {(isPreso || showActionBanner) && (
-        <div className="px-4 pt-3 space-y-2 shrink-0">
-          {isPreso && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/20 border-l-[3px] border-rose-400 dark:border-rose-700">
-              <Lock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-              <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">
-                Preso{tempoPreso ? ` há ${tempoPreso}` : ""}
-              </span>
-              {assistido.unidadePrisional && (
-                <span className="text-[10px] text-rose-600/80 dark:text-rose-400/70 truncate">· {assistido.unidadePrisional}</span>
-              )}
-            </div>
-          )}
-          {showActionBanner && topSignal && (() => {
+      {/* Banner fixo no topo: próxima ação (sinal mais urgente). Custódia vive no cabeçalho. */}
+      {showActionBanner && topSignal && (
+        <div className="px-4 pt-3 shrink-0">
+          {(() => {
             const tone = SEV_TONE[topSignal.severity];
             const Icon = KIND_ICON[topSignal.kind];
             return (
@@ -246,6 +244,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               {assistido.vulgo && (
                 <p className="text-xs text-neutral-400 italic mt-0.5">&ldquo;{assistido.vulgo}&rdquo;</p>
               )}
+              {/* status (custódia) — único indicador, semântico, com tempo + unidade */}
               <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                 {custodia && (
                   <span
@@ -256,9 +255,13 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                     )}
                   >
                     {custodia.label}
+                    {isPreso && tempoPreso && <span className="font-mono tabular-nums opacity-80">· {tempoPreso}</span>}
                   </span>
                 )}
-                {atribuicoes.slice(0, 3).map((attr, idx) => {
+                {isPreso && assistido.unidadePrisional && (
+                  <span className="text-[10px] text-rose-500/80 dark:text-rose-400/70 truncate max-w-[150px]">{assistido.unidadePrisional}</span>
+                )}
+                {atribuicoes.slice(0, 2).map((attr, idx) => {
                   const opt = resolveAttr(attr);
                   const color = opt ? SOLID_COLOR_MAP[opt.value] || "#6b7280" : "#6b7280";
                   return (
@@ -272,9 +275,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                   );
                 })}
                 {idade && <span className="text-[10px] text-neutral-400">{idade}a</span>}
-                {tempoPreso && (
-                  <span className="text-[10px] text-rose-400 font-mono tabular-nums">{tempoPreso}</span>
-                )}
               </div>
               {/* contato + CPF */}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -287,10 +287,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         href={whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-medium transition-colors"
+                        className="text-emerald-600 hover:text-emerald-700 transition-colors"
+                        title="WhatsApp Web"
                       >
-                        <MessageCircle className="w-2.5 h-2.5" />
-                        Zap
+                        <MessageCircle className="w-3.5 h-3.5" />
                       </a>
                     )}
                   </span>
@@ -376,15 +376,15 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="min-w-0 flex-1">
                           <p className="text-[13px] font-semibold text-foreground truncate">{c.titulo}</p>
-                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                             <span className="text-[9px] font-semibold uppercase tracking-wide" style={{ color: hex }}>{atribLabel}</span>
-                            <span className="text-[10px] text-neutral-400">· {c.processos.length} proc.</span>
-                            {c.analyzedAt ? (
-                              <span className="inline-flex items-center gap-0.5 text-[9px] text-emerald-600 dark:text-emerald-400"><Layers className="w-2.5 h-2.5" /> Análise {safeFmt(c.analyzedAt, "dd/MM")}</span>
-                            ) : (
-                              <span className="text-[9px] text-neutral-300 dark:text-neutral-600">sem análise</span>
+                            <span className="text-[10px] text-neutral-400">{c.processos.length} proc.</span>
+                            {c.analyzedAt && (
+                              <Tag tone="accent"><Layers className="w-2.5 h-2.5" /> Análise {safeFmt(c.analyzedAt, "dd/MM")}</Tag>
                             )}
-                            {proxAud && <span className="inline-flex items-center gap-0.5 text-[9px] text-violet-500"><Calendar className="w-2.5 h-2.5" /> {safeFmt(proxAud, "dd/MM")}</span>}
+                            {proxAud && (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] text-neutral-500 dark:text-neutral-400"><Calendar className="w-2.5 h-2.5 text-neutral-400" /> {safeFmt(proxAud, "dd/MM")}</span>
+                            )}
                           </div>
                         </div>
                         <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
@@ -396,9 +396,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                           const tlabel = tipoEfetivoLabel(tipoEfetivo({ tipoProcesso: p.tipoProcesso, classeProcessual: p.classeProcessual }));
                           return (
                             <Link key={p.id} href={`/admin/processos/${p.id}`} className="flex items-center gap-2 py-1 group">
-                              <span className="text-[8.5px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 shrink-0">{tlabel}</span>
+                              <Tag>{tlabel}</Tag>
                               <span className="font-mono tabular-nums text-[10px] text-neutral-600 dark:text-neutral-300 truncate flex-1 group-hover:text-emerald-600">{p.numeroAutos || "—"}</span>
-                              {p.proximaAudiencia && <span className="text-[9px] text-violet-500 shrink-0">{safeFmt(p.proximaAudiencia.data, "dd/MM")}</span>}
+                              {p.proximaAudiencia && <span className="inline-flex items-center gap-0.5 text-[9px] text-neutral-500 shrink-0"><Calendar className="w-2.5 h-2.5 text-neutral-400" />{safeFmt(p.proximaAudiencia.data, "dd/MM")}</span>}
                             </Link>
                           );
                         })}
@@ -419,7 +419,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                       const tlabel = tipoEfetivoLabel(tipoEfetivo({ tipoProcesso: p.tipoProcesso, classeProcessual: p.classeProcessual }));
                       return (
                         <Link key={p.id} href={`/admin/processos/${p.id}`} className="flex items-center gap-2 py-0.5 group">
-                          <span className="text-[8.5px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 shrink-0">{tlabel}</span>
+                          <Tag>{tlabel}</Tag>
                           <span className="font-mono tabular-nums text-[10px] text-neutral-600 dark:text-neutral-300 truncate flex-1 group-hover:text-emerald-600">{p.numeroAutos || "—"}</span>
                         </Link>
                       );
@@ -471,9 +471,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 const isImg = (f.mimeType ?? "").startsWith("image/");
                 const openUrl = f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`;
                 const selo = isAnalise
-                  ? { label: "Análise", cls: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400" }
+                  ? { label: "Análise", tone: "accent" as const }
                   : isAutos
-                    ? { label: "Autos", cls: "bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400" }
+                    ? { label: "Autos", tone: "neutral" as const }
                     : null;
                 return (
                   <div key={f.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
@@ -482,7 +482,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{f.name}</p>
                         {selo ? (
-                          <span className={cn("inline-block text-[8.5px] font-bold uppercase tracking-wide px-1 rounded", selo.cls)}>{selo.label}</span>
+                          <Tag tone={selo.tone}>{selo.label}</Tag>
                         ) : (f.documentType || f.categoria) ? (
                           <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>
                         ) : null}
@@ -517,7 +517,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 const tel = f.telefone ? f.telefone.replace(/\D/g, "") : null;
                 return (
                   <div key={f.id} className="flex items-center gap-2 px-1 py-1">
-                    <span className="text-[8.5px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 shrink-0">{f.grau || "—"}</span>
+                    <Tag>{f.grau || "—"}</Tag>
                     <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">{f.nome}</span>
                     {tel && (
                       <Link href={`/admin/whatsapp?phone=${tel}`} className="text-neutral-400 hover:text-emerald-600 transition-colors" title="Conversa no OMBUDS">
@@ -569,38 +569,19 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           )}
         </section>
 
-        {/* número de processo (cópia rápida) */}
-        {assistido.numeroProcesso && (
-          <section className="px-5 py-3">
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-              <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
-              <span className="font-mono tabular-nums text-xs text-neutral-600 dark:text-neutral-400 flex-1 truncate">
-                {assistido.numeroProcesso}
-              </span>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(assistido.numeroProcesso!);
-                  toast.success("Copiado!");
-                }}
-                className="p-1.5 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-                title="Copiar número"
-              >
-                <Copy className="w-3 h-3 text-neutral-400" />
-              </button>
-            </div>
-          </section>
-        )}
       </div>
 
       {/* ───────── 4. AÇÕES (sticky footer) ───────── */}
       <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/80 backdrop-blur-sm">
-        <Link href={ctaHref(cta.kind, assistido.id)} className="block">
-          <button className="w-full h-11 sm:h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
-            {cta.label}
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </Link>
-        <div className="flex items-center gap-2 mt-2">
+        {cta.kind !== "ver" && !showActionBanner && (
+          <Link href={ctaHref(cta.kind, assistido.id)} className="block">
+            <button className="w-full h-11 sm:h-9 flex items-center justify-center gap-1.5 bg-neutral-900 hover:bg-emerald-600 dark:bg-neutral-700 dark:hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+              {cta.label}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </Link>
+        )}
+        <div className={cn("flex items-center gap-2", cta.kind !== "ver" && !showActionBanner && "mt-2")}>
           <Link href={`/admin/assistidos/${assistido.id}`} className="flex-1">
             <button className="w-full h-11 sm:h-8 flex items-center justify-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-300 hover:border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all cursor-pointer">
               <ExternalLink className="w-3.5 h-3.5" />
