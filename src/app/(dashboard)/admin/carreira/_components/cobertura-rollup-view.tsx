@@ -7,6 +7,7 @@ import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO, COLORS } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
+import { carreiraStatusInfo } from "@/lib/carreira/status-visual";
 
 function Kpi({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
   return (
@@ -52,7 +53,7 @@ export function CoberturaRollupView() {
                     <div className="font-medium truncate">{c.defensorAfastado} → {c.defensorSubstituto}</div>
                     <div className="text-[11px] text-muted-foreground">{c.periodo}</div>
                   </div>
-                  {c.statusGratificacao ? <StatusChip status={c.statusGratificacao} /> : <span className={cn("text-[11px]", COLORS.warning.text)}>sem gratificação</span>}
+                  {c.statusGratificacao ? <StatusChip info={carreiraStatusInfo(c.statusGratificacao)} /> : <span className={cn("text-[11px]", COLORS.warning.text)}>sem gratificação</span>}
                 </li>
               ))}
             </ul>
@@ -62,7 +63,9 @@ export function CoberturaRollupView() {
         {/* Pendências */}
         <section className={CARD_STYLE.base}>
           <h2 className={cn(TYPO.h3, "mb-3")}>Pendências operacionais</h2>
-          {!data || data.pendencias.length === 0 ? (
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : !data || data.pendencias.length === 0 ? (
             <EmptyState icon={CheckCircle} title="Sem pendências" size="sm" />
           ) : (
             <ul className="divide-y divide-neutral-100">
@@ -72,7 +75,7 @@ export function CoberturaRollupView() {
                     <div className="font-medium truncate">{p.defensorSubstituto} · {p.unidadeSubstituida}</div>
                     <div className="text-[11px] text-muted-foreground">falta: {p.faltando.length ? p.faltando.join(", ") : "—"}</div>
                   </div>
-                  <StatusChip status={p.status} />
+                  <StatusChip info={carreiraStatusInfo(p.status)} />
                 </li>
               ))}
             </ul>
@@ -82,15 +85,17 @@ export function CoberturaRollupView() {
         {/* Por defensor */}
         <section className={CARD_STYLE.base}>
           <h2 className={cn(TYPO.h3, "mb-3")}>Por defensor</h2>
-          {!data || data.porDefensor.length === 0 ? (
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : !data || data.porDefensor.length === 0 ? (
             <EmptyState icon={BarChart2} title="Sem dados" size="sm" />
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] text-muted-foreground">
-                  <th className="py-1">Defensor</th>
-                  <th className="py-1">Subst. abertas</th>
-                  <th className="py-1">Afastado</th>
+                  <th scope="col" className="py-1">Defensor</th>
+                  <th scope="col" className="py-1">Subst. abertas</th>
+                  <th scope="col" className="py-1">Afastado</th>
                 </tr>
               </thead>
               <tbody>

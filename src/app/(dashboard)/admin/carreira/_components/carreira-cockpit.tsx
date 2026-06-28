@@ -8,6 +8,7 @@ import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO, COLORS } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
+import { carreiraStatusInfo } from "@/lib/carreira/status-visual";
 
 const CLUSTER_LABEL: Record<string, string> = {
   ausencias: "Ausências & designações",
@@ -65,7 +66,7 @@ export function CarreiraCockpit() {
                       {CLUSTER_LABEL[e.cluster] ?? e.cluster} · {e.prazo ? `prazo ${e.prazo}` : e.dataEvento}
                     </div>
                   </div>
-                  <StatusChip status={e.status} />
+                  <StatusChip info={carreiraStatusInfo(e.status)} />
                 </li>
               ))}
             </ul>
@@ -93,7 +94,7 @@ export function CarreiraCockpit() {
                     {summary.itens.slice(0, 5).map((it) => (
                       <li key={it.id} className="flex items-center justify-between text-sm">
                         <span className="truncate">{it.titulo}</span>
-                        <StatusChip status={it.status} />
+                        <StatusChip info={carreiraStatusInfo(it.status)} />
                       </li>
                     ))}
                   </ul>
