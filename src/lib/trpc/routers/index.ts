@@ -96,6 +96,7 @@ import { execucaoRouter } from "./execucao";
 import { objetosRouter } from "./objetos";
 import { promocaoRouter } from "./promocao";
 import { vidaFuncionalRouter } from "./vida-funcional";
+import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 
 
@@ -450,6 +451,10 @@ export const appRouter = router({
   // VIDA FUNCIONAL — CRUD escopado por defensor (privado)
   // ==========================================
   vidaFuncional: vidaFuncionalRouter,
+  // ==========================================
+  // CARREIRA — agregação panorama pessoal + rollup de cobertura (admin)
+  // ==========================================
+  carreira: carreiraRouter,
   // ==========================================
   // INTIMACOES — importação de intimações PJe (lane browser)
   // ==========================================
