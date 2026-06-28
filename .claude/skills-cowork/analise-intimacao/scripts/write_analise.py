@@ -110,6 +110,26 @@ def _strip_label(value, *labels) -> str:
     return v.replace("**", "").strip()
 
 
+def resolve_ctx(r) -> tuple:
+    """Resolve (assistido_id, processo_id) — usa os do resultado se vierem; senão
+    busca no registro base (registro_id) ou na própria demanda. registros.assistido_id
+    é NOT NULL, então isto é obrigatório antes de inserir."""
+    aid, pid = r.get("assistido_id"), r.get("processo_id")
+    if aid:
+        return aid, pid
+    rid = r.get("registro_id")
+    if rid:
+        rows = req("GET", f"/rest/v1/registros?id=eq.{rid}&select=assistido_id,processo_id")
+        if rows:
+            return rows[0].get("assistido_id"), (pid or rows[0].get("processo_id"))
+    did = r.get("demanda_id")
+    if did:
+        rows = req("GET", f"/rest/v1/demandas?id=eq.{did}&select=assistido_id,processo_id")
+        if rows:
+            return rows[0].get("assistido_id"), (pid or rows[0].get("processo_id"))
+    return aid, pid
+
+
 def main():
     if not URL or not KEY:
         print("ERRO: env Supabase ausente", file=sys.stderr); sys.exit(1)
@@ -126,8 +146,12 @@ def main():
         demanda_id = r.get("demanda_id")
         if not demanda_id:
             continue
+        assistido_id, processo_id = resolve_ctx(r)
+        if not assistido_id:
+            print(f"  ⚠ demanda {demanda_id}: sem assistido_id (pulando)", file=sys.stderr)
+            continue
         base = {
-            "assistido_id": r.get("assistido_id"), "processo_id": r.get("processo_id"),
+            "assistido_id": assistido_id, "processo_id": processo_id,
             "demanda_id": demanda_id, "data_registro": datetime.now().isoformat(),
             "autor_id": AUTOR_ID, "status": "realizado",
         }
