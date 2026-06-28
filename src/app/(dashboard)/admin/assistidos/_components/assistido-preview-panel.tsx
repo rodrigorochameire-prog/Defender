@@ -76,10 +76,10 @@ function UltimoContato({ assistidoId }: { assistidoId: number }) {
   const frio = Math.floor((Date.now() - ultimo.getTime()) / MS_DIA) > 30;
   return (
     <span
-      className={cn("inline-flex items-center gap-1 text-[10.5px]", frio ? "text-amber-600 dark:text-amber-400" : "text-neutral-500 dark:text-neutral-400")}
+      className="inline-flex items-center gap-1 text-[10.5px] text-neutral-500 dark:text-neutral-400"
       title={ultimo.toLocaleString("pt-BR")}
     >
-      <MessageSquare className="h-3 w-3" />
+      <MessageSquare className={cn("h-3 w-3", frio ? "text-amber-500" : "text-neutral-400")} />
       último contato {relativoContato(ultimo)}
     </span>
   );
@@ -164,8 +164,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   // Vermelho fica reservado para prazos/audiências (urgência real) abaixo.
   const completudeTone =
     comp.tone === "complete" || comp.tone === "good"
-      ? "bg-emerald-500"
-      : "bg-amber-500";
+      ? "bg-emerald-400"
+      : "bg-amber-400";
 
   return (
     <div className="flex flex-col h-full">
@@ -202,17 +202,17 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4"
           style={atribHex ? { borderLeftColor: atribHex, borderLeftWidth: "3px" } : undefined}
         >
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-3.5">
             <AssistidoAvatar
               nome={assistido.nome}
               photoUrl={assistido.photoUrl}
-              size="xl"
+              size="lg"
               atribuicao={primaryAttr}
               statusPrisional={assistido.statusPrisional}
               showStatusDot
             />
             <div className="flex-1 min-w-0">
-              <h2 className="font-serif text-xl font-semibold text-neutral-900 dark:text-neutral-50 leading-tight">
+              <h2 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight">
                 {assistido.nome}
               </h2>
               {assistido.vulgo && (
@@ -315,7 +315,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                   </span>
                 ))}
               </div>
-              <Link href={`/admin/assistidos/${assistido.id}/editar`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+              <Link href={`/admin/assistidos/${assistido.id}/editar`} className={cn("inline-flex items-center gap-1 text-[10.5px] hover:opacity-80", atribTextCls ?? "text-emerald-600")}>
                 Completar cadastro <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -371,7 +371,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                             </Link>
                           );
                         })}
-                        <Link href={`/admin/assistidos/${assistido.id}/caso/${c.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 pt-0.5">
+                        <Link href={`/admin/assistidos/${assistido.id}/caso/${c.id}`} className={cn("inline-flex items-center gap-1 text-[10.5px] pt-0.5 hover:opacity-80", atribTextCls ?? "text-emerald-600")}>
                           Abrir caso <ChevronRight className="w-3 h-3" />
                         </Link>
                       </div>
@@ -386,7 +386,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
                       {casosData.semCaso.length} a agrupar
                     </span>
-                    <Link href={`/admin/assistidos/${assistido.id}/casos`} className="inline-flex items-center gap-0.5 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                    <Link href={`/admin/assistidos/${assistido.id}/casos`} className={cn("inline-flex items-center gap-0.5 text-[10.5px] hover:opacity-80", atribTextCls ?? "text-emerald-600")}>
                       Agrupar <ChevronRight className="w-3 h-3" />
                     </Link>
                   </div>
@@ -471,13 +471,13 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                           <img src={`https://drive.google.com/thumbnail?id=${f.driveFileId}&sz=w400`} alt={f.name ?? "documento"} loading="lazy" className="w-full max-h-44 object-contain rounded-md border border-neutral-200 dark:border-neutral-700 bg-white" />
                         )}
                         <p className="text-[10px] text-neutral-400">{f.mimeType || "arquivo"}{f.lastModifiedTime ? ` · ${safeFmt(f.lastModifiedTime, "dd/MM/yyyy HH:mm")}` : ""}</p>
-                        <a href={openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">Abrir no Drive <ExternalLink className="w-3 h-3" /></a>
+                        <a href={openUrl} target="_blank" rel="noopener noreferrer" className={cn("inline-flex items-center gap-1 text-[10.5px] hover:opacity-80", atribTextCls ?? "text-emerald-600")}>Abrir no Drive <ExternalLink className="w-3 h-3" /></a>
                       </div>
                     )}
                   </div>
                 );
               })}
-              <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">Ver todos os documentos →</Link>
+              <Link href={`/admin/assistidos/${assistido.id}/documentos`} className={cn("block text-[10px] pt-0.5 hover:opacity-80", atribTextCls ?? "text-emerald-600")}>Ver todos os documentos →</Link>
             </div>
           </CollapsibleSection>
         )}
