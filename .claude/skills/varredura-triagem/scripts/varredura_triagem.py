@@ -195,6 +195,18 @@ class Supabase:
     def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
 
+    def upsert_processo_vvd(self, processo_id: int, fields: dict) -> None:
+        """Atualiza a linha de processos_vvd; se não existir, cria (insert mínimo:
+        processo_id + tipo_processo='MPU' + fields). requerido/requerente são
+        opcionais no schema (processos_vvd via importação)."""
+        rows = self._req("GET", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}&select=id&limit=1")
+        if isinstance(rows, list) and rows:
+            self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
+        else:
+            self._req("POST", "/rest/v1/processos_vvd",
+                      {"processo_id": processo_id, "tipo_processo": "MPU", **fields},
+                      prefer="return=minimal")
+
     def get_registro_by_titulo(self, demanda_id: int, titulo: str) -> dict | None:
         from urllib.parse import quote
         rows = self._req(
@@ -802,7 +814,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         if fase: pvvd["fase_procedimento"] = fase
         if motivo: pvvd["motivo_ultima_intimacao"] = motivo
         try:
-            sb.update_processo_vvd(proc_id, pvvd)
+            sb.upsert_processo_vvd(proc_id, pvvd)
         except Exception as e:
             log(f"  ⚠ falha processos_vvd (proc_id={proc_id}): {e}")
 
@@ -927,7 +939,7 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
                 pvvd["distancia_minima"] = dist
             if parsed.get("prazo_dias"):
                 pvvd["data_decisao_mpu"] = date.today().isoformat()
-            sb.update_processo_vvd(proc_id, pvvd)
+            sb.upsert_processo_vvd(proc_id, pvvd)
         except Exception as e:
             log(f"  ⚠ falha ao gravar medidas em processos_vvd: {e}")
     # Registro "Medidas protetivas deferidas" (anotação determinística)
