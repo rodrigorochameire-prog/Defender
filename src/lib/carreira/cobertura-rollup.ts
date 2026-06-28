@@ -93,12 +93,18 @@ export function buildCoberturaRollup(
       faltando: faltandoSteps(s),
     }));
 
-  const porDefensor = users.map((u) => ({
-    defensorId: u.id,
-    nome: u.name,
-    substituicoesAbertas: substituicoes.filter((s) => s.defensorId === u.id && s.status !== "paga").length,
-    afastamentoAtivo: afastamentos.some((a) => a.defensorId === u.id && isActiveToday(a, today)),
-  }));
+  const relevantes = new Set<number>();
+  for (const a of afastamentos) relevantes.add(a.defensorId);
+  for (const s of substituicoes) if (s.defensorId !== null) relevantes.add(s.defensorId);
+
+  const porDefensor = users
+    .filter((u) => relevantes.has(u.id))
+    .map((u) => ({
+      defensorId: u.id,
+      nome: u.name,
+      substituicoesAbertas: substituicoes.filter((s) => s.defensorId === u.id && s.status !== "paga").length,
+      afastamentoAtivo: afastamentos.some((a) => a.defensorId === u.id && isActiveToday(a, today)),
+    }));
 
   return {
     kpis: { afastadosHoje, substituicoesAbertas, semCobertura, gratificacoesAOficiar, gratificacoesAPagar },

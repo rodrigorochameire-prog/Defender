@@ -108,9 +108,22 @@ export function CarreiraCockpit() {
         <section className={cn(CARD_STYLE.base, "p-4")}>
           <h2 className={cn(TYPO.h3, "mb-3")}>Trajetória</h2>
           <TrajetoriaTimeline
-            eventos={(data?.agoraProximos ?? []).map((e) => ({
-              id: e.id, tipo: e.tipo, titulo: e.titulo, dataEvento: e.dataEvento, driveFolderId: null,
-            }))}
+            eventos={
+              data
+                ? [
+                    ...data.clusters.ausencias.itens,
+                    ...data.clusters.contraprestacao.itens,
+                    ...data.clusters.progressao.itens,
+                    ...data.clusters.administrativo.itens,
+                  ].map((it) => ({
+                    id: it.id,
+                    tipo: it.tipo,
+                    titulo: it.titulo,
+                    dataEvento: it.dataEvento,
+                    driveFolderId: null,
+                  }))
+                : []
+            }
             isLoading={isLoading}
           />
         </section>

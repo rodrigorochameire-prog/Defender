@@ -56,7 +56,10 @@ export const carreiraRouter = router({
         seiProtocolo: substituicoes.seiProtocolo,
       })
       .from(substituicoes);
-    const userRows = await db.select({ id: users.id, name: users.name }).from(users);
+    const userRows = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(isNull(users.deletedAt));
 
     const af: AfastamentoLite[] = afRows.map((a) => ({
       id: a.id, defensorId: a.defensorId, substitutoId: a.substitutoId,

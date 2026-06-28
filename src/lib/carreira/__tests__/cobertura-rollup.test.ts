@@ -80,6 +80,16 @@ describe("buildCoberturaRollup", () => {
     expect(r.pendencias[0]).toMatchObject({ substituicaoId: 1, defensorSubstituto: "Bruno", faltando: ["relatório", "SEI"] });
   });
 
+  it("porDefensor excludes users with no afastamento/substituição", () => {
+    const r = buildCoberturaRollup({
+      afastamentos: [af({ id: 1, defensorId: 1 })],
+      substituicoes: [sub({ id: 1, defensorId: 2 })],
+      users, // Ana(1), Bruno(2), Carla(3)
+    }, TODAY);
+    expect(r.porDefensor.map((d) => d.defensorId).sort()).toEqual([1, 2]);
+    expect(r.porDefensor.find((d) => d.defensorId === 3)).toBeUndefined();
+  });
+
   it("porDefensor counts open substituições and active afastamento per user", () => {
     const r = buildCoberturaRollup({
       afastamentos: [af({ id: 1, defensorId: 1, ativo: true, dataInicio: "2026-06-01", dataFim: "2026-07-15" })],
