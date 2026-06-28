@@ -6,7 +6,7 @@ import { CalendarClock, Briefcase, FileText, Plane, FolderOpen } from "lucide-re
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
-import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
+import { CARD_STYLE, TYPO, COLORS } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
 
 const CLUSTER_LABEL: Record<string, string> = {
@@ -84,7 +84,9 @@ export function CarreiraCockpit() {
                     {summary?.total ?? 0} · {summary?.emCurso ?? 0} em curso · {summary?.pendentes ?? 0} pendentes
                   </span>
                 </div>
-                {!summary || summary.itens.length === 0 ? (
+                {isLoading && !data ? (
+                  <p className="text-sm text-muted-foreground">Carregando…</p>
+                ) : !summary || summary.itens.length === 0 ? (
                   <EmptyState icon={FolderOpen} title="Sem registros" size="sm" />
                 ) : (
                   <ul className="space-y-1">
@@ -105,7 +107,7 @@ export function CarreiraCockpit() {
         <section className={cn(CARD_STYLE.base)}>
           <div className="flex items-center justify-between">
             <h2 className={TYPO.h3}>Trajetória</h2>
-            <Link href="/admin/carreira/vida-funcional" className="text-sm text-emerald-600 hover:underline">
+            <Link href="/admin/carreira/vida-funcional" className={cn("text-sm hover:underline", COLORS.primary.text)}>
               Ver linha do tempo completa →
             </Link>
           </div>
