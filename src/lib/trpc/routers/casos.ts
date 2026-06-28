@@ -1411,6 +1411,8 @@ export const casosRouter = router({
           status: casos.status,
           fase: casos.fase,
           prioridade: casos.prioridade,
+          analyzedAt: casos.analyzedAt,
+          analysisStatus: casos.analysisStatus,
           updatedAt: casos.updatedAt,
         })
         .from(casos)
@@ -1435,6 +1437,7 @@ export const casosRouter = router({
           comarca: processos.comarca,
           assunto: processos.assunto,
           classeProcessual: processos.classeProcessual,
+          tipoProcesso: processos.tipoProcesso,
           casoId: processos.casoId,
         })
         .from(processos)
@@ -1517,6 +1520,7 @@ export const casosRouter = router({
         comarca: p.comarca,
         assunto: p.assunto,
         classeProcessual: p.classeProcessual,
+        tipoProcesso: p.tipoProcesso,
         proximaAudiencia: proxAud.get(p.id) ?? null,
         proximoPrazo: proxPrazo.get(p.id) ?? null,
       });

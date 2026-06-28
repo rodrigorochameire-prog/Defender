@@ -225,6 +225,9 @@ export function agruparProcessos(
   if (elegiveis.length === 0) return [];
 
   const byId = new Map(elegiveis.map((p) => [p.id, p]));
+  // Execução Penal nunca se agrupa — vira sempre caso próprio (decisão de produto:
+  // simplifica a classificação; EP tem dinâmica e atribuição próprias).
+  const isEP = (p: ProcessoSeed) => tipoEfetivo(p) === "EP";
   const uf = new UnionFind();
   for (const p of elegiveis) uf.find(p.id); // garante nó
 
@@ -236,20 +239,22 @@ export function agruparProcessos(
     motivosPorRaiz.get(r)!.add(m);
   };
 
-  // Aresta 1 — vínculo de origem explícito (forte).
+  // Aresta 1 — vínculo de origem explícito (forte). EP não participa.
   for (const p of elegiveis) {
-    if (p.processoOrigemId != null && byId.has(p.processoOrigemId)) {
+    if (isEP(p)) continue;
+    if (p.processoOrigemId != null && byId.has(p.processoOrigemId) && !isEP(byId.get(p.processoOrigemId)!)) {
       uf.union(p.id, p.processoOrigemId);
       addMotivo(p.id, "vínculo de origem explícito");
     }
   }
 
   // Aresta 2 — mesma parte contrária discriminante + mesma comarca (médio-forte).
-  // Útil sobretudo para VVD (vítima nominal une MPU + IP + AP).
+  // Útil sobretudo para VVD (vítima nominal une MPU + IP + AP). EP não participa.
   for (let i = 0; i < elegiveis.length; i++) {
     for (let j = i + 1; j < elegiveis.length; j++) {
       const a = elegiveis[i];
       const b = elegiveis[j];
+      if (isEP(a) || isEP(b)) continue;
       const pa = normalizarParte(a.parteContraria);
       const pb = normalizarParte(b.parteContraria);
       if (pa && pb && pa === pb && normalizarComarca(a.comarca) === normalizarComarca(b.comarca)) {
