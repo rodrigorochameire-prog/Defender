@@ -73,13 +73,12 @@ function UltimoContato({ assistidoId }: { assistidoId: number }) {
     return melhor;
   }, [data]);
   if (!ultimo) return null;
-  const frio = Math.floor((Date.now() - ultimo.getTime()) / MS_DIA) > 30;
   return (
     <span
       className="inline-flex items-center gap-1 text-[10.5px] text-neutral-500 dark:text-neutral-400"
       title={ultimo.toLocaleString("pt-BR")}
     >
-      <MessageSquare className={cn("h-3 w-3", frio ? "text-amber-500" : "text-neutral-400")} />
+      <MessageSquare className="h-3 w-3 text-neutral-400" />
       último contato {relativoContato(ultimo)}
     </span>
   );
@@ -156,8 +155,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const isMonit = /MONITOR|TORNOZEL|DOMICILIAR/.test(String(assistido.statusPrisional ?? "").toUpperCase());
   // Classe de texto na cor da atribuição (700/400 — legível), p/ links de ação por área.
   const atribTextCls = primaryAttr ? getAtribuicaoColors(primaryAttr).text : null;
-  // Hex da atribuição — acento de identidade no card-hero (padrão OMBUDS de cards).
-  const atribHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   // Completude não é urgência — só emerald (ok) ou amber (a completar).
@@ -198,10 +195,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
       <div className="flex-1 overflow-y-auto bg-neutral-50/70 dark:bg-neutral-950/30 p-3 space-y-2.5">
         {/* ───────── 1. RESUMO (hero) ───────── */}
-        <section
-          className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4"
-          style={atribHex ? { borderLeftColor: atribHex, borderLeftWidth: "3px" } : undefined}
-        >
+        <section className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4">
           <div className="flex items-start gap-3.5">
             <AssistidoAvatar
               nome={assistido.nome}
@@ -310,7 +304,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Faltam {comp.faltam.length} campos</p>
               <div className="flex flex-wrap gap-1">
                 {comp.faltam.map((f) => (
-                  <span key={f.label} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400">
+                  <span key={f.label} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                     {f.label}
                   </span>
                 ))}
