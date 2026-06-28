@@ -111,6 +111,36 @@ function Tag({ tone = "neutral", className, children }: { tone?: keyof typeof TA
   );
 }
 
+// Seção colapsável — contexto secundário recolhido por padrão (evita parede de seções).
+function CollapsibleSection({
+  icon: Icon,
+  title,
+  count,
+  defaultOpen = false,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="px-5 py-3.5">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-1.5 cursor-pointer">
+        <Icon className="w-3 h-3 text-neutral-400" />
+        <span className={TYPO.label}>{title}</span>
+        {count != null && count > 0 && (
+          <span className="text-[10px] text-neutral-400 tabular-nums">{count}</span>
+        )}
+        <ChevronRight className={cn("ml-auto w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform", open && "rotate-90")} />
+      </button>
+      {open && <div className="mt-3">{children}</div>}
+    </section>
+  );
+}
+
 // ── Painel principal: 4 blocos (Resumo / Atividade / Pendências / Ações) ──
 
 export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI }) {
@@ -457,10 +487,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           </section>
         )}
 
-        {/* ───────── DOCUMENTOS ───────── */}
+        {/* ───────── DOCUMENTOS (colapsável) ───────── */}
         {docsAll.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={FileText}>Documentos</BlockHeader>
+          <CollapsibleSection icon={FileText} title="Documentos" count={docsAll.length}>
             <div className="space-y-1.5">
               {docsAll.slice(0, 8).map((f) => {
                 const k = `doc-${f.id}`;
@@ -505,13 +534,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               })}
               <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">Ver todos os documentos →</Link>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        {/* ───────── FAMÍLIA / REDE ───────── */}
+        {/* ───────── FAMÍLIA / REDE (colapsável) ───────── */}
         {familiaData && familiaData.familiares.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={Users}>Família e rede</BlockHeader>
+          <CollapsibleSection icon={Users} title="Família e rede" count={familiaData.familiares.length}>
             <div className="space-y-0.5">
               {familiaData.familiares.map((f) => {
                 const tel = f.telefone ? f.telefone.replace(/\D/g, "") : null;
@@ -528,13 +556,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 );
               })}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        {/* ───────── LINHA DO TEMPO ───────── */}
+        {/* ───────── LINHA DO TEMPO (colapsável) ───────── */}
         {feed.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={History}>Linha do tempo</BlockHeader>
+          <CollapsibleSection icon={History} title="Linha do tempo" count={feed.length}>
             <div className="relative pl-3 space-y-2 border-l border-neutral-200 dark:border-neutral-800">
               {feed.slice(0, 8).map((it) => (
                 <div key={it.id} className="relative">
@@ -549,7 +576,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 </div>
               ))}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* ───────── 3. PENDÊNCIAS ───────── */}
