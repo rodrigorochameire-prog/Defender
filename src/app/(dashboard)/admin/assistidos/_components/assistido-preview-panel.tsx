@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
-import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP, normalizeAreaToFilter } from "@/lib/config/atribuicoes";
+import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP, normalizeAreaToFilter, getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { statusPrisionalInfo } from "@/lib/config/tipologia";
 import { TYPO } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
@@ -210,6 +210,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
     : (atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null);
   // Status colorido só para custódia relevante (preso/monitorado); "Solto" fica neutro.
   const isMonit = /MONITOR|TORNOZEL|DOMICILIAR/.test(String(assistido.statusPrisional ?? "").toUpperCase());
+  // Classe de texto na cor da atribuição (700/400 — legível), p/ links de ação por área.
+  const atribTextCls = primaryAttr ? getAtribuicaoColors(primaryAttr).text : null;
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   // Completude não é urgência — só emerald (ok) ou amber (a completar).
@@ -331,7 +333,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 <UltimoContato assistidoId={assistido.id} />
                 <Link
                   href={`/admin/atendimentos/novo?assistido=${assistido.id}`}
-                  className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 transition-colors"
+                  className={cn("inline-flex items-center gap-1 text-[10.5px] font-medium transition-opacity hover:opacity-80", atribTextCls ?? "text-emerald-600")}
                 >
                   <Plus className="w-3 h-3" /> registrar atendimento
                 </Link>
