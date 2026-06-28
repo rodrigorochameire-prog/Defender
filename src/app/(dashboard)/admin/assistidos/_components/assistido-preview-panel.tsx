@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -91,6 +91,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
     { assistidoId: assistido.id },
     { enabled: !!assistido.id, staleTime: 60_000 },
   );
+
+  // Acordeão: um item expandido por vez (processo/demanda/documento) mostra prévia inline.
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const toggle = (k: string) => setExpandedKey((prev) => (prev === k ? null : k));
 
   const ultimasDemandas = (detalhe?.demandas ?? []).slice(0, 3);
   const processosLista = (detalhe?.processos ?? []).slice(0, 4);
@@ -342,19 +346,35 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               )}
             </div>
           )}
-          {/* últimas demandas */}
+          {/* últimas demandas — expansíveis */}
           {ultimasDemandas.length > 0 && (
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-3 space-y-1">
               {ultimasDemandas.map((d) => {
                 const prazoD = d.prazo ? getPrazoInfo(d.prazo) : null;
                 const done = d.status === "CONCLUIDO" || d.status === "ARQUIVADO";
+                const k = `dem-${d.id}`;
+                const open = expandedKey === k;
+                const procNum = d.processoId ? detalhe?.processos?.find((p) => p.id === d.processoId)?.numeroAutos : null;
                 return (
-                  <div key={d.id} className="flex items-center gap-2 py-0.5">
-                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", done ? "bg-emerald-400" : "bg-amber-400")} />
-                    <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
-                      {d.ato || d.tipoAto || "Demanda"}
-                    </span>
-                    {prazoD && <span className={cn("text-[10px] font-medium shrink-0", prazoD.color)}>{prazoD.text}</span>}
+                  <div key={d.id} className="rounded-lg border border-transparent hover:border-neutral-200/70 dark:hover:border-neutral-800 transition-colors">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-1.5 py-1 text-left cursor-pointer">
+                      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", done ? "bg-emerald-400" : "bg-amber-400")} />
+                      <span className="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
+                        {d.ato || d.tipoAto || "Demanda"}
+                      </span>
+                      {prazoD && <span className={cn("text-[10px] font-medium shrink-0", prazoD.color)}>{prazoD.text}</span>}
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="mx-1.5 mb-1.5 px-2.5 py-2 rounded-md bg-neutral-50 dark:bg-neutral-800/30 space-y-1">
+                        {d.status && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Status: </span>{d.status}</p>}
+                        {d.defensorNome && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Defensor: </span>{d.defensorNome}</p>}
+                        {procNum && <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-mono tabular-nums truncate"><span className="text-neutral-400 font-sans">Processo: </span>{procNum}</p>}
+                        <Link href={`/admin/demandas?assistidoId=${assistido.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                          Abrir demanda <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -390,24 +410,44 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           <section className="px-5 py-4">
             <BlockHeader icon={Scale}>Processos</BlockHeader>
             <div className="space-y-1.5">
-              {processosLista.map((p) => (
-                <Link
-                  key={p.id}
-                  href={`/admin/assistidos/${assistido.id}/casos`}
-                  className="flex items-center gap-2 py-1 group"
-                >
-                  <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-mono tabular-nums text-neutral-700 dark:text-neutral-300 truncate group-hover:text-emerald-600 transition-colors">
-                      {p.numeroAutos || "—"}
-                    </p>
-                    {(p.vara || p.assunto) && (
-                      <p className="text-[10px] text-neutral-400 truncate">{p.vara || p.assunto}</p>
+              {processosLista.map((p) => {
+                const k = `proc-${p.id}`;
+                const open = expandedKey === k;
+                const auds = (detalhe?.audiencias ?? []).filter((a) => a.processoId === p.id);
+                const dems = (detalhe?.demandas ?? []).filter((d) => d.processoId === p.id);
+                const proxAud = auds
+                  .filter((a) => new Date(a.dataAudiencia).getTime() >= Date.now())
+                  .sort((a, b) => new Date(a.dataAudiencia).getTime() - new Date(b.dataAudiencia).getTime())[0];
+                return (
+                  <div key={p.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
+                      <Scale className="w-3 h-3 text-neutral-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-mono tabular-nums text-neutral-700 dark:text-neutral-300 truncate">{p.numeroAutos || "—"}</p>
+                        {(p.vara || p.assunto) && <p className="text-[10px] text-neutral-400 truncate">{p.vara || p.assunto}</p>}
+                      </div>
+                      {p.fase && <span className="text-[9px] text-neutral-400 shrink-0 uppercase">{p.fase}</span>}
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-1.5 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
+                        {p.situacao && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Situação: </span>{p.situacao}</p>}
+                        {p.papel && <p className="text-[11px] text-neutral-600 dark:text-neutral-300"><span className="text-neutral-400">Papel: </span>{p.papel}</p>}
+                        {proxAud && (
+                          <p className="text-[11px] flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300">
+                            <Calendar className="w-3 h-3 text-violet-500 shrink-0" />
+                            {format(new Date(proxAud.dataAudiencia), "dd/MM HH:mm")} · {proxAud.tipo || "Audiência"}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-neutral-400">{dems.length} demanda(s) · {auds.length} audiência(s)</p>
+                        <Link href={`/admin/processos/${p.id}`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                          Abrir processo <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
                     )}
                   </div>
-                  {p.fase && <span className="text-[9px] text-neutral-400 shrink-0 uppercase">{p.fase}</span>}
-                </Link>
-              ))}
+                );
+              })}
               {totalProcessos > 4 && (
                 <Link href={`/admin/assistidos/${assistido.id}/casos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
                   +{totalProcessos - 4} processo(s) →
@@ -422,27 +462,47 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           <section className="px-5 py-4">
             <BlockHeader icon={FileText}>Documentos recentes</BlockHeader>
             <div className="space-y-1.5">
-              {documentosRecentes.map((f) => (
-                <a
-                  key={f.id}
-                  href={f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 py-1 group"
-                >
-                  <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate group-hover:text-emerald-600 transition-colors">{f.name}</p>
-                    {(f.documentType || f.categoria) && (
-                      <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>
+              {documentosRecentes.map((f) => {
+                const k = `doc-${f.id}`;
+                const open = expandedKey === k;
+                const isImg = (f.mimeType ?? "").startsWith("image/");
+                const openUrl = f.webViewLink || `https://drive.google.com/file/d/${f.driveFileId}/view`;
+                return (
+                  <div key={f.id} className="rounded-lg border border-neutral-100 dark:border-neutral-800 overflow-hidden">
+                    <button onClick={() => toggle(k)} className="w-full flex items-center gap-2 px-2.5 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer">
+                      <FileText className="w-3 h-3 text-neutral-400 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-neutral-700 dark:text-neutral-300 truncate">{f.name}</p>
+                        {(f.documentType || f.categoria) && <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>}
+                      </div>
+                      <span className="text-[9px] text-neutral-400 tabular-nums shrink-0">
+                        {f.lastModifiedTime && format(new Date(f.lastModifiedTime), "dd/MM")}
+                      </span>
+                      <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
+                    </button>
+                    {open && (
+                      <div className="px-2.5 pb-2.5 pt-1.5 space-y-2 bg-neutral-50/60 dark:bg-neutral-800/20 border-t border-neutral-100 dark:border-neutral-800">
+                        {isImg && f.driveFileId && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={`https://drive.google.com/thumbnail?id=${f.driveFileId}&sz=w400`}
+                            alt={f.name ?? "documento"}
+                            loading="lazy"
+                            className="w-full max-h-44 object-contain rounded-md border border-neutral-200 dark:border-neutral-700 bg-white"
+                          />
+                        )}
+                        <p className="text-[10px] text-neutral-400">
+                          {f.mimeType || "arquivo"}
+                          {f.lastModifiedTime ? ` · ${format(new Date(f.lastModifiedTime), "dd/MM/yyyy HH:mm")}` : ""}
+                        </p>
+                        <a href={openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                          Abrir no Drive <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     )}
                   </div>
-                  <span className="inline-flex items-center gap-1 text-[9px] text-neutral-400 tabular-nums shrink-0">
-                    {f.lastModifiedTime && format(new Date(f.lastModifiedTime), "dd/MM")}
-                    <ExternalLink className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </span>
-                </a>
-              ))}
+                );
+              })}
               <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">
                 Ver todos os documentos →
               </Link>
