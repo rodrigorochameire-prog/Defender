@@ -12,7 +12,7 @@ describe("ferias schema", () => {
 
   it("ferias_parcelas has the SIGA alignment columns", () => {
     for (const col of ["numeroSolicitacao","nSiga","provimento","dataPublicacao","conversaoPecunia","valorAbonoCents","suspensa","situacaoSiga","sigaSyncedAt"]) {
-      expect((feriasParcelas as Record<string, unknown>)[col]).toBeDefined();
+      expect((feriasParcelas as unknown as Record<string, unknown>)[col]).toBeDefined();
     }
   });
 });
