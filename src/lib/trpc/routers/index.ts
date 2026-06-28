@@ -99,6 +99,7 @@ import { vidaFuncionalRouter } from "./vida-funcional";
 import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 import { feriasRouter } from "./ferias";
+import { diariasRouter } from "./diarias";
 
 
 export const appRouter = router({
@@ -456,6 +457,10 @@ export const appRouter = router({
   // FERIAS — CRUD períodos/parcelas + cascata afastamento/evento
   // ==========================================
   ferias: feriasRouter,
+  // ==========================================
+  // DIARIAS — CRUD + cascata vida_funcional_eventos
+  // ==========================================
+  diarias: diariasRouter,
   // ==========================================
   // CARREIRA — agregação panorama pessoal + rollup de cobertura (admin)
   // ==========================================

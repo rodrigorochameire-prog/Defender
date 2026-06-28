@@ -143,8 +143,8 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
   // evitar duplicação.
   const iaRegistros = useMemo(() => {
     if (!registrosDemanda || registrosDemanda.length === 0) return [];
-    return registrosDemanda.filter((r) =>
-      IA_TITULOS.has((r.titulo ?? "").trim())
+    return registrosDemanda.filter(
+      (r) => r.tipo === "analise" || IA_TITULOS.has((r.titulo ?? "").trim())
     );
   }, [registrosDemanda]);
 
@@ -154,7 +154,7 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     if (!registrosDemanda || registrosDemanda.length === 0) return [];
     const grupos = new Map<TipoRegistro, typeof registrosDemanda>();
     for (const r of registrosDemanda) {
-      if (IA_TITULOS.has((r.titulo ?? "").trim())) continue;
+      if (r.tipo === "analise" || IA_TITULOS.has((r.titulo ?? "").trim())) continue;
       const tipo = r.tipo as TipoRegistro;
       const grupo = grupos.get(tipo) ?? [];
       grupo.push(r);
@@ -624,9 +624,27 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/80 mb-1">
                   {r.titulo}
                 </p>
-                <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
-                  {r.conteudo}
-                </p>
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed space-y-0.5">
+                  {(r.conteudo ?? "")
+                    .replace(/\*\*/g, "")
+                    .split("\n")
+                    .filter((l) => l.trim())
+                    .map((linha, i) => {
+                      const m = linha.match(/^([^:]{2,40}):\s*(.*)$/);
+                      return m ? (
+                        <p key={i} className="whitespace-pre-wrap">
+                          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                            {m[1]}:
+                          </span>{" "}
+                          {m[2]}
+                        </p>
+                      ) : (
+                        <p key={i} className="whitespace-pre-wrap">
+                          {linha}
+                        </p>
+                      );
+                    })}
+                </div>
               </div>
             ))}
           </div>

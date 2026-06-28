@@ -11,10 +11,14 @@ import {
   Search,
   Microscope,
   ArrowRightLeft,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
 export type TipoRegistro =
+  // Análise gerada pela IA (skill analise-intimacao): resumo do objeto da
+  // intimação, o que decidir e a providência/prazo. Aparece em card próprio.
+  | "analise"
   | "atendimento"
   | "diligencia"
   | "anotacao"
@@ -43,6 +47,14 @@ export interface TipoConfig {
 }
 
 export const REGISTRO_TIPOS: Record<TipoRegistro, TipoConfig> = {
+  analise: {
+    label: "Análise IA",
+    shortLabel: "Análise",
+    color: "#8b5cf6",
+    bg: "bg-violet-50 dark:bg-violet-950/30",
+    text: "text-violet-700 dark:text-violet-400",
+    Icon: Sparkles,
+  },
   atendimento: {
     label: "Atendimento",
     shortLabel: "Atend.",

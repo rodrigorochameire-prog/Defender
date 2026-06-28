@@ -34,9 +34,9 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
 {
   "registro_id": <int>, "demanda_id": <int>,
   "assistido_id": null, "processo_id": null,
-  "resumo_objeto": "Objeto: 1 frase curta — o que é esta intimação",
+  "resumo_objeto": "1 frase curta — o que é esta intimação (NÃO prefixe 'Objeto:')",
   "o_que_decidido": "1-2 frases: o que foi efetivamente decidido/determinado|null",
-  "o_que_fazer": "Providência/Prazo: providência objetiva + prazo, se houver",
+  "o_que_fazer": "providência objetiva no imperativo + prazo (NÃO prefixe 'Providência:')",
   "cabe_recurso": "sim|nao|talvez|null",
   "recurso_cabivel": "apelação|RESE|ED|REsp|RE|null",
   "fundamento_recurso": "1 frase de fundamento preliminar|null",
@@ -49,10 +49,12 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
 ```
 > `assistido_id`/`processo_id` podem ficar null — o write resolve pelo registro base.
 > Use os ids exatos vindos do fetch (`registro_id`, `demanda_id`).
-> A anotação "Resumo e providências" é montada pelo write em seções curtas:
-> **Objeto** (`resumo_objeto`) · **O que foi decidido** (`o_que_decidido`) ·
-> **Providência/Prazo** (`o_que_fazer`) + bloco "Cabe recurso? (análise preliminar
-> — revisar)". Mantenha cada seção enxuta.
+> A anotação "Resumo e providências" é montada pelo write em seções curtas, cada
+> uma rotulada por ele — **Objeto** (`resumo_objeto`) · **O que foi decidido**
+> (`o_que_decidido`) · **Providência/Prazo** (`o_que_fazer`) + bloco "Cabe recurso?
+> (análise preliminar — revisar)". **Não** repita esses rótulos dentro dos valores
+> (o write já os adiciona); devolva só o conteúdo. Mantenha cada seção enxuta.
+> Esses registros são gravados com `tipo="analise"` (aparecem em card próprio).
 
 ## Sugestão de `ato` (vocabulário canônico — No Invention)
 
@@ -86,6 +88,9 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
   vítima alegou) e oriente a defesa do requerido.
 - **Resposta à acusação / alegações / memoriais / contrarrazões**: `o_que_fazer`
   com o foco da peça e o prazo; o contato do assistido já está no registro base.
+  Se o texto mandar **apresentar resposta à acusação** (CPP arts. 396/396-A, em
+  regra 10 dias) → `ato_sugerido="Resposta à Acusação"`, `ato_confianca="alta"`.
+  Não confunda com mera ciência de decisão: aqui há prazo para uma **peça**.
 
 ## Princípios inegociáveis
 
