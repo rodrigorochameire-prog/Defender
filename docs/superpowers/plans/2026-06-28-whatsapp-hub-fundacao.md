@@ -281,12 +281,11 @@ describe("normalizeBrPhone", () => {
     expect(normalizeBrPhone("abc")).toBeNull();
   });
   it("ignora sufixo @s.whatsapp.net e não-dígitos", () => {
-    expect(normalizeBrPhone("557199999888@s.whatsapp.net")).toBe("5571999998888"); // 12→ insere? ver regra
+    // 13 dígitos com DDI 55 → DDD 71 + 9 + 8 dígitos = celular canônico
+    expect(normalizeBrPhone("5571999998888@s.whatsapp.net")).toBe("5571999998888");
   });
 });
 ```
-
-> Nota: o último caso (`557199999888`) tem 12 dígitos após DDI → DDD 71 + 9999988 8 = ver lógica; ajustar a expectativa ao comportamento definido no Step 3 (rodar para descobrir e fixar). A regra abaixo é a fonte da verdade.
 
 - [ ] **Step 2: Rodar e ver falhar**
 
@@ -660,7 +659,7 @@ export async function findOrCreateWhatsappAtendimento(
 
 **Files:** Modify `src/lib/trpc/routers/whatsapp-chat.ts` (procedure `sendMessage`, ~linha 861).
 
-- [ ] **Step 1:** Após o envio bem-sucedido, carregar o contato; se `assistidoId != null`, dentro de uma transação chamar `findOrCreateWhatsappAtendimento(tx, { assistidoId, autorId: ctx.user.id, processoId/demandaId ativos se já disponíveis, now: new Date() })`. Encapsular em try/catch para não derrubar o envio se o registro falhar.
+- [ ] **Step 1:** Após o envio bem-sucedido, carregar o contato; se `assistidoId != null`, dentro de uma transação chamar `findOrCreateWhatsappAtendimento(tx, { assistidoId, autorId: ctx.user.id, processoId: null, demandaId: null, now: new Date() })`. **Decisão de escopo:** nesta fase o atendimento liga só ao `assistidoId` (passar `processoId`/`demandaId` = `null`) — vincular à demanda/processo ativo é M5, e evita query extra no hot path. Encapsular em try/catch para não derrubar o envio se o registro falhar.
 - [ ] **Step 2:** typecheck. Run: `npm run typecheck`.
 - [ ] **Step 3: Commit.** `git commit -am "feat(whatsapp): responder gera atendimento do dia (M2)"`
 
@@ -668,7 +667,7 @@ export async function findOrCreateWhatsappAtendimento(
 
 **Files:** Modify `src/lib/trpc/routers/whatsapp-chat.ts` (`saveToCase`, `createNoteFromMessage`, `applyExtractedData`).
 
-- [ ] **Step 1:** Em cada ação, além do `whatsapp_message_actions` já existente, inserir um `registros` ligado ao `assistidoId` do contato e ao `processoId`/`demandaId` alvo, com `origem:"whatsapp"` e `tipo` adequado (ex.: `"anotacao"` para nota, `"diligencia"` para extração aplicada). Reusar a lógica de `registros.create`.
+- [ ] **Step 1:** Em cada ação, além do `whatsapp_message_actions` já existente, inserir um `registros` ligado ao `assistidoId` do contato e ao `processoId`/`demandaId` alvo (que a ação já recebe como input), com `origem:"whatsapp"`. **Mapa de `tipo`**: `saveToCase`/`saveMessageToProcess` → `"anotacao"`; `createNoteFromMessage` → `"anotacao"`; `applyExtractedData` → `"diligencia"`. Reusar a lógica de `registros.create`.
 - [ ] **Step 2:** typecheck. Run: `npm run typecheck`.
 - [ ] **Step 3: Commit.** `git commit -am "feat(whatsapp): ações de mensagem gravam no dossiê (M2)"`
 
