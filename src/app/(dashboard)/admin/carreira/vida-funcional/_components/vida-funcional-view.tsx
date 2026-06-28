@@ -11,7 +11,7 @@ import { isMarco, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
 import { computeRadar } from "@/lib/vida-funcional/radar";
 import { COLORS } from "@/lib/config/design-tokens";
 import { vfIcon } from "./icon-map";
-import { TrajetoriaTimeline } from "./trajetoria-timeline";
+import { TrajetoriaTimeline } from "@/components/carreira/trajetoria-timeline";
 import { Button } from "@/components/ui/button";
 import { EventoFormDialog } from "./evento-form-dialog";
 

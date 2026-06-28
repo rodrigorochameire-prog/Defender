@@ -1,12 +1,12 @@
 // src/app/(dashboard)/admin/carreira/_components/carreira-cockpit.tsx
 "use client";
 
-import Link from "next/link";
 import { CalendarClock, Briefcase, FileText, Plane, FolderOpen } from "lucide-react";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
-import { CARD_STYLE, TYPO, COLORS } from "@/lib/config/design-tokens";
+import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
+import { TrajetoriaTimeline } from "@/components/carreira/trajetoria-timeline";
 import { cn } from "@/lib/utils";
 import { carreiraStatusInfo } from "@/lib/carreira/status-visual";
 
@@ -104,14 +104,15 @@ export function CarreiraCockpit() {
           })}
         </section>
 
-        {/* Trajetória link-out (full timeline lives in the dedicated page; promoted component wired in Task 6) */}
-        <section className={cn(CARD_STYLE.base)}>
-          <div className="flex items-center justify-between">
-            <h2 className={TYPO.h3}>Trajetória</h2>
-            <Link href="/admin/carreira/vida-funcional" className={cn("text-sm hover:underline", COLORS.primary.text)}>
-              Ver linha do tempo completa →
-            </Link>
-          </div>
+        {/* Trajetória — reutiliza o timeline promovido a compartilhado */}
+        <section className={cn(CARD_STYLE.base, "p-4")}>
+          <h2 className={cn(TYPO.h3, "mb-3")}>Trajetória</h2>
+          <TrajetoriaTimeline
+            eventos={(data?.agoraProximos ?? []).map((e) => ({
+              id: e.id, tipo: e.tipo, titulo: e.titulo, dataEvento: e.dataEvento, driveFolderId: null,
+            }))}
+            isLoading={isLoading}
+          />
         </section>
       </div>
     </CollapsiblePageHeader>
