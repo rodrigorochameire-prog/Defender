@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Lock,
   Shield,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -41,7 +42,49 @@ import {
   contextualCTA,
 } from "@/lib/assistidos/state";
 import { AttentionSignalRow, ctaHref, SEV_TONE, KIND_ICON } from "@/components/ds/attention";
-import { UltimoContato } from "../[id]/_components/ultimo-contato";
+
+// Formata datas com segurança — date-fns lança em datas inválidas (causava blank screen).
+function safeFmt(v: unknown, pattern: string): string {
+  if (!v) return "";
+  const d = new Date(v as string | number | Date);
+  return Number.isNaN(d.getTime()) ? "" : format(d, pattern);
+}
+
+// Chip "último contato" — inline (evita import cross-route que quebrava no Turbopack dev).
+const MS_DIA = 86_400_000;
+function relativoContato(d: Date): string {
+  const dias = Math.floor((Date.now() - d.getTime()) / MS_DIA);
+  if (dias <= 0) return "hoje";
+  if (dias === 1) return "ontem";
+  if (dias <= 30) return `há ${dias}d`;
+  return `há ${Math.floor(dias / 30)}m`;
+}
+function UltimoContato({ assistidoId }: { assistidoId: number }) {
+  const { data } = trpc.atendimentos.list.useQuery({ assistidoId, limit: 5 }, { staleTime: 60_000 });
+  const ultimo = useMemo(() => {
+    const items = (data?.items ?? []) as Array<{ atendimento?: { dataRegistro?: string | Date | null } }>;
+    let melhor: Date | null = null;
+    for (const it of items) {
+      const raw = it.atendimento?.dataRegistro;
+      if (!raw) continue;
+      const dt = new Date(raw);
+      if (Number.isNaN(dt.getTime())) continue;
+      if (!melhor || dt > melhor) melhor = dt;
+    }
+    return melhor;
+  }, [data]);
+  if (!ultimo) return null;
+  const frio = Math.floor((Date.now() - ultimo.getTime()) / MS_DIA) > 30;
+  return (
+    <span
+      className={cn("inline-flex items-center gap-1 text-[10.5px]", frio ? "text-amber-600 dark:text-amber-400" : "text-neutral-500 dark:text-neutral-400")}
+      title={ultimo.toLocaleString("pt-BR")}
+    >
+      <MessageSquare className="h-3 w-3" />
+      último contato {relativoContato(ultimo)}
+    </span>
+  );
+}
 
 // ── Subcomponentes locais (StatCell/BlockHeader; sinais de atenção vêm do DS) ──
 
@@ -396,7 +439,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                     </p>
                     <p className="text-[10px] text-amber-700/80 dark:text-amber-400/70">
                       {m.distanciaMetros ? `${m.distanciaMetros}m · ` : ""}
-                      {m.dataVencimento ? `vence ${format(new Date(m.dataVencimento), "dd/MM/yyyy")}` : "sem vencimento"}
+                      {m.dataVencimento ? `vence ${safeFmt(m.dataVencimento, "dd/MM/yyyy")}` : "sem vencimento"}
                     </p>
                   </div>
                 </div>
@@ -436,7 +479,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         {proxAud && (
                           <p className="text-[11px] flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300">
                             <Calendar className="w-3 h-3 text-violet-500 shrink-0" />
-                            {format(new Date(proxAud.dataAudiencia), "dd/MM HH:mm")} · {proxAud.tipo || "Audiência"}
+                            {safeFmt(proxAud.dataAudiencia, "dd/MM HH:mm")} · {proxAud.tipo || "Audiência"}
                           </p>
                         )}
                         <p className="text-[10px] text-neutral-400">{dems.length} demanda(s) · {auds.length} audiência(s)</p>
@@ -476,7 +519,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         {(f.documentType || f.categoria) && <p className="text-[10px] text-neutral-400 truncate">{f.documentType || f.categoria}</p>}
                       </div>
                       <span className="text-[9px] text-neutral-400 tabular-nums shrink-0">
-                        {f.lastModifiedTime && format(new Date(f.lastModifiedTime), "dd/MM")}
+                        {f.lastModifiedTime && safeFmt(f.lastModifiedTime, "dd/MM")}
                       </span>
                       <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 shrink-0 transition-transform", open && "rotate-90")} />
                     </button>
@@ -493,7 +536,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         )}
                         <p className="text-[10px] text-neutral-400">
                           {f.mimeType || "arquivo"}
-                          {f.lastModifiedTime ? ` · ${format(new Date(f.lastModifiedTime), "dd/MM/yyyy HH:mm")}` : ""}
+                          {f.lastModifiedTime ? ` · ${safeFmt(f.lastModifiedTime, "dd/MM/yyyy HH:mm")}` : ""}
                         </p>
                         <a href={openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700">
                           Abrir no Drive <ExternalLink className="w-3 h-3" />
