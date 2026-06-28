@@ -42,6 +42,7 @@ export function FeriasView() {
   const criarParcela = trpc.ferias.criarParcela.useMutation({ onSuccess: invalidate });
   const atualizarParcela = trpc.ferias.atualizarParcela.useMutation({ onSuccess: invalidate });
   const removerParcela = trpc.ferias.removerParcela.useMutation({ onSuccess: invalidate });
+  const removerPeriodo = trpc.ferias.removerPeriodo.useMutation({ onSuccess: invalidate });
 
   const [novoPeriodo, setNovoPeriodo] = useState(false);
   const [pAq, setPAq] = useState({ inicio: "", fim: "", dias: 30 });
@@ -87,6 +88,9 @@ export function FeriasView() {
           {removerParcela.error && (
             <p className="mt-2 text-[11px] text-rose-600">{removerParcela.error.message}</p>
           )}
+          {removerPeriodo.error && (
+            <p className="mt-2 text-[11px] text-rose-600">{removerPeriodo.error.message}</p>
+          )}
           {novoPeriodo && (
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <label className="text-xs">Início aquisitivo
@@ -121,13 +125,24 @@ export function FeriasView() {
             const pct = row.saldo.direito > 0 ? Math.max(0, Math.min(100, (row.saldo.disponiveis / row.saldo.direito) * 100)) : 0;
             return (
               <section key={row.periodo.id} className={cn(CARD_STYLE.base)}>
-                <div className="flex items-center justify-between">
-                  <h3 className={TYPO.h3}>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className={cn(TYPO.h3, "min-w-0 truncate")}>
                     Aquisitivo {row.periodo.aquisitivoInicio} – {row.periodo.aquisitivoFim}
                   </h3>
-                  <span className="text-[11px] text-muted-foreground">
-                    {row.saldo.disponiveis}/{row.saldo.direito} dias disponíveis
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-[11px] text-muted-foreground">
+                      {row.saldo.disponiveis}/{row.saldo.direito} dias disponíveis
+                    </span>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-rose-600"
+                      disabled={removerPeriodo.isPending}
+                      onClick={() => {
+                        if (window.confirm("Excluir este período e todas as suas parcelas?")) {
+                          removerPeriodo.mutate({ id: row.periodo.id });
+                        }
+                      }}>
+                      Excluir período
+                    </Button>
+                  </div>
                 </div>
                 <div className="mt-2 h-1.5 rounded-full bg-neutral-100 overflow-hidden">
                   <div className="h-full bg-emerald-500" style={{ width: `${pct}%` }} />

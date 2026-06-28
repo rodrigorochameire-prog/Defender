@@ -176,7 +176,11 @@ export const feriasRouter = router({
       const novos = diasInclusive(input.dataInicio, input.dataFim);
 
       return await db.transaction(async (tx) => {
-        // saldo guard inside the transaction (serializes check+insert, avoids TOCTOU)
+        // saldo guard inside the transaction: garante atomicidade das escritas
+        // (sem parcelas órfãs se algo falhar). Não serializa o check de saldo entre
+        // chamadas concorrentes — safety total contra corrida de saldo exigiria
+        // isolamento mais estrito (SERIALIZABLE) ou constraint no banco. Aceitável
+        // aqui porque as escritas são pessoais e só o titular as faz.
         const existentes = await tx.select().from(feriasParcelas)
           .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
         const lite: ParcelaLite[] = existentes.map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
