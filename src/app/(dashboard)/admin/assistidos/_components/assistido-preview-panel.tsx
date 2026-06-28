@@ -208,7 +208,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const primaryAttr = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
     ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
     : (atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null);
-  const primaryAttrHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
+  // Status colorido só para custódia relevante (preso/monitorado); "Solto" fica neutro.
+  const isMonit = /MONITOR|TORNOZEL|DOMICILIAR/.test(String(assistido.statusPrisional ?? "").toUpperCase());
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   // Completude não é urgência — só emerald (ok) ou amber (a completar).
@@ -220,14 +221,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
   return (
     <div className="flex flex-col h-full">
-      {/* Acento de identidade — única cor de área, hairline sutil */}
-      {primaryAttrHex && (
-        <div
-          className="h-[3px] shrink-0"
-          style={{ background: `linear-gradient(to right, ${primaryAttrHex}, transparent)` }}
-        />
-      )}
-
       {/* Banner fixo no topo: próxima ação (sinal mais urgente). Custódia vive no cabeçalho. */}
       {showActionBanner && topSignal && (
         <div className="px-4 pt-3 shrink-0">
@@ -280,8 +273,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                      custodia.bg,
-                      custodia.color,
+                      isPreso || isMonit
+                        ? cn(custodia.bg, custodia.color)
+                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
                     )}
                   >
                     {custodia.label}
@@ -375,11 +369,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               </Link>
             </div>
           )}
-          {!fichaOpen && comp.faltam.length > 0 && (
-            <p className="mt-1 text-[10px] text-neutral-400 truncate">
-              falta: {comp.faltam.map((f) => f.label).join(", ")}
-            </p>
-          )}
         </section>
 
         {/* ───────── 2. CASOS (processos agrupados) ───────── */}
@@ -442,8 +431,15 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               })}
 
               {casosData.semCaso.length > 0 && (
-                <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/10 px-3 py-2.5">
-                  <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mb-1">{casosData.semCaso.length} processo(s) sem caso</p>
+                <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800 px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                      {casosData.semCaso.length} a agrupar
+                    </span>
+                    <Link href={`/admin/assistidos/${assistido.id}/casos`} className="inline-flex items-center gap-0.5 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                      Agrupar <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                   <div className="space-y-0.5">
                     {casosData.semCaso.slice(0, 4).map((p) => {
                       const tlabel = tipoEfetivoLabel(tipoEfetivo({ tipoProcesso: p.tipoProcesso, classeProcessual: p.classeProcessual }));
@@ -454,10 +450,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         </Link>
                       );
                     })}
+                    {casosData.semCaso.length > 4 && (
+                      <p className="text-[10px] text-neutral-400 pt-0.5">+{casosData.semCaso.length - 4} processo(s)</p>
+                    )}
                   </div>
-                  <Link href={`/admin/assistidos/${assistido.id}/casos`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 pt-1">
-                    Agrupar em casos <ChevronRight className="w-3 h-3" />
-                  </Link>
                 </div>
               )}
             </div>
