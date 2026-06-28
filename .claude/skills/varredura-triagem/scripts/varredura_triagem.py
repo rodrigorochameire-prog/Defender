@@ -99,6 +99,53 @@ def normalize(s: str) -> str:
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
 
 
+# Linhas de puro cabeçalho/rodapé/formatação do PJe — removidas antes de classificar,
+# resumir (IA) e parsear medidas. NÃO removem keywords jurídicas (designo, defiro,
+# sentença, condeno, medida protetiva…), só boilerplate.
+_BOILER = [
+    "poder judiciario", "tribunal de justica", "estado da bahia", "coordenadoria",
+    "secretaria", "assinado eletronicamente", "documento assinado", "autenticidade",
+    "codigo verificador", "chave de acesso", "diario da justica", "diario eletronico",
+    "diario oficial", "consulte a autenticidade", "validacao do documento",
+    "https://", "http://", "www.", "cep:", "cep ", "telefone:", "e-mail:", "email:",
+    "endereco:", "forum ", "comarca de camacari -", "pagina ",
+]
+_BOILER_RE = [__import__("re").compile(p) for p in _BOILER]
+_DISPOSITIVO_RE = __import__("re").compile(
+    r"(ante o exposto|isto posto|posto isso|diante do exposto|do exposto|dispositiv|\bdecido\b|\bdefiro\b|\bdefere\b|\bjulgo\b|\bresolve\b|pelo exposto)",
+    __import__("re").IGNORECASE,
+)
+
+
+def _clean_decisao_text(text: str, budget: int = 12000) -> str:
+    """Limpa o texto da decisão: remove linhas de cabeçalho/rodapé/formatação,
+    colapsa espaços; se exceder `budget`, mantém o início (contexto) + o DISPOSITIVO
+    (parte operativa, em geral perto do fim) para não cortar o que importa."""
+    if not text:
+        return ""
+    import re as _re
+    keep = []
+    for ln in text.split("\n"):
+        s = ln.strip()
+        if not s:
+            keep.append("")
+            continue
+        low = normalize(s)
+        # números soltos (paginação) ou linha que é só boilerplate
+        if _re.fullmatch(r"\d{1,4}", s) or any(r.search(low) for r in _BOILER_RE):
+            continue
+        keep.append(s)
+    cleaned = _re.sub(r"\n{3,}", "\n\n", "\n".join(keep)).strip()
+    if len(cleaned) <= budget:
+        return cleaned
+    m = _DISPOSITIVO_RE.search(cleaned)
+    if m and m.start() > budget * 0.4:
+        head = cleaned[: int(budget * 0.45)].rstrip()
+        disp = cleaned[m.start():]
+        return (head + "\n\n[…trecho intermediário omitido…]\n\n" + disp)[:budget]
+    return cleaned[:budget]
+
+
 def _is_mpu(demanda: dict) -> bool:
     """Espelho de src/lib/mpu.ts isMpu(). Detecta MPU por:
     - processos.processosVvd.tipo_processo == 'MPU'
@@ -875,7 +922,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
             "status": "realizado" if rule["registro_tipo"] == "ciencia" else "agendado",
             "autor_id": DEFENSOR_ID,
             "enrichment_status": enr_status,
-            "enrichment_data": {"raw_text": (content or "")[:8000]} if not skip_ai else None,
+            "enrichment_data": {"raw_text": (content or "")[:12000]} if not skip_ai else None,
         })
     else:
         # Registro base já existe (re-rodada). Faz BACKFILL do enriquecimento se
@@ -885,7 +932,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         if not skip_ai and existing.get("enrichment_status") in (None, "pending", "error"):
             sb.update_registro(base_reg_id, {
                 "enrichment_status": "pending",
-                "enrichment_data": {"raw_text": (content or "")[:8000]},
+                "enrichment_data": {"raw_text": (content or "")[:12000]},
             })
 
     # ── Side-effect: agendar / reagendar audiência ─────────────────────────────
@@ -1279,14 +1326,17 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 is_mpu_demanda = _is_mpu(d)
                 if is_mpu_demanda:
                     log(f"  [MPU] detectado — usando regras defensivas")
-                rule = classify(content["text"], titulo=best_titulo, is_mpu=is_mpu_demanda)
+                # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
+                # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
+                texto = _clean_decisao_text(content["text"])
+                rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)
                     stats["manual"] += 1
                     continue
 
-                pendente_ia = apply_classification(sb, d, rule, content["text"])
+                pendente_ia = apply_classification(sb, d, rule, texto)
                 if pendente_ia:
                     pending_ai_ids.append(d["id"])
                 counts[rule["ato"]] = counts.get(rule["ato"], 0) + 1
