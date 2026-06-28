@@ -111,6 +111,36 @@ function Tag({ tone = "neutral", className, children }: { tone?: keyof typeof TA
   );
 }
 
+// Seção colapsável — contexto secundário recolhido por padrão (evita parede de seções).
+function CollapsibleSection({
+  icon: Icon,
+  title,
+  count,
+  defaultOpen = false,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  count?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className="px-5 py-3.5">
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-1.5 cursor-pointer">
+        <Icon className="w-3 h-3 text-neutral-400" />
+        <span className={TYPO.label}>{title}</span>
+        {count != null && count > 0 && (
+          <span className="text-[10px] text-neutral-400 tabular-nums">{count}</span>
+        )}
+        <ChevronRight className={cn("ml-auto w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform", open && "rotate-90")} />
+      </button>
+      {open && <div className="mt-3">{children}</div>}
+    </section>
+  );
+}
+
 // ── Painel principal: 4 blocos (Resumo / Atividade / Pendências / Ações) ──
 
 export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI }) {
@@ -178,7 +208,8 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
   const primaryAttr = normalizeAreaToFilter(assistido.atribuicaoPrimaria) !== "all"
     ? normalizeAreaToFilter(assistido.atribuicaoPrimaria)
     : (atribuicoes.length ? resolveAttr(atribuicoes[0])?.value ?? null : null);
-  const primaryAttrHex = primaryAttr ? SOLID_COLOR_MAP[primaryAttr] || null : null;
+  // Status colorido só para custódia relevante (preso/monitorado); "Solto" fica neutro.
+  const isMonit = /MONITOR|TORNOZEL|DOMICILIAR/.test(String(assistido.statusPrisional ?? "").toUpperCase());
 
   const prazoInfo = getPrazoInfo(assistido.proximoPrazo);
   // Completude não é urgência — só emerald (ok) ou amber (a completar).
@@ -190,14 +221,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
   return (
     <div className="flex flex-col h-full">
-      {/* Acento de identidade — única cor de área, hairline sutil */}
-      {primaryAttrHex && (
-        <div
-          className="h-[3px] shrink-0"
-          style={{ background: `linear-gradient(to right, ${primaryAttrHex}, transparent)` }}
-        />
-      )}
-
       {/* Banner fixo no topo: próxima ação (sinal mais urgente). Custódia vive no cabeçalho. */}
       {showActionBanner && topSignal && (
         <div className="px-4 pt-3 shrink-0">
@@ -250,8 +273,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                   <span
                     className={cn(
                       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                      custodia.bg,
-                      custodia.color,
+                      isPreso || isMonit
+                        ? cn(custodia.bg, custodia.color)
+                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
                     )}
                   >
                     {custodia.label}
@@ -345,11 +369,6 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               </Link>
             </div>
           )}
-          {!fichaOpen && comp.faltam.length > 0 && (
-            <p className="mt-1 text-[10px] text-neutral-400 truncate">
-              falta: {comp.faltam.map((f) => f.label).join(", ")}
-            </p>
-          )}
         </section>
 
         {/* ───────── 2. CASOS (processos agrupados) ───────── */}
@@ -412,8 +431,15 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               })}
 
               {casosData.semCaso.length > 0 && (
-                <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/10 px-3 py-2.5">
-                  <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mb-1">{casosData.semCaso.length} processo(s) sem caso</p>
+                <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800 px-3 py-2.5">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                      {casosData.semCaso.length} a agrupar
+                    </span>
+                    <Link href={`/admin/assistidos/${assistido.id}/casos`} className="inline-flex items-center gap-0.5 text-[10.5px] text-emerald-600 hover:text-emerald-700">
+                      Agrupar <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </div>
                   <div className="space-y-0.5">
                     {casosData.semCaso.slice(0, 4).map((p) => {
                       const tlabel = tipoEfetivoLabel(tipoEfetivo({ tipoProcesso: p.tipoProcesso, classeProcessual: p.classeProcessual }));
@@ -424,10 +450,10 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                         </Link>
                       );
                     })}
+                    {casosData.semCaso.length > 4 && (
+                      <p className="text-[10px] text-neutral-400 pt-0.5">+{casosData.semCaso.length - 4} processo(s)</p>
+                    )}
                   </div>
-                  <Link href={`/admin/assistidos/${assistido.id}/casos`} className="inline-flex items-center gap-1 text-[10.5px] text-emerald-600 hover:text-emerald-700 pt-1">
-                    Agrupar em casos <ChevronRight className="w-3 h-3" />
-                  </Link>
                 </div>
               )}
             </div>
@@ -457,10 +483,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           </section>
         )}
 
-        {/* ───────── DOCUMENTOS ───────── */}
+        {/* ───────── DOCUMENTOS (colapsável) ───────── */}
         {docsAll.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={FileText}>Documentos</BlockHeader>
+          <CollapsibleSection icon={FileText} title="Documentos" count={docsAll.length}>
             <div className="space-y-1.5">
               {docsAll.slice(0, 8).map((f) => {
                 const k = `doc-${f.id}`;
@@ -505,13 +530,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               })}
               <Link href={`/admin/assistidos/${assistido.id}/documentos`} className="block text-[10px] text-emerald-600 hover:text-emerald-700 pt-0.5">Ver todos os documentos →</Link>
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        {/* ───────── FAMÍLIA / REDE ───────── */}
+        {/* ───────── FAMÍLIA / REDE (colapsável) ───────── */}
         {familiaData && familiaData.familiares.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={Users}>Família e rede</BlockHeader>
+          <CollapsibleSection icon={Users} title="Família e rede" count={familiaData.familiares.length}>
             <div className="space-y-0.5">
               {familiaData.familiares.map((f) => {
                 const tel = f.telefone ? f.telefone.replace(/\D/g, "") : null;
@@ -528,13 +552,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 );
               })}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
-        {/* ───────── LINHA DO TEMPO ───────── */}
+        {/* ───────── LINHA DO TEMPO (colapsável) ───────── */}
         {feed.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={History}>Linha do tempo</BlockHeader>
+          <CollapsibleSection icon={History} title="Linha do tempo" count={feed.length}>
             <div className="relative pl-3 space-y-2 border-l border-neutral-200 dark:border-neutral-800">
               {feed.slice(0, 8).map((it) => (
                 <div key={it.id} className="relative">
@@ -549,7 +572,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 </div>
               ))}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* ───────── 3. PENDÊNCIAS ───────── */}
