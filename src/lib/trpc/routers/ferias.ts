@@ -251,7 +251,7 @@ export const feriasRouter = router({
           provimento: input.provimento ?? null,
           dataPublicacao: input.dataPublicacao ?? null,
           conversaoPecunia: input.conversaoPecunia ?? false,
-          valorAbonoCents: input.valorAbonoCents ?? null,
+          valorAbonoCents: input.conversaoPecunia ? (input.valorAbonoCents ?? null) : null,
           suspensa: input.suspensa ?? false,
           situacaoSiga: input.situacaoSiga ?? null,
         }).returning();
@@ -341,7 +341,7 @@ export const feriasRouter = router({
           provimento: input.provimento === undefined ? parcela.provimento : input.provimento,
           dataPublicacao: input.dataPublicacao === undefined ? parcela.dataPublicacao : input.dataPublicacao,
           conversaoPecunia: novaConversao,
-          valorAbonoCents: novoValorAbono,
+          valorAbonoCents: novaConversao ? novoValorAbono : null,
           suspensa: input.suspensa ?? parcela.suspensa,
           situacaoSiga: input.situacaoSiga === undefined ? parcela.situacaoSiga : input.situacaoSiga,
           updatedAt: new Date(),
