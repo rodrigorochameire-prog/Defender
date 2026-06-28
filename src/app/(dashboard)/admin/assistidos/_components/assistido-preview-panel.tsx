@@ -22,13 +22,11 @@ import {
   Users,
   History,
   Layers,
-  type LucideIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { ATRIBUICAO_OPTIONS, SOLID_COLOR_MAP, normalizeAreaToFilter, getAtribuicaoColors } from "@/lib/config/atribuicoes";
 import { statusPrisionalInfo } from "@/lib/config/tipologia";
-import { TYPO } from "@/lib/config/design-tokens";
 import { trpc } from "@/lib/trpc/client";
 import type { AssistidoUI } from "./assistido-types";
 import { getPrazoInfo, calcularIdade, calcularTempoPreso } from "./assistido-utils";
@@ -41,6 +39,8 @@ import {
 } from "@/lib/assistidos/state";
 import { AttentionSignalRow, ctaHref, SEV_TONE, KIND_ICON } from "@/components/ds/attention";
 import { tipoEfetivo, tipoEfetivoLabel } from "@/lib/casos/agrupamento";
+import { Tag } from "@/components/ds/tag";
+import { CollapsibleSection } from "@/components/ds/collapsible-section";
 
 // Formata datas com segurança — date-fns lança em datas inválidas (causava blank screen).
 function safeFmt(v: unknown, pattern: string): string {
@@ -85,63 +85,7 @@ function UltimoContato({ assistidoId }: { assistidoId: number }) {
   );
 }
 
-// ── Subcomponentes locais (StatCell/BlockHeader; sinais de atenção vêm do DS) ──
-
-function BlockHeader({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
-  return (
-    <p className={cn(TYPO.label, "flex items-center gap-1.5 mb-2.5")}>
-      <Icon className="w-3 h-3" />
-      {children}
-    </p>
-  );
-}
-
-// Badge unificado — uma única forma para todos os selos (tipo, análise, autos, grau).
-const TAG_TONE = {
-  neutral: "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
-  accent: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400",
-  warn: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400",
-  danger: "bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400",
-} as const;
-function Tag({ tone = "neutral", className, children }: { tone?: keyof typeof TAG_TONE; className?: string; children: React.ReactNode }) {
-  return (
-    <span className={cn("inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0", TAG_TONE[tone], className)}>
-      {children}
-    </span>
-  );
-}
-
-// Seção colapsável — contexto secundário recolhido por padrão (evita parede de seções).
-function CollapsibleSection({
-  icon: Icon,
-  title,
-  count,
-  defaultOpen = false,
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  count?: number;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <section className="px-5 py-3.5">
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-1.5 cursor-pointer">
-        <Icon className="w-3 h-3 text-neutral-400" />
-        <span className={TYPO.label}>{title}</span>
-        {count != null && count > 0 && (
-          <span className="text-[10px] text-neutral-400 tabular-nums">{count}</span>
-        )}
-        <ChevronRight className={cn("ml-auto w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform", open && "rotate-90")} />
-      </button>
-      {open && <div className="mt-3">{children}</div>}
-    </section>
-  );
-}
-
-// ── Painel principal: 4 blocos (Resumo / Atividade / Pendências / Ações) ──
+// ── Painel principal: Resumo (hero) + seções em cards (padrão dos sheets) ──
 
 export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI }) {
   const { data: detalhe } = trpc.assistidos.getById.useQuery(
@@ -250,9 +194,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
-        {/* ───────── 1. RESUMO ───────── */}
-        <section className="px-5 py-4">
+      <div className="flex-1 overflow-y-auto bg-neutral-50/70 dark:bg-neutral-950/30 p-3 space-y-2.5">
+        {/* ───────── 1. RESUMO (hero) ───────── */}
+        <section className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 px-4 py-4">
           <div className="flex items-start gap-4">
             <AssistidoAvatar
               nome={assistido.nome}
@@ -374,8 +318,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         </section>
 
         {/* ───────── 2. CASOS (processos agrupados) ───────── */}
-        <section className="px-5 py-4">
-          <BlockHeader icon={Briefcase}>Casos</BlockHeader>
+        <CollapsibleSection id="casos" label="Casos" icon={Briefcase} defaultOpen storageKey="assistido-preview-sections">
           {!casosData ? (
             <p className="text-[11px] text-neutral-400 px-1">Carregando…</p>
           ) : (casosData.casos.length === 0 && casosData.semCaso.length === 0) ? (
@@ -460,12 +403,11 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               )}
             </div>
           )}
-        </section>
+        </CollapsibleSection>
 
         {/* ───────── MEDIDAS PROTETIVAS (VVD) ───────── */}
         {medidasVigentes.length > 0 && (
-          <section className="px-5 py-4">
-            <BlockHeader icon={Shield}>Medidas protetivas vigentes</BlockHeader>
+          <CollapsibleSection id="medidas" label="Medidas protetivas" icon={Shield} count={medidasVigentes.length} defaultOpen storageKey="assistido-preview-sections">
             <div className="space-y-1.5">
               {medidasVigentes.map((m, i) => (
                 <div key={i} className="flex items-start gap-2 px-2.5 py-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/10 border-l-2 border-amber-300 dark:border-amber-800">
@@ -482,12 +424,12 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 </div>
               ))}
             </div>
-          </section>
+          </CollapsibleSection>
         )}
 
         {/* ───────── DOCUMENTOS (colapsável) ───────── */}
         {docsAll.length > 0 && (
-          <CollapsibleSection icon={FileText} title="Documentos" count={docsAll.length}>
+          <CollapsibleSection id="documentos" label="Documentos" icon={FileText} count={docsAll.length} storageKey="assistido-preview-sections">
             <div className="space-y-1.5">
               {docsAll.slice(0, 8).map((f) => {
                 const k = `doc-${f.id}`;
@@ -537,7 +479,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
         {/* ───────── FAMÍLIA / REDE (colapsável) ───────── */}
         {familiaData && familiaData.familiares.length > 0 && (
-          <CollapsibleSection icon={Users} title="Família e rede" count={familiaData.familiares.length}>
+          <CollapsibleSection id="familia" label="Família e rede" icon={Users} count={familiaData.familiares.length} storageKey="assistido-preview-sections">
             <div className="space-y-0.5">
               {familiaData.familiares.map((f) => {
                 const tel = f.telefone ? f.telefone.replace(/\D/g, "") : null;
@@ -559,7 +501,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
 
         {/* ───────── LINHA DO TEMPO (colapsável) ───────── */}
         {feed.length > 0 && (
-          <CollapsibleSection icon={History} title="Linha do tempo" count={feed.length}>
+          <CollapsibleSection id="timeline" label="Linha do tempo" icon={History} count={feed.length} storageKey="assistido-preview-sections">
             <div className="relative pl-3 space-y-2 border-l border-neutral-200 dark:border-neutral-800">
               {feed.slice(0, 8).map((it) => (
                 <div key={it.id} className="relative">
@@ -578,8 +520,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
         )}
 
         {/* ───────── 3. PENDÊNCIAS ───────── */}
-        <section className="px-5 py-4">
-          <BlockHeader icon={AlertCircle}>Pendências</BlockHeader>
+        <CollapsibleSection id="pendencias" label="Pendências" icon={AlertCircle} count={sinais.length} defaultOpen storageKey="assistido-preview-sections">
           {sinais.length === 0 ? (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/10 border-l-2 border-emerald-300 dark:border-emerald-800">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -592,7 +533,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               ))}
             </div>
           )}
-        </section>
+        </CollapsibleSection>
 
       </div>
 
