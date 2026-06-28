@@ -195,17 +195,44 @@ class Supabase:
     def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
 
-    def upsert_processo_vvd(self, processo_id: int, fields: dict) -> None:
+    def upsert_processo_vvd(self, processo_id: int, fields: dict) -> int | None:
         """Atualiza a linha de processos_vvd; se não existir, cria (insert mínimo:
-        processo_id + tipo_processo='MPU' + fields). requerido/requerente são
+        processo_id + tipo_processo='MPU' + fields). Retorna o id da linha (=
+        processo_vvd_id, usado pela tabela medidas_mpu). requerido/requerente são
         opcionais no schema (processos_vvd via importação)."""
         rows = self._req("GET", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}&select=id&limit=1")
         if isinstance(rows, list) and rows:
             self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
-        else:
-            self._req("POST", "/rest/v1/processos_vvd",
+            return rows[0]["id"]
+        r = self._req("POST", "/rest/v1/processos_vvd",
                       {"processo_id": processo_id, "tipo_processo": "MPU", **fields},
-                      prefer="return=minimal")
+                      prefer="return=representation")
+        return r[0]["id"] if isinstance(r, list) and r else None
+
+    def insert_medidas_mpu(self, processo_vvd_id: int, medidas: list[dict]) -> int:
+        """Insere medidas na tabela `medidas_mpu` (a que o painel MedidasVigentes
+        exibe), 1 linha por medida. Idempotente: não duplica códigos já gravados
+        para este processo_vvd. origem='varredura'."""
+        existing = self._req("GET", f"/rest/v1/medidas_mpu?processo_vvd_id=eq.{processo_vvd_id}&select=codigo")
+        have = {m["codigo"] for m in existing} if isinstance(existing, list) else set()
+        novos = []
+        for m in medidas:
+            if m["codigo"] in have:
+                continue
+            # Chaves UNIFORMES em todas as linhas (PostgREST bulk exige isso).
+            novos.append({
+                "processo_vvd_id": processo_vvd_id,
+                "codigo": m["codigo"],
+                "artigo": m.get("artigo"),
+                "distancia_metros": m.get("distancia_metros"),
+                "parametros": ({"protegidos": m["protegidos"]} if m.get("protegidos") else None),
+                "literal": (m.get("literal") or "")[:1000],
+                "status": "ativa",
+                "origem": "varredura",
+            })
+        if novos:
+            self._req("POST", "/rest/v1/medidas_mpu", novos, prefer="return=minimal")
+        return len(novos)
 
     def get_registro_by_titulo(self, demanda_id: int, titulo: str) -> dict | None:
         from urllib.parse import quote
@@ -929,9 +956,10 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
     if not medidas and not parsed.get("revogacao_total"):
         return
     if medidas:
+        pvid = None
         try:
             pvvd: dict = {
-                "medidas_deferidas": [m["codigo"] for m in medidas],
+                "medidas_deferidas": [m["codigo"] for m in medidas],  # campo de comparação (BlocosFaseVii)
                 "mpu_ativa": True,
             }
             dist = next((m.get("distancia_metros") for m in medidas if m.get("distancia_metros")), None)
@@ -939,9 +967,17 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
                 pvvd["distancia_minima"] = dist
             if parsed.get("prazo_dias"):
                 pvvd["data_decisao_mpu"] = date.today().isoformat()
-            sb.upsert_processo_vvd(proc_id, pvvd)
+            pvid = sb.upsert_processo_vvd(proc_id, pvvd)
         except Exception as e:
-            log(f"  ⚠ falha ao gravar medidas em processos_vvd: {e}")
+            log(f"  ⚠ falha ao gravar em processos_vvd: {e}")
+        # Tabela medidas_mpu — a que o painel MedidasVigentes EXIBE (1 linha/medida).
+        if pvid:
+            try:
+                n = sb.insert_medidas_mpu(pvid, medidas)
+                if n:
+                    log(f"  🛡 {n} medida(s) gravada(s) em medidas_mpu (painel)")
+            except Exception as e:
+                log(f"  ⚠ falha ao gravar medidas_mpu: {e}")
     # Registro "Medidas protetivas deferidas" (anotação determinística)
     titulo = "Medidas protetivas deferidas"
     if medidas and not sb.registro_exists(demanda["id"], titulo):
