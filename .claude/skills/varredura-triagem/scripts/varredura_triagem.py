@@ -195,6 +195,18 @@ class Supabase:
     def update_processo_vvd(self, processo_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/processos_vvd?processo_id=eq.{processo_id}", fields, prefer="return=minimal")
 
+    def get_registro_by_titulo(self, demanda_id: int, titulo: str) -> dict | None:
+        from urllib.parse import quote
+        rows = self._req(
+            "GET",
+            f"/rest/v1/registros?demanda_id=eq.{demanda_id}&titulo=eq.{quote(titulo)}"
+            "&select=id,enrichment_status&limit=1",
+        )
+        return rows[0] if isinstance(rows, list) and rows else None
+
+    def update_registro(self, registro_id: int, fields: dict) -> None:
+        self._req("PATCH", f"/rest/v1/registros?id=eq.{registro_id}", fields, prefer="return=minimal")
+
     def insert_registro_returning(self, registro: dict) -> int | None:
         """Insere e retorna o id (para vincular audiencia_id no registro base)."""
         rows = self._req("POST", "/rest/v1/registros", registro, prefer="return=representation")
@@ -810,7 +822,8 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
     skip_ai = _ato_administrativo(rule) or not (content or "").strip()
     enr_status = "skipped" if skip_ai else "pending"
     base_reg_id = None
-    if not sb.registro_exists(demanda["id"], rule["ato"]):
+    existing = sb.get_registro_by_titulo(demanda["id"], rule["ato"])
+    if existing is None:
         conteudo = ((content[:1500] + ("..." if len(content) > 1500 else "")) or "(sem conteúdo lido)") + contato_txt
         base_reg_id = sb.insert_registro_returning({
             "assistido_id": assistido_id,
@@ -825,6 +838,16 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
             "enrichment_status": enr_status,
             "enrichment_data": {"raw_text": (content or "")[:8000]} if not skip_ai else None,
         })
+    else:
+        # Registro base já existe (re-rodada). Faz BACKFILL do enriquecimento se
+        # ainda não foi enriquecido (status null/pending/error) — permite a IA
+        # processar demandas triadas antes da fase B. Não toca em 'done'/'skipped'.
+        base_reg_id = existing["id"]
+        if not skip_ai and existing.get("enrichment_status") in (None, "pending", "error"):
+            sb.update_registro(base_reg_id, {
+                "enrichment_status": "pending",
+                "enrichment_data": {"raw_text": (content or "")[:8000]},
+            })
 
     # ── Side-effect: agendar / reagendar audiência ─────────────────────────────
     if proc_id and any(fx in ("agendar_audiencia", "reagendar_audiencia") for fx in side_effects):
