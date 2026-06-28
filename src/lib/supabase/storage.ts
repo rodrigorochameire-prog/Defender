@@ -112,8 +112,13 @@ export async function uploadImageBuffer(
     .from(BUCKETS.PHOTOS)
     .createSignedUrl(data.path, 60 * 60 * 24 * 365);
 
+  // Falhar visível em vez de gravar URL vazia (que deixaria o avatar quebrado em silêncio).
+  if (!urlData?.signedUrl) {
+    throw new Error("Falha ao gerar URL da imagem no storage");
+  }
+
   return {
-    url: urlData?.signedUrl || "",
+    url: urlData.signedUrl,
     path: data.path,
   };
 }
