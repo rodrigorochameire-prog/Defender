@@ -35,6 +35,15 @@ import { toast } from "sonner";
 import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/demanda-status";
 import { REGISTRO_TIPOS, TIPO_KEYS, type TipoRegistro } from "@/components/registros/registro-tipo-config";
 
+// ─── Títulos de registros gerados pela análise de IA (skill analise-intimacao) ───
+// Exibidos em card destacado próprio; excluídos da listagem por tipo.
+const IA_TITULOS = new Set<string>([
+  "Resumo e providências",
+  "Relato da suposta vítima",
+  "Termos da pronúncia",
+  "Medidas protetivas deferidas",
+]);
+
 // ─── Status color map (DB enum → badge style) ────────────────────────
 const STATUS_BADGE_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   "2_ATENDER":      { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", label: "Atender" },
@@ -129,12 +138,23 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
     { enabled: !isNaN(demandaId) && !!demanda }
   );
 
+  // Anotações geradas pela análise de IA (skill analise-intimacao) — destacadas
+  // em card próprio acima das providências; excluídas da listagem por tipo p/
+  // evitar duplicação.
+  const iaRegistros = useMemo(() => {
+    if (!registrosDemanda || registrosDemanda.length === 0) return [];
+    return registrosDemanda.filter((r) =>
+      IA_TITULOS.has((r.titulo ?? "").trim())
+    );
+  }, [registrosDemanda]);
+
   // Registros agrupados por tipo (ordem canônica de REGISTRO_TIPOS),
   // mais recentes primeiro dentro de cada grupo.
   const registrosPorTipo = useMemo(() => {
     if (!registrosDemanda || registrosDemanda.length === 0) return [];
     const grupos = new Map<TipoRegistro, typeof registrosDemanda>();
     for (const r of registrosDemanda) {
+      if (IA_TITULOS.has((r.titulo ?? "").trim())) continue;
       const tipo = r.tipo as TipoRegistro;
       const grupo = grupos.get(tipo) ?? [];
       grupo.push(r);
@@ -586,6 +606,33 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {/* ─── Análise IA (skill analise-intimacao) ─── */}
+      {iaRegistros.length > 0 && (
+        <div className="bg-white dark:bg-neutral-900 border border-violet-200/70 dark:border-violet-900/40 rounded-xl p-5 shadow-sm shadow-violet-500/[0.04]">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-violet-500 dark:text-violet-300" />
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+              Análise IA
+            </h3>
+            <span className="text-[10px] font-medium text-violet-500/80 dark:text-violet-300/70 bg-violet-50 dark:bg-violet-900/20 rounded px-1.5 py-0.5">
+              preliminar — revisar
+            </span>
+          </div>
+          <div className="space-y-4">
+            {iaRegistros.map((r) => (
+              <div key={r.id}>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/80 mb-1">
+                  {r.titulo}
+                </p>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
+                  {r.conteudo}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ─── Providências (registros da demanda agrupados por tipo) ─── */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
@@ -594,9 +641,9 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Providências
             </h3>
-            {registrosDemanda && registrosDemanda.length > 0 && (
+            {registrosDemanda && registrosDemanda.length - iaRegistros.length > 0 && (
               <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-0 text-xs h-5 px-1.5">
-                {registrosDemanda.length}
+                {registrosDemanda.length - iaRegistros.length}
               </Badge>
             )}
           </div>
