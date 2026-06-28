@@ -85,10 +85,11 @@ export function AssistidoAvatar({
         )}
         <AvatarFallback
           className={cn(
-            "bg-gradient-to-br font-semibold",
+            "bg-gradient-to-br font-semibold ring-1 ring-inset",
             gradient.from,
             gradient.to,
             gradient.text,
+            gradient.ring,
             gradient.darkFrom,
             gradient.darkTo,
             gradient.darkText,
