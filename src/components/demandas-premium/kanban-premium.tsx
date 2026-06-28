@@ -33,6 +33,7 @@ import {
   ExternalLink,
   UserPlus,
   Undo2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -114,6 +115,8 @@ interface KanbanDemanda {
   delegacaoWorkStatus?: string | null;
   reuPreso?: boolean;
   providenciaResumo?: string | null;
+  /** Prévia do registro "Resumo e providências" (IA) — para glancear no card. */
+  analiseResumo?: string | null;
   lastEvento?: EventoLine | null;
   pendenteEvento?: EventoLine | null;
   data?: string | null;
@@ -490,6 +493,16 @@ function KanbanCard({
   const isAlta = !isUrgente && demanda.prioridade === "ALTA";
   // Registros (ciência/diligência/anotação) criados pela varredura nível 2.
   const registrosCount = typeof demanda.registrosCount === "number" ? demanda.registrosCount : 0;
+  // Prévia da análise IA: extrai a "Providência/Prazo" (o que fazer) do registro
+  // "Resumo e providências"; fallback p/ "Objeto". Glanceável no card.
+  const analisePreview = (() => {
+    const raw = (demanda.analiseResumo || "").slice(0, 450);
+    if (!raw) return null;
+    const prov = raw.match(/\*\*Provid[êe]ncia[^:]*:\*\*\s*([^\n]+)/i);
+    const obj = raw.match(/\*\*Objeto:\*\*\s*([^\n]+)/i);
+    const txt = (prov?.[1] || obj?.[1] || raw).replace(/\*\*/g, "").trim();
+    return txt || null;
+  })();
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
@@ -875,6 +888,16 @@ function KanbanCard({
               {processo}
             </span>
             <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
+          </div>
+        )}
+
+        {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável */}
+        {analisePreview && (
+          <div className="flex items-start gap-1 mb-1" title={demanda.analiseResumo ?? undefined}>
+            <Sparkles className="w-2.5 h-2.5 text-violet-400 dark:text-violet-300 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
+            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2 min-w-0">
+              {analisePreview}
+            </span>
           </div>
         )}
 

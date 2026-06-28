@@ -149,6 +149,9 @@ export const demandasRouter = router({
           syncedAt: demandas.syncedAt,
           enrichmentData: demandas.enrichmentData,
           registrosCount: sql<number>`(SELECT count(*)::int FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id})`,
+          // Prévia da análise IA ("Resumo e providências") para o card glancear o
+          // "o que fazer" sem abrir a demanda. left() limita o payload da lista.
+          analiseResumo: sql<string | null>`(SELECT left(${registros.conteudo}, 450) FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id} AND ${registros.titulo} = ${'Resumo e providências'} ORDER BY ${registros.id} DESC LIMIT 1)`,
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,
