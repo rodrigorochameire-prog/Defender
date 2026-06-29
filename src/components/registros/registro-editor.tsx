@@ -43,6 +43,7 @@ export function RegistroEditor({
   const [tipo, setTipo] = useState<TipoRegistro>(tipoDefault);
   const [titulo, setTitulo] = useState("");
   const [conteudo, setConteudo] = useState("");
+  const [prazo, setPrazo] = useState("");
 
   // Arquivos "staged" em memória — enviados após a criação do registro (precisa do id).
   const [staged, setStaged] = useState<File[]>([]);
@@ -55,10 +56,12 @@ export function RegistroEditor({
 
   const conteudoRef = useRef(conteudo);
   const tituloRef = useRef(titulo);
+  const prazoRef = useRef(prazo);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
     conteudoRef.current = conteudo;
     tituloRef.current = titulo;
+    prazoRef.current = prazo;
   });
   useEffect(() => {
     textareaRef.current?.focus();
@@ -143,6 +146,7 @@ export function RegistroEditor({
             audienciaId,
             titulo: tituloRef.current.trim() || undefined,
             conteudo: conteudoNow.trim(),
+            prazo: prazoRef.current || undefined,
           });
         }
         return;
@@ -271,6 +275,25 @@ export function RegistroEditor({
           className="w-full bg-transparent text-[13px] text-neutral-700 dark:text-neutral-300 placeholder:text-neutral-400 outline-none resize-none leading-relaxed"
         />
 
+        {/* Campo de prazo — exibido apenas para diligências */}
+        {tipo === "diligencia" && (
+          <div className="flex items-center gap-2 py-0.5">
+            <label
+              htmlFor="registro-prazo"
+              className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap"
+            >
+              Prazo
+            </label>
+            <input
+              id="registro-prazo"
+              type="date"
+              value={prazo}
+              onChange={(e) => setPrazo(e.target.value)}
+              className="text-[12px] bg-transparent text-neutral-700 dark:text-neutral-300 outline-none border-b border-neutral-200 dark:border-neutral-700 py-0.5 cursor-pointer"
+            />
+          </div>
+        )}
+
         {/* Input de arquivo oculto — acionado pelo clipe no rodapé */}
         <input
           ref={fileInputRef}
@@ -348,6 +371,7 @@ export function RegistroEditor({
                   audienciaId,
                   titulo: titulo.trim() || undefined,
                   conteudo: conteudo.trim(),
+                  prazo: prazo || undefined,
                 })
               }
               style={
