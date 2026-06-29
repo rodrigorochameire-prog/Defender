@@ -81,6 +81,7 @@ import { googleIntegrationRouter } from "./google-integration";
 import { analiseRouter } from "./analise";
 import { feedbacksRouter } from "./feedbacks";
 import { instanciaSuperiorRouter } from "./instancia-superior";
+import { sentencasRouter } from "./sentencas";
 import { systemRouter } from "./system";
 import { pjeRouter } from "./pje";
 import { encaminhamentosRouter } from "./encaminhamentos";
@@ -395,6 +396,11 @@ export const appRouter = router({
   // INSTÂNCIA SUPERIOR (TJBA - RECURSOS, ACÓRDÃOS)
   // ==========================================
   instanciaSuperior: instanciaSuperiorRouter,
+
+  // ==========================================
+  // SENTENÇAS (1º grau — persistência da análise IA)
+  // ==========================================
+  sentencas: sentencasRouter,
 
   // ==========================================
   // SISTEMA (daemon health, observabilidade)

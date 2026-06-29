@@ -54,6 +54,7 @@ export * from "./microsoft-tokens";
 export * from "./feedback";
 export * from "./defensoria";
 export * from "./instancia-superior";
+export * from "./sentencas";
 export * from "./system";
 
 // Pessoas (Fase I-A — entity resolution)
