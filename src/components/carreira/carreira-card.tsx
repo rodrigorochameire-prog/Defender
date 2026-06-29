@@ -42,7 +42,7 @@ export function CarreiraCard({
       className={cn(
         "relative bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-lg shadow-sm transition-all duration-200",
         interactive &&
-          "cursor-pointer hover:shadow-md hover:-translate-y-0.5 " + FOCUS_RING,
+          cn("cursor-pointer hover:shadow-md hover:-translate-y-0.5", FOCUS_RING),
         selected &&
           "ring-2 ring-emerald-400/50 dark:ring-emerald-500/40 border-emerald-300 dark:border-emerald-700",
         className,

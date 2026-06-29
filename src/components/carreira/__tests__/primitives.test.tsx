@@ -35,6 +35,14 @@ describe("CarreiraCard", () => {
     const { container } = render(<CarreiraCard selected>s</CarreiraCard>);
     expect(container.firstChild).toHaveClass("ring-2");
   });
+  it("fires onClick on Enter and Space keydown", () => {
+    const fn = vi.fn();
+    render(<CarreiraCard onClick={fn}>key</CarreiraCard>);
+    const card = screen.getByRole("button");
+    fireEvent.keyDown(card, { key: "Enter" });
+    fireEvent.keyDown(card, { key: " " });
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("CarreiraField", () => {
@@ -61,5 +69,13 @@ describe("ConfirmDeleteButton", () => {
     const confirm = await screen.findByRole("button", { name: /^Excluir$/ });
     fireEvent.click(confirm);
     expect(fn).toHaveBeenCalledOnce();
+  });
+  it("does not fire onConfirm on cancel", async () => {
+    const fn = vi.fn();
+    render(<ConfirmDeleteButton onConfirm={fn} title="Excluir?" />);
+    fireEvent.click(screen.getByRole("button", { name: /excluir/i }));
+    const cancel = await screen.findByRole("button", { name: /cancelar/i });
+    fireEvent.click(cancel);
+    expect(fn).not.toHaveBeenCalled();
   });
 });
