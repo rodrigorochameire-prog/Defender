@@ -62,9 +62,9 @@ describe("RegistroEditor — tiposPrimarios", () => {
       <RegistroEditor
         assistidoId={1}
         tipoDefault="ciencia"
-        // todos os 12
+        // todos os 13
         tiposPrimarios={[
-          "atendimento", "diligencia", "anotacao", "ciencia", "providencia",
+          "analise", "atendimento", "diligencia", "anotacao", "ciencia", "providencia",
           "delegacao", "pesquisa", "elaboracao", "peticao",
           "busca", "investigacao", "transferencia",
         ]}
