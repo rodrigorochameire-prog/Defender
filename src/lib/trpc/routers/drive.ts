@@ -52,7 +52,7 @@ import {
   getAccessToken,
 } from "@/lib/services/google-drive";
 import { inngest } from "@/lib/inngest/client";
-import { getFolderIdForAtribuicao, mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
+import { mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
 import { processos, assistidos, casos, demandas, registros as atendimentos, audiencias, driveDocumentSections, driveFileContents, claudeCodeTasks } from "@/lib/db/schema";
 import {
   enrichmentClient,
