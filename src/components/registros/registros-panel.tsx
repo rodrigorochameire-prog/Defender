@@ -33,6 +33,13 @@ export type RegistrosPanelProps = {
     adicionarPrazo?: () => void;
   };
   onAbrirAutos?: () => void;
+  /**
+   * Parent-facing hook fired after a registro is saved (in addition to the
+   * internal refetch). Needed by hosts that must refresh sibling data — e.g.
+   * the demanda drawer refreshing audiências, since creating a `ciencia` can
+   * auto-schedule an audiência as a `registros.create` side-effect.
+   */
+  onRegistroSaved?: () => void;
 };
 
 /**
@@ -51,6 +58,7 @@ export function RegistrosPanel({
   emptyHint,
   quickActions,
   onAbrirAutos,
+  onRegistroSaved,
 }: RegistrosPanelProps) {
   const [filtroTipo, setFiltroTipo] = useState<TipoRegistro | null>(null);
   const [busca, setBusca] = useState("");
@@ -183,7 +191,10 @@ export function RegistrosPanel({
           tiposPrimarios={tiposPrimarios}
           tiposPermitidos={tiposPermitidos}
           onAbrirAutos={onAbrirAutos}
-          onSaved={refetchBoth}
+          onSaved={() => {
+            refetchBoth();
+            onRegistroSaved?.();
+          }}
         />
       )}
 
