@@ -88,3 +88,11 @@ export function getDefensoresVisiveis(user: User): number[] | "all" {
 
   return [user.id];
 }
+
+/** Detail-visibility scope for the shared `sentencas` table.
+ *  A sentença's detail is visible if its origin demanda's defensorId is visible to the user.
+ *  Returns "all" (admin/unrestricted servidor) or the list of visible defensorIds.
+ *  Callers must JOIN sentencas.demandaOrigemId → demandas.defensorId and filter by this. */
+export function getSentencaDetailScope(user: User): number[] | "all" {
+  return getDefensoresVisiveis(user);
+}
