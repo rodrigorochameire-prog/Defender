@@ -29,6 +29,19 @@ export function pickAtribuicaoFolderPrimary(
   return pickAtribuicaoFolders(folders, atribuicao)[0] ?? null;
 }
 
+/** Pura: varre o mapa de um grupo procurando o folderId → sua chave de atribuição. */
+export function findAtribuicaoForFolder(
+  folders: AtribuicaoFoldersMap,
+  folderId: string,
+): Atribuicao | null {
+  for (const atribuicao of ATRIBUICOES) {
+    if (pickAtribuicaoFolders(folders, atribuicao).includes(folderId)) {
+      return atribuicao;
+    }
+  }
+  return null;
+}
+
 async function loadGroupFolders(userId: number): Promise<AtribuicaoFoldersMap> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),

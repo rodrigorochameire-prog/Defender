@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickAtribuicaoFolders, pickAtribuicaoFolderPrimary, ATRIBUICOES } from "../drive-folders";
+import { pickAtribuicaoFolders, pickAtribuicaoFolderPrimary, ATRIBUICOES, findAtribuicaoForFolder } from "../drive-folders";
 
 describe("pickAtribuicaoFolders (multi-pasta)", () => {
   const folders = { JURI: ["fJuri"], VVD: ["fVvdCrim", "fVvdMpu"], EP: ["fEp"] };
@@ -29,5 +29,26 @@ describe("pickAtribuicaoFolders (multi-pasta)", () => {
     expect([...ATRIBUICOES].sort()).toEqual(
       ["CRIMINAL", "EP", "GRUPO_JURI", "JURI", "SUBSTITUICAO", "VVD"].sort(),
     );
+  });
+});
+
+describe("findAtribuicaoForFolder (lookup reverso puro)", () => {
+  const folders = { JURI: ["fJuri"], VVD: ["fVvdCrim", "fVvdMpu"], EP: ["fEp"] };
+
+  it("acha a atribuição cuja lista contém o folderId", () => {
+    expect(findAtribuicaoForFolder(folders, "fVvdMpu")).toBe("VVD");
+    expect(findAtribuicaoForFolder(folders, "fJuri")).toBe("JURI");
+  });
+
+  it("retorna null quando nenhum grupo contém o folderId", () => {
+    expect(findAtribuicaoForFolder(folders, "desconhecido")).toBeNull();
+  });
+
+  it("tolera valor string legado no mapa", () => {
+    expect(findAtribuicaoForFolder({ EP: "fEpLegado" } as any, "fEpLegado")).toBe("EP");
+  });
+
+  it("retorna null para mapa vazio", () => {
+    expect(findAtribuicaoForFolder({}, "qualquer")).toBeNull();
   });
 });
