@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRegistroInput } from "../registros";
+import { createRegistroInput, statusForTipo } from "../registros";
 
 describe("createRegistroInput", () => {
   it("accepts an optional prazo date string", () => {
@@ -18,5 +18,15 @@ describe("createRegistroInput", () => {
         assistidoId: 1, tipo: "diligencia", conteudo: "x", prazo: "2026-7-11",
       }),
     ).toThrow();
+  });
+});
+
+describe("statusForTipo", () => {
+  it("marks a diligência as agendado (so it pins to Pendências)", () => {
+    expect(statusForTipo("diligencia")).toBe("agendado");
+  });
+  it("marks other tipos as realizado", () => {
+    expect(statusForTipo("ciencia")).toBe("realizado");
+    expect(statusForTipo("anotacao")).toBe("realizado");
   });
 });

@@ -133,6 +133,15 @@ const camposAtendimentoSolar = {
 
 const PRAZO_REGEX = /^\d{4}-\d{2}-\d{2}$/; // prazo no formato YYYY-MM-DD
 
+/**
+ * Status inicial de um registro recém-criado pela UI. Diligências são tarefas
+ * EM ABERTO (status "agendado") → o painel as fixa em "Pendências", ordenadas
+ * por prazo. Os demais tipos registram algo já ocorrido ("realizado").
+ */
+export function statusForTipo(tipo: string): "agendado" | "realizado" {
+  return tipo === "diligencia" ? "agendado" : "realizado";
+}
+
 // ─── Schema de input do procedimento `create` (exportado p/ testes) ─────────
 export const createRegistroInput = z.object({
   assistidoId: z.number().int().positive(),
@@ -231,7 +240,7 @@ export const registrosRouter = router({
         demandaId: z.number().int().positive().optional(),
         audienciaId: z.number().int().positive().optional(),
         tipo: TIPO_REGISTRO.optional(),
-        limit: z.number().int().min(1).max(100).default(50),
+        limit: z.number().int().min(1).max(300).default(50),
         cursor: z
           .object({
             dataRegistro: z.string(),
@@ -423,7 +432,7 @@ export const registrosRouter = router({
             conteudo: input.conteudo,
             dataRegistro: input.dataRegistro,
             interlocutor: input.interlocutor,
-            status: "realizado",
+            status: statusForTipo(input.tipo),
             prazo: input.prazo ?? null,
             autorId: ctx.user.id,
           })
