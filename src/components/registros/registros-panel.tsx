@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CalendarPlus, ClipboardList, Inbox } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -62,17 +62,18 @@ export function RegistrosPanel({
   const listQuery = trpc.registros.list.useQuery({
     ...scope,
     tipo: filtroTipo ?? undefined,
+    limit: 200,
   });
   const registrosRaw = listQuery.data ?? [];
 
   // (2) Unfiltered list — drives per-tipo counts for the toolbar.
-  const countsQuery = trpc.registros.list.useQuery({ ...scope });
+  const countsQuery = trpc.registros.list.useQuery({ ...scope, limit: 200 });
   const registrosTodos = countsQuery.data ?? [];
 
-  const refetchBoth = () => {
+  const refetchBoth = useCallback(() => {
     listQuery.refetch();
     countsQuery.refetch();
-  };
+  }, [listQuery, countsQuery]);
 
   const deleteMut = trpc.registros.delete.useMutation({
     onSuccess: refetchBoth,
@@ -111,17 +112,17 @@ export function RegistrosPanel({
   }, [filtrados, ordem]);
 
   // ── Per-tipo counts for the toolbar ──────────────────────────────────────
-  const tiposEscopo = tiposPermitidos ?? TIPO_KEYS;
   const tiposComContagem = useMemo(() => {
+    const escopo = tiposPermitidos ?? TIPO_KEYS;
     const c = new Map<TipoRegistro, number>();
     registrosTodos.forEach((r) => {
       const t = r.tipo as TipoRegistro;
       c.set(t, (c.get(t) ?? 0) + 1);
     });
-    return tiposEscopo
+    return escopo
       .filter((t) => (c.get(t) ?? 0) > 0)
       .map((tipo) => ({ tipo, count: c.get(tipo) ?? 0 }));
-  }, [registrosTodos, tiposEscopo]);
+  }, [registrosTodos, tiposPermitidos]);
 
   const total = registrosTodos.length;
   const temRegistros = total > 0;
@@ -197,7 +198,7 @@ export function RegistrosPanel({
         <div className="space-y-4">
           {/* Pendências pinned */}
           {pendencias.length > 0 && (
-            <section className="space-y-2">
+            <section className="space-y-2" aria-label="Pendências">
               <div className="flex items-center gap-1.5 px-1">
                 <span className="text-[11px] font-semibold tracking-wide text-amber-600 dark:text-amber-400">
                   PENDÊNCIAS
@@ -216,7 +217,7 @@ export function RegistrosPanel({
 
           {/* Histórico dated */}
           {historico.map((group) => (
-            <section key={group.dayKey} className="space-y-2">
+            <section key={group.dayKey} className="space-y-2" aria-label={dayLabel(group.dayKey)}>
               <div className="px-1 text-[11px] font-semibold tracking-wide text-neutral-400 dark:text-neutral-500">
                 {dayLabel(group.dayKey)}
               </div>
