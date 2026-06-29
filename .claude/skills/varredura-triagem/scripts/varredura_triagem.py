@@ -57,7 +57,9 @@ except ImportError:
 
 # Parsers determinísticos (mesma pasta; stdlib puro — sem playwright).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from designacao_parse import detectar_designacao_audiencia  # noqa: E402
+from designacao_parse import (  # noqa: E402
+    detectar_designacao_audiencia, extrair_movimentos_audiencia,
+)
 from mpu_parse import parse_decisao_mpu  # noqa: E402
 
 # ───── Config ────────────────────────────────────────────────────────────────
@@ -673,8 +675,46 @@ def _decide_by_titulo_mpu(titulo: str, text: str) -> dict | None:
     return None  # fallback para RULES_MPU em classify()
 
 
+# Atos de título "fracos" (ciência genérica BAIXA): quando o título só resolve
+# pra um desses, um MOVIMENTO de audiência designada/redesignada na timeline é
+# sinal MAIS concreto do objeto da intimação → tem prioridade sobre eles.
+_TITULO_WEAK_ATOS = {
+    "Ciência", "Ciência de petição", "Ciência de mandado", "Ciência de edital",
+    "Ciência de ata de audiência",
+}
+
+
+def _melhor_movimento(movimentos: list | None) -> dict | None:
+    """Escolhe a designação futura mais relevante (maior data) da timeline."""
+    if not movimentos:
+        return None
+    return sorted(movimentos, key=lambda d: d.get("data") or "")[-1]
+
+
+def _classificar_designacao(det: dict | None, is_mpu: bool = False) -> dict | None:
+    """Designação parseada (de movimento ou corpo) → rule dict de ciência +
+    side-effect de (re)agendar. A `Designacao` segue em `extras._designacao` para
+    o agendamento não precisar re-parsear (e funcionar mesmo sem data no corpo)."""
+    if not det:
+        return None
+    redesig = bool(det.get("redesignacao"))
+    # MPU: audiência de justificação → ótica defensiva do requerido.
+    if is_mpu and "justifica" in normalize(det.get("tipo") or ""):
+        return {"ato": "Defesa em audiência de justificação", "prioridade": "URGENTE",
+                "prazo_dias": 5, "registro_tipo": "diligencia",
+                "fase": "audiencia_designada", "motivo": "ciencia_audiencia",
+                "side_effects": ["agendar_audiencia"],
+                "extras": {"tipo_audiencia": "JUSTIFICACAO", "_designacao": det}}
+    return {
+        "ato": "Ciência redesignação de audiência" if redesig else "Ciência designação de audiência",
+        "prioridade": "NORMAL", "prazo_dias": None, "registro_tipo": "ciencia",
+        "side_effects": ["reagendar_audiencia" if redesig else "agendar_audiencia"],
+        "extras": {"_designacao": det},
+    }
+
+
 def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
-             atribuicao: str | None = None) -> dict | None:
+             atribuicao: str | None = None, movimentos: list | None = None) -> dict | None:
     """Classifica usando (a) título do doc + (b) regras textuais como fallback.
 
     Quando is_mpu=True, RULES_MPU vem antes de RULES_BASE — ótica defensiva
@@ -683,8 +723,15 @@ def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
     Quando a atribuição é Execução Penal (`"EXECUCAO_PENAL" in atribuicao`),
     RULES_EP vem antes de RULES_BASE — atos específicos da execução; se nenhuma
     regra EP casar, faz fallback para o título genérico + RULES_BASE.
+
+    `movimentos` (designações extraídas da timeline via
+    extrair_movimentos_audiencia) é um sinal ESTRUTURADO: quando o título é
+    fraco/ausente, uma audiência designada/redesignada na timeline tem
+    prioridade sobre o fallback de texto — resolve "despacho vago + audiência
+    num movimento" (sem data no corpo do documento intimado).
     """
     n = normalize(text)
+    melhor_mov = _melhor_movimento(movimentos)
     if is_mpu:
         if titulo:
             r = _decide_by_titulo_mpu(titulo, text)
@@ -695,6 +742,9 @@ def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
                 return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
                         "registro_tipo": tipo, "fase": fase, "motivo": motivo,
                         "side_effects": fx, "extras": ex}
+        mv = _classificar_designacao(melhor_mov, is_mpu=True)
+        if mv:
+            return mv
         # se MPU mas nada matcheou, cai no RULES_BASE como último recurso
     if "EXECUCAO_PENAL" in (atribuicao or ""):
         for pat, ato, prio, prazo, tipo, fx, ex in RULES_EP:
@@ -704,10 +754,14 @@ def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
                     "registro_tipo": tipo, "side_effects": fx, "extras": ex,
                 }
         # nenhuma regra EP casou → fallback para título genérico + RULES_BASE
-    if titulo:
-        r = _decide_by_titulo(titulo, text)
-        if r:
-            return r
+    titulo_rule = _decide_by_titulo(titulo, text) if titulo else None
+    if titulo_rule and titulo_rule["ato"] not in _TITULO_WEAK_ATOS:
+        return titulo_rule
+    mv_rule = _classificar_designacao(melhor_mov)
+    if mv_rule:
+        return mv_rule
+    if titulo_rule:
+        return titulo_rule
     for pat, ato, prio, prazo, tipo, fx, ex in RULES_BASE:
         if re.search(pat, n):
             return {
@@ -876,6 +930,14 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
 
         default_text = await read_iframe()
         timeline = await autos.evaluate(JS_READ_TIMELINE)
+        # Texto da página de autos (frame principal) — contém os MOVIMENTOS da
+        # timeline (ex.: "AUDIÊNCIA ... REDESIGNADA CONDUZIDA POR DD/MM/AAAA ..."),
+        # que não são documentos clicáveis e por isso não entram em `timeline`.
+        try:
+            panel_text = await autos.evaluate(
+                "() => (document.body && document.body.innerText) || ''")
+        except Exception:
+            panel_text = ""
 
         # Candidatos por prioridade semântica
         candidates: list[dict] = []
@@ -908,6 +970,7 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
             # mesmo quando o corpo é PDF ilegível e best_id ficou None).
             "top_titulo": candidates[0]["titulo"] if candidates else None,
             "timeline": timeline[:8],
+            "panel_text": (panel_text or "")[:20000],
         }
     finally:
         await autos.close()
@@ -1037,9 +1100,11 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
 
 
 def _agendar_audiencia(sb: Supabase, demanda: dict, rule: dict, content: str, base_reg_id) -> None:
-    """Extrai a designação do texto e insere/atualiza a audiência (idempotente)."""
+    """Insere/atualiza a audiência (idempotente). Prefere a designação já parseada
+    em `extras._designacao` (vinda de um movimento da timeline — pode não ter data
+    no corpo do doc); senão extrai do texto do documento."""
     proc_id = demanda["processo_id"]
-    det = detectar_designacao_audiencia(content)
+    det = (rule.get("extras") or {}).get("_designacao") or detectar_designacao_audiencia(content)
     if not det:
         # Sem data detectável → diligência p/ definir manualmente (não inventa data).
         if not sb.registro_exists(demanda["id"], "Definir data da audiência"):
@@ -1461,8 +1526,14 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
                 # Fallback p/ atrib_alvo quando a demanda não traz processo.
                 atrib_demanda = (d.get("processos") or {}).get("atribuicao") or atrib_alvo
+                # Sinal estruturado: audiências (re)designadas nos MOVIMENTOS da
+                # timeline — pega o objeto da intimação mesmo quando o doc intimado
+                # é um despacho vago sem data (caso André Chaves, 8016157-03).
+                movimentos = extrair_movimentos_audiencia(content.get("panel_text", ""))
+                if movimentos:
+                    log(f"  ⤷ {len(movimentos)} movimento(s) de audiência na timeline")
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
-                                atribuicao=atrib_demanda)
+                                atribuicao=atrib_demanda, movimentos=movimentos)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)

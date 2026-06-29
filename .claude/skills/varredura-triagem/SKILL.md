@@ -303,6 +303,40 @@ Em rodada real (2026-05-04, 10 demandas VVD, ontem+hoje):
 - 1 caso (932) processado em 1ª passada — está em vara fora do painel atual
   (Salvador, não Camaçari).
 
+## Audiência em MOVIMENTO da timeline (sinal estruturado — 2026-06-29)
+
+Aprendizado-chave (caso André Chaves, `8016157-03.2025.8.05.0039`, VVD): a
+designação/redesignação de audiência **nem sempre está no corpo do documento
+intimado**. O despacho intimado pode ser vago (*"…inclusão em nova data na pauta
+de audiência"* — sem data), enquanto a data real vive num **MOVIMENTO** da
+timeline do PJe:
+
+```
+AUDIÊNCIA OITIVA ESPECIAL REDESIGNADA CONDUZIDA POR 16/07/2026 09:15 EM/PARA VARA DE VIOLÊNCIA DOMÉSTICA FAM CONTRA A MULHER DE CAMAÇARI, #NÃO PREENCHIDO#.
+```
+
+Esse movimento **não é um documento clicável** (não tem ID), então não entrava em
+`JS_READ_TIMELINE` nem chegava ao classificador → a audiência era perdida e a
+demanda caía em "manual-review" ou "Cumprir despacho".
+
+**Como funciona agora:**
+1. `read_doc_content` captura o `panel_text` (innerText do frame principal dos
+   autos), que contém os movimentos.
+2. `extrair_movimentos_audiencia(panel_text)` (em `designacao_parse.py`) acha os
+   blocos `AUDIÊNCIA … (RE)DESIGNADA CONDUZIDA POR DD/MM/AAAA …` e reusa
+   `detectar_designacao_audiencia` (que já trata `por DD/MM` + `em/para`).
+   CANCELADA/REALIZADA não casam `(RE)DESIGNAD[AO]` → ignoradas.
+3. `classify(..., movimentos=[...])` usa o movimento como sinal **estruturado**:
+   quando o título do doc é fraco/ausente (despacho, petição, intimação genérica),
+   a audiência da timeline tem prioridade → ato `Ciência (re)designação de
+   audiência` + side-effect `agendar/reagendar`. **Títulos fortes (sentença,
+   acórdão, decisão substantiva) NÃO são sobrescritos.**
+4. A `Designacao` parseada viaja em `extras._designacao`; `_agendar_audiencia` a
+   usa direto — agenda a audiência mesmo sem data no corpo do documento (#4).
+
+Testes: `scripts/test_movimento_audiencia.py` (14 asserts, fixture = timeline real
+do André Chaves, inclui guarda anti-sobrescrita de sentença e regressão).
+
 ## Triagem MPU (defesa do requerido)
 
 Quando a demanda é uma **MPU** (`processosVvd.tipoProcesso='MPU'`,
@@ -348,6 +382,7 @@ Constantes canônicas em `src/lib/mpu-constants.ts`:
 | Inquérito remetido ao MP cai em "no match" | regra inexistente | Adicionar regra `encaminha-?se.{0,30}(inquerito|i\.?p\.?).{0,30}(ministerio publico|mp\b)` → Ciência BAIXA |
 | iframe default tem só header (~700b) → "no match" | doc atual é "Juntada de comprovante", não a intimação de fato | Clicar candidatos da timeline e guardar texto maior |
 | Anexo Comet não funciona (`Browser.setDownloadBehavior` bloqueado) | Comet/Perplexity restringe CDP | Usar Chromium puro com `--remote-debugging-port=9222` |
+| Audiência (re)designada perdida → "Cumprir despacho"/manual-review | designação só num MOVIMENTO da timeline (não no doc intimado); movimento não tem ID → não era lido | `panel_text` + `extrair_movimentos_audiencia` → `classify(movimentos=…)` (ver seção "Audiência em MOVIMENTO da timeline") |
 
 ---
 

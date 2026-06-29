@@ -148,6 +148,39 @@ def detectar_designacao_audiencia(texto: str) -> Optional[Designacao]:
     }
 
 
+# ── Movimentos de audiência da timeline do PJe ────────────────────────────────
+# A designação/redesignação muitas vezes NÃO está no corpo do documento intimado
+# (despacho vago: "...inclusão em nova data na pauta de audiência"), mas num
+# MOVIMENTO da timeline, no formato:
+#   AUDIÊNCIA <tipo> (RE)DESIGNADA CONDUZIDA POR DD/MM/AAAA HH:MM EM/PARA <vara>, #...#.
+# Capturamos esses blocos e reusamos detectar_designacao_audiencia (que já trata
+# o formato `por DD/MM` + `em/para`). CANCELADA/REALIZADA não casam (RE)DESIGNAD[AO]
+# → ignoradas (não reagendamos audiência passada/cancelada).
+_MOVIMENTO_AUDIENCIA_RE = re.compile(
+    r"AUDI[EÊ]NCIA[\s\S]{0,120}?(?:RE)?DESIGNAD[AO][\s\S]{0,40}?CONDUZIDA"
+    r"[\s\S]{0,15}?POR\s+\d{1,2}[/.]\d{1,2}[/.]\d{4}"
+    r"[\s\S]{0,200}?(?:#\s*N[ÃA]O\s+PREENCHIDO\s*#|(?=AUDI[EÊ]NCIA)|\Z)",
+    re.IGNORECASE,
+)
+
+
+def extrair_movimentos_audiencia(timeline_text: str) -> list[Designacao]:
+    """Extrai designações de audiência dos MOVIMENTOS da timeline do PJe.
+
+    Retorna lista de `Designacao` (apenas as parseáveis, com data/hora válidas).
+    Cada movimento de designação/redesignação vira um item; cancelamentos e
+    audiências realizadas são ignorados (não casam o padrão (RE)DESIGNAD[AO]).
+    """
+    if not timeline_text:
+        return []
+    out: list[Designacao] = []
+    for mt in _MOVIMENTO_AUDIENCIA_RE.finditer(timeline_text):
+        det = detectar_designacao_audiencia(mt.group(0))
+        if det:
+            out.append(det)
+    return out
+
+
 # ── Self-test (paridade com os exemplos do docstring da fonte TS) ──────────────
 if __name__ == "__main__":
     casos = [
