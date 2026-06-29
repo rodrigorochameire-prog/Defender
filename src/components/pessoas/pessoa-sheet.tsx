@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { PessoaChip } from "./pessoa-chip";
+import { PessoaAvatar } from "@/components/shared/pessoa-avatar";
 
 interface Props {
   pessoaId: number | null;
@@ -53,13 +54,12 @@ export function PessoaSheet({ pessoaId, open, onOpenChange }: Props) {
           {!isLoading && pessoa && (
             <>
               <div className="px-4 pt-4 pb-2 flex items-center gap-3">
-                {(pessoa as any).avatarDataUrl && (
-                  <img
-                    src={(pessoa as any).avatarDataUrl}
-                    alt={pessoa.nome}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-white dark:ring-neutral-800 shadow-sm shrink-0"
-                  />
-                )}
+                <PessoaAvatar
+                  nome={pessoa.nome}
+                  photoUrl={(pessoa as any).avatarDataUrl}
+                  papel={participacoes[0]?.papel ?? null}
+                  size="lg"
+                />
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200 truncate">
                     {pessoa.nome}

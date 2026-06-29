@@ -152,6 +152,29 @@ const SKILL_REGISTRY = {
     },
   },
 
+  // Importação da pauta de audiências PJe para staging (pauta_import_staging).
+  // Requer --job-id e --atribuicoes CSV; --since/--until opcionais (default no worker).
+  'importar-pauta': {
+    label: 'Importar pauta de audiências (staging)',
+    // Exige login manual no PJe (Keycloak + 2FA) → só roda em broker interativo.
+    interactive: true,
+    build: (meta) => {
+      if (!meta.atribuicoes?.length) throw new Error('meta.atribuicoes é obrigatório para importar-pauta');
+      return {
+        interpreter: VENV_PYTHON,
+        argv: [
+          resolve(PROJECT_DIR, '.claude/skills/importar-pauta/scripts/importar_pauta.py'),
+          '--job-id', String(meta.jobId),
+          '--atribuicoes', meta.atribuicoes.join(','),
+          ...(meta.since ? ['--since', String(meta.since)] : []),
+          ...(meta.until ? ['--until', String(meta.until)] : []),
+          '--modo', meta.modo || 'cdp',
+        ],
+        timeoutMs: 30 * 60_000,
+      };
+    },
+  },
+
   // Smoke test da lane — não abre browser. Prova queue→spawn→result sem credenciais.
   __selftest: {
     label: 'Self-test (sem browser)',
