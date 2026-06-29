@@ -16,7 +16,7 @@ import { db } from "@/lib/db";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { pautaImportStaging } from "@/lib/db/schema/pauta-import";
 import { audiencias, processos } from "@/lib/db/schema";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
 import { linhaParaEvento, formatDataHora } from "@/lib/agenda/parse-pauta";
 import { importarAudiencias } from "@/lib/agenda/importar-audiencias";
 
@@ -112,12 +112,13 @@ export const pautaRouter = router({
         });
       }
 
-      // Linhas staged ordenadas por id de inserção (ordem da raspagem = ordem do PJe)
+      // Linhas staged ordenadas por DATA da audiência (crescente) — a ordem do PJe
+      // não é cronológica; assim o preview já vem do mais próximo ao mais distante.
       const stagingRows = await db
         .select()
         .from(pautaImportStaging)
         .where(eq(pautaImportStaging.jobId, input.jobId))
-        .orderBy(pautaImportStaging.id);
+        .orderBy(asc(pautaImportStaging.dataAudiencia), asc(pautaImportStaging.id));
 
       // Enriquecer cada linha com preview derivado via linhaParaEvento (puro/regex, barato)
       const rows = stagingRows.map((r) => {

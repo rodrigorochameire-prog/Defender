@@ -158,6 +158,32 @@ export function mapearSituacao(situacaoTexto: string): string {
 // Extrai nome + CPF dos assistidos da Defensoria no polo passivo.
 // ---------------------------------------------------------------------------
 
+/**
+ * Heurística de instituição (polo ativo típico: MP, delegacias, varas, Estado).
+ * Usada no fallback do formato TABELA, onde não há marcador de papel (REU) para
+ * distinguir o réu do autor — o assistido é o lado que NÃO é instituição.
+ */
+function _ehInstituicao(nome: string): boolean {
+  const n = nome
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+  return (
+    n.includes("ministerio") ||
+    n.includes("vara") ||
+    n.includes("deam") ||
+    n.includes("policia") ||
+    n.includes("delegacia") ||
+    n.includes("segredo de justica") ||
+    n.includes("comarca") ||
+    n.includes("juizo") ||
+    n.includes("estado da bahia") ||
+    n.includes("defensoria") ||
+    /^\d{1,3}a?\s*dt\b/.test(n) ||
+    /\bdt\b/.test(n)
+  );
+}
+
 export function extrairAssistidos(partesTexto: string): AssistidoInfo[] {
   // Normaliza quebras de linha e rejunta CPF partido entre linhas (ex.: "915-\n09")
   const normalizado = partesTexto
@@ -202,6 +228,25 @@ export function extrairAssistidos(partesTexto: string): AssistidoInfo[] {
         nome: toTitleCase(nome),
         cpf,
       });
+    }
+  }
+
+  // FALLBACK formato TABELA (pauta raspada do listView.seam): "AUTOR X RÉU" sem
+  // CPF nem marcador de papel. A ordem dos polos VARIA (VVD: "DEAM/MP X réu";
+  // Júri: "réu X MP"), então o assistido é o lado que NÃO é instituição.
+  if (partesAssistidas.length === 0) {
+    const lados = normalizado.split(/\s+X\s+/);
+    if (lados.length >= 2) {
+      for (let lado of lados) {
+        lado = lado
+          .replace(/\s+e\s+outros?\s*\(\d+\)\s*$/i, "") // "… e outros (1)"
+          .replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (lado && lado.length > 2 && !_ehInstituicao(lado)) {
+          partesAssistidas.push({ nome: toTitleCase(lado), cpf: "" });
+        }
+      }
     }
   }
 
