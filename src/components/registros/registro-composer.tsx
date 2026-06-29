@@ -17,6 +17,8 @@ export type RegistroComposerProps = {
   tipoDefault?: TipoRegistro;
   /** Encaminhado ao RegistroEditor para controlar os tipos mostrados inline. */
   tiposPrimarios?: TipoRegistro[];
+  /** Allowlist estrita de tipos selecionáveis (ex.: aba de audiência). */
+  tiposPermitidos?: TipoRegistro[];
   /**
    * Quando fornecido, exibe um botão "Abrir autos" na barra colapsada que
    * chama este callback sem abrir o editor (a surface pai controla o diálogo).
@@ -36,6 +38,7 @@ export function RegistroComposer({
   scope,
   tipoDefault = "ciencia",
   tiposPrimarios,
+  tiposPermitidos,
   onAbrirAutos,
   onSaved,
 }: RegistroComposerProps) {
@@ -50,6 +53,7 @@ export function RegistroComposer({
         audienciaId={scope.audienciaId}
         tipoDefault={tipoDefault}
         tiposPrimarios={tiposPrimarios}
+        tiposPermitidos={tiposPermitidos}
         onSaved={() => {
           setOpen(false);
           onSaved?.();
@@ -71,11 +75,12 @@ export function RegistroComposer({
       <button
         type="button"
         aria-label="Adicionar registro…"
+        aria-expanded={false}
         onClick={() => setOpen(true)}
         className={cn(
           "flex flex-1 items-center gap-2 text-sm",
           "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300",
-          "transition-colors cursor-text",
+          "transition-colors cursor-pointer",
         )}
       >
         <Pencil className="w-3.5 h-3.5 shrink-0" />
