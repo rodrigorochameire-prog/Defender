@@ -67,6 +67,14 @@ PJE_BASE = "https://pje.tjba.jus.br/pje"
 PANEL_URL = f"{PJE_BASE}/Painel/painel_usuario/advogado.seam"
 DEFENSOR_ID = 1
 RELOGIN_EVERY = 8
+
+# Colunas/embeds PostgREST das demandas — fonte única usada por list_demandas
+# E build_by_ids_params, garantindo que os dois modos puxem o mesmo shape.
+_DEMANDA_SELECT = (
+    "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
+    "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
+    "assistidos!inner(nome)"
+)
 CDP_URL = "http://127.0.0.1:9222"
 PAGE_LIMIT = 8
 
@@ -205,9 +213,7 @@ class Supabase:
 
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
-            "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
-            "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
-            "assistidos!inner(nome)",
+            _DEMANDA_SELECT,
             "status=in.(5_TRIAGEM,URGENTE)",
             f"defensor_id=eq.{DEFENSOR_ID}",
             "deleted_at=is.null",
@@ -1404,6 +1410,9 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
         # Navega o painel até a vara da atribuição ANTES de localizar os docs —
         # find_in_panel só acha o expediente na tabela populada da vara correta.
+        # Modo --demanda-ids: navegação usa UMA vara por rodada (a de demandas[0]);
+        # demandas de outra vara caem no fallback manual-review. Lote homogêneo por
+        # vara é o suportado — seleção em lote da UI é escopada por atribuição.
         if modo in ("cdp", "direct"):
             if atrib_alvo:
                 try:
@@ -1524,7 +1533,12 @@ def main():
 
     sb = Supabase(sb_url, sb_key)
     if args.demanda_ids:
-        ids = [int(x) for x in args.demanda_ids.split(",") if x.strip()]
+        try:
+            ids = [int(x) for x in args.demanda_ids.split(",") if x.strip()]
+        except ValueError:
+            sys.exit("ERRO: --demanda-ids deve ser CSV de inteiros (ex.: 1368,12)")
+        if not ids:
+            sys.exit("ERRO: --demanda-ids vazio")
         demandas = sb.list_demandas_by_ids(ids)
         print(f"[varredura] alvo: {len(demandas)} demandas (selecionadas)")
     else:
@@ -1548,9 +1562,7 @@ def build_by_ids_params(ids: list[int], defensor_id: int) -> list[str]:
     status (analisa em qualquer coluna). Puro/testável."""
     ids_csv = ",".join(str(int(i)) for i in ids)
     return [
-        "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
-        "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
-        "assistidos!inner(nome)",
+        _DEMANDA_SELECT,
         f"id=in.({ids_csv})",
         f"defensor_id=eq.{defensor_id}",
         "deleted_at=is.null",
