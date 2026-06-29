@@ -341,7 +341,7 @@ Expected: FAIL (props/markup mismatch or missing prazo badge).
 
 - [ ] **Step 3: Update `RegistroCard`** to the refined anatomy. Keep the existing `onEdit`/`onDelete` hover actions; reuse `REGISTRO_TIPOS[tipo]` for `{ Icon, label, color, bg, text }`. Add an optional `showPrazo` prop that renders an amber prazo chip (`dd/MM`) when `registro.prazo` is set. Structure: `[tipo badge with <Icon/> + label] [title (truncate)] [relative time]` / 2-line clamped preview (`line-clamp-2`) / `[autor]`. `registro-card.tsx:4` already imports `format` from `date-fns`.
 
-> **Date safety:** there is NO `safeFmt` helper in this codebase. Add a small **local** guarded formatter in this file for the prazo chip — e.g. `const fmtPrazo = (s: string | null) => { if (!s) return null; const d = new Date(s); return isNaN(d.getTime()) ? null : format(d, "dd/MM"); }` — and reuse the same guard pattern for relative time. Do NOT call `date-fns` `format()` directly on a possibly-invalid value (project memory: it throws).
+> **Date safety:** there is no shared/importable `safeFmt` helper (a non-exported local one exists in `assistido-preview-panel.tsx` but is not reusable). Add a small **local** guarded formatter in this file for the prazo chip — e.g. `const fmtPrazo = (s: string | null) => { if (!s) return null; const d = new Date(s); return isNaN(d.getTime()) ? null : format(d, "dd/MM"); }` — and reuse the same guard pattern for relative time. Do NOT call `date-fns` `format()` directly on a possibly-invalid value (project memory: it throws).
 
 - [ ] **Step 4: Run — verify it passes**
 
@@ -581,7 +581,7 @@ git commit -m "feat(registros): wire RegistrosPanel into processo/atendimento/au
 - Modify: any remaining importers of `RegistrosTimeline`
 
 - [ ] **Step 1:** In `FeedPorCaso`/`FeedUnificado`, replace bespoke row markup with `<RegistroCard>` for `tipo`-bearing entries (registros), keeping the multi-source merge (registros + demandaEventos + audiências) and the per-caso grouping. Audiência/evento rows keep their own small renderers but adopt the same badge/spacing tokens for visual parity. Optionally surface the new `prazo` (now selected in `feedUnificado`) as a `showPrazo` chip.
-- [ ] **Step 2:** Grep for stragglers: `grep -rl "registros-timeline\|RegistrosTimeline" src` — migrate each to `RegistrosPanel`. Expected after migration: no matches outside the deleted file.
+- [ ] **Step 2:** Grep for stragglers: `grep -rl "registros-timeline\|RegistrosTimeline" src` — migrate each to `RegistrosPanel`. Note: `src/components/demandas-premium/demandas-premium-view.tsx:1421` matches only in a **stale code comment** (not a live mount) — delete/update that comment so the final grep is clean. Expected after migration: no matches outside the deleted file.
 - [ ] **Step 3:** Delete `src/components/registros/registros-timeline.tsx`.
 - [ ] **Step 4: Run the full registros test suite + typecheck**
 
@@ -625,7 +625,7 @@ git add -A && git commit -m "chore(registros): verification cleanup" || echo "no
 
 - **Side-effects are sacred:** all creation flows go through `registros.create` (never raw insert) so audiência auto-schedule / MPU-cautelar parsing / Sheets sync keep working. The composer reuses `RegistroEditor`, which already calls `create`.
 - **`prazo` vs `demanda.prazo`:** the new `registros.prazo` is per-registro (powers Pendências countdowns) and is **distinct** from the existing `demanda.prazo` chip in the drawer — do not conflate them.
-- **Date safety:** never call `date-fns` `format()` on possibly-invalid dates (project memory: it throws). Use guarded helpers / `safeFmt`.
+- **Date safety:** never call `date-fns` `format()` on possibly-invalid dates (project memory: it throws). Add a **local** guarded formatter (see Task 4) — there is no shared/importable helper for this.
 - **Turbopack dev only** for manual testing (project memory: webpack dev crashes the PDF viewer / cross-route `[id]` imports).
 - **Out of scope (separate plan):** the catch-22 where demandas already in `2_ATENDER` never get a registro (the Moabe/Fábio gap).
 ```
