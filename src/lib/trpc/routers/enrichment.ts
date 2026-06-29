@@ -55,7 +55,7 @@ const scanIntimacoesInputSchema = z.object({
     atribuicao: z.string(),
     idDocumento: z.string().optional(),
   })),
-  driveBasePath: z.string(),
+  driveBasePath: z.string().optional(),
 });
 
 const enrichmentStatusInputSchema = z.object({
