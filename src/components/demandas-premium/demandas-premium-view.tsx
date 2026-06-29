@@ -2,6 +2,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useVarreduraJob } from "@/hooks/use-varredura-job";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
@@ -865,6 +866,11 @@ export default function Demandas() {
   } = useOfflineQuery(demandasQuery, getOfflineDemandas);
 
   const utils = trpc.useUtils();
+
+  // Varredura nível 2 (leitura profunda) — instanciado UMA vez no nível da view.
+  // O `analisar` é compartilhado pelo gatilho do card (1 demanda) e pela ação
+  // em lote da barra de seleção. NÃO instanciar dentro do card (N poll subs).
+  const { analisar, isRunning: analisando } = useVarreduraJob();
 
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
@@ -1783,6 +1789,17 @@ export default function Demandas() {
         },
       }
     );
+  };
+
+  // Ação em lote — dispara a leitura profunda para todas as selecionadas.
+  const handleBatchAnalisar = () => {
+    if (selectedIds.size === 0) return;
+    const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (numericIds.length === 0) return;
+    if (numericIds.length > 50) { toast.error("Selecione no máximo 50 demandas por análise"); return; }
+    analisar(numericIds);
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
   };
 
   // Mapeamento de nome amigável → DB enum para atribuição
@@ -3668,6 +3685,16 @@ export default function Demandas() {
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs gap-1.5"
+                          onClick={handleBatchAnalisar}
+                          disabled={analisando}
+                        >
+                          <ScanSearch className="w-3 h-3" />
+                          Analisar selecionadas ({selectedIds.size})
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
                           onClick={handleBatchCopy}
                         >
                           <Copy className="w-3 h-3" />
@@ -3770,6 +3797,8 @@ export default function Demandas() {
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
               onAtoChange={handleAtoChange}
+              onAnalisar={(id) => analisar([id])}
+              analisando={analisando}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}
