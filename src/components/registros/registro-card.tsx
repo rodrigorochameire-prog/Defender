@@ -161,7 +161,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
       </div>
 
       {registro.titulo && (
-        <h4 className="mt-1.5 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug">
+        <h4 className="mt-1.5 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug truncate">
           {registro.titulo}
         </h4>
       )}
@@ -179,7 +179,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
             ref={contentRef}
             className={cn(
               "text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed",
-              !expanded && "line-clamp-3",
+              !expanded && "line-clamp-2",
             )}
           >
             {conteudo}
