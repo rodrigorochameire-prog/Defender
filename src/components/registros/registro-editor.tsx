@@ -66,6 +66,11 @@ export function RegistroEditor({
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+  // Prazo só faz sentido para diligência: ao trocar para outro tipo, limpa o
+  // valor para não enviar um prazo "fantasma" num registro sem campo visível.
+  useEffect(() => {
+    if (tipo !== "diligencia") setPrazo("");
+  }, [tipo]);
   const utils = trpc.useUtils();
 
   const create = trpc.registros.create.useMutation({
@@ -101,6 +106,7 @@ export function RegistroEditor({
       }
       setConteudo("");
       setTitulo("");
+      setPrazo("");
       onSaved?.();
       // Envia os arquivos staged ao registro recém-criado (fire-and-forget).
       const files = stagedRef.current;
