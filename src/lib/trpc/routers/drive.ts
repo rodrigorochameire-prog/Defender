@@ -63,7 +63,6 @@ import { classificarAutos } from "@/lib/match-autos";
 import {
   resolveAllAtribuicaoFolders,
   resolveAtribuicaoFolder,
-  ATRIBUICOES,
   type Atribuicao,
 } from "@/lib/services/drive-folders";
 
@@ -5065,12 +5064,12 @@ export const driveRouter = router({
         atribuicaoPrimaria: z.string().nullable(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       let rootFolderId: string | null = null;
       if (input.atribuicaoPrimaria) {
         try {
           const atribuicaoSimple = mapAtribuicaoEnumToSimple(input.atribuicaoPrimaria);
-          rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
+          rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicaoSimple as Atribuicao);
         } catch {
           // Se não conseguir mapear, ignora filtro de atribuição
         }
@@ -5099,7 +5098,7 @@ export const driveRouter = router({
 
   backfillAssistidoLinks: protectedProcedure
     .input(z.object({ limit: z.number().min(1).max(100).default(50) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // 1. Busca assistidos sem pasta vinculada
       const unlinked = await db
         .select({
@@ -5127,7 +5126,11 @@ export const driveRouter = router({
 
           // Mapeia enum do banco (JURI_CAMACARI, VVD_CAMACARI, etc.) para chave do Drive (JURI, VVD, etc.)
           const atribuicaoSimple = mapAtribuicaoEnumToSimple(assistido.atribuicaoPrimaria);
-          const rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
+          const rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicaoSimple as Atribuicao);
+          if (!rootFolderId) {
+            skipped++;
+            continue;
+          }
           const normalizedTarget = normalizeNameForMatch(assistido.nome);
 
           // Executa dentro de uma transação para evitar race conditions
