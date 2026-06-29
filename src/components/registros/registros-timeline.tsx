@@ -1,3 +1,4 @@
+// DEPRECATED: superseded by registros-panel.tsx — importers migrated in Tasks 9-11, then this file is removed.
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
