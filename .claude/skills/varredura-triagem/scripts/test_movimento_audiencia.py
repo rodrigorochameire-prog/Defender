@@ -98,11 +98,26 @@ check("petição+movimento → designação",
 check("side-effect agendar",
       bool(rule5) and "agendar_audiencia" in rule5["side_effects"])
 
-# 6. GUARDA: título FORTE (sentença) não é sobrescrito por movimento
+# 6. GUARDA: título FORTE terminal (sentença) não é sobrescrito NEM aumentado
 rule6 = classify("JULGO PROCEDENTE a denúncia e CONDENO o réu.",
                  titulo="Sentença", movimentos=desig)
-check("sentença não sobrescrita por movimento",
+check("sentença mantém ato",
       bool(rule6) and rule6["ato"] == "Ciência condenação")
+check("sentença não ganha agendamento espúrio",
+      bool(rule6) and "agendar_audiencia" not in (rule6["side_effects"] or [])
+      and "reagendar_audiencia" not in (rule6["side_effects"] or []))
+
+# 6b. CASO REAL (André Chaves): doc titulado "Decisão" que redesignou a audiência.
+#     O corpo não casa o regex de designação, então o ato fica "Analisar decisão"
+#     — MAS a audiência futura do movimento NÃO pode ser perdida: agenda mesmo
+#     assim (sinal preservado, não dicotomia).
+rule6b = classify("Defiro o pedido. Intime-se.", titulo="Decisão", movimentos=movs)
+check("decisão mantém ato analítico",
+      bool(rule6b) and rule6b["ato"] == "Analisar decisão")
+check("decisão + movimento → agenda mesmo assim",
+      bool(rule6b) and "reagendar_audiencia" in (rule6b["side_effects"] or []))
+check("decisão carrega designação p/ agendamento",
+      bool(rule6b) and (rule6b["extras"].get("_designacao") or {}).get("data") == "2026-07-16")
 
 # 7. REGRESSÃO: classify sem movimentos não agenda audiência a partir de despacho vago
 rule7 = classify(DESPACHO_VAGO, titulo="Despacho")
