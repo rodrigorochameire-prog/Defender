@@ -21,21 +21,25 @@ export type ProjecaoEvento = {
   dataEvento: string;
   dataFim: string;
   status: "previsto" | "em_curso" | "concluido";
+  valorCents: number | null;
   dados: { feriasParcelaId: number | null };
 };
 
 export function projecaoEventoDeParcela(
-  parcela: { id: number | null; dataInicio: string; dataFim: string; status: string },
+  parcela: { id: number | null; dataInicio: string; dataFim: string; status: string; conversaoPecunia?: boolean; valorAbonoCents?: number | null },
   periodo: { aquisitivoInicio: string; aquisitivoFim: string },
   ordem: number,
 ): ProjecaoEvento {
+  const baseTitulo = tituloParcela({ aquisitivoInicio: periodo.aquisitivoInicio, aquisitivoFim: periodo.aquisitivoFim, ordem });
+  const abono = parcela.conversaoPecunia === true;
   return {
     tipo: "FERIAS",
     cluster: "ausencias",
-    titulo: tituloParcela({ aquisitivoInicio: periodo.aquisitivoInicio, aquisitivoFim: periodo.aquisitivoFim, ordem }),
+    titulo: abono ? `${baseTitulo} (abono pecuniário)` : baseTitulo,
     dataEvento: parcela.dataInicio,
     dataFim: parcela.dataFim,
     status: statusEventoDeParcela(parcela.status),
+    valorCents: abono ? (parcela.valorAbonoCents ?? null) : null,
     dados: { feriasParcelaId: parcela.id },
   };
 }
