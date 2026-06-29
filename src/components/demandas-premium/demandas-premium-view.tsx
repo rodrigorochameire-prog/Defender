@@ -3778,6 +3778,16 @@ export default function Demandas() {
                     </button>
                     <button
                       type="button"
+                      onClick={handleBatchAnalisar}
+                      disabled={analisando}
+                      title="Analisar selecionadas (leitura profunda dos autos)"
+                      className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ScanSearch className="w-3.5 h-3.5" />
+                      Analisar ({selectedIds.size})
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleBatchDelegate}
                       title="Delegar selecionadas"
                       className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
