@@ -34,6 +34,7 @@ import {
   UserPlus,
   Undo2,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -118,6 +119,8 @@ interface KanbanDemanda {
   statusDelegacao?: string | null;
   delegacaoWorkStatus?: string | null;
   reuPreso?: boolean;
+  /** Classificação do ato sob baixa confiança da IA — sinaliza revisão humana. */
+  revisaoPendente?: boolean;
   providenciaResumo?: string | null;
   /** Prévia do registro "Resumo e providências" (IA) — para glancear no card. */
   analiseResumo?: string | null;
@@ -822,6 +825,16 @@ function KanbanCard({
           )}
           {isAlta && (
             <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" aria-label="Prioridade alta" />
+          )}
+          {demanda.revisaoPendente && (
+            <span
+              className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400"
+              title="Revisão pendente — classificação do ato com baixa confiança da IA"
+              aria-label="Revisão pendente"
+            >
+              <AlertCircle className="w-2.5 h-2.5" />
+              revisar
+            </span>
           )}
           {registrosCount > 0 && (
             <span
