@@ -24,7 +24,7 @@ import { documentos } from "./documentos";
 // O mapa atribuicaoFolders substitui a constante global ATRIBUICAO_FOLDER_IDS.
 export const driveGroups = pgTable("drive_groups", {
   id: serial("id").primaryKey().notNull(),
-  ownerUserId: integer("owner_user_id").notNull(),
+  ownerUserId: integer("owner_user_id").notNull().references(() => users.id),
   label: text("label").notNull(),
   // IMPORTANTE: valores são ARRAYS — uma atribuição pode ter >1 pasta.
   // Ex. real do Rodrigo: VVD = [Criminal, MPU]; SUBSTITUICAO = [criminal, cível]; GRUPO_JURI = [grupo, extra].
@@ -54,7 +54,7 @@ export const driveSyncFolders = pgTable("drive_sync_folders", {
   isActive: boolean("is_active").default(true).notNull(),
   lastSyncAt: timestamp("last_sync_at"),
   syncToken: text("sync_token"),
-  userId: integer("user_id"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -140,7 +140,7 @@ export const driveFiles = pgTable("drive_files", {
   }>(),
 
   // Escopo de usuário (multi-tenant)
-  userId: integer("user_id"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
 
   // Metadados
   createdById: integer("created_by_id").references(() => users.id),
