@@ -93,6 +93,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
 // Carreira - Vida Funcional
 const CARREIRA_NAV: AssignmentMenuItem[] = [
   { label: "Vida Funcional", path: "/admin/carreira/vida-funcional", icon: "Briefcase" },
+  { label: "Pedidos Adm.", path: "/admin/pedidos-administrativos", icon: "FileText" },
 ];
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)
