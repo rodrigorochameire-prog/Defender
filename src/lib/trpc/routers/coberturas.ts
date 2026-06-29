@@ -31,6 +31,11 @@ export const coberturasRouter = router({
           acessoEquipe: afastamentos.acessoEquipe,
           createdAt: afastamentos.createdAt,
           updatedAt: afastamentos.updatedAt,
+          numeroSolicitacao: afastamentos.numeroSolicitacao,
+          nSiga: afastamentos.nSiga,
+          dataPublicacao: afastamentos.dataPublicacao,
+          situacaoSiga: afastamentos.situacaoSiga,
+          sigaSyncedAt: afastamentos.sigaSyncedAt,
           defensorNome: sql<string>`(SELECT name FROM users WHERE id = ${afastamentos.defensorId})`.as('defensor_nome'),
           substitutoNome: sql<string>`(SELECT name FROM users WHERE id = ${afastamentos.substitutoId})`.as('substituto_nome'),
         })
@@ -81,6 +86,10 @@ export const coberturasRouter = router({
       tipo: z.string().optional(),
       motivo: z.string().optional(),
       ativo: z.boolean().optional(),
+      numeroSolicitacao: z.string().optional(),
+      nSiga: z.string().optional(),
+      dataPublicacao: z.string().optional(),
+      situacaoSiga: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const existing = await db
@@ -104,6 +113,10 @@ export const coberturasRouter = router({
       if (input.tipo !== undefined) updateData.tipo = input.tipo;
       if (input.motivo !== undefined) updateData.motivo = input.motivo;
       if (input.ativo !== undefined) updateData.ativo = input.ativo;
+      if (input.numeroSolicitacao !== undefined) updateData.numeroSolicitacao = input.numeroSolicitacao;
+      if (input.nSiga !== undefined) updateData.nSiga = input.nSiga;
+      if (input.dataPublicacao !== undefined) updateData.dataPublicacao = input.dataPublicacao;
+      if (input.situacaoSiga !== undefined) updateData.situacaoSiga = input.situacaoSiga;
 
       const [updated] = await db.update(afastamentos)
         .set(updateData)

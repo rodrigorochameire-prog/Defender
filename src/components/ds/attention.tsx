@@ -64,14 +64,16 @@ export function AttentionSignalRow({ signal, href }: { signal: AttentionSignal; 
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-2.5 px-3 py-2 rounded-lg border-l-2 transition-colors cursor-pointer group",
+        "flex items-center gap-2.5 px-2.5 py-2 rounded-xl border transition-colors cursor-pointer group",
         tone.border,
         tone.bg,
-        "hover:brightness-[0.98] dark:hover:brightness-125",
+        "hover:brightness-[0.98] dark:hover:brightness-110",
         FOCUS_RING,
       )}
     >
-      <Icon className={cn("w-3.5 h-3.5 shrink-0", tone.text)} />
+      <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-white/70 dark:bg-neutral-900/40">
+        <Icon className={cn("w-3.5 h-3.5", tone.text)} />
+      </span>
       <span className={cn("text-xs font-medium flex-1 min-w-0 truncate", tone.text)}>{signal.label}</span>
       <span className="text-[10px] text-muted-foreground group-hover:text-foreground/70 flex items-center gap-0.5 shrink-0">
         {signal.cta.label}

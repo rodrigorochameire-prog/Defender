@@ -90,10 +90,11 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
   { label: "Mapa dos Fatos", path: "/admin/mapa-dos-fatos", icon: "MapPin" },
 ];
 
-// Carreira - Vida Funcional
+// Carreira - Vida Funcional + Diárias
 const CARREIRA_NAV: AssignmentMenuItem[] = [
   { label: "Vida Funcional", path: "/admin/carreira/vida-funcional", icon: "Briefcase" },
   { label: "Ausências", path: "/admin/ausencias", icon: "CalendarOff" },
+  { label: "Diárias", path: "/admin/diarias", icon: "CreditCard" },
 ];
 
 // 3. Documentos - Drive, Distribuição, Ofícios, Modelos, Jurisprudência, Legislação (laranja)

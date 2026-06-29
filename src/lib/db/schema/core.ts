@@ -450,6 +450,11 @@ export const afastamentos = pgTable("afastamentos", {
   ativo: boolean("ativo").default(true).notNull(),
   acessoDemandas: boolean("acesso_demandas").default(true),
   acessoEquipe: boolean("acesso_equipe").default(false),
+  numeroSolicitacao: text("numero_solicitacao"),
+  nSiga: text("n_siga"),
+  dataPublicacao: date("data_publicacao"),
+  situacaoSiga: text("situacao_siga"),
+  sigaSyncedAt: timestamp("siga_synced_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

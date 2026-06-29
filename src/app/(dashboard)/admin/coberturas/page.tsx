@@ -106,6 +106,15 @@ function CoberturaCard({ cobertura, onEncerrar }: {
             </Button>
           )}
         </div>
+
+        {/* SIGA metadata */}
+        {(cobertura.numeroSolicitacao || cobertura.situacaoSiga || cobertura.dataPublicacao) && (
+          <div className="text-[11px] text-muted-foreground mt-2">
+            {cobertura.numeroSolicitacao ? `nº ${cobertura.numeroSolicitacao}` : ""}
+            {cobertura.situacaoSiga ? ` · SIGA: ${cobertura.situacaoSiga}` : ""}
+            {cobertura.dataPublicacao ? ` · pub. ${cobertura.dataPublicacao}` : ""}
+          </div>
+        )}
       </div>
     </Card>
   );

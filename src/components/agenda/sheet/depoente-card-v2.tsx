@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Loader2, Mic, ExternalLink } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
+import { PessoaAvatar } from "@/components/shared/pessoa-avatar";
 import { secoesPorTipo } from "@/lib/agenda/secao-classificada";
 import type { Segmento } from "@/lib/agenda/transcript-sync";
 import { VincularAudioPopover } from "./vincular-audio-popover";
@@ -136,23 +137,7 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
         onClick={onToggle}
         className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
       >
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={depoente.nome}
-            className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-neutral-200 dark:ring-neutral-700"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 text-[10px] font-semibold text-neutral-400">
-            {(depoente.nome || "")
-              .split(" ")
-              .filter(Boolean)
-              .slice(0, 2)
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()}
-          </div>
-        )}
+        <PessoaAvatar nome={depoente.nome} photoUrl={avatarUrl} papel={depoente.papel} size="sm" />
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 truncate">
             {depoente.nome}

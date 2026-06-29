@@ -78,3 +78,4 @@ export * from "./demanda-eventos";
 export * from "./pje-import";
 export * from "./ferias";
 export * from "./ausencias";
+export * from "./diarias";

@@ -39,4 +39,25 @@ describe("ferias router — contract", () => {
     expect(index).toContain("feriasRouter");
     expect(index).toMatch(/ferias:\s*feriasRouter/);
   });
+  it("criarParcela writes valorCents into the evento insert", () => {
+    // the evento insert must include valorCents from the projection
+    expect(src).toMatch(/valorCents:\s*proj\.valorCents/);
+  });
+  it("atualizarParcela fetches periodo unconditionally (not only on date change)", () => {
+    // the periodo fetch must NOT be nested only under an if(input.dataInicio...) block
+    const idx = src.indexOf("atualizarParcela");
+    const seg = src.slice(idx);
+    expect(seg).toContain("Período não encontrado");
+    // titulo + valorCents propagated to the evento update
+    expect(seg).toMatch(/titulo:\s*proj\.titulo/);
+    expect(seg).toMatch(/valorCents:\s*proj\.valorCents/);
+  });
+  it("rejects conversaoPecunia without valorAbonoCents", () => {
+    expect(src).toMatch(/Convers[aã]o em pec[úu]nia exige valor/);
+  });
+  it("persists the SIGA fields (numeroSolicitacao, provimento, conversaoPecunia)", () => {
+    expect(src).toContain("numeroSolicitacao");
+    expect(src).toContain("provimento");
+    expect(src).toContain("conversaoPecunia");
+  });
 });
