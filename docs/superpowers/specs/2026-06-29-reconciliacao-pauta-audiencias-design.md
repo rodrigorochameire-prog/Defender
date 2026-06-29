@@ -166,6 +166,26 @@ após popular a tabela.** Sequência obrigatória:
 
 Sem o passo 1, implementar o passo 2 é construir contra tabela vazia.
 
+### ⚠ Achado 2026-06-29 — a `listView` da pauta NÃO serve como gold source
+
+Investigação ao vivo (skill `importar-pauta`) revelou que
+`ProcessoAudiencia/PautaAudiencia/listView.seam` é uma **visão de audiências
+iminentes**, não um arquivo consultável:
+
+1. **Campo "De" travado no presente** — setar data início no futuro (`.value` ou
+   `fill()` com teclado) faz o RichFaces limpar e resetar para hoje
+   (`maxDate=hoje` provável). A janela sempre começa em hoje.
+2. **Grid sem paginador** — a tabela não tem datascroller; renderiza ~16–17
+   linhas e o `JS_GOTO_PAGE` não acha próxima página → o resto é inalcançável.
+3. **AJAX flaky** — runs idênticos voltaram 16/17/1 linhas.
+
+**Consequência:** a pauta só cobre as próximas ~16 audiências — exatamente o que
+a varredura JÁ captura via expedientes + movimentos da timeline (commits
+`e19a9c48`/`09b22224`, validado no André). **O valor marginal da reconciliação
+contra esta tela é baixo.** Para o #2 valer, trocar a fonte: **aba "Audiências"
+por processo** ou **API `procapi`** — NÃO a `listView`. Decisão de produto
+pendente antes de implementar. Memória: `gotcha-pauta-listview-imminent-only`.
+
 ---
 
 ## 8. Decisões em aberto (para validar antes de implementar)
