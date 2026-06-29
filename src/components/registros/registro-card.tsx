@@ -106,7 +106,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
           {tipoCfg && TipoIcon && (
             <span
               className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ring-current/20",
                 tipoCfg.bg,
                 tipoCfg.text,
               )}
