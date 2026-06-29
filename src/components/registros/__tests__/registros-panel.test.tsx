@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, afterEach, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { RegistrosPanel } from "../registros-panel";
 import { dayLabel } from "../registros-sections";
 
@@ -115,6 +115,18 @@ describe("RegistrosPanel", () => {
     expect(screen.getByText("Nada por aqui ainda.")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Agendar audi[êe]ncia/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the filtered-empty message when a text search matches nothing", () => {
+    listData = [diligencia];
+    render(<RegistrosPanel scope={{ assistidoId: 42 }} />);
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
+    fireEvent.change(screen.getByLabelText(/buscar registros/i), {
+      target: { value: "zzz-no-match" },
+    });
+    expect(
+      screen.getByText(/Nenhum registro com esse filtro/i),
     ).toBeInTheDocument();
   });
 });
