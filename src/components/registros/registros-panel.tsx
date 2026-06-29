@@ -72,11 +72,14 @@ export function RegistrosPanel({
     tipo: filtroTipo ?? undefined,
     limit: 200,
   });
-  const registrosRaw = listQuery.data ?? [];
+  const registrosRaw = useMemo(() => listQuery.data ?? [], [listQuery.data]);
 
   // (2) Unfiltered list — drives per-tipo counts for the toolbar.
   const countsQuery = trpc.registros.list.useQuery({ ...scope, limit: 200 });
-  const registrosTodos = countsQuery.data ?? [];
+  const registrosTodos = useMemo(
+    () => countsQuery.data ?? [],
+    [countsQuery.data],
+  );
 
   const refetchBoth = useCallback(() => {
     listQuery.refetch();
