@@ -87,10 +87,11 @@ export async function createUserDriveStructure(userId: number): Promise<{
   if (!user) throw new Error("Usuário não encontrado");
 
   // Idempotency: if a drive_group already exists for this user, return existing data.
-  if (user.driveGroupId != null && user.driveFolderId) {
+  if (user.driveGroupId != null) {
+    const rootFolderId = user.driveFolderId ?? "";
     return {
-      rootFolderId: user.driveFolderId,
-      rootFolderUrl: `https://drive.google.com/drive/folders/${user.driveFolderId}`,
+      rootFolderId,
+      rootFolderUrl: `https://drive.google.com/drive/folders/${rootFolderId}`,
       driveGroupId: user.driveGroupId,
     };
   }
