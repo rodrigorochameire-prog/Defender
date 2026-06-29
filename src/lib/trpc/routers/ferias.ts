@@ -8,7 +8,7 @@ import { feriasPeriodos, feriasParcelas, afastamentos, vidaFuncionalEventos, use
 import { getVidaFuncionalScope } from "../vida-funcional-scope";
 import { computeSaldo, diasInclusive, type ParcelaLite } from "@/lib/ferias/saldo";
 import { podeTransicionar } from "@/lib/ferias/transicoes";
-import { projecaoEventoDeParcela, statusEventoDeParcela } from "@/lib/ferias/projecao";
+import { projecaoEventoDeParcela } from "@/lib/ferias/projecao";
 
 const ISO = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (AAAA-MM-DD)");
 
@@ -72,6 +72,14 @@ export const feriasRouter = router({
             substitutoNome: p.substitutoId !== null ? nome.get(p.substitutoId) ?? null : null,
             seiProtocolo: p.seiProtocolo,
             observacoes: p.observacoes,
+            numeroSolicitacao: p.numeroSolicitacao,
+            nSiga: p.nSiga,
+            provimento: p.provimento,
+            dataPublicacao: p.dataPublicacao,
+            conversaoPecunia: p.conversaoPecunia,
+            valorAbonoCents: p.valorAbonoCents,
+            suspensa: p.suspensa,
+            situacaoSiga: p.situacaoSiga,
           }))
           .sort((a, b) => a.ordem - b.ordem),
       };
@@ -162,6 +170,14 @@ export const feriasRouter = router({
       substitutoId: z.number().int().nullable().optional(),
       seiProtocolo: z.string().nullable().optional(),
       observacoes: z.string().nullable().optional(),
+      numeroSolicitacao: z.string().nullable().optional(),
+      nSiga: z.string().nullable().optional(),
+      provimento: z.string().nullable().optional(),
+      dataPublicacao: ISO.nullable().optional(),
+      conversaoPecunia: z.boolean().optional(),
+      valorAbonoCents: z.number().int().min(0).nullable().optional(),
+      suspensa: z.boolean().optional(),
+      situacaoSiga: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [periodo] = await db.select().from(feriasPeriodos)
@@ -172,15 +188,14 @@ export const feriasRouter = router({
       if (input.substitutoId != null && input.substitutoId === ctx.user.id) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Você não pode ser seu próprio substituto" });
       }
+      if (input.conversaoPecunia && (input.valorAbonoCents === null || input.valorAbonoCents === undefined)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Conversão em pecúnia exige valor do abono" });
+      }
 
       const novos = diasInclusive(input.dataInicio, input.dataFim);
 
       return await db.transaction(async (tx) => {
-        // saldo guard inside the transaction: garante atomicidade das escritas
-        // (sem parcelas órfãs se algo falhar). Não serializa o check de saldo entre
-        // chamadas concorrentes — safety total contra corrida de saldo exigiria
-        // isolamento mais estrito (SERIALIZABLE) ou constraint no banco. Aceitável
-        // aqui porque as escritas são pessoais e só o titular as faz.
+        // saldo guard inside the transaction (atomicidade; ver nota original).
         const existentes = await tx.select().from(feriasParcelas)
           .where(and(eq(feriasParcelas.periodoId, periodo.id), isNull(feriasParcelas.deletedAt)));
         const lite: ParcelaLite[] = existentes.map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
@@ -208,13 +223,15 @@ export const feriasRouter = router({
         }
 
         const proj = projecaoEventoDeParcela(
-          { id: null, dataInicio: input.dataInicio, dataFim: input.dataFim, status: "programada" },
+          { id: null, dataInicio: input.dataInicio, dataFim: input.dataFim, status: "programada",
+            conversaoPecunia: input.conversaoPecunia ?? false, valorAbonoCents: input.valorAbonoCents ?? null },
           periodo, ordem,
         );
         const [evento] = await tx.insert(vidaFuncionalEventos).values({
           defensorId: ctx.user.id,
           tipo: proj.tipo, cluster: proj.cluster, titulo: proj.titulo,
           dataEvento: proj.dataEvento, dataFim: proj.dataFim, status: proj.status,
+          valorCents: proj.valorCents,
           origem: "manual", dados: { feriasParcelaId: null },
         }).returning({ id: vidaFuncionalEventos.id });
 
@@ -229,9 +246,16 @@ export const feriasRouter = router({
           vidaFuncionalEventoId: evento.id,
           seiProtocolo: input.seiProtocolo ?? null,
           observacoes: input.observacoes ?? null,
+          numeroSolicitacao: input.numeroSolicitacao ?? null,
+          nSiga: input.nSiga ?? null,
+          provimento: input.provimento ?? null,
+          dataPublicacao: input.dataPublicacao ?? null,
+          conversaoPecunia: input.conversaoPecunia ?? false,
+          valorAbonoCents: input.conversaoPecunia ? (input.valorAbonoCents ?? null) : null,
+          suspensa: input.suspensa ?? false,
+          situacaoSiga: input.situacaoSiga ?? null,
         }).returning();
 
-        // backfill the projection's dados with the real parcela id
         await tx.update(vidaFuncionalEventos)
           .set({ dados: { feriasParcelaId: parcela.id } })
           .where(eq(vidaFuncionalEventos.id, evento.id));
@@ -248,6 +272,14 @@ export const feriasRouter = router({
       dataFim: ISO.optional(),
       seiProtocolo: z.string().nullable().optional(),
       observacoes: z.string().nullable().optional(),
+      numeroSolicitacao: z.string().nullable().optional(),
+      nSiga: z.string().nullable().optional(),
+      provimento: z.string().nullable().optional(),
+      dataPublicacao: ISO.nullable().optional(),
+      conversaoPecunia: z.boolean().optional(),
+      valorAbonoCents: z.number().int().min(0).nullable().optional(),
+      suspensa: z.boolean().optional(),
+      situacaoSiga: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const [parcela] = await db.select().from(feriasParcelas)
@@ -263,13 +295,22 @@ export const feriasRouter = router({
       const novaFim = input.dataFim ?? parcela.dataFim;
       if (novaFim < novaInicio) throw new TRPCError({ code: "BAD_REQUEST", message: "dataFim anterior a dataInicio" });
 
+      const novaConversao = input.conversaoPecunia ?? parcela.conversaoPecunia;
+      const novoValorAbono = input.valorAbonoCents === undefined ? parcela.valorAbonoCents : input.valorAbonoCents;
+      if (novaConversao && (novoValorAbono === null || novoValorAbono === undefined)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Conversão em pecúnia exige valor do abono" });
+      }
+
+      // período sempre buscado: necessário p/ saldo E p/ reconstruir a projeção (título/ordem)
+      const [periodo] = await db.select().from(feriasPeriodos)
+        .where(and(eq(feriasPeriodos.id, parcela.periodoId), isNull(feriasPeriodos.deletedAt))).limit(1);
+      if (!periodo) throw new TRPCError({ code: "NOT_FOUND", message: "Período não encontrado" });
+
+      const irmas = await db.select().from(feriasParcelas)
+        .where(and(eq(feriasParcelas.periodoId, parcela.periodoId), isNull(feriasParcelas.deletedAt)));
+
       if (input.dataInicio || input.dataFim) {
-        const [periodo] = await db.select().from(feriasPeriodos)
-          .where(and(eq(feriasPeriodos.id, parcela.periodoId), isNull(feriasPeriodos.deletedAt))).limit(1);
-        if (!periodo) throw new TRPCError({ code: "NOT_FOUND", message: "Período não encontrado" });
-        const outras = await db.select().from(feriasParcelas)
-          .where(and(eq(feriasParcelas.periodoId, parcela.periodoId), isNull(feriasParcelas.deletedAt)));
-        const lite: ParcelaLite[] = outras
+        const lite: ParcelaLite[] = irmas
           .filter((p) => p.id !== parcela.id)
           .map((p) => ({ id: p.id, dataInicio: p.dataInicio, dataFim: p.dataFim, status: p.status }));
         const saldo = computeSaldo(periodo.diasDireito, lite);
@@ -280,6 +321,13 @@ export const feriasRouter = router({
       }
 
       const novoStatus = input.status ?? parcela.status;
+      const ordemBase = irmas.map((p) => ({ id: p.id, dataInicio: p.id === parcela.id ? novaInicio : p.dataInicio }));
+      const ordem = ordemDe(ordemBase, novaInicio, parcela.id);
+      const proj = projecaoEventoDeParcela(
+        { id: parcela.id, dataInicio: novaInicio, dataFim: novaFim, status: novoStatus,
+          conversaoPecunia: novaConversao, valorAbonoCents: novoValorAbono },
+        periodo, ordem,
+      );
 
       return await db.transaction(async (tx) => {
         await tx.update(feriasParcelas).set({
@@ -288,10 +336,17 @@ export const feriasRouter = router({
           dataFim: novaFim,
           seiProtocolo: input.seiProtocolo === undefined ? parcela.seiProtocolo : input.seiProtocolo,
           observacoes: input.observacoes === undefined ? parcela.observacoes : input.observacoes,
+          numeroSolicitacao: input.numeroSolicitacao === undefined ? parcela.numeroSolicitacao : input.numeroSolicitacao,
+          nSiga: input.nSiga === undefined ? parcela.nSiga : input.nSiga,
+          provimento: input.provimento === undefined ? parcela.provimento : input.provimento,
+          dataPublicacao: input.dataPublicacao === undefined ? parcela.dataPublicacao : input.dataPublicacao,
+          conversaoPecunia: novaConversao,
+          valorAbonoCents: novaConversao ? novoValorAbono : null,
+          suspensa: input.suspensa ?? parcela.suspensa,
+          situacaoSiga: input.situacaoSiga === undefined ? parcela.situacaoSiga : input.situacaoSiga,
           updatedAt: new Date(),
         }).where(eq(feriasParcelas.id, parcela.id));
 
-        // cascade: linked afastamento
         if (parcela.afastamentoId != null) {
           const ativo = novoStatus !== "cancelada" && novoStatus !== "concluida";
           await tx.update(afastamentos)
@@ -299,15 +354,16 @@ export const feriasRouter = router({
             .where(eq(afastamentos.id, parcela.afastamentoId));
         }
 
-        // cascade: linked vida_funcional evento
         if (parcela.vidaFuncionalEventoId != null) {
           if (novoStatus === "cancelada") {
             await tx.update(vidaFuncionalEventos).set({ deletedAt: new Date() })
               .where(eq(vidaFuncionalEventos.id, parcela.vidaFuncionalEventoId));
           } else {
             await tx.update(vidaFuncionalEventos).set({
-              status: statusEventoDeParcela(novoStatus),
-              dataEvento: novaInicio, dataFim: novaFim, updatedAt: new Date(),
+              status: proj.status,
+              dataEvento: proj.dataEvento, dataFim: proj.dataFim,
+              titulo: proj.titulo, valorCents: proj.valorCents,
+              updatedAt: new Date(),
             }).where(eq(vidaFuncionalEventos.id, parcela.vidaFuncionalEventoId));
           }
         }
