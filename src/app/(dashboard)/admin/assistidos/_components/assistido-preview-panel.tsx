@@ -188,47 +188,43 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
               showStatusDot
             />
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight">
-                {assistido.nome}
-              </h2>
-              {assistido.vulgo && (
-                <p className="text-xs text-neutral-400 italic mt-0.5">&ldquo;{assistido.vulgo}&rdquo;</p>
-              )}
-              {/* status (custódia) — único indicador, semântico, com tempo + unidade */}
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              {/* linha 1: nome + status (custódia) no canto superior direito */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h2 className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-50 leading-tight truncate">
+                    {assistido.nome}
+                  </h2>
+                  {assistido.vulgo && (
+                    <p className="text-xs text-neutral-400 italic mt-0.5 truncate">&ldquo;{assistido.vulgo}&rdquo;</p>
+                  )}
+                </div>
                 {custodia && (
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
-                      isPreso || isMonit
-                        ? cn(custodia.bg, custodia.color)
-                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+                  <div className="flex flex-col items-end gap-0.5 shrink-0 max-w-[42%]">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium",
+                        isPreso || isMonit
+                          ? cn(custodia.bg, custodia.color)
+                          : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400",
+                      )}
+                    >
+                      {custodia.label}
+                      {isPreso && tempoPreso && <span className="font-mono tabular-nums opacity-80">· {tempoPreso}</span>}
+                    </span>
+                    {isPreso && assistido.unidadePrisional && (
+                      <span className="text-[10px] text-rose-500/80 dark:text-rose-400/70 truncate max-w-full text-right">{assistido.unidadePrisional}</span>
                     )}
-                  >
-                    {custodia.label}
-                    {isPreso && tempoPreso && <span className="font-mono tabular-nums opacity-80">· {tempoPreso}</span>}
+                  </div>
+                )}
+              </div>
+              {/* linha 2: CPF + telefone logo abaixo do nome (dados de identidade) */}
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                {maskedCpf && (
+                  <span className="inline-flex items-center gap-1 text-xs font-mono tabular-nums text-neutral-500">
+                    <IdCard className="w-3 h-3 text-neutral-400" />
+                    {maskedCpf}
                   </span>
                 )}
-                {isPreso && assistido.unidadePrisional && (
-                  <span className="text-[10px] text-rose-500/80 dark:text-rose-400/70 truncate max-w-[150px]">{assistido.unidadePrisional}</span>
-                )}
-                {atribuicoes.slice(0, 2).map((attr, idx) => {
-                  const opt = resolveAttr(attr);
-                  const color = opt ? SOLID_COLOR_MAP[opt.value] || "#6b7280" : "#6b7280";
-                  return (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                      {opt?.shortLabel || attr.substring(0, 4)}
-                    </span>
-                  );
-                })}
-                {idade && <span className="text-[10px] text-neutral-400">{idade}a</span>}
-              </div>
-              {/* contato + CPF */}
-              <div className="flex items-center gap-3 mt-2 flex-wrap">
                 {telefoneDisplay && (
                   <span className="inline-flex items-center gap-1.5 text-xs text-neutral-500">
                     <Phone className="w-3 h-3 text-neutral-400" />
@@ -246,14 +242,25 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                     )}
                   </span>
                 )}
-                {maskedCpf && (
-                  <span className="inline-flex items-center gap-1 text-xs font-mono tabular-nums text-neutral-500">
-                    <IdCard className="w-3 h-3 text-neutral-400" />
-                    {maskedCpf}
-                  </span>
-                )}
               </div>
-              {/* último contato + registrar atendimento */}
+              {/* linha 3: atribuição (única cor) · idade */}
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                {atribuicoes.slice(0, 2).map((attr, idx) => {
+                  const opt = resolveAttr(attr);
+                  const color = opt ? SOLID_COLOR_MAP[opt.value] || "#6b7280" : "#6b7280";
+                  return (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                      {opt?.shortLabel || attr.substring(0, 4)}
+                    </span>
+                  );
+                })}
+                {idade && <span className="text-[10px] text-neutral-400 tabular-nums">{idade}a</span>}
+              </div>
+              {/* linha 4: último contato + registrar atendimento */}
               <div className="flex items-center gap-2.5 mt-2 flex-wrap">
                 <UltimoContato assistidoId={assistido.id} />
                 <Link
@@ -268,7 +275,7 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
           {/* completude — clicável: expande os campos faltantes */}
           <button
             onClick={() => setFichaOpen((v) => !v)}
-            className="mt-3.5 w-full flex items-center gap-2 cursor-pointer group"
+            className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800/60 w-full flex items-center gap-2 cursor-pointer group"
           >
             <div className="flex-1 h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
               <div
@@ -276,7 +283,9 @@ export function AssistidoPreviewPanel({ assistido }: { assistido: AssistidoUI })
                 style={{ width: `${comp.pct}%` }}
               />
             </div>
-            <span className="text-[10px] text-neutral-400 tabular-nums font-medium">Ficha {comp.pct}%</span>
+            <span className="text-[10px] text-neutral-400 tabular-nums font-medium">
+              {comp.faltam.length > 0 ? `Completar ficha · ${comp.pct}%` : `Ficha ${comp.pct}%`}
+            </span>
             {comp.faltam.length > 0 && (
               <ChevronRight className={cn("w-3.5 h-3.5 text-neutral-300 dark:text-neutral-600 transition-transform", fichaOpen && "rotate-90")} />
             )}

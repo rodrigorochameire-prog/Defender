@@ -54,7 +54,7 @@ import { AnalyzeCTA } from "./sheet/analyze-cta";
 import { FreshnessBadge } from "./sheet/freshness-badge";
 import { cn } from "@/lib/utils";
 import { nomeVaraExibicao } from "@/lib/format/nome-vara";
-import { iniciaisNome } from "@/lib/format/iniciais";
+import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ordenarNotasDesc } from "@/lib/agenda/anotacoes-rapidas";
@@ -1334,24 +1334,19 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
           <div className="mx-3 mt-3 mb-3 px-4 py-3.5 rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/80 dark:ring-neutral-800 shadow-sm">
                 <div className="flex items-start gap-3.5">
-                  {/* Avatar colorido — única fonte de identidade visual da atribuição. */}
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300"
-                    style={{
-                      backgroundColor: `${atribColor}14`,
-                      boxShadow: `inset 0 0 0 1px ${atribColor}40`,
-                    }}
-                  >
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: atribColor }}
-                    >
-                      {iniciaisNome(assistidoNome || evento.titulo || "")}
-                    </span>
-                  </div>
+                  {/* Avatar padrão OMBUDS — identidade da atribuição via anel + iniciais
+                      (a cor forte da atribuição já vive na faixa superior do header). */}
+                  <AssistidoAvatar
+                    nome={assistidoNome || evento.titulo || ""}
+                    photoUrl={(ctx?.assistido as any)?.photoUrl ?? null}
+                    size="lg"
+                    atribuicao={atribFilterKey}
+                    statusPrisional={(ctx?.assistido as any)?.statusPrisional ?? null}
+                    showStatusDot
+                  />
                   <div className="flex-1 min-w-0 pt-0.5">
                     {assistidoNome && (
-                      <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
+                      <h2 className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-100 leading-tight truncate">
                         {assistidoNome}
                       </h2>
                     )}
