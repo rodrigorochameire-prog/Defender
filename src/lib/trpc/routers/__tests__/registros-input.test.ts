@@ -12,4 +12,11 @@ describe("createRegistroInput", () => {
     const parsed = createRegistroInput.parse({ assistidoId: 1, tipo: "ciencia", conteudo: "x" });
     expect(parsed.prazo).toBeUndefined();
   });
+  it("rejects a malformed prazo", () => {
+    expect(() =>
+      createRegistroInput.parse({
+        assistidoId: 1, tipo: "diligencia", conteudo: "x", prazo: "2026-7-11",
+      }),
+    ).toThrow();
+  });
 });

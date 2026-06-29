@@ -131,7 +131,9 @@ const camposAtendimentoSolar = {
   dossieAtendimento: dossieAtendimentoSchema.nullish(),
 };
 
-// ─── Schema exportado para testes unitários (registros-input) ──────────────
+const PRAZO_REGEX = /^\d{4}-\d{2}-\d{2}$/; // prazo no formato YYYY-MM-DD
+
+// ─── Schema de input do procedimento `create` (exportado p/ testes) ─────────
 export const createRegistroInput = z.object({
   assistidoId: z.number().int().positive(),
   tipo: TIPO_REGISTRO,
@@ -153,7 +155,7 @@ export const createRegistroInput = z.object({
   delegadoParaId: z.number().int().positive().optional(),
   motivoDelegacao: z.string().optional(),
   // Prazo da tarefa/diligência (YYYY-MM-DD)
-  prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "prazo deve ser YYYY-MM-DD").optional(),
+  prazo: z.string().regex(PRAZO_REGEX, "prazo deve ser YYYY-MM-DD").optional(),
 });
 
 // ─── Schema exportado para testes unitários (Task 5) ───────────────────────
@@ -168,7 +170,7 @@ export const updateRegistroInput = z.object({
   local: z.string().nullish(),
   dataRegistro: z.union([z.string(), z.date()]).optional(),
   processoId: z.number().int().positive().nullish(),
-  prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  prazo: z.string().regex(PRAZO_REGEX, "prazo deve ser YYYY-MM-DD").nullable().optional(),
   ...camposAtendimentoSolar,
 });
 
