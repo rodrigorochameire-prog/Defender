@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { router, protectedProcedure } from "../init";
-import { db } from "@/lib/db";
+import { db, withTransaction } from "@/lib/db";
 import { sentencas, magistrados } from "@/lib/db/schema/sentencas";
 import type { AnaliseSentenca } from "@/lib/db/schema/sentencas";
 import { registros } from "@/lib/db/schema/agenda";
@@ -102,55 +102,17 @@ export const sentencasRouter = router({
       // 2. Sigilo derivado da atribuição (VVD/MPU ⇒ sigiloso).
       const sigiloso = /VVD|MPU/i.test(input.atribuicao ?? "") ? 1 : 0;
 
-      // 3. Upsert do magistrado prolator (registro compartilhado).
-      let magistradoId: number | null = null;
-      const { nomeNormalizado, comarcaId: comarcaKey } = buildMagistradoKey(
-        analise.juizProlator ?? "",
-        comarcaId
-      );
-      if (nomeNormalizado) {
-        const comarcaCond =
-          comarcaKey == null
-            ? isNull(magistrados.comarcaId)
-            : eq(magistrados.comarcaId, comarcaKey);
-        const [existente] = await db
-          .select({ id: magistrados.id, varasConhecidas: magistrados.varasConhecidas })
-          .from(magistrados)
-          .where(and(eq(magistrados.nomeNormalizado, nomeNormalizado), comarcaCond))
-          .limit(1);
-        if (existente) {
-          magistradoId = existente.id;
-          // Acrescenta a vara conhecida quando nova (best-effort).
-          if (vara) {
-            const atuais = existente.varasConhecidas ?? [];
-            if (!atuais.includes(vara)) {
-              await db
-                .update(magistrados)
-                .set({ varasConhecidas: [...atuais, vara], updatedAt: new Date() })
-                .where(eq(magistrados.id, existente.id));
-            }
-          }
-        } else {
-          const [novo] = await db
-            .insert(magistrados)
-            .values({
-              nome: analise.juizProlator,
-              nomeNormalizado,
-              comarcaId: comarcaKey,
-              status: "NAO_CONFIRMADO",
-              varasConhecidas: vara ? [vara] : [],
-            })
-            .returning({ id: magistrados.id });
-          magistradoId = novo?.id ?? null;
-        }
-      }
-
-      // 4. Dedupe + upsert da sentença.
+      // Pré-cálculos puros (sem I/O) usados dentro da transação.
       const pjeDocumentoId = input.pjeDocumentoId ?? null;
       const tipoDecisao = analise.tipoDecisao ?? null;
       // dataSentenca é opcional e pode não existir no payload da IA.
       const dataSentenca =
         (analise as { dataSentenca?: string | null }).dataSentenca ?? null;
+      const criadoPorId = ctx.user.defensorBaId ?? null;
+      const { nomeNormalizado, comarcaId: comarcaKey } = buildMagistradoKey(
+        analise.juizProlator ?? "",
+        comarcaId
+      );
 
       const dedupe = resolveSentencaDedupe({
         processoId,
@@ -160,100 +122,146 @@ export const sentencasRouter = router({
         demandaOrigemId: input.demandaOrigemId,
       });
 
-      let dedupeCond;
-      if (dedupe.by === "doc") {
-        dedupeCond = and(
-          eq(sentencas.processoId, dedupe.processoId),
-          eq(sentencas.pjeDocumentoId, dedupe.pjeDocumentoId)
-        );
-      } else if (dedupe.by === "tipo_data") {
-        dedupeCond = and(
-          eq(sentencas.processoId, dedupe.processoId),
-          eq(sentencas.tipoDecisao, dedupe.tipoDecisao),
-          eq(sentencas.dataSentenca, dedupe.dataSentenca)
-        );
-      } else {
-        dedupeCond = eq(sentencas.demandaOrigemId, dedupe.demandaOrigemId);
-      }
+      // Os passos de ESCRITA (magistrado, sentença, registro, refino da
+      // demanda) correm numa única transação — integridade do dado jurídico:
+      // ou tudo é gravado, ou nada (sem sentença órfã de registro).
+      const resultado = await withTransaction(async (tx) => {
+        // 3. Upsert do magistrado prolator (registro compartilhado).
+        let magistradoId: number | null = null;
+        if (nomeNormalizado) {
+          const comarcaCond =
+            comarcaKey == null
+              ? isNull(magistrados.comarcaId)
+              : eq(magistrados.comarcaId, comarcaKey);
+          const [existente] = await tx
+            .select({ id: magistrados.id, varasConhecidas: magistrados.varasConhecidas })
+            .from(magistrados)
+            .where(and(eq(magistrados.nomeNormalizado, nomeNormalizado), comarcaCond))
+            .limit(1);
+          if (existente) {
+            magistradoId = existente.id;
+            // Acrescenta a vara conhecida quando nova (best-effort).
+            if (vara) {
+              const atuais = existente.varasConhecidas ?? [];
+              if (!atuais.includes(vara)) {
+                await tx
+                  .update(magistrados)
+                  .set({ varasConhecidas: [...atuais, vara], updatedAt: new Date() })
+                  .where(eq(magistrados.id, existente.id));
+              }
+            }
+          } else {
+            const [novo] = await tx
+              .insert(magistrados)
+              .values({
+                nome: analise.juizProlator,
+                nomeNormalizado,
+                comarcaId: comarcaKey,
+                status: "NAO_CONFIRMADO",
+                varasConhecidas: vara ? [vara] : [],
+              })
+              .returning({ id: magistrados.id });
+            magistradoId = novo?.id ?? null;
+          }
+        }
 
-      const [existenteSentenca] = await db
-        .select({ id: sentencas.id })
-        .from(sentencas)
-        .where(dedupeCond)
-        .limit(1);
+        // 4. Dedupe + upsert da sentença.
+        let dedupeCond;
+        if (dedupe.by === "doc") {
+          dedupeCond = and(
+            eq(sentencas.processoId, dedupe.processoId),
+            eq(sentencas.pjeDocumentoId, dedupe.pjeDocumentoId)
+          );
+        } else if (dedupe.by === "tipo_data") {
+          dedupeCond = and(
+            eq(sentencas.processoId, dedupe.processoId),
+            eq(sentencas.tipoDecisao, dedupe.tipoDecisao),
+            eq(sentencas.dataSentenca, dedupe.dataSentenca)
+          );
+        } else {
+          dedupeCond = eq(sentencas.demandaOrigemId, dedupe.demandaOrigemId);
+        }
 
-      const criadoPorId = ctx.user.defensorBaId ?? null;
-      const valores = {
-        processoId,
-        assistidoId,
-        demandaOrigemId: input.demandaOrigemId,
-        magistradoId,
-        comarcaId,
-        vara,
-        numeroProcesso,
-        pjeDocumentoId,
-        sigiloso,
-        tipoDecisao,
-        dataSentenca,
-        driveFileId: input.driveFileId ?? null,
-        analiseIa: analise,
-        analiseStatus: "CONCLUIDO",
-        analyzedAt: new Date(),
-      };
+        const [existenteSentenca] = await tx
+          .select({ id: sentencas.id })
+          .from(sentencas)
+          .where(dedupeCond)
+          .limit(1);
 
-      let sentencaId: number;
-      if (existenteSentenca) {
-        const [upd] = await db
-          .update(sentencas)
-          .set({ ...valores, updatedAt: new Date() })
-          .where(eq(sentencas.id, existenteSentenca.id))
-          .returning({ id: sentencas.id });
-        sentencaId = upd!.id;
-      } else {
-        const [ins] = await db
-          .insert(sentencas)
-          .values({ ...valores, criadoPorId })
-          .returning({ id: sentencas.id });
-        sentencaId = ins!.id;
-      }
+        const valores = {
+          processoId,
+          assistidoId,
+          demandaOrigemId: input.demandaOrigemId,
+          magistradoId,
+          comarcaId,
+          vara,
+          numeroProcesso,
+          pjeDocumentoId,
+          sigiloso,
+          tipoDecisao,
+          dataSentenca,
+          driveFileId: input.driveFileId ?? null,
+          analiseIa: analise,
+          analiseStatus: "CONCLUIDO",
+          analyzedAt: new Date(),
+        };
 
-      // 5. Registro tipo "analise" no diário de bordo da demanda.
-      const conteudo = [
-        analise.impactoParaDefesa?.trim(),
-        analise.recomendacaoProxPasso?.trim(),
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-      await db.insert(registros).values({
-        assistidoId,
-        processoId,
-        demandaId: input.demandaOrigemId,
-        tipo: "analise",
-        titulo: "Resumo e providências",
-        assunto: analise.resultado ?? null,
-        conteudo: conteudo || analise.dispositivoResumo || analise.resultado || "Análise da sentença",
-        dataRegistro: new Date(),
-        status: "realizado",
-        autorId: ctx.user.id,
-      });
+        let sentencaId: number;
+        if (existenteSentenca) {
+          const [upd] = await tx
+            .update(sentencas)
+            .set({ ...valores, updatedAt: new Date() })
+            .where(eq(sentencas.id, existenteSentenca.id))
+            .returning({ id: sentencas.id });
+          sentencaId = upd!.id;
+        } else {
+          const [ins] = await tx
+            .insert(sentencas)
+            .values({ ...valores, criadoPorId })
+            .returning({ id: sentencas.id });
+          sentencaId = ins!.id;
+        }
 
-      // 6. Refino da demanda (nunca altera status).
-      if (analise.confidence === "alta" && ATOS_GENERICOS.has(demanda.ato)) {
-        const novoAto = tipoDecisao ? ATO_POR_TIPO[tipoDecisao] : undefined;
-        if (novoAto && novoAto !== demanda.ato) {
-          await db
+        // 5. Registro tipo "analise" no diário de bordo da demanda.
+        const conteudo = [
+          analise.impactoParaDefesa?.trim(),
+          analise.recomendacaoProxPasso?.trim(),
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        await tx.insert(registros).values({
+          assistidoId,
+          processoId,
+          demandaId: input.demandaOrigemId,
+          tipo: "analise",
+          titulo: "Resumo e providências",
+          assunto: analise.resultado ?? null,
+          conteudo: conteudo || analise.dispositivoResumo || analise.resultado || "Análise da sentença",
+          dataRegistro: new Date(),
+          status: "realizado",
+          autorId: ctx.user.id,
+        });
+
+        // 6. Refino da demanda (nunca altera status).
+        if (analise.confidence === "alta" && ATOS_GENERICOS.has(demanda.ato)) {
+          const novoAto = tipoDecisao ? ATO_POR_TIPO[tipoDecisao] : undefined;
+          if (novoAto && novoAto !== demanda.ato) {
+            await tx
+              .update(demandas)
+              .set({ ato: novoAto, updatedAt: new Date() })
+              .where(eq(demandas.id, input.demandaOrigemId));
+          }
+        } else if (analise.confidence === "baixa") {
+          await tx
             .update(demandas)
-            .set({ ato: novoAto, updatedAt: new Date() })
+            .set({ revisaoPendente: true, updatedAt: new Date() })
             .where(eq(demandas.id, input.demandaOrigemId));
         }
-      } else if (analise.confidence === "baixa") {
-        await db
-          .update(demandas)
-          .set({ revisaoPendente: true, updatedAt: new Date() })
-          .where(eq(demandas.id, input.demandaOrigemId));
-      }
 
-      return { id: sentencaId, magistradoId };
+        return { id: sentencaId, magistradoId };
+      });
+
+      return resultado;
     }),
 
   // ────────────────────────────────────────────────────────────────────
