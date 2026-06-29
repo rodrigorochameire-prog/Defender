@@ -5012,7 +5012,7 @@ export const driveRouter = router({
       if (!assistido?.atribuicaoPrimaria || !assistido.nome) return null;
 
       // 2. Obtém o Drive folder ID da pasta raiz da atribuição (via grupo do usuário)
-      const atribuicao = assistido.atribuicaoPrimaria as Atribuicao;
+      const atribuicao = mapAtribuicaoEnumToSimple(assistido.atribuicaoPrimaria);
       const rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicao);
       if (!rootFolderId) return null;
 

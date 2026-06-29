@@ -26,7 +26,8 @@ import { eq, and, inArray } from "drizzle-orm";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { getSession } from "@/lib/auth/session";
-import { resolveAtribuicaoFolder, type Atribuicao } from "@/lib/services/drive-folders";
+import { resolveAtribuicaoFolder } from "@/lib/services/drive-folders";
+import { mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
 
 // ==========================================
 // PADRÃO DEFENDER — CONFIGURAÇÃO POR ATRIBUIÇÃO
@@ -128,7 +129,7 @@ async function buildPremiumPrompt(
   const citacoes = await loadFileContent(join(SKILLS_BASE, "citacoes-seguras/SKILL.md"));
 
   // Resolver pasta da atribuição a partir do grupo do usuário no Drive (multi-tenant)
-  const atribuicaoFolderId = await resolveAtribuicaoFolder(userId, atribuicao as Atribuicao);
+  const atribuicaoFolderId = await resolveAtribuicaoFolder(userId, mapAtribuicaoEnumToSimple(atribuicao));
 
   return `# INSTRUÇÃO: Gerar Dossiê Estratégico de Defesa — Padrão Defender v2
 
