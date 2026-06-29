@@ -1447,8 +1447,13 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
                 # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
                 texto = _clean_decisao_text(content["text"])
+                # Atribuição POR-DEMANDA (não a global da rodada): no modo
+                # --demanda-ids a seleção pode misturar atribuições, então cada
+                # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
+                # Fallback p/ atrib_alvo quando a demanda não traz processo.
+                atrib_demanda = (d.get("processos") or {}).get("atribuicao") or atrib_alvo
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
-                                atribuicao=atrib_alvo)
+                                atribuicao=atrib_demanda)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)
