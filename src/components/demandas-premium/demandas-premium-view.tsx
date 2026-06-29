@@ -870,7 +870,10 @@ export default function Demandas() {
   // Varredura nível 2 (leitura profunda) — instanciado UMA vez no nível da view.
   // O `analisar` é compartilhado pelo gatilho do card (1 demanda) e pela ação
   // em lote da barra de seleção. NÃO instanciar dentro do card (N poll subs).
-  const { analisar, isRunning: analisando } = useVarreduraJob();
+  const { analisar, isPending, isRunning } = useVarreduraJob();
+  // Gate inclui isPending (mutação em voo) além de isRunning (job já criado),
+  // senão um duplo-clique rápido dispara dois jobs antes de isRunning virar true.
+  const analisando = isRunning || isPending;
 
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
