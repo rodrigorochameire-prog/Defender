@@ -17,7 +17,6 @@ import {
   listProcessosAvulsos,
   moveProcessoToAp,
   findApFolderByNumber,
-  ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
 import type { TipoProcesso } from "@/lib/services/gemini";
 import {

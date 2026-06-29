@@ -76,6 +76,8 @@ import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import Link from "next/link";
+// Grupo padrão legado (9ª DP). Fase 1.5 migrará SuggestedFolders para usar o grupo do usuário.
+import { ATRIBUICAO_FOLDER_IDS } from "@/lib/utils/text-extraction";
 
 // ==========================================
 // TIPOS
@@ -311,20 +313,6 @@ function SyncFolderCard({
     </Card>
   );
 }
-
-// IDs das pastas de atribuição
-const ATRIBUICAO_FOLDER_IDS = {
-  JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
-  VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
-  EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
-  SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
-};
-
-// Pastas especiais
-const SPECIAL_FOLDER_IDS = {
-  JURISPRUDENCIA: "1Dvpn1r6b5nZ3bALst9_YEbZHlRDSPw7S",
-  DISTRIBUICAO: "1dw8Hfpt_NLtLZ8DYDIcgjauo_xtM1nH4",
-};
 
 function SuggestedFolders({
   onAdd,

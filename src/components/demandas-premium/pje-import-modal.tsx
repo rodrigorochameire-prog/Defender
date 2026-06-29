@@ -181,7 +181,9 @@ export function PJeImportModal({
   // Mutation para criar jobs de scan (job queue pattern)
   const scanIntimacoesMutation = trpc.enrichment.scanIntimacoessPje.useMutation();
 
-  const DRIVE_BASE_PATH = "/Users/rodrigorochameire/Library/CloudStorage/GoogleDrive-rodrigorochameire@gmail.com/Meu Drive/1 - Defensoria 9ª DP";
+  // Fase 4: driveBasePath virá da config do agente local do usuário.
+  // Por ora é undefined — leitura local só habilitada quando o agente estiver configurado.
+  const driveBasePath: string | undefined = undefined;
 
   // Cleanup Realtime channel on unmount
   useEffect(() => {
@@ -286,6 +288,8 @@ export function PJeImportModal({
   }, [applyJobToRow]);
 
   const handleScan = async () => {
+    if (!driveBasePath) return;
+
     const vazios = reviewRows
       .map((r, i) => ({ r, i }))
       .filter(({ r }) => !r.excluded && !r.ato);
@@ -302,7 +306,7 @@ export function PJeImportModal({
           assistidoNome: r.assistidoNome,
           atribuicao: atribuicao,
         })),
-        driveBasePath: DRIVE_BASE_PATH,
+        driveBasePath,
       });
 
       // Subscribe to Realtime updates for this batch
@@ -314,6 +318,8 @@ export function PJeImportModal({
   };
 
   const handleScanRow = async (index: number) => {
+    if (!driveBasePath) return;
+
     const row = reviewRows[index];
     if (!row || row.ato) return;
 
@@ -328,7 +334,7 @@ export function PJeImportModal({
           assistidoNome: row.assistidoNome,
           atribuicao: atribuicao,
         }],
-        driveBasePath: DRIVE_BASE_PATH,
+        driveBasePath,
       });
 
       // Subscribe to Realtime updates for this single-job batch
@@ -1124,6 +1130,13 @@ export function PJeImportModal({
                 {(() => {
                   const vaziosCount = reviewRows.filter((r) => !r.excluded && !r.ato).length;
                   if (vaziosCount === 0 && !isScanning) return null;
+                  if (!driveBasePath) {
+                    return (
+                      <p className="text-[10px] text-neutral-400 dark:text-neutral-500 px-1 pb-1">
+                        Configure seu agente OMBUDS para habilitar a leitura local de documentos.
+                      </p>
+                    );
+                  }
                   return (
                     <div className="flex items-center gap-2 px-1 pb-1">
                       {isScanning ? (
@@ -1150,7 +1163,7 @@ export function PJeImportModal({
                     onRowsChange={setReviewRows}
                     atribuicao={atribuicao}
                     showTipoProcesso={isVVD}
-                    onScanRow={handleScanRow}
+                    onScanRow={driveBasePath ? handleScanRow : undefined}
                     scanningIndex={scanningRowIndex}
                   />
                 </div>

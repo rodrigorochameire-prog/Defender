@@ -22,7 +22,24 @@ export interface AtribuicaoResult {
   motivo: string;
 }
 
-// Mapeamento das atribuições para IDs de pasta no Drive
+/**
+ * Labels legíveis para cada chave de atribuição Drive (JURI, VVD, EP, …).
+ * Use este mapa para exibição — não dependa de `ATRIBUICAO_FOLDER_IDS` para labels.
+ */
+export const ATRIBUICAO_LABELS: Record<string, string> = {
+  JURI: "Júri",
+  VVD: "Violência Doméstica",
+  EP: "Execução Penal",
+  SUBSTITUICAO: "Substituição",
+  GRUPO_JURI: "Grupo do Júri",
+  CRIMINAL: "Criminal Comum",
+};
+
+// GRUPO PADRÃO LEGADO (pastas da 9ª DP). Ainda consumido por google-drive.ts até a Fase 1.5.
+/**
+ * @deprecated use `resolveAtribuicaoFolder(s)` de `@/lib/services/drive-folders`.
+ * Mantido como grupo padrão legado — consumido por `google-drive.ts` até a Fase 1.5.
+ */
 export const ATRIBUICAO_FOLDER_IDS = {
   JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
   VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti", // Processos - VVD (Criminal)
@@ -33,6 +50,10 @@ export const ATRIBUICAO_FOLDER_IDS = {
 } as const;
 
 /**
+ * @deprecated Grupo padrão legado (Fase 1.5 removerá esta constante).
+ * Use `resolveAtribuicaoFolders` de `@/lib/services/drive-folders` em vez disso.
+ * As extras estão seedadas no mapa do grupo no banco (`driveGroups.atribuicaoFolders`).
+ *
  * Pastas-raiz adicionais varridas junto da atribuição indicada (mesmo `key`).
  * Necessário porque uma atribuição pode ter mais de uma pasta de processos no
  * Drive: VVD, por exemplo, separa `VVD (Criminal)` (acima) de `VVD (MPU)` — os

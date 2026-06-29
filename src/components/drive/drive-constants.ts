@@ -5,8 +5,11 @@ import {
   Inbox, BookOpen,
 } from "lucide-react";
 
-// Import actual folder IDs from text-extraction
-import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
+// Import folder IDs and labels from text-extraction (canonical source)
+import { ATRIBUICAO_FOLDER_IDS, ATRIBUICAO_LABELS, SPECIAL_FOLDER_IDS } from "@/lib/utils/text-extraction";
+
+// Re-export so consumers can use ATRIBUICAO_LABELS from here or from text-extraction directly
+export { ATRIBUICAO_LABELS };
 
 export const DRIVE_ATRIBUICOES = [
   {
