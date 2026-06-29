@@ -326,13 +326,19 @@ demanda caía em "manual-review" ou "Cumprir despacho".
    blocos `AUDIÊNCIA … (RE)DESIGNADA CONDUZIDA POR DD/MM/AAAA …` e reusa
    `detectar_designacao_audiencia` (que já trata `por DD/MM` + `em/para`).
    CANCELADA/REALIZADA não casam `(RE)DESIGNAD[AO]` → ignoradas.
-3. `classify(..., movimentos=[...])` usa o movimento como sinal **estruturado**:
-   quando o título do doc é fraco/ausente (despacho, petição, intimação genérica),
-   a audiência da timeline tem prioridade → ato `Ciência (re)designação de
-   audiência` + side-effect `agendar/reagendar`. **Títulos fortes (sentença,
-   acórdão, decisão substantiva) NÃO são sobrescritos.**
+3. `classify(..., movimentos=[...])` usa o movimento como sinal **estruturado**,
+   em dois níveis (sinais NÃO competem — preserva ato analítico E agenda):
+   - **Título fraco/ausente** (despacho, petição, intimação genérica): a audiência
+     vira o ato primário → `Ciência (re)designação de audiência` + `agendar/reagendar`.
+   - **Título com ato próprio mas não-terminal** (ex.: doc "Decisão" cujo corpo não
+     traz a data → ato `Analisar decisão`): o ato é **preservado** e o agendamento
+     é **adicionado** como side-effect (augmentation). Foi o caso real do André: a
+     decisão redesignou a audiência, mas a data só estava no movimento.
+   - **Atos terminais** (`_NO_AUGMENT_ATOS`: sentença/acórdão) NÃO recebem
+     agendamento — um movimento futuro coincidente seria espúrio.
 4. A `Designacao` parseada viaja em `extras._designacao`; `_agendar_audiencia` a
    usa direto — agenda a audiência mesmo sem data no corpo do documento (#4).
+   `classify` = `_classify_core` (ato primário) + augmentation de agendamento.
 
 Testes: `scripts/test_movimento_audiencia.py` (14 asserts, fixture = timeline real
 do André Chaves, inclui guarda anti-sobrescrita de sentença e regressão).

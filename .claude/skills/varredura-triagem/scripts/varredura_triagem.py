@@ -713,8 +713,39 @@ def _classificar_designacao(det: dict | None, is_mpu: bool = False) -> dict | No
     }
 
 
+# Atos terminais — NÃO recebem agendamento automático a partir de um movimento
+# (sentença/acórdão encerram fase; um movimento de audiência futuro coincidente
+# seria espúrio). Demais atos podem ganhar o side-effect de (re)agendar.
+_NO_AUGMENT_ATOS = {
+    "Ciência absolvição", "Ciência condenação", "Ciência da pronúncia",
+    "Ciência da impronúncia", "Analisar sentença", "Ciência acórdão",
+    "Analisar acórdão",
+}
+
+
 def classify(text: str, titulo: str | None = None, is_mpu: bool = False,
              atribuicao: str | None = None, movimentos: list | None = None) -> dict | None:
+    """Classifica e, se houver audiência (re)designada nos movimentos da timeline,
+    garante o agendamento — mesmo quando o ato primário é outro (ex.: "Analisar
+    decisão" cujo corpo não traz a data, mas a redesignação está num movimento).
+    Sinais não competem: o ato analítico é preservado E a audiência é agendada.
+    Atos terminais (`_NO_AUGMENT_ATOS`) não recebem agendamento espúrio."""
+    rule = _classify_core(text, titulo, is_mpu, atribuicao, movimentos)
+    melhor_mov = _melhor_movimento(movimentos)
+    if rule and melhor_mov and rule["ato"] not in _NO_AUGMENT_ATOS:
+        fx = rule.get("side_effects") or []
+        if not any(s in ("agendar_audiencia", "reagendar_audiencia") for s in fx):
+            redesig = bool(melhor_mov.get("redesignacao"))
+            rule = {
+                **rule,
+                "side_effects": [*fx, "reagendar_audiencia" if redesig else "agendar_audiencia"],
+                "extras": {**(rule.get("extras") or {}), "_designacao": melhor_mov},
+            }
+    return rule
+
+
+def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
+                   atribuicao: str | None = None, movimentos: list | None = None) -> dict | None:
     """Classifica usando (a) título do doc + (b) regras textuais como fallback.
 
     Quando is_mpu=True, RULES_MPU vem antes de RULES_BASE — ótica defensiva
