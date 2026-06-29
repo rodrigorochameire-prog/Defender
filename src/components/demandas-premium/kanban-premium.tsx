@@ -71,6 +71,10 @@ import { wipHealth, WIP_LIMITS } from "./kanban-wip";
 // KanbanCard consome direto. O Provider fica no KanbanPremium.
 const KanbanAtoContext = React.createContext<{
   onAtoChange?: (demandaId: string, ato: string) => void;
+  /** Dispara a análise de leitura profunda (varredura nível 2) para 1 demanda. */
+  onAnalisar?: (id: number) => void;
+  /** True enquanto há um job de análise em andamento (desabilita o gatilho). */
+  analisando?: boolean;
 }>({});
 
 // ==========================================
@@ -138,6 +142,10 @@ interface KanbanPremiumProps {
   onStatusChange?: (demandaId: string, newStatus: string) => void;
   /** Altera o ato direto no card (dropdown), igual ao status. */
   onAtoChange?: (demandaId: string, ato: string) => void;
+  /** Dispara a análise de leitura profunda (varredura nível 2) para 1 demanda. */
+  onAnalisar?: (id: number) => void;
+  /** True enquanto há um job de análise em andamento (desabilita o gatilho). */
+  analisando?: boolean;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
   /** Atalho hover no card → abre o preview já no modo "novo registro" */
@@ -508,7 +516,7 @@ function KanbanCard({
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
   // Edição de ato direto no card (via context, evita threadar props)
-  const { onAtoChange } = React.useContext(KanbanAtoContext);
+  const { onAtoChange, onAnalisar, analisando } = React.useContext(KanbanAtoContext);
   const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
 
   // Status popover state
@@ -654,6 +662,30 @@ function KanbanCard({
           transition-opacity duration-150
         "
       >
+        {onAnalisar && (
+          <button
+            type="button"
+            disabled={analisando}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAnalisar(parseInt(String(demanda.id), 10));
+            }}
+            aria-label="Analisar (leitura profunda)"
+            title="Analisar (leitura profunda dos autos)"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onMouseEnter={(e) => {
+              if (analisando) return;
+              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+              e.currentTarget.style.color = groupColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
+            <Search className="w-3 h-3" />
+          </button>
+        )}
         {onAgendarAudiencia && (
           <button
             type="button"
@@ -1819,6 +1851,8 @@ export function KanbanPremium({
   onOpenEventsDrawer,
   onStatusChange,
   onAtoChange,
+  onAnalisar,
+  analisando,
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
@@ -2150,7 +2184,7 @@ export function KanbanPremium({
   }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
 
   return (
-    <KanbanAtoContext.Provider value={{ onAtoChange }}>
+    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando }}>
     <div className="space-y-2">
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">
