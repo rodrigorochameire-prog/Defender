@@ -194,6 +194,7 @@ export const registros = pgTable("registros", {
   conteudo: text("conteudo"),
   acompanhantes: text("acompanhantes"),
   status: varchar("status", { length: 20 }).default("agendado"),
+  prazo: date("prazo"), // deadline for diligências; null for ciência/anotação
   interlocutor: varchar("interlocutor", { length: 30 }).default("assistido"),
   // Atendimento (SOLAR) — só usados quando tipo='atendimento'
   numeroSolar: varchar("numero_solar", { length: 30 }),
