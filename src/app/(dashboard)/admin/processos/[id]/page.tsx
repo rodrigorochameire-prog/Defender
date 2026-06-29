@@ -3,7 +3,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { trpc } from "@/lib/trpc/client";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 import { ProcessosVinculadosList } from "@/components/processo/processos-vinculados-list";
 import { ProcessoCockpitHeader } from "@/components/processo/processo-cockpit-header";
 import { AnaliseProcessoCard } from "@/components/processo/analise-processo-card";
@@ -94,7 +94,7 @@ export default function ProcessoPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2">
               Registros
             </h2>
-            <RegistrosTimeline processoId={id} emptyHint="Nenhum registro neste processo ainda." />
+            <RegistrosPanel scope={{ processoId: id }} variant="page" emptyHint="Nenhum registro neste processo ainda." />
           </section>
         </div>
 

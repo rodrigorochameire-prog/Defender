@@ -131,6 +131,42 @@ const camposAtendimentoSolar = {
   dossieAtendimento: dossieAtendimentoSchema.nullish(),
 };
 
+const PRAZO_REGEX = /^\d{4}-\d{2}-\d{2}$/; // prazo no formato YYYY-MM-DD
+
+/**
+ * Status inicial de um registro recém-criado pela UI. Diligências são tarefas
+ * EM ABERTO (status "agendado") → o painel as fixa em "Pendências", ordenadas
+ * por prazo. Os demais tipos registram algo já ocorrido ("realizado").
+ */
+export function statusForTipo(tipo: string): "agendado" | "realizado" {
+  return tipo === "diligencia" ? "agendado" : "realizado";
+}
+
+// ─── Schema de input do procedimento `create` (exportado p/ testes) ─────────
+export const createRegistroInput = z.object({
+  assistidoId: z.number().int().positive(),
+  tipo: TIPO_REGISTRO,
+  conteudo: z.string().min(1, "conteudo é obrigatório"),
+  // Contexto opcional
+  processoId: z.number().int().positive().optional(),
+  demandaId: z.number().int().positive().optional(),
+  audienciaId: z.number().int().positive().optional(),
+  casoId: z.number().int().positive().optional(),
+  titulo: z.string().max(120).optional(),
+  dataRegistro: z
+    .union([z.string(), z.date()])
+    .optional()
+    .transform((v) => (v ? new Date(v) : new Date())),
+  interlocutor: z
+    .enum(["assistido", "familiar", "testemunha", "outro"])
+    .default("assistido"),
+  // Delegação (só aplicável quando tipo === "delegacao")
+  delegadoParaId: z.number().int().positive().optional(),
+  motivoDelegacao: z.string().optional(),
+  // Prazo da tarefa/diligência (YYYY-MM-DD)
+  prazo: z.string().regex(PRAZO_REGEX, "prazo deve ser YYYY-MM-DD").optional(),
+});
+
 // ─── Schema exportado para testes unitários (Task 5) ───────────────────────
 export const updateRegistroInput = z.object({
   id: z.number().int().positive(),
@@ -143,6 +179,7 @@ export const updateRegistroInput = z.object({
   local: z.string().nullish(),
   dataRegistro: z.union([z.string(), z.date()]).optional(),
   processoId: z.number().int().positive().nullish(),
+  prazo: z.string().regex(PRAZO_REGEX, "prazo deve ser YYYY-MM-DD").nullable().optional(),
   ...camposAtendimentoSolar,
 });
 
@@ -203,7 +240,7 @@ export const registrosRouter = router({
         demandaId: z.number().int().positive().optional(),
         audienciaId: z.number().int().positive().optional(),
         tipo: TIPO_REGISTRO.optional(),
-        limit: z.number().int().min(1).max(100).default(50),
+        limit: z.number().int().min(1).max(300).default(50),
         cursor: z
           .object({
             dataRegistro: z.string(),
@@ -306,6 +343,7 @@ export const registrosRouter = router({
             enrichmentData: registros.enrichmentData,
             pontosChave: registros.pontosChave,
             autorId: registros.autorId,
+            prazo: registros.prazo,
           })
           .from(registros)
           .where(eq(registros.assistidoId, assistidoId))
@@ -377,29 +415,7 @@ export const registrosRouter = router({
   // create — insere registro + (se delegacao) atualiza demanda atomicamente
   // ────────────────────────────────────────────────────────────────────
   create: protectedProcedure
-    .input(
-      z.object({
-        assistidoId: z.number().int().positive(),
-        tipo: TIPO_REGISTRO,
-        conteudo: z.string().min(1, "conteudo é obrigatório"),
-        // Contexto opcional
-        processoId: z.number().int().positive().optional(),
-        demandaId: z.number().int().positive().optional(),
-        audienciaId: z.number().int().positive().optional(),
-        casoId: z.number().int().positive().optional(),
-        titulo: z.string().max(120).optional(),
-        dataRegistro: z
-          .union([z.string(), z.date()])
-          .optional()
-          .transform((v) => (v ? new Date(v) : new Date())),
-        interlocutor: z
-          .enum(["assistido", "familiar", "testemunha", "outro"])
-          .default("assistido"),
-        // Delegação (só aplicável quando tipo === "delegacao")
-        delegadoParaId: z.number().int().positive().optional(),
-        motivoDelegacao: z.string().optional(),
-      })
-    )
+    .input(createRegistroInput)
     .mutation(async ({ input, ctx }) => {
       const created = await withTransaction(async (tx) => {
         // 1. Insere o registro
@@ -416,7 +432,8 @@ export const registrosRouter = router({
             conteudo: input.conteudo,
             dataRegistro: input.dataRegistro,
             interlocutor: input.interlocutor,
-            status: "realizado",
+            status: statusForTipo(input.tipo),
+            prazo: input.prazo ?? null,
             autorId: ctx.user.id,
           })
           .returning();
@@ -652,6 +669,7 @@ export const registrosRouter = router({
       if (rest.assunto !== undefined) data.assunto = rest.assunto;
       if (rest.local !== undefined) data.local = rest.local;
       if (rest.processoId !== undefined) data.processoId = rest.processoId;
+      if (rest.prazo !== undefined) data.prazo = rest.prazo;
       if (rest.dataRegistro !== undefined)
         data.dataRegistro = new Date(rest.dataRegistro as string | Date);
       if (rest.numeroSolar !== undefined) data.numeroSolar = rest.numeroSolar;

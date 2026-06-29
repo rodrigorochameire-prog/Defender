@@ -4,8 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Notebook, MessageSquare, NotebookPen } from "lucide-react";
 import type { RegistroAudienciaData } from "../types";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
-import { NovoRegistroButton } from "@/components/registros/novo-registro-button";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 
 interface TabAnotacoesProps {
   registro: RegistroAudienciaData;
@@ -138,15 +137,10 @@ export function TabAnotacoes({ registro, updateRegistro, audienciaId, assistidoI
               <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Anotações tipadas vinculadas a esta audiência</p>
             </div>
           </div>
-          {assistidoId ? (
-            <NovoRegistroButton
-              assistidoId={assistidoId}
-              audienciaId={audienciaId}
-              tipoDefault="anotacao"
-            />
-          ) : null}
-          <RegistrosTimeline
-            audienciaId={audienciaId}
+          <RegistrosPanel
+            scope={{ audienciaId, assistidoId }}
+            variant="tab"
+            tipoDefault="anotacao"
             emptyHint="Sem registros nesta audiência."
           />
         </div>

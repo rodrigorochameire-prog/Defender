@@ -3,8 +3,8 @@
 // Sheet de gestão do atendimento — padrão visual do sheet da agenda:
 // top bar escura, cartão de identidade com avatar por atribuição, seções
 // colapsáveis persistentes, documentos & autos com visualizador encaixado à
-// esquerda (AutosModalViewer), registros do assistido com composer rápido
-// (RegistrosTimeline + RegistroEditor), anexos espelhados no Drive e footer
+// esquerda (AutosModalViewer), registros do assistido via RegistrosPanel
+// (composer + timeline unificados), anexos espelhados no Drive e footer
 // de ações. Simples, funcional, sofisticado.
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -28,8 +28,7 @@ import { CollapsibleSection } from "@/components/agenda/sheet/collapsible-sectio
 import { SheetToC, type ToCSection } from "@/components/agenda/sheet/sheet-toc";
 import { DocumentosBlock } from "@/components/agenda/sheet/documentos-block";
 import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
-import { RegistroEditor } from "@/components/registros/registro-editor";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 import { AnexoDropzone } from "@/components/registros/anexos/anexo-dropzone";
 import { AnexoList } from "@/components/registros/anexos/anexo-list";
 import { useAnexoUpload } from "@/components/registros/anexos/use-anexo-upload";
@@ -47,7 +46,6 @@ import {
   MessageCircle,
   Pencil,
   Phone,
-  Plus,
   RotateCcw,
   ScrollText,
   Sparkles,
@@ -89,7 +87,6 @@ export function AtendimentoDetailSheet({
   const utils = trpc.useUtils();
   const [relato, setRelato] = useState("");
   const [mostrandoRelato, setMostrandoRelato] = useState(false);
-  const [novoRegistro, setNovoRegistro] = useState(false);
   const [autosModalId, setAutosModalId] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -486,33 +483,13 @@ export function AtendimentoDetailSheet({
               defaultOpen
               className="ring-1 ring-emerald-500/20 border-emerald-500/25 dark:border-emerald-500/15"
             >
-              <div className="space-y-3">
-                {novoRegistro ? (
-                  <RegistroEditor
-                    assistidoId={a.assistidoId}
-                    processoId={a.processoId ?? undefined}
-                    tipoDefault="anotacao"
-                    tiposPrimarios={["anotacao", "providencia", "diligencia", "peticao"]}
-                    onSaved={() => {
-                      setNovoRegistro(false);
-                      utils.registros.list.invalidate();
-                    }}
-                    onCancel={() => setNovoRegistro(false)}
-                  />
-                ) : (
-                  <button
-                    onClick={() => setNovoRegistro(true)}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-2 text-xs font-medium text-white transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-400/50 outline-none"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Registrar anotação, providência, diligência…
-                  </button>
-                )}
-                <RegistrosTimeline
-                  assistidoId={a.assistidoId}
-                  emptyHint="Sem registros para este assistido ainda — o que for colhido no atendimento entra aqui."
-                />
-              </div>
+              <RegistrosPanel
+                scope={{ assistidoId: a.assistidoId, processoId: a.processoId ?? undefined }}
+                variant="tab"
+                tipoDefault="anotacao"
+                tiposPrimarios={["anotacao", "providencia", "diligencia", "peticao"]}
+                emptyHint="Sem registros para este assistido ainda."
+              />
             </CollapsibleSection>
 
             {/* Áudio do atendimento — gravar e armazenar na pasta do Drive */}

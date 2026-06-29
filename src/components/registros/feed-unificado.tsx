@@ -12,12 +12,17 @@ import {
   FAMILIA_CONFIG, FAMILIAS_ORDEM, iconeDoTipo,
   type Familia,
 } from "@/lib/registros/tipologia";
+import { cn } from "@/lib/utils";
+import { REGISTRO_TIPOS, type TipoRegistro } from "./registro-tipo-config";
 
 // Resolve nome-de-ícone (string da tipologia) → componente Lucide.
 const ICONES: Record<string, LucideIcon> = {
   Users, Eye, FileSignature, PenLine, CheckSquare, MapPin, BookOpen,
   Search, Microscope, Send, ArrowRightLeft, StickyNote, MessageSquare, Gavel,
 };
+
+/** Keys of REGISTRO_TIPOS for O(1) membership check in FeedRow. */
+const TIPO_KEYS_SET = new Set(Object.keys(REGISTRO_TIPOS));
 
 export type ItemFeed = {
   id: string;
@@ -109,7 +114,19 @@ function LinkChip({ href, label }: { href: string; label: string }) {
 export function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: string | null }) {
   const [aberto, setAberto] = useState(false);
   const fam = FAMILIA_CONFIG[item.familia];
-  const Icone = ICONES[iconeDoTipo(item.origem, item.tipo)] ?? StickyNote;
+
+  // For registro items with a recognised tipo, adopt the RegistroCard visual language:
+  // typed Lucide icon + bg/text badge tokens from REGISTRO_TIPOS config.
+  const tipoCfg =
+    item.origem === "registro" && TIPO_KEYS_SET.has(item.tipo)
+      ? REGISTRO_TIPOS[item.tipo as TipoRegistro]
+      : null;
+
+  // Icon: prefer the REGISTRO_TIPOS icon for registros; fall back to family tipologia icon.
+  const Icone = tipoCfg?.Icon ?? ICONES[iconeDoTipo(item.origem, item.tipo)] ?? StickyNote;
+  // Tint color for the icon circle.
+  const iconeColor = tipoCfg?.color ?? fam.cor;
+
   const titulo = item.titulo?.trim() || item.rotulo;
   const resumo = item.resumo?.trim() || null;
   const temResumoLongo = !!resumo && resumo.length > 90;
@@ -119,20 +136,25 @@ export function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: str
   return (
     <li
       onClick={() => temResumoLongo && setAberto((v) => !v)}
-      className={`group relative flex gap-2.5 rounded-lg border border-neutral-200/70 dark:border-white/[0.06] bg-neutral-100/50 dark:bg-white/[0.03] px-2.5 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-white/[0.06] ${temResumoLongo ? "cursor-pointer" : ""}`}
+      className={cn(
+        "group relative flex gap-2.5 rounded-lg border border-neutral-200/70 dark:border-white/[0.06] bg-neutral-100/50 dark:bg-white/[0.03] px-2.5 py-2 transition-colors hover:bg-neutral-100 dark:hover:bg-white/[0.06]",
+        temResumoLongo && "cursor-pointer",
+      )}
+      // Registro rows get a subtle left-accent matching RegistroCard's border-l-2 pattern.
+      style={tipoCfg ? { borderLeftColor: `${tipoCfg.color}4d`, borderLeftWidth: "3px" } : undefined}
     >
-      {/* Trilho de família + ícone */}
+      {/* Icon circle: updated tint to REGISTRO_TIPOS color for registro items */}
       <div className="flex flex-col items-center pt-0.5">
         <span
           className="flex h-5 w-5 items-center justify-center rounded-full ring-1 ring-inset ring-black/5 dark:ring-white/10"
-          style={{ backgroundColor: `${fam.cor}1a`, color: fam.cor }}
-          title={fam.label}
+          style={{ backgroundColor: `${iconeColor}1a`, color: iconeColor }}
+          title={tipoCfg?.label ?? fam.label}
         >
           <Icone className="h-3 w-3" />
         </span>
       </div>
 
-      {/* Corpo */}
+      {/* Body */}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-1.5">
           <span className="truncate text-[11.5px] font-medium text-foreground/90">{titulo}</span>
@@ -150,11 +172,29 @@ export function FeedRow({ item, procNumero }: { item: ItemFeed; procNumero?: str
           </p>
         )}
 
-        {/* Meta: tipo · autor · status · prazo · links */}
+        {/* Meta: tipo badge · autor · status · prazo · links */}
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-muted-foreground">
-          <span className="font-medium uppercase tracking-wide" style={{ color: fam.cor }}>
-            {item.rotulo}
-          </span>
+          {/* Tipo badge: REGISTRO_TIPOS tokens for registros; harmonised family badge for others */}
+          {tipoCfg ? (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[9px] font-medium ring-1 ring-inset ring-current/20",
+                tipoCfg.bg,
+                tipoCfg.text,
+              )}
+            >
+              <Icone className="w-2.5 h-2.5" />
+              {tipoCfg.label}
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[9px] font-medium"
+              style={{ backgroundColor: `${fam.cor}15`, color: fam.cor }}
+            >
+              <Icone className="w-2.5 h-2.5" />
+              {item.rotulo}
+            </span>
+          )}
           {item.autorNome && <span className="truncate max-w-[120px]">· {item.autorNome}</span>}
           {statusCor && <span className={`font-medium ${statusCor}`}>· {item.status}</span>}
           {pz && <span className={`inline-flex items-center gap-0.5 font-medium ${pz.cor}`}><CalendarClock className="h-2.5 w-2.5" />{pz.label}</span>}
