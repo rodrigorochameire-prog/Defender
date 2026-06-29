@@ -24,6 +24,14 @@ export type RegistrosToolbarProps = {
  * Tipo filter uses a plain state-driven popover (no Radix portal) so it is
  * deterministic under happy-dom in tests.
  */
+function iconBtn(active: boolean) {
+  return cn(
+    "p-1 rounded-md transition-colors cursor-pointer",
+    active
+      ? "text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800"
+      : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+  );
+}
 export function RegistrosToolbar({
   busca,
   onBusca,
@@ -54,14 +62,6 @@ export function RegistrosToolbar({
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [filtroOpen]);
-
-  const iconBtn = (active: boolean) =>
-    cn(
-      "p-1 rounded-md transition-colors cursor-pointer",
-      active
-        ? "text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800"
-        : "text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800",
-    );
 
   return (
     <div className="flex items-center gap-1">
@@ -169,7 +169,11 @@ export function RegistrosToolbar({
       <button
         type="button"
         onClick={() => onOrdem(ordem === "recente" ? "antigo" : "recente")}
-        aria-label="Ordenar"
+        aria-label={
+          ordem === "recente"
+            ? "Ordenar: mais antigo primeiro"
+            : "Ordenar: mais recente primeiro"
+        }
         title={
           ordem === "recente" ? "Mais recente primeiro" : "Mais antigo primeiro"
         }

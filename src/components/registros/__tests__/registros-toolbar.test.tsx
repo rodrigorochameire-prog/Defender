@@ -35,4 +35,11 @@ describe("RegistrosToolbar", () => {
     fireEvent.click(screen.getByText(/Diligência/i));
     expect(onFiltroTipo).toHaveBeenCalledWith("diligencia");
   });
+  it("resets the filter when clicking Todos", () => {
+    const onFiltroTipo = vi.fn();
+    render(<RegistrosToolbar {...baseProps} filtroTipo="diligencia" onFiltroTipo={onFiltroTipo} />);
+    fireEvent.click(screen.getByRole("button", { name: /filtrar por tipo/i }));
+    fireEvent.click(screen.getByText(/^Todos$/));
+    expect(onFiltroTipo).toHaveBeenCalledWith(null);
+  });
 });
