@@ -56,10 +56,13 @@ Validated visually with the user. Key decisions:
 A single **`RegistrosPanel`** replaces the divergent usages. Props:
 
 ```ts
+// Only dimensions that trpc.registros.list actually filters by. `casoId` is
+// intentionally excluded: list does NOT filter by casoId today and no surface
+// needs caso-scoped filtering — adding it would be unused (YAGNI). If a real
+// caso scope is ever needed, extend registros.list first, then add it here.
 type RegistrosScope = {
   assistidoId?: number;
   processoId?: number;
-  casoId?: number;
   demandaId?: number;
   audienciaId?: number;
 };
@@ -84,7 +87,7 @@ Internals (each independently understandable/testable):
 | `RegistroCard` | One registro row (badge + Lucide icon, title, preview, autor, time, hover edit/delete). | refactor of `registro-card.tsx`; `registros.update`/`delete` |
 | `registro-tipo-config.ts` | Tipo taxonomy: labels, colors, **Lucide icons** (swap any non-Lucide glyphs). | existing, extended |
 
-`registros-timeline.tsx` is refactored into `RegistrosPanel` (or kept as a thin wrapper during migration). The section-splitting + grouping is pure, derived client-side from the `registros.list` result.
+`registros-timeline.tsx` is **refactored in place** into `RegistrosPanel` (renamed) — no parallel wrapper is kept, to avoid two divergent components lingering. The section-splitting + grouping is pure, derived client-side from the `registros.list` result.
 
 ## 5. Data Model
 
