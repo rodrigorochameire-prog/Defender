@@ -55,11 +55,6 @@ function DecisaoChip({ decisao }: { decisao: Decisao }) {
   );
 }
 
-// ----------- inputCls (mirroring ausencias-view) ------------------------------
-
-const inputCls =
-  "block border rounded px-2 py-1 text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
-
 // ----------- Staging row type (from router) -----------------------------------
 
 type StagingRow = {
@@ -240,10 +235,10 @@ export function SigaImportView() {
           </div>
 
           {extrair.error && (
-            <p className="mt-2 text-[11px] text-rose-600">{extrair.error.message}</p>
+            <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-400">{extrair.error.message}</p>
           )}
           {confirmar.error && (
-            <p className="mt-2 text-[11px] text-rose-600">{confirmar.error.message}</p>
+            <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-400">{confirmar.error.message}</p>
           )}
 
           {importResult && (
@@ -257,6 +252,8 @@ export function SigaImportView() {
         {/* Lista */}
         {!sessionId ? null : staging.isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : staging.error ? (
+          <p className="text-sm text-rose-600 dark:text-rose-400">{staging.error.message}</p>
         ) : grouped.length === 0 ? (
           <EmptyState
             icon={DownloadCloud}
