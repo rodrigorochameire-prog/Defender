@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Importar módulo do script principal sem rodar main()
 SCRIPT = Path(__file__).parent / "varredura_triagem.py"
-ns: dict = {}
+ns: dict = {"__file__": str(SCRIPT)}
 src = SCRIPT.read_text()
 # Remover a chamada main() final para poder importar
 src_no_main = "\n".join(
