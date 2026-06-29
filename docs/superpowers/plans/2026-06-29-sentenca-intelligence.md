@@ -49,7 +49,7 @@ Create `src/lib/db/schema/sentencas.ts` mirroring `instancia-superior.ts` conven
 import {
   pgTable, serial, text, varchar, integer, jsonb, date, timestamp, index, uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { assistidos, processos, demandas } from "./core";
 import { comarcas } from "./comarcas";
 import { defensoresBa } from "./defensoria";
@@ -88,8 +88,13 @@ export type CircunstanciaJudicial = {
   valoracao: "FAVORAVEL" | "DESFAVORAVEL" | "NEUTRA";
   fundamento: string;
 };
+export type TipoDecisao =
+  | "CONDENATORIA" | "ABSOLUTORIA" | "PARCIAL" | "ABSOLVICAO_SUMARIA"
+  | "EXTINTIVA_PUNIBILIDADE" | "PRONUNCIA" | "IMPRONUNCIA" | "DESCLASSIFICACAO";
+
 export type AnaliseSentenca = {
-  resultado: string;
+  tipoDecisao: TipoDecisao;   // canonical classification → copied into sentencas.tipoDecisao + dedupe key
+  resultado: string;          // prose summary of the dispositivo
   dispositivoResumo: string;
   crimesImputados: { artigo: string; descricao: string }[];
   crimesCondenados: { artigo: string; descricao: string }[];
@@ -127,8 +132,8 @@ export const sentencas = pgTable("sentencas", {
   vara: varchar("vara", { length: 120 }),
   numeroProcesso: varchar("numero_processo", { length: 30 }),
   pjeDocumentoId: varchar("pje_documento_id", { length: 30 }),
-  sigiloso: integer("sigiloso").default(0).notNull(), // 0/1 — VVD/sigilo: excluded from institutional detail reads
-  tipoDecisao: varchar("tipo_decisao", { length: 30 }), // CONDENATORIA/ABSOLUTORIA/PARCIAL/ABSOLVICAO_SUMARIA/EXTINTIVA_PUNIBILIDADE/PRONUNCIA/IMPRONUNCIA/DESCLASSIFICACAO
+  sigiloso: integer("sigiloso").default(0).notNull(), // 0/1 — VVD/sigilo: excluded from institutional detail reads; derived from atribuição (Task 12)
+  tipoDecisao: varchar("tipo_decisao", { length: 30 }), // CONDENATORIA/ABSOLUTORIA/PARCIAL/ABSOLVICAO_SUMARIA/EXTINTIVA_PUNIBILIDADE/PRONUNCIA/IMPRONUNCIA/DESCLASSIFICACAO — from analiseIa.tipoDecisao
   dataSentenca: date("data_sentenca"),
   driveFileId: integer("drive_file_id"), // FK → drive_files.id (insert that row first)
   analiseIa: jsonb("analise_ia").$type<AnaliseSentenca | null>().default(null),
@@ -138,7 +143,10 @@ export const sentencas = pgTable("sentencas", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
-  uniqueIndex("sentencas_processo_doc_unique").on(t.processoId, t.pjeDocumentoId), // partial — see migration step
+  // Partial unique: idempotency on (processo, doc) only when doc id is present.
+  // `.where()` is supported (precedent: src/lib/db/schema/pje-import.ts:67) so db:push stays in sync — NO hand-edited SQL.
+  uniqueIndex("sentencas_processo_doc_unique").on(t.processoId, t.pjeDocumentoId)
+    .where(sql`"pje_documento_id" IS NOT NULL`),
   index("sentencas_magistrado_idx").on(t.magistradoId),
   index("sentencas_comarca_idx").on(t.comarcaId),
   index("sentencas_tipo_decisao_idx").on(t.tipoDecisao),
@@ -182,33 +190,24 @@ git commit -m "feat(sentencas): add magistrados + sentencas schema and AnaliseSe
 
 ---
 
-## Task 2: Migration (with partial unique index)
+## Task 2: Migration
 
 **Files:**
 - Generated: `drizzle/XXXX_*.sql`
 
+The partial-unique predicate is already in the TS schema (Task 1, `.where(sql\`"pje_documento_id" IS NOT NULL\`)`), so drizzle-kit emits it directly — **no hand-edited SQL**.
+
 - [ ] **Step 1: Generate the migration**
 
 Run: `npm run db:generate`
-Expected: a new `drizzle/NNNN_*.sql` creating `magistrados` and `sentencas`.
+Expected: a new `drizzle/NNNN_*.sql` creating `magistrados` and `sentencas`, with the index emitted as `CREATE UNIQUE INDEX "sentencas_processo_doc_unique" ON "sentencas" ("processo_id","pje_documento_id") WHERE "pje_documento_id" IS NOT NULL;`. If the `WHERE` is absent, the `.where()` clause in Task 1 was dropped — fix Task 1, don't hand-edit the SQL.
 
-- [ ] **Step 2: Make the idempotency index PARTIAL**
-
-drizzle-kit emits a plain `UNIQUE` on `(processo_id, pje_documento_id)`. Edit the generated SQL so it only applies when the doc id is present (nulls must not collide):
-
-```sql
--- replace the generated unique index line with:
-CREATE UNIQUE INDEX "sentencas_processo_doc_unique"
-  ON "sentencas" ("processo_id","pje_documento_id")
-  WHERE "pje_documento_id" IS NOT NULL;
-```
-
-- [ ] **Step 3: Apply**
+- [ ] **Step 2: Apply**
 
 Run: `npm run db:push`
-Expected: tables created; no errors. (If push diverges from the hand-edited SQL, prefer running the migration file directly or re-edit until `db:push` is idempotent.)
+Expected: tables created; no errors. Re-running `db:push` is a no-op (no drift).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add drizzle/
@@ -265,7 +264,8 @@ const SENTENCA_RE = /senten|condena|absolvi|pron[uú]ncia|impron|desclassifica/;
 const ACORDAO_RE = /ac[oó]rd[aã]o/;
 
 function norm(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  // ̀-ͯ = combining diacritics (escape form, matches src/lib/utils/name-matching.ts:8)
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 export function isSentencaAto(ato: string | null | undefined): boolean {
@@ -373,6 +373,7 @@ import { describe, it, expect } from "vitest";
 import { parseAnaliseSentenca } from "../parse-analise";
 
 const minimal = {
+  tipoDecisao: "CONDENATORIA",
   resultado: "Condenação", dispositivoResumo: "...", crimesImputados: [],
   crimesCondenados: [], crimesAbsolvidos: [], pena: null, dosimetria: null,
   tesesDefensivas: { acolhidas: [], rejeitadas: [] }, provasValoradas: [],
@@ -408,7 +409,7 @@ describe("parseAnaliseSentenca", () => {
 // src/lib/sentenca/parse-analise.ts
 import type { AnaliseSentenca } from "@/lib/db/schema/sentencas";
 
-const REQUIRED_KEYS = ["resultado", "tesesDefensivas", "juizProlator", "confidence"] as const;
+const REQUIRED_KEYS = ["tipoDecisao", "resultado", "tesesDefensivas", "juizProlator", "confidence"] as const;
 
 function tryParse(s: string): unknown {
   try { return JSON.parse(s); } catch { return undefined; }
@@ -578,15 +579,26 @@ No unit test (DB I/O; repo has no DB test harness) — verified via typecheck + 
 
 - [ ] **Step 1: Implement the router**
 
-Procedures:
-- `upsertFromAnalysis` (protectedProcedure): input = the capture+analysis result (processoId, assistidoId, demandaOrigemId, comarcaId, vara, numeroProcesso, pjeDocumentoId, sigiloso, tipoDecisao, dataSentenca, driveFileId, juizProlator, analiseIa). Logic:
-  1. `buildMagistradoKey(juizProlator, comarcaId)` → SELECT magistrado by `(nomeNormalizado, comarcaId)`; if absent INSERT with `status: "NAO_CONFIRMADO"`, else push `vara` into `varasConhecidas` if new.
-  2. `resolveSentencaDedupe(...)` → SELECT existing sentença by the chosen key.
-  3. INSERT or UPDATE the sentença row with `magistradoId`, `analiseIa`, `analiseStatus: "CONCLUIDO"`, `analyzedAt: now()`. On low `confidence`, the caller (varredura) also sets `demandas.revisaoPendente=true`.
-- `getDetail` (protectedProcedure): input `{ id }`. Build `getSentencaDetailScope(ctx.user)`; SELECT the sentença JOIN demandas; if scope ≠ "all", require `demandas.defensorId ∈ scope` AND `sentencas.sigiloso = 0 OR demanda visible`. Return 404-equivalent if out of scope.
-- `aggregate` (protectedProcedure): input `{ magistradoId? , comarcaId? }`. SELECT only non-identifying columns (`magistradoId, vara, comarcaId, tipoDecisao, analiseIa->pena, analiseIa->tesesDefensivas, analiseIa->flagsAlerta`) across **all** rows — never assistido/processo identifiers. This is the forward-contract for the deferred dashboards.
+**Input resolution (where each field comes from — close the cross-stage gap):**
+- `demandaOrigemId`, `numeroProcesso`, `pjeDocumentoId`, `assistidoId`, `atribuicao` — carried in the `claude_code_tasks` payload (Task 12).
+- `processoId`, `comarcaId` — resolved in this procedure: look up the demanda by `demandaOrigemId` (it has `processoId`), and the processo/assistido carries `comarcaId`. Do NOT expect them in the task payload.
+- `tipoDecisao`, `dataSentenca`, `juizProlator`, `vara`, `analiseIa` — come from the analysis output (`analiseIa.tipoDecisao`, etc.). `dataSentenca` may be null.
+- `sigiloso` — `1` when `atribuicao` is a sigiloso attribution (VVD/MPU), else `0` (Task 12 supplies `atribuicao`; compute here).
+- `driveFileId` — the `drive_files.id` int from capture (Task 11).
 
-Follow the structure of `src/lib/trpc/routers/instancia-superior.ts` (imports, `router({...})`, `protectedProcedure`, drizzle `eq/and/sql`). Use `ctx.user.id` for `criadoPorId` when present.
+Procedures:
+- `upsertFromAnalysis` (protectedProcedure): input = `{ demandaOrigemId, numeroProcesso, pjeDocumentoId, assistidoId, atribuicao, driveFileId, analiseIa }`. Logic:
+  1. Resolve `processoId` + `comarcaId` from `demandaOrigemId` (SELECT demanda → processo).
+  2. Derive `sigiloso` from `atribuicao`.
+  3. `buildMagistradoKey(analiseIa.juizProlator, comarcaId)` → SELECT magistrado by `(nomeNormalizado, comarcaId)`; if absent INSERT with `status: "NAO_CONFIRMADO"`, else push `vara` into `varasConhecidas` if new. (Concurrency: `magistrados` has only a non-unique index, so two simultaneous tasks for the same judge may create duplicates — **accepted** per spec §5.1, resolved by manual-merge. If you prefer to prevent it, make the index `uniqueIndex` and `INSERT … ON CONFLICT DO NOTHING` then re-SELECT.)
+  4. `resolveSentencaDedupe({ processoId, pjeDocumentoId, tipoDecisao: analiseIa.tipoDecisao, dataSentenca: analiseIa..., demandaOrigemId })` → SELECT existing sentença by the chosen key.
+  5. INSERT or UPDATE the sentença row with `magistradoId`, `tipoDecisao`, `dataSentenca`, `sigiloso`, `driveFileId`, `analiseIa`, `analiseStatus: "CONCLUIDO"`, `analyzedAt: now()`.
+  6. **Create the registro** tipo `analise` on the demanda (titulo "Resumo e providências") — reuse the `registros` insert pattern from `registros.ts` / the `analise-intimacao` write path.
+  7. **Refine `demandas.ato`** ONLY if `analiseIa.confidence === "alta"` AND the current ato is generic (e.g. "Ciência"/"Analisar decisão"). On `confidence === "baixa"`, set `demandas.revisaoPendente=true`.
+- `getDetail` (protectedProcedure): input `{ id }`. Build `getSentencaDetailScope(ctx.user)`; SELECT the sentença JOIN demandas; if scope ≠ "all", require `demandas.defensorId ∈ scope`. Return 404-equivalent if out of scope.
+- `aggregate` (protectedProcedure): input `{ magistradoId? , comarcaId? }`. SELECT only non-identifying columns (`magistradoId, vara, comarcaId, tipoDecisao, analiseIa->pena, analiseIa->dosimetria, analiseIa->tesesDefensivas, analiseIa->flagsAlerta`) across **all** rows — never assistido/processo identifiers. NOTE: the de-identification guarantee depends on the analysis skill never emitting assistido names into `tesesDefensivas`/`flagsAlerta`/`fundamentosChave` (enforced in Task 10's output contract). This is the forward-contract for the deferred dashboards.
+
+Follow the structure of `src/lib/trpc/routers/instancia-superior.ts` (imports, `router({...})`, `protectedProcedure`, drizzle `eq/and/sql`). For `criadoPorId` use **`ctx.user.defensorBaId`** (FK → `defensoresBa.id`, as `instancia-superior.ts:173,190` does) — NOT `ctx.user.id` (that is a `users.id`). For daemon-side calls, derive the defensor from the origin demanda's `defensorId` → its `defensoresBa` row, or leave null.
 
 - [ ] **Step 2: Register the router**
 
@@ -647,8 +659,9 @@ No automated test (LLM skill). Verified by running on a sample sentença.
 Frontmatter (name `analise-sentenca`, description) + body containing:
 - Role: extract structured intelligence from a 1st-degree criminal sentença.
 - Input contract: full sentença text (or registro `raw_text` fallback). Token guard: if the text is very large, section-summarize (relatório / fundamentação / dispositivo / dosimetria) then do a final structured pass.
-- Output contract: **emit ONLY** a JSON object matching the `AnaliseSentenca` shape from `src/lib/db/schema/sentencas.ts` (paste the field list and enums verbatim, including `tipoDecisao` mapping, `flagsAlerta` guidance — Súmulas 444, 718/719, dosimetria genérica, condenação baseada só em prova policial — and `confidence`).
-- Persistence note: the daemon writes `resultado` JSON to `claude_code_tasks.resultado`; a follow-up step calls `sentencas.upsertFromAnalysis`.
+- Output contract: **emit ONLY** a JSON object matching the `AnaliseSentenca` shape from `src/lib/db/schema/sentencas.ts` (paste the field list and enums verbatim, including the required `tipoDecisao` enum value, `flagsAlerta` guidance — Súmulas 444, 718/719, dosimetria genérica, condenação baseada só em prova policial — and `confidence`).
+- **De-identification constraint (load-bearing for the shared aggregate):** the array fields that feed institutional aggregates — `tesesDefensivas`, `flagsAlerta`, `fundamentosChave`, `precedentesCitados` — MUST be phrased generically and MUST NOT contain the assistido's name, CPF, or other personal identifiers. Refer to the defendant as "o réu/a ré". Only `juizProlator` (the magistrate) is a name.
+- Orchestration: this skill is the unit of work the (browser-lane) daemon runs. It must (1) invoke `capturar_sentenca.py` to get `{ driveFilesRowId, textoIntegral }` (fallback to registro `raw_text` if capture returns `ok:false`), (2) produce the `AnaliseSentenca` JSON, (3) call `sentencas.upsertFromAnalysis` with the payload from Task 12. The daemon also writes `resultado` JSON to `claude_code_tasks.resultado`.
 
 Model the prose/structure on the existing `.claude/skills-cowork/analise-intimacao/SKILL.md` so the daemon handles it consistently.
 
@@ -704,8 +717,8 @@ git commit -m "feat(sentencas): capturar_sentenca browser-lane (open process →
 - [ ] **Step 1: Add the enqueue at write-back**
 
 After the demanda `ato` is resolved and the base registro is written, if the resolved ato satisfies the sentença test (port `isSentencaAto`'s regex to Python: `re.search(r"senten|condena|absolvi|pron[uú]ncia|impron|desclassifica", n)` and NOT `re.search(r"ac[oó]rd[aã]o", n)` on the accent-stripped lowercased ato), AND a download id is available (`pje_documento_id` on the demanda, else `enrichment_data.id_documento_pje`):
-  - enqueue a `claude_code_tasks` row: `skill="analise-sentenca"`, `lane="browser"`, `created_by = SYSTEM_USER_ID`, `prompt`/`instrucao_adicional` carrying `numeroProcesso`, `pjeDocumentoId`, `assistidoId`, `atribuicao`, `demandaOrigemId`.
-  - The daemon then runs capture (browser) → analysis (ai) → `sentencas.upsertFromAnalysis`.
+  - enqueue a `claude_code_tasks` row: `skill="analise-sentenca"`, `lane="browser"`, `created_by = SYSTEM_USER_ID`, `prompt`/`instrucao_adicional` carrying `numeroProcesso`, `pjeDocumentoId`, `assistidoId`, **`atribuicao`** (this is what `upsertFromAnalysis` derives `sigiloso` from — VVD/MPU ⇒ sigiloso=1), and `demandaOrigemId`.
+  - The `analise-sentenca` skill (Task 10) orchestrates: run `capturar_sentenca.py` → take `textoIntegral` (fallback registro `raw_text` on capture failure) → produce `AnaliseSentenca` JSON → call `sentencas.upsertFromAnalysis` with `{ demandaOrigemId, numeroProcesso, pjeDocumentoId, assistidoId, atribuicao, driveFileId, analiseIa }`.
 Use the existing REST/insert pattern the varredura already uses to write `registros` (POST to Supabase `/rest/v1/claude_code_tasks`). Do **not** change demanda `status`.
 
 - [ ] **Step 2: Manual verification**
