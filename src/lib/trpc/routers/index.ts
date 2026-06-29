@@ -101,6 +101,7 @@ import { intimacoesRouter } from "./intimacoes";
 import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
 import { ausenciasRouter } from "./ausencias";
+import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
 
 
@@ -475,6 +476,9 @@ export const appRouter = router({
   // ==========================================
   intimacoes: intimacoesRouter,
   // ==========================================
+  // SIGA — importação de carreira (licenças, férias, afastamentos)
+  // ==========================================
+  siga: sigaRouter,
   // PAUTA — importação de pauta de audiências PJe (lane browser)
   // ==========================================
   pauta: pautaRouter,

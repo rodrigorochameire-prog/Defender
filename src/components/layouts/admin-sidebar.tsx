@@ -12,7 +12,8 @@ import {
   FileSearch, UserCheck, ChevronRight, Menu, X, ListTodo, Network, UsersRound,
   MoreHorizontal, Box, Puzzle, BookUser, Users2, Home, FolderInput, Sun,
   MessageSquare, FileCheck, ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity,
-  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package, CalendarOff
+  UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package, CalendarOff,
+  DownloadCloud
 } from "lucide-react";
 import { usePermissions, type UserRole } from "@/hooks/use-permissions";
 import { usePlan } from "@/hooks/use-plan";
@@ -94,6 +95,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
 const CARREIRA_NAV: AssignmentMenuItem[] = [
   { label: "Vida Funcional", path: "/admin/carreira/vida-funcional", icon: "Briefcase" },
   { label: "Ausências", path: "/admin/ausencias", icon: "CalendarOff" },
+  { label: "Importar SIGA", path: "/admin/siga-import", icon: "DownloadCloud" },
   { label: "Diárias", path: "/admin/diarias", icon: "CreditCard" },
 ];
 
@@ -217,7 +219,8 @@ const iconMap: Record<string, React.ElementType> = {
   History, PieChart, Handshake, CalendarDays, Sparkles, FileSearch, UserCheck,
   ChevronRight, ListTodo, Network, UsersRound, MoreHorizontal, Box, Puzzle,
   BookUser, Users2, Home, FolderInput, Sun, MessageSquare, FileCheck,
-  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package, CalendarOff
+  ArrowLeftRight, Timer, Newspaper, Rss, Radio, Map, Activity, UserPlus, CreditCard, FileSpreadsheet, Landmark, MapPin, Radar, Package, CalendarOff,
+  DownloadCloud
 };
 
 const SIDEBAR_WIDTH_KEY = "admin-sidebar-width";

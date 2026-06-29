@@ -9,6 +9,7 @@ import { getVidaFuncionalScope } from "../vida-funcional-scope";
 import { diasInclusive } from "@/lib/ausencias/calculos";
 import { podeTransicionar } from "@/lib/ausencias/transicoes";
 import { projecaoEventoDeAusencia } from "@/lib/ausencias/projecao";
+import { criarAusenciaComEvento } from "@/lib/ausencias/persist";
 
 const ISO = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (AAAA-MM-DD)");
 const TIPO = z.enum(["licenca", "outra_ausencia"]);
@@ -45,38 +46,17 @@ export const ausenciasRouter = router({
   criar: protectedProcedure.input(z.object(baseFields)).mutation(async ({ ctx, input }) => {
     if (input.dataFim < input.dataInicio) throw new TRPCError({ code: "BAD_REQUEST", message: "dataFim anterior a dataInicio" });
 
-    return await db.transaction(async (tx) => {
-      const proj = projecaoEventoDeAusencia({
-        id: null, tipo: input.tipo, motivo: input.motivo ?? null,
-        dataInicio: input.dataInicio, dataFim: input.dataFim, situacao: "solicitada",
-      });
-      const [evento] = await tx.insert(vidaFuncionalEventos).values({
-        defensorId: ctx.user.id,
-        tipo: proj.tipo, cluster: proj.cluster, titulo: proj.titulo,
-        dataEvento: proj.dataEvento, dataFim: proj.dataFim, status: proj.status,
-        origem: "manual", dados: { ausenciaId: null },
-      }).returning({ id: vidaFuncionalEventos.id });
-
-      const [a] = await tx.insert(ausencias).values({
-        defensorId: ctx.user.id,
-        tipo: input.tipo,
-        motivo: input.motivo ?? null,
-        dataInicio: input.dataInicio,
-        dataFim: input.dataFim,
+    return await db.transaction(async (tx) =>
+      criarAusenciaComEvento(tx, ctx.user.id, {
+        tipo: input.tipo, motivo: input.motivo ?? null,
+        dataInicio: input.dataInicio, dataFim: input.dataFim,
         situacao: "solicitada",
-        interrompida: input.interrompida ?? false,
-        suspensa: input.suspensa ?? false,
-        numeroSolicitacao: input.numeroSolicitacao ?? null,
-        nSiga: input.nSiga ?? null,
-        dataPublicacao: input.dataPublicacao ?? null,
-        observacao: input.observacao ?? null,
-        situacaoSiga: input.situacaoSiga ?? null,
-        vidaFuncionalEventoId: evento.id,
-      }).returning();
-
-      await tx.update(vidaFuncionalEventos).set({ dados: { ausenciaId: a.id } }).where(eq(vidaFuncionalEventos.id, evento.id));
-      return a;
-    });
+        interrompida: input.interrompida, suspensa: input.suspensa,
+        numeroSolicitacao: input.numeroSolicitacao, nSiga: input.nSiga,
+        dataPublicacao: input.dataPublicacao, observacao: input.observacao,
+        situacaoSiga: input.situacaoSiga,
+      }),
+    );
   }),
 
   atualizar: protectedProcedure.input(updateInput).mutation(async ({ ctx, input }) => {

@@ -55,6 +55,7 @@ export * from "./feedback";
 export * from "./defensoria";
 export * from "./instancia-superior";
 export * from "./system";
+export * from "./siga-import";
 
 // Pessoas (Fase I-A — entity resolution)
 export * from "./pessoas";
