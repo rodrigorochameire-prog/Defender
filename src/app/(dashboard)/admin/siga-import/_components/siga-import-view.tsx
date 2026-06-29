@@ -8,19 +8,11 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
 import { cn } from "@/lib/utils";
-
-// ----------- KPI chip ----------------------------------------------------------
-
-function Kpi({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.08]">
-      <div className="leading-tight">
-        <div className="text-sm font-semibold text-white">{value}</div>
-        <div className="text-[11px] text-white/60">{label}</div>
-      </div>
-    </div>
-  );
-}
+import {
+  KpiChip,
+  CarreiraCard,
+  CarreiraListSkeleton,
+} from "@/components/carreira";
 
 // ----------- Decisão chip -----------------------------------------------------
 
@@ -180,10 +172,10 @@ export function SigaImportView() {
 
   const stats = sessionId ? (
     <div className="flex flex-wrap items-center gap-2">
-      <Kpi label="Total" value={counts.total} />
-      <Kpi label="Novas" value={counts.novas} />
-      <Kpi label="Atualizadas" value={counts.atualizadas} />
-      <Kpi label="Já importadas" value={counts.jaImportadas} />
+      <KpiChip label="Total" value={counts.total} />
+      <KpiChip label="Novas" value={counts.novas} />
+      <KpiChip label="Atualizadas" value={counts.atualizadas} />
+      <KpiChip label="Já importadas" value={counts.jaImportadas} />
     </div>
   ) : null;
 
@@ -251,7 +243,7 @@ export function SigaImportView() {
 
         {/* Lista */}
         {!sessionId ? null : staging.isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <CarreiraListSkeleton rows={3} />
         ) : staging.error ? (
           <p className="text-sm text-rose-600 dark:text-rose-400">{staging.error.message}</p>
         ) : grouped.length === 0 ? (
@@ -276,77 +268,79 @@ export function SigaImportView() {
                   if (!row.importavel) {
                     // Férias / Afastamento: read-only
                     return (
-                      <div
-                        key={row.id}
-                        className="flex flex-wrap items-start gap-3 py-2 border-b border-border last:border-0 opacity-60"
-                      >
-                        <div className="min-w-0 flex-1 space-y-0.5">
+                      <CarreiraCard key={row.id} accent="neutral" className="p-2 opacity-60">
+                        <div className="flex flex-wrap items-start gap-3">
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <div className="text-sm">
+                              {dataInicio && dataFim ? `${dataInicio} – ${dataFim}` : "—"}
+                              {motivo ? ` · ${motivo}` : ""}
+                            </div>
+                            {situacaoSiga && (
+                              <div className={TYPO.caption}>SIGA: {situacaoSiga}</div>
+                            )}
+                          </div>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500">
+                            importação v2
+                          </span>
+                        </div>
+                      </CarreiraCard>
+                    );
+                  }
+
+                  // Licença / Outra ausência: selectable via CarreiraCard
+                  const isChecked = selected.has(row.id);
+                  return (
+                    <CarreiraCard
+                      key={row.id}
+                      selected={isChecked}
+                      onClick={() => handleToggle(row.id)}
+                      className="p-2"
+                    >
+                      <div className="flex flex-wrap items-start gap-3">
+                        <button
+                          type="button"
+                          aria-label={isChecked ? "Desselecionar" : "Selecionar"}
+                          className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggle(row.id);
+                          }}
+                        >
+                          {isChecked ? (
+                            <CheckSquare className="w-4 h-4" />
+                          ) : (
+                            <Square className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </button>
+
+                        <div className="min-w-0 flex-1 space-y-1">
                           <div className="text-sm">
                             {dataInicio && dataFim ? `${dataInicio} – ${dataFim}` : "—"}
                             {motivo ? ` · ${motivo}` : ""}
                           </div>
-                          {situacaoSiga && (
-                            <div className={TYPO.caption}>SIGA: {situacaoSiga}</div>
-                          )}
-                        </div>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 text-neutral-400 dark:bg-neutral-800 dark:text-neutral-500">
-                          importação v2
-                        </span>
-                      </div>
-                    );
-                  }
 
-                  // Licença / Outra ausência: selectable
-                  const isChecked = selected.has(row.id);
-                  return (
-                    <div
-                      key={row.id}
-                      className="flex flex-wrap items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer"
-                      onClick={() => handleToggle(row.id)}
-                    >
-                      <button
-                        type="button"
-                        aria-label={isChecked ? "Desselecionar" : "Selecionar"}
-                        className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggle(row.id);
-                        }}
-                      >
-                        {isChecked ? (
-                          <CheckSquare className="w-4 h-4" />
-                        ) : (
-                          <Square className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </button>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <DecisaoChip decisao={row.decisao} />
 
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="text-sm">
-                          {dataInicio && dataFim ? `${dataInicio} – ${dataFim}` : "—"}
-                          {motivo ? ` · ${motivo}` : ""}
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <DecisaoChip decisao={row.decisao} />
-
-                          {row.nSiga && (
-                            <span className="text-[11px] text-muted-foreground">
-                              nSiga: {row.nSiga}
-                            </span>
-                          )}
-                          {row.numeroSolicitacao && (
-                            <span className="text-[11px] text-muted-foreground">
-                              nº {row.numeroSolicitacao}
-                            </span>
-                          )}
-                          {situacaoSiga && (
-                            <span className="text-[11px] text-muted-foreground">
-                              SIGA: {situacaoSiga}
-                            </span>
-                          )}
+                            {row.nSiga && (
+                              <span className="text-[11px] text-muted-foreground">
+                                nSiga: {row.nSiga}
+                              </span>
+                            )}
+                            {row.numeroSolicitacao && (
+                              <span className="text-[11px] text-muted-foreground">
+                                nº {row.numeroSolicitacao}
+                              </span>
+                            )}
+                            {situacaoSiga && (
+                              <span className="text-[11px] text-muted-foreground">
+                                SIGA: {situacaoSiga}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </CarreiraCard>
                   );
                 })}
               </div>
