@@ -31,6 +31,7 @@ import { prepararAudienciasActions } from "@/hooks/use-preparar-audiencias";
 import { EventoCreateModal } from "@/components/agenda/evento-create-modal";
 import { AgendaExportModal } from "@/components/agenda/agenda-export-modal";
 import { PJeAgendaImportModal } from "@/components/agenda/pje-agenda-import-modal";
+import { AtualizarPautaModal } from "@/components/agenda/atualizar-pauta-modal";
 import { GoogleCalendarConfigModal } from "@/components/agenda/google-calendar-config-modal";
 import { GoogleCalendarSyncModal } from "@/components/agenda/google-calendar-sync-modal";
 import { ICalImportModal } from "@/components/agenda/ical-import-modal";
@@ -616,6 +617,7 @@ export default function AgendaPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isPJeImportModalOpen, setIsPJeImportModalOpen] = useState(false);
+  const [isAtualizarPautaOpen, setIsAtualizarPautaOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isGoogleConfigModalOpen, setIsGoogleConfigModalOpen] = useState(false);
   const [isGoogleSyncModalOpen, setIsGoogleSyncModalOpen] = useState(false);
@@ -1793,6 +1795,14 @@ export default function AgendaPage() {
                 <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            {/* Atalho: Atualizar pauta (automático do PJe) */}
+            <button
+              onClick={() => setIsAtualizarPautaOpen(true)}
+              title="Atualizar pauta"
+              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+            >
+              <RefreshCw className="w-[15px] h-[15px]" />
+            </button>
             {/* Atalho de uso frequente: Importar do PJe */}
             <button
               onClick={() => setIsPJeImportModalOpen(true)}
@@ -2178,6 +2188,11 @@ export default function AgendaPage() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         eventos={eventos}
+      />
+
+      <AtualizarPautaModal
+        isOpen={isAtualizarPautaOpen}
+        onClose={() => setIsAtualizarPautaOpen(false)}
       />
 
       <PJeAgendaImportModal
