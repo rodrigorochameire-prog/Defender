@@ -76,3 +76,22 @@ export async function resolveAllAtribuicaoFolders(
 ): Promise<AtribuicaoFoldersMap> {
   return loadGroupFolders(userId);
 }
+
+/** Lookup reverso: folderId → {dono, grupo, atribuição}, sem sessão. Varre todos os grupos. */
+export async function resolveFolderToAtribuicao(
+  folderId: string,
+): Promise<{ ownerUserId: number; driveGroupId: number; atribuicao: Atribuicao } | null> {
+  const groups = await db.query.driveGroups.findMany({
+    columns: { id: true, ownerUserId: true, atribuicaoFolders: true },
+  });
+  for (const g of groups) {
+    const atribuicao = findAtribuicaoForFolder(
+      (g.atribuicaoFolders ?? {}) as AtribuicaoFoldersMap,
+      folderId,
+    );
+    if (atribuicao) {
+      return { ownerUserId: g.ownerUserId, driveGroupId: g.id, atribuicao };
+    }
+  }
+  return null;
+}
