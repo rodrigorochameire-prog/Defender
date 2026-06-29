@@ -151,6 +151,18 @@ import { importarDemandas } from "@/lib/services/pje-import";
 
 const ATRIBUICOES_PERMITIDAS = ["VVD_CAMACARI", "JURI_CAMACARI"] as const;
 
+export const criarVarreduraJobInput = z
+  .object({
+    atribuicoes: z.array(z.enum(ATRIBUICOES_PERMITIDAS)).min(1).optional(),
+    demandaIds: z.array(z.number().int()).min(1).max(50).optional(),
+    since: z.string().optional(),
+    limit: z.number().int().min(1).max(500).optional(),
+  })
+  .refine(
+    (v) => Boolean(v.atribuicoes?.length) !== Boolean(v.demandaIds?.length),
+    { message: "Informe atribuicoes OU demandaIds (exatamente um)." },
+  );
+
 const criarImportJobInput = z.object({
   atribuicoes: z.array(z.enum(ATRIBUICOES_PERMITIDAS)).min(1),
   since: z.string().optional(), // YYYY-MM-DD
@@ -461,13 +473,7 @@ export const intimacoesRouter = router({
    * — espelha o dedup de criarImportJob.
    */
   criarVarreduraJob: protectedProcedure
-    .input(
-      z.object({
-        atribuicoes: z.array(z.enum(ATRIBUICOES_PERMITIDAS)).min(1),
-        since: z.string().optional(), // YYYY-MM-DD
-        limit: z.number().int().min(1).max(500).optional(),
-      }),
-    )
+    .input(criarVarreduraJobInput)
     .mutation(async ({ ctx, input }) => {
       // Dedup: não enfileira se já houver varredura ativa — evita concorrência.
       const emAndamento = await db
@@ -488,11 +494,32 @@ export const intimacoesRouter = router({
         };
       }
 
+      // Branch por demanda: 1 task com os IDs, sem atribuição/since.
+      if (input.demandaIds?.length) {
+        const [task] = await db
+          .insert(claudeCodeTasks)
+          .values({
+            skill: "varredura-triagem",
+            lane: "browser",
+            prompt: `Leitura profunda — ${input.demandaIds.length} demanda(s) selecionada(s) (lane browser)`,
+            instrucaoAdicional: JSON.stringify({
+              demandaIds: input.demandaIds,
+              modo: "cdp",
+              defensorId: ctx.user.id,
+            }),
+            status: "pending",
+            createdBy: ctx.user.id,
+          })
+          .returning({ id: claudeCodeTasks.id });
+        return { success: true, existing: false, taskIds: [task.id] };
+      }
+
       const limit = input.limit ?? 80;
       const taskIds: number[] = [];
 
       // Uma task por atribuição (worker recebe --atribuicao singular).
-      for (const atribuicao of input.atribuicoes) {
+      // Garantido presente pelo XOR do schema (demandaIds já retornou acima).
+      for (const atribuicao of input.atribuicoes ?? []) {
         const [task] = await db
           .insert(claudeCodeTasks)
           .values({
