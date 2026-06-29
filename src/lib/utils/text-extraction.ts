@@ -22,6 +22,11 @@ export interface AtribuicaoResult {
   motivo: string;
 }
 
+/**
+ * @deprecated Grupo padrão legado (Fase 1.5 removerá esta constante).
+ * Use `resolveAtribuicaoFolder(s)` de `@/lib/services/drive-folders` em vez disso.
+ * Ainda lido por `google-drive.ts` (deferido para Fase 1.5).
+ */
 // Mapeamento das atribuições para IDs de pasta no Drive
 export const ATRIBUICAO_FOLDER_IDS = {
   JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
@@ -33,6 +38,10 @@ export const ATRIBUICAO_FOLDER_IDS = {
 } as const;
 
 /**
+ * @deprecated Grupo padrão legado (Fase 1.5 removerá esta constante).
+ * Use `resolveAtribuicaoFolders` de `@/lib/services/drive-folders` em vez disso.
+ * As extras estão seedadas no mapa do grupo no banco (`driveGroups.atribuicaoFolders`).
+ *
  * Pastas-raiz adicionais varridas junto da atribuição indicada (mesmo `key`).
  * Necessário porque uma atribuição pode ter mais de uma pasta de processos no
  * Drive: VVD, por exemplo, separa `VVD (Criminal)` (acima) de `VVD (MPU)` — os
