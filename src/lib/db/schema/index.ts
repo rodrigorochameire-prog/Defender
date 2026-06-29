@@ -76,5 +76,6 @@ export * from "./relations";
 
 export * from "./demanda-eventos";
 export * from "./pje-import";
+export * from "./pauta-import";
 export * from "./ferias";
 export * from "./diarias";
