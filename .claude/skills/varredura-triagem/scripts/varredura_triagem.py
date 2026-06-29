@@ -1155,6 +1155,8 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
                 "assistido_id": assistido_id,
                 "atribuicao": atribuicao,
                 "demanda_origem_id": demanda["id"],
+                # fallback p/ análise quando o capture do PDF falha (spec §7)
+                "registro_raw_text": (content or "")[:12000],
             }
             sb._req("POST", "/rest/v1/claude_code_tasks", {
                 "skill": "analise-sentenca",

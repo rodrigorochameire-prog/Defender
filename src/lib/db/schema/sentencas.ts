@@ -66,6 +66,7 @@ export type AnaliseSentenca = {
   fundamentosChave: string[];
   precedentesCitados: string[];
   juizProlator: string;
+  dataSentenca: string | null;  // ISO date (YYYY-MM-DD) extraída da sentença, ou null — alimenta sentencas.dataSentenca + dedupe tipo_data
   recurso: { prazoRecursal: string | null; recursoCabivel: string | null; fundamentoRecurso: string | null };
   flagsAlerta: string[];
   impactoParaDefesa: string;

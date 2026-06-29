@@ -16,8 +16,9 @@ de teses, recorrência de flags) — por isso as regras de des-identificação a
 
 ## Orquestração (esta skill é a unidade de trabalho que o daemon browser-lane roda)
 
-Você recebe, na **Instrução adicional**, um JSON com a tarefa:
-`{demandaOrigemId, numeroProcesso, pjeDocumentoId, assistidoId, atribuicao, registroRawText?}`.
+Você recebe, na **Instrução adicional**, um JSON com a tarefa em **snake_case** (como a varredura enfileira):
+`{demanda_origem_id, numero_processo, pje_documento_id, assistido_id, atribuicao, registro_raw_text}`.
+Ao chamar a mutation tRPC no passo 3, mapeie para **camelCase** (`demanda_origem_id`→`demandaOrigemId`, etc.).
 
 1. **Capturar o PDF e o texto** — rode o script browser-lane com o payload:
    ```
@@ -30,7 +31,7 @@ Você recebe, na **Instrução adicional**, um JSON com a tarefa:
    (ou `--json '{...}'` com as quatro chaves). A saída é um único objeto JSON:
    - `{"ok": true, "drive_files_row_id": <int>, "texto_integral": "<...>"}` → siga.
    - `{"ok": false, "error": "<msg>", "stage": "<...>"}` (exit ≠ 0) → **fallback**:
-     use o `registroRawText` da demanda como `texto_integral` e `driveFileId = null`.
+     use o `registro_raw_text` da Instrução adicional como `texto_integral` e `driveFileId = null`.
 2. **Produzir o JSON `AnaliseSentenca`** a partir do `texto_integral` (schema abaixo).
 3. **Persistir** chamando a mutation tRPC `sentencas.upsertFromAnalysis` com:
    ```json
@@ -101,6 +102,7 @@ Deve casar **campo a campo** com o tipo `AnaliseSentenca` de
   "fundamentosChave": ["<fundamento decisório central — genérico, sem identificadores pessoais>"],
   "precedentesCitados": ["<súmula / tese / julgado citado na sentença — ex: Súmula 444 STJ>"],
   "juizProlator": "<nome do(a) magistrado(a) que prolatou a sentença>",
+  "dataSentenca": "<YYYY-MM-DD da sentença, ou null>",
   "recurso": {
     "prazoRecursal": "<ex: 5 dias (apelação) | null>",
     "recursoCabivel": "<apelação | RESE | embargos de declaração | null>",
