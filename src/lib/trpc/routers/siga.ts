@@ -241,6 +241,7 @@ export const sigaRouter = router({
               .where(
                 and(
                   eq(ausencias.id, row.matchedAusenciaId),
+                  eq(ausencias.defensorId, ctx.user.id),
                   isNull(ausencias.deletedAt),
                 ),
               )

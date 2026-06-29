@@ -3,6 +3,7 @@ export type AusenciaTipo = "licenca" | "outra_ausencia";
 const SITUACAO_RULES: { match: RegExp; situacao: string; suspensa?: boolean }[] = [
   { match: /gozad/i, situacao: "gozada" },
   { match: /indefer|desist/i, situacao: "indeferida" },
+  { match: /cancel/i, situacao: "cancelada" },
   { match: /suspens/i, situacao: "deferida", suspensa: true },
 ];
 

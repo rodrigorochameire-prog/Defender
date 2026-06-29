@@ -6,6 +6,7 @@ describe("situacaoFromSiga", () => {
     expect(situacaoFromSiga("Gozada")).toEqual({ situacao: "gozada", suspensa: false });
     expect(situacaoFromSiga("Licenças Indeferidas/Desistência")).toEqual({ situacao: "indeferida", suspensa: false });
     expect(situacaoFromSiga("Suspensa")).toEqual({ situacao: "deferida", suspensa: true });
+    expect(situacaoFromSiga("Cancelada")).toEqual({ situacao: "cancelada", suspensa: false });
     expect(situacaoFromSiga("Passível de Prorrogação")).toEqual({ situacao: "solicitada", suspensa: false });
     expect(situacaoFromSiga(null)).toEqual({ situacao: "solicitada", suspensa: false });
   });
