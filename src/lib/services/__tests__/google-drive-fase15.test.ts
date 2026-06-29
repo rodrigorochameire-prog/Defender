@@ -30,9 +30,9 @@ describe("Fase 1.5 — de-hardcode forward (contract)", () => {
     expect(gdrive).toContain("folderForAtribuicaoOrLegacy");
   });
   it("threada ownerUserId nas 3 assinaturas forward", () => {
-    expect(gdrive).toMatch(/createOrFindAssistidoFolder\([^)]*ownerUserId/s);
-    expect(gdrive).toMatch(/moveAssistidoFolder\([^)]*ownerUserId/s);
-    expect(gdrive).toMatch(/listAssistidoFoldersWithCount\([^)]*ownerUserId/s);
+    expect(gdrive).toMatch(/createOrFindAssistidoFolder\([^)]*ownerUserId/);
+    expect(gdrive).toMatch(/moveAssistidoFolder\([^)]*ownerUserId/);
+    expect(gdrive).toMatch(/listAssistidoFoldersWithCount\([^)]*ownerUserId/);
   });
   it("as funções forward obtêm a pasta via o helper (>=4 ocorrências: def + create + move x2 + list)", () => {
     const usos = gdrive.match(/folderForAtribuicaoOrLegacy\(/g) ?? [];
