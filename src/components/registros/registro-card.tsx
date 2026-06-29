@@ -6,15 +6,29 @@ import { ptBR } from "date-fns/locale";
 import { Edit3, Trash2, Mic, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
-import { RegistroTipoChip } from "./registro-tipo-chip";
 import { REGISTRO_TIPOS, type TipoRegistro } from "./registro-tipo-config";
 import { AnexoList } from "./anexos/anexo-list";
 import { AnexoDropzone } from "./anexos/anexo-dropzone";
 import { useAnexoUpload } from "./anexos/use-anexo-upload";
 
+/**
+ * Local guard — never calls format() on an invalid date.
+ * Parses YYYY-MM-DD as a LOCAL date (not UTC midnight) to avoid timezone
+ * drift: new Date("2026-07-11") → UTC midnight → Jul 10 in UTC-3 locales.
+ */
+const fmtPrazo = (s: string | null | undefined): string | null => {
+  if (!s) return null;
+  const parts = s.split("-");
+  if (parts.length !== 3) return null;
+  const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  return isNaN(d.getTime()) ? null : format(d, "dd/MM");
+};
+
 export interface RegistroCardData {
   id: number;
   tipo: TipoRegistro;
+  status?: string | null;
+  prazo?: string | null; // YYYY-MM-DD — optional deadline field
   titulo?: string | null;
   conteudo: string | null;
   dataRegistro: Date | string;
@@ -28,9 +42,11 @@ interface Props {
   registro: RegistroCardData;
   onEdit?: (id: number) => void;
   onDelete?: (id: number) => void;
+  /** When true and registro.prazo is set, renders a small amber prazo chip (dd/MM). */
+  showPrazo?: boolean;
 }
 
-export function RegistroCard({ registro, onEdit, onDelete }: Props) {
+export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
   const contentRef = useRef<HTMLParagraphElement>(null);
@@ -40,6 +56,8 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
       : registro.dataRegistro;
   const hasAudio = !!registro.audioUrl;
   const tipoCfg = REGISTRO_TIPOS[registro.tipo];
+  const TipoIcon = tipoCfg?.Icon;
+  const prazoFormatted = showPrazo ? fmtPrazo(registro.prazo) : null;
 
   const conteudo = registro.conteudo ?? "";
 
@@ -84,7 +102,24 @@ export function RegistroCard({ registro, onEdit, onDelete }: Props) {
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <RegistroTipoChip tipo={registro.tipo} />
+          {/* Tipo badge: full label + colored bg/text per design spec §3 */}
+          {tipoCfg && TipoIcon && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset",
+                tipoCfg.bg,
+                tipoCfg.text,
+              )}
+            >
+              <TipoIcon className="w-3 h-3" />
+              {tipoCfg.label}
+            </span>
+          )}
+          {prazoFormatted && (
+            <span className="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
+              {prazoFormatted}
+            </span>
+          )}
           {hasAudio && (
             <Mic
               className="w-3 h-3 text-neutral-400"
