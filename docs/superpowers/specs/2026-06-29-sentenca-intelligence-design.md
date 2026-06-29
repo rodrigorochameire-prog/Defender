@@ -133,7 +133,7 @@ Index on `(nomeNormalizado, comarcaId)`. Matching: new sentença → match by `n
 
 `tipoDecisao` ∈ `CONDENATORIA · ABSOLUTORIA · PARCIAL · ABSOLVICAO_SUMARIA · EXTINTIVA_PUNIBILIDADE · PRONUNCIA · IMPRONUNCIA · DESCLASSIFICACAO`.
 
-**Idempotency (enforced, not "unique-ish"):** add a partial unique index `UNIQUE (processo_id, pje_documento_id) WHERE pje_documento_id IS NOT NULL` (mirrors the existing partial-unique pattern on `demandas`). When `pje_documento_id` is null, the writer must first SELECT by `(processoId, tipoDecisao, dataSentenca)` and UPDATE if found; if `dataSentenca` is also null, fall back to `(demandaOrigemId)` so a re-run of the same demanda updates in place rather than duplicating.
+**Idempotency (enforced, not "unique-ish"):** add a partial unique index `UNIQUE (processo_id, pje_documento_id) WHERE pje_documento_id IS NOT NULL`, declared in the Drizzle TS schema via `.where(sql\`...\`)` (precedent: `src/lib/db/schema/pje-import.ts:67`) so `db:push` stays in sync — no hand-edited SQL. When `pje_documento_id` is null, the writer must first SELECT by `(processoId, tipoDecisao, dataSentenca)` and UPDATE if found; if `dataSentenca` is also null, fall back to `(demandaOrigemId)` so a re-run of the same demanda updates in place rather than duplicating.
 
 **Scoping rule (concrete — there is NO existing assistido→defensor visibility helper to reuse; `defensor-scope.ts` scopes only via `demandas.defensorId`):**
 - **Detail** (the sentença row + assistido): scope by joining `sentencas.demandaOrigemId → demandas.defensorId` and comparing against `getDefensoresVisiveis(user)`. This requires a **new helper** `getSentencaDetailScope(user)` added to `defensor-scope.ts`. Responsible defensor + admin see detail; others do not.
