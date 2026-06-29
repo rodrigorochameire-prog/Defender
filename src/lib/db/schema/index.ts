@@ -79,5 +79,6 @@ export * from "./demanda-eventos";
 export * from "./pje-import";
 export * from "./pauta-import";
 export * from "./ferias";
+export * from "./pedidos-administrativos";
 export * from "./ausencias";
 export * from "./diarias";

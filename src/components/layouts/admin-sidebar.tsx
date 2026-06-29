@@ -94,6 +94,7 @@ const CADASTROS_NAV: AssignmentMenuItem[] = [
 // Carreira - Vida Funcional + Diárias
 const CARREIRA_NAV: AssignmentMenuItem[] = [
   { label: "Vida Funcional", path: "/admin/carreira/vida-funcional", icon: "Briefcase" },
+  { label: "Pedidos Adm.", path: "/admin/pedidos-administrativos", icon: "FileText" },
   { label: "Ausências", path: "/admin/ausencias", icon: "CalendarOff" },
   { label: "Importar SIGA", path: "/admin/siga-import", icon: "DownloadCloud" },
   { label: "Diárias", path: "/admin/diarias", icon: "CreditCard" },

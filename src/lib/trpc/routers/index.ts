@@ -100,6 +100,7 @@ import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
+import { pedidosAdministrativosRouter } from "./pedidos-administrativos";
 import { ausenciasRouter } from "./ausencias";
 import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
@@ -461,6 +462,9 @@ export const appRouter = router({
   // ==========================================
   ferias: feriasRouter,
   // ==========================================
+  // PEDIDOS ADMINISTRATIVOS — CRUD + projeção/cascata evento, guards, transações
+  // ==========================================
+  pedidosAdministrativos: pedidosAdministrativosRouter,
   // AUSENCIAS — CRUD ausências + cascata vida_funcional_eventos
   // ==========================================
   ausencias: ausenciasRouter,
