@@ -100,6 +100,7 @@ import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
+import { ausenciasRouter } from "./ausencias";
 import { diariasRouter } from "./diarias";
 
 
@@ -459,6 +460,9 @@ export const appRouter = router({
   // ==========================================
   ferias: feriasRouter,
   // ==========================================
+  // AUSENCIAS — CRUD ausências + cascata vida_funcional_eventos
+  // ==========================================
+  ausencias: ausenciasRouter,
   // DIARIAS — CRUD + cascata vida_funcional_eventos
   // ==========================================
   diarias: diariasRouter,
