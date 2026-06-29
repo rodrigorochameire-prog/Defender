@@ -9,9 +9,9 @@
 ## 1. Problem & Goal
 
 The carreira modules (Hub cockpit, cobertura-rollup, vida-funcional + `[dominio]`, Férias, Diárias, Ausências, Pedidos-Adm, SIGA-import) work but lag the app's best screens. Systemic gaps (confirmed by audit):
-- A header KPI chip helper copy-pasted **4×** (`carreira-cockpit`, `cobertura-rollup-view`, `ferias-view`, `diarias-view`).
-- The `inputCls` raw-`<input>` anti-pattern (no focus ring, bypasses shadcn `Input`/`Select`, bare `rounded`) in `ferias-view`/`diarias-view` (and the newer ausências/pedidos views mirror it).
-- `window.confirm()` for destructive actions (férias/diárias) instead of Radix `AlertDialog`.
+- A header KPI chip helper copy-pasted **6×** with identical `{ icon, label, value }` signature (`carreira-cockpit:20`, `cobertura-rollup-view:12`, `ferias-view:14`, `diarias-view:24`, `ausencias-view:17`, `pedidos-view:14`) **plus a 7th `{ label, value }` no-icon variant** in `siga-import-view:14`.
+- The `inputCls` raw-`<input>` anti-pattern (no focus ring, bypasses shadcn `Input`/`Select`, bare `rounded`) in `ferias-view`/`diarias-view`/`ausencias-view`/`pedidos-view`.
+- `window.confirm()` for destructive actions in **4 files** (`ferias-view:140`, `diarias-view:145`, `ausencias-view:379`, `pedidos-view:214`) instead of Radix `AlertDialog`.
 - Zero `dark:` coverage in the Hub cockpit/rollup; `divide-neutral-100` invisible in dark mode.
 - No loading skeletons (plain "Carregando…"); no `collapsedStats` on any header; inline abono/suspensa pills bypass `StatusChip`; `EmptyState` never uses `description`; progress bar without a11y; bento "0" with no CTA; non-responsive table/forms.
 
@@ -25,14 +25,14 @@ The carreira modules (Hub cockpit, cobertura-rollup, vida-funcional + `[dominio]
 
 **In:** new shared carreira UI primitives; apply them across the 9 carreira view files; a11y (focus rings, aria-labels, AlertDialog); full dark-mode; loading skeletons; richer empty states; responsive forms/tables; `collapsedStats` in headers.
 
-**Out (explicit):** no change to routers, schema, tRPC inputs, lifecycle logic, or projection. No new data. No new routes. The SIGA scrape and Drive seeding are a **separate data-population track** (handled outside this redesign). No redesign of non-carreira screens.
+**Out (explicit):** no change to routers, schema, tRPC inputs, lifecycle logic, or projection. No new data. No new routes. The SIGA scrape and Drive seeding are a **separate data-population track** (handled outside this redesign). No redesign of non-carreira screens. **`admin/progressoes/` is NOT covered** (stub page, no `_components/` view, no Kpi/inputCls to fix) — explicitly excluded.
 
 ---
 
 ## 3. Constraints (from existing code)
 
 - Reuse `src/lib/config/design-tokens.ts` tokens verbatim: `TYPO`, `CARD_STYLE`, `GLASS`, `LIST_ITEM`, `TAB_STYLE_V3`, `HEADER_STYLE`, `COLORS`, `FOCUS_RING` (`focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40`).
-- Card shell must match the exemplar exactly: `rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/70 dark:ring-neutral-800 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`, optional top accent pinstripe (`absolute inset-x-0 top-0 h-0.5`), optional selected ring (`ring-2 ring-emerald-400/50 dark:ring-emerald-500/40`).
+- Card shell must match the **`assistido-card`** exemplar verbatim (it is the chosen reference; `DemandaCard` uses `rounded-xl`/`duration-300` on an outer wrapper — we follow `assistido-card`): `bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200`, optional top accent pinstripe (`absolute inset-x-0 top-0 h-0.5`), optional selected ring (`ring-2 ring-emerald-400/50 dark:ring-emerald-500/40 border-emerald-300 dark:border-emerald-700`).
 - Forms use shadcn `Input`/`Select`/`Textarea` from `@/components/ui/*` + `Label`, never raw `inputCls`.
 - Destructive actions use Radix `AlertDialog` (the `[dominio]` page already does — copy that), never `window.confirm`.
 - Palette per `RULES.md §5`: emerald/zinc; semantic cluster accents only (no decorative blue/rose/amber).
@@ -43,13 +43,13 @@ The carreira modules (Hub cockpit, cobertura-rollup, vida-funcional + `[dominio]
 ## 4. Shared primitives (new — `src/components/carreira/`)
 
 ### `KpiChip` (`kpi-chip.tsx`)
-Extracts the 4× duplicated header chip. Exactly the current markup, hardened:
+Extracts the duplicated header chip. **`icon` is optional** so the no-icon `siga-import` variant unifies too. Exactly the current markup, hardened:
 ```tsx
 // charcoal-header KPI chip (lives inside CollapsiblePageHeader children)
-export function KpiChip({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
+export function KpiChip({ icon: Icon, label, value }: { icon?: React.ElementType; label: string; value: React.ReactNode }) {
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-lg bg-white/[0.08] px-3 py-1.5">
-      <Icon className="h-4 w-4 shrink-0 text-white/70" />
+      {Icon ? <Icon className="h-4 w-4 shrink-0 text-white/70" /> : null}
       <div className="min-w-0 leading-tight">
         <div className="truncate text-sm font-semibold text-white">{value}</div>
         <div className="truncate text-[11px] text-white/60">{label}</div>
@@ -58,10 +58,10 @@ export function KpiChip({ icon: Icon, label, value }: { icon: React.ElementType;
   );
 }
 ```
-Replaces the 4 local `Kpi` copies (fixes the currency-overflow gap via `min-w-0 truncate`).
+Replaces all **7** local `Kpi` copies (the 6 `{icon,label,value}` + the siga-import `{label,value}` one), fixing the currency-overflow gap via `min-w-0 truncate`.
 
 ### `CarreiraCard` (`carreira-card.tsx`)
-The exemplar card shell + optional accent + selected state.
+The `assistido-card` shell + optional accent + selected state. The accent pinstripe colors are **semantic cluster identifiers** (each carreira cluster has a fixed hue), which is an explicit, allowed exception to `RULES.md §5`'s ban on *decorative* (meaningless) blue/rose/amber — here the color *is* the meaning. Hues align with the established cluster palettes (ausências=amber per the app's amber-VVD-adjacent convention; progressão=blue; administrativo=violet; contraprestação=emerald).
 ```tsx
 const ACCENT: Record<string, string> = {
   ausencias: "from-amber-400 to-amber-500",
@@ -72,7 +72,14 @@ const ACCENT: Record<string, string> = {
 };
 export function CarreiraCard({ accent, selected, onClick, className, children }: {
   accent?: keyof typeof ACCENT; selected?: boolean; onClick?: () => void; className?: string; children: React.ReactNode;
-}) { /* relative rounded-xl bg-white dark:bg-neutral-900 ring-1 ... hover:-translate-y-0.5 ...; accent pinstripe; selected ring; FOCUS_RING when onClick */ }
+}) {
+  /* shell (match assistido-card verbatim):
+     relative bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80
+     rounded-lg shadow-sm transition-all duration-200
+     + when onClick: hover:shadow-md hover:-translate-y-0.5 cursor-pointer + FOCUS_RING
+     + when selected: ring-2 ring-emerald-400/50 dark:ring-emerald-500/40 border-emerald-300 dark:border-emerald-700
+     + when accent: child <span className="absolute inset-x-0 top-0 h-0.5 rounded-t-lg bg-gradient-to-r {ACCENT[accent]}" /> */
+}
 ```
 
 ### `CarreiraField` (`carreira-field.tsx`)
@@ -95,7 +102,7 @@ All five primitives are unit/render-tested (Section 7).
 | **carreira-cockpit** | `KpiChip`; `collapsedStats` (the 4 KPIs) on header; full `dark:` pass + `dark:divide-neutral-800`; cluster cards → `CarreiraCard accent={cluster}`; list rows → `CarreiraListSkeleton` while loading; `EmptyState` gains `description`. |
 | **cobertura-rollup-view** | `KpiChip`; full `dark:`; "Por defensor" `<table>` wrapped in `overflow-x-auto`; skeletons; `CarreiraCard` for the two lists. |
 | **vida-funcional-view** | tab bar → `TAB_STYLE_V3`; radar + bento cards → `CarreiraCard accent`; bento "0" gets an "Adicionar" CTA via `EmptyState size="sm"`; "Produtividade" placeholder → `EmptyState icon title description`; title via header slot. |
-| **vida-funcional/[dominio]** | accordion rows → `CarreiraCard`; `aria-label` on edit/delete icon buttons (keep its existing `AlertDialog`). |
+| **vida-funcional/[dominio]** | accordion rows → `CarreiraCard`; `aria-label` on edit/delete icon buttons (keep its existing `AlertDialog`, which is **inline in `[dominio]/page.tsx:105-113`**, not a separate component). |
 | **ferias-view** | `KpiChip`; `collapsedStats`; forms → `CarreiraField` (DS `Input`/`Select`); rows → `CarreiraCard`; `CarreiraListSkeleton`; delete → `ConfirmDeleteButton`; abono/suspensa pills → `StatusChip size="xs"`; progress bar gets `role="progressbar"` + `aria-valuenow/min/max` + `dark:` track; responsive form grid; `EmptyState description`. |
 | **diarias-view** | same treatment as férias (KpiChip, collapsedStats, CarreiraField, CarreiraCard, skeleton, ConfirmDeleteButton, currency KPI `min-w-0 truncate`, EmptyState description). |
 | **ausencias view** | same treatment (mirrors férias). |
