@@ -12,7 +12,7 @@ import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, 
 import { eq, and, desc, ilike, or, sql, gt, lt, isNull } from "drizzle-orm";
 import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS, normalizeName, toTitleCase } from "@/lib/utils/text-extraction";
 import { calculateSimilarity } from "@/lib/utils/name-matching";
-import { resolveFolderToAtribuicao, type Atribuicao } from "./drive-folders";
+import { resolveAtribuicaoFolder, resolveFolderToAtribuicao, type Atribuicao } from "./drive-folders";
 export { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS };
 import { inngest } from "@/lib/inngest/client";
 
@@ -3488,6 +3488,19 @@ export function mapAtribuicaoToFolderKey(
   return mapping[atribuicao] || null;
 }
 
+/** Pasta da atribuição pelo grupo do dono, ou constante legada (grupo padrão legado). */
+async function folderForAtribuicaoOrLegacy(
+  ownerUserId: number | null | undefined,
+  atribuicao: Atribuicao,
+): Promise<string | null> {
+  if (ownerUserId != null) {
+    const resolved = await resolveAtribuicaoFolder(ownerUserId, atribuicao);
+    if (resolved) return resolved;
+  }
+  const legacy = ATRIBUICAO_FOLDER_IDS as Record<string, string>;
+  return legacy[atribuicao] ?? null;
+}
+
 /**
  * Cria pasta do assistido na estrutura hierárquica
  * Hierarquia: Atribuição → Assistido (Title Case) → Processo → Documentos
@@ -3498,9 +3511,11 @@ export function mapAtribuicaoToFolderKey(
  */
 export async function createOrFindAssistidoFolder(
   atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL",
-  nomeAssistido: string
+  nomeAssistido: string,
+  ownerUserId?: number | null,
 ): Promise<DriveFolder | null> {
-  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const parentFolderId = await folderForAtribuicaoOrLegacy(ownerUserId, atribuicao);
+  if (!parentFolderId) return null;
   const nomePasta = toTitleCase(nomeAssistido);
 
   // Primeiro, buscar pasta existente
@@ -3525,14 +3540,15 @@ export async function createOrFindAssistidoFolder(
 export async function moveAssistidoFolder(
   folderId: string,
   oldAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
-  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
+  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  ownerUserId?: number | null,
 ): Promise<{ success: boolean; error?: string }> {
   if (oldAtribuicao === newAtribuicao) {
     return { success: true };
   }
 
-  const oldParentId = ATRIBUICAO_FOLDER_IDS[oldAtribuicao];
-  const newParentId = ATRIBUICAO_FOLDER_IDS[newAtribuicao];
+  const oldParentId = await folderForAtribuicaoOrLegacy(ownerUserId, oldAtribuicao);
+  const newParentId = await folderForAtribuicaoOrLegacy(ownerUserId, newAtribuicao);
 
   if (!oldParentId || !newParentId) {
     return { success: false, error: "Pasta raiz da atribuição não configurada" };
@@ -3883,9 +3899,11 @@ export async function getFileCountInFolder(folderId: string): Promise<number> {
  * Lista pastas de assistidos com contagem de processos
  */
 export async function listAssistidoFoldersWithCount(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  ownerUserId?: number | null,
 ): Promise<Array<DriveFolder & { processoCount: number }>> {
-  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const parentFolderId = await folderForAtribuicaoOrLegacy(ownerUserId, atribuicao);
+  if (!parentFolderId) return [];
   const folders = await listSubfolders(parentFolderId);
 
   // Para cada pasta, obter contagem de subpastas (processos)

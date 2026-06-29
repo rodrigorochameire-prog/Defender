@@ -24,3 +24,21 @@ describe("Fase 1.5 — reverse-sync multi-tenant (contract)", () => {
     expect(inngest).toMatch(/await isAtribuicaoRootChild\(/);
   });
 });
+
+describe("Fase 1.5 — de-hardcode forward (contract)", () => {
+  it("define o helper de fallback legado", () => {
+    expect(gdrive).toContain("folderForAtribuicaoOrLegacy");
+  });
+  it("threada ownerUserId nas 3 assinaturas forward", () => {
+    expect(gdrive).toMatch(/createOrFindAssistidoFolder\([^)]*ownerUserId/s);
+    expect(gdrive).toMatch(/moveAssistidoFolder\([^)]*ownerUserId/s);
+    expect(gdrive).toMatch(/listAssistidoFoldersWithCount\([^)]*ownerUserId/s);
+  });
+  it("as funções forward obtêm a pasta via o helper (>=4 ocorrências: def + create + move x2 + list)", () => {
+    const usos = gdrive.match(/folderForAtribuicaoOrLegacy\(/g) ?? [];
+    expect(usos.length).toBeGreaterThanOrEqual(4);
+  });
+  it("não há mais indexação direta ATRIBUICAO_FOLDER_IDS[...] (vai toda pelo helper)", () => {
+    expect(gdrive).not.toMatch(/ATRIBUICAO_FOLDER_IDS\[/);
+  });
+});
