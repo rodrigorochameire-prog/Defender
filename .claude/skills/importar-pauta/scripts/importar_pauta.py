@@ -159,27 +159,27 @@ JS_GOTO_PAGE = r"""(target) => {
 # TODO: validar seletor ao vivo — o id/classe do tbody pode diferir de
 #   rich-table-row. Alternativa: tr[class*='row'] ou tr:not([class*='header'])
 JS_EXTRACT_PAUTA_ROWS = r"""() => {
-  // TODO: validar seletor ao vivo — tbody pode ter id diferente em listView.seam
-  const tbody =
-    document.querySelector('table.rich-table tbody') ||
-    document.querySelector('tbody.rich-table-body') ||
-    document.querySelector('[id*="tbAudiencias"]') ||
-    document.querySelector('[id*="tbPauta"]') ||
-    null;
-  if (!tbody) return [];
+  // Validado ao vivo (2026-06-29) em PautaAudiencia/listView.seam:
+  // as linhas de dados são tr.rich-table-row; a 1ª célula (índice 0) é a coluna
+  // de ação (vazia/checkbox), então os campos começam no índice 1:
+  //   [1]=Data/hora "DD/MM/YYYY HH:MM" · [2]=Processo · [3]=Órgão · [4]=Partes
+  //   · [5]=Classe · [6]=Tipo · [7]=Sala · [8]=Situação
   const rows = [];
-  for (const row of tbody.querySelectorAll('tr.rich-table-row, tr[class*="row"]')) {
+  for (const row of document.querySelectorAll('tr.rich-table-row')) {
     const cells = [...row.children];
     const cellText = i => (cells[i] ? (cells[i].innerText || cells[i].textContent || '').trim() : '');
+    const dataHora = cellText(1);
+    // só linhas de dados reais (têm data DD/MM/AAAA HH:MM na coluna 1)
+    if (!/\d{2}\/\d{2}\/\d{2,4}\s+\d{2}:\d{2}/.test(dataHora)) continue;
     rows.push({
-      dataHora:     cellText(0),
-      processo:     cellText(1),
-      orgao:        cellText(2),
-      partes:       cellText(3),
-      classe:       cellText(4),
-      tipo:         cellText(5),
-      sala:         cellText(6),
-      situacao:     cellText(7),
+      dataHora,
+      processo:  cellText(2),
+      orgao:     cellText(3),
+      partes:    cellText(4),
+      classe:    cellText(5),
+      tipo:      cellText(6),
+      sala:      cellText(7),
+      situacao:  cellText(8),
     });
   }
   return rows;
@@ -451,13 +451,14 @@ async def _set_situacoes_todas(page) -> bool:
     """
     result = await page.evaluate(
         """() => {
-          // TODO: validar seletor ao vivo
+          // Validado ao vivo (2026-06-29): o checkbox "Todas" é
+          // processoAudienciaSearchForm:listaSituacoesT (sufixo ":listaSituacoesT").
           const SELECTORS = [
+            'input[id$=":listaSituacoesT"]',
+            'input[id$="listaSituacoesT"]',
             'input[id*="todas"]',
             'input[id*="Todas"]',
-            'input[name*="todas"]',
             'input[id*="situacaoTodas"]',
-            'input[id*="chkTodas"]',
           ];
           for (const sel of SELECTORS) {
             const cb = document.querySelector(sel);
@@ -512,20 +513,18 @@ async def _set_periodo(page, since: str | None, until: str | None) -> None:
 
     await page.evaluate(
         """([since_br, until_br]) => {
-          // TODO: validar seletor ao vivo
+          // Validado ao vivo (2026-06-29): o período é um range RichFaces único
+          // (dtInicioDecoration) com inputs From (De) e To (Até):
+          //   ...:dtInicioFromFormInputDate  e  ...:dtInicioToFormInputDate
           const DE_SELECTORS = [
+            'input[id$="dtInicioFromFormInputDate"]',
+            'input[id*="dtInicioFrom"]',
             'input[id*="dataInicio"]',
-            'input[id*="dtInicio"]',
-            'input[id*="periodoInicio"]',
-            'input[id*="dataIni"]',
-            'input[name*="dataInicio"]',
           ];
           const ATE_SELECTORS = [
+            'input[id$="dtInicioToFormInputDate"]',
+            'input[id*="dtInicioTo"]',
             'input[id*="dataFim"]',
-            'input[id*="dtFim"]',
-            'input[id*="periodoFim"]',
-            'input[id*="dtFinal"]',
-            'input[name*="dataFim"]',
           ];
           function setInput(selectors, value) {
             if (!value) return;
@@ -556,16 +555,22 @@ async def _click_pesquisar(page) -> bool:
     """
     result = await page.evaluate(
         r"""() => {
-          // TODO: validar seletor ao vivo
-          const cands = [
-            ...document.querySelectorAll('input[type=submit], button, a, input[type=button]')
-          ];
-          for (const el of cands) {
-            const t = (el.value || el.textContent || '').trim()
-              .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-            if (/^pesquis|^buscar|^filtrar/.test(t)) {
-              const r = el.getBoundingClientRect();
-              if (r.width > 0 && r.height > 0) { el.click(); return true; }
+          // Validado ao vivo (2026-06-29): o gatilho REAL da busca \u00e9 o input
+          // <input id="...:searchButton" value="Pesquisar"
+          //   onclick="showLoading(); A4J.AJAX.Submit('processoAudienciaSearchForm'...)">
+          // Fica ABAIXO da dobra (y~1264). N\u00c3O confundir com os <a>"Pesquisar"
+          // de navega\u00e7\u00e3o (menu / breadcrumb btn-voltar fora da tela) nem com a
+          // aba "PESQUISA" \u2014 nenhum deles dispara a consulta.
+          // el.click() ignora posi\u00e7\u00e3o e dispara o onclick a4j.
+          const byId = document.querySelector('input[id$=":searchButton"]')
+                    || document.getElementById('processoAudienciaSearchForm:searchButton');
+          if (byId) { byId.click(); return true; }
+          // Fallback: input/submit cujo onclick cont\u00e9m A4J.AJAX.Submit do form de busca
+          for (const el of document.querySelectorAll('input[type=submit], input[type=button], button')) {
+            const oc = el.getAttribute('onclick') || '';
+            const v  = (el.value || el.textContent || '').trim().toLowerCase();
+            if (oc.includes("A4J.AJAX.Submit('processoAudienciaSearchForm'") || v === 'pesquisar') {
+              el.click(); return true;
             }
           }
           return false;
@@ -582,15 +587,11 @@ async def _table_loaded(page) -> bool:
     """
     return await page.evaluate(
         r"""() => {
-          // TODO: validar seletor ao vivo
-          const tbody =
-            document.querySelector('table.rich-table tbody') ||
-            document.querySelector('tbody.rich-table-body') ||
-            document.querySelector('[id*="tbAudiencias"]') ||
-            document.querySelector('[id*="tbPauta"]');
-          if (tbody) {
-            const rows = tbody.querySelectorAll('tr.rich-table-row, tr[class*="row"]');
-            if (rows.length > 0) return true;
+          // Validado ao vivo (2026-06-29): linhas de dados são tr.rich-table-row
+          // com a data "DD/MM/AAAA HH:MM" na 2ª célula (índice 1).
+          for (const row of document.querySelectorAll('tr.rich-table-row')) {
+            const c1 = row.children[1];
+            if (c1 && /\d{2}\/\d{2}\/\d{2,4}\s+\d{2}:\d{2}/.test(c1.innerText || '')) return true;
           }
           // Mensagem de vazio também significa que a pesquisa concluiu.
           // Normaliza acentos (NFD + strip combining marks) p/ que 'audiência'
