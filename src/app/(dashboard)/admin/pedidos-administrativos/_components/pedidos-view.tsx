@@ -5,23 +5,25 @@ import { FileText, Hourglass, CalendarCheck, CheckCircle2, Plus } from "lucide-r
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
 import { pedidoStatusInfo } from "@/lib/pedidos-administrativos/status-visual";
 import { podeTransicionar } from "@/lib/pedidos-administrativos/transicoes";
 import { cn } from "@/lib/utils";
+import {
+  KpiChip,
+  CarreiraCard,
+  CarreiraField,
+  CarreiraListSkeleton,
+  ConfirmDeleteButton,
+} from "@/components/carreira";
 
-function Kpi({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.08]">
-      <Icon className="w-4 h-4 text-white/70" />
-      <div className="leading-tight">
-        <div className="text-sm font-semibold text-white">{value}</div>
-        <div className="text-[11px] text-white/60">{label}</div>
-      </div>
-    </div>
-  );
-}
+// Textareas kept as native — no shadcn Textarea import; styling kept consistent.
+const nativeCls =
+  "block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 " +
+  "dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
 
 const ACAO_LABEL: Record<string, string> = {
   em_analise: "Em análise",
@@ -29,8 +31,6 @@ const ACAO_LABEL: Record<string, string> = {
   indeferido: "Indeferir",
   cancelado: "Cancelar",
 };
-
-const inputCls = "block border rounded px-2 py-1 text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
 
 const FORM_EMPTY = {
   assunto: "",
@@ -69,19 +69,15 @@ export function PedidosView() {
     [data],
   );
 
-  const stats = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Kpi icon={Hourglass} label="Pendentes" value={kpis.pendentes} />
-      <Kpi icon={CalendarCheck} label="Em análise" value={kpis.emAnalise} />
-      <Kpi icon={CheckCircle2} label="Deferidos" value={kpis.deferidos} />
-      <Kpi icon={FileText} label="Total" value={kpis.total} />
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
       <CollapsiblePageHeader title="Pedidos administrativos" icon={FileText}>
-        {stats}
+        <div className="flex flex-wrap items-center gap-2">
+          <KpiChip icon={Hourglass} label="Pendentes" value={kpis.pendentes} />
+          <KpiChip icon={CalendarCheck} label="Em análise" value={kpis.emAnalise} />
+          <KpiChip icon={CheckCircle2} label="Deferidos" value={kpis.deferidos} />
+          <KpiChip icon={FileText} label="Total" value={kpis.total} />
+        </div>
       </CollapsiblePageHeader>
 
       <div className="p-4 space-y-4">
@@ -95,75 +91,69 @@ export function PedidosView() {
           </div>
 
           {showForm && (
-            <div className="mt-3 flex flex-wrap items-end gap-2">
-              <label className="text-xs w-full sm:w-auto">
-                Assunto *
-                <input
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+              <CarreiraField label="Assunto *" className="sm:col-span-2 lg:col-span-3">
+                <Input
                   type="text"
-                  className={cn(inputCls, "w-full sm:w-64 block")}
                   value={form.assunto}
                   onChange={(e) => setForm({ ...form, assunto: e.target.value })}
                 />
-              </label>
-              <label className="text-xs">
-                Data do pedido *
-                <input
+              </CarreiraField>
+              <CarreiraField label="Data do pedido *">
+                <Input
                   type="date"
-                  className={inputCls}
                   value={form.dataPedido}
                   onChange={(e) => setForm({ ...form, dataPedido: e.target.value })}
                 />
-              </label>
-              <label className="text-xs">
-                Prazo
-                <input
+              </CarreiraField>
+              <CarreiraField label="Prazo">
+                <Input
                   type="date"
-                  className={inputCls}
                   value={form.prazo}
                   onChange={(e) => setForm({ ...form, prazo: e.target.value })}
                 />
-              </label>
-              <label className="text-xs">
-                Protocolo SEI
-                <input
+              </CarreiraField>
+              <CarreiraField label="Protocolo SEI">
+                <Input
                   type="text"
-                  className={cn(inputCls, "w-36")}
+                  className="w-36"
                   value={form.seiProtocolo}
                   onChange={(e) => setForm({ ...form, seiProtocolo: e.target.value })}
                 />
-              </label>
-              <label className="text-xs w-full">
-                Descrição
+              </CarreiraField>
+              {/* Textareas kept as native — no shadcn Textarea used in ferias template */}
+              <CarreiraField label="Descrição" className="sm:col-span-2 lg:col-span-3">
                 <textarea
-                  className={cn(inputCls, "w-full h-16 resize-y")}
+                  className={cn(nativeCls, "h-16 resize-y")}
                   value={form.descricao}
                   onChange={(e) => setForm({ ...form, descricao: e.target.value })}
                 />
-              </label>
-              <label className="text-xs w-full">
-                Observação
+              </CarreiraField>
+              <CarreiraField label="Observação" className="sm:col-span-2 lg:col-span-3">
                 <textarea
-                  className={cn(inputCls, "w-full h-16 resize-y")}
+                  className={cn(nativeCls, "h-16 resize-y")}
                   value={form.observacao}
                   onChange={(e) => setForm({ ...form, observacao: e.target.value })}
                 />
-              </label>
-              <Button
-                size="sm"
-                disabled={!form.assunto || !form.dataPedido || criar.isPending}
-                onClick={() =>
-                  criar.mutate({
-                    assunto: form.assunto,
-                    descricao: form.descricao || null,
-                    dataPedido: form.dataPedido,
-                    prazo: form.prazo || null,
-                    seiProtocolo: form.seiProtocolo || null,
-                    observacao: form.observacao || null,
-                  })
-                }
-              >
-                Salvar
-              </Button>
+              </CarreiraField>
+              <div>
+                <Button
+                  size="sm"
+                  disabled={!form.assunto || !form.dataPedido || criar.isPending}
+                  onClick={() =>
+                    criar.mutate({
+                      assunto: form.assunto,
+                      descricao: form.descricao || null,
+                      dataPedido: form.dataPedido,
+                      prazo: form.prazo || null,
+                      seiProtocolo: form.seiProtocolo || null,
+                      observacao: form.observacao || null,
+                    })
+                  }
+                >
+                  Salvar
+                </Button>
+              </div>
             </div>
           )}
 
@@ -174,12 +164,16 @@ export function PedidosView() {
 
         {/* List */}
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <CarreiraListSkeleton rows={3} />
         ) : data.length === 0 ? (
-          <EmptyState icon={FileText} title="Nenhum pedido administrativo cadastrado" />
+          <EmptyState
+            icon={FileText}
+            title="Nenhum pedido administrativo cadastrado"
+            description='Clique em "Novo pedido" para registrar um pedido.'
+          />
         ) : (
           data.map((p) => (
-            <section key={p.id} className={cn(CARD_STYLE.base)}>
+            <CarreiraCard key={p.id} accent="administrativo" className="p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-sm font-medium truncate">{p.assunto}</div>
@@ -205,28 +199,22 @@ export function PedidosView() {
                         {ACAO_LABEL[s]}
                       </Button>
                     ))}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-[11px] text-rose-600"
+                  <ConfirmDeleteButton
+                    onConfirm={() => remover.mutate({ id: p.id })}
+                    title="Excluir pedido?"
+                    description="Remove este pedido administrativo definitivamente."
                     disabled={remover.isPending}
-                    onClick={() => {
-                      if (window.confirm("Excluir este pedido?")) {
-                        remover.mutate({ id: p.id });
-                      }
-                    }}
-                  >
-                    Excluir
-                  </Button>
+                  />
                 </div>
               </div>
+              {/* Per-card mutation-error scoping preserved exactly */}
               {atualizar.error && atualizar.variables?.id === p.id && (
                 <p className="mt-2 text-[11px] text-rose-600">{atualizar.error.message}</p>
               )}
               {remover.error && remover.variables?.id === p.id && (
                 <p className="mt-2 text-[11px] text-rose-600">{remover.error.message}</p>
               )}
-            </section>
+            </CarreiraCard>
           ))
         )}
       </div>
