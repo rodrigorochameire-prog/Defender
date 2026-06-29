@@ -45,13 +45,12 @@
 **Files:**
 - Modify: `src/lib/db/schema/agenda.ts` (drizzle import line; `registros` table ~L196)
 
-- [ ] **Step 1: Add `date` to the drizzle import**
+- [ ] **Step 1: Confirm `date` is already imported (NO code change)**
 
-In `src/lib/db/schema/agenda.ts`, the top import from `drizzle-orm/pg-core` currently lists `pgTable, serial, integer, varchar, text, timestamp, jsonb` (no `date`). Add `date`:
+`src/lib/db/schema/agenda.ts:1-12` already imports `date` (line 9) from `drizzle-orm/pg-core`, alongside `boolean` and `index` (used 44× in the file). **Do NOT rewrite the import line** — doing so risks dropping `boolean`/`index` and breaking the build. Just verify:
 
-```ts
-import { pgTable, serial, integer, varchar, text, timestamp, jsonb, date } from "drizzle-orm/pg-core";
-```
+Run: `grep -n "from \"drizzle-orm/pg-core\"" src/lib/db/schema/agenda.ts`
+Expected: the import already includes `date`. Proceed to Step 2.
 
 - [ ] **Step 2: Add the `prazo` column** to the `registros` pgTable, right after `status` (~L196):
 
@@ -340,9 +339,9 @@ describe("RegistroCard", () => {
 Run: `npx vitest run src/components/registros/__tests__/registro-card.test.tsx`
 Expected: FAIL (props/markup mismatch or missing prazo badge).
 
-- [ ] **Step 3: Update `RegistroCard`** to the refined anatomy. Keep the existing `onEdit`/`onDelete` hover actions; reuse `REGISTRO_TIPOS[tipo]` for `{ Icon, label, color, bg, text }`. Add an optional `showPrazo` prop that renders an amber prazo chip (`dd/MM`) when `registro.prazo` is set. Structure: `[tipo badge with <Icon/> + label] [title (truncate)] [relative time]` / 2-line clamped preview (`line-clamp-2`) / `[autor]`. Use existing relative-time/`date-fns` helpers already imported in the file (use the project's `safeFmt` for any date formatting — see memory note on date-fns throwing on invalid dates).
+- [ ] **Step 3: Update `RegistroCard`** to the refined anatomy. Keep the existing `onEdit`/`onDelete` hover actions; reuse `REGISTRO_TIPOS[tipo]` for `{ Icon, label, color, bg, text }`. Add an optional `showPrazo` prop that renders an amber prazo chip (`dd/MM`) when `registro.prazo` is set. Structure: `[tipo badge with <Icon/> + label] [title (truncate)] [relative time]` / 2-line clamped preview (`line-clamp-2`) / `[autor]`. `registro-card.tsx:4` already imports `format` from `date-fns`.
 
-> Pure formatting helpers (`dd/MM` from a YYYY-MM-DD string, relative time) — if not already present, add small local functions guarded against invalid input. Do NOT call `date-fns` `format()` directly on possibly-invalid values.
+> **Date safety:** there is NO `safeFmt` helper in this codebase. Add a small **local** guarded formatter in this file for the prazo chip — e.g. `const fmtPrazo = (s: string | null) => { if (!s) return null; const d = new Date(s); return isNaN(d.getTime()) ? null : format(d, "dd/MM"); }` — and reuse the same guard pattern for relative time. Do NOT call `date-fns` `format()` directly on a possibly-invalid value (project memory: it throws).
 
 - [ ] **Step 4: Run — verify it passes**
 
@@ -513,7 +512,7 @@ git commit -m "feat(registros): RegistrosPanel orchestrator (composer + toolbar 
 
 ## Phase 4 — Wire the 5 surfaces
 
-> After each surface, run `npm run typecheck` and a quick manual smoke (the dev server must use Turbopack — see project memory; `npm run dev`).
+> After each surface, run `npm run typecheck` and a quick manual smoke. **The dev server MUST use Turbopack** (project memory: webpack `next dev` crashes the react-pdf viewer / cross-route `[id]` imports, and these surfaces mount `RegistroComAutosDialog` = the PDF split view). Use **`npm run dev:turbo`**, NOT `npm run dev`.
 
 ### Task 9: Demanda drawer (`DemandaQuickPreview.tsx`)
 
@@ -539,7 +538,7 @@ git commit -m "feat(registros): RegistrosPanel orchestrator (composer + toolbar 
 
 - [ ] **Step 2:** Remove now-dead local state/handlers (`novoRegistroOpen` and its toggles) if no longer referenced. Keep `registroComAutosOpen`/`setRegistroComAutosOpen` and the `RegistroComAutosDialog` mount (now opened via `onAbrirAutos`). Keep the footer quick-action buttons OR drop them in favor of the panel's empty-state actions — **keep them** (they're useful when registros exist too).
 - [ ] **Step 3:** Remove the `RegistroEditor` import if unused; remove the `RegistrosTimeline` import.
-- [ ] **Step 4: Typecheck + manual smoke** — open a demanda drawer: empty state shows composer + "Agendar audiência"/"Adicionar prazo"; add a Ciência that designates an audiência → confirm the audiência still auto-schedules (side-effect preserved); "Abrir autos" opens the split dialog.
+- [ ] **Step 4: Typecheck + manual smoke** (`npm run dev:turbo`) — open a demanda drawer: empty state shows composer + "Agendar audiência"/"Adicionar prazo"; add a Ciência that designates an audiência → confirm the audiência still auto-schedules (side-effect preserved); "Abrir autos" opens the split dialog.
 
 Run: `npm run typecheck`
 Expected: PASS.
@@ -557,6 +556,7 @@ git commit -m "feat(registros): wire RegistrosPanel into demanda drawer"
 - Modify: `src/components/processo/sheet/processo-sheet.tsx:89`
 - Modify: `src/components/atendimentos/atendimento-detail-sheet.tsx` (L491-514)
 - Modify: `src/components/agenda/registro-audiencia/tabs/tab-anotacoes.tsx` (L142-151)
+- Modify (also live `RegistrosTimeline` mounts — easy to miss): `src/app/(dashboard)/admin/processos/[id]/page.tsx:97` (`<RegistrosTimeline processoId={id} emptyHint=... />` → `<RegistrosPanel scope={{ processoId: id }} variant="page" emptyHint=... />`) and `src/app/(dashboard)/admin/assistidos/[id]/caso/[casoId]/processo/[procId]/page.tsx` (same processo-scoped swap). These MUST be migrated here or in Task 11 before `registros-timeline.tsx` is deleted, or the build breaks.
 
 - [ ] **Step 1 — Processo sheet:** replace `<RegistrosTimeline processoId={processoId} />` with `<RegistrosPanel scope={{ processoId }} variant="page" />`. (No `assistidoId` → composer hidden by the guard; read-only timeline. If the sheet has `assistidoId` in scope, pass it to enable the composer.)
 - [ ] **Step 2 — Atendimento sheet:** replace the `RegistroEditor` + `RegistrosTimeline` pair (L491-514) with `<RegistrosPanel scope={{ assistidoId: a.assistidoId, processoId: a.processoId ?? undefined }} variant="tab" tipoDefault="anotacao" tiposPrimarios={["anotacao","providencia","diligencia","peticao"]} emptyHint="Sem registros para este assistido ainda." />`. Remove the now-redundant local `novoRegistro` toggle + its button.
@@ -606,7 +606,7 @@ git commit -m "feat(registros): reskin assistido feed to RegistroCard; remove re
 Run: `npm run typecheck && npm run lint && npx vitest run`
 Expected: all PASS (note pre-existing `CI_QUARANTINE` exclusions only apply when `CI` is set).
 
-- [ ] **Step 2: Manual cross-surface checklist** (dev server on Turbopack: `npm run dev`):
+- [ ] **Step 2: Manual cross-surface checklist** (dev server on Turbopack: `npm run dev:turbo`):
   - [ ] Demanda drawer: empty → composer + quick actions; add Ciência w/ audiência designation → audiência auto-schedules; add Diligência w/ prazo → appears pinned in **Pendências** with countdown; "Abrir autos" split view works.
   - [ ] Processo detail: read-only timeline renders (or composer if assistido in scope).
   - [ ] Atendimento sheet: composer + timeline render; create invalidates list.
