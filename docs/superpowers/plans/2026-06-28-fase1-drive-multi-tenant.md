@@ -23,7 +23,8 @@
 | `src/lib/services/__tests__/drive-folders.test.ts` | testes do resolver | **Create** |
 | `src/lib/services/google-drive-peruser.ts` | provisionamento por usuário | **Modify**: `createUserDriveStructure` cria subpastas de atribuição e grava no grupo |
 | `src/lib/utils/text-extraction.ts` | (atual) constante global de folders | **Modify**: marcar `ATRIBUICAO_FOLDER_IDS` como legado e remover usos |
-| `src/lib/trpc/routers/drive.ts` | router tRPC de Drive | **Modify**: trocar usos da constante pelo resolver; add mutation `provisionMyDrive` |
+| `src/lib/trpc/routers/drive.ts` | router tRPC de Drive | **Modify**: trocar TODOS (~15) os usos da constante pelo resolver; add mutation `provisionMyDrive` |
+| `src/lib/trpc/routers/distribuicao.ts` | router de distribuição | **Modify**: trocar uso de `ATRIBUICAO_FOLDER_IDS` pelo resolver |
 | `src/app/api/analyze/route.ts` | rota de análise premium | **Modify**: remover `process.env.HOME` e `drivePath` literais |
 | `src/components/demandas-premium/pje-import-modal.tsx` | modal de import PJe | **Modify**: remover `DRIVE_BASE_PATH` hardcoded |
 | `scripts/seed-drive-group-rodrigo.mjs` | seed do grupo do Rodrigo | **Create**: cria o grupo apontando para as pastas atuais |
@@ -59,17 +60,21 @@ No topo do arquivo, garantir imports de `jsonb`, `serial`, `text`, `integer`, `t
 // drive_groups — conjunto de pastas por atribuição compartilhável entre defensores.
 // O mapa atribuicaoFolders substitui a constante global ATRIBUICAO_FOLDER_IDS.
 export const driveGroups = pgTable("drive_groups", {
-  id: serial().primaryKey().notNull(),
+  id: serial("id").primaryKey().notNull(),
   ownerUserId: integer("owner_user_id").notNull(),
-  label: text().notNull(),
-  // { JURI: "<folderId>", VVD: "...", EP: "...", SUBSTITUICAO: "...", GRUPO_JURI: "...", CRIMINAL: "..." }
+  label: text("label").notNull(),
+  // IMPORTANTE: valores são ARRAYS — uma atribuição pode ter >1 pasta.
+  // Ex. real do Rodrigo: VVD = [Criminal, MPU]; SUBSTITUICAO = [criminal, cível]; GRUPO_JURI = [grupo, extra].
+  // { JURI: ["<id>"], VVD: ["<id1>","<id2>"], EP: ["<id>"], SUBSTITUICAO: [...], GRUPO_JURI: [...], CRIMINAL: ["<id>"] }
   atribuicaoFolders: jsonb("atribuicao_folders").default({}).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-}, (table) => ({
-  ownerIdx: index("drive_groups_owner_idx").on(table.ownerUserId),
-}));
+}, (table) => [
+  index("drive_groups_owner_idx").on(table.ownerUserId),
+]);
 ```
+
+> **Convenção de estilo:** `drive.ts` usa nomes de coluna explícitos (`serial("id")`) e extras de tabela em **forma de array** (`(table) => [ ... ]`). Seguir essa convenção em todas as edições de schema desta fase.
 
 - [ ] **Step 2: Adicionar `userId` em `driveFiles` e `driveSyncFolders` (mesmo arquivo)**
 
@@ -139,21 +144,30 @@ A lógica pura (escolher o folderId do mapa) é testada sem banco; o wrapper que
 ```typescript
 // src/lib/services/__tests__/drive-folders.test.ts
 import { describe, expect, it } from "vitest";
-import { pickAtribuicaoFolder, ATRIBUICOES } from "../drive-folders";
+import { pickAtribuicaoFolders, pickAtribuicaoFolderPrimary, ATRIBUICOES } from "../drive-folders";
 
-describe("pickAtribuicaoFolder", () => {
-  const folders = { JURI: "fJuri", VVD: "fVvd", EP: "fEp" };
+describe("pickAtribuicaoFolders (multi-pasta)", () => {
+  const folders = { JURI: ["fJuri"], VVD: ["fVvdCrim", "fVvdMpu"], EP: ["fEp"] };
 
-  it("retorna o folderId da atribuição quando existe", () => {
-    expect(pickAtribuicaoFolder(folders, "VVD")).toBe("fVvd");
+  it("retorna todas as pastas da atribuição (inclui extras)", () => {
+    expect(pickAtribuicaoFolders(folders, "VVD")).toEqual(["fVvdCrim", "fVvdMpu"]);
   });
 
-  it("retorna null quando a atribuição não está mapeada", () => {
-    expect(pickAtribuicaoFolder(folders, "CRIMINAL")).toBeNull();
+  it("retorna [] quando a atribuição não está mapeada", () => {
+    expect(pickAtribuicaoFolders(folders, "CRIMINAL")).toEqual([]);
   });
 
-  it("retorna null para mapa vazio", () => {
-    expect(pickAtribuicaoFolder({}, "JURI")).toBeNull();
+  it("retorna [] para mapa vazio", () => {
+    expect(pickAtribuicaoFolders({}, "JURI")).toEqual([]);
+  });
+
+  it("tolera valor string legado tratando como array de 1", () => {
+    expect(pickAtribuicaoFolders({ EP: "fEpLegado" } as any, "EP")).toEqual(["fEpLegado"]);
+  });
+
+  it("primary retorna a primeira pasta, ou null se vazio", () => {
+    expect(pickAtribuicaoFolderPrimary(folders, "VVD")).toBe("fVvdCrim");
+    expect(pickAtribuicaoFolderPrimary({}, "VVD")).toBeNull();
   });
 
   it("ATRIBUICOES cobre as 6 atribuições do domínio", () => {
@@ -183,43 +197,73 @@ export const ATRIBUICOES = [
 ] as const;
 export type Atribuicao = (typeof ATRIBUICOES)[number];
 
-/** Lógica pura: escolhe o folderId da atribuição no mapa do grupo. */
-export function pickAtribuicaoFolder(
-  folders: Record<string, string>,
+/** Mapa armazenado no grupo: atribuição → lista de pastas (>1 por causa de MPU/cível/extras). */
+export type AtribuicaoFoldersMap = Record<string, string[] | string>;
+
+/** Lógica pura: TODAS as pastas da atribuição (tolera valor string legado). */
+export function pickAtribuicaoFolders(
+  folders: AtribuicaoFoldersMap,
   atribuicao: Atribuicao,
-): string | null {
-  return folders?.[atribuicao] ?? null;
+): string[] {
+  const v = folders?.[atribuicao];
+  if (v == null) return [];
+  return Array.isArray(v) ? v : [v];
 }
 
-/** Resolve a pasta de uma atribuição para um defensor, via o grupo de Drive dele. */
-export async function resolveAtribuicaoFolder(
-  userId: number,
+/** Lógica pura: pasta primária (primeira) ou null. */
+export function pickAtribuicaoFolderPrimary(
+  folders: AtribuicaoFoldersMap,
   atribuicao: Atribuicao,
-): Promise<string | null> {
+): string | null {
+  return pickAtribuicaoFolders(folders, atribuicao)[0] ?? null;
+}
+
+async function loadGroupFolders(userId: number): Promise<AtribuicaoFoldersMap> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
     columns: { driveGroupId: true },
   });
-  if (!user?.driveGroupId) return null;
-
+  if (!user?.driveGroupId) return {};
   const group = await db.query.driveGroups.findFirst({
     where: eq(driveGroups.id, user.driveGroupId),
   });
-  const folders = (group?.atribuicaoFolders ?? {}) as Record<string, string>;
-  return pickAtribuicaoFolder(folders, atribuicao);
+  return (group?.atribuicaoFolders ?? {}) as AtribuicaoFoldersMap;
+}
+
+/** TODAS as pastas de uma atribuição para um defensor (use nos loops de sync/scan). */
+export async function resolveAtribuicaoFolders(
+  userId: number,
+  atribuicao: Atribuicao,
+): Promise<string[]> {
+  return pickAtribuicaoFolders(await loadGroupFolders(userId), atribuicao);
+}
+
+/** Pasta primária de uma atribuição (use onde se espera 1 pasta, ex. prompt de análise). */
+export async function resolveAtribuicaoFolder(
+  userId: number,
+  atribuicao: Atribuicao,
+): Promise<string | null> {
+  return pickAtribuicaoFolderPrimary(await loadGroupFolders(userId), atribuicao);
+}
+
+/** Mapa completo do grupo (use para iterar todas as atribuições de uma vez). */
+export async function resolveAllAtribuicaoFolders(
+  userId: number,
+): Promise<AtribuicaoFoldersMap> {
+  return loadGroupFolders(userId);
 }
 ```
 
 - [ ] **Step 4: Rodar e ver passar**
 
 Run: `npm test -- --run src/lib/services/__tests__/drive-folders.test.ts`
-Expected: PASS (4 testes).
+Expected: PASS (6 testes).
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/lib/services/drive-folders.ts src/lib/services/__tests__/drive-folders.test.ts
-git commit -m "feat(drive): resolver resolveAtribuicaoFolder por grupo de Drive (TDD)"
+git commit -m "feat(drive): resolver de pastas por grupo (multi-pasta por atribuição, TDD)"
 ```
 
 ---
@@ -238,13 +282,16 @@ Cria 1 grupo cujo `atribuicaoFolders` são exatamente as pastas hoje em `ATRIBUI
 // Cria o drive_group do Rodrigo com as pastas atuais e vincula o usuário.
 import { createClient } from "@supabase/supabase-js";
 
+// ARRAYS — inclui as pastas primárias (ATRIBUICAO_FOLDER_IDS) E as extras
+// (EXTRA_ATRIBUICAO_FOLDERS) de src/lib/utils/text-extraction.ts, para NÃO regredir
+// o scan das pastas VVD-MPU / Substituição-cível / Grupo-Júri-extra.
 const ATRIBUICAO_FOLDERS = {
-  JURI: "1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-",
-  VVD: "1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti",
-  EP: "1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q",
-  SUBSTITUICAO: "1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU",
-  GRUPO_JURI: "1LUW4yauxm6iaJYCrjRgXAnSgTZIbel2j",
-  CRIMINAL: "1xMwqXkBgEc3bsJkO3ioPt4u50D4lpJ5u",
+  JURI: ["1_S-2qdqO0n1npNcs0PnoagBM4ZtwKhk-"],
+  VVD: ["1fN2GiGlNzc61g01ZeBMg9ZBy1hexx0ti", "1D-tHrNqU0sAczQP4NAslm7ofthC73COe"], // Criminal + MPU
+  EP: ["1-mbwgP3-ygVVjoN9RPTbHwnaicnBAv0q"],
+  SUBSTITUICAO: ["1eNDT0j-5KQkzYXbqK6IBa9sIMT3QFWVU", "1ym7x4l3w3I8ox_FCpZo3I-miDJSZ3E46"], // criminal + cível
+  GRUPO_JURI: ["1LUW4yauxm6iaJYCrjRgXAnSgTZIbel2j", "1sET3k_-5c2Mo8D7xF-cJCKzxgI_yh4dW"], // grupo + extra
+  CRIMINAL: ["1xMwqXkBgEc3bsJkO3ioPt4u50D4lpJ5u"],
 };
 
 const RODRIGO_EMAIL = "rodrigorochameire@gmail.com";
@@ -283,8 +330,8 @@ Expected: "OK: grupo N criado e vinculado…" (idempotente se rodar de novo).
 
 - [ ] **Step 3: Verificar no banco**
 
-Run: `node -e "import('@supabase/supabase-js').then(async({createClient})=>{const s=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY);const{data}=await s.from('drive_groups').select('*');console.log(data)})"`
-Expected: 1 linha com os 6 folderIds.
+Run: `node -e "import('@supabase/supabase-js').then(async({createClient})=>{const s=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY);const{data}=await s.from('drive_groups').select('*');console.log(JSON.stringify(data,null,2))})"`
+Expected: 1 linha; `atribuicao_folders` com arrays (VVD e SUBSTITUICAO com 2 IDs, GRUPO_JURI com 2).
 
 - [ ] **Step 4: Commit**
 
@@ -295,35 +342,46 @@ git commit -m "feat(drive): seed do grupo de Drive do Rodrigo com as pastas atua
 
 ---
 
-## Task 4: Trocar os usos de `ATRIBUICAO_FOLDER_IDS` no router de Drive
+## Task 4: Trocar TODOS os usos de `ATRIBUICAO_FOLDER_IDS` / `EXTRA_ATRIBUICAO_FOLDERS`
 
 **Files:**
-- Modify: `src/lib/trpc/routers/drive.ts` (usos em ~linhas 53, 56, 125–132)
-- Modify: `src/lib/utils/text-extraction.ts` (marcar constante como legado)
+- Modify: `src/lib/trpc/routers/drive.ts` (**~15 call-sites** — NÃO confiar em números de linha; mapear por Grep)
+- Modify: `src/lib/trpc/routers/distribuicao.ts` (importa a constante — ~linha 20)
+- Modify: `src/lib/utils/text-extraction.ts` (marcar constantes como legado)
 
-- [ ] **Step 1: Mapear os usos atuais**
+> ⚠️ O escopo aqui é maior do que parece: além de acessos `ATRIBUICAO_FOLDER_IDS[atribuicao]`, há **loops** que iteram `Object.entries(ATRIBUICAO_FOLDER_IDS)` e usos de `EXTRA_ATRIBUICAO_FOLDERS` (pastas VVD-MPU / Substituição-cível / Grupo-Júri-extra). Migrar TODOS — senão Task 10 (remoção) quebra o build, ou o scan perde pastas.
 
-Run: `Grep` por `ATRIBUICAO_FOLDER_IDS` em `src/` e listar cada ocorrência.
-Expected: ocorrências em `drive.ts`, `drive-constants.ts`, `admin/settings/drive/page.tsx`, `api/analyze/route.ts`.
+- [ ] **Step 1: Mapear TODOS os usos (não usar números de linha fixos)**
 
-- [ ] **Step 2: No `drive.ts`, resolver por usuário**
+Run: `Grep` por `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` em `src/`, com `-n`, listando cada ocorrência.
+Expected: ~15 sites em `drive.ts` (incluindo loops `Object.entries`), 1 em `distribuicao.ts`, usos em `drive-constants.ts`, `api/analyze/route.ts`, e o **duplicado local** em `admin/settings/drive/page.tsx` (define a própria cópia — tratar na Task 10). Anotar a lista completa antes de editar.
 
-Onde hoje o router lê `ATRIBUICAO_FOLDER_IDS[atribuicao]`, trocar por `await resolveAtribuicaoFolder(ctx.session.user.id, atribuicao)` (importar de `@/lib/services/drive-folders`). Onde o router itera todas as atribuições, montar o conjunto a partir do `driveGroups.atribuicaoFolders` do usuário (uma leitura do grupo) em vez da constante. Tratar `null` (grupo ausente) retornando lista vazia + flag `needsProvisioning: true`.
+- [ ] **Step 2: No `drive.ts`, resolver por usuário (acessos diretos)**
 
-- [ ] **Step 3: Type-check**
+Onde lê `ATRIBUICAO_FOLDER_IDS[atribuicao]`, trocar por `await resolveAtribuicaoFolders(ctx.session.user.id, atribuicao)` (array — importar de `@/lib/services/drive-folders`). Onde antes pegava 1 pasta, iterar o array.
 
-Run: `npm run typecheck` (ou `npx tsc --noEmit`)
-Expected: sem erros relacionados a `drive.ts`.
+- [ ] **Step 3: No `drive.ts`, migrar os loops `Object.entries(...)` + extras**
 
-- [ ] **Step 4: Marcar a constante como legado em `text-extraction.ts`**
+Onde o router itera todas as atribuições (e onde concatena `EXTRA_ATRIBUICAO_FOLDERS`), trocar por `const map = await resolveAllAtribuicaoFolders(ctx.session.user.id)` e iterar `Object.entries(map)` achatando os arrays (`Object.values(map).flat()`). Isso já inclui as extras (foram seedadas no mapa). Tratar mapa vazio (grupo ausente) retornando lista vazia + flag `needsProvisioning: true`.
 
-Adicionar comentário `@deprecated use resolveAtribuicaoFolder` acima de `ATRIBUICAO_FOLDER_IDS` (não remover ainda — `drive-constants.ts` / página admin ainda usam para *labels*; a remoção total é a última task).
+- [ ] **Step 4: Migrar `distribuicao.ts`**
 
-- [ ] **Step 5: Commit**
+Mesmo tratamento: substituir o uso da constante pelo resolver (`resolveAtribuicaoFolders` / `resolveAllAtribuicaoFolders`) com o `userId` do contexto. Se o uso for só de *label*, usar `ATRIBUICAO_LABELS` (criado na Task 10) em vez de folderId.
+
+- [ ] **Step 5: Marcar as constantes como legado em `text-extraction.ts`**
+
+`@deprecated use resolveAtribuicaoFolder(s)` acima de `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` (remoção total é a Task 10; aqui só marcar e zerar os leitores de folderId).
+
+- [ ] **Step 6: Type-check**
+
+Run: `npm run typecheck`
+Expected: sem erros em `drive.ts` / `distribuicao.ts`.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/lib/trpc/routers/drive.ts src/lib/utils/text-extraction.ts
-git commit -m "refactor(drive): router resolve pastas por grupo do usuário (substitui constante global)"
+git add src/lib/trpc/routers/drive.ts src/lib/trpc/routers/distribuicao.ts src/lib/utils/text-extraction.ts
+git commit -m "refactor(drive): resolve pastas por grupo em drive.ts/distribuicao.ts (inclui loops + extras)"
 ```
 
 ---
@@ -339,17 +397,17 @@ A rota da nuvem não deve assumir `process.env.HOME` nem `Meu Drive/1 - Defensor
 
 Em `ATRIBUICAO_CONFIG`, remover o campo `drivePath` de cada entrada (mantém `label`, `palette`, `skillPaths`). Remover o `DEFAULT_CONFIG.drivePath`.
 
-- [ ] **Step 2: Resolver o folder da atribuição via grupo**
+- [ ] **Step 2: Resolver o folder da atribuição via grupo (thread do `userId` + async)**
 
-Onde hoje monta `const drivePath = join(homePath, config.drivePath)`, trocar por:
+O `drivePath` hoje é montado dentro da função builder do prompt (~linha 119), que recebe só `atribuicao`. É preciso: (a) **passar o `userId`** (obtido do `getSession` no handler `POST`, ~linha 765+) para o builder, e (b) tornar o builder **async**. Trocar a montagem do caminho por:
 ```typescript
 import { resolveAtribuicaoFolder } from "@/lib/services/drive-folders";
-// ...
-const atribuicaoFolderId = await resolveAtribuicaoFolder(userId, atribuicaoKey);
-// O prompt passa a referenciar a pasta por ID/URL do Drive, não por caminho local:
+// dentro do builder (agora async, recebendo userId):
+const atribuicaoFolderId = await resolveAtribuicaoFolder(userId, atribuicaoKey); // pasta primária
+// O prompt referencia a pasta por URL do Drive, não por caminho local:
 // `Pasta da atribuição no Drive: https://drive.google.com/drive/folders/${atribuicaoFolderId}`
 ```
-Ajustar o trecho do prompt (linha ~154) para usar a URL do Drive em vez de `${drivePath}/${assistidoNome}/`.
+Ajustar o trecho do prompt (~linha 154) para usar a URL do Drive em vez de `${drivePath}/${assistidoNome}/`, e atualizar o(s) `await` no chamador do builder.
 
 - [ ] **Step 3: `SKILLS_BASE` — remover o fallback fixo do home do Rodrigo**
 
@@ -418,9 +476,10 @@ const ATRIBUICAO_SUBFOLDERS: Array<{ key: string; name: string }> = [
   { key: "CRIMINAL", name: "Processos" },
 ];
 
-const atribuicaoFolders: Record<string, string> = {};
+// valores são ARRAYS (consistente com o schema/resolver); defensor novo começa com 1 pasta cada.
+const atribuicaoFolders: Record<string, string[]> = {};
 for (const sf of ATRIBUICAO_SUBFOLDERS) {
-  atribuicaoFolders[sf.key] = await createSubfolder(accessToken, rootFolder.id, sf.name);
+  atribuicaoFolders[sf.key] = [await createSubfolder(accessToken, rootFolder.id, sf.name)];
 }
 ```
 
@@ -510,35 +569,42 @@ git commit -m "docs(onboarding): convenção de organização das pastas do Driv
 
 ---
 
-## Task 10: Remoção final da constante global + verificação de fim de fase
+## Task 10: Remoção final das constantes de folderId + verificação de fim de fase
 
 **Files:**
-- Modify: `src/components/drive/drive-constants.ts`, `src/app/(dashboard)/admin/settings/drive/page.tsx` (parar de depender de `ATRIBUICAO_FOLDER_IDS` para *dados*; manter só labels se necessário)
-- Modify: `src/lib/utils/text-extraction.ts` (remover `ATRIBUICAO_FOLDER_IDS`/`EXTRA_ATRIBUICAO_FOLDERS` se não houver mais leitores de folderId)
+- Modify: `src/components/drive/drive-constants.ts` (re-exporta a constante; separar labels de IDs)
+- Modify: `src/app/(dashboard)/admin/settings/drive/page.tsx` (**duplicado local** próprio de `ATRIBUICAO_FOLDER_IDS`/`SPECIAL_FOLDER_IDS` — não é import compartilhado; tratar à parte)
+- Modify: `src/lib/utils/text-extraction.ts` (remover `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` quando não houver mais leitor de folderId)
 
-- [ ] **Step 1: Reconfirmar que não há leitor de folderId pela constante**
+> **NÃO remover `SPECIAL_FOLDER_IDS`**: está em uso em `api/webhooks/drive/route.ts`, `api/drive/upload/route.ts`, `whatsapp-chat.ts`, `inngest/functions.ts` e `drive-constants.ts`. Fica fora do escopo da Fase 1.
 
-Run: `Grep` por `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS`.
-Expected: nenhum uso que leia folderId para sync/análise (só labels, se restar).
+- [ ] **Step 1: Reconfirmar que não há leitor de folderId pelas constantes**
 
-- [ ] **Step 2: Remover/segregar a constante**
+Run: `Grep -n` por `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS` em todo `src/`.
+Expected: nenhum uso que leia folderId para sync/análise/distribuição (de `drive.ts`/`distribuicao.ts`/`analyze` já migrados nas Tasks 4–5). Restam, no máximo, usos de *label* e o duplicado local da página admin.
 
-Se restarem só usos de *label*, extrair um `ATRIBUICAO_LABELS` separado e remover os IDs. Se nada restar, remover as duas constantes e o `SPECIAL_FOLDER_IDS` se órfão.
+- [ ] **Step 2: Separar labels de IDs**
 
-- [ ] **Step 3: Suíte completa + typecheck + lint**
+Extrair `ATRIBUICAO_LABELS` (mapa atribuição→rótulo) em `text-extraction.ts` (ou `drive-constants.ts`) e apontar `drive-constants.ts` para ele. Remover então `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS` (IDs) de `text-extraction.ts`.
+
+- [ ] **Step 3: Substituir o duplicado local da página admin**
+
+Em `admin/settings/drive/page.tsx`, trocar a cópia local `ATRIBUICAO_FOLDER_IDS` por dados vindos do `myDriveStatus`/grupo (ou por `ATRIBUICAO_LABELS` se for só exibição). Confirmar que a página passa a refletir o grupo do usuário logado, não as pastas fixas do Rodrigo.
+
+- [ ] **Step 4: Suíte completa + typecheck + lint**
 
 Run: `npm test -- --run && npm run typecheck && npm run lint`
 Expected: tudo verde (exceto quarentena conhecida de Postgres).
 
-- [ ] **Step 4: Verificação manual de não-regressão (conta do Rodrigo)**
+- [ ] **Step 5: Verificação manual de não-regressão (conta do Rodrigo)**
 
-Confirmar que, com o grupo seedado (Task 3), o sync e a análise da conta do Rodrigo continuam usando exatamente as mesmas pastas de antes.
+Confirmar que, com o grupo seedado (Task 3, **com as extras**), o sync e a análise da conta do Rodrigo continuam varrendo exatamente as mesmas pastas de antes — inclusive VVD-MPU, Substituição-cível e Grupo-Júri-extra.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add -A
-git commit -m "refactor(drive): remove ATRIBUICAO_FOLDER_IDS global; folders 100% por grupo (fim da Fase 1)"
+git commit -m "refactor(drive): remove constantes de folderId globais; folders 100% por grupo (fim da Fase 1)"
 ```
 
 ---
@@ -546,8 +612,9 @@ git commit -m "refactor(drive): remove ATRIBUICAO_FOLDER_IDS global; folders 100
 ## Critérios de aceite da Fase 1
 
 - [ ] `drive_groups` existe; `users.driveGroupId`, `driveFiles.userId`, `driveSyncFolders.userId` aplicados.
-- [ ] Resolver `resolveAtribuicaoFolder` cobre as 6 atribuições, com testes verdes.
-- [ ] Grupo do Rodrigo seedado → **zero regressão** no fluxo atual dele.
+- [ ] Resolver cobre as 6 atribuições com **multi-pasta** (`string[]`), com testes verdes.
+- [ ] Grupo do Rodrigo seedado **com as pastas extras** (VVD-MPU, Substituição-cível, Grupo-Júri-extra) → **zero regressão** no fluxo atual dele.
+- [ ] `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` migradas em `drive.ts` **e** `distribuicao.ts`; `SPECIAL_FOLDER_IDS` preservada.
 - [ ] Um 2º defensor consegue: conectar Google → provisionar árvore → ver folders no `drive_groups` próprio.
 - [ ] Nenhum `process.env.HOME ?? "/Users/rodrigorochameire"`, `DRIVE_BASE_PATH` ou `Meu Drive/1 - Defensoria 9ª DP/...` literal restante no código da nuvem.
 - [ ] `ATRIBUICAO_FOLDER_IDS` removida (ou reduzida a labels).
