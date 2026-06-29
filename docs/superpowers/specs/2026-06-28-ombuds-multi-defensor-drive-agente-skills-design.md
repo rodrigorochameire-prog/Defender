@@ -107,6 +107,18 @@ pk (userId, hostname)
 ### 4.9 `drive_files` / `drive_sync_folders` (alteração)
 - `userId` — escopo por defensor (hoje não têm).
 
+### 4.9.1 `release_notes` (nova — Fase 4)
+Alimenta o feed de "Novidades" e o digest semanal.
+```
+id          serial pk
+tipo        text       -- 'skill' | 'feature' | 'agente'
+refSlug     text       -- skill/feature afetada (nullable)
+versao      text
+titulo      text
+resumo      text
+publishedAt timestamp
+```
+
 ### 4.10 `skills_registry` (nova — Fase 5)
 ```
 id            serial pk
@@ -178,7 +190,16 @@ Cada fase é entregável de forma independente e agrega valor isolada.
   5. Grava `~/.ombuds-agent/config.json` (token, URL da API, caminho do Drive).
   6. Cria launchd `com.ombuds.agent` (sobe no login, auto-restart).
   7. `claude login` (Max do defensor) + valida com `claude -p` de teste.
-- **Atualização:** `ombuds-agent update` re-puxa daemon + skills de uma URL de release, versionado; heartbeat reporta `agentVersion` → nuvem avisa desatualizados.
+- **Atualização das skills oficiais — automática quando ocioso:**
+  - **Fonte da verdade:** `.claude/skills-cowork/` no repo. Um passo de release (script ou build-step do deploy) zipa cada skill, calcula hash, sobe bundles e incrementa a versão num manifesto: `GET /api/agent/skills/manifest` → `{ officialSkillsVersion, skills: [{ slug, version, sha, bundleUrl }] }`. Release de skill é **independente** do deploy do app.
+  - **Descoberta:** o `heartbeat` passa a enviar `officialSkillsVersion`; o servidor compara e responde `{ updateAvailable, latest }`.
+  - **Aplicação:** o agente aplica **só quando ocioso** (nunca no meio de um `claude -p`): baixa → confere hash → **troca atômica** de `~/.claude/skills/ombuds-*` → guarda versão anterior para **rollback** → reporta nova versão no heartbeat. **As skills próprias/comunidade do defensor não são tocadas** (namespacing).
+  - **O agente também se auto-atualiza** (código do daemon) pelo mesmo mecanismo via `agentVersion` + restart launchd. `ombuds-agent update` força manualmente.
+  - **Mudança no app da nuvem quase nunca exige update do agente** (cliente HTTP fino, Approach A); só mudança de skill ou de contrato da API.
+- **Comunicação de atualizações (sem spam):**
+  - Após aplicar um update, registra entrada em `release_notes` (§4.9.1) e mostra **badge discreto e dispensável** ("atualizado para vX") na próxima abertura.
+  - **Feed "Novidades"** na UI (changelog sempre acessível).
+  - **Digest semanal** (cron server-side, ex.: Vercel cron) agrega `release_notes` dos últimos 7 dias → notificação in-app (+ e-mail opcional). Batched para evitar anúncio por feature.
 - **Onboarding (UI "Meu Agente"):** checklist — (1) Conectar Drive ✓, (2) Confirmar atuação (auto, editável), (3) Gerar token + copiar comando, (4) Status do agente (online/offline, última batida, versão, `claudeMaxOk`).
 - **Admin (sua visão):** tabela de todos os defensores — Drive linkado? grupo/atuação, agente online? versão, tarefas na fila.
 - `ombuds-agent check-drive` — verificador da convenção de pastas da Fase 1.
