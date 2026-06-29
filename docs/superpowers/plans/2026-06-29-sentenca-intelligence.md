@@ -264,7 +264,7 @@ const SENTENCA_RE = /senten|condena|absolvi|pron[uú]ncia|impron|desclassifica/;
 const ACORDAO_RE = /ac[oó]rd[aã]o/;
 
 function norm(s: string): string {
-  // ̀-ͯ = combining diacritics (escape form, matches src/lib/utils/name-matching.ts:8)
+  // U+0300–U+036F = combining diacritics (escape form, matches src/lib/utils/name-matching.ts:8)
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
