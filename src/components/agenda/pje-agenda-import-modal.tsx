@@ -7,9 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { NAME_ACCENTS } from "@/lib/utils/title-case";
 import { detectarSituacao } from "./detectar-tipo-audiencia";
 import { detectarSlug, tipoPorSlug, TIPOS_AUDIENCIA, type AtribuicaoTipo } from "@/lib/agenda/tipos-audiencia";
+import {
+  toTitleCase,
+  mapearAtribuicao,
+  mapearSituacao,
+  extrairAssistidos,
+  type AssistidoInfo,
+  type ParsedEvento,
+} from "@/lib/agenda/parse-pauta";
 import {
   Upload,
   AlertTriangle,
@@ -41,29 +48,6 @@ interface PJeAgendaImportModalProps {
   defaultAtribuicao?: string;
 }
 
-interface AssistidoInfo {
-  nome: string;
-  cpf: string;
-}
-
-interface ParsedEvento {
-  titulo: string;
-  tipo: string;
-  data: string;
-  horarioInicio: string;
-  horarioFim: string;
-  local: string;
-  processo: string;
-  assistido: string;
-  assistidos: AssistidoInfo[]; // Lista de assistidos com nome e CPF
-  atribuicao: string;
-  status: string;
-  descricao: string;
-  classeJudicial: string;
-  situacaoAudiencia: string;
-  orgaoJulgador: string;
-}
-
 // Opções de atribuição disponíveis com ícones Lucide
 function siglasDe(attr: AtribuicaoTipo): string {
   return TIPOS_AUDIENCIA.filter((t) => t.atribuicoes.includes(attr)).map((t) => t.sigla).join(", ");
@@ -82,111 +66,6 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
   const [parsedEventos, setParsedEventos] = useState<ParsedEvento[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [forcedAtribuicao, setForcedAtribuicao] = useState<string>(defaultAtribuicao || "auto");
-
-  // Conectivos que devem permanecer em minúsculo no Title Case
-  const conectivos = ["de", "da", "do", "das", "dos", "e", "em", "para", "por", "com", "sem", "a", "o", "as", "os"];
-
-  // Função para converter texto em Title Case (exceto conectivos)
-  const toTitleCase = (texto: string): string => {
-    if (!texto) return "";
-
-    return texto
-      .toLowerCase()
-      .split(" ")
-      .map((palavra, index) => {
-        // Acentuar nomes próprios conhecidos (dicionário compartilhado, independe de conectivo)
-        if (NAME_ACCENTS[palavra]) return NAME_ACCENTS[palavra];
-        // Primeira palavra sempre em maiúsculo, conectivos em minúsculo
-        if (index === 0 || !conectivos.includes(palavra)) {
-          return palavra.charAt(0).toUpperCase() + palavra.slice(1);
-        }
-        return palavra;
-      })
-      .join(" ");
-  };
-
-  const mapearAtribuicao = (orgaoJulgador: string, classeJudicial: string, textoCompleto: string): string => {
-    const texto = `${orgaoJulgador} ${classeJudicial} ${textoCompleto}`.toUpperCase();
-
-    // Violência Doméstica - verificar múltiplas variações e padrões
-    if (
-      texto.includes("VIOLÊNCIA DOMÉSTICA") ||
-      texto.includes("VIOLENCIA DOMESTICA") ||
-      texto.includes("VIOLÊNCIA DOM") ||
-      texto.includes("VIOLENCIA DOM") ||
-      texto.includes("MARIA DA PENHA") ||
-      texto.includes("MEDIDAS PROTETIVAS") ||
-      texto.includes("MULHER DE CAMAÇARI") ||
-      texto.includes("MULHER DE CAMACARI") ||
-      texto.includes("VARA DE VIOLÊNCIA") ||
-      texto.includes("VARA DE VIOLENCIA") ||
-      /VIOL[EÊ]NCIA\s+DOM[EÉ]STICA\s+FAM/i.test(texto)
-    ) {
-      return "Violência Doméstica";
-    }
-
-    // Tribunal do Júri - VERIFICAR PRIMEIRO a classe judicial (mais específico)
-    // "COMPETÊNCIA DO JÚRI" ou "AÇÃO PENAL DE COMPETÊNCIA DO JÚRI" na classe judicial
-    if (
-      classeJudicial.toUpperCase().includes("COMPET") && classeJudicial.toUpperCase().includes("JÚRI") ||
-      classeJudicial.toUpperCase().includes("COMPET") && classeJudicial.toUpperCase().includes("JURI") ||
-      texto.includes("TRIBUNAL DO JÚRI") ||
-      texto.includes("TRIBUNAL DO JURI") ||
-      texto.includes("PLENÁRIO") ||
-      texto.includes("VARA DO JÚRI") ||
-      texto.includes("VARA DO JURI") ||
-      /VARA\s+D[OAE]\s+J[UÚ]RI/i.test(texto) ||
-      /COMPET[EÊ]NCIA\s+D[OAE]\s+J[UÚ]RI/i.test(texto)
-    ) {
-      return "Tribunal do Júri";
-    }
-
-    // Execução Penal - SOMENTE quando explicitamente mencionado, não por estar no nome da vara
-    // Não detectar "VARA DO JÚRI E EXECUÇÕES PENAIS" como Execução Penal
-    const ehVaraJuriComExecucao = /VARA\s+D[OAE]\s+J[UÚ]RI\s+E\s+EXECU[CÇ]/i.test(texto);
-    if (!ehVaraJuriComExecucao && (texto.includes("EXECUÇÃO PENAL") || texto.includes("EXECUCAO PENAL") || texto.includes("EXECUÇÕES"))) {
-      return "Execução Penal";
-    }
-
-    if (texto.includes("CURADORIA")) {
-      return "Curadoria";
-    }
-
-    return "Criminal Geral";
-  };
-
-  const extrairAssistido = (partesTexto: string): string => {
-    // Formato: "Autor X Réu"
-    // O assistido da defensoria é o réu (segunda parte após o X)
-    const partes = partesTexto.split(/\s+X\s+/);
-    
-    if (partes.length >= 2) {
-      // Pegar a segunda parte (réu) e limpar
-      let assistido = partes[1].trim();
-      
-      // Remover texto extra como "registrado(a) civilmente como"
-      assistido = assistido.replace(/registrado\(a\) civilmente como.*/i, "").trim();
-      
-      return assistido;
-    }
-
-    return "";
-  };
-
-  const mapearSituacao = (situacaoTexto: string): string => {
-    const situacao = situacaoTexto.toLowerCase();
-
-    // A ordem importa: "redesignada" CONTÉM "designada" e "não-realizada" CONTÉM
-    // "realizada". Os termos mais específicos precisam ser testados primeiro, senão
-    // toda redesignada cairia em "confirmado".
-    if (situacao.includes("cancelada")) return "cancelado";
-    if (situacao.includes("não-realizada") || situacao.includes("nao-realizada")) return "cancelado";
-    if (situacao.includes("redesignada")) return "remarcado";
-    if (situacao.includes("realizada")) return "concluido";
-    if (situacao.includes("designada")) return "confirmado";
-
-    return "confirmado";
-  };
 
   const handleParse = () => {
     setIsProcessing(true);
@@ -250,64 +129,11 @@ export function PJeAgendaImportModal({ isOpen, onClose, onImport, title, descrip
         // Limpar espaços extras
         orgaoJulgador = orgaoJulgador.replace(/\s+/g, " ").trim();
 
-        // Extrair partes - buscar assistidos após o separador "X"
-        // Em violência doméstica, o assistido é quem vem APÓS o X (réu, requerido, investigado, flagranteado ou autoridade polo passivo)
-        const partesAssistidas: AssistidoInfo[] = [];
-        
-        // Primeiro, encontrar a posição do X que separa as partes
+        // Extrair partes — delegar para extrairAssistidos (fonte única em parse-pauta.ts)
         const separadorX = textoBloco.indexOf(" X\n") !== -1 ? textoBloco.indexOf(" X\n") : textoBloco.indexOf("\nX\n");
         const textoAposX = separadorX !== -1 ? textoBloco.substring(separadorX) : textoBloco;
-        // Normaliza quebras de linha do PJe e rejunta CPF partido entre linhas (ex.: "915-\n09")
-        const textoAposXNorm = textoAposX.replace(/\s+/g, " ").replace(/(\d)\s*-\s*(\d)/g, "$1-$2");
-
-        // Padrão expandido: captura NOME - CPF: XXX (TIPO) incluindo AUTORIDADE
-        // Captura grupos: 1=nome, 2=cpf (opcional), 3=tipo
-        // Flag SEM "i": a primeira letra precisa ser maiúscula (nomes e marcadores
-        // como (REU) sempre são), evitando que conectores em minúsculo — "e",
-        // "civilmente", "como" — ancorem a captura e contaminem o nome.
-        const regexAssistido = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/g;
-        let assistidoMatch;
-        while ((assistidoMatch = regexAssistido.exec(textoAposXNorm)) !== null) {
-          let nome = assistidoMatch[1].trim();
-          const cpf = assistidoMatch[2] ? assistidoMatch[2].trim() : "";
-          const tipoParte = assistidoMatch[3].toUpperCase();
-
-          // Limpar "registrado(a) civilmente como"
-          nome = nome.replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "").trim();
-          // Remover prefixos como "X "
-          nome = nome.replace(/^X\s+/i, "").trim();
-          // Remover conjunção "e/E" que liga réus (ex.: "e ANDERSON FARIAS DIAS")
-          nome = nome.replace(/^e\s+/i, "").trim();
-          // Remover quebras de linha e espaços extras
-          nome = nome.replace(/\s+/g, " ").trim();
-          
-          // Filtrar entidades que não são pessoas físicas
-          const naoEPessoa = nome.includes("Ministério") || 
-                            nome.includes("VARA") || 
-                            nome.includes("DEAM") || 
-                            nome.includes("Polícia") ||
-                            nome.includes("DT ") ||
-                            nome.includes("DELEGACIA") ||
-                            nome.includes("segredo de justiça") ||
-                            nome.match(/^\d{2}ª?\s*D[T]/i);
-          
-          if (nome && nome.length > 2 && !naoEPessoa) {
-            partesAssistidas.push({
-              nome: toTitleCase(nome),
-              cpf: cpf,
-            });
-          }
-        }
-
-        // Remover duplicatas por CPF ou nome
-        const assistidosUnicos = partesAssistidas.filter((assistido, index, self) =>
-          index === self.findIndex((a) => 
-            (a.cpf && a.cpf === assistido.cpf) || a.nome === assistido.nome
-          )
-        );
-        const assistido = assistidosUnicos.length > 0 
-          ? assistidosUnicos[0].nome // Pegar apenas o primeiro assistido para o título
-          : "";
+        const assistidosUnicos = extrairAssistidos(textoAposX);
+        const assistido = assistidosUnicos.length > 0 ? assistidosUnicos[0].nome : "";
 
         // Extrair classe processual
         const classeMatch = textoBloco.match(/AÇÃO\s+PENAL\s*-?\s*PROCEDIMENTO\s+(ORDINÁRIO|SUMÁRIO)|AÇÃO\s+PENAL\s+DE\s+COMPETÊNC?IA\s+D[OAE]\s+JÚRI|AÇÃO\s+PENAL|MEDIDAS\s+PROTETIVAS\s+DE\s+URGÊNCIA|MEDIDAS\s+PROTETIVAS|INQUÉRITO\s+POLICIAL|AUTO\s+DE\s+PRISÃO\s+EM\s+FLAGRANTE|EXECUÇÃO\s+PENAL/i);
@@ -428,52 +254,10 @@ Status: ${situacao}`;
             const fim = Math.min(conteudo.length, dataMatch.index! + 500);
             const textoContexto = conteudo.substring(inicio, fim);
             
-            // Extrair assistidos após o X (incluindo AUTORIDADE para casos específicos)
-            const partesAssistitasAlt: AssistidoInfo[] = [];
-            
-            // Encontrar posição do X separador
+            // Extrair assistidos — delegar para extrairAssistidos (fonte única em parse-pauta.ts)
             const separadorXAlt = textoContexto.indexOf(" X\n") !== -1 ? textoContexto.indexOf(" X\n") : textoContexto.indexOf("\nX\n");
             const textoAposXAlt = separadorXAlt !== -1 ? textoContexto.substring(separadorXAlt) : textoContexto;
-            // Normaliza quebras de linha do PJe e rejunta CPF partido entre linhas (ex.: "915-\n09")
-            const textoAposXAltNorm = textoAposXAlt.replace(/\s+/g, " ").replace(/(\d)\s*-\s*(\d)/g, "$1-$2");
-
-            // Regex que captura nome, CPF e tipo. Flag SEM "i": a primeira letra precisa
-            // ser maiúscula, evitando que conectores minúsculos ("e", "civilmente", "como")
-            // ancorem a captura e contaminem o nome do réu.
-            const regexAssistidoAlt = /([A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ][A-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑa-záàâãéèêíïóôõöúçñ\s]+?)(?:\s*-\s*CPF:\s*([\d.-]+))?\s*\((REU|INVESTIGADO|REQUERIDO|FLAGRANTEADO|RECORRIDO|APELADO|AUTORIDADE)\)/g;
-            let assistidoMatchAlt;
-            while ((assistidoMatchAlt = regexAssistidoAlt.exec(textoAposXAltNorm)) !== null) {
-              let nome = assistidoMatchAlt[1].trim()
-                .replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "")
-                .replace(/^X\s+/i, "")
-                .replace(/^e\s+/i, "")
-                .replace(/\s+/g, " ")
-                .trim();
-              const cpf = assistidoMatchAlt[2] ? assistidoMatchAlt[2].trim() : "";
-              
-              const naoEPessoa = nome.includes("Ministério") || 
-                                nome.includes("VARA") || 
-                                nome.includes("DEAM") || 
-                                nome.includes("Polícia") ||
-                                nome.includes("DT ") ||
-                                nome.includes("DELEGACIA") ||
-                                nome.includes("segredo de justiça") ||
-                                nome.match(/^\d{2}ª?\s*D[T]/i);
-              
-              if (nome && nome.length > 2 && !naoEPessoa) {
-                partesAssistitasAlt.push({
-                  nome: toTitleCase(nome),
-                  cpf: cpf,
-                });
-              }
-            }
-            
-            // Remover duplicatas
-            const assistidosUnicosAlt = partesAssistitasAlt.filter((assistido, index, self) =>
-              index === self.findIndex((a) => 
-                (a.cpf && a.cpf === assistido.cpf) || a.nome === assistido.nome
-              )
-            );
+            const assistidosUnicosAlt = extrairAssistidos(textoAposXAlt);
             const assistidoAlt = assistidosUnicosAlt.length > 0 ? assistidosUnicosAlt[0].nome : "";
             const assistidosTextoAlt = assistidosUnicosAlt.map(a => a.nome).join(", ");
             

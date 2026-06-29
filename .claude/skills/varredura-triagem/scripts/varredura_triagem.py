@@ -389,7 +389,9 @@ RULES_BASE = [
     (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao e julgamento)",
      "Ciência designação de audiência", "NORMAL", None, "ciencia", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
     # ─── 2. Atos com prazo expresso
-    (r"(nomeada a defensoria|vistas? a dpe).{0,80}resposta a acusacao|apresente.{0,20}resposta a acusacao",
+    (r"(nomeada a defensoria|vistas? a dpe|apresent\w*|ofereca|oferec\w*).{0,80}resposta a acusacao"
+     r"|resposta a acusacao.{0,40}(\d+\s*dias|prazo|arts?\.?\s*396)"
+     r"|arts?\.?\s*396(-?a)?\b",
      "Resposta à Acusação", "URGENTE", 10, "diligencia", [], {}),
     (r"prazo (sucessivo )?de \d+ dias.{0,40}alegacoes finais",
      "Alegações finais", "URGENTE", 5, "diligencia", [], {}),
@@ -1132,7 +1134,8 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
         except Exception as e:
             log(f"  ⚠ falha ao revogar medidas_mpu: {e}")
 
-    # Registro "Medidas protetivas deferidas" (anotação determinística)
+    # Registro "Medidas protetivas deferidas" (análise determinística — tipo
+    # "analise" p/ aparecer no card de Análise IA junto ao resumo da fase 2)
     titulo = "Medidas protetivas deferidas"
     if medidas and not sb.registro_exists(demanda["id"], titulo):
         linhas = [f"- {m['rotulo']} ({m['artigo'] if str(m['artigo']).lower().startswith('art') else 'art. ' + m['artigo']})"
@@ -1144,7 +1147,7 @@ def _aplicar_medidas_mpu(sb: Supabase, demanda: dict, content: str) -> None:
         sb.insert_registro({
             "assistido_id": demanda.get("assistido_id"), "processo_id": proc_id,
             "demanda_id": demanda["id"], "data_registro": datetime.now().isoformat(),
-            "tipo": "anotacao", "titulo": titulo, "conteudo": corpo,
+            "tipo": "analise", "titulo": titulo, "conteudo": corpo,
             "status": "realizado", "autor_id": DEFENSOR_ID,
         })
         log(f"  🛡 {len(medidas)} medida(s) protetiva(s) registrada(s)")

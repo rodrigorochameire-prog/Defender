@@ -498,8 +498,9 @@ function KanbanCard({
   const analisePreview = (() => {
     const raw = (demanda.analiseResumo || "").slice(0, 450);
     if (!raw) return null;
-    const prov = raw.match(/\*\*Provid[êe]ncia[^:]*:\*\*\s*([^\n]+)/i);
-    const obj = raw.match(/\*\*Objeto:\*\*\s*([^\n]+)/i);
+    // Tolera formato antigo (**Label:**) e novo (Label:).
+    const prov = raw.match(/\*{0,2}Provid[êe]ncia[^:]*:\*{0,2}\s*([^\n]+)/i);
+    const obj = raw.match(/\*{0,2}Objeto:\*{0,2}\s*([^\n]+)/i);
     const txt = (prov?.[1] || obj?.[1] || raw).replace(/\*\*/g, "").trim();
     return txt || null;
   })();

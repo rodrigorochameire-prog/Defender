@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, serial, integer, text, date, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, integer, text, date, boolean, bigint, timestamp, index } from "drizzle-orm/pg-core";
 import { users } from "./core";
 
 export const feriasStatusEnum = pgEnum("ferias_status", [
@@ -31,6 +31,15 @@ export const feriasParcelas = pgTable("ferias_parcelas", {
   vidaFuncionalEventoId: integer("vida_funcional_evento_id"),
   seiProtocolo: text("sei_protocolo"),
   observacoes: text("observacoes"),
+  numeroSolicitacao: text("numero_solicitacao"),
+  nSiga: text("n_siga"),
+  provimento: text("provimento"),
+  dataPublicacao: date("data_publicacao"),
+  conversaoPecunia: boolean("conversao_pecunia").default(false).notNull(),
+  valorAbonoCents: bigint("valor_abono_cents", { mode: "number" }),
+  suspensa: boolean("suspensa").default(false).notNull(),
+  situacaoSiga: text("situacao_siga"),
+  sigaSyncedAt: timestamp("siga_synced_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"),

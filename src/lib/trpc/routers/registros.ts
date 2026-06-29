@@ -53,6 +53,7 @@ function syncProvidenciasToSheet(demandaId: number | null | undefined): void {
 // finalize a migração dos consumidores.
 
 const TIPO_REGISTRO = z.enum([
+  "analise",
   "atendimento",
   "diligencia",
   "anotacao",

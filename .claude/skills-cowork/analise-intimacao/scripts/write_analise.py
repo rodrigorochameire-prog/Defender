@@ -66,7 +66,7 @@ HDR = {"apikey": KEY, "Authorization": f"Bearer {KEY}", "Content-Type": "applica
 # desta lista NUNCA é sobrescrito.
 ATO_GENERICO = {
     "Analisar decisão", "Analisar sentença", "Analisar acórdão",
-    "Ciência", "Cumprir despacho",
+    "Ciência", "Ciência de decisão", "Cumprir despacho",
 }
 
 
@@ -95,6 +95,41 @@ def update_demanda_ato(demanda_id, novo_ato):
         prefer="return=minimal")
 
 
+def _strip_label(value, *labels) -> str:
+    """Remove rótulo duplicado e markdown que a IA possa ter prefixado no valor
+    (ex.: "**Objeto:** Objeto: ..." → "..."). Tolera asteriscos e ':' ou '-'."""
+    v = (value or "").strip().lstrip("*").strip()
+    for lbl in labels:
+        # remove "Label:" / "Label -" repetido no início, possivelmente 2x
+        pat = re.compile(rf"^\**\s*{re.escape(lbl)}\s*[:\-–]\s*", re.IGNORECASE)
+        for _ in range(2):
+            nv = pat.sub("", v)
+            if nv == v:
+                break
+            v = nv.strip().lstrip("*").strip()
+    return v.replace("**", "").strip()
+
+
+def resolve_ctx(r) -> tuple:
+    """Resolve (assistido_id, processo_id) — usa os do resultado se vierem; senão
+    busca no registro base (registro_id) ou na própria demanda. registros.assistido_id
+    é NOT NULL, então isto é obrigatório antes de inserir."""
+    aid, pid = r.get("assistido_id"), r.get("processo_id")
+    if aid:
+        return aid, pid
+    rid = r.get("registro_id")
+    if rid:
+        rows = req("GET", f"/rest/v1/registros?id=eq.{rid}&select=assistido_id,processo_id")
+        if rows:
+            return rows[0].get("assistido_id"), (pid or rows[0].get("processo_id"))
+    did = r.get("demanda_id")
+    if did:
+        rows = req("GET", f"/rest/v1/demandas?id=eq.{did}&select=assistido_id,processo_id")
+        if rows:
+            return rows[0].get("assistido_id"), (pid or rows[0].get("processo_id"))
+    return aid, pid
+
+
 def main():
     if not URL or not KEY:
         print("ERRO: env Supabase ausente", file=sys.stderr); sys.exit(1)
@@ -111,8 +146,12 @@ def main():
         demanda_id = r.get("demanda_id")
         if not demanda_id:
             continue
+        assistido_id, processo_id = resolve_ctx(r)
+        if not assistido_id:
+            print(f"  ⚠ demanda {demanda_id}: sem assistido_id (pulando)", file=sys.stderr)
+            continue
         base = {
-            "assistido_id": r.get("assistido_id"), "processo_id": r.get("processo_id"),
+            "assistido_id": assistido_id, "processo_id": processo_id,
             "demanda_id": demanda_id, "data_registro": datetime.now().isoformat(),
             "autor_id": AUTOR_ID, "status": "realizado",
         }
@@ -125,25 +164,27 @@ def main():
                 and ato_sug != ato_atual):
             ato_ajuste = (ato_atual, ato_sug)
         # --- Anotação principal: resumo ESTRUTURADO (+ recurso preliminar, se houver) ---
+        # Texto puro (sem markdown) com rótulo "Label: valor". _strip_label evita
+        # rótulo duplicado quando a IA já prefixa o valor (ex.: "Objeto: Objeto: ...").
         corpo = []
         if r.get("resumo_objeto"):
-            corpo.append(f"**Objeto:** {r['resumo_objeto'].strip()}")
+            corpo.append(f"Objeto: {_strip_label(r['resumo_objeto'], 'objeto')}")
         if r.get("o_que_decidido"):
-            corpo.append(f"**O que foi decidido:** {r['o_que_decidido'].strip()}")
+            corpo.append(f"O que foi decidido: {_strip_label(r['o_que_decidido'], 'o que foi decidido')}")
         if r.get("o_que_fazer"):
-            corpo.append(f"**Providência/Prazo:** {r['o_que_fazer'].strip()}")
+            corpo.append(f"Providência/Prazo: {_strip_label(r['o_que_fazer'], 'providência/prazo', 'providencia/prazo', 'providência', 'providencia')}")
         cr = (r.get("cabe_recurso") or "").lower()
         if cr in ("sim", "talvez"):
             rec = r.get("recurso_cabivel") or "recurso"
             fund = f" — {r['fundamento_recurso'].strip()}" if r.get("fundamento_recurso") else ""
-            corpo.append(f"**Cabe recurso? (análise preliminar — revisar):** {cr} · {rec}{fund}")
+            corpo.append(f"Cabe recurso? (análise preliminar — revisar): {cr} · {rec}{fund}")
         elif cr == "nao":
-            corpo.append("**Cabe recurso? (análise preliminar — revisar):** não")
+            corpo.append("Cabe recurso? (análise preliminar — revisar): não")
         if ato_ajuste:
             corpo.append(f"Ato ajustado: {ato_ajuste[0]} → {ato_ajuste[1]}")
         titulo = "Resumo e providências"
         if corpo and not registro_exists(demanda_id, titulo):
-            insert_registro({**base, "tipo": "anotacao", "titulo": titulo,
+            insert_registro({**base, "tipo": "analise", "titulo": titulo,
                              "conteudo": "\n".join(corpo)})
             n_anota += 1
             # Aplica a troca do ato junto com a 1ª gravação (idempotente: re-runs
@@ -158,14 +199,14 @@ def main():
         if r.get("relato_vitima"):
             t2 = "Relato da suposta vítima"
             if not registro_exists(demanda_id, t2):
-                insert_registro({**base, "tipo": "anotacao", "titulo": t2,
+                insert_registro({**base, "tipo": "analise", "titulo": t2,
                                  "conteudo": r["relato_vitima"].strip()})
                 n_relato += 1
         # Pronúncia: termos (anexa à anotação principal se houver corpo dedicado)
         if r.get("termos_pronuncia"):
             t3 = "Termos da pronúncia"
             if not registro_exists(demanda_id, t3):
-                insert_registro({**base, "tipo": "anotacao", "titulo": t3,
+                insert_registro({**base, "tipo": "analise", "titulo": t3,
                                  "conteudo": r["termos_pronuncia"].strip()})
         # Marca o registro base como enriquecido (done)
         if r.get("registro_id"):
