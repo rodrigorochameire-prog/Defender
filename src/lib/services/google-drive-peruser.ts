@@ -4,6 +4,15 @@ import { eq, sql } from "drizzle-orm";
 
 const GOOGLE_API_BASE = "https://www.googleapis.com";
 
+const ATRIBUICAO_SUBFOLDERS: Array<{ key: string; name: string }> = [
+  { key: "JURI", name: "Processos - Júri" },
+  { key: "VVD", name: "Processos - VVD (Criminal)" },
+  { key: "EP", name: "Processos - Execução Penal" },
+  { key: "SUBSTITUICAO", name: "Processos - Substituição" },
+  { key: "GRUPO_JURI", name: "Processos - Grupo do Júri" },
+  { key: "CRIMINAL", name: "Processos" },
+];
+
 async function getAccessToken(refreshToken: string): Promise<string> {
   const clientId = process.env.GOOGLE_CLIENT_ID!;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
@@ -40,6 +49,18 @@ async function getUserToken(userId: number): Promise<{ refreshToken: string; acc
   return { refreshToken: token.refreshToken, accessToken };
 }
 
+async function createSubfolder(accessToken: string, parentId: string, name: string): Promise<string> {
+  const folder = await driveRequest(accessToken, "/drive/v3/files", {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    }),
+  });
+  return folder.id as string;
+}
+
 async function driveRequest(accessToken: string, path: string, options?: RequestInit) {
   const res = await fetch(`${GOOGLE_API_BASE}${path}`, {
     ...options,
@@ -59,10 +80,20 @@ async function driveRequest(accessToken: string, path: string, options?: Request
 export async function createUserDriveStructure(userId: number): Promise<{
   rootFolderId: string;
   rootFolderUrl: string;
+  driveGroupId: number;
 }> {
   const { accessToken } = await getUserToken(userId);
   const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!user) throw new Error("Usuário não encontrado");
+
+  // Idempotency: if a drive_group already exists for this user, return existing data.
+  if (user.driveGroupId != null && user.driveFolderId) {
+    return {
+      rootFolderId: user.driveFolderId,
+      rootFolderUrl: `https://drive.google.com/drive/folders/${user.driveFolderId}`,
+      driveGroupId: user.driveGroupId,
+    };
+  }
 
   const comarcaResult = await db.execute(sql`SELECT nome FROM comarcas WHERE id = ${user.comarcaId}`);
   const comarcaNome = (comarcaResult[0] as any)?.nome ?? "";
@@ -75,22 +106,38 @@ export async function createUserDriveStructure(userId: number): Promise<{
     }),
   });
 
-  await driveRequest(accessToken, "/drive/v3/files", {
-    method: "POST",
-    body: JSON.stringify({
-      name: "Modelos",
-      mimeType: "application/vnd.google-apps.folder",
-      parents: [rootFolder.id],
-    }),
-  });
+  // Create "Modelos" subfolder (pre-existing behaviour)
+  await createSubfolder(accessToken, rootFolder.id, "Modelos");
 
+  // Create standard atribuição subfolders and build the folder map
+  const atribuicaoFolders: Record<string, string[]> = {};
+  for (const sf of ATRIBUICAO_SUBFOLDERS) {
+    const folderId = await createSubfolder(accessToken, rootFolder.id, sf.name);
+    atribuicaoFolders[sf.key] = [folderId];
+  }
+
+  // Persist drive_folder_id (existing behaviour)
   await db.execute(sql`
     UPDATE users SET drive_folder_id = ${rootFolder.id} WHERE id = ${userId}
+  `);
+
+  // Create the drive_groups row for this defensor
+  const groupRows = await db.execute(sql`
+    INSERT INTO drive_groups (owner_user_id, label, atribuicao_folders)
+    VALUES (${userId}, ${`OMBUDS — ${user.name}`}, ${JSON.stringify(atribuicaoFolders)}::jsonb)
+    RETURNING id
+  `);
+  const groupId = (groupRows[0] as any).id as number;
+
+  // Link the group back to the user and mark Google as linked
+  await db.execute(sql`
+    UPDATE users SET drive_group_id = ${groupId}, google_linked = true WHERE id = ${userId}
   `);
 
   return {
     rootFolderId: rootFolder.id,
     rootFolderUrl: `https://drive.google.com/drive/folders/${rootFolder.id}`,
+    driveGroupId: groupId,
   };
 }
 
