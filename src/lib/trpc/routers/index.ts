@@ -100,6 +100,7 @@ import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 import { feriasRouter } from "./ferias";
 import { ausenciasRouter } from "./ausencias";
+import { sigaRouter } from "./siga";
 
 
 export const appRouter = router({
@@ -469,6 +470,10 @@ export const appRouter = router({
   // INTIMACOES — importação de intimações PJe (lane browser)
   // ==========================================
   intimacoes: intimacoesRouter,
+  // ==========================================
+  // SIGA — importação de carreira (licenças, férias, afastamentos)
+  // ==========================================
+  siga: sigaRouter,
 });
 
 export type AppRouter = typeof appRouter;

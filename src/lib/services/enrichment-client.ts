@@ -327,6 +327,33 @@ export interface SolarUploadDocumentoOutput {
   screenshots: string[];
 }
 
+// === SIGA Carreira Types ===
+
+export interface SigaCarreiraRow {
+  tipo: string;
+  numeroSolicitacao?: string | null;
+  nSiga?: string | null;
+  dataInicio?: string | null;
+  dataFim?: string | null;
+  situacaoSiga?: string | null;
+  motivo?: string | null;
+  dataPublicacao?: string | null;
+  observacao?: string | null;
+  provimento?: string | null;
+  interrompida?: boolean;
+  suspensa?: boolean;
+}
+
+export interface SigaExtrairCarreiraOutput {
+  success: boolean;
+  licencas?: SigaCarreiraRow[];
+  outras?: SigaCarreiraRow[];
+  ferias?: SigaCarreiraRow[];
+  afastamentos?: SigaCarreiraRow[];
+  errors?: string[];
+  error?: string | null;
+}
+
 // === SIGAD Types ===
 
 export interface SigadObservacao {
@@ -944,6 +971,16 @@ class EnrichmentClient {
     return this.request<SigadBuscarOutput>("/sigad/buscar-assistido", {
       cpf: input.cpf,
     });
+  }
+
+  // === SIGA Methods ===
+
+  /**
+   * Extrair carreira do defensor no SIGA (licenças, férias, afastamentos).
+   * Chamado pelo: tRPC siga.extrair
+   */
+  async sigaExtrairCarreira(): Promise<SigaExtrairCarreiraOutput> {
+    return this.request<SigaExtrairCarreiraOutput>("/siga/extrair-carreira", {}, 120_000);
   }
 
   // === Intelligence / Consolidation Methods ===
