@@ -66,7 +66,7 @@ export const driveGroups = pgTable("drive_groups", {
   // IMPORTANTE: valores são ARRAYS — uma atribuição pode ter >1 pasta.
   // Ex. real do Rodrigo: VVD = [Criminal, MPU]; SUBSTITUICAO = [criminal, cível]; GRUPO_JURI = [grupo, extra].
   // { JURI: ["<id>"], VVD: ["<id1>","<id2>"], EP: ["<id>"], SUBSTITUICAO: [...], GRUPO_JURI: [...], CRIMINAL: ["<id>"] }
-  atribuicaoFolders: jsonb("atribuicao_folders").default({}).notNull(),
+  atribuicaoFolders: jsonb("atribuicao_folders").$type<Record<string, string[]>>().default({}).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 }, (table) => [
@@ -103,12 +103,16 @@ Junto das colunas de Drive já existentes (`googleLinked`, `driveFolderId`), adi
 
 - [ ] **Step 4: Relations (`relations.ts`)**
 
-Seguindo o padrão do arquivo, adicionar (e referenciar em `usersRelations` se existir):
+Seguindo o padrão do arquivo, adicionar **os dois lados** da relação:
 ```typescript
 export const driveGroupsRelations = relations(driveGroups, ({ one, many }) => ({
   owner: one(users, { fields: [driveGroups.ownerUserId], references: [users.id] }),
   members: many(users),
 }));
+```
+E o inverso em `usersRelations` (adicionar a chave; manter as demais que já existirem):
+```typescript
+  driveGroup: one(driveGroups, { fields: [users.driveGroupId], references: [driveGroups.id] }),
 ```
 Garantir o import de `driveGroups` no topo de `relations.ts`.
 
