@@ -1134,6 +1134,7 @@ export default function Demandas() {
       prioridade: d.prioridade || "normal",
       arquivado: d.status === "ARQUIVADO",
       reuPreso: d.reuPreso || false,
+      revisaoPendente: d.revisaoPendente ?? false,
       substatus: d.substatus || null,
       photoUrl: d.assistido?.photoUrl || null,
       updatedAt: d.updatedAt ? new Date(d.updatedAt).toISOString() : null,

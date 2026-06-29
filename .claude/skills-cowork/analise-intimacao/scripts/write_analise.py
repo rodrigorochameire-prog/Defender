@@ -163,6 +163,15 @@ def main():
         if (ato_sug and ato_conf == "alta" and ato_atual in ATO_GENERICO
                 and ato_sug != ato_atual):
             ato_ajuste = (ato_atual, ato_sug)
+        # Confiança média/baixa na classificação do ato → sinaliza revisão humana.
+        # Só marca True (nunca rebaixa). Roda para toda demanda, independente de
+        # ter havido troca de ato ou gravação de registro.
+        if ato_conf in ("media", "baixa"):
+            try:
+                req("PATCH", f"/rest/v1/demandas?id=eq.{demanda_id}",
+                    {"revisao_pendente": True}, prefer="return=minimal")
+            except Exception as e:
+                print(f"  ⚠ falha ao marcar revisao_pendente demanda {demanda_id}: {e}", file=sys.stderr)
         # --- Anotação principal: resumo ESTRUTURADO (+ recurso preliminar, se houver) ---
         # Texto puro (sem markdown) com rótulo "Label: valor". _strip_label evita
         # rótulo duplicado quando a IA já prefixa o valor (ex.: "Objeto: Objeto: ...").
