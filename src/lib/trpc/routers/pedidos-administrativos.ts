@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { pedidosAdministrativos, vidaFuncionalEventos } from "@/lib/db/schema";
 import { getVidaFuncionalScope } from "../vida-funcional-scope";
 import { podeTransicionar } from "@/lib/pedidos-administrativos/transicoes";
-import { projecaoEventoDePedido, statusEventoDePedido } from "@/lib/pedidos-administrativos/projecao";
+import { projecaoEventoDePedido } from "@/lib/pedidos-administrativos/projecao";
 import { criarPedidoComEvento } from "@/lib/pedidos-administrativos/persist";
 
 const ISO = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida (AAAA-MM-DD)");
