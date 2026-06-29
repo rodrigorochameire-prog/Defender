@@ -220,6 +220,10 @@ class Supabase:
             params.append(f"created_at=gte.{since}")
         return self._req("GET", "/rest/v1/demandas?" + "&".join(params))
 
+    def list_demandas_by_ids(self, ids: list[int]) -> list[dict]:
+        params = build_by_ids_params(ids, DEFENSOR_ID)
+        return self._req("GET", "/rest/v1/demandas?" + "&".join(params))
+
     def update_demanda(self, demanda_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/demandas?id=eq.{demanda_id}", fields)
 
@@ -1497,6 +1501,8 @@ def main():
                         help="cdp=anexa Chromium aberto pelo usuário; direct=launcha headless; manual-review=só registra diligência")
     parser.add_argument("--defensor-id", type=int, default=None,
                         help="ID do defensor (filtro + autor dos registros). Default: DEFENSOR_ID do módulo.")
+    parser.add_argument("--demanda-ids", default=None,
+                        help="CSV de IDs de demanda. Analisa SÓ essas, em qualquer coluna (ignora filtro de status). Exclusivo com --atribuicao/--since.")
     args = parser.parse_args()
 
     # Defensor do job (vem do ctx.user.id pela UI) — sobrepõe o default hardcoded,
@@ -1512,8 +1518,13 @@ def main():
         sys.exit("ERRO: NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes no .env.local")
 
     sb = Supabase(sb_url, sb_key)
-    demandas = sb.list_demandas(args.atribuicao, args.since, args.limit)
-    print(f"[varredura] alvo: {len(demandas)} demandas em triagem")
+    if args.demanda_ids:
+        ids = [int(x) for x in args.demanda_ids.split(",") if x.strip()]
+        demandas = sb.list_demandas_by_ids(ids)
+        print(f"[varredura] alvo: {len(demandas)} demandas (selecionadas)")
+    else:
+        demandas = sb.list_demandas(args.atribuicao, args.since, args.limit)
+        print(f"[varredura] alvo: {len(demandas)} demandas em triagem")
 
     if args.modo == "manual-review":
         for d in demandas:
@@ -1525,6 +1536,30 @@ def main():
         sys.exit("ERRO: modo direct precisa PJE_CPF/PJE_SENHA no .env.local")
 
     asyncio.run(varredura(sb, demandas, args.modo, env, args.atribuicao))
+
+
+def build_by_ids_params(ids: list[int], defensor_id: int) -> list[str]:
+    """Monta os params PostgREST para buscar demandas por ID, SEM filtro de
+    status (analisa em qualquer coluna). Puro/testável."""
+    ids_csv = ",".join(str(int(i)) for i in ids)
+    return [
+        "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
+        "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
+        "assistidos!inner(nome)",
+        f"id=in.({ids_csv})",
+        f"defensor_id=eq.{defensor_id}",
+        "deleted_at=is.null",
+    ]
+
+
+def _self_test_build_by_ids():
+    p = build_by_ids_params([1368, 12], 1)
+    joined = "&".join(p)
+    assert "id=in.(1368,12)" in joined, joined
+    assert "status=in." not in joined, "NÃO deve filtrar por status"
+    assert "defensor_id=eq.1" in joined
+    assert "deleted_at=is.null" in joined
+    print("[self-test] build_by_ids_params OK")
 
 
 if __name__ == "__main__":
