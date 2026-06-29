@@ -105,12 +105,12 @@ export function VidaFuncionalView() {
                     );
                     return a.dominioKey ? (
                       <Link key={a.eventoId} href={`/admin/carreira/vida-funcional/${a.dominioKey}`} className="cursor-pointer">
-                        <CarreiraCard className="overflow-hidden h-full">
+                        <CarreiraCard className={cn("overflow-hidden h-full", c.border)}>
                           {inner}
                         </CarreiraCard>
                       </Link>
                     ) : (
-                      <CarreiraCard key={a.eventoId} className="overflow-hidden h-full">
+                      <CarreiraCard key={a.eventoId} className={cn("overflow-hidden h-full", c.border)}>
                         {inner}
                       </CarreiraCard>
                     );
