@@ -17,4 +17,7 @@ describe("criarVarreduraJobInput (XOR)", () => {
   it("rejeita lote > 50", () => {
     expect(criarVarreduraJobInput.safeParse({ demandaIds: Array.from({ length: 51 }, (_, i) => i + 1) }).success).toBe(false);
   });
+  it("rejeita demandaIds não-inteiro", () => {
+    expect(criarVarreduraJobInput.safeParse({ demandaIds: [1.5] }).success).toBe(false);
+  });
 });

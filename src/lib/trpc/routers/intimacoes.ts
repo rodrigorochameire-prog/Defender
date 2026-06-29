@@ -486,6 +486,12 @@ export const intimacoesRouter = router({
           ),
         );
 
+      // Mutual-exclusion deliberada: o daemon usa UMA sessão CDP, então só pode
+      // haver uma varredura browser-lane por vez. Vale também p/ o gatilho
+      // por-demanda abaixo — se houver varredura ativa, retorna existing:true e o
+      // usuário reenfileira quando livre (a UI mostra "já há uma análise em
+      // andamento"). Enfileirar concorrente corromperia a sessão CDP.
+      // (Melhoria futura: serializar via fila no daemon.)
       if (emAndamento.length > 0) {
         return {
           success: true,
