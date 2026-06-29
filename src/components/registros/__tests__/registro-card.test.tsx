@@ -57,6 +57,8 @@ describe("RegistroCard", () => {
     expect(screen.getByText("Resposta à Acusação")).toBeInTheDocument();
     expect(screen.getByText(/Diligência/i)).toBeInTheDocument();
     expect(screen.getByText(/Defensoria nomeada/)).toBeInTheDocument();
+    // showPrazo not passed → prazo chip absent even though prazo is set
+    expect(screen.queryByText(/11\/07/)).not.toBeInTheDocument();
   });
   it("shows a prazo badge when prazo is set", () => {
     render(<RegistroCard registro={base as any} showPrazo />);
