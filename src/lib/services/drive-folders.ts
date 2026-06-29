@@ -42,16 +42,21 @@ export function findAtribuicaoForFolder(
   return null;
 }
 
-async function loadGroupFolders(userId: number): Promise<AtribuicaoFoldersMap> {
+/** Mapa do grupo do usuário, ou null se o usuário não tem grupo (distingue "sem grupo" de "grupo sem a chave"). */
+export async function loadUserGroupFolders(userId: number): Promise<AtribuicaoFoldersMap | null> {
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
     columns: { driveGroupId: true },
   });
-  if (!user?.driveGroupId) return {};
+  if (!user?.driveGroupId) return null;
   const group = await db.query.driveGroups.findFirst({
     where: eq(driveGroups.id, user.driveGroupId),
   });
   return (group?.atribuicaoFolders ?? {}) as AtribuicaoFoldersMap;
+}
+
+async function loadGroupFolders(userId: number): Promise<AtribuicaoFoldersMap> {
+  return (await loadUserGroupFolders(userId)) ?? {};
 }
 
 /** TODAS as pastas de uma atribuição para um defensor (use nos loops de sync/scan). */

@@ -8,7 +8,11 @@ const inngest = readFileSync(join(ROOT, "src/lib/inngest/functions.ts"), "utf8")
 
 describe("Fase 1.5 — reverse-sync multi-tenant (contract)", () => {
   it("removeu o mapa global FOLDER_ID_TO_ATRIBUICAO", () => {
-    expect(gdrive).not.toContain("FOLDER_ID_TO_ATRIBUICAO");
+    expect(gdrive).not.toMatch(/\bFOLDER_ID_TO_ATRIBUICAO\b/); // old global map gone; LEGACY_ prefixed is allowed
+  });
+  it("reverse-sync usa o resolver com fallback legado (não fica dormente pré-seed)", () => {
+    expect(gdrive).toContain("resolveFolderToAtribuicaoOrLegacy");
+    expect(gdrive).toContain("LEGACY_FOLDER_ID_TO_ATRIBUICAO");
   });
   it("usa o resolver reverso por grupo", () => {
     expect(gdrive).toContain("resolveFolderToAtribuicao");
@@ -40,5 +44,8 @@ describe("Fase 1.5 — de-hardcode forward (contract)", () => {
   });
   it("não há mais indexação direta ATRIBUICAO_FOLDER_IDS[...] (vai toda pelo helper)", () => {
     expect(gdrive).not.toMatch(/ATRIBUICAO_FOLDER_IDS\[/);
+  });
+  it("o helper forward usa o discriminador de grupo (fail-safe, sem vazamento entre defensores)", () => {
+    expect(gdrive).toContain("loadUserGroupFolders");
   });
 });

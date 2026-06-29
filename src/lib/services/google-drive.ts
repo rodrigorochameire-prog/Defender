@@ -12,7 +12,7 @@ import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, 
 import { eq, and, desc, ilike, or, sql, gt, lt, isNull } from "drizzle-orm";
 import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS, normalizeName, toTitleCase } from "@/lib/utils/text-extraction";
 import { calculateSimilarity } from "@/lib/utils/name-matching";
-import { resolveAtribuicaoFolder, resolveFolderToAtribuicao, type Atribuicao } from "./drive-folders";
+import { loadUserGroupFolders, pickAtribuicaoFolderPrimary, resolveFolderToAtribuicao, type Atribuicao } from "./drive-folders";
 export { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS };
 import { inngest } from "@/lib/inngest/client";
 
@@ -3494,9 +3494,11 @@ async function folderForAtribuicaoOrLegacy(
   atribuicao: Atribuicao,
 ): Promise<string | null> {
   if (ownerUserId != null) {
-    const resolved = await resolveAtribuicaoFolder(ownerUserId, atribuicao);
-    if (resolved) return resolved;
+    const map = await loadUserGroupFolders(ownerUserId);
+    // Usuário TEM grupo → fail-safe: nunca cai no legado (evita criar/mover pasta no Drive de outro defensor).
+    if (map !== null) return pickAtribuicaoFolderPrimary(map, atribuicao);
   }
+  // Sem ownerUserId ou sem grupo → grupo padrão legado.
   const legacy = ATRIBUICAO_FOLDER_IDS as Record<string, string>;
   return legacy[atribuicao] ?? null;
 }
@@ -4244,6 +4246,27 @@ const ATRIBUICAO_KEY_TO_ENUM: Record<Atribuicao, string> = {
   CRIMINAL: "CRIMINAL_CAMACARI",
 };
 
+/** Mapa reverso legado (grupo padrão): folderId da raiz de atribuição → chave de grupo.
+ *  Fallback single-tenant enquanto drive_groups ainda não foi semeado. */
+const LEGACY_FOLDER_ID_TO_ATRIBUICAO: Record<string, Atribuicao> = {
+  [ATRIBUICAO_FOLDER_IDS.JURI]: "JURI",
+  [ATRIBUICAO_FOLDER_IDS.VVD]: "VVD",
+  [ATRIBUICAO_FOLDER_IDS.EP]: "EP",
+  [ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO]: "SUBSTITUICAO",
+  [ATRIBUICAO_FOLDER_IDS.GRUPO_JURI]: "GRUPO_JURI",
+};
+
+/** Resolve folderId → {ownerUserId, atribuicao} pelos grupos; cai no mapa legado (ownerUserId=null) se nada casar. */
+async function resolveFolderToAtribuicaoOrLegacy(
+  folderId: string,
+): Promise<{ ownerUserId: number | null; atribuicao: Atribuicao } | null> {
+  const resolved = await resolveFolderToAtribuicao(folderId);
+  if (resolved) return { ownerUserId: resolved.ownerUserId, atribuicao: resolved.atribuicao };
+  const legacy = LEGACY_FOLDER_ID_TO_ATRIBUICAO[folderId];
+  if (legacy) return { ownerUserId: null, atribuicao: legacy };
+  return null;
+}
+
 export interface ReverseSyncResult {
   action: "linked" | "created" | "created_pending" | "skipped";
   assistidoId: number;
@@ -4272,7 +4295,7 @@ export async function handleNewAssistidoFolder(
   parentFolderId: string
 ): Promise<ReverseSyncResult | null> {
   // 1. Resolve atribuição + dono a partir do parent (multi-tenant, sem sessão)
-  const resolved = await resolveFolderToAtribuicao(parentFolderId);
+  const resolved = await resolveFolderToAtribuicaoOrLegacy(parentFolderId);
   if (!resolved) {
     return null; // Not a direct child of an atribuição folder — skip
   }
@@ -4436,5 +4459,5 @@ async function scheduleEnrichment(assistidoId: number, driveFolderId: string) {
  */
 export async function isAtribuicaoRootChild(parentDriveId: string | undefined): Promise<boolean> {
   if (!parentDriveId) return false;
-  return (await resolveFolderToAtribuicao(parentDriveId)) !== null;
+  return (await resolveFolderToAtribuicaoOrLegacy(parentDriveId)) !== null;
 }
