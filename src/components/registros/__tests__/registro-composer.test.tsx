@@ -47,6 +47,8 @@ describe("RegistroComposer", () => {
     rerender(<RegistroComposer scope={{ assistidoId: 1 }} onAbrirAutos={onAbrirAutos} />);
     // Prop provided → button appears and calls the callback
     fireEvent.click(screen.getByRole("button", { name: /abrir autos/i }));
-    expect(onAbrirAutos).toHaveBeenCalled();
+    expect(onAbrirAutos).toHaveBeenCalledTimes(1);
+    // Abrir autos must NOT expand the editor
+    expect(screen.queryByRole("button", { name: /salvar/i })).not.toBeInTheDocument();
   });
 });
