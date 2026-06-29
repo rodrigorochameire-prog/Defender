@@ -77,11 +77,11 @@ describe("registrosRouter.list input", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("clamps limit to a max of 100", () => {
-    const ok = schema.safeParse({ limit: 100 });
-    expect(ok.success).toBe(true);
-    const bad = schema.safeParse({ limit: 200 });
-    expect(bad.success).toBe(false);
+  it("clamps limit to a max of 300", () => {
+    // 300 is the cap (raised from 100 so RegistrosPanel's limit:200 is valid)
+    expect(schema.safeParse({ limit: 200 }).success).toBe(true);
+    expect(schema.safeParse({ limit: 300 }).success).toBe(true);
+    expect(schema.safeParse({ limit: 301 }).success).toBe(false);
   });
 });
 
