@@ -98,6 +98,7 @@ import { promocaoRouter } from "./promocao";
 import { vidaFuncionalRouter } from "./vida-funcional";
 import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
+import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
 import { diariasRouter } from "./diarias";
 
@@ -469,6 +470,10 @@ export const appRouter = router({
   // INTIMACOES — importação de intimações PJe (lane browser)
   // ==========================================
   intimacoes: intimacoesRouter,
+  // ==========================================
+  // PAUTA — importação de pauta de audiências PJe (lane browser)
+  // ==========================================
+  pauta: pautaRouter,
 });
 
 export type AppRouter = typeof appRouter;

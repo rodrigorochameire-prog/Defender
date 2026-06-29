@@ -322,3 +322,25 @@ Status: ${cols.situacao}`;
     orgaoJulgador,
   };
 }
+
+// ---------------------------------------------------------------------------
+// formatDataHora — formata um timestamp do staging para "DD/MM/YY HH:MM",
+// no formato que linhaParaEvento espera em cols.dataHora.
+//
+// O worker Python (importar_pauta.py) insere data_audiencia como string ISO
+// SEM timezone ("YYYY-MM-DDTHH:MM:00"), representando a hora local BRT.
+// O driver psql trata timestamps-sem-tz como UTC ao construir o JS Date, de
+// modo que getUTCHours() recupera exatamente a hora BRT original (round-trip).
+// Retorna "" para entrada nula/inválida — chamadores devem PULAR linhas sem
+// data (uma data-lixo nunca pode virar audiência). Nunca lança.
+// ---------------------------------------------------------------------------
+
+export function formatDataHora(date: Date | null | undefined): string {
+  if (!date || Number.isNaN(date.getTime())) return "";
+  const dd = String(date.getUTCDate()).padStart(2, "0");
+  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const yy = String(date.getUTCFullYear()).slice(2);
+  const hh = String(date.getUTCHours()).padStart(2, "0");
+  const min = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yy} ${hh}:${min}`;
+}

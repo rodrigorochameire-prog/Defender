@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toTitleCase, mapearAtribuicao, extrairAssistidos, mapearSituacao, linhaParaEvento } from "../parse-pauta";
+import { toTitleCase, mapearAtribuicao, extrairAssistidos, mapearSituacao, linhaParaEvento, formatDataHora } from "../parse-pauta";
 
 describe("toTitleCase", () => {
   it("mantém conectivo em minúsculo no meio do nome", () => {
@@ -81,5 +81,20 @@ describe("linhaParaEvento", () => {
     expect(ev.atribuicao).toBe("Violência Doméstica");
     expect(ev.status).toBe("confirmado");
     expect(ev.situacaoAudiencia).toBe("designada");
+  });
+});
+
+describe("formatDataHora", () => {
+  it("round-trip: naive BRT armazenado como UTC recupera a hora original (09:00)", () => {
+    // O worker grava "2026-06-30T09:00:00" (naive BRT); o driver constrói o Date
+    // como se fosse UTC. formatDataHora usa getUTC* → deve recuperar 09:00.
+    const d = new Date("2026-06-30T09:00:00Z");
+    expect(formatDataHora(d)).toBe("30/06/26 09:00");
+  });
+  it("retorna '' para null", () => {
+    expect(formatDataHora(null)).toBe("");
+  });
+  it("retorna '' para Date inválido", () => {
+    expect(formatDataHora(new Date("invalid"))).toBe("");
   });
 });
