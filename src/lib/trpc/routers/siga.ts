@@ -1,11 +1,10 @@
 // src/lib/trpc/routers/siga.ts
 import { z } from "zod";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../init";
 import { db } from "@/lib/db";
 import { ausencias, vidaFuncionalEventos, sigaImportStaging } from "@/lib/db/schema";
-import { getVidaFuncionalScope } from "../vida-funcional-scope";
 import { projecaoEventoDeAusencia } from "@/lib/ausencias/projecao";
 import { criarAusenciaComEvento } from "@/lib/ausencias/persist";
 import { decidir } from "@/lib/siga-import/dedup";
@@ -30,23 +29,29 @@ export const sigaRouter = router({
 
     const sessionId = crypto.randomUUID();
 
-    // Carregar ausências existentes para o dedup
-    const scope = getVidaFuncionalScope(ctx.user);
+    // Carregar ausências existentes do TITULAR para o dedup. Um defensor só
+    // sincroniza os seus próprios dados do SIGA — nunca os de outro defensor
+    // (escopos servidor/estagiário incluiriam IDs alheios e gerariam decisões
+    // ja_importada/atualizada contra linhas de terceiros).
     const existingAusencias = await db
       .select({
         id: ausencias.id,
         nSiga: ausencias.nSiga,
+        numeroSolicitacao: ausencias.numeroSolicitacao,
         situacao: ausencias.situacao,
         dataInicio: ausencias.dataInicio,
         dataFim: ausencias.dataFim,
         motivo: ausencias.motivo,
       })
       .from(ausencias)
-      .where(and(isNull(ausencias.deletedAt), inArray(ausencias.defensorId, scope)));
+      .where(and(isNull(ausencias.deletedAt), eq(ausencias.defensorId, ctx.user.id)));
 
-    const porNSiga = new Map<string, ExistingAusencia>();
+    // Chave de dedup = nSiga ?? numeroSolicitacao. Linhas sem nSiga (algumas
+    // ausências do SIGA não têm) tornam-se idempotentes via numeroSolicitacao.
+    const porChave = new Map<string, ExistingAusencia>();
     for (const a of existingAusencias) {
-      if (a.nSiga) porNSiga.set(a.nSiga, a as ExistingAusencia);
+      const chave = a.nSiga ?? a.numeroSolicitacao;
+      if (chave) porChave.set(chave, a as ExistingAusencia);
     }
 
     type StagingInsert = {
@@ -71,9 +76,10 @@ export const sigaRouter = router({
     for (const row of licencas) {
       const tipo = "licenca" as const;
       const mapped = mapToAusencia(tipo, row as unknown as Record<string, unknown>);
+      const chave = row.nSiga ?? row.numeroSolicitacao ?? null;
       const { decisao, matchedAusenciaId } = decidir(
-        { nSiga: row.nSiga ?? null, mapped },
-        porNSiga,
+        { nSiga: chave, mapped },
+        porChave,
       );
       rows.push({
         defensorId: ctx.user.id,
@@ -92,9 +98,10 @@ export const sigaRouter = router({
     for (const row of outras) {
       const tipo = "outra_ausencia" as const;
       const mapped = mapToAusencia(tipo, row as unknown as Record<string, unknown>);
+      const chave = row.nSiga ?? row.numeroSolicitacao ?? null;
       const { decisao, matchedAusenciaId } = decidir(
-        { nSiga: row.nSiga ?? null, mapped },
-        porNSiga,
+        { nSiga: chave, mapped },
+        porChave,
       );
       rows.push({
         defensorId: ctx.user.id,
@@ -309,6 +316,9 @@ export const sigaRouter = router({
                     dataEvento: proj.dataEvento,
                     dataFim: proj.dataFim,
                     titulo: proj.titulo,
+                    // Revive o evento: se o SIGA reverteu indeferida/cancelada de
+                    // volta para deferida, ele reaparece no Hub.
+                    deletedAt: null,
                     updatedAt: new Date(),
                   })
                   .where(eq(vidaFuncionalEventos.id, a.vidaFuncionalEventoId));
