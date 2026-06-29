@@ -3,8 +3,8 @@
 // Sheet de gestão do atendimento — padrão visual do sheet da agenda:
 // top bar escura, cartão de identidade com avatar por atribuição, seções
 // colapsáveis persistentes, documentos & autos com visualizador encaixado à
-// esquerda (AutosModalViewer), registros do assistido com composer rápido
-// (RegistrosTimeline + RegistroEditor), anexos espelhados no Drive e footer
+// esquerda (AutosModalViewer), registros do assistido via RegistrosPanel
+// (composer + timeline unificados), anexos espelhados no Drive e footer
 // de ações. Simples, funcional, sofisticado.
 
 import { useEffect, useMemo, useRef, useState } from "react";
