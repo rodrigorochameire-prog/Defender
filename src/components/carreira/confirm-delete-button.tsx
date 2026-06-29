@@ -18,12 +18,14 @@ export function ConfirmDeleteButton({
   description,
   trigger,
   confirmLabel = "Excluir",
+  disabled = false,
 }: {
   onConfirm: () => void;
   title?: string;
   description?: string;
   trigger?: React.ReactNode;
   confirmLabel?: string;
+  disabled?: boolean;
 }) {
   return (
     <AlertDialog>
@@ -32,7 +34,8 @@ export function ConfirmDeleteButton({
           <button
             type="button"
             aria-label="Excluir"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+            disabled={disabled}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="h-4 w-4" />
           </button>

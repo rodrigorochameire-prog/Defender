@@ -186,6 +186,7 @@ export function FeriasView() {
                       onConfirm={() => removerPeriodo.mutate({ id: row.periodo.id })}
                       title="Excluir período?"
                       description="Exclui o período e todas as parcelas vinculadas."
+                      disabled={removerPeriodo.isPending}
                     />
                   </div>
                 </div>
@@ -277,6 +278,7 @@ export function FeriasView() {
                               onConfirm={() => removerParcela.mutate({ id: p.id })}
                               title="Excluir parcela?"
                               description="Remove esta parcela de férias definitivamente."
+                              disabled={removerParcela.isPending}
                             />
                           </div>
                         </CarreiraCard>
