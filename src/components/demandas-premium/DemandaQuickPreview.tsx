@@ -63,8 +63,7 @@ import { TIPO_PROCESSO_OPTIONS } from "@/config/tipos-processo";
 import { STATUS_PRISIONAL_CONFIG, STATUS_PRISIONAL_OPTIONS, type StatusPrisional } from "./status-prisional-config";
 import { InlineDatePicker } from "@/components/shared/inline-date-picker";
 import { AssistidoAvatar } from "@/components/shared/assistido-avatar";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
-import { RegistroEditor } from "@/components/registros/registro-editor";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 import { RegistroComAutosDialog } from "@/components/registros/registro-com-autos-dialog";
 import { IdentificacaoSecao } from "./sheet/secoes/IdentificacaoSecao";
 import { CronologiaSecao } from "./sheet/secoes/CronologiaSecao";
@@ -941,67 +940,42 @@ export function DemandaQuickPreview({
       temDado: true,
       count: registrosCount || undefined,
       node: demanda.assistidoId ? (
-        <div className="space-y-3">
-          {!novoRegistroOpen && (
-            <div className="flex items-center justify-end gap-1">
-              {/* Opt-in: registrar lendo os autos lado a lado (modal). Só quando há PDFs. */}
-              {previewFiles.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setRegistroComAutosOpen(true)}
-                  title="Registrar lendo os autos lado a lado"
-                  aria-label="Registrar com autos"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer p-1 md:px-2 md:py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Com autos</span>
-                </button>
-              )}
-              {/* CTA de Registros — refinado: soft-emerald (ring + bg suave +
-                  texto emerald) em vez do bloco sólido. Presente sem pesar. */}
-              <button
-                type="button"
-                onClick={() => setNovoRegistroOpen(true)}
-                title="Adicionar registro (n)"
-                aria-label="Adicionar registro"
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 ring-1 ring-inset ring-emerald-200/70 dark:ring-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer px-2.5 py-1 rounded-lg"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Adicionar
-              </button>
-            </div>
-          )}
-          {/* "Adicionar" abre o editor enxuto inline (sem PDF). Ler os autos lado a
-              lado é opt-in pelo botão "Com autos" → RegistroComAutosDialog abaixo. */}
-          {novoRegistroOpen && (
-            <RegistroEditor
-              assistidoId={demanda.assistidoId}
-              processoId={demanda.processoId ?? undefined}
-              demandaId={Number(demanda.id)}
-              tipoDefault="ciencia"
-              tiposPrimarios={[
-                "ciencia",
-                "providencia",
-                "diligencia",
-                "atendimento",
-                "delegacao",
-                "anotacao",
-                "peticao",
-              ]}
-              onSaved={() => {
-                setNovoRegistroOpen(false);
-                refetchAudiencias();
-              }}
-              onCancel={() => setNovoRegistroOpen(false)}
-            />
-          )}
-          <RegistrosTimeline
-            assistidoId={demanda.assistidoId}
-            processoId={demanda.processoId ?? undefined}
-            demandaId={Number(demanda.id)}
-            emptyHint="Sem registros nesta demanda."
-          />
-        </div>
+        <RegistrosPanel
+          scope={{
+            assistidoId: demanda.assistidoId,
+            processoId: demanda.processoId ?? undefined,
+            demandaId: Number(demanda.id),
+          }}
+          variant="drawer"
+          tipoDefault="ciencia"
+          tiposPrimarios={[
+            "ciencia",
+            "providencia",
+            "diligencia",
+            "atendimento",
+            "delegacao",
+            "anotacao",
+            "peticao",
+          ]}
+          emptyHint="Sem registros nesta demanda."
+          onRegistroSaved={refetchAudiencias}
+          onAbrirAutos={
+            previewFiles.length > 0
+              ? () => setRegistroComAutosOpen(true)
+              : undefined
+          }
+          quickActions={{
+            agendarAudiencia: onAgendarAudiencia
+              ? () => onAgendarAudiencia(demanda.id)
+              : undefined,
+            adicionarPrazo: () =>
+              (
+                document.querySelector(
+                  `[data-prazo-trigger='${demanda.id}'] button[data-edit-trigger]`,
+                ) as HTMLButtonElement | null
+              )?.click(),
+          }}
+        />
       ) : (
         <div className="text-[11px] text-muted-foreground italic">
           Vincule um assistido para registrar providências e atendimentos.
