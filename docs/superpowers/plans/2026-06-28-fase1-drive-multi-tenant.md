@@ -353,7 +353,9 @@ git commit -m "feat(drive): seed do grupo de Drive do Rodrigo com as pastas atua
 - Modify: `src/lib/trpc/routers/distribuicao.ts` (importa a constante — ~linha 20)
 - Modify: `src/lib/utils/text-extraction.ts` (marcar constantes como legado)
 
-> ⚠️ O escopo aqui é maior do que parece: além de acessos `ATRIBUICAO_FOLDER_IDS[atribuicao]`, há **loops** que iteram `Object.entries(ATRIBUICAO_FOLDER_IDS)` e usos de `EXTRA_ATRIBUICAO_FOLDERS` (pastas VVD-MPU / Substituição-cível / Grupo-Júri-extra). Migrar TODOS — senão Task 10 (remoção) quebra o build, ou o scan perde pastas.
+> ⚠️ O escopo aqui é maior do que parece: além de acessos `ATRIBUICAO_FOLDER_IDS[atribuicao]`, há **loops** que iteram `Object.entries(ATRIBUICAO_FOLDER_IDS)` e usos de `EXTRA_ATRIBUICAO_FOLDERS` (pastas VVD-MPU / Substituição-cível / Grupo-Júri-extra). Migrar TODOS os **acessos diretos** em `drive.ts` + `distribuicao.ts`.
+
+> 🟡 **DECISÃO (deferimento) — `google-drive.ts` fora desta task.** `src/lib/services/google-drive.ts` lê a constante em ~12 lugares (incl. o reverse-sync por webhook `FOLDER_ID_TO_ATRIBUICAO`). A migração dele exige design (atribuição por grupo no webhook) e fica para a **Fase 1.5**. Nesta task: **NÃO** alterar `google-drive.ts` nem as chamadas que `drive.ts` faz a funções dele (`criarPastaProcesso`, etc.) — essas continuam usando a constante, que passa a ser o **grupo padrão legado**. Migrar apenas os acessos **diretos** à constante dentro de `drive.ts`/`distribuicao.ts`.
 
 - [ ] **Step 1: Mapear TODOS os usos (não usar números de linha fixos)**
 
@@ -573,27 +575,29 @@ git commit -m "docs(onboarding): convenção de organização das pastas do Driv
 
 ---
 
-## Task 10: Remoção final das constantes de folderId + verificação de fim de fase
+## Task 10: Constante vira "grupo padrão legado" + separar labels + verificação de fim de fase
+
+> 🟡 **MUDANÇA vs. plano original:** NÃO removemos `ATRIBUICAO_FOLDER_IDS`/`EXTRA_ATRIBUICAO_FOLDERS` nesta fase. `google-drive.ts` ainda as consome (migração = **Fase 1.5**). Aqui a constante é **rebatizada conceitualmente como o "grupo padrão legado"** (as pastas do Rodrigo), mantida para `google-drive.ts`, e só separamos os *labels* dos *IDs* para limpeza.
 
 **Files:**
-- Modify: `src/components/drive/drive-constants.ts` (re-exporta a constante; separar labels de IDs)
-- Modify: `src/app/(dashboard)/admin/settings/drive/page.tsx` (**duplicado local** próprio de `ATRIBUICAO_FOLDER_IDS`/`SPECIAL_FOLDER_IDS` — não é import compartilhado; tratar à parte)
-- Modify: `src/lib/utils/text-extraction.ts` (remover `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` quando não houver mais leitor de folderId)
+- Modify: `src/lib/utils/text-extraction.ts` (extrair `ATRIBUICAO_LABELS`; documentar a constante como "grupo padrão legado")
+- Modify: `src/components/drive/drive-constants.ts` (usar `ATRIBUICAO_LABELS` para rótulos)
+- Modify: `src/app/(dashboard)/admin/settings/drive/page.tsx` (**duplicado local** — passar a refletir o grupo do usuário via `myDriveStatus`, não as pastas fixas)
 
-> **NÃO remover `SPECIAL_FOLDER_IDS`**: está em uso em `api/webhooks/drive/route.ts`, `api/drive/upload/route.ts`, `whatsapp-chat.ts`, `inngest/functions.ts` e `drive-constants.ts`. Fica fora do escopo da Fase 1.
+> **NÃO remover `SPECIAL_FOLDER_IDS`**: em uso em `api/webhooks/drive/route.ts`, `api/drive/upload/route.ts`, `whatsapp-chat.ts`, `inngest/functions.ts`, `drive-constants.ts`. Fora do escopo.
 
-- [ ] **Step 1: Reconfirmar que não há leitor de folderId pelas constantes**
+- [ ] **Step 1: Mapear leitores restantes da constante**
 
-Run: `Grep -n` por `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS` em todo `src/`.
-Expected: nenhum uso que leia folderId para sync/análise/distribuição (de `drive.ts`/`distribuicao.ts`/`analyze` já migrados nas Tasks 4–5). Restam, no máximo, usos de *label* e o duplicado local da página admin.
+Run: `Grep -n` por `ATRIBUICAO_FOLDER_IDS`/`EXTRA_ATRIBUICAO_FOLDERS`.
+Expected: após Tasks 4–5, os acessos diretos em `drive.ts`/`distribuicao.ts`/`analyze` sumiram; restam `google-drive.ts` (deferido p/ 1.5), usos de *label* (`drive-constants.ts`), e o duplicado da página admin.
 
-- [ ] **Step 2: Separar labels de IDs**
+- [ ] **Step 2: Separar labels de IDs (sem remover IDs)**
 
-Extrair `ATRIBUICAO_LABELS` (mapa atribuição→rótulo) em `text-extraction.ts` (ou `drive-constants.ts`) e apontar `drive-constants.ts` para ele. Remover então `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS` (IDs) de `text-extraction.ts`.
+Extrair `ATRIBUICAO_LABELS` (atribuição→rótulo) e apontar `drive-constants.ts` para ele. Acima de `ATRIBUICAO_FOLDER_IDS` em `text-extraction.ts`, documentar: `// GRUPO PADRÃO LEGADO (pastas da 9ª DP). Ainda consumido por google-drive.ts até a Fase 1.5.` **Manter** `ATRIBUICAO_FOLDER_IDS` e `EXTRA_ATRIBUICAO_FOLDERS`.
 
 - [ ] **Step 3: Substituir o duplicado local da página admin**
 
-Em `admin/settings/drive/page.tsx`, trocar a cópia local `ATRIBUICAO_FOLDER_IDS` por dados vindos do `myDriveStatus`/grupo (ou por `ATRIBUICAO_LABELS` se for só exibição). Confirmar que a página passa a refletir o grupo do usuário logado, não as pastas fixas do Rodrigo.
+Em `admin/settings/drive/page.tsx`, trocar a cópia local por dados do `myDriveStatus`/grupo (ou `ATRIBUICAO_LABELS` se for só exibição), refletindo o grupo do usuário logado.
 
 - [ ] **Step 4: Suíte completa + typecheck + lint**
 
@@ -602,13 +606,13 @@ Expected: tudo verde (exceto quarentena conhecida de Postgres).
 
 - [ ] **Step 5: Verificação manual de não-regressão (conta do Rodrigo)**
 
-Confirmar que, com o grupo seedado (Task 3, **com as extras**), o sync e a análise da conta do Rodrigo continuam varrendo exatamente as mesmas pastas de antes — inclusive VVD-MPU, Substituição-cível e Grupo-Júri-extra.
+Confirmar que, com o grupo seedado (Task 3, **com as extras**), o sync/análise via `drive.ts` (resolver) e os fluxos via `google-drive.ts` (grupo padrão legado) da conta do Rodrigo continuam varrendo exatamente as mesmas pastas — inclusive VVD-MPU, Substituição-cível e Grupo-Júri-extra.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add -A
-git commit -m "refactor(drive): remove constantes de folderId globais; folders 100% por grupo (fim da Fase 1)"
+git commit -m "refactor(drive): separa labels; ATRIBUICAO_FOLDER_IDS vira grupo padrao legado (google-drive.ts -> Fase 1.5)"
 ```
 
 ---
@@ -618,11 +622,15 @@ git commit -m "refactor(drive): remove constantes de folderId globais; folders 1
 - [ ] `drive_groups` existe; `users.driveGroupId`, `driveFiles.userId`, `driveSyncFolders.userId` aplicados.
 - [ ] Resolver cobre as 6 atribuições com **multi-pasta** (`string[]`), com testes verdes.
 - [ ] Grupo do Rodrigo seedado **com as pastas extras** (VVD-MPU, Substituição-cível, Grupo-Júri-extra) → **zero regressão** no fluxo atual dele.
-- [ ] `ATRIBUICAO_FOLDER_IDS` **e** `EXTRA_ATRIBUICAO_FOLDERS` migradas em `drive.ts` **e** `distribuicao.ts`; `SPECIAL_FOLDER_IDS` preservada.
+- [ ] Acessos diretos a `ATRIBUICAO_FOLDER_IDS`/`EXTRA_ATRIBUICAO_FOLDERS` migrados em `drive.ts` **e** `distribuicao.ts`; `SPECIAL_FOLDER_IDS` preservada.
 - [ ] Um 2º defensor consegue: conectar Google → provisionar árvore → ver folders no `drive_groups` próprio.
-- [ ] Nenhum `process.env.HOME ?? "/Users/rodrigorochameire"`, `DRIVE_BASE_PATH` ou `Meu Drive/1 - Defensoria 9ª DP/...` literal restante no código da nuvem.
-- [ ] `ATRIBUICAO_FOLDER_IDS` removida (ou reduzida a labels).
+- [ ] Nenhum `process.env.HOME ?? "/Users/rodrigorochameire"`, `DRIVE_BASE_PATH` ou `Meu Drive/1 - Defensoria 9ª DP/...` literal restante em `drive.ts`/`distribuicao.ts`/`analyze`/`pje-import-modal`.
+- [ ] `ATRIBUICAO_FOLDER_IDS` mantida como **grupo padrão legado** (consumida só por `google-drive.ts`); labels separados em `ATRIBUICAO_LABELS`.
 - [ ] `npm test`, `npm run typecheck`, `npm run lint` verdes.
+
+## Fase 1.5 (follow-up, fora desta fase)
+- Migrar `src/lib/services/google-drive.ts` (~12 usos) para o resolver por grupo, incluindo o **design do reverse-sync por webhook** (`FOLDER_ID_TO_ATRIBUICAO`): resolver `folderId → (grupo, atribuição)` sem sessão de usuário.
+- Só então remover `ATRIBUICAO_FOLDER_IDS`/`EXTRA_ATRIBUICAO_FOLDERS` de vez.
 
 ## Itens a confirmar antes/durante (do spec §9)
 
