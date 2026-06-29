@@ -109,6 +109,26 @@ def normalize(s: str) -> str:
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
 
 
+# ── Gate de sentença 1º grau (espelha o TS isSentencaAto) ─────────────────────
+# Após NFD + strip de marcas (Mn): "pronúncia"→"pronuncia", "acórdão"→"acordao",
+# então os regexes ASCII abaixo casam corretamente. Acórdão (2º grau) é EXCLUÍDO.
+def _norm_ato(s: str) -> str:
+    s = unicodedata.normalize("NFD", s or "")
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return s.lower()
+
+
+_SENTENCA_RE = re.compile(r"senten|condena|absolvi|pronuncia|impron|desclassifica")
+_ACORDAO_RE = re.compile(r"acordao")
+
+
+def is_sentenca_ato(ato: str) -> bool:
+    n = _norm_ato(ato)
+    if _ACORDAO_RE.search(n):
+        return False
+    return bool(_SENTENCA_RE.search(n))
+
+
 # Linhas de puro cabeçalho/rodapé/formatação do PJe — removidas antes de classificar,
 # resumir (IA) e parsear medidas. NÃO removem keywords jurídicas (designo, defiro,
 # sentença, condeno, medida protetiva…), só boilerplate.
@@ -1118,6 +1138,38 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
                 "enrichment_status": "pending",
                 "enrichment_data": {"raw_text": (content or "")[:12000]},
             })
+
+    # ── Enfileira captura+análise da SENTENÇA 1º grau (lane=browser) ───────────
+    # Quando o ato classificado é sentença de 1ª instância (condenação/absolvição/
+    # pronúncia/etc., NÃO acórdão) e há um id de documento para baixar, dispara o
+    # pipeline `analise-sentenca` no daemon. NÃO altera o status da demanda.
+    # Guard total em try/except: falhar aqui NUNCA pode quebrar a varredura.
+    doc_id = demanda.get("pje_documento_id") or (demanda.get("enrichment_data") or {}).get("id_documento_pje")
+    if is_sentenca_ato(rule["ato"]) and doc_id:
+        try:
+            numero = (demanda.get("processos") or {}).get("numero_autos") or ""
+            atribuicao = (demanda.get("processos") or {}).get("atribuicao")
+            payload = {
+                "numero_processo": numero,
+                "pje_documento_id": doc_id,
+                "assistido_id": assistido_id,
+                "atribuicao": atribuicao,
+                "demanda_origem_id": demanda["id"],
+            }
+            sb._req("POST", "/rest/v1/claude_code_tasks", {
+                "skill": "analise-sentenca",
+                "lane": "browser",
+                "status": "pending",
+                "etapa": "Na fila",
+                "created_by": 1,  # SYSTEM_USER_ID — see src/config/system-user.ts
+                "assistido_id": assistido_id,
+                "processo_id": proc_id,
+                "prompt": f"Capturar e analisar sentença de {numero or 'processo'}".strip(),
+                "instrucao_adicional": json.dumps(payload),
+            }, prefer="return=minimal")
+            log(f"  ⚖ enfileirada análise de sentença (analise-sentenca) p/ {numero}")
+        except Exception as e:
+            log(f"  ⚠ falha ao enfileirar analise-sentenca (demanda={demanda['id']}): {e}")
 
     # ── Side-effect: agendar / reagendar audiência ─────────────────────────────
     if proc_id and any(fx in ("agendar_audiencia", "reagendar_audiencia") for fx in side_effects):
