@@ -4,12 +4,11 @@
  * depoimento_timestamp_inicio_s / fim_s, e pinos (JSONB append)
  * a partir do registro_audiencia enriquecido.
  *
- * Uso: node scripts/pje-cdp/vincular_testemunhas.mjs /tmp/registros-2026-06-30.json
+ * Uso: node scripts/pje-cdp/vincular_testemunhas.mjs --registro /tmp/registros-2026-06-30.json
  * Entrada: mesmo formato do popular_ombuds.mjs —
  *   [{ audiencia_id, registro_audiencia: { depoentes: [...] }, ... }]
  *
  * Requer migração 20260630_testemunhas_pins_timestamps.sql aplicada.
- * pinos_sugeridos: stub — silenciosamente no-op enquanto spec D3 não for implementado.
  */
 import * as dotenv from "dotenv";
 dotenv.config({ path: "/Users/rodrigorochameire/Projetos/Defender/.env.local" });
@@ -23,7 +22,13 @@ const sql = postgres(process.env.DATABASE_URL.replace(/^"|"$/g, ""), {
   prepare: false, connect_timeout: 20, ssl: "require",
 });
 
-const items = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+const regIdx = process.argv.indexOf('--registro');
+if (regIdx === -1 || !process.argv[regIdx + 1]) {
+  console.error('Usage: node vincular_testemunhas.mjs --registro <registro_audiencia.json>');
+  process.exit(1);
+}
+const registroPath = process.argv[regIdx + 1];
+const items = JSON.parse(fs.readFileSync(registroPath, "utf8"));
 
 async function appendPinos(depoenteId, pinosToAdd) {
   if (!pinosToAdd || pinosToAdd.length === 0) return 0;
@@ -45,7 +50,7 @@ async function appendPinos(depoenteId, pinosToAdd) {
     }
     const result = await sql`
       UPDATE testemunhas
-      SET pinos = pinos || ${JSON.stringify(dbPino)}::jsonb
+      SET pinos = COALESCE(pinos, '[]'::jsonb) || ${JSON.stringify(dbPino)}::jsonb
       WHERE id = ${depoenteId}
         AND NOT EXISTS (
           SELECT 1 FROM jsonb_array_elements(pinos) p2
@@ -73,7 +78,7 @@ for (const item of items) {
     const termoPagina = dep.termo_delegacia?.pagina_inicio ?? null;    // spec: pagina_inicio
     const tsInicio = dep.gravacao_judicial?.timestamp_inicio_s ?? null; // spec: timestamp_inicio_s
     const tsFim = dep.gravacao_judicial?.timestamp_fim_s ?? null;       // spec: timestamp_fim_s
-    const pinosSugeridos = dep.pinos_sugeridos ?? [];                   // stub: usually []
+    const pinosSugeridos = dep.pinos ?? [];                              // field: dep.pinos per schema
 
     // Nothing to write — skip
     if (!termoDriveFileId && tsInicio === null && pinosSugeridos.length === 0) {
