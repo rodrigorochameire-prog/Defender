@@ -22,7 +22,7 @@
 | `src/components/agenda/sheet/secoes-manifest.ts` | Reorder SECOES_INSTRUCAO espinha only |
 | `src/components/agenda/sheet/secoes-manifest.test.ts` | Update if espinha order is asserted |
 | `src/components/agenda/sheet/prova-oral-console.tsx` | Rename export ProvaOralConsole → DepoimentosConsole |
-| `src/components/agenda/event-detail-sheet.tsx` | Default tab + hardcoded "prova-oral" ref + import rename |
+| `src/components/agenda/event-detail-sheet.tsx` | Default tab + "prova-oral" ref + import rename + certidaoComunicacao wiring |
 | `src/components/shared/pessoa-avatar.tsx` | Fix DEFAULT_TONE + add 4 entries to PAPEL_AVATAR_MAP |
 | `src/components/agenda/sheet/depoente-card-v2.tsx` | Faixa top, rounded-none, intimação line, certidão expander |
 | `src/components/agenda/sheet/secoes/DepoentesSecao.tsx` | Grouped by Acusação / Defesa |
@@ -227,26 +227,28 @@ git commit -m "refactor(areas-mae): new AreaMae — imputacao/depoimentos/laudos
 **Files:**
 - Modify: `src/components/agenda/sheet/secoes-manifest.ts`
 
-- [ ] **Step 1: Update SECOES_INSTRUCAO**
+- [ ] **Step 1: Apply the canonical SECOES_INSTRUCAO order unconditionally**
 
-In `secoes-manifest.ts`, replace the espinha block (lines 95–118). The only change is moving `"resumo"` from position 1 to position 1 (it's already there) — actually `"resumo"` is already the first item. Confirm by reading:
+In `secoes-manifest.ts`, replace the `SECOES_INSTRUCAO` array with the definitive order from the spec (§4.5). Do not grep-and-decide — apply it regardless of what's currently there:
 
-```bash
-grep -n '"resumo"' src/components/agenda/sheet/secoes-manifest.ts
-```
-
-If `"resumo"` is already first in `SECOES_INSTRUCAO`, **no change needed** to the manifest. Move on to step 2.
-
-If not, reorder so the espinha is:
 ```ts
-// Espinha (7)
-"resumo",        // narrativa do caso — topo da aba Imputação
-"imputacao",
-"fatos",
-"depoentes",
-"depoimentos",
-"laudos",
-"documentos",
+export const SECOES_INSTRUCAO: SecaoId[] = [
+  // Espinha (7)
+  "resumo",        // narrativa do caso — topo da aba Imputação
+  "imputacao",
+  "fatos",
+  "depoentes",
+  "depoimentos",
+  "laudos",
+  "documentos",
+  // Preparação
+  "dossie",
+  "teses",
+  // Contexto (colapsado via GRUPO_CONTEXTO_INSTRUCAO)
+  "contradicoes", "versao", "relato-vitima", "sintese",
+  "investigacao", "pendencias", "medidas", "ata",
+  "anotacoes-rapidas", "analise-ia", "midia",
+];
 ```
 
 - [ ] **Step 2: Check secoes-manifest test**
@@ -305,7 +307,26 @@ const [activeTab, setActiveTab] = useState<AreaMae>("resumo");
 const [activeTab, setActiveTab] = useState<AreaMae>("imputacao");
 ```
 
-**2c. Hardcoded area check (around line 1493):**
+**2c. Hardcoded area check (around line 1493) — also rename `resumoProvaOral` import:**
+
+```ts
+// was:
+import { resumoProvaOral } from "@/lib/agenda/depoente-status";
+// becomes:
+import { resumoDepoimentos } from "@/lib/agenda/depoente-status";
+```
+
+In `src/lib/agenda/depoente-status.ts`, add an alias export (or rename the function — check if it's used elsewhere first with `grep -r "resumoProvaOral" src/`):
+
+```ts
+// If used only in event-detail-sheet, rename the function directly:
+export function resumoDepoimentos(...) { ... }  // was resumoProvaOral
+
+// If used elsewhere, add alias and keep original:
+export { resumoProvaOral as resumoDepoimentos };
+```
+
+Update the callsite in `event-detail-sheet.tsx`:
 ```ts
 // was:
 {!isLoading && tabAtiva === "prova-oral" && depoentesStatus.length > 0 && (
@@ -313,9 +334,65 @@ const [activeTab, setActiveTab] = useState<AreaMae>("imputacao");
 )}
 // becomes:
 {!isLoading && tabAtiva === "depoimentos" && depoentesStatus.length > 0 && (
-  <DepoimentosConsole resumo={resumoProvaOral(depoentesStatus)} />
+  <DepoimentosConsole resumo={resumoDepoimentos(depoentesStatus)} />
 )}
 ```
+
+**2d. Wire `certidaoComunicacao` into the `depoentes` memo**
+
+The `depoentes` array (used by `DepoenteCardV2`) is built in `event-detail-sheet.tsx` around line 389. `testemunhasDB` entries already carry `certidaoComunicacao` from the DB, but `testemunhasAcusacao`/`testemunhasDefesa` (from AI analysis) do not. Add a name-based merge to populate the field for all entries.
+
+Find the `certidaoPorNome` map already built inside `depoentesStatus` (lines ~413–417) and extract it as its own `useMemo` ABOVE both `depoentes` and `depoentesStatus`:
+
+```ts
+// Insert this BEFORE the depoentes useMemo (around line 389):
+const certidaoPorNome = useMemo(() => {
+  const norm = (s: unknown) =>
+    typeof s === "string"
+      ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+      : "";
+  const m = new Map<string, string>();
+  for (const t of testemunhasDB as any[]) {
+    const teor = t?.certidaoComunicacao as string | undefined;
+    const key = norm(t?.nome);
+    if (key && typeof teor === "string" && teor.trim()) m.set(key, teor);
+  }
+  return m;
+}, [testemunhasDB]);
+```
+
+Then update the `depoentes` useMemo to enrich each entry:
+
+```ts
+const depoentes = useMemo(() => {
+  const norm = (s: unknown) =>
+    typeof s === "string"
+      ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+      : "";
+  const all = [
+    ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
+    ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", tipo: "ACUSACAO" })),
+    ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", tipo: "DEFESA" })),
+  ];
+  const seen = new Set<string>();
+  return all
+    .filter((d) => {
+      const key = (d.nome ?? "").toLowerCase().trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((d: any) => {
+      const certidao =
+        d?.certidao_comunicacao ?? d?.certidaoComunicacao ?? certidaoPorNome.get(norm(d?.nome));
+      return certidao ? { ...d, certidaoComunicacao: certidao } : d;
+    });
+}, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa, certidaoPorNome]);
+```
+
+Finally, update `depoentesStatus` to use the extracted `certidaoPorNome` instead of rebuilding it internally (remove the duplicate map-building code from that memo).
+
+After this change, `d.certidaoComunicacao` in the DepoenteCardV2 call will be populated whenever the data is available.
 
 - [ ] **Step 3: Update `area-tabs.test.tsx`**
 
