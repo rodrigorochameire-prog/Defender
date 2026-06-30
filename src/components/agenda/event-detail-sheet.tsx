@@ -863,7 +863,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       count: depoentesDetalhe.length || depoentes.length,
       node: (
         <CollapsibleSection id="depoentes" label="Depoentes" count={depoentesDetalhe.length || depoentes.length} defaultOpen>
-          <DepoentesSecao depoentes={depoentesStatus} onAbrirDepoimento={abrirDepoimentoNoPonto} />
+          <DepoentesSecao depoentes={depoentesStatus} />
         </CollapsibleSection>
       ),
     },
