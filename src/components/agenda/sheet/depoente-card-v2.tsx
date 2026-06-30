@@ -138,6 +138,11 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
   const transcStatus = midia?.transcricaoStatus ? TRANSC_STATUS[midia.transcricaoStatus] : null;
   const audioDepoimento = midia?.audioDriveFileId ?? null;
   const segments = (midia?.segments ?? []) as Segmento[];
+  const pinosDepoimento = (midia?.pinos ?? []) as import("@/lib/agenda/pino").Pino[];
+  const offsetDepoimento = midia?.depoimentoTimestampInicioS ?? 0;
+
+  const addPinoMutation = trpc.audiencias.addPino.useMutation();
+  const removePinoMutation = trpc.audiencias.removePino.useMutation();
 
   // Termo do IP/delegacia: melhor seção classificada do tipo termo/depoimento.
   const { data: sections } = trpc.drive.sectionsByProcesso.useQuery(
@@ -249,6 +254,23 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
                 driveFileId={audioDepoimento}
                 segments={segments}
                 transcricao={midia?.transcricao ?? null}
+                offsetS={offsetDepoimento}
+                pinos={pinosDepoimento}
+                onAddPino={(ts) => {
+                  if (!depoente.id) return;
+                  addPinoMutation.mutate({
+                    depoenteId: depoente.id,
+                    pino: {
+                      id: crypto.randomUUID(),
+                      timestampS: ts,
+                      fonte: "DEFENSOR",
+                    },
+                  });
+                }}
+                onRemovePino={(id) => {
+                  if (!depoente.id) return;
+                  removePinoMutation.mutate({ depoenteId: depoente.id, pinoId: id });
+                }}
               />
             ) : (() => {
               const ouvidoJuizo = depoente.sinteseJuizo ?? depoente.versaoJuizo ?? null;
