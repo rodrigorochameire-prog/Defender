@@ -15,8 +15,8 @@ import { Fragment, type ReactNode, useEffect, useMemo, useRef, useState } from "
 import { resolverManifesto, SECOES_INSTRUCAO, GRUPO_CONTEXTO_INSTRUCAO, type SecaoId } from "@/components/agenda/sheet/secoes-manifest";
 import { AreaTabs } from "@/components/agenda/sheet/area-tabs";
 import { computeWorkspaceTabs, type AreaMae } from "@/components/agenda/sheet/areas-mae";
-import { ProvaOralConsole } from "@/components/agenda/sheet/prova-oral-console";
-import { resumoProvaOral } from "@/lib/agenda/depoente-status";
+import { DepoimentosConsole } from "@/components/agenda/sheet/prova-oral-console";
+import { resumoDepoimentos } from "@/lib/agenda/depoente-status";
 import { EstrategiaConsole } from "@/components/agenda/sheet/estrategia-console";
 import { resumoEstrategia } from "@/lib/agenda/resumo-estrategia";
 import { ExecucaoConsole } from "@/components/agenda/sheet/execucao-console";
@@ -219,7 +219,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   } = useSheetWidthResize({ storageKey: "ombuds_autos_modal_split_v2" });
   const [verFatosLiteral, setVerFatosLiteral] = useState(false);
   const [activeSection, setActiveSection] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<AreaMae>("resumo");
+  const [activeTab, setActiveTab] = useState<AreaMae>("imputacao");
   const [openDepoenteIdx, setOpenDepoenteIdx] = useState<number | null>(null);
   const [deteccaoPendente, setDeteccaoPendente] = useState<AnotacaoAudienciaParsed | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -386,42 +386,63 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
   const { qtd: qtdMedidasBanco } = useMedidasVigentes({ processoId: typeof processoId === "number" ? processoId : null });
   const medidasAnalysis = medidasProtetivas.length ? medidasProtetivas : medidasVigentesArr;
 
+  // Mapa nome-normalizado → teor da certidão de comunicação, extraído das
+  // testemunhas do banco. Usado tanto em `depoentes` quanto em `depoentesStatus`.
+  const certidaoPorNome = useMemo(() => {
+    const norm = (s: unknown) =>
+      typeof s === "string"
+        ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+        : "";
+    const m = new Map<string, string>();
+    for (const t of testemunhasDB as any[]) {
+      const teor = t?.certidaoComunicacao as string | undefined;
+      const key = norm(t?.nome);
+      if (key && typeof teor === "string" && teor.trim()) m.set(key, teor);
+    }
+    return m;
+  }, [testemunhasDB]);
+
   const depoentes = useMemo(() => {
+    const norm = (s: unknown) =>
+      typeof s === "string"
+        ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
+        : "";
     const all = [
       ...testemunhasDB.map((t: any) => ({ ...t, _source: "db" })),
       ...testemunhasAcusacao.map((t: any) => ({ ...t, lado: "acusacao", tipo: "ACUSACAO" })),
       ...testemunhasDefesa.map((t: any) => ({ ...t, lado: "defesa", tipo: "DEFESA" })),
     ];
     const seen = new Set<string>();
-    return all.filter((d) => {
-      const key = (d.nome ?? "").toLowerCase().trim();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa]);
+    return all
+      .filter((d) => {
+        const key = (d.nome ?? "").toLowerCase().trim();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((d: any) => {
+        const certidao =
+          d?.certidao_comunicacao ?? d?.certidaoComunicacao ?? certidaoPorNome.get(norm(d?.nome));
+        return certidao ? { ...d, certidaoComunicacao: certidao } : d;
+      });
+  }, [testemunhasDB, testemunhasAcusacao, testemunhasDefesa, certidaoPorNome]);
 
   // Painel de status (F3): usa o detalhe da análise, mas funde o teor da
   // certidão de comunicação (campo do banco em `testemunhas`) por nome.
   // A certidão é populada pela skill de sistematização (ver tasks.md F3/T3.4);
   // quando ausente, o depoente fica sem certidão (sem ruído).
+  // `certidaoPorNome` é calculado acima e reutilizado aqui.
   const depoentesStatus = useMemo(() => {
     const norm = (s: unknown) =>
       typeof s === "string"
         ? s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim()
         : "";
-    const certidaoPorNome = new Map<string, string>();
-    for (const t of testemunhasDB as any[]) {
-      const teor = t?.certidaoComunicacao;
-      const key = norm(t?.nome);
-      if (key && typeof teor === "string" && teor.trim()) certidaoPorNome.set(key, teor);
-    }
     const base = depoentesDetalhe.length ? depoentesDetalhe : depoentes;
     return base.map((d: any) => {
       const certidao = d?.certidao_comunicacao ?? d?.certidaoComunicacao ?? certidaoPorNome.get(norm(d?.nome));
       return certidao ? { ...d, certidao_comunicacao: certidao } : d;
     });
-  }, [depoentesDetalhe, depoentes, testemunhasDB]);
+  }, [depoentesDetalhe, depoentes, certidaoPorNome]);
 
   const participacoesQuery = trpc.pessoas.getParticipacoesDoProcesso.useQuery(
     { processoId: processoId ?? 0 },
@@ -1489,9 +1510,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
               </div>
             )}
 
-            {/* Console do modo Prova oral — síntese de oitiva no topo da aba. */}
-            {!isLoading && tabAtiva === "prova-oral" && depoentesStatus.length > 0 && (
-              <ProvaOralConsole resumo={resumoProvaOral(depoentesStatus)} />
+            {/* Console do modo Depoimentos — síntese de oitiva no topo da aba. */}
+            {!isLoading && tabAtiva === "depoimentos" && depoentesStatus.length > 0 && (
+              <DepoimentosConsole resumo={resumoDepoimentos(depoentesStatus)} />
             )}
 
             {/* Painel de inteligência do modo Estratégia — prontidão estratégica. */}

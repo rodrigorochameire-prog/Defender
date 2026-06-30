@@ -7,7 +7,7 @@ import type { ResumoProvaOral } from "@/lib/agenda/depoente-status";
  * total / ouvidos / a ouvir e, como sinal de cerceamento (cor = exceção), o nº
  * de depoentes ainda sem ciência. Numerais tabulares para leitura de coluna.
  */
-export function ProvaOralConsole({ resumo }: { resumo: ResumoProvaOral }) {
+export function DepoimentosConsole({ resumo }: { resumo: ResumoProvaOral }) {
   if (resumo.total === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-neutral-200/80 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 px-3 py-2 text-[11px]">
@@ -25,6 +25,9 @@ export function ProvaOralConsole({ resumo }: { resumo: ResumoProvaOral }) {
     </div>
   );
 }
+
+/** @deprecated Use DepoimentosConsole */
+export { DepoimentosConsole as ProvaOralConsole };
 
 function Metric({
   icon: Icon,

@@ -105,3 +105,6 @@ export function resumoProvaOral(depoentes: unknown[]): ResumoProvaOral {
   }
   return r;
 }
+
+/** Alias para `resumoProvaOral` — nome canônico após redesign das áreas-mãe. */
+export const resumoDepoimentos = resumoProvaOral;
