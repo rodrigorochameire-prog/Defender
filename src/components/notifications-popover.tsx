@@ -30,6 +30,10 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { CalendarClock } from "lucide-react";
+import { summarizePrazos } from "@/lib/prazos/alert-summary";
+import { summarizeToday, type HearingLike } from "@/lib/audiencias/today-summary";
 
 const typeIcons: Record<string, React.ElementType> = {
   prazo: AlertTriangle,
@@ -94,6 +98,21 @@ export function NotificationsPopover() {
     refetchInterval: 60000, // Atualiza a cada 1 minuto
   });
 
+  // Alertas de prazos/audiências dobrados no sino (antes eram chips no header).
+  const { data: prazosStats } = trpc.prazos.estatisticasPrazos.useQuery(undefined, {
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const { data: audienciasProximas } = trpc.audiencias.proximas.useQuery(
+    { dias: 1 },
+    { staleTime: 60_000, refetchOnWindowFocus: true },
+  );
+  const mPrazos = summarizePrazos(prazosStats);
+  const sAud = summarizeToday(audienciasProximas as HearingLike[] | undefined, Date.now());
+  const temAlerta = mPrazos.hasUrgent || mPrazos.reuPresoVencido > 0 || sAud.count > 0;
+  // Dot vermelho = prazo vencido/réu preso (acionável); âmbar = só audiências hoje.
+  const dotUrgente = mPrazos.hasUrgent || mPrazos.reuPresoVencido > 0;
+
   // Mutations
   const markAsReadMutation = trpc.notifications.markAsRead.useMutation({
     onSuccess: () => {
@@ -146,11 +165,19 @@ export function NotificationsPopover() {
           className="h-7 w-7 rounded-full bg-transparent hover:bg-white/[0.08] border-none relative transition-all duration-200"
         >
           <Bell className="h-3.5 w-3.5 text-white/50 hover:text-white/70" />
-          {unreadCount > 0 && (
+          {unreadCount > 0 ? (
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center shadow-sm animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
-          )}
+          ) : temAlerta ? (
+            // Sem não-lidas mas há prazo/audiência: dot discreto (vermelho=acionável, âmbar=info)
+            <span
+              className={cn(
+                "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full shadow-sm",
+                dotUrgente ? "bg-rose-500 animate-pulse" : "bg-amber-400",
+              )}
+            />
+          ) : null}
           <span className="sr-only">Notificações</span>
         </Button>
       </PopoverTrigger>
@@ -179,6 +206,42 @@ export function NotificationsPopover() {
             </Button>
           )}
         </div>
+
+        {/* Alertas (prazos/audiências) — dobrados aqui do header (antes eram chips) */}
+        {temAlerta && (
+          <div className="border-b px-4 py-2.5 space-y-1.5 bg-muted/30">
+            {(mPrazos.hasUrgent || mPrazos.reuPresoVencido > 0) && (
+              <Link
+                href="/admin/demandas"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-300 hover:underline"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-semibold">{mPrazos.label || "Prazos a vencer"}</span>
+                {mPrazos.reuPresoVencido > 0 && (
+                  <span className="rounded-full bg-rose-600 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-white">
+                    réu preso {mPrazos.reuPresoVencido}
+                  </span>
+                )}
+              </Link>
+            )}
+            {sAud.count > 0 && (
+              <Link
+                href="/admin/agenda"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 hover:underline"
+              >
+                <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium">
+                  {sAud.count} audiência{sAud.count > 1 ? "s" : ""} hoje
+                </span>
+                {sAud.proximaLabel && (
+                  <span className="text-muted-foreground truncate">· {sAud.proximaLabel}</span>
+                )}
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Notifications List */}
         <ScrollArea className="h-[320px]">

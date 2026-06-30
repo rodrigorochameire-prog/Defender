@@ -3,8 +3,6 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { CommandPalette } from "@/components/shared/command-palette";
-import { PrazosAlertChip } from "@/components/shared/prazos-alert-chip";
-import { AudienciasHojeChip } from "@/components/shared/audiencias-hoje-chip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ConflictBadge } from "@/components/conflict-badge";
@@ -70,10 +68,9 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
         {/* Extra slot (server-rendered badges, e.g. TriagemBadge) */}
         {extra && <div className="text-white/80">{extra}</div>}
 
-        {/* Controls */}
+        {/* Controls — alertas de prazos/audiências foram movidos p/ o sino
+            (NotificationsPopover): cabeçalho mais limpo, detalhe a 1 clique. */}
         <div className="flex items-center gap-1">
-          <AudienciasHojeChip className="mr-1 hidden md:inline-flex" />
-          <PrazosAlertChip className="mr-1 hidden sm:inline-flex" />
           <CommandPalette />
           <ThemeToggle />
           <NotificationsPopover />
