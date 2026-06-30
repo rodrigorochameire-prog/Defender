@@ -1315,9 +1315,7 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Linha 2 — duas pills editáveis: ATO + STATUS.
-                    Atribuição migrou para baixo do avatar (coluna esquerda),
-                    deixando esta linha mais limpa e sem risco de wrap. */}
+                {/* Linha 2 — ato + prazo (status movido para abaixo do pipeline stepper) */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                   <InlineDropdown
                     value={demanda.ato}
@@ -1340,23 +1338,6 @@ export function DemandaQuickPreview({
                     options={atoOptions}
                     onChange={(v) => onAtoChange(demanda.id, v)}
                     layout="accordion"
-                  />
-                  <InlineDropdown
-                    value={demanda.status}
-                    compact
-                    displayValue={
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-neutral-100/80 dark:bg-neutral-800/60 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/60 transition-colors"
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: statusColor }}
-                        />
-                        {statusConfig.label}
-                      </span>
-                    }
-                    options={statusOptions}
-                    onChange={(v) => onStatusChange(demanda.id, v)}
                   />
                   {/* Chip de prazo — urgência sempre visível. Clique pula/abre
                       Cronologia & Prazo para editar a data. */}
@@ -1560,6 +1541,29 @@ export function DemandaQuickPreview({
                 onClose={() => setActiveStagePopover(null)}
               />
             )}
+          </div>
+
+          {/* ===== STATUS — abaixo do pipeline, acima das abas ===== */}
+          <div className="px-5 pb-3 flex items-center gap-2">
+            <InlineDropdown
+              value={demanda.status}
+              compact
+              displayValue={
+                <span
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors hover:brightness-95"
+                  style={{
+                    backgroundColor: `${statusColor}14`,
+                    color: statusColor,
+                    boxShadow: `inset 0 0 0 1px ${statusColor}30`,
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
+                  {statusConfig.label}
+                </span>
+              }
+              options={statusOptions}
+              onChange={(v) => onStatusChange(demanda.id, v)}
+            />
           </div>
 
           {/* ===== MODOS (Fase 4) — navegação interna por abas; cada modo mostra
