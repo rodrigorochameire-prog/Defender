@@ -182,9 +182,36 @@ iminentes**, não um arquivo consultável:
 **Consequência:** a pauta só cobre as próximas ~16 audiências — exatamente o que
 a varredura JÁ captura via expedientes + movimentos da timeline (commits
 `e19a9c48`/`09b22224`, validado no André). **O valor marginal da reconciliação
-contra esta tela é baixo.** Para o #2 valer, trocar a fonte: **aba "Audiências"
-por processo** ou **API `procapi`** — NÃO a `listView`. Decisão de produto
-pendente antes de implementar. Memória: `gotcha-pauta-listview-imminent-only`.
+contra esta tela é baixo.** Memória: `gotcha-pauta-listview-imminent-only`.
+
+### ✅ Achado 2026-06-29 (2) — a fonte por processo = movimentos dos autos (sweep)
+
+Sondagem ao vivo dos autos do André (`listProcessoCompletoAdvogado.seam`):
+
+- Existe uma aba **"Audiência"** por processo (`navbar:linkAbaAudiencia`), mas ela
+  carrega via **RichFaces A4J AJAX** — fragmento DOM, **sem `procapi`, sem JSON**
+  (0 chamadas "audien"/procapi entre 67 requests). **Não há API barata.**
+- **Não é preciso** a aba: a página de autos é a MESMA que a varredura já abre, e
+  os **movimentos da timeline** dessa página JÁ são a fonte de audiência por
+  processo — foi deles que extraímos o 16/07 do André (`extrair_movimentos_audiencia`).
+
+**Forma final do #2 (quando/se valer a pena):**
+```
+para cada processo ATIVO no OMBUDS (carteira):
+    abrir autos (já fazemos)  →  extrair_movimentos_audiencia()  (já existe)
+    reconciliar com `audiencias`  (algoritmo §3)
+```
+- **Tecnologia nova: nenhuma.** Reusa 100% do que foi construído em 2026-06-29.
+  Código novo = só o *driver* (iterar processos ativos) + o *writer* de reconciliação.
+- **Custo:** ~25s/processo (carregar autos) → **só como batch noturno** sobre a
+  carteira, com retry/relogin (token `ca` curto + panel-nav flaky, como a varredura).
+- **Valor marginal:** cobre só processos **sem expediente pendente** (o ângulo cego);
+  os com expediente a varredura já pega.
+
+**Decisão (2026-06-29): NÃO implementar agora.** A varredura + movimentos cobre o
+caso comum (designação acompanhada de expediente). Ligar o sweep só se, em uso real,
+audiências começarem a escapar em processos sem intimação pendente — ~½ dia de
+trabalho, sem risco, sem dependência nova.
 
 ---
 
