@@ -93,7 +93,7 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
  */
 export const SECOES_INSTRUCAO: SecaoId[] = [
   // Espinha (7)
-  "resumo",
+  "resumo",        // narrativa do caso — topo da aba Imputação
   "imputacao",
   "fatos",
   "depoentes",
@@ -103,18 +103,10 @@ export const SECOES_INSTRUCAO: SecaoId[] = [
   // Preparação
   "dossie",
   "teses",
-  // Contexto (grupo colapsado — ver GRUPO_CONTEXTO_INSTRUCAO)
-  "contradicoes",
-  "versao",
-  "relato-vitima",
-  "sintese",
-  "investigacao",
-  "pendencias",
-  "medidas",
-  "ata",
-  "anotacoes-rapidas",
-  "analise-ia",
-  "midia",
+  // Contexto (colapsado via GRUPO_CONTEXTO_INSTRUCAO)
+  "contradicoes", "versao", "relato-vitima", "sintese",
+  "investigacao", "pendencias", "medidas", "ata",
+  "anotacoes-rapidas", "analise-ia", "midia",
 ];
 
 /**
