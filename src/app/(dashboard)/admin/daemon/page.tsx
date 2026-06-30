@@ -35,7 +35,7 @@ export default function DaemonPage() {
         <div>
           <h1 className="text-2xl font-semibold">Daemon de Análise IA</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Worker que processa <code className="text-xs">claude_code_tasks</code> via Supabase Realtime no Mac Mini M4 Pro.
+            Worker que processa <code className="text-xs">claude_code_tasks</code> via Supabase Realtime na máquina ativa do defensor (com fallback no Mac Mini).
           </p>
         </div>
         <button
