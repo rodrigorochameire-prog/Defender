@@ -327,6 +327,9 @@ function EventoDetalhado({
   // "Designada" para manter as linhas limpas — só exceções/conclusões aparecem.
   const statusTone = eventoAgendaTipo(evento.status);
   const showStatusChip = statusTone.label !== "Designada";
+  // Audiência superada (redesignada) ou cancelada: aparece fosca + riscada quando
+  // o toggle "Cancelados/Redesignados" está ligado (escondida por padrão).
+  const isSuperada = evento.status === "redesignada" || evento.status === "cancelada";
 
   return (
     <div
@@ -335,7 +338,7 @@ function EventoDetalhado({
         visual.dashed
           ? "bg-white/60 dark:bg-neutral-900/60 border-neutral-200 dark:border-neutral-700 border-dashed"
           : "bg-white dark:bg-neutral-900 border-neutral-100 dark:border-neutral-800"
-      }`}
+      } ${isSuperada ? "opacity-50 hover:opacity-75" : ""}`}
     >
       {/* Barra lateral colorida — sólida (audiência/other) ou tracejada (atendimento) */}
       <div
@@ -359,7 +362,7 @@ function EventoDetalhado({
           <div className="flex items-center gap-1.5 min-w-0">
             {visual.icon === "Users" && <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
             {visual.icon === "Gavel" && <Gavel className="w-3.5 h-3.5 flex-shrink-0" style={{ color: solidColor }} />}
-            <h4 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
+            <h4 className={`font-semibold text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1 ${isSuperada ? "line-through" : ""}`}>
               {evento.titulo}
             </h4>
           </div>
@@ -585,8 +588,10 @@ export default function AgendaPage() {
   const [selectedPeriodo, setSelectedPeriodo] = useState<string | null>(null);
   const [selectedDefensor, setSelectedDefensor] = useState<string | null>(null);
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
-  // Filtro para mostrar/esconder eventos cancelados e redesignados
-  const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(true);
+  // Filtro para mostrar/esconder eventos cancelados e redesignados.
+  // Padrão: ESCONDIDOS (agenda limpa = só audiências ativas). O toggle revela-os
+  // riscados/foscos para conferência. Ficam sempre gravados no banco/detalhe.
+  const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(false);
   // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
   const [showPastEventsInList, setShowPastEventsInList] = useState(false);
 
@@ -762,9 +767,10 @@ export default function AgendaPage() {
     // 1. Processar audiências (tabela audiencias)
     if (audienciasData) {
       audienciasData.forEach((a) => {
-        // Esconder slots redesignados/cancelados da agenda (slots superados pela
-        // reconciliação da pauta, ou cancelados). Mantém agendada/realizada/outros.
-        if (a.status === "redesignada" || a.status === "cancelada") return;
+        // Slots redesignados/cancelados: escondidos por padrão (slots superados
+        // pela reconciliação da pauta, ou cancelados). Quando o toggle está ligado,
+        // entram na agenda renderizados riscados/foscos (ver EventoCard).
+        if ((a.status === "redesignada" || a.status === "cancelada") && !showCanceladosRedesignados) return;
         // Mutirão: contexto da própria audiência sobrepõe a atribuição do processo
         // (o processo continua na atribuição de origem; só o ato é de mutirão)
         const atribuicaoKey = a.contexto === "MUTIRAO"
@@ -882,7 +888,7 @@ export default function AgendaPage() {
 
     // 4. Ordenar por data
     return items.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-  }, [audienciasData, calendarData, registrosAgendados, escalaConfig]);
+  }, [audienciasData, calendarData, registrosAgendados, escalaConfig, showCanceladosRedesignados]);
 
   // Navegar automaticamente para o mês do primeiro evento se não houver eventos no mês atual
   useEffect(() => {
@@ -1726,7 +1732,7 @@ export default function AgendaPage() {
                         <>
                           <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
                           <button
-                            onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(true); }}
+                            onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
                             className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
                           >
                             Limpar filtros
