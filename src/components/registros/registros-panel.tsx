@@ -241,19 +241,33 @@ export function RegistrosPanel({
             </section>
           )}
 
-          {/* Histórico dated */}
-          {historico.map((group) => (
-            <section key={group.dayKey} className="space-y-2" aria-label={dayLabel(group.dayKey)}>
-              <div className="px-1 text-[11px] font-semibold tracking-wide text-neutral-400 dark:text-neutral-500">
-                {dayLabel(group.dayKey)}
-              </div>
-              <div className="space-y-2">
-                {group.registros.map((r) =>
-                  renderCard(r as unknown as RegistroCardData, false),
-                )}
-              </div>
-            </section>
-          ))}
+          {/* Histórico dated — timeline */}
+          {historico.length > 0 && (
+            <div className="relative pl-4">
+              {/* Vertical spine */}
+              <div className="absolute left-[3px] top-1.5 bottom-1 w-[2px] rounded-full bg-neutral-100 dark:bg-neutral-800" />
+              {historico.map((group, gi) => (
+                <section
+                  key={group.dayKey}
+                  className={cn("relative", gi > 0 && "mt-4")}
+                  aria-label={dayLabel(group.dayKey)}
+                >
+                  {/* Date marker */}
+                  <div className="flex items-center gap-2 mb-2 -ml-4">
+                    <div className="w-2 h-2 rounded-full bg-neutral-300 dark:bg-neutral-600 ring-2 ring-white dark:ring-neutral-950 shrink-0 z-10" />
+                    <span className="text-[10px] font-semibold tracking-widest uppercase text-neutral-400 dark:text-neutral-500">
+                      {dayLabel(group.dayKey)}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {group.registros.map((r) =>
+                      renderCard(r as unknown as RegistroCardData, false),
+                    )}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

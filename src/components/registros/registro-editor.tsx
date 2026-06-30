@@ -184,10 +184,10 @@ export function RegistroEditor({
     <AnexoDropzone
       onFiles={(files) => setStaged((s) => [...s, ...files])}
       dragHint="Solte para anexar"
-      className="rounded-xl"
+      className="rounded-r-xl"
     >
     <div
-      className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden border-l-2 transition-colors"
+      className="rounded-r-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800 overflow-hidden border-l-2 transition-colors"
       style={{ borderLeftColor: `${activeCfg.color}66` }}
     >
       {/* Tipo selector — single row icon-only.
