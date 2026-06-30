@@ -47,7 +47,6 @@ import { CautelaresPanel } from "@/components/cautelares/cautelares-panel";
 import { PrisaoPreventivaPanel } from "@/components/cautelares/prisao-preventiva-panel";
 import { AtaAudienciaBlock } from "@/components/agenda/sheet/ata-audiencia-block";
 import { hasDossieV2 } from "@/lib/agenda/dossie-v2";
-import { extrairNumPje } from "@/lib/agenda/extrair-num-pje";
 import { matchDepoenteAudio } from "@/lib/agenda/match-depoente-audio";
 import { useAudienciaStatusActions } from "@/hooks/use-audiencia-status-actions";
 import { AnalyzeCTA } from "./sheet/analyze-cta";
@@ -344,13 +343,6 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       ?? cand.find((f: any) => f?.driveFileId)?.driveFileId ?? null;
   }, [autosDeeplinkQuery.data]);
 
-  // Abre a doca do PDF buscando o "Num. X" do depoimento (cai no ponto do documento).
-  const abrirDepoimentoNoPonto = (d: any) => {
-    if (!primaryAutosDriveId) return;
-    const num = extrairNumPje(d?.depoimento_ip || d?.depoimento_juizo);
-    setAutosModalId(primaryAutosDriveId);
-    setDocaSearch(num ? `Num. ${num}` : null);
-  };
   const jaConcluida = (ctx as any)?.audiencia?.status === "concluida" || evento?.status === "concluida";
   const analysisStatus = (ctx?.processo as any)?.analysisStatus ?? null;
   const analyzedAt = (ctx?.processo as any)?.analyzedAt ?? null;

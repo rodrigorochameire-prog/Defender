@@ -194,9 +194,9 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
           {/* Intimação status */}
           {(() => {
             const intim = intimacaoLabel(depoente.status);
-            return intim ? (
+            return (intim || depoente.certidaoComunicacao) ? (
               <div>
-                <p className={cn("text-[10px] font-medium leading-snug", intim.color)}>{intim.text}</p>
+                {intim && <p className={cn("text-[10px] font-medium leading-snug", intim.color)}>{intim.text}</p>}
                 {depoente.certidaoComunicacao && (
                   <CertidaoExpander teor={depoente.certidaoComunicacao} />
                 )}
