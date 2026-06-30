@@ -1,6 +1,6 @@
 export type VfTipo =
   | "POSSE" | "PROMOCAO" | "REMOCAO" | "TITULARIDADE" | "ACUMULO"
-  | "DESIGNACAO_RELEVANTE" | "CONVOCACAO" | "FERIAS" | "LICENCA" | "AFASTAMENTO" | "COOPERACAO"
+  | "DESIGNACAO_RELEVANTE" | "CONVOCACAO" | "FERIAS" | "LICENCA" | "AFASTAMENTO" | "COOPERACAO" | "OUTRA_AUSENCIA"
   | "DIARIA" | "FOLGA" | "TRABALHO_EXTRAORDINARIO" | "SUBSTITUICAO" | "GRATIFICACAO" | "REEMBOLSO"
   | "SOLICITACAO_ADM";
 
@@ -18,6 +18,7 @@ const TIPO_CLUSTER: Record<VfTipo, VfCluster> = {
   LICENCA: "ausencias",
   AFASTAMENTO: "ausencias",
   COOPERACAO: "ausencias",
+  OUTRA_AUSENCIA: "ausencias",
   DIARIA: "contraprestacao",
   FOLGA: "contraprestacao",
   TRABALHO_EXTRAORDINARIO: "contraprestacao",

@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { trpc } from "@/lib/trpc/client";
 import { onlyDigits } from "@/lib/format/cnj";
 import { formatProcesso } from "@/lib/format/apresentacao";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 import { SkillLauncher } from "@/components/shared/skill-launcher";
 import { SkillTaskHistory } from "@/components/shared/skill-task-history";
 import type { Atribuicao } from "@/lib/skills/catalog";
@@ -80,13 +80,19 @@ export function ProcessoSheet({ processoId, open, onOpenChange, onVincularCaso }
     if (processoId != null) onVincularCaso?.(processoId);
   };
 
+  // Assistido principal — usado tanto em RegistrosPanel (scope) quanto em SkillLauncher.
+  const principalId =
+    processo?.assistidos?.find((a) => a.isPrincipal)?.id ??
+    processo?.assistidos?.[0]?.id ??
+    undefined;
+
   // Slots reais por aba — Registros via timeline; Documentos/Partes/Vinculados
   // inline a partir do payload. Sem dado → o body cai no EmptyState canônico.
   const slots = processo
     ? {
         registros:
           processoId != null ? (
-            <RegistrosTimeline processoId={processoId} />
+            <RegistrosPanel scope={{ processoId, assistidoId: principalId }} variant="page" />
           ) : undefined,
         documentos:
           processo.driveFiles && processo.driveFiles.length > 0 ? (
@@ -148,10 +154,6 @@ export function ProcessoSheet({ processoId, open, onOpenChange, onVincularCaso }
 
   // Launcher de skills de IA — montado aqui (tem ids reais); o body apenas o
   // renderiza. Assistido principal alimenta o assistidoId exigido pelo daemon.
-  const principalId =
-    processo?.assistidos?.find((a) => a.isPrincipal)?.id ??
-    processo?.assistidos?.[0]?.id ??
-    undefined;
   const iaLauncher =
     processo && data ? (
       <div className="space-y-3">

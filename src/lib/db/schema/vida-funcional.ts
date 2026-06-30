@@ -31,6 +31,7 @@ export const vfTipoEventoEnum = pgEnum("vf_tipo_evento", [
   "LICENCA",
   "AFASTAMENTO",
   "COOPERACAO",
+  "OUTRA_AUSENCIA",
   // cluster: contraprestacao
   "DIARIA",
   "FOLGA",

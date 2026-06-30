@@ -6,6 +6,7 @@ import { matchSkill } from "@/lib/skills/matcher";
 import { entityFromPathname } from "@/lib/skills/palette-context";
 import { PaletteAiActions } from "@/components/shared/palette-ai-actions";
 import { PaletteHojeCard } from "@/components/shared/palette-hoje-card";
+import { PalettePrazosCard } from "@/components/shared/palette-prazos-card";
 import { initializeSkills, getAllSkills } from "@/lib/skills/registry";
 import { executeSkill, type ExecutionCallback } from "@/lib/skills/executor";
 import type { MatchResult } from "@/lib/skills/types";
@@ -248,6 +249,16 @@ export function CommandPalette() {
           {/* Card "Hoje" — audiências do dia, visível na abertura (busca vazia) */}
           {!search && (
             <PaletteHojeCard
+              onSelect={(processoId) => {
+                router.push(`/admin/processos/${processoId}`);
+                setOpen(false);
+                setSearch("");
+              }}
+            />
+          )}
+          {/* Prazos urgentes — vencidos/hoje, visível na abertura (busca vazia) */}
+          {!search && (
+            <PalettePrazosCard
               onSelect={(processoId) => {
                 router.push(`/admin/processos/${processoId}`);
                 setOpen(false);

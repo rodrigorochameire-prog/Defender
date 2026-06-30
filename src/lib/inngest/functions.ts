@@ -1031,7 +1031,7 @@ export const incrementalSyncFn = inngest.createFunction(
 
           const fileData = await res.json();
           const parentId = fileData.parents?.[0];
-          if (!parentId || !isAtribuicaoRootChild(parentId)) continue;
+          if (!parentId || !(await isAtribuicaoRootChild(parentId))) continue;
 
           const result = await handleNewAssistidoFolder(
             file.driveFileId,

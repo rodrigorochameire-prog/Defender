@@ -33,6 +33,25 @@ describe("extrairAssistidos", () => {
   });
 });
 
+describe("extrairAssistidos — formato TABELA (pauta raspada, sem CPF/papel)", () => {
+  it("MP antes do X → réu é o lado depois do X", () => {
+    const r = extrairAssistidos("Ministério Público do Estado da Bahia\nX\nREIDIRAN DOS SANTOS COSTA");
+    expect(r.map((a) => a.nome)).toEqual(["Reidiran dos Santos Costa"]);
+  });
+  it("réu ANTES do X (ordem invertida no Júri) → pega o lado não-institucional", () => {
+    const r = extrairAssistidos("JONATHAN MACHADO QUEIROZ DO ESPIRITO SANTO\nX\nMinistério Público do Estado da Bahia");
+    expect(r.map((a) => a.nome)).toEqual(["Jonathan Machado Queiroz do Espirito Santo"]);
+  });
+  it("DEAM antes do X (VVD) → réu depois do X", () => {
+    const r = extrairAssistidos("DEAM CAMAÇARI\nX\nADNAILTON SANTANA SERRA");
+    expect(r.map((a) => a.nome)).toEqual(["Adnailton Santana Serra"]);
+  });
+  it("remove 'e outros (N)' do nome do réu", () => {
+    const r = extrairAssistidos("Ministério Público do Estado da Bahia\nX\nCOSME MIGUEL GOMES DE SOUZA e outros (1)");
+    expect(r.map((a) => a.nome)).toEqual(["Cosme Miguel Gomes de Souza"]);
+  });
+});
+
 describe("mapearAtribuicao", () => {
   it("Vara do Júri e Execuções Penais → Tribunal do Júri (não EP)", () => {
     expect(mapearAtribuicao("VARA DO JÚRI E EXECUÇÕES PENAIS DE CAMAÇARI", "AÇÃO PENAL", "")).toBe("Tribunal do Júri");

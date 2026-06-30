@@ -100,6 +100,9 @@ import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
 import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
+import { pedidosAdministrativosRouter } from "./pedidos-administrativos";
+import { ausenciasRouter } from "./ausencias";
+import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
 
 
@@ -459,6 +462,12 @@ export const appRouter = router({
   // ==========================================
   ferias: feriasRouter,
   // ==========================================
+  // PEDIDOS ADMINISTRATIVOS — CRUD + projeção/cascata evento, guards, transações
+  // ==========================================
+  pedidosAdministrativos: pedidosAdministrativosRouter,
+  // AUSENCIAS — CRUD ausências + cascata vida_funcional_eventos
+  // ==========================================
+  ausencias: ausenciasRouter,
   // DIARIAS — CRUD + cascata vida_funcional_eventos
   // ==========================================
   diarias: diariasRouter,
@@ -471,6 +480,9 @@ export const appRouter = router({
   // ==========================================
   intimacoes: intimacoesRouter,
   // ==========================================
+  // SIGA — importação de carreira (licenças, férias, afastamentos)
+  // ==========================================
+  siga: sigaRouter,
   // PAUTA — importação de pauta de audiências PJe (lane browser)
   // ==========================================
   pauta: pautaRouter,

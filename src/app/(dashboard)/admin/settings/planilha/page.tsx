@@ -4,7 +4,74 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc/client";
-import { FileSpreadsheet, CheckCircle2, ExternalLink, Link2, AlertTriangle, Unlink } from "lucide-react";
+import { FileSpreadsheet, CheckCircle2, ExternalLink, Link2, AlertTriangle, Unlink, FolderOpen, HardDriveUpload } from "lucide-react";
+
+/** Card showing the user's provisioned Drive folder tree (or the "Criar estrutura" action). */
+function DriveStructureCard({ gs, refetch }: { gs: { googleLinked: boolean; driveGroupId: number | null; atribuicaoFolders: Record<string, string[]> }; refetch: () => void }) {
+  const createDrive = trpc.googleIntegration.createDrive.useMutation({ onSuccess: () => refetch() });
+  const hasFolders = Object.keys(gs.atribuicaoFolders).length > 0;
+
+  if (!gs.googleLinked) return null;
+
+  return (
+    <Card className="bg-neutral-900 border-neutral-800">
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <HardDriveUpload className="h-4 w-4 text-emerald-500" />
+          <p className="text-sm font-medium text-neutral-200">Pastas no Google Drive</p>
+        </div>
+
+        {hasFolders ? (
+          <div className="space-y-2">
+            {Object.entries(gs.atribuicaoFolders).map(([atrib, ids]) =>
+              ids.map((folderId, idx) => (
+                <a
+                  key={`${atrib}-${idx}`}
+                  href={`https://drive.google.com/drive/folders/${folderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-2 rounded-lg bg-neutral-800/50 border border-neutral-800 hover:border-emerald-800/50 transition-colors"
+                >
+                  <FolderOpen className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-neutral-300">
+                      {atrib}{ids.length > 1 ? ` (${idx + 1})` : ""}
+                    </p>
+                    <p className="text-xs text-neutral-600 truncate">{folderId}</p>
+                  </div>
+                  <ExternalLink className="h-3 w-3 text-neutral-500 shrink-0" />
+                </a>
+              ))
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-neutral-500 hover:text-neutral-300 mt-1"
+              onClick={() => createDrive.mutate()}
+              disabled={createDrive.isPending}
+            >
+              {createDrive.isPending ? "Sincronizando..." : "Re-verificar / sincronizar pastas"}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-neutral-400">
+              Crie sua estrutura de pastas no Drive com subpastas por atribuição (Júri, VVD, EP, etc.).
+            </p>
+            <Button
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => createDrive.mutate()}
+              disabled={createDrive.isPending}
+            >
+              <HardDriveUpload className="h-4 w-4 mr-2" />
+              {createDrive.isPending ? "Criando estrutura..." : "Criar estrutura de pastas"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function PlanilhaPage() {
   const { data: gs, isLoading, refetch } = trpc.googleIntegration.myStatus.useQuery();
@@ -63,8 +130,8 @@ export default function PlanilhaPage() {
   // State 2: Google linked, no spreadsheet
   if (!gs.sheetsSpreadsheetUrl) {
     return (
-      <div className="p-6 max-w-2xl">
-        <h1 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
+      <div className="p-6 max-w-2xl space-y-6">
+        <h1 className="text-lg font-bold text-neutral-100 flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
           Sincronizar com Google Sheets
         </h1>
@@ -84,14 +151,15 @@ export default function PlanilhaPage() {
             </Button>
           </CardContent>
         </Card>
+        <DriveStructureCard gs={gs} refetch={refetch} />
       </div>
     );
   }
 
   // State 3: Everything linked
   return (
-    <div className="p-6 max-w-2xl">
-      <h1 className="text-lg font-bold text-neutral-100 mb-6 flex items-center gap-2">
+    <div className="p-6 max-w-2xl space-y-6">
+      <h1 className="text-lg font-bold text-neutral-100 flex items-center gap-2">
         <FileSpreadsheet className="h-5 w-5 text-emerald-500" />
         Google Sheets — Sincronizado
       </h1>
@@ -119,6 +187,7 @@ export default function PlanilhaPage() {
           </div>
         </CardContent>
       </Card>
+      <DriveStructureCard gs={gs} refetch={refetch} />
     </div>
   );
 }

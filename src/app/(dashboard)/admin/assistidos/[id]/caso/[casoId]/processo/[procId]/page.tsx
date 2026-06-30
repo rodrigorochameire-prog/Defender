@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
-import { RegistrosTimeline } from "@/components/registros/registros-timeline";
+import { RegistrosPanel } from "@/components/registros/registros-panel";
 import { AnppBlock } from "@/components/anpp/anpp-block";
 import { ModusOperandiBlock } from "@/components/modus/modus-operandi-block";
 import { ProcessosVinculadosList } from "@/components/processo/processos-vinculados-list";
@@ -45,8 +45,9 @@ export default function ProcessoTecnicoPage() {
       </section>
       <section className="pt-3 border-t border-neutral-100 dark:border-neutral-800/60">
         <h3 className="text-sm font-semibold mb-2">Registros deste processo</h3>
-        <RegistrosTimeline
-          processoId={procId}
+        <RegistrosPanel
+          scope={{ processoId: procId }}
+          variant="page"
           emptyHint="Nenhum registro neste processo ainda."
         />
       </section>

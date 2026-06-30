@@ -29,11 +29,19 @@ async function ensureDriveFolderForAssistido(
     const folderKey = mapAtribuicaoToFolderKey(atribuicao);
     if (!folderKey) return;
 
+    // Dono = defensor responsável do assistido (null → fallback grupo legado)
+    const [ownerRow] = await db
+      .select({ defensorId: assistidos.defensorId })
+      .from(assistidos)
+      .where(eq(assistidos.id, assistidoId))
+      .limit(1);
+    const ownerUserId = ownerRow?.defensorId ?? null;
+
     // Se mudando de atribuição e já tem pasta → mover
     if (oldAtribuicao && existingFolderId && oldAtribuicao !== atribuicao) {
       const oldKey = mapAtribuicaoToFolderKey(oldAtribuicao);
       if (oldKey && oldKey !== folderKey) {
-        const moveResult = await moveAssistidoFolder(existingFolderId, oldKey, folderKey);
+        const moveResult = await moveAssistidoFolder(existingFolderId, oldKey, folderKey, ownerUserId);
         if (!moveResult.success) {
           console.error(`[Drive] Erro ao mover pasta do assistido ${assistidoId}:`, moveResult.error);
         }
@@ -45,7 +53,7 @@ async function ensureDriveFolderForAssistido(
     if (existingFolderId) return;
 
     // Criar pasta no Drive
-    const folder = await createOrFindAssistidoFolder(folderKey, nome);
+    const folder = await createOrFindAssistidoFolder(folderKey, nome, ownerUserId);
     if (folder) {
       await db
         .update(assistidos)

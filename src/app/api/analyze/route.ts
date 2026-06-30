@@ -26,19 +26,22 @@ import { eq, and, inArray } from "drizzle-orm";
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { getSession } from "@/lib/auth/session";
+import { resolveAtribuicaoFolder } from "@/lib/services/drive-folders";
+import { mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
 
 // ==========================================
 // PADRÃO DEFENDER — CONFIGURAÇÃO POR ATRIBUIÇÃO
 // ==========================================
 
-const SKILLS_BASE = join(process.env.HOME ?? "/Users/rodrigorochameire", "Projetos/Defender/.claude/skills-cowork");
+// OMBUDS_SKILLS_BASE aponta para a pasta skills-cowork do agente local (Fase 3).
+// Em funções cloud esta variável não é definida e loadFileContent retorna "" graciosamente.
+const SKILLS_BASE = process.env.OMBUDS_SKILLS_BASE ?? "";
 const PADRAO_DEFENDER_PATH = join(SKILLS_BASE, "padrao-defender-relatorios.md");
 
 interface AtribuicaoConfig {
   label: string;
   palette: { dark: string; accent: string; bg: string; title: string };
   skillPaths: Record<string, string>; // skill → relative path from SKILLS_BASE
-  drivePath: string; // pasta dos processos no Drive
 }
 
 const ATRIBUICAO_CONFIG: Record<string, AtribuicaoConfig> = {
@@ -51,7 +54,6 @@ const ATRIBUICAO_CONFIG: Record<string, AtribuicaoConfig> = {
       "analise-juri": "juri/references/analise_juri_estruturada.md",
       "preparar-422": "juri/references/analise_preparar_juri_422.md",
     },
-    drivePath: "Meu Drive/1 - Defensoria 9ª DP/Processos - Júri",
   },
   VVD_CAMACARI: {
     label: "Violência Doméstica",
@@ -62,7 +64,6 @@ const ATRIBUICAO_CONFIG: Record<string, AtribuicaoConfig> = {
       "analise-ra": "vvd/references/vvd_analise_para_ra.md",
       "analise-justificacao": "vvd/references/vvd_analise_audiencia_justificacao.md",
     },
-    drivePath: "Meu Drive/1 - Defensoria 9ª DP/Processos - VVD (Criminal)",
   },
   EXECUCAO_PENAL: {
     label: "Execução Penal",
@@ -74,7 +75,6 @@ const ATRIBUICAO_CONFIG: Record<string, AtribuicaoConfig> = {
       "reconversao": "execucao-penal/references/ep_impugnacao_reconversao_nao_localizado.md",
       "readequacao-anpp": "execucao-penal/references/ep_readequacao_anpp.md",
     },
-    drivePath: "Meu Drive/1 - Defensoria 9ª DP/Processos - Execução Penal",
   },
   SUBSTITUICAO: {
     label: "Substituição Criminal",
@@ -84,7 +84,6 @@ const ATRIBUICAO_CONFIG: Record<string, AtribuicaoConfig> = {
       "preparar-audiencia": "analise-audiencias/references/analise_audiencia_criminal.md",
       "analise-trafico": "analise-audiencias/references/analise_audiencia_trafico.md",
     },
-    drivePath: "Meu Drive/1 - Defensoria 9ª DP/Processos - Substituição",
   },
 };
 
@@ -95,7 +94,6 @@ const DEFAULT_CONFIG: AtribuicaoConfig = {
   skillPaths: {
     "analise-autos": "analise-audiencias/references/analise_audiencia_criminal.md",
   },
-  drivePath: "Meu Drive/1 - Defensoria 9ª DP",
 };
 
 // ==========================================
@@ -115,6 +113,7 @@ async function buildPremiumPrompt(
   atribuicao: string,
   assistidoNome: string,
   processo: { id: number; numeroAutos: string; vara: string | null; comarca: string | null; classeProcessual: string | null },
+  userId: number,
 ): Promise<string> {
   const config = ATRIBUICAO_CONFIG[atribuicao] ?? DEFAULT_CONFIG;
 
@@ -129,8 +128,8 @@ async function buildPremiumPrompt(
   const linguagem = await loadFileContent(join(SKILLS_BASE, "linguagem-defensiva/SKILL.md"));
   const citacoes = await loadFileContent(join(SKILLS_BASE, "citacoes-seguras/SKILL.md"));
 
-  const homePath = process.env.HOME ?? "/Users/rodrigorochameire";
-  const drivePath = join(homePath, config.drivePath);
+  // Resolver pasta da atribuição a partir do grupo do usuário no Drive (multi-tenant)
+  const atribuicaoFolderId = await resolveAtribuicaoFolder(userId, mapAtribuicaoEnumToSimple(atribuicao));
 
   return `# INSTRUÇÃO: Gerar Dossiê Estratégico de Defesa — Padrão Defender v2
 
@@ -151,8 +150,10 @@ async function buildPremiumPrompt(
 | Title text | ${config.palette.title} |
 
 ## PASTA DO ASSISTIDO
-Buscar em: ${drivePath}/${assistidoNome}/
-Extrair TODOS os PDFs com pdftotext e ler integralmente.
+${atribuicaoFolderId
+  ? `Pasta da atribuição no Drive: https://drive.google.com/drive/folders/${atribuicaoFolderId}\nBuscar a subpasta de "${assistidoNome}" dentro dessa pasta e extrair TODOS os PDFs.`
+  : `Pasta da atribuição no Drive: não configurada para este usuário (grupo sem folderId para ${config.label}).\nConfigure o grupo do defensor no painel Drive para habilitar o acesso.`
+}
 
 ## PADRÃO DEFENDER v2 (REFERÊNCIA COMPLETA)
 ${padraoDefender ? padraoDefender.substring(0, 8000) : "Consultar: skills-cowork/padrao-defender-relatorios.md"}
@@ -843,7 +844,7 @@ export async function POST(req: NextRequest) {
       vara: p.vara,
       comarca: p.comarca,
       classeProcessual: p.classeProcessual,
-    });
+    }, user.id);
 
     // Inserir na fila canônica (processada pelo claude-code-daemon.mjs)
     const [newTask] = await db

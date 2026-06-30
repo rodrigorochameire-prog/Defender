@@ -55,6 +55,7 @@ export * from "./feedback";
 export * from "./defensoria";
 export * from "./instancia-superior";
 export * from "./system";
+export * from "./siga-import";
 
 // Pessoas (Fase I-A — entity resolution)
 export * from "./pessoas";
@@ -78,4 +79,6 @@ export * from "./demanda-eventos";
 export * from "./pje-import";
 export * from "./pauta-import";
 export * from "./ferias";
+export * from "./pedidos-administrativos";
+export * from "./ausencias";
 export * from "./diarias";

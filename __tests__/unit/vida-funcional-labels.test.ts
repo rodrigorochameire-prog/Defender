@@ -3,7 +3,7 @@ import { TIPO_LABELS, tipoLabel, statusLabel, TIPO_OPTIONS } from "@/lib/vida-fu
 
 const ALL_TIPOS = [
   "POSSE","PROMOCAO","REMOCAO","TITULARIDADE","ACUMULO","DESIGNACAO_RELEVANTE","CONVOCACAO",
-  "FERIAS","LICENCA","AFASTAMENTO","COOPERACAO","DIARIA","FOLGA","TRABALHO_EXTRAORDINARIO",
+  "FERIAS","LICENCA","AFASTAMENTO","COOPERACAO","OUTRA_AUSENCIA","DIARIA","FOLGA","TRABALHO_EXTRAORDINARIO",
   "SUBSTITUICAO","GRATIFICACAO","REEMBOLSO","SOLICITACAO_ADM",
 ];
 
@@ -17,8 +17,8 @@ describe("labels", () => {
       seen.add(l);
     }
   });
-  it("TIPO_OPTIONS cobre todos os 18 tipos", () => {
-    expect(TIPO_OPTIONS).toHaveLength(18);
+  it("TIPO_OPTIONS cobre todos os 19 tipos", () => {
+    expect(TIPO_OPTIONS).toHaveLength(19);
     expect(TIPO_OPTIONS.map((o) => o.value).sort()).toEqual([...ALL_TIPOS].sort());
   });
   it("tipoLabel faz fallback p/ o próprio valor se desconhecido", () => {
