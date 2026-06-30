@@ -67,6 +67,14 @@ PJE_BASE = "https://pje.tjba.jus.br/pje"
 PANEL_URL = f"{PJE_BASE}/Painel/painel_usuario/advogado.seam"
 DEFENSOR_ID = 1
 RELOGIN_EVERY = 8
+
+# Colunas/embeds PostgREST das demandas — fonte única usada por list_demandas
+# E build_by_ids_params, garantindo que os dois modos puxem o mesmo shape.
+_DEMANDA_SELECT = (
+    "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
+    "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
+    "assistidos!inner(nome)"
+)
 CDP_URL = "http://127.0.0.1:9222"
 PAGE_LIMIT = 8
 
@@ -205,9 +213,7 @@ class Supabase:
 
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
-            "select=id,ato,assistido_id,processo_id,enrichment_data,pje_documento_id,"
-            "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
-            "assistidos!inner(nome)",
+            _DEMANDA_SELECT,
             "status=in.(5_TRIAGEM,URGENTE)",
             f"defensor_id=eq.{DEFENSOR_ID}",
             "deleted_at=is.null",
@@ -218,6 +224,10 @@ class Supabase:
             params.append(f"processos.atribuicao=eq.{atribuicao}")
         if since:
             params.append(f"created_at=gte.{since}")
+        return self._req("GET", "/rest/v1/demandas?" + "&".join(params))
+
+    def list_demandas_by_ids(self, ids: list[int]) -> list[dict]:
+        params = build_by_ids_params(ids, DEFENSOR_ID)
         return self._req("GET", "/rest/v1/demandas?" + "&".join(params))
 
     def update_demanda(self, demanda_id: int, fields: dict) -> None:
@@ -1400,6 +1410,9 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
         # Navega o painel até a vara da atribuição ANTES de localizar os docs —
         # find_in_panel só acha o expediente na tabela populada da vara correta.
+        # Modo --demanda-ids: navegação usa UMA vara por rodada (a de demandas[0]);
+        # demandas de outra vara caem no fallback manual-review. Lote homogêneo por
+        # vara é o suportado — seleção em lote da UI é escopada por atribuição.
         if modo in ("cdp", "direct"):
             if atrib_alvo:
                 try:
@@ -1443,8 +1456,13 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
                 # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
                 texto = _clean_decisao_text(content["text"])
+                # Atribuição POR-DEMANDA (não a global da rodada): no modo
+                # --demanda-ids a seleção pode misturar atribuições, então cada
+                # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
+                # Fallback p/ atrib_alvo quando a demanda não traz processo.
+                atrib_demanda = (d.get("processos") or {}).get("atribuicao") or atrib_alvo
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
-                                atribuicao=atrib_alvo)
+                                atribuicao=atrib_demanda)
                 if not rule:
                     log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
                     create_manual_review(sb, d)
@@ -1497,6 +1515,8 @@ def main():
                         help="cdp=anexa Chromium aberto pelo usuário; direct=launcha headless; manual-review=só registra diligência")
     parser.add_argument("--defensor-id", type=int, default=None,
                         help="ID do defensor (filtro + autor dos registros). Default: DEFENSOR_ID do módulo.")
+    parser.add_argument("--demanda-ids", default=None,
+                        help="CSV de IDs de demanda. Analisa SÓ essas, em qualquer coluna (ignora filtro de status). Exclusivo com --atribuicao/--since.")
     args = parser.parse_args()
 
     # Defensor do job (vem do ctx.user.id pela UI) — sobrepõe o default hardcoded,
@@ -1512,8 +1532,18 @@ def main():
         sys.exit("ERRO: NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY ausentes no .env.local")
 
     sb = Supabase(sb_url, sb_key)
-    demandas = sb.list_demandas(args.atribuicao, args.since, args.limit)
-    print(f"[varredura] alvo: {len(demandas)} demandas em triagem")
+    if args.demanda_ids:
+        try:
+            ids = [int(x) for x in args.demanda_ids.split(",") if x.strip()]
+        except ValueError:
+            sys.exit("ERRO: --demanda-ids deve ser CSV de inteiros (ex.: 1368,12)")
+        if not ids:
+            sys.exit("ERRO: --demanda-ids vazio")
+        demandas = sb.list_demandas_by_ids(ids)
+        print(f"[varredura] alvo: {len(demandas)} demandas (selecionadas)")
+    else:
+        demandas = sb.list_demandas(args.atribuicao, args.since, args.limit)
+        print(f"[varredura] alvo: {len(demandas)} demandas em triagem")
 
     if args.modo == "manual-review":
         for d in demandas:
@@ -1525,6 +1555,28 @@ def main():
         sys.exit("ERRO: modo direct precisa PJE_CPF/PJE_SENHA no .env.local")
 
     asyncio.run(varredura(sb, demandas, args.modo, env, args.atribuicao))
+
+
+def build_by_ids_params(ids: list[int], defensor_id: int) -> list[str]:
+    """Monta os params PostgREST para buscar demandas por ID, SEM filtro de
+    status (analisa em qualquer coluna). Puro/testável."""
+    ids_csv = ",".join(str(int(i)) for i in ids)
+    return [
+        _DEMANDA_SELECT,
+        f"id=in.({ids_csv})",
+        f"defensor_id=eq.{defensor_id}",
+        "deleted_at=is.null",
+    ]
+
+
+def _self_test_build_by_ids():
+    p = build_by_ids_params([1368, 12], 1)
+    joined = "&".join(p)
+    assert "id=in.(1368,12)" in joined, joined
+    assert "status=in." not in joined, "NÃO deve filtrar por status"
+    assert "defensor_id=eq.1" in joined
+    assert "deleted_at=is.null" in joined
+    print("[self-test] build_by_ids_params OK")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useVarreduraJob } from "@/hooks/use-varredura-job";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
@@ -866,6 +867,14 @@ export default function Demandas() {
 
   const utils = trpc.useUtils();
 
+  // Varredura nível 2 (leitura profunda) — instanciado UMA vez no nível da view.
+  // O `analisar` é compartilhado pelo gatilho do card (1 demanda) e pela ação
+  // em lote da barra de seleção. NÃO instanciar dentro do card (N poll subs).
+  const { analisar, isPending, isRunning } = useVarreduraJob();
+  // Gate inclui isPending (mutação em voo) além de isRunning (job já criado),
+  // senão um duplo-clique rápido dispara dois jobs antes de isRunning virar true.
+  const analisando = isRunning || isPending;
+
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
   // pausa de digitar. Ver docs/specs/demandas-cnj-ux.md.
@@ -1125,6 +1134,7 @@ export default function Demandas() {
       prioridade: d.prioridade || "normal",
       arquivado: d.status === "ARQUIVADO",
       reuPreso: d.reuPreso || false,
+      revisaoPendente: d.revisaoPendente ?? false,
       substatus: d.substatus || null,
       photoUrl: d.assistido?.photoUrl || null,
       updatedAt: d.updatedAt ? new Date(d.updatedAt).toISOString() : null,
@@ -1783,6 +1793,17 @@ export default function Demandas() {
         },
       }
     );
+  };
+
+  // Ação em lote — dispara a leitura profunda para todas as selecionadas.
+  const handleBatchAnalisar = () => {
+    if (selectedIds.size === 0) return;
+    const numericIds = Array.from(selectedIds).map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    if (numericIds.length === 0) return;
+    if (numericIds.length > 50) { toast.error("Selecione no máximo 50 demandas por análise"); return; }
+    analisar(numericIds);
+    setSelectedIds(new Set());
+    setIsSelectMode(false);
   };
 
   // Mapeamento de nome amigável → DB enum para atribuição
@@ -3668,6 +3689,16 @@ export default function Demandas() {
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs gap-1.5"
+                          onClick={handleBatchAnalisar}
+                          disabled={analisando}
+                        >
+                          <ScanSearch className="w-3 h-3" />
+                          Analisar selecionadas ({selectedIds.size})
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1.5"
                           onClick={handleBatchCopy}
                         >
                           <Copy className="w-3 h-3" />
@@ -3751,6 +3782,16 @@ export default function Demandas() {
                     </button>
                     <button
                       type="button"
+                      onClick={handleBatchAnalisar}
+                      disabled={analisando}
+                      title="Analisar selecionadas (leitura profunda dos autos)"
+                      className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ScanSearch className="w-3.5 h-3.5" />
+                      Analisar ({selectedIds.size})
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleBatchDelegate}
                       title="Delegar selecionadas"
                       className="h-7 px-2.5 rounded-lg bg-white dark:bg-neutral-900 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-[11px] font-medium flex items-center gap-1.5"
@@ -3770,6 +3811,8 @@ export default function Demandas() {
               onOpenEventsDrawer={(id) => setEventsDrawerDemandaId(id)}
               onStatusChange={handleStatusChange}
               onAtoChange={handleAtoChange}
+              onAnalisar={(id) => analisar([id])}
+              analisando={analisando}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}

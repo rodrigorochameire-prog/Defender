@@ -134,10 +134,11 @@ export default function AudienciasPage() {
   const { currentAssignment } = useAssignment();
   const [areaFilter, setAreaFilter] = useState("all");
   
-  // Buscar audiências do banco de dados via tRPC
-  const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery({
-    limit: 500, // Aumentado para garantir que todos os eventos apareçam
-  });
+  // Buscar audiências do banco de dados via tRPC.
+  // SEM limite: o router ordena por data ASC; um teto (ex.: 500) com a tabela já
+  // passando de 600 linhas faz as passadas ocuparem a janela e derruba as
+  // audiências FUTURAS (inclusive as agendadas automaticamente pelo parsing).
+  const { data: audienciasData, isLoading, refetch } = trpc.audiencias.list.useQuery();
   
   // Mutation para atualizar audiências
   const updateAudiencia = trpc.audiencias.update.useMutation({
@@ -149,13 +150,27 @@ export default function AudienciasPage() {
   // Transformar dados do banco para o formato esperado pelo componente
   const audiencias: Audiencia[] = useMemo(() => {
     if (!audienciasData) return [];
-    
+
+    // O banco grava o status canônico minúsculo (agendada/cancelada/realizada/
+    // redesignada); o hub usa outro vocabulário (DESIGNADA/CANCELADA/...). Sem
+    // esta tradução, "agendada".toUpperCase() = "AGENDADA" não casa nenhuma
+    // coluna do Kanban nem os KPIs, e a audiência "some" (vira "A Designar").
+    const STATUS_DB_TO_HUB: Record<string, Audiencia["status"]> = {
+      agendada: "DESIGNADA",
+      designada: "DESIGNADA",
+      realizada: "REALIZADA",
+      concluida: "CONCLUIDA",
+      cancelada: "CANCELADA",
+      redesignada: "ADIADA",
+      adiada: "ADIADA",
+    };
+
     return audienciasData.map((a) => ({
       id: a.id,
       dataAudiencia: new Date(a.dataHora),
       horario: a.horario,
       tipo: a.tipo?.toUpperCase() || "OUTRA",
-      status: (a.status?.toUpperCase() || "DESIGNADA") as Audiencia["status"],
+      status: STATUS_DB_TO_HUB[(a.status ?? "").toLowerCase()] ?? "DESIGNADA",
       sala: a.sala,
       local: a.local,
       juiz: a.juiz,

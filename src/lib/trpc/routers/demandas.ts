@@ -131,6 +131,7 @@ export const demandasRouter = router({
           substatus: demandas.substatus,
           prioridade: demandas.prioridade,
           reuPreso: demandas.reuPreso,
+          revisaoPendente: demandas.revisaoPendente,
           processoId: demandas.processoId,
           assistidoId: demandas.assistidoId,
           casoId: demandas.casoId,

@@ -117,6 +117,12 @@ const SKILL_REGISTRY = {
       argv: [
         resolve(PROJECT_DIR, '.claude/skills/varredura-triagem/scripts/varredura_triagem.py'),
         '--modo', meta.modo || 'cdp',
+        // Modo por-demanda (gatilho "Analisar" da UI): analisa SÓ os IDs
+        // selecionados, em qualquer coluna (ignora o filtro de Triagem). Exclusivo
+        // com --atribuicao/--since — o router envia um OU outro (XOR validado).
+        ...(Array.isArray(meta.demandaIds) && meta.demandaIds.length
+          ? ['--demanda-ids', meta.demandaIds.join(',')]
+          : []),
         ...(meta.atribuicao ? ['--atribuicao', String(meta.atribuicao)] : []),
         ...(meta.since ? ['--since', String(meta.since)] : []),
         ...(meta.limit ? ['--limit', String(meta.limit)] : []),
