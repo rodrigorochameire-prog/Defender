@@ -335,6 +335,11 @@ export const testemunhas = pgTable("testemunhas", {
     Array<{ start: number; end: number; text: string }>
   >(),
   depoimentoTranscricaoStatus: varchar("depoimento_transcricao_status", { length: 20 }),
+  termoDelegaciaDriveFileId: varchar("termo_delegacia_drive_file_id", { length: 100 }),
+  termoDelegaciaPagina: integer("termo_delegacia_pagina"),
+  depoimentoTimestampInicioS: integer("depoimento_timestamp_inicio_s"),
+  depoimentoTimestampFimS: integer("depoimento_timestamp_fim_s"),
+  pinos: jsonb("pinos").$type<import("@/lib/agenda/pino").Pino[]>().notNull().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [

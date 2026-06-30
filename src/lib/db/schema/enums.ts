@@ -348,6 +348,7 @@ export const tipoTestemunhaEnum = pgEnum("tipo_testemunha", [
   "INFORMANTE",
   "PERITO",
   "VITIMA",
+  "INTERROGANDO",
 ]);
 
 export const statusTestemunhaEnum = pgEnum("status_testemunha", [
