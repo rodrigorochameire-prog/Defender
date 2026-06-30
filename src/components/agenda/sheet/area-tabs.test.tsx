@@ -10,7 +10,7 @@ afterEach(() => cleanup());
 describe("AreaTabs", () => {
   it("renderiza um tab por área informada, com rótulo legível", () => {
     render(<AreaTabs areas={AREA_ORDER} active="imputacao" onChange={() => {}} />);
-    expect(screen.getByRole("tab", { name: /Imputação/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Caso/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Depoimentos/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Laudos e documentos/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Estratégia e teses/i })).toBeInTheDocument();
@@ -20,7 +20,7 @@ describe("AreaTabs", () => {
   it("marca o tab ativo com aria-selected", () => {
     render(<AreaTabs areas={AREA_ORDER} active="depoimentos" onChange={() => {}} />);
     expect(screen.getByRole("tab", { name: /Depoimentos/i })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: /Imputação/i })).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("tab", { name: /Caso/i })).toHaveAttribute("aria-selected", "false");
   });
 
   it("dispara onChange com a área ao clicar", () => {

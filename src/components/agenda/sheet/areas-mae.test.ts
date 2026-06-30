@@ -11,8 +11,8 @@ import {
 import { SECOES_DEFAULT, SECOES_JUSTIFICACAO, SECOES_INSTRUCAO, type SecaoId } from "./secoes-manifest";
 
 describe("áreas-mãe (mapeamento de seções → modos de trabalho)", () => {
-  it("define exatamente 5 áreas, na ordem do workspace", () => {
-    expect(AREA_ORDER).toEqual(["imputacao", "depoimentos", "laudos-docs", "estrategia", "execucao"]);
+  it("define exatamente 6 áreas, na ordem do workspace", () => {
+    expect(AREA_ORDER).toEqual(["imputacao", "intimacoes", "depoimentos", "laudos-docs", "estrategia", "execucao"]);
   });
 
   it("tem rótulo legível para cada área", () => {

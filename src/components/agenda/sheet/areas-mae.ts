@@ -12,13 +12,14 @@
 
 import type { SecaoId } from "./secoes-manifest";
 
-export type AreaMae = "imputacao" | "depoimentos" | "laudos-docs" | "estrategia" | "execucao";
+export type AreaMae = "imputacao" | "intimacoes" | "depoimentos" | "laudos-docs" | "estrategia" | "execucao";
 
 /** Ordem de exibição das abas no workspace. */
-export const AREA_ORDER: AreaMae[] = ["imputacao", "depoimentos", "laudos-docs", "estrategia", "execucao"];
+export const AREA_ORDER: AreaMae[] = ["imputacao", "intimacoes", "depoimentos", "laudos-docs", "estrategia", "execucao"];
 
 export const AREA_LABELS: Record<AreaMae, string> = {
-  imputacao: "Imputação",
+  imputacao: "Caso",
+  intimacoes: "Intimações",
   depoimentos: "Depoimentos",
   "laudos-docs": "Laudos e documentos",
   estrategia: "Estratégia e teses",
@@ -38,9 +39,11 @@ export const SECAO_TO_AREA: Record<SecaoId, AreaMae> = {
   fatos: "imputacao",
   depoentes: "imputacao",
 
-  // DEPOIMENTOS — oitiva, intimação, depoimento IP e juízo
+  // INTIMAÇÕES — status de comunicação por depoente
+  intimacao: "intimacoes",
+
+  // DEPOIMENTOS — oitiva, depoimento IP e juízo
   depoimentos: "depoimentos",
-  intimacao: "depoimentos",
 
   // LAUDOS E DOCUMENTOS — provas técnicas, relatos, medidas
   laudos: "laudos-docs",

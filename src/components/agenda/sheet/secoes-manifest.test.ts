@@ -36,6 +36,7 @@ const ESPINHA_INSTRUCAO: SecaoId[] = [
   "imputacao",
   "fatos",
   "depoentes",
+  "intimacao",    // ← Intimações tab (A4)
   "depoimentos",
   "laudos",
   "documentos",
@@ -73,7 +74,7 @@ describe("resolverManifesto", () => {
 });
 
 describe("SECOES_INSTRUCAO (espinha + Preparação + Contexto)", () => {
-  it("começa exatamente pela espinha de 7 + Preparação (dossie, teses)", () => {
+  it("começa exatamente pela espinha de 8 + Preparação (dossie, teses)", () => {
     expect(SECOES_INSTRUCAO.slice(0, ESPINHA_INSTRUCAO.length)).toEqual(ESPINHA_INSTRUCAO);
   });
 
@@ -94,7 +95,7 @@ describe("SECOES_INSTRUCAO (espinha + Preparação + Contexto)", () => {
 });
 
 describe("GRUPO_CONTEXTO_INSTRUCAO", () => {
-  it("é disjunto da espinha de 9 itens", () => {
+  it("é disjunto da espinha de 10 itens", () => {
     const espinha = new Set(ESPINHA_INSTRUCAO);
     for (const id of GRUPO_CONTEXTO_INSTRUCAO) {
       expect(espinha.has(id)).toBe(false);

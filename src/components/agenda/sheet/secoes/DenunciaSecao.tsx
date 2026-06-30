@@ -3,6 +3,7 @@
 import { ExternalLink, Loader2, ScrollText } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { secoesPorTipo } from "@/lib/agenda/secao-classificada";
+import { extrairNarrativaFatos } from "@/lib/agenda/extrair-narrativa-fatos";
 
 /** Monta o deep-link do PDF, ancorando na página inicial quando houver. */
 function linkExordial(link: string | null, pagina: number | null): string | null {
@@ -64,7 +65,7 @@ export function DenunciaSecao({
               </div>
               {s.textoExtraido ? (
                 <blockquote className="whitespace-pre-wrap border-l-2 border-neutral-300 pl-3 font-serif text-[13px] leading-relaxed text-neutral-700 dark:border-neutral-700 dark:text-neutral-300">
-                  {s.textoExtraido}
+                  {extrairNarrativaFatos(s.textoExtraido ?? "")}
                 </blockquote>
               ) : (
                 <p className="text-xs italic text-neutral-400">

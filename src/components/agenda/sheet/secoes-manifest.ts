@@ -92,11 +92,12 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
  * renderizado dentro de um único CollapsibleSection no corpo do sheet AIJ.
  */
 export const SECOES_INSTRUCAO: SecaoId[] = [
-  // Espinha (7)
+  // Espinha (8)
   "resumo",        // narrativa do caso — topo da aba Imputação
   "imputacao",
   "fatos",
   "depoentes",
+  "intimacao",     // ← Intimações tab
   "depoimentos",
   "laudos",
   "documentos",

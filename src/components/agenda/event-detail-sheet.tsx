@@ -27,6 +27,7 @@ import { MotivoDesignacaoSecao } from "@/components/agenda/sheet/secoes/MotivoDe
 import { RequerimentoDefesaSecao } from "@/components/agenda/sheet/secoes/RequerimentoDefesaSecao";
 import { ResumoGeralSecao } from "@/components/agenda/sheet/secoes/ResumoGeralSecao";
 import { IntimacaoSecao } from "@/components/agenda/sheet/secoes/IntimacaoSecao";
+import { IntimacoesSecao } from "@/components/agenda/sheet/secoes/IntimacoesSecao";
 import { MedidasVigentesSecao } from "@/components/agenda/sheet/secoes/MedidasVigentesSecao";
 import { DenunciaSecao } from "@/components/agenda/sheet/secoes/DenunciaSecao";
 import { LaudosSecao } from "@/components/agenda/sheet/secoes/LaudosSecao";
@@ -792,9 +793,13 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
       ),
     },
     "intimacao": {
-      label: "Intimação",
-      temDado: !!intimacaoTexto,
-      node: (
+      label: "Intimações",
+      temDado: depoentesStatus.length > 0 || !!intimacaoTexto,
+      node: depoentesStatus.length > 0 ? (
+        <CollapsibleSection id="intimacao" label="Intimações" defaultOpen>
+          <IntimacoesSecao depoentes={depoentesStatus} />
+        </CollapsibleSection>
+      ) : (
         <CollapsibleSection id="intimacao" label="Intimação" defaultOpen>
           <IntimacaoSecao texto={intimacaoTexto!} />
         </CollapsibleSection>
@@ -1494,7 +1499,9 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
           </div>
 
           <div className="px-3 pb-4 space-y-3">
-            {!isLoading && <SubtipoBanner subtipo={subtipo} processoNum={processoNum} />}
+            {!isLoading && subtipoCfg?.direcionaCockpit && (
+              <SubtipoBanner subtipo={subtipo} processoNum={processoNum} />
+            )}
 
             {isLoading && (
               <div className="flex items-center justify-center py-12">
