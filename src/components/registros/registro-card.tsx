@@ -96,43 +96,34 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
   return (
     <AnexoDropzone onFiles={(files) => upload(registro.id, files)}>
       <div
-        className="rounded-xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800/70 px-3.5 py-2.5 group transition-colors border-l-2 hover:ring-neutral-300/70 dark:hover:ring-neutral-700/70"
-        style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}33` }}
+        className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] dark:shadow-black/20 px-3.5 py-2.5 group transition-shadow border-l-2 hover:shadow-md hover:shadow-black/[0.07]"
+        style={{ borderLeftColor: tipoCfg?.color ?? "#a1a1aa" }}
       >
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          {/* Tipo badge: full label + colored bg/text per design spec §3 */}
           {tipoCfg && TipoIcon && (
             <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ring-current/20",
-                tipoCfg.bg,
-                tipoCfg.text,
-              )}
+              className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide"
+              style={{ color: tipoCfg.color }}
             >
               <TipoIcon className="w-3 h-3" />
-              {tipoCfg.label}
+              {tipoCfg.shortLabel.toUpperCase()}
             </span>
           )}
           {prazoFormatted && (
-            <span className="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20">
-              {prazoFormatted}
+            <span className="inline-flex items-center rounded px-1.5 py-px text-[10px] font-semibold tracking-wide text-amber-600 dark:text-amber-400">
+              · {prazoFormatted}
             </span>
           )}
           {hasAudio && (
-            <Mic
-              className="w-3 h-3 text-neutral-400"
-              aria-label="Possui áudio"
-            />
+            <Mic className="w-3 h-3 text-neutral-300 dark:text-neutral-600" aria-label="Possui áudio" />
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <time className="text-[10.5px] text-neutral-500 dark:text-neutral-400 tabular-nums">
-            {format(data, "dd 'de' MMM · HH:mm", { locale: ptBR })}
+        <div className="flex items-center gap-1 shrink-0">
+          <time className="text-[10px] text-neutral-400 dark:text-neutral-500 tabular-nums">
+            {format(data, "dd MMM · HH:mm", { locale: ptBR })}
           </time>
-          {/* Ações: hover-reveal no desktop; sempre visíveis em telas de toque
-              (sem hover não há como descobri-las — era impossível editar/excluir no iPad) */}
           <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity flex gap-0.5">
             {onEdit && (
               <button
@@ -142,7 +133,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
                 title="Editar"
                 aria-label="Editar registro"
               >
-                <Edit3 className="w-3.5 h-3.5 text-neutral-400" />
+                <Edit3 className="w-3 h-3 text-neutral-400" />
               </button>
             )}
             {onDelete && (
@@ -153,7 +144,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
                 title="Excluir"
                 aria-label="Excluir registro"
               >
-                <Trash2 className="w-3.5 h-3.5 text-neutral-400 hover:text-red-500" />
+                <Trash2 className="w-3 h-3 text-neutral-400 hover:text-red-500" />
               </button>
             )}
           </div>
@@ -161,15 +152,15 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
       </div>
 
       {registro.titulo && (
-        <h4 className="mt-1.5 text-[13px] font-semibold text-neutral-900 dark:text-neutral-100 leading-snug truncate">
+        <h4 className="mt-1.5 text-[12.5px] font-semibold text-neutral-800 dark:text-neutral-100 leading-snug">
           {registro.titulo}
         </h4>
       )}
 
       {registro.audienciaId && (
-        <div className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-cyan-50 dark:bg-cyan-900/20 px-2 py-1 text-[11px] font-medium text-cyan-700 dark:text-cyan-300 ring-1 ring-inset ring-cyan-500/20">
+        <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-cyan-600 dark:text-cyan-400">
           <CalendarCheck className="w-3 h-3" />
-          Audiência agendada automaticamente
+          Audiência agendada
         </div>
       )}
 
@@ -178,8 +169,8 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
           <p
             ref={contentRef}
             className={cn(
-              "text-[13px] text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed",
-              !expanded && "line-clamp-2",
+              "text-[12.5px] text-neutral-600 dark:text-neutral-400 whitespace-pre-wrap leading-[1.55]",
+              !expanded && "line-clamp-3",
             )}
           >
             {conteudo}
@@ -188,25 +179,18 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 text-[11px] font-medium text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 cursor-pointer"
+              className="mt-1 text-[10px] font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
             >
-              {expanded ? "Ver menos" : "Ver mais"}
+              {expanded ? "↑ menos" : "↓ mais"}
             </button>
           )}
         </div>
       )}
 
-      {/* Footer: autor — discreto, com iniciais como avatar mini */}
       {registro.autor?.name && (
-        <div className="mt-2 pt-1.5 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center gap-1.5">
-          <span
-            className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-semibold text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800"
-            aria-hidden
-          >
-            {autorIniciais || "?"}
-          </span>
-          <span className="text-[10.5px] text-neutral-500 dark:text-neutral-400 truncate">
-            {registro.autor.name}
+        <div className="mt-2 flex items-center gap-1">
+          <span className="text-[9.5px] text-neutral-400 dark:text-neutral-500 truncate">
+            {autorIniciais}
           </span>
         </div>
       )}

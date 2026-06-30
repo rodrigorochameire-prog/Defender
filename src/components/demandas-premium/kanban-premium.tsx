@@ -826,6 +826,92 @@ function KanbanCard({
           })()}
         </div>
 
+        {/* Row 1b: Status badge — logo abaixo do nome, antes do processo */}
+        {(() => {
+          const delegSt = demanda.statusDelegacao;
+          const isDeleg = delegSt === "a_delegar" || delegSt === "delegado";
+          const cor = isDeleg ? "#9B84B8" : groupColor;
+          const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
+          const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
+          const pillClass = cn(
+            "flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap border transition-all duration-150",
+            onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default",
+            delegSt === "a_delegar" && "border-dashed",
+          );
+          const pillStyle = {
+            backgroundColor: `${cor}14`,
+            borderColor: `${cor}40`,
+            color: cor,
+            filter: "saturate(1.1)",
+            "--tw-ring-color": `${cor}60`,
+          } as React.CSSProperties;
+          const pillInner = (
+            <>
+              {isDeleg ? <UserPlus className="w-3 h-3 shrink-0" /> : <StatusIcon className="w-3 h-3 shrink-0" />}
+              {isDeleg ? (delegSt === "a_delegar" ? "Delegar" : "Delegado") : statusDisplay}
+              {onStatusChange && (
+                <ChevronDown className={cn("w-2.5 h-2.5 transition-opacity", isDeleg ? "opacity-60" : "opacity-0 group-hover/kcard:opacity-70")} />
+              )}
+            </>
+          );
+
+          if (isDeleg && onStatusChange) {
+            return (
+              <div className="mb-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button ref={badgeRef} className={pillClass} style={pillStyle} onClick={(e) => e.stopPropagation()} title="Gerir delegação">
+                      {pillInner}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[12rem]" onClick={(e) => e.stopPropagation()}>
+                    {delegSt === "a_delegar" && (
+                      <DropdownMenuItem onClick={() => marcarDelegado.mutate({ demandaId: Number(demanda.id) })}>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-2 text-violet-500" /> Marcar como enviada
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => retomarDelegacao.mutate({ demandaId: Number(demanda.id) })}
+                      className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
+                    >
+                      <Undo2 className="w-3.5 h-3.5 mr-2" /> Devolver a mim
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowStatusPopover(true)}>
+                      <ListTodo className="w-3.5 h-3.5 mr-2 text-neutral-500" /> Alterar status…
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {showStatusPopover && (
+                  <StatusPipelineSelector
+                    currentStatus={currentStatusKey}
+                    onSelect={handleStatusSelect}
+                    onClose={() => setShowStatusPopover(false)}
+                    variant="dropdown"
+                    anchorRef={badgeRef}
+                  />
+                )}
+              </div>
+            );
+          }
+          return (
+            <div className="mb-1">
+              <button ref={badgeRef} onClick={handleBadgeClick} className={pillClass} style={pillStyle} title={onStatusChange ? "Alterar status" : undefined}>
+                {pillInner}
+              </button>
+              {showStatusPopover && (
+                <StatusPipelineSelector
+                  currentStatus={currentStatusKey}
+                  onSelect={handleStatusSelect}
+                  onClose={() => setShowStatusPopover(false)}
+                  variant="dropdown"
+                  anchorRef={badgeRef}
+                />
+              )}
+            </div>
+          );
+        })()}
+
         {/* Row 2: Processo — hover na cor funcional do status */}
         {processo && (
           <div className="flex items-center gap-1 mb-0.5">
@@ -911,127 +997,43 @@ function KanbanCard({
           </div>
         )}
 
-        {/* Row 4: Prazo; Row 5: Status badge — cada um em linha própria */}
-        <div className="flex flex-col gap-1">
-          {demanda.prazo && (
-            <span
-              className={`text-[11px] font-mono tabular-nums flex items-center gap-0.5 ${
-                prazoLevel === "vencido"
-                  ? "font-bold px-1.5 py-0.5 rounded"
-                  : prazoLevel === "urgente"
-                    ? "font-semibold"
-                    : prazoLevel === "proximo"
-                      ? "font-medium"
-                      : "text-neutral-400"
-              }`}
-              style={
-                prazoLevel === "vencido"
-                  ? { color: groupColor, backgroundColor: `${groupColor}1a` }
-                  : prazoLevel
-                    ? { color: groupColor }
-                    : undefined
-              }
-            >
-              {prazoDiff !== null && prazoDiff < 0 ? (
-                <>
-                  <Clock className="w-2.5 h-2.5" />
-                  {Math.abs(prazoDiff)}d
-                </>
-              ) : prazoDiff !== null && prazoDiff === 0 ? (
-                <>
-                  <Clock className="w-2.5 h-2.5" />
-                  Hoje
-                </>
-              ) : prazoDiff !== null && prazoDiff <= 7 ? (
-                <span>{prazoDiff}d</span>
-              ) : (
-                prazoText
-              )}
-            </span>
-          )}
-
-          {/* Status badge — no fluxo de delegação, o próprio estado É o status:
-              "Delegar" (falta enviar) / "Delegado" (já enviei), em paleta
-              violeta; fora dele, o status processual real. A linha abaixo traz
-              quem + andamento. */}
-          {(() => {
-            const delegSt = demanda.statusDelegacao;
-            const isDeleg = delegSt === "a_delegar" || delegSt === "delegado";
-            const cor = isDeleg ? "#9B84B8" : groupColor; // violeta (Acompanhar) p/ delegação
-            const statusKey = (demanda.substatus || demanda.status || "triagem").toLowerCase().replace(/\s+/g, "_");
-            const StatusIcon = statusCfg?.icon || STATUS_ICONS[statusKey] || ListTodo;
-            const pillClass = cn(
-              "ml-auto flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-semibold whitespace-nowrap border transition-all duration-150",
-              onStatusChange ? "hover:ring-1 cursor-pointer" : "cursor-default",
-              delegSt === "a_delegar" && "border-dashed",
-            );
-            const pillStyle = {
-              backgroundColor: `${cor}14`,
-              borderColor: `${cor}40`,
-              color: cor,
-              filter: "saturate(1.1)",
-              // @ts-ignore -- ring color via inline
-              "--tw-ring-color": `${cor}60`,
-            } as React.CSSProperties;
-            const pillInner = (
-              <>
-                {isDeleg ? <UserPlus className="w-3 h-3 shrink-0" /> : <StatusIcon className="w-3 h-3 shrink-0" />}
-                {isDeleg ? (delegSt === "a_delegar" ? "Delegar" : "Delegado") : statusDisplay}
-                {onStatusChange && (
-                  <ChevronDown className={cn("w-2.5 h-2.5 transition-opacity", isDeleg ? "opacity-60" : "opacity-0 group-hover/kcard:opacity-70")} />
-                )}
-              </>
-            );
-
-            // No fluxo de delegação, o chevron do pill abre um menu com as ações
-            // (Devolver a mim / Marcar enviada / Alterar status…). Fora dele, o
-            // pill abre direto o seletor de status (comportamento padrão).
-            if (isDeleg && onStatusChange) {
-              return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button ref={badgeRef} className={pillClass} style={pillStyle} onClick={(e) => e.stopPropagation()} title="Gerir delegação">
-                      {pillInner}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-[12rem]" onClick={(e) => e.stopPropagation()}>
-                    {delegSt === "a_delegar" && (
-                      <DropdownMenuItem onClick={() => marcarDelegado.mutate({ demandaId: Number(demanda.id) })}>
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-2 text-violet-500" /> Marcar como enviada
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      onClick={() => retomarDelegacao.mutate({ demandaId: Number(demanda.id) })}
-                      className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400"
-                    >
-                      <Undo2 className="w-3.5 h-3.5 mr-2" /> Devolver a mim
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowStatusPopover(true)}>
-                      <ListTodo className="w-3.5 h-3.5 mr-2 text-neutral-500" /> Alterar status…
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              );
+        {/* Row 4: Prazo */}
+        {demanda.prazo && (
+          <span
+            className={`text-[11px] font-mono tabular-nums flex items-center gap-0.5 ${
+              prazoLevel === "vencido"
+                ? "font-bold px-1.5 py-0.5 rounded"
+                : prazoLevel === "urgente"
+                  ? "font-semibold"
+                  : prazoLevel === "proximo"
+                    ? "font-medium"
+                    : "text-neutral-400"
+            }`}
+            style={
+              prazoLevel === "vencido"
+                ? { color: groupColor, backgroundColor: `${groupColor}1a` }
+                : prazoLevel
+                  ? { color: groupColor }
+                  : undefined
             }
-            return (
-              <button ref={badgeRef} onClick={handleBadgeClick} className={pillClass} style={pillStyle} title={onStatusChange ? "Alterar status" : undefined}>
-                {pillInner}
-              </button>
-            );
-          })()}
-
-          {/* Pipeline Selector */}
-          {showStatusPopover && (
-            <StatusPipelineSelector
-              currentStatus={currentStatusKey}
-              onSelect={handleStatusSelect}
-              onClose={() => setShowStatusPopover(false)}
-              variant="dropdown"
-              anchorRef={badgeRef}
-            />
-          )}
-        </div>
+          >
+            {prazoDiff !== null && prazoDiff < 0 ? (
+              <>
+                <Clock className="w-2.5 h-2.5" />
+                {Math.abs(prazoDiff)}d
+              </>
+            ) : prazoDiff !== null && prazoDiff === 0 ? (
+              <>
+                <Clock className="w-2.5 h-2.5" />
+                Hoje
+              </>
+            ) : prazoDiff !== null && prazoDiff <= 7 ? (
+              <span>{prazoDiff}d</span>
+            ) : (
+              prazoText
+            )}
+          </span>
+        )}
 
         {/* Chip delegação — tom driven by rotuloDelegacaoChip (a_delegar/ativo/concluida) */}
         {(() => {
