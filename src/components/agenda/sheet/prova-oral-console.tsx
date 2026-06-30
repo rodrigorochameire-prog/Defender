@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { ResumoProvaOral } from "@/lib/agenda/depoente-status";
 
 /**
- * Console do modo Prova oral (spec §D): síntese de ação no topo da aba —
+ * Console do modo Depoimentos: síntese de ação no topo da aba —
  * total / ouvidos / a ouvir e, como sinal de cerceamento (cor = exceção), o nº
  * de depoentes ainda sem ciência. Numerais tabulares para leitura de coluna.
  */
