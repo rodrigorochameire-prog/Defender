@@ -29,8 +29,6 @@ import {
   Eye,
   CheckCircle2,
   CloudOff,
-  CalendarPlus,
-  ExternalLink,
   UserPlus,
   Undo2,
   Sparkles,
@@ -689,28 +687,8 @@ function KanbanCard({
             <Search className="w-3 h-3" />
           </button>
         )}
-        {onAgendarAudiencia && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAgendarAudiencia(String(demanda.id));
-            }}
-            aria-label="Agendar audiência"
-            title="Agendar audiência"
-            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
-              e.currentTarget.style.color = groupColor;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "";
-              e.currentTarget.style.color = "";
-            }}
-          >
-            <CalendarPlus className="w-3 h-3" />
-          </button>
-        )}
+        {/* "Agendar audiência" removido do card — já disponível no sheet da
+            demanda. A prop onAgendarAudiencia segue mantida (atalho de teclado). */}
         {onStatusChange && (demanda.substatus || demanda.status || "").toLowerCase() !== "ciencia" && (
           <button
             type="button"
@@ -731,6 +709,28 @@ function KanbanCard({
             }}
           >
             <Eye className="w-3 h-3" />
+          </button>
+        )}
+        {onStatusChange && (demanda.substatus || "").toLowerCase() !== "protocolado" && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStatusSelect("protocolado");
+            }}
+            aria-label="Protocolar"
+            title="Protocolar (conclui a demanda como Protocolado)"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
+              e.currentTarget.style.color = groupColor;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "";
+              e.currentTarget.style.color = "";
+            }}
+          >
+            <Upload className="w-3 h-3" />
           </button>
         )}
         {onToggleUrgent && (
@@ -764,51 +764,15 @@ function KanbanCard({
             <Flame className="w-3 h-3" />
           </button>
         )}
-        {processo && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              // PJe TJBA não aceita query string para pré-preencher o
-              // campo de busca na Consulta Processual logada. Workaround:
-              // copia o CNJ pra clipboard e abre o login (que redireciona
-              // pro painel se já estiver autenticado). Usuário cola com
-              // Cmd+V no campo de busca.
-              navigator.clipboard.writeText(processo).then(
-                () => toast.success("CNJ copiado", {
-                  description: "Cole (Cmd+V) no campo de busca do PJe.",
-                  duration: 4000,
-                }),
-                () => toast.info("Abrindo PJe", {
-                  description: `Buscar pelo CNJ: ${processo}`,
-                  duration: 5000,
-                }),
-              );
-              // Tenta abrir direto na aba Consulta Processos (com sessão
-              // ativa, PJe leva direto pra lá). Se não logado, PJe pode
-              // redirecionar pro login. Se ainda assim cair em "página
-              // não encontrada", vale voltar pra /pje/login.seam.
-              window.open(
-                "https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam",
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }}
-            aria-label="Abrir no PJe"
-            title="Abrir no PJe"
-            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = `${groupColor}1a`;
-              e.currentTarget.style.color = groupColor;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "";
-              e.currentTarget.style.color = "";
-            }}
-          >
-            <ExternalLink className="w-3 h-3" />
-          </button>
-        )}
+        {/* "Abrir no PJe" removido do card — não é funcional de forma confiável
+            (o PJe TJBA não aceita query string para pré-preencher a busca na
+            Consulta Processual logada). Abordagem a retomar depois:
+              1) copiar o CNJ (`processo`) para o clipboard
+                 navigator.clipboard.writeText(processo)
+              2) abrir https://pje.tjba.jus.br/pje/ConsultaProcesso/listView.seam
+                 (com sessão ativa o PJe leva direto ao painel; senão, login.seam)
+              3) usuário cola (Cmd+V) no campo de busca.
+            Reativar quando houver um deep-link confiável (ou via daemon/CDP). */}
       </div>
 
       <div className={cn("px-3 py-2.5", isSelectMode && "pl-7")}>
