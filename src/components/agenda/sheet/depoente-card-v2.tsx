@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Loader2, Mic, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Loader2, Mic, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -27,6 +27,7 @@ export interface DepoenteV2 {
   ouvidoEm?: Date | string | null;
   redesignadoPara?: string | null;
   audioDriveFileId?: string | null;
+  certidaoComunicacao?: string | null;
 }
 
 interface Props {
@@ -71,6 +72,39 @@ function qualidadeLabel(d: DepoenteV2): string | null {
   return null;
 }
 
+function intimacaoLabel(status?: string): { text: string; color: string } | null {
+  switch (status) {
+    case "INTIMADA":        return { text: "Intimada",                        color: "text-emerald-600 dark:text-emerald-400" };
+    case "ARROLADA":        return { text: "Não intimada",                    color: "text-rose-600 dark:text-rose-400" };
+    case "NAO_LOCALIZADA":  return { text: "Não intimada — não localizada",   color: "text-rose-600 dark:text-rose-400" };
+    case "CARTA_PRECATORIA":return { text: "Carta precatória expedida",       color: "text-amber-600 dark:text-amber-400" };
+    case "DESISTIDA":       return { text: "Desistência comunicada",          color: "text-neutral-400 dark:text-neutral-500" };
+    default:                return null;
+  }
+}
+
+function CertidaoExpander({ teor }: { teor: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 text-[10px] font-medium text-neutral-500 hover:text-emerald-600 dark:text-neutral-400 cursor-pointer"
+      >
+        <ChevronDown className={cn("h-3 w-3 transition-transform motion-reduce:transition-none", open && "rotate-180")} />
+        <FileText className="h-3 w-3" />
+        {open ? "Ocultar certidão de comunicação" : "Ver certidão de comunicação"}
+      </button>
+      {open && (
+        <p className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap rounded ring-1 ring-neutral-200 p-2 text-[10.5px] leading-relaxed text-neutral-600 dark:text-neutral-400 dark:ring-neutral-800">
+          {teor}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const TRANSC_STATUS: Record<string, { label: string; tone: string; spin?: boolean }> = {
   pending: { label: "Transcrição na fila", tone: "text-amber-600", spin: true },
   processing: { label: "Transcrevendo…", tone: "text-amber-600", spin: true },
@@ -113,11 +147,13 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
       ? `${termoIp.fileWebViewLink}${termoIp.paginaInicio ? `#page=${termoIp.paginaInicio}` : ""}`
       : null;
 
-  const ladoBorder = {
-    acusacao: "border-l-rose-300/70",
-    defesa: "border-l-emerald-300/70",
-    neutro: "border-l-neutral-200",
+  const topBarColor = {
+    acusacao: "bg-rose-300/70",
+    defesa: "bg-emerald-300/70",
+    neutro: "bg-neutral-200",
   }[lado];
+
+  const papelParaAvatar = { acusacao: "ACUSACAO", defesa: "DEFESA", neutro: undefined }[lado] as string | undefined;
   const statusClasses = {
     emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
     amber: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -127,17 +163,16 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
   return (
     <div
       data-lado={lado}
-      className={cn(
-        "rounded-lg border border-neutral-200/60 dark:border-neutral-700/60 border-l-[3px] overflow-hidden",
-        ladoBorder
-      )}
+      className="border border-neutral-200/60 dark:border-neutral-700/60 overflow-hidden"
     >
+      {/* Semantic top bar */}
+      <div className={cn("h-[3px] w-full", topBarColor)} />
       <button
         type="button"
         onClick={onToggle}
         className="w-full text-left flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20"
       >
-        <PessoaAvatar nome={depoente.nome} photoUrl={avatarUrl} papel={depoente.papel} size="sm" />
+        <PessoaAvatar nome={depoente.nome} photoUrl={avatarUrl} papel={papelParaAvatar} size="sm" />
         <div className="flex-1 min-w-0">
           <div className="text-xs font-semibold text-neutral-800 dark:text-neutral-100 truncate">
             {depoente.nome}
@@ -156,6 +191,18 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
       </button>
       {isOpen && (
         <div className="px-3 pb-3 border-t border-neutral-100 dark:border-neutral-800/40 pt-2.5 space-y-2.5">
+          {/* Intimação status */}
+          {(() => {
+            const intim = intimacaoLabel(depoente.status);
+            return intim ? (
+              <div>
+                <p className={cn("text-[10px] font-medium leading-snug", intim.color)}>{intim.text}</p>
+                {depoente.certidaoComunicacao && (
+                  <CertidaoExpander teor={depoente.certidaoComunicacao} />
+                )}
+              </div>
+            ) : null;
+          })()}
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <div className="text-[9px] font-semibold text-neutral-400 tracking-wide">
@@ -247,7 +294,7 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
               <button
                 type="button"
                 onClick={() => depoente.id != null && onMarcarOuvido(depoente.id, undefined)}
-                className="text-[10px] font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 cursor-pointer"
+                className="text-[10px] font-medium px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 cursor-pointer"
               >
                 ✓ Marcar ouvido
               </button>
@@ -255,14 +302,14 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
             <button
               type="button"
               onClick={() => depoente.id != null && onRedesignar(depoente.id)}
-              className="text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
+              className="text-[10px] font-medium px-2 py-1 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
             >
               ↷ Redesignar
             </button>
             <button
               type="button"
               onClick={() => depoente.id != null && onAdicionarPergunta(depoente.id)}
-              className="text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
+              className="text-[10px] font-medium px-2 py-1 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
             >
               + Pergunta
             </button>
@@ -277,7 +324,7 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
               <button
                 type="button"
                 onClick={() => depoente.id != null && onAbrirAudio(depoente.id)}
-                className="text-[10px] font-medium px-2 py-1 rounded-md bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
+                className="text-[10px] font-medium px-2 py-1 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 cursor-pointer"
               >
                 ▶ Áudio
               </button>
