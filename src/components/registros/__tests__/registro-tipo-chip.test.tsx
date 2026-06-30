@@ -34,9 +34,10 @@ describe("RegistroTipoChip", () => {
 });
 
 describe("registro-tipo-config", () => {
-  it("includes the 12 canonical tipos", () => {
+  it("includes the 13 canonical tipos", () => {
     expect(TIPO_KEYS).toEqual(
       expect.arrayContaining([
+        "analise",
         "atendimento",
         "diligencia",
         "anotacao",
@@ -51,7 +52,7 @@ describe("registro-tipo-config", () => {
         "transferencia",
       ]),
     );
-    expect(TIPO_KEYS).toHaveLength(12);
+    expect(TIPO_KEYS).toHaveLength(13);
   });
 
   it("each tipo has all required fields including a real hex color", () => {
