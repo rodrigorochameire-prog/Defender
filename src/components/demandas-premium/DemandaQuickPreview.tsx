@@ -1687,6 +1687,21 @@ export function DemandaQuickPreview({
               </button>
             ))}
 
+            {/* Ações de IA — só no modo Produção, dentro do scroll (não comprime flex-1) */}
+            {activeMode === "producao" && demanda.processoId != null && demanda.assistidoId != null && (
+              <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 p-3">
+                <SkillLauncher
+                  entity="processo"
+                  atribuicao={(demanda.atribuicaoEnum ?? demanda.atribuicao ?? "") as Atribuicao}
+                  assistidoId={demanda.assistidoId}
+                  processoId={demanda.processoId}
+                />
+                <div className="mt-3">
+                  <SkillTaskHistory processoId={demanda.processoId} limit={3} />
+                </div>
+              </div>
+            )}
+
             {/* ===== AÇÕES RÁPIDAS (fixo — não colapsável) ===== */}
             <div className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] border border-neutral-200/60 dark:border-neutral-800/60 overflow-hidden">
               <div className="flex divide-x divide-neutral-200/40 dark:divide-neutral-800/40">
@@ -1873,20 +1888,6 @@ export function DemandaQuickPreview({
         )}
           </div>
         </div>
-        {/* Ações de IA — analisar/gerar peça no processo da demanda sem sair do kanban */}
-        {demanda.processoId != null && demanda.assistidoId != null && (
-          <div className="border-t border-neutral-200/60 px-4 py-3 dark:border-neutral-800/60">
-            <SkillLauncher
-              entity="processo"
-              atribuicao={(demanda.atribuicaoEnum ?? demanda.atribuicao ?? "") as Atribuicao}
-              assistidoId={demanda.assistidoId}
-              processoId={demanda.processoId}
-            />
-            <div className="mt-3">
-              <SkillTaskHistory processoId={demanda.processoId} limit={3} />
-            </div>
-          </div>
-        )}
       </SheetContent>
       <DemandaTimelineDrawer
         isOpen={timelineOpen}
