@@ -78,7 +78,7 @@ for (const item of items) {
     const termoPagina = dep.termo_delegacia?.pagina_inicio ?? null;    // spec: pagina_inicio
     const tsInicio = dep.gravacao_judicial?.timestamp_inicio_s ?? null; // spec: timestamp_inicio_s
     const tsFim = dep.gravacao_judicial?.timestamp_fim_s ?? null;       // spec: timestamp_fim_s
-    const pinosSugeridos = dep.pinos ?? [];                              // field: dep.pinos per schema
+    const pinosSugeridos = dep.pinos_sugeridos ?? [];                     // field: dep.pinos_sugeridos per schema_registro_audiencia.md
 
     // Nothing to write — skip
     if (!termoDriveFileId && tsInicio === null && pinosSugeridos.length === 0) {

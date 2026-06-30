@@ -50,7 +50,7 @@ interface Props {
 
 function ladoOf(d: DepoenteV2): "acusacao" | "defesa" | "neutro" {
   if (d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "VITIMA") return "acusacao";
-  if (d.lado === "defesa" || d.tipo === "DEFESA" || d.tipo === "INTERROGANDO") return "defesa";
+  if (d.lado === "defesa" || d.tipo === "DEFESA" || d.tipo?.toUpperCase() === "INTERROGANDO") return "defesa";
   return "neutro";
 }
 
@@ -71,7 +71,7 @@ function qualidadeLabel(d: DepoenteV2): string | null {
   if (d.tipo === "INFORMANTE") return "Informante";
   if (d.tipo === "PERITO") return "Perito";
   if (d.tipo === "COMUM") return "Testemunha";
-  if (d.tipo === "INTERROGANDO") return "Réu (interrogatório)";
+  if (d.tipo?.toUpperCase() === "INTERROGANDO") return "Réu (interrogatório)";
   return null;
 }
 
@@ -161,7 +161,7 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
         : null);
 
   const topBarColor =
-    depoente.tipo === "INTERROGANDO"
+    (depoente.tipo ?? "").toUpperCase() === "INTERROGANDO"
       ? "bg-emerald-500/70"
       : {
           acusacao: "bg-rose-300/70",

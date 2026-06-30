@@ -63,6 +63,11 @@ export function TranscriptPlayer({
     el.addEventListener("timeupdate",     onTime);
     el.addEventListener("seeked",         onTime);
     el.addEventListener("loadedmetadata", onMeta);
+    // Immediately sync if metadata already loaded (preload="metadata" may fire early)
+    if (el.readyState >= 1) {
+      setDuration(el.duration);
+      setCurrentTime(el.currentTime);
+    }
     return () => {
       el.removeEventListener("play",           onPlay);
       el.removeEventListener("pause",          onPause);
