@@ -77,10 +77,10 @@ describe("registrosRouter.list input", () => {
     expect(parsed.success).toBe(false);
   });
 
-  it("clamps limit to a max of 100", () => {
-    const ok = schema.safeParse({ limit: 100 });
+  it("clamps limit to a max of 300", () => {
+    const ok = schema.safeParse({ limit: 300 });
     expect(ok.success).toBe(true);
-    const bad = schema.safeParse({ limit: 200 });
+    const bad = schema.safeParse({ limit: 301 });
     expect(bad.success).toBe(false);
   });
 });
