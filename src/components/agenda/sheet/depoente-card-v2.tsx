@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, FileText, Loader2, Mic, ExternalLink } from "lucide-react";
+import { Building2, ChevronDown, ChevronRight, ExternalLink, FileText, Loader2, Mic, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc/client";
@@ -15,7 +15,7 @@ import { GravarDepoimento } from "./gravar-depoimento";
 export interface DepoenteV2 {
   id?: number;
   nome: string;
-  tipo?: "ACUSACAO" | "DEFESA" | "COMUM" | "INFORMANTE" | "PERITO" | "VITIMA";
+  tipo?: "ACUSACAO" | "DEFESA" | "COMUM" | "INFORMANTE" | "PERITO" | "VITIMA" | "INTERROGANDO";
   status?: "ARROLADA" | "INTIMADA" | "OUVIDA" | "DESISTIDA" | "NAO_LOCALIZADA" | "CARTA_PRECATORIA";
   lado?: string;
   qualidade?: string;
@@ -28,6 +28,8 @@ export interface DepoenteV2 {
   redesignadoPara?: string | null;
   audioDriveFileId?: string | null;
   certidaoComunicacao?: string | null;
+  termoDelegaciaDriveFileId?: string | null;
+  termoDelegaciaPagina?: number | null;
 }
 
 interface Props {
@@ -48,7 +50,7 @@ interface Props {
 
 function ladoOf(d: DepoenteV2): "acusacao" | "defesa" | "neutro" {
   if (d.lado === "acusacao" || d.tipo === "ACUSACAO" || d.tipo === "VITIMA") return "acusacao";
-  if (d.lado === "defesa" || d.tipo === "DEFESA") return "defesa";
+  if (d.lado === "defesa" || d.tipo === "DEFESA" || d.tipo === "INTERROGANDO") return "defesa";
   return "neutro";
 }
 
@@ -69,6 +71,7 @@ function qualidadeLabel(d: DepoenteV2): string | null {
   if (d.tipo === "INFORMANTE") return "Informante";
   if (d.tipo === "PERITO") return "Perito";
   if (d.tipo === "COMUM") return "Testemunha";
+  if (d.tipo === "INTERROGANDO") return "Réu (interrogatório)";
   return null;
 }
 
@@ -142,16 +145,20 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
     { enabled: isOpen && typeof processoId === "number" && processoId > 0 },
   );
   const termoIp = secoesPorTipo(sections ?? [], ["termo", "depoimento", "interrogatorio", "oitiva"])[0] ?? null;
-  const termoIpHref =
-    termoIp?.fileWebViewLink && (depoente.versaoDelegacia || termoIp.textoExtraido)
-      ? `${termoIp.fileWebViewLink}${termoIp.paginaInicio ? `#page=${termoIp.paginaInicio}` : ""}`
-      : null;
+  const termoIpHref = depoente.termoDelegaciaDriveFileId
+    ? `https://drive.google.com/file/d/${depoente.termoDelegaciaDriveFileId}/view${depoente.termoDelegaciaPagina ? `#page=${depoente.termoDelegaciaPagina}` : ""}`
+    : (termoIp?.fileWebViewLink && (depoente.versaoDelegacia || termoIp.textoExtraido)
+        ? `${termoIp.fileWebViewLink}${termoIp.paginaInicio ? `#page=${termoIp.paginaInicio}` : ""}`
+        : null);
 
-  const topBarColor = {
-    acusacao: "bg-rose-300/70",
-    defesa: "bg-emerald-300/70",
-    neutro: "bg-neutral-200",
-  }[lado];
+  const topBarColor =
+    depoente.tipo === "INTERROGANDO"
+      ? "bg-emerald-500/70"
+      : {
+          acusacao: "bg-rose-300/70",
+          defesa: "bg-emerald-300/70",
+          neutro: "bg-neutral-200",
+        }[lado];
 
   const papelParaAvatar = { acusacao: "ACUSACAO", defesa: "DEFESA", neutro: undefined }[lado] as string | undefined;
   const statusClasses = {
@@ -205,8 +212,9 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
           })()}
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <div className="text-[9px] font-semibold text-neutral-400 tracking-wide">
-                🏛 DELEGACIA
+              <div className="flex items-center gap-1 text-[9px] font-semibold text-neutral-400 tracking-wide">
+                <Building2 className="h-3 w-3" />
+                DELEGACIA
               </div>
               {termoIpHref && (
                 <a
@@ -225,8 +233,9 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <div className="text-[9px] font-semibold text-neutral-400 tracking-wide">
-                ⚖ EM JUÍZO
+              <div className="flex items-center gap-1 text-[9px] font-semibold text-neutral-400 tracking-wide">
+                <Scale className="h-3 w-3" />
+                EM JUÍZO
               </div>
               {transcStatus && (
                 <span className={cn("inline-flex items-center gap-1 text-[9px] font-medium", transcStatus.tone)}>
