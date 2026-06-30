@@ -1973,6 +1973,10 @@ export const audienciasRouter = router({
           segments: testemunhas.depoimentoSegments,
           transcricaoStatus: testemunhas.depoimentoTranscricaoStatus,
           duracao: testemunhas.depoimentoAudioDuracao,
+          pinos: testemunhas.pinos,
+          termoDelegaciaDriveFileId: testemunhas.termoDelegaciaDriveFileId,
+          termoDelegaciaPagina: testemunhas.termoDelegaciaPagina,
+          depoimentoTimestampInicioS: testemunhas.depoimentoTimestampInicioS,
         })
         .from(testemunhas)
         .where(eq(testemunhas.id, input.depoenteId))
@@ -1984,7 +1988,51 @@ export const audienciasRouter = router({
         segments: t?.segments ?? [],
         transcricaoStatus: t?.transcricaoStatus ?? null,
         duracao: t?.duracao ?? null,
+        pinos: (t?.pinos ?? []) as import("@/lib/agenda/pino").Pino[],
+        termoDelegaciaDriveFileId: t?.termoDelegaciaDriveFileId ?? null,
+        termoDelegaciaPagina: t?.termoDelegaciaPagina ?? null,
+        depoimentoTimestampInicioS: t?.depoimentoTimestampInicioS ?? null,
       };
+    }),
+
+  /** Adiciona um pino ao array JSONB do depoente, sem duplicar timestampS+fonte. */
+  addPino: protectedProcedure
+    .input(z.object({
+      depoenteId: z.number(),
+      pino: z.object({
+        id: z.string(),
+        timestampS: z.number(),
+        nota: z.string().optional(),
+        fonte: z.enum(["IA", "DEFENSOR"]),
+        categoria: z.string().optional(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      await db.execute(sql`
+        UPDATE testemunhas
+        SET pinos = pinos || ${JSON.stringify(input.pino)}::jsonb
+        WHERE id = ${input.depoenteId}
+          AND NOT EXISTS (
+            SELECT 1 FROM jsonb_array_elements(pinos) p
+            WHERE (p->>'timestampS')::float = ${input.pino.timestampS}
+              AND p->>'fonte' = ${input.pino.fonte}
+          )
+      `);
+    }),
+
+  /** Remove um pino do array JSONB do depoente pelo id. */
+  removePino: protectedProcedure
+    .input(z.object({ depoenteId: z.number(), pinoId: z.string() }))
+    .mutation(async ({ input }) => {
+      await db.execute(sql`
+        UPDATE testemunhas
+        SET pinos = (
+          SELECT COALESCE(jsonb_agg(p), '[]'::jsonb)
+          FROM jsonb_array_elements(pinos) p
+          WHERE p->>'id' != ${input.pinoId}
+        )
+        WHERE id = ${input.depoenteId}
+      `);
     }),
 
   /** Dry-run do parser de ata (preview no botão "Parsear ata" do sheet). */
