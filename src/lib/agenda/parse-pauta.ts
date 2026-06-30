@@ -237,15 +237,23 @@ export function extrairAssistidos(partesTexto: string): AssistidoInfo[] {
   if (partesAssistidas.length === 0) {
     const lados = normalizado.split(/\s+X\s+/);
     if (lados.length >= 2) {
-      for (let lado of lados) {
-        lado = lado
+      const limpar = (s: string) =>
+        s
           .replace(/\s+e\s+outros?\s*\(\d+\)\s*$/i, "") // "… e outros (1)"
           .replace(/registrado\(a\)\s+civilmente\s+como\s*/gi, "")
           .replace(/\s+/g, " ")
           .trim();
-        if (lado && lado.length > 2 && !_ehInstituicao(lado)) {
-          partesAssistidas.push({ nome: toTitleCase(lado), cpf: "" });
-        }
+      const esquerda = limpar(lados[0]);
+      const direita = limpar(lados[lados.length - 1]); // polo passivo (réu) = depois do X
+      // O assistido é o lado NÃO-institucional. Se AMBOS forem não-institucionais
+      // (ex.: VVD particular "requerente pessoa X requerido"), o réu é o polo
+      // passivo (direita). Se ambos institucionais (carta precatória juízo X juízo),
+      // não há réu pessoa física → vazio.
+      let reu: string | null = null;
+      if (!_ehInstituicao(direita)) reu = direita;
+      else if (!_ehInstituicao(esquerda)) reu = esquerda;
+      if (reu && reu.length > 2) {
+        partesAssistidas.push({ nome: toTitleCase(reu), cpf: "" });
       }
     }
   }

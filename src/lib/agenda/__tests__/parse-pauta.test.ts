@@ -50,6 +50,14 @@ describe("extrairAssistidos — formato TABELA (pauta raspada, sem CPF/papel)", 
     const r = extrairAssistidos("Ministério Público do Estado da Bahia\nX\nCOSME MIGUEL GOMES DE SOUZA e outros (1)");
     expect(r.map((a) => a.nome)).toEqual(["Cosme Miguel Gomes de Souza"]);
   });
+  it("VVD particular (requerente pessoa X requerido) → só o réu (polo passivo)", () => {
+    const r = extrairAssistidos("ANA PAULA BARROS SANTOS\nX\nMICAEL DE JESUS");
+    expect(r.map((a) => a.nome)).toEqual(["Micael de Jesus"]);
+  });
+  it("carta precatória (juízo X juízo) → sem réu pessoa física", () => {
+    const r = extrairAssistidos("3ª VARA DAS GARANTIAS DA COMARCA DE SALVADOR\nX\nVara da Infancia e Juventude de Camacari");
+    expect(r).toEqual([]);
+  });
 });
 
 describe("mapearAtribuicao", () => {
