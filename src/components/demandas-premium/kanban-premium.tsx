@@ -826,7 +826,27 @@ function KanbanCard({
           })()}
         </div>
 
-        {/* Row 2: Ato + Data (inline, data só quebra se não couber) */}
+        {/* Row 2: Processo — hover na cor funcional do status */}
+        {processo && (
+          <div className="flex items-center gap-1 mb-0.5">
+            <span
+              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate transition-colors cursor-pointer"
+              style={{ ["--hover-color" as string]: groupColor }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = groupColor; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = ""; }}
+              onClick={(e) => {
+                e.stopPropagation();
+                copyToClipboard(processo);
+              }}
+              title="Copiar"
+            >
+              {processo}
+            </span>
+            <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
+          </div>
+        )}
+
+        {/* Row 3: Ato + Data (abaixo do processo) */}
         <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
           {onAtoChange && atoOptions.length > 0 ? (
             <span
@@ -881,26 +901,6 @@ function KanbanCard({
           )}
         </div>
 
-        {/* Row 3: Processo — hover na cor funcional do status */}
-        {processo && (
-          <div className="flex items-center gap-1 mb-1">
-            <span
-              className="text-[10px] font-mono tabular-nums text-neutral-400 dark:text-neutral-500 truncate transition-colors cursor-pointer"
-              style={{ ["--hover-color" as string]: groupColor }}
-              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = groupColor; }}
-              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = ""; }}
-              onClick={(e) => {
-                e.stopPropagation();
-                copyToClipboard(processo);
-              }}
-              title="Copiar"
-            >
-              {processo}
-            </span>
-            <Copy className="w-2.5 h-2.5 text-neutral-300 dark:text-neutral-600 opacity-0 group-hover/kcard:opacity-100 transition-opacity shrink-0" />
-          </div>
-        )}
-
         {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável */}
         {analisePreview && (
           <div className="flex items-start gap-1 mb-1" title={demanda.analiseResumo ?? undefined}>
@@ -911,8 +911,8 @@ function KanbanCard({
           </div>
         )}
 
-        {/* Row 4: Prazo + Status badge (clickable) */}
-        <div className="flex items-center gap-1.5">
+        {/* Row 4: Prazo; Row 5: Status badge — cada um em linha própria */}
+        <div className="flex flex-col gap-1">
           {demanda.prazo && (
             <span
               className={`text-[11px] font-mono tabular-nums flex items-center gap-0.5 ${

@@ -170,11 +170,8 @@ export function RegistrosPanel({
 
   return (
     <div className={gap}>
-      {/* ── Header: title + count + toolbar ── */}
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400">
-          REGISTROS{temRegistros && <span className="opacity-60"> · {total}</span>}
-        </h3>
+      {/* ── Header: title + toolbar (título omitido no drawer — CollapsibleSection já fornece) ── */}
+      {variant === "drawer" ? (
         <RegistrosToolbar
           busca={busca}
           onBusca={setBusca}
@@ -184,7 +181,22 @@ export function RegistrosPanel({
           ordem={ordem}
           onOrdem={setOrdem}
         />
-      </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-[11px] font-semibold tracking-wide text-neutral-500 dark:text-neutral-400">
+            REGISTROS{temRegistros && <span className="opacity-60"> · {total}</span>}
+          </h3>
+          <RegistrosToolbar
+            busca={busca}
+            onBusca={setBusca}
+            filtroTipo={filtroTipo}
+            onFiltroTipo={setFiltroTipo}
+            tiposComContagem={tiposComContagem}
+            ordem={ordem}
+            onOrdem={setOrdem}
+          />
+        </div>
+      )}
 
       {/* ── Composer (only when an assistidoId anchors the scope) ── */}
       {scope.assistidoId != null && (
