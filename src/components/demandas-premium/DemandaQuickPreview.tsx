@@ -85,6 +85,9 @@ import { AutosModalViewer } from "@/components/agenda/sheet/autos-modal-viewer";
 import { RecursosSecao } from "./sheet/secoes/RecursosSecao";
 import { rankAutos } from "@/lib/autos-pick";
 import { trpc } from "@/lib/trpc/client";
+import { SkillLauncher } from "@/components/shared/skill-launcher";
+import { SkillTaskHistory } from "@/components/shared/skill-task-history";
+import type { Atribuicao } from "@/lib/skills/catalog";
 import { toast } from "sonner";
 
 // ============================================
@@ -1870,6 +1873,20 @@ export function DemandaQuickPreview({
         )}
           </div>
         </div>
+        {/* Ações de IA — analisar/gerar peça no processo da demanda sem sair do kanban */}
+        {demanda.processoId != null && demanda.assistidoId != null && (
+          <div className="border-t border-neutral-200/60 px-4 py-3 dark:border-neutral-800/60">
+            <SkillLauncher
+              entity="processo"
+              atribuicao={(demanda.atribuicaoEnum ?? demanda.atribuicao ?? "") as Atribuicao}
+              assistidoId={demanda.assistidoId}
+              processoId={demanda.processoId}
+            />
+            <div className="mt-3">
+              <SkillTaskHistory processoId={demanda.processoId} limit={3} />
+            </div>
+          </div>
+        )}
       </SheetContent>
       <DemandaTimelineDrawer
         isOpen={timelineOpen}

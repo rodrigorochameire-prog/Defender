@@ -17,6 +17,29 @@ import { users, processos, assistidos } from "./core";
 import { documentos } from "./documentos";
 
 // ==========================================
+// GRUPOS DE DRIVE (multi-tenant)
+// ==========================================
+
+// drive_groups — conjunto de pastas por atribuição compartilhável entre defensores.
+// O mapa atribuicaoFolders substitui a constante global ATRIBUICAO_FOLDER_IDS.
+export const driveGroups = pgTable("drive_groups", {
+  id: serial("id").primaryKey().notNull(),
+  ownerUserId: integer("owner_user_id").notNull().references(() => users.id),
+  label: text("label").notNull(),
+  // IMPORTANTE: valores são ARRAYS — uma atribuição pode ter >1 pasta.
+  // Ex. real do Rodrigo: VVD = [Criminal, MPU]; SUBSTITUICAO = [criminal, cível]; GRUPO_JURI = [grupo, extra].
+  // { JURI: ["<id>"], VVD: ["<id1>","<id2>"], EP: ["<id>"], SUBSTITUICAO: [...], GRUPO_JURI: [...], CRIMINAL: ["<id>"] }
+  atribuicaoFolders: jsonb("atribuicao_folders").$type<Record<string, string[]>>().default({}).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+}, (table) => [
+  index("drive_groups_owner_idx").on(table.ownerUserId),
+]);
+
+export type DriveGroup = typeof driveGroups.$inferSelect;
+export type InsertDriveGroup = typeof driveGroups.$inferInsert;
+
+// ==========================================
 // SINCRONIZAÇÃO GOOGLE DRIVE - PASTAS
 // ==========================================
 
@@ -31,6 +54,7 @@ export const driveSyncFolders = pgTable("drive_sync_folders", {
   isActive: boolean("is_active").default(true).notNull(),
   lastSyncAt: timestamp("last_sync_at"),
   syncToken: text("sync_token"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -38,6 +62,7 @@ export const driveSyncFolders = pgTable("drive_sync_folders", {
   index("drive_sync_folders_drive_folder_id_idx").on(table.driveFolderId),
   index("drive_sync_folders_is_active_idx").on(table.isActive),
   uniqueIndex("drive_sync_folders_provider_folder_id_unique").on(table.driveFolderId, table.provider),
+  index("drive_sync_folders_user_idx").on(table.userId),
 ]);
 
 export type DriveSyncFolder = typeof driveSyncFolders.$inferSelect;
@@ -114,6 +139,9 @@ export const driveFiles = pgTable("drive_files", {
     analysis?: Record<string, unknown>;
   }>(),
 
+  // Escopo de usuário (multi-tenant)
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+
   // Metadados
   createdById: integer("created_by_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -129,6 +157,7 @@ export const driveFiles = pgTable("drive_files", {
   index("drive_files_parent_file_id_idx").on(table.parentFileId),
   index("drive_files_enrichment_status_idx").on(table.enrichmentStatus),
   index("drive_files_enriched_at_idx").on(table.enrichedAt),
+  index("drive_files_user_idx").on(table.userId),
 ]);
 
 export type DriveFile = typeof driveFiles.$inferSelect;

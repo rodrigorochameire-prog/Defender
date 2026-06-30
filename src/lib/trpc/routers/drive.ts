@@ -50,10 +50,9 @@ import {
   stopChannel,
   // Auth
   getAccessToken,
-  ATRIBUICAO_FOLDER_IDS,
 } from "@/lib/services/google-drive";
 import { inngest } from "@/lib/inngest/client";
-import { getFolderIdForAtribuicao, mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
+import { mapAtribuicaoEnumToSimple } from "@/lib/utils/text-extraction";
 import { processos, assistidos, casos, demandas, registros as atendimentos, audiencias, driveDocumentSections, driveFileContents, claudeCodeTasks } from "@/lib/db/schema";
 import {
   enrichmentClient,
@@ -61,6 +60,11 @@ import {
 } from "@/lib/services/enrichment-client";
 import { calculateSimilarity, normalizeNameForMatch } from "@/lib/utils/name-matching";
 import { classificarAutos } from "@/lib/match-autos";
+import {
+  resolveAllAtribuicaoFolders,
+  resolveAtribuicaoFolder,
+  type Atribuicao,
+} from "@/lib/services/drive-folders";
 
 export const driveRouter = router({
   /**
@@ -240,15 +244,27 @@ export const driveRouter = router({
    * Útil para configurar rapidamente o sistema
    */
   registerAllAtribuicoes: protectedProcedure.mutation(async ({ ctx }) => {
-    const { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+    const { SPECIAL_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
+    const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
 
-    const folders = [
-      { id: ATRIBUICAO_FOLDER_IDS.JURI, name: "Júri", description: "Assistidos da atribuição do Tribunal do Júri" },
-      { id: ATRIBUICAO_FOLDER_IDS.VVD, name: "VVD", description: "Violência e Vítimas Domésticas" },
-      { id: ATRIBUICAO_FOLDER_IDS.EP, name: "Execução Penal", description: "Assistidos em Execução Penal" },
-      { id: ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO, name: "Substituição", description: "Substituição Criminal" },
-      { id: SPECIAL_FOLDER_IDS.DISTRIBUICAO, name: "Distribuição", description: "Pasta para distribuição de documentos" },
-    ];
+    if (Object.keys(atribMap).length === 0) {
+      return { results: [], needsProvisioning: true };
+    }
+
+    const atribDefs = [
+      { key: "JURI", name: "Júri", description: "Assistidos da atribuição do Tribunal do Júri" },
+      { key: "VVD", name: "VVD", description: "Violência e Vítimas Domésticas" },
+      { key: "EP", name: "Execução Penal", description: "Assistidos em Execução Penal" },
+      { key: "SUBSTITUICAO", name: "Substituição", description: "Substituição Criminal" },
+    ] as const;
+
+    const folders: Array<{ id: string; name: string; description: string }> = [];
+    for (const def of atribDefs) {
+      const v = atribMap[def.key];
+      const primaryId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+      if (primaryId) folders.push({ id: primaryId, name: def.name, description: def.description });
+    }
+    folders.push({ id: SPECIAL_FOLDER_IDS.DISTRIBUICAO, name: "Distribuição", description: "Pasta para distribuição de documentos" });
 
     const results = [];
 
@@ -297,7 +313,8 @@ export const driveRouter = router({
    * Busca pastas nas atribuições que correspondem ao nome do assistido
    */
   autoLinkAssistidosByName: adminProcedure.mutation(async ({ ctx }) => {
-    const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+    const { normalizeName } = await import("@/lib/utils/text-extraction");
+    const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
 
     // Buscar todos os assistidos sem pasta vinculada
     const assistidosSemPasta = await db
@@ -317,7 +334,7 @@ export const driveRouter = router({
       details: [] as { nome: string; status: string; folderId?: string; searchedIn?: string }[],
     };
 
-    // Mapeia atribuicaoPrimaria (enum do banco) para chave do ATRIBUICAO_FOLDER_IDS
+    // Mapeia atribuicaoPrimaria (enum do banco) para chave do mapa de atribuições
     const atribToFolder: Record<string, string> = {
       JURI_CAMACARI: "JURI",
       GRUPO_JURI: "GRUPO_JURI",
@@ -350,18 +367,19 @@ export const driveRouter = router({
         const foldersToSearch: Array<{ key: string; folderId: string; priority: number }> = [];
 
         // Prioridade 1: atribuição primária do assistido
-        if (atribKey && ATRIBUICAO_FOLDER_IDS[atribKey as keyof typeof ATRIBUICAO_FOLDER_IDS]) {
-          foldersToSearch.push({
-            key: atribKey,
-            folderId: ATRIBUICAO_FOLDER_IDS[atribKey as keyof typeof ATRIBUICAO_FOLDER_IDS],
-            priority: 1,
-          });
+        if (atribKey) {
+          const v = atribMap[atribKey];
+          const primaryId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+          if (primaryId) {
+            foldersToSearch.push({ key: atribKey, folderId: primaryId, priority: 1 });
+          }
         }
 
         // Prioridade 2: todas as outras atribuições (fallback)
-        for (const [key, folderId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
+        for (const [key, v] of Object.entries(atribMap)) {
           if (key !== atribKey) {
-            foldersToSearch.push({ key, folderId, priority: 2 });
+            const folderId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+            if (folderId) foldersToSearch.push({ key, folderId, priority: 2 });
           }
         }
 
@@ -436,18 +454,30 @@ export const driveRouter = router({
       dryRun: z.boolean().default(true),
       createMissing: z.boolean().default(true),
     }))
-    .mutation(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS, EXTRA_ATRIBUICAO_FOLDERS, normalizeName } =
-        await import("@/lib/utils/text-extraction");
+    .mutation(async ({ ctx, input }) => {
+      const { normalizeName } = await import("@/lib/utils/text-extraction");
+      const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
 
-      // 1. SCAN: roots de cada atribuição + pastas extras (ex.: VVD (MPU)) — uma
-      // atribuição pode ter mais de uma pasta de processos no Drive.
-      const scanTargets: Array<{ key: string; folderId: string }> = [
-        ...(Object.entries(ATRIBUICAO_FOLDER_IDS) as Array<[string, string]>).map(
-          ([key, folderId]) => ({ key, folderId }),
-        ),
-        ...EXTRA_ATRIBUICAO_FOLDERS.map((e) => ({ key: e.key as string, folderId: e.folderId })),
-      ];
+      if (Object.keys(atribMap).length === 0) {
+        return {
+          scanned: [],
+          actions: [],
+          stats: { totalUnlinked: 0, willLink: 0, willCreate: 0, noAtribuicao: 0 },
+          executed: null,
+          dryRun: input.dryRun,
+          needsProvisioning: true,
+        };
+      }
+
+      // 1. SCAN: roots de cada atribuição (o mapa do grupo já inclui todas as pastas,
+      // inclusive extras como VVD (MPU) e Substituição-cível).
+      const scanTargets: Array<{ key: string; folderId: string }> = [];
+      for (const [key, v] of Object.entries(atribMap)) {
+        const ids = Array.isArray(v) ? v : typeof v === "string" ? [v] : [];
+        for (const folderId of ids) {
+          scanTargets.push({ key, folderId });
+        }
+      }
 
       const scanResults = await Promise.allSettled(
         scanTargets.map(async ({ key, folderId }) => {
@@ -665,8 +695,17 @@ export const driveRouter = router({
    * Dashboard de vínculos Drive↔Assistidos
    * Retorna stats por atribuição + contagem de pastas no Drive
    */
-  syncDashboard: adminProcedure.query(async () => {
-    const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+  syncDashboard: adminProcedure.query(async ({ ctx }) => {
+    const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
+
+    if (Object.keys(atribMap).length === 0) {
+      return {
+        byAtribuicao: [],
+        totals: { totalAssistidos: 0, linked: 0, unlinked: 0, linkRate: 0 },
+        needsProvisioning: true,
+      };
+    }
+
 
     // 1. Get assistido counts per atribuição from DB
     const dbCounts = await db
@@ -707,7 +746,7 @@ export const driveRouter = router({
     };
 
     const aggregated: Record<string, { linked: number; unlinked: number }> = {};
-    for (const key of Object.keys(ATRIBUICAO_FOLDER_IDS)) {
+    for (const key of Object.keys(atribMap)) {
       aggregated[key] = { linked: 0, unlinked: 0 };
     }
 
@@ -719,14 +758,16 @@ export const driveRouter = router({
       }
     }
 
-    // 3. Scan Drive folders in parallel (5 API calls)
-    const atribuicaoKeys = Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+    // 3. Scan Drive folders in parallel
+    const atribuicaoKeys = Object.keys(atribMap);
 
     let driveFolderCounts: Record<string, number> = {};
     try {
       const scanResults = await Promise.allSettled(
         atribuicaoKeys.map(async (key) => {
-          const folderId = ATRIBUICAO_FOLDER_IDS[key];
+          const v = atribMap[key];
+          const folderId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+          if (!folderId) return { key, folderCount: 0 };
           const items = await listAllItemsInFolder(folderId);
           const folderCount = items.filter(item => item.mimeType === "application/vnd.google-apps.folder").length;
           return { key, folderCount };
@@ -781,8 +822,9 @@ export const driveRouter = router({
       atribuicao: z.enum(["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"]).optional(),
       minConfidence: z.number().default(0.4),
     }))
-    .query(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+    .query(async ({ ctx, input }) => {
+      const { normalizeName } = await import("@/lib/utils/text-extraction");
+      const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
 
       const atribToFolder: Record<string, string> = {
         JURI_CAMACARI: "JURI",
@@ -805,16 +847,17 @@ export const driveRouter = router({
 
       // 1. SCAN Drive folders
       const keysToScan = input.atribuicao
-        ? [input.atribuicao as keyof typeof ATRIBUICAO_FOLDER_IDS]
-        : Object.keys(ATRIBUICAO_FOLDER_IDS) as (keyof typeof ATRIBUICAO_FOLDER_IDS)[];
+        ? [input.atribuicao]
+        : Object.keys(atribMap);
 
       type FolderEntry = { id: string; name: string; normalizedName: string; atribuicaoKey: string };
       const drivefolders: FolderEntry[] = [];
 
       const scanResults = await Promise.allSettled(
         keysToScan.map(async (key) => {
-          const folderId = ATRIBUICAO_FOLDER_IDS[key];
-          const items = await listAllItemsInFolder(folderId);
+          const v = atribMap[key];
+          const folderId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+          const items = folderId ? await listAllItemsInFolder(folderId) : [];
           return { key, folders: items.filter(item => item.mimeType === "application/vnd.google-apps.folder") };
         })
       );
@@ -993,15 +1036,18 @@ export const driveRouter = router({
       dryRun: z.boolean().default(true),
       atribuicao: z.enum(["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"]).optional(),
     }))
-    .mutation(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+    .mutation(async ({ ctx, input }) => {
       const { handleNewAssistidoFolder } = await import("@/lib/services/google-drive");
+      const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
+
+      if (Object.keys(atribMap).length === 0) {
+        return { dryRun: input.dryRun, orphanCount: 0, orphans: [], results: [], needsProvisioning: true };
+      }
 
       // 1. Determine which atribuição folders to scan
-      type AtribKey = keyof typeof ATRIBUICAO_FOLDER_IDS;
-      const atribuicoes: AtribKey[] = input.atribuicao
+      const atribuicoes: string[] = input.atribuicao
         ? [input.atribuicao]
-        : ["JURI", "VVD", "EP", "SUBSTITUICAO", "GRUPO_JURI"];
+        : Object.keys(atribMap);
 
       // 2. Get all existing assistidos with driveFolderId
       const linkedAssistidos = await db
@@ -1022,7 +1068,9 @@ export const driveRouter = router({
       }> = [];
 
       for (const atribKey of atribuicoes) {
-        const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribKey];
+        const v = atribMap[atribKey];
+        const parentFolderId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+        if (!parentFolderId) continue;
         const subfolders = await listAllItemsInFolder(parentFolderId);
 
         for (const folder of subfolders) {
@@ -1087,9 +1135,10 @@ export const driveRouter = router({
    */
   suggestFoldersForAssistido: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
-    .query(async ({ input }) => {
-      const { ATRIBUICAO_FOLDER_IDS, normalizeName } = await import("@/lib/utils/text-extraction");
+    .query(async ({ ctx, input }) => {
+      const { normalizeName } = await import("@/lib/utils/text-extraction");
       const { mapAtribuicaoToFolderKey } = await import("@/lib/services/google-drive");
+      const atribMap = await resolveAllAtribuicaoFolders(ctx.user.id);
 
       // Buscar assistido
       const [assistido] = await db
@@ -1103,15 +1152,17 @@ export const driveRouter = router({
       }
 
       const folderKey = mapAtribuicaoToFolderKey(assistido.atribuicaoPrimaria || "SUBSTITUICAO");
-      const atribuicaoFolderId = folderKey
-        ? ATRIBUICAO_FOLDER_IDS[folderKey as keyof typeof ATRIBUICAO_FOLDER_IDS]
+      const atribuicaoFolderIdPrimary = folderKey
+        ? (() => { const v = atribMap[folderKey]; return Array.isArray(v) ? v[0] : typeof v === "string" ? v : null; })()
         : null;
 
       // Buscar em todas as atribuições, priorizando a do assistido
       const allSuggestions: Array<{ id: string; name: string; similarity: number; atribuicao: string }> = [];
       const nomeNorm = normalizeName(assistido.nome).toLowerCase().replace(/\s+/g, " ").trim();
 
-      for (const [key, fId] of Object.entries(ATRIBUICAO_FOLDER_IDS)) {
+      for (const [key, v] of Object.entries(atribMap)) {
+        const fId = Array.isArray(v) ? v[0] : typeof v === "string" ? v : undefined;
+        if (!fId) continue;
         const items = await listAllItemsInFolder(fId);
         if (!items || items.length === 0) continue;
 
@@ -1121,7 +1172,7 @@ export const driveRouter = router({
           const similarity = calculateSimilarity(folderNorm, nomeNorm);
           if (similarity > 0.3) {
             // Boost de prioridade se for da atribuição do assistido
-            const boost = (atribuicaoFolderId && fId === atribuicaoFolderId) ? 0.1 : 0;
+            const boost = (atribuicaoFolderIdPrimary && fId === atribuicaoFolderIdPrimary) ? 0.1 : 0;
             allSuggestions.push({
               id: folder.id,
               name: folder.name,
@@ -4259,8 +4310,7 @@ export const driveRouter = router({
         const folderKey = mapAtribuicaoToFolderKey(assistido.atribuicaoPrimaria || "SUBSTITUICAO");
 
         if (folderKey) {
-          const { ATRIBUICAO_FOLDER_IDS } = await import("@/lib/utils/text-extraction");
-          const rootFolderId = ATRIBUICAO_FOLDER_IDS[folderKey as keyof typeof ATRIBUICAO_FOLDER_IDS];
+          const rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, folderKey as Atribuicao);
 
           if (rootFolderId) {
             // Listar subpastas da atribuição e tentar match
@@ -4952,7 +5002,7 @@ export const driveRouter = router({
    */
   getSuggestedFolderForAssistido: protectedProcedure
     .input(z.object({ assistidoId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       // 1. Busca o assistido
       const assistido = await db.query.assistidos.findFirst({
         where: eq(assistidos.id, input.assistidoId),
@@ -4961,10 +5011,10 @@ export const driveRouter = router({
 
       if (!assistido?.atribuicaoPrimaria || !assistido.nome) return null;
 
-      // 2. Obtém o Drive folder ID da pasta raiz da atribuição
-      const atribuicao = assistido.atribuicaoPrimaria as keyof typeof ATRIBUICAO_FOLDER_IDS;
-      if (!(atribuicao in ATRIBUICAO_FOLDER_IDS)) return null;
-      const rootFolderId = getFolderIdForAtribuicao(atribuicao);
+      // 2. Obtém o Drive folder ID da pasta raiz da atribuição (via grupo do usuário)
+      const atribuicao = mapAtribuicaoEnumToSimple(assistido.atribuicaoPrimaria);
+      const rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicao);
+      if (!rootFolderId) return null;
 
       // 3. Busca pastas não vinculadas dentro dessa raiz
       const candidates = await db
@@ -5014,12 +5064,12 @@ export const driveRouter = router({
         atribuicaoPrimaria: z.string().nullable(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       let rootFolderId: string | null = null;
       if (input.atribuicaoPrimaria) {
         try {
           const atribuicaoSimple = mapAtribuicaoEnumToSimple(input.atribuicaoPrimaria);
-          rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
+          rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicaoSimple as Atribuicao);
         } catch {
           // Se não conseguir mapear, ignora filtro de atribuição
         }
@@ -5048,7 +5098,7 @@ export const driveRouter = router({
 
   backfillAssistidoLinks: protectedProcedure
     .input(z.object({ limit: z.number().min(1).max(100).default(50) }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // 1. Busca assistidos sem pasta vinculada
       const unlinked = await db
         .select({
@@ -5076,7 +5126,11 @@ export const driveRouter = router({
 
           // Mapeia enum do banco (JURI_CAMACARI, VVD_CAMACARI, etc.) para chave do Drive (JURI, VVD, etc.)
           const atribuicaoSimple = mapAtribuicaoEnumToSimple(assistido.atribuicaoPrimaria);
-          const rootFolderId = getFolderIdForAtribuicao(atribuicaoSimple);
+          const rootFolderId = await resolveAtribuicaoFolder(ctx.user.id, atribuicaoSimple as Atribuicao);
+          if (!rootFolderId) {
+            skipped++;
+            continue;
+          }
           const normalizedTarget = normalizeNameForMatch(assistido.nome);
 
           // Executa dentro de uma transação para evitar race conditions

@@ -12,6 +12,7 @@ import { processos, driveFiles, driveSyncFolders, driveSyncLogs, driveWebhooks, 
 import { eq, and, desc, ilike, or, sql, gt, lt, isNull } from "drizzle-orm";
 import { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS, normalizeName, toTitleCase } from "@/lib/utils/text-extraction";
 import { calculateSimilarity } from "@/lib/utils/name-matching";
+import { loadUserGroupFolders, pickAtribuicaoFolderPrimary, resolveFolderToAtribuicao, type Atribuicao } from "./drive-folders";
 export { ATRIBUICAO_FOLDER_IDS, SPECIAL_FOLDER_IDS };
 import { inngest } from "@/lib/inngest/client";
 
@@ -3487,6 +3488,21 @@ export function mapAtribuicaoToFolderKey(
   return mapping[atribuicao] || null;
 }
 
+/** Pasta da atribuição pelo grupo do dono, ou constante legada (grupo padrão legado). */
+async function folderForAtribuicaoOrLegacy(
+  ownerUserId: number | null | undefined,
+  atribuicao: Atribuicao,
+): Promise<string | null> {
+  if (ownerUserId != null) {
+    const map = await loadUserGroupFolders(ownerUserId);
+    // Usuário TEM grupo → fail-safe: nunca cai no legado (evita criar/mover pasta no Drive de outro defensor).
+    if (map !== null) return pickAtribuicaoFolderPrimary(map, atribuicao);
+  }
+  // Sem ownerUserId ou sem grupo → grupo padrão legado.
+  const legacy = ATRIBUICAO_FOLDER_IDS as Record<string, string>;
+  return legacy[atribuicao] ?? null;
+}
+
 /**
  * Cria pasta do assistido na estrutura hierárquica
  * Hierarquia: Atribuição → Assistido (Title Case) → Processo → Documentos
@@ -3497,9 +3513,11 @@ export function mapAtribuicaoToFolderKey(
  */
 export async function createOrFindAssistidoFolder(
   atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI" | "CRIMINAL",
-  nomeAssistido: string
+  nomeAssistido: string,
+  ownerUserId?: number | null,
 ): Promise<DriveFolder | null> {
-  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const parentFolderId = await folderForAtribuicaoOrLegacy(ownerUserId, atribuicao);
+  if (!parentFolderId) return null;
   const nomePasta = toTitleCase(nomeAssistido);
 
   // Primeiro, buscar pasta existente
@@ -3524,14 +3542,15 @@ export async function createOrFindAssistidoFolder(
 export async function moveAssistidoFolder(
   folderId: string,
   oldAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
-  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
+  newAtribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  ownerUserId?: number | null,
 ): Promise<{ success: boolean; error?: string }> {
   if (oldAtribuicao === newAtribuicao) {
     return { success: true };
   }
 
-  const oldParentId = ATRIBUICAO_FOLDER_IDS[oldAtribuicao];
-  const newParentId = ATRIBUICAO_FOLDER_IDS[newAtribuicao];
+  const oldParentId = await folderForAtribuicaoOrLegacy(ownerUserId, oldAtribuicao);
+  const newParentId = await folderForAtribuicaoOrLegacy(ownerUserId, newAtribuicao);
 
   if (!oldParentId || !newParentId) {
     return { success: false, error: "Pasta raiz da atribuição não configurada" };
@@ -3882,9 +3901,11 @@ export async function getFileCountInFolder(folderId: string): Promise<number> {
  * Lista pastas de assistidos com contagem de processos
  */
 export async function listAssistidoFoldersWithCount(
-  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI"
+  atribuicao: "JURI" | "VVD" | "EP" | "SUBSTITUICAO" | "GRUPO_JURI",
+  ownerUserId?: number | null,
 ): Promise<Array<DriveFolder & { processoCount: number }>> {
-  const parentFolderId = ATRIBUICAO_FOLDER_IDS[atribuicao];
+  const parentFolderId = await folderForAtribuicaoOrLegacy(ownerUserId, atribuicao);
+  if (!parentFolderId) return [];
   const folders = await listSubfolders(parentFolderId);
 
   // Para cada pasta, obter contagem de subpastas (processos)
@@ -4215,19 +4236,36 @@ export async function distributeFileIntelligent(
 // REVERSE SYNC: DRIVE → ASSISTIDO
 // ==========================================
 
-/**
- * Reverse mapping: Google Drive folder ID → atribuição enum value
- * Used to detect when a new folder is created inside an atribuição root folder
- */
-const FOLDER_ID_TO_ATRIBUICAO: Record<string, string> = Object.fromEntries(
-  Object.entries({
-    [ATRIBUICAO_FOLDER_IDS.JURI]: "JURI_CAMACARI",
-    [ATRIBUICAO_FOLDER_IDS.VVD]: "VVD_CAMACARI",
-    [ATRIBUICAO_FOLDER_IDS.EP]: "EXECUCAO_PENAL",
-    [ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO]: "SUBSTITUICAO",
-    [ATRIBUICAO_FOLDER_IDS.GRUPO_JURI]: "GRUPO_JURI",
-  })
-);
+/** Chave de grupo (resolver) → valor do enum atribuicaoPrimaria do banco. */
+const ATRIBUICAO_KEY_TO_ENUM: Record<Atribuicao, string> = {
+  JURI: "JURI_CAMACARI",
+  VVD: "VVD_CAMACARI",
+  EP: "EXECUCAO_PENAL",
+  SUBSTITUICAO: "SUBSTITUICAO",
+  GRUPO_JURI: "GRUPO_JURI",
+  CRIMINAL: "CRIMINAL_CAMACARI",
+};
+
+/** Mapa reverso legado (grupo padrão): folderId da raiz de atribuição → chave de grupo.
+ *  Fallback single-tenant enquanto drive_groups ainda não foi semeado. */
+const LEGACY_FOLDER_ID_TO_ATRIBUICAO: Record<string, Atribuicao> = {
+  [ATRIBUICAO_FOLDER_IDS.JURI]: "JURI",
+  [ATRIBUICAO_FOLDER_IDS.VVD]: "VVD",
+  [ATRIBUICAO_FOLDER_IDS.EP]: "EP",
+  [ATRIBUICAO_FOLDER_IDS.SUBSTITUICAO]: "SUBSTITUICAO",
+  [ATRIBUICAO_FOLDER_IDS.GRUPO_JURI]: "GRUPO_JURI",
+};
+
+/** Resolve folderId → {ownerUserId, atribuicao} pelos grupos; cai no mapa legado (ownerUserId=null) se nada casar. */
+async function resolveFolderToAtribuicaoOrLegacy(
+  folderId: string,
+): Promise<{ ownerUserId: number | null; atribuicao: Atribuicao } | null> {
+  const resolved = await resolveFolderToAtribuicao(folderId);
+  if (resolved) return { ownerUserId: resolved.ownerUserId, atribuicao: resolved.atribuicao };
+  const legacy = LEGACY_FOLDER_ID_TO_ATRIBUICAO[folderId];
+  if (legacy) return { ownerUserId: null, atribuicao: legacy };
+  return null;
+}
 
 export interface ReverseSyncResult {
   action: "linked" | "created" | "created_pending" | "skipped";
@@ -4256,11 +4294,13 @@ export async function handleNewAssistidoFolder(
   folderName: string,
   parentFolderId: string
 ): Promise<ReverseSyncResult | null> {
-  // 1. Check if parent is an atribuição root folder
-  const atribuicao = FOLDER_ID_TO_ATRIBUICAO[parentFolderId];
-  if (!atribuicao) {
+  // 1. Resolve atribuição + dono a partir do parent (multi-tenant, sem sessão)
+  const resolved = await resolveFolderToAtribuicaoOrLegacy(parentFolderId);
+  if (!resolved) {
     return null; // Not a direct child of an atribuição folder — skip
   }
+  const { ownerUserId } = resolved;
+  const atribuicao = ATRIBUICAO_KEY_TO_ENUM[resolved.atribuicao];
 
   // 2. Check if this folder is already linked to an assistido
   const alreadyLinked = await db
@@ -4286,11 +4326,11 @@ export async function handleNewAssistidoFolder(
 
   // 4. Search for existing assistidos (all, to find best match)
   const allAssistidos = await db
-    .select({ id: assistidos.id, nome: assistidos.nome, driveFolderId: assistidos.driveFolderId })
+    .select({ id: assistidos.id, nome: assistidos.nome, driveFolderId: assistidos.driveFolderId, defensorId: assistidos.defensorId })
     .from(assistidos)
     .where(isNull(assistidos.deletedAt));
 
-  let bestMatch: { id: number; nome: string; confidence: number; hasFolder: boolean } | null = null;
+  let bestMatch: { id: number; nome: string; confidence: number; hasFolder: boolean; defensorId: number | null } | null = null;
 
   for (const a of allAssistidos) {
     const normalizedAssistido = normalizeName(a.nome);
@@ -4302,6 +4342,7 @@ export async function handleNewAssistidoFolder(
         nome: a.nome,
         confidence: similarity,
         hasFolder: !!a.driveFolderId,
+        defensorId: a.defensorId,
       };
     }
   }
@@ -4312,7 +4353,7 @@ export async function handleNewAssistidoFolder(
     if (!bestMatch.hasFolder) {
       await db
         .update(assistidos)
-        .set({ driveFolderId: folderId, updatedAt: new Date() })
+        .set({ driveFolderId: folderId, defensorId: bestMatch.defensorId ?? ownerUserId, updatedAt: new Date() })
         .where(eq(assistidos.id, bestMatch.id));
 
       console.log(`[ReverseSync] Linked folder "${folderName}" → assistido "${bestMatch.nome}" (${bestMatch.confidence.toFixed(2)})`);
@@ -4348,6 +4389,7 @@ export async function handleNewAssistidoFolder(
       atribuicaoPrimaria: atribuicao as typeof assistidos.$inferInsert.atribuicaoPrimaria,
       driveFolderId: folderId,
       origemCadastro: "drive_sync",
+      defensorId: ownerUserId,
       duplicataSugerida: {
         assistidoId: bestMatch.id,
         nome: bestMatch.nome,
@@ -4380,6 +4422,7 @@ export async function handleNewAssistidoFolder(
     atribuicaoPrimaria: atribuicao as typeof assistidos.$inferInsert.atribuicaoPrimaria,
     driveFolderId: folderId,
     origemCadastro: "drive_sync",
+    defensorId: ownerUserId,
   }).returning({ id: assistidos.id });
 
   console.log(`[ReverseSync] Created NEW "${titleCaseName}" (${atribuicao}, no match found)`);
@@ -4414,7 +4457,7 @@ async function scheduleEnrichment(assistidoId: number, driveFolderId: string) {
  * Checks if a Drive file/folder is a direct child of an atribuição root folder.
  * Used by syncIncremental to detect new assistido folders.
  */
-export function isAtribuicaoRootChild(parentDriveId: string | undefined): boolean {
+export async function isAtribuicaoRootChild(parentDriveId: string | undefined): Promise<boolean> {
   if (!parentDriveId) return false;
-  return parentDriveId in FOLDER_ID_TO_ATRIBUICAO;
+  return (await resolveFolderToAtribuicaoOrLegacy(parentDriveId)) !== null;
 }

@@ -65,6 +65,7 @@ export const users = pgTable("users", {
   storageProvider: varchar("storage_provider", { length: 20 }).default("google"),
   onedriveRootFolderId: varchar("onedrive_root_folder_id", { length: 100 }),
   driveFolderId: varchar("drive_folder_id", { length: 100 }),
+  driveGroupId: integer("drive_group_id"),
   sheetsSpreadsheetId: varchar("sheets_spreadsheet_id", { length: 100 }),
   sheetsSpreadsheetUrl: text("sheets_spreadsheet_url"),
   sheetsSyncEnabled: boolean("sheets_sync_enabled").default(false),

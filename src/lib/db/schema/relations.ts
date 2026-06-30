@@ -55,6 +55,9 @@ import { notifications } from "./comunicacao";
 // Defensoria tables
 import { defensoresBa } from "./defensoria";
 
+// Drive tables
+import { driveGroups } from "./drive";
+
 // Demanda eventos
 import { demandaEventos, atendimentoDemandas } from "./demanda-eventos";
 
@@ -81,6 +84,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   afastamentosComoSubstituto: many(afastamentos, { relationName: "defensorSubstituto" }),
   // Ponte para diretório institucional DPE-BA
   defensorBa: one(defensoresBa, { fields: [users.defensorBaId], references: [defensoresBa.id] }),
+  // Grupo de Drive multi-tenant
+  driveGroup: one(driveGroups, { fields: [users.driveGroupId], references: [driveGroups.id] }),
 }));
 
 export const afastamentosRelations = relations(afastamentos, ({ one }) => ({
@@ -254,4 +259,13 @@ export const demandaEventosRelations = relations(demandaEventos, ({ one }) => ({
 export const atendimentoDemandasRelations = relations(atendimentoDemandas, ({ one }) => ({
   atendimento: one(atendimentos, { fields: [atendimentoDemandas.atendimentoId], references: [atendimentos.id] }),
   demanda: one(demandas, { fields: [atendimentoDemandas.demandaId], references: [demandas.id] }),
+}));
+
+// ==========================================
+// RELATIONS - Drive groups (multi-tenant)
+// ==========================================
+
+export const driveGroupsRelations = relations(driveGroups, ({ one, many }) => ({
+  owner: one(users, { fields: [driveGroups.ownerUserId], references: [users.id] }),
+  members: many(users),
 }));

@@ -12,6 +12,7 @@ export const TIPO_LABELS: Record<VfTipo, string> = {
   LICENCA: "Licença",
   AFASTAMENTO: "Afastamento",
   COOPERACAO: "Cooperação",
+  OUTRA_AUSENCIA: "Outra ausência",
   DIARIA: "Diária",
   FOLGA: "Folga",
   TRABALHO_EXTRAORDINARIO: "Trabalho extraordinário",

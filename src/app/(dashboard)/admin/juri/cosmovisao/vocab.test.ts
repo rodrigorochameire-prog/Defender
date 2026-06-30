@@ -70,7 +70,7 @@ describe("Completeness label — canonical term is 'Ficha'", () => {
 
   it("preview panel uses 'Ficha' for the completeness metric", () => {
     const src = read(PREVIEW_PANEL);
-    expect(src).toContain("Ficha {comp.pct}%");
-    expect(src).not.toContain("Cadastro {comp.pct}%");
+    expect(src).toContain("Ficha ${comp.pct}%");
+    expect(src).not.toContain("Cadastro ${comp.pct}%");
   });
 });

@@ -686,6 +686,35 @@ class SigadBuscarOutput(BaseModel):
     error: str | None = None
 
 
+# === SIGA Carreira (extração via CDP) ===
+
+class SigaCarreiraRow(BaseModel):
+    """Uma linha de qualquer seção de Carreira do SIGA."""
+    tipo: str
+    numeroSolicitacao: str | None = None
+    nSiga: str | None = None
+    dataInicio: str | None = None
+    dataFim: str | None = None
+    situacaoSiga: str | None = None
+    motivo: str | None = None
+    dataPublicacao: str | None = None
+    observacao: str | None = None
+    provimento: str | None = None
+    interrompida: bool = False
+    suspensa: bool = False
+
+
+class SigaExtrairCarreiraOutput(BaseModel):
+    """Output de POST /siga/extrair-carreira."""
+    success: bool
+    licencas: list[SigaCarreiraRow] = Field(default_factory=list)
+    outras: list[SigaCarreiraRow] = Field(default_factory=list)
+    ferias: list[SigaCarreiraRow] = Field(default_factory=list)
+    afastamentos: list[SigaCarreiraRow] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+    error: str | None = None
+
+
 # === Consolidation (Sistema Nervoso Defensivo) ===
 
 class ConsolidationInput(BaseModel):
