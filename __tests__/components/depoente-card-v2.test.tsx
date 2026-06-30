@@ -120,19 +120,23 @@ describe("DepoenteCardV2 (fechado)", () => {
     expect(screen.getByText(/acusação/i)).toBeInTheDocument();
   });
 
-  it("border-left rose para acusação", () => {
+  it("faixa top rose para acusação", () => {
     const { container } = render(
       <DepoenteCardV2 depoente={baseDep} isOpen={false} onToggle={noop} variant="sheet" {...handlers} />
     );
-    expect(container.querySelector('[data-lado="acusacao"]')?.className).toMatch(/border-l-rose/);
+    // Task 5: redesign usa faixa top semântica (bg-rose-300/70) em vez de border-left
+    const topBar = container.querySelector('[data-lado="acusacao"] div:first-child');
+    expect(topBar?.className).toMatch(/bg-rose/);
   });
 
-  it("border-left emerald para defesa", () => {
+  it("faixa top emerald para defesa", () => {
     const dep = { ...baseDep, tipo: "DEFESA" as const, lado: "defesa" };
     const { container } = render(
       <DepoenteCardV2 depoente={dep} isOpen={false} onToggle={noop} variant="sheet" {...handlers} />
     );
-    expect(container.querySelector('[data-lado="defesa"]')?.className).toMatch(/border-l-emerald/);
+    // Task 5: redesign usa faixa top semântica (bg-emerald-300/70) em vez de border-left
+    const topBar = container.querySelector('[data-lado="defesa"] div:first-child');
+    expect(topBar?.className).toMatch(/bg-emerald/);
   });
 
   it("badge de status OUVIDA aparece", () => {
