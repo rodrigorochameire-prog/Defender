@@ -150,3 +150,10 @@ def validar_registro(r: dict) -> list[str]:
 `audiencias.resumo_defesa` (coluna TEXT) continua sendo o "resumo narrativo" — texto corrido, 2-4 parágrafos. Este campo é alimentado em paralelo ao JSON estruturado, e é o que aparece em telas legadas que ainda não consomem o JSON.
 
 Regra: o JSON é a fonte de verdade; o TEXT é uma view derivada. Quando o JSON for atualizado, o TEXT é regerado a partir dele (concatenação: imputação → tese → pontos críticos), preservando o resumo de defesa redigido manualmente quando houver.
+
+## Loaders
+
+| Script | Target | Writes |
+|--------|--------|--------|
+| `scripts/pje-cdp/popular_ombuds.mjs` | `audiencias.registro_audiencia` | Full registro JSONB blob |
+| `scripts/pje-cdp/vincular_testemunhas.mjs` | `testemunhas` rows (matched by `audiencia_id + nome`) | `termo_delegacia_drive_file_id`, `termo_delegacia_pagina`, `depoimento_timestamp_inicio_s`, `depoimento_timestamp_fim_s`, `pinos` (JSONB append with dedup) |
