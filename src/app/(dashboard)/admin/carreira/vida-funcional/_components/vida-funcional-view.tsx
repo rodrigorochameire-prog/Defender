@@ -2,16 +2,18 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Briefcase, Milestone, CalendarClock, Plus, type LucideIcon } from "lucide-react";
+import { Briefcase, Milestone, CalendarClock, Plus, BarChart2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { dominiosByCluster } from "@/lib/vida-funcional/dominios";
 import { isMarco, type VfTipo } from "@/lib/vida-funcional/tipo-cluster";
 import { computeRadar } from "@/lib/vida-funcional/radar";
-import { COLORS } from "@/lib/config/design-tokens";
+import { COLORS, TAB_STYLE_V3 } from "@/lib/config/design-tokens";
 import { vfIcon } from "./icon-map";
 import { TrajetoriaTimeline } from "@/components/carreira/trajetoria-timeline";
+import { CarreiraCard } from "@/components/carreira";
 import { Button } from "@/components/ui/button";
 import { EventoFormDialog } from "./evento-form-dialog";
 
@@ -45,15 +47,12 @@ export function VidaFuncionalView() {
   ];
 
   const bottomRow = (
-    <div className="flex items-center gap-0.5">
+    <div className={TAB_STYLE_V3.bar}>
       {tabs.map((t) => (
         <button
           key={t.key}
           onClick={() => setTab(t.key)}
-          className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer",
-            tab === t.key ? "bg-white/90 text-neutral-800 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/[0.06]",
-          )}
+          className={cn(TAB_STYLE_V3.item, tab === t.key && TAB_STYLE_V3.active, "cursor-pointer")}
         >
           <t.icon className="w-3 h-3" />
           {t.label}
@@ -98,7 +97,7 @@ export function VidaFuncionalView() {
                   {radar.map((a) => {
                     const c = a.severidade === "critico" ? COLORS.danger : a.severidade === "atencao" ? COLORS.warning : COLORS.info;
                     const inner = (
-                      <div className={cn("p-3 rounded-xl border h-full", c.border, c.bg)}>
+                      <div className={cn("p-3", c.bg)}>
                         <p className={cn("text-[11px] font-mono", c.text)}>{a.prazo ?? a.motivo}</p>
                         <p className="text-sm font-medium truncate">{a.titulo}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{a.motivo}</p>
@@ -106,10 +105,14 @@ export function VidaFuncionalView() {
                     );
                     return a.dominioKey ? (
                       <Link key={a.eventoId} href={`/admin/carreira/vida-funcional/${a.dominioKey}`} className="cursor-pointer">
-                        {inner}
+                        <CarreiraCard className={cn("overflow-hidden h-full", c.border)}>
+                          {inner}
+                        </CarreiraCard>
                       </Link>
                     ) : (
-                      <div key={a.eventoId}>{inner}</div>
+                      <CarreiraCard key={a.eventoId} className={cn("overflow-hidden h-full", c.border)}>
+                        {inner}
+                      </CarreiraCard>
                     );
                   })}
                 </div>
@@ -143,13 +146,17 @@ export function VidaFuncionalView() {
                       <Link
                         key={d.key}
                         href={`/admin/carreira/vida-funcional/${d.key}`}
-                        className="p-3 rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50 hover:border-emerald-500/30 transition-colors cursor-pointer"
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <Icon className="w-4 h-4 text-neutral-500" />
-                          <span className="text-xs text-neutral-500 truncate">{d.label}</span>
-                        </div>
-                        <p className="text-lg font-semibold tabular-nums">{count}</p>
+                        <CarreiraCard accent={c.key} className="p-3 cursor-pointer overflow-hidden">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Icon className="w-4 h-4 text-neutral-500" />
+                            <span className="text-xs text-neutral-500 truncate">{d.label}</span>
+                          </div>
+                          <p className="text-lg font-semibold tabular-nums">{count}</p>
+                          {count === 0 && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Adicionar registro</p>
+                          )}
+                        </CarreiraCard>
                       </Link>
                     );
                   })}
@@ -162,9 +169,11 @@ export function VidaFuncionalView() {
         {tab === "timeline" && <TrajetoriaTimeline eventos={eventos} isLoading={isLoading} />}
 
         {tab === "produtividade" && (
-          <div className="p-6 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 text-center">
-            <p className="text-sm text-muted-foreground">Produtividade chega no próximo estágio (dashboard + relatório).</p>
-          </div>
+          <EmptyState
+            icon={BarChart2}
+            title="Em breve"
+            description="Estatísticas de produtividade estarão disponíveis em breve"
+          />
         )}
       </div>
       <EventoFormDialog open={novoOpen} onOpenChange={setNovoOpen} />

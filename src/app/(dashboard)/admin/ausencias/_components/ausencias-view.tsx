@@ -5,26 +5,26 @@ import { CalendarOff, CalendarX, CalendarClock, CalendarCheck, Plus } from "luci
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
 import { ausenciaStatusInfo } from "@/lib/ausencias/status-visual";
 import { podeTransicionar } from "@/lib/ausencias/transicoes";
 import { LICENCA_MOTIVOS } from "@/lib/ausencias/motivos";
 import { cn } from "@/lib/utils";
+import {
+  KpiChip,
+  CarreiraCard,
+  CarreiraField,
+  CarreiraListSkeleton,
+  ConfirmDeleteButton,
+} from "@/components/carreira";
 
-// ----------- Sub-componentes --------------------------------------------------
-
-function Kpi({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.08]">
-      <Icon className="w-4 h-4 text-white/70" />
-      <div className="leading-tight">
-        <div className="text-sm font-semibold text-white">{value}</div>
-        <div className="text-[11px] text-white/60">{label}</div>
-      </div>
-    </div>
-  );
-}
+// Native selects kept — controlled empty-string sentinel doesn't map cleanly to Radix SelectItem.
+const nativeSelectCls =
+  "block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 " +
+  "dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
 
 const ACAO_LABEL: Record<string, string> = {
   deferida: "Deferir",
@@ -33,12 +33,7 @@ const ACAO_LABEL: Record<string, string> = {
   cancelada: "Cancelar",
 };
 
-const inputCls =
-  "block border rounded px-2 py-1 text-sm dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-100";
-
 type TipoFiltro = "todos" | "licenca" | "outra_ausencia";
-
-// ----------- Formulário de criação -------------------------------------------
 
 type FormState = {
   tipo: "licenca" | "outra_ausencia";
@@ -63,8 +58,6 @@ const FORM_EMPTY: FormState = {
   numeroSolicitacao: "",
   dataPublicacao: "",
 };
-
-// ----------- View principal --------------------------------------------------
 
 export function AusenciasView() {
   const utils = trpc.useUtils();
@@ -100,15 +93,6 @@ export function AusenciasView() {
     return data.filter((a) => a.tipo === tipoFiltro);
   }, [data, tipoFiltro]);
 
-  const stats = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Kpi icon={CalendarX} label="Licenças" value={kpis.licencas} />
-      <Kpi icon={CalendarOff} label="Outras" value={kpis.outras} />
-      <Kpi icon={CalendarClock} label="Solicitadas" value={kpis.solicitadas} />
-      <Kpi icon={CalendarCheck} label="Em vigor" value={kpis.emVigor} />
-    </div>
-  );
-
   const handleCriar = () => {
     criar.mutate(
       {
@@ -134,14 +118,19 @@ export function AusenciasView() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
       <CollapsiblePageHeader title="Ausências" icon={CalendarOff}>
-        {stats}
+        <div className="flex flex-wrap items-center gap-2">
+          <KpiChip icon={CalendarX} label="Licenças" value={kpis.licencas} />
+          <KpiChip icon={CalendarOff} label="Outras" value={kpis.outras} />
+          <KpiChip icon={CalendarClock} label="Solicitadas" value={kpis.solicitadas} />
+          <KpiChip icon={CalendarCheck} label="Em vigor" value={kpis.emVigor} />
+        </div>
       </CollapsiblePageHeader>
 
       <div className="p-4 space-y-4">
         {/* Cabeçalho + filtro + botão novo */}
         <section className={cn(CARD_STYLE.base)}>
           <div className="flex flex-wrap items-center gap-3 justify-between">
-            {/* Filtro de tipo */}
+            {/* Filtro de tipo — preserving aria-pressed */}
             <div className="flex items-center gap-1.5">
               {(["todos", "licenca", "outra_ausencia"] as TipoFiltro[]).map((t) => (
                 <button
@@ -169,10 +158,10 @@ export function AusenciasView() {
           {/* Formulário de criação */}
           {showForm && (
             <div className="mt-4 border-t border-border pt-4 flex flex-wrap items-end gap-3">
-              <label className="text-xs flex flex-col gap-0.5">
-                Tipo
+              {/* Tipo — native select kept */}
+              <CarreiraField label="Tipo">
                 <select
-                  className={inputCls}
+                  className={nativeSelectCls}
                   value={form.tipo}
                   onChange={(e) =>
                     setForm({ ...form, tipo: e.target.value as "licenca" | "outra_ausencia", motivo: "" })
@@ -181,13 +170,13 @@ export function AusenciasView() {
                   <option value="licenca">Licença</option>
                   <option value="outra_ausencia">Outra ausência</option>
                 </select>
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Motivo
+              {/* Motivo — native select for licença, Input for outra_ausencia */}
+              <CarreiraField label="Motivo" className="min-w-[220px]">
                 {form.tipo === "licenca" ? (
                   <select
-                    className={cn(inputCls, "min-w-[220px]")}
+                    className={nativeSelectCls}
                     value={form.motivo}
                     onChange={(e) => setForm({ ...form, motivo: e.target.value })}
                   >
@@ -199,67 +188,57 @@ export function AusenciasView() {
                     ))}
                   </select>
                 ) : (
-                  <input
+                  <Input
                     type="text"
-                    className={cn(inputCls, "min-w-[200px]")}
                     placeholder="Motivo (opcional)"
                     value={form.motivo}
                     onChange={(e) => setForm({ ...form, motivo: e.target.value })}
                   />
                 )}
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Data início
-                <input
+              <CarreiraField label="Data início">
+                <Input
                   type="date"
-                  className={inputCls}
                   value={form.dataInicio}
                   onChange={(e) => setForm({ ...form, dataInicio: e.target.value })}
                 />
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Data fim
-                <input
+              <CarreiraField label="Data fim">
+                <Input
                   type="date"
-                  className={inputCls}
                   value={form.dataFim}
                   onChange={(e) => setForm({ ...form, dataFim: e.target.value })}
                 />
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Nº solicitação
-                <input
+              <CarreiraField label="Nº solicitação">
+                <Input
                   type="text"
-                  className={cn(inputCls, "w-32")}
+                  className="w-32"
                   placeholder="opcional"
                   value={form.numeroSolicitacao}
                   onChange={(e) => setForm({ ...form, numeroSolicitacao: e.target.value })}
                 />
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Data publicação
-                <input
+              <CarreiraField label="Data publicação">
+                <Input
                   type="date"
-                  className={inputCls}
                   value={form.dataPublicacao}
                   onChange={(e) => setForm({ ...form, dataPublicacao: e.target.value })}
                 />
-              </label>
+              </CarreiraField>
 
-              <label className="text-xs flex flex-col gap-0.5">
-                Observação
-                <input
+              <CarreiraField label="Observação" className="min-w-[180px]">
+                <Input
                   type="text"
-                  className={cn(inputCls, "min-w-[180px]")}
                   placeholder="opcional"
                   value={form.observacao}
                   onChange={(e) => setForm({ ...form, observacao: e.target.value })}
                 />
-              </label>
+              </CarreiraField>
 
               <label className="text-xs flex items-center gap-1.5 cursor-pointer">
                 <input
@@ -296,7 +275,7 @@ export function AusenciasView() {
 
         {/* Lista */}
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <CarreiraListSkeleton rows={3} />
         ) : lista.length === 0 ? (
           <EmptyState
             icon={CalendarOff}
@@ -311,7 +290,7 @@ export function AusenciasView() {
           lista.map((a) => {
             const tipoLabel = a.tipo === "licenca" ? "Licença" : "Outra ausência";
             return (
-              <section key={a.id} className={cn(CARD_STYLE.base)}>
+              <CarreiraCard key={a.id} accent="ausencias" className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   {/* Coluna principal */}
                   <div className="min-w-0 space-y-1">
@@ -323,7 +302,7 @@ export function AusenciasView() {
                       <div className={TYPO.caption}>{a.motivo}</div>
                     )}
 
-                    {/* Metadata */}
+                    {/* Metadata — SIGA fields preserved exactly */}
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       <StatusChip info={ausenciaStatusInfo(a.situacao)} />
 
@@ -370,19 +349,12 @@ export function AusenciasView() {
                         </Button>
                       ))}
 
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-[11px] text-rose-600"
+                    <ConfirmDeleteButton
+                      onConfirm={() => remover.mutate({ id: a.id })}
+                      title="Excluir ausência?"
+                      description="Remove esta ausência definitivamente."
                       disabled={remover.isPending}
-                      onClick={() => {
-                        if (window.confirm("Excluir esta ausência?")) {
-                          remover.mutate({ id: a.id });
-                        }
-                      }}
-                    >
-                      Excluir
-                    </Button>
+                    />
                   </div>
                 </div>
 
@@ -394,7 +366,7 @@ export function AusenciasView() {
                 {remover.error && remover.variables?.id === a.id && (
                   <p className="mt-2 text-[11px] text-rose-600">{remover.error.message}</p>
                 )}
-              </section>
+              </CarreiraCard>
             );
           })
         )}

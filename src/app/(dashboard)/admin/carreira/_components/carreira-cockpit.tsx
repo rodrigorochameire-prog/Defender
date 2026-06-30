@@ -9,6 +9,7 @@ import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
 import { TrajetoriaTimeline } from "@/components/carreira/trajetoria-timeline";
 import { cn } from "@/lib/utils";
 import { carreiraStatusInfo } from "@/lib/carreira/status-visual";
+import { KpiChip, CarreiraCard, CarreiraListSkeleton } from "@/components/carreira";
 
 const CLUSTER_LABEL: Record<string, string> = {
   ausencias: "Ausências & designações",
@@ -17,47 +18,44 @@ const CLUSTER_LABEL: Record<string, string> = {
   administrativo: "Administrativo",
 };
 
-function Kpi({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.08]">
-      <Icon className="w-4 h-4 text-white/70" />
-      <div className="leading-tight">
-        <div className="text-sm font-semibold text-white">{value}</div>
-        <div className="text-[11px] text-white/60">{label}</div>
-      </div>
-    </div>
-  );
-}
-
 export function CarreiraCockpit() {
   const { data, isLoading } = trpc.carreira.meuPanorama.useQuery();
 
   const kpis = data?.kpis;
-  const stats = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Kpi icon={CalendarClock} label="Próximo prazo" value={kpis?.proximoPrazo?.prazo ?? "—"} />
-      <Kpi icon={Briefcase} label="Substituições ativas" value={kpis?.substituicoesAtivas ?? 0} />
-      <Kpi icon={FileText} label="Pedidos pendentes" value={kpis?.pedidosPendentes ?? 0} />
-      <Kpi icon={Plane} label="Férias agendadas" value={kpis?.feriasAgendadas ?? 0} />
-    </div>
-  );
 
   return (
-    <CollapsiblePageHeader title="Carreira — meu dia a dia" icon={Briefcase}>
-      {stats}
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <CollapsiblePageHeader
+        title="Carreira — meu dia a dia"
+        icon={Briefcase}
+        collapsedStats={
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
+            {kpis?.substituicoesAtivas ?? 0} subst. ativas
+          </span>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <KpiChip icon={CalendarClock} label="Próximo prazo" value={kpis?.proximoPrazo?.prazo ?? "—"} />
+          <KpiChip icon={Briefcase} label="Substituições ativas" value={kpis?.substituicoesAtivas ?? 0} />
+          <KpiChip icon={FileText} label="Pedidos pendentes" value={kpis?.pedidosPendentes ?? 0} />
+          <KpiChip icon={Plane} label="Férias agendadas" value={kpis?.feriasAgendadas ?? 0} />
+        </div>
+      </CollapsiblePageHeader>
+
       <div className="p-4 space-y-4">
         {/* Agora & Próximos */}
         <section className={cn(CARD_STYLE.base)}>
           <h2 className={cn(TYPO.h3, "mb-3")}>Agora & próximos</h2>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
+            <CarreiraListSkeleton rows={3} />
           ) : !data || data.agoraProximos.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
               title="Nada ativo ou agendado nos próximos 90 dias"
+              description="Registre ausências, férias ou designações para ver os próximos eventos."
             />
           ) : (
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {data.agoraProximos.map((e) => (
                 <li key={e.id} className="flex items-center justify-between py-2">
                   <div className="min-w-0">
@@ -78,28 +76,30 @@ export function CarreiraCockpit() {
           {(["ausencias", "contraprestacao", "progressao", "administrativo"] as const).map((c) => {
             const summary = data?.clusters[c];
             return (
-              <div key={c} className={cn(CARD_STYLE.base)}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className={TYPO.h3}>{CLUSTER_LABEL[c]}</h3>
-                  <span className="text-[11px] text-muted-foreground">
-                    {summary?.total ?? 0} · {summary?.emCurso ?? 0} em curso · {summary?.pendentes ?? 0} pendentes
-                  </span>
+              <CarreiraCard key={c} accent={c}>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className={TYPO.h3}>{CLUSTER_LABEL[c]}</h3>
+                    <span className="text-[11px] text-muted-foreground">
+                      {summary?.total ?? 0} · {summary?.emCurso ?? 0} em curso · {summary?.pendentes ?? 0} pendentes
+                    </span>
+                  </div>
+                  {isLoading && !data ? (
+                    <CarreiraListSkeleton rows={3} />
+                  ) : !summary || summary.itens.length === 0 ? (
+                    <EmptyState icon={FolderOpen} title="Sem registros" size="sm" description="Nenhum item neste cluster." />
+                  ) : (
+                    <ul className="space-y-1">
+                      {summary.itens.slice(0, 5).map((it) => (
+                        <li key={it.id} className="flex items-center justify-between text-sm">
+                          <span className="truncate">{it.titulo}</span>
+                          <StatusChip info={carreiraStatusInfo(it.status)} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                {isLoading && !data ? (
-                  <p className="text-sm text-muted-foreground">Carregando…</p>
-                ) : !summary || summary.itens.length === 0 ? (
-                  <EmptyState icon={FolderOpen} title="Sem registros" size="sm" />
-                ) : (
-                  <ul className="space-y-1">
-                    {summary.itens.slice(0, 5).map((it) => (
-                      <li key={it.id} className="flex items-center justify-between text-sm">
-                        <span className="truncate">{it.titulo}</span>
-                        <StatusChip info={carreiraStatusInfo(it.status)} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              </CarreiraCard>
             );
           })}
         </section>
@@ -128,6 +128,6 @@ export function CarreiraCockpit() {
           />
         </section>
       </div>
-    </CollapsiblePageHeader>
+    </div>
   );
 }

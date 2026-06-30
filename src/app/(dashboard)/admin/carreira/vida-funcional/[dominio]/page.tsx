@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EventoFormDialog } from "../_components/evento-form-dialog";
 import { tipoLabel, statusLabel } from "@/lib/vida-funcional/labels";
+import { CarreiraCard } from "@/components/carreira";
 
 export default function DominioPage({ params }: { params: Promise<{ dominio: string }> }) {
   const { dominio } = use(params);
@@ -70,7 +71,7 @@ export default function DominioPage({ params }: { params: Promise<{ dominio: str
           eventos.map((e) => {
             const open = openId === e.id;
             return (
-              <div key={e.id} className="rounded-xl border border-neutral-200 dark:border-neutral-700/30 bg-white dark:bg-neutral-900/50">
+              <CarreiraCard key={e.id}>
                 <div className="w-full text-left p-4 flex items-center gap-3">
                   <div
                     role="button"
@@ -87,8 +88,20 @@ export default function DominioPage({ params }: { params: Promise<{ dominio: str
                   </div>
                   <div className="flex items-center gap-2 shrink-0" onClick={(ev) => ev.stopPropagation()}>
                     <span className="text-[10px] uppercase tracking-wide text-neutral-400">{tipoLabel(e.tipo)}</span>
-                    <button className="p-1 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] cursor-pointer" onClick={() => { setEditing(e); setFormOpen(true); }} title="Editar"><Pencil className="w-3.5 h-3.5 text-neutral-400" /></button>
-                    <button className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer" onClick={() => setToDelete({ id: e.id, titulo: e.titulo })} title="Excluir"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
+                    <button
+                      className="p-1 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] cursor-pointer"
+                      onClick={() => { setEditing(e); setFormOpen(true); }}
+                      aria-label="Editar evento"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-neutral-400" />
+                    </button>
+                    <button
+                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
+                      onClick={() => setToDelete({ id: e.id, titulo: e.titulo })}
+                      aria-label="Excluir evento"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    </button>
                   </div>
                 </div>
                 {open && e.driveFolderId && (
@@ -96,7 +109,7 @@ export default function DominioPage({ params }: { params: Promise<{ dominio: str
                     <DrivePanel folderId={e.driveFolderId} />
                   </div>
                 )}
-              </div>
+              </CarreiraCard>
             );
           })
         )}
