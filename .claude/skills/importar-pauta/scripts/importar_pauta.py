@@ -732,18 +732,50 @@ async def _async_scrape_pauta(
             print("  [aviso] tabela não carregou após 30s — encerrando sem dados", flush=True)
         await asyncio.sleep(1)
 
-        # ── Paginação e extração ──────────────────────────────────────────
-        await page.evaluate(JS_RESET_TO_PAGE_1)
-        await asyncio.sleep(1.5)
+        # ── Paginação (slider RichFaces) e extração ───────────────────────
+        # O paginador da pauta NÃO é o datascroller clássico (« ‹ 1 2 ›): é um
+        # rich-inputNumberSlider — um input com a página atual e ".rich-inslider-
+        # right-num" com a última página. Validado ao vivo (2026-06-29): setar o
+        # input + disparar change navega via A4J e recarrega a tabela.
+        await asyncio.sleep(1.0)
+        max_page = await page.evaluate(
+            r"""() => {
+              const e = document.querySelector('.rich-inslider-right-num');
+              const n = e ? parseInt((e.innerText || '').trim(), 10) : 1;
+              return Number.isFinite(n) && n > 0 ? n : 1;
+            }"""
+        )
+        print(f"  [paginação] {max_page} página(s) (slider)", flush=True)
+        pg_loop = asyncio.get_running_loop()
 
-        page_num = 1
+        for page_num in range(1, max_page + 1):
+            if page_num > 1:
+                before = await _first_pauta_row_text(page)
+                set_ok = await page.evaluate(
+                    r"""(n) => {
+                      const inp = document.querySelector('input.rich-inslider-field-right')
+                        || document.querySelector('[id$="j_id492Input"]')
+                        || document.querySelector('.rich-inslider input[type="text"]');
+                      if (!inp) return false;
+                      inp.value = String(n);
+                      inp.dispatchEvent(new Event('change', {bubbles: true}));
+                      inp.dispatchEvent(new Event('blur', {bubbles: true}));
+                      return true;
+                    }""",
+                    page_num,
+                )
+                if not set_ok:
+                    print(f"  [paginação] slider não encontrado na pág {page_num} — parando", flush=True)
+                    break
+                # Aguarda a tabela recarregar (1ª linha muda) — A4J assíncrono.
+                pg_deadline = pg_loop.time() + 15
+                while pg_loop.time() < pg_deadline:
+                    await asyncio.sleep(0.6)
+                    if (await _first_pauta_row_text(page)) != before:
+                        break
+                await asyncio.sleep(0.8)
 
-        while True:
             raw_rows = await page.evaluate(JS_EXTRACT_PAUTA_ROWS)
-            if not raw_rows:
-                print(f"  → pág {page_num}: tabela vazia ou não encontrada", flush=True)
-                break
-
             novos = []
             for r in raw_rows:
                 # Normaliza CNJ partido por quebra de linha
@@ -753,32 +785,27 @@ async def _async_scrape_pauta(
                     continue
                 novos.append(r)
 
-            if not novos:
-                print(f"  → pág {page_num}: sem linhas novas — encerrando", flush=True)
-                break
-
-            print(f"  → pág {page_num}: {len(novos)} linha(s)", flush=True)
+            print(f"  → pág {page_num}/{max_page}: {len(novos)} linha(s)", flush=True)
             results.extend(novos)
-
             if heartbeat:
                 heartbeat(len(results))
 
-            # Próxima página
-            before = await _first_pauta_row_text(page)
-            ok_next = await page.evaluate(JS_GOTO_PAGE, page_num + 1)
-            if not ok_next:
-                break  # última página
-
-            pg_loop = asyncio.get_running_loop()
-            pg_deadline = pg_loop.time() + 12
-            while pg_loop.time() < pg_deadline:
-                await asyncio.sleep(0.5)
-                if (await _first_pauta_row_text(page)) != before:
-                    break
-            await asyncio.sleep(0.8)
-            page_num += 1
-
-    return results
+    # Dedup intra-job (mesma audiência pode reaparecer se uma página recarregar):
+    # chave estável = processo + data + tipo + situação.
+    vistos: set[str] = set()
+    unicos: list[dict] = []
+    for r in results:
+        ch = compute_pauta_hash(
+            r.get("processo") or "", r.get("dataHora") or "",
+            r.get("tipo") or "", r.get("situacao") or "",
+        )
+        if ch in vistos:
+            continue
+        vistos.add(ch)
+        unicos.append(r)
+    if len(unicos) != len(results):
+        print(f"  [dedup] {len(results)} → {len(unicos)} linhas únicas", flush=True)
+    return unicos
 
 
 def scrape_pauta(
