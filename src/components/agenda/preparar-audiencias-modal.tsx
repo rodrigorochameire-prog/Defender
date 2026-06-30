@@ -882,7 +882,7 @@ export function PrepararAudienciasModal() {
                                 {q.jobQueued?.created
                                   ? `Job #${q.jobQueued.id} criado · `
                                   : `Job #${q.jobQueued?.id} já estava em fila · `}
-                                Worker do Mac Mini vai processar e popular a análise.
+                                O worker do Claude (máquina ativa do defensor) vai processar e popular a análise.
                               </div>
                             </div>
                           ))}
