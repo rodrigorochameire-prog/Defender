@@ -72,18 +72,17 @@ def find_term_page(pdf_path: str, deponent_name: str) -> int | None:
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--registro", required=False)
-    ap.add_argument("--pdf", required=False)
-    ap.add_argument("--file-id", required=False)
-    ap.add_argument("--test", action="store_true")
-    args = ap.parse_args()
-
-    if args.test:
+    if "--test" in sys.argv:
         ratio = difflib.SequenceMatcher(None, "maria santos", "maria dos santos").ratio()
         assert ratio >= 0.65, f"ratio too low: {ratio}"
         print("OK: name matching works")
         sys.exit(0)
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--registro", required=True)
+    ap.add_argument("--pdf", required=True)
+    ap.add_argument("--file-id", required=True)
+    args = ap.parse_args()
 
     registro_path = Path(args.registro)
     registro = json.loads(registro_path.read_text())
