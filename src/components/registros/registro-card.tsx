@@ -96,8 +96,8 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
   return (
     <AnexoDropzone onFiles={(files) => upload(registro.id, files)}>
       <div
-        className="rounded-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] dark:shadow-black/20 px-3.5 py-2.5 group transition-shadow border-l-2 hover:shadow-md hover:shadow-black/[0.07]"
-        style={{ borderLeftColor: tipoCfg?.color ?? "#a1a1aa" }}
+        className="rounded-r-xl bg-white dark:bg-neutral-900 shadow-sm shadow-black/[0.04] dark:shadow-black/20 px-3.5 py-2.5 group transition-shadow border-l-[3px] hover:shadow-md hover:shadow-black/[0.07]"
+        style={{ borderLeftColor: `${tipoCfg?.color ?? "#a1a1aa"}70` }}
       >
       {/* Header: tipo+audio (esq) | data+ações (dir) */}
       <div className="flex items-center justify-between gap-2">

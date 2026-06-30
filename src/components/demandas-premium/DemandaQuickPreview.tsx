@@ -1315,7 +1315,48 @@ export function DemandaQuickPreview({
                   )}
                 </div>
 
-                {/* Linha 2 — ato + prazo (status movido para abaixo do pipeline stepper) */}
+                {/* Linha 2 — processo */}
+                {(processo || (onProcessoNumeroChange && searchProcessosFn)) && (
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    {!isProcStub && processo && (
+                      <button
+                        className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          copyToClipboard(processo.numero, "Processo copiado!");
+                        }}
+                        title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
+                      >
+                        {processo.tipo && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                            {processo.tipo}
+                          </span>
+                        )}
+                        <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
+                        <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
+                      </button>
+                    )}
+                    {isProcStub && onProcessoNumeroChange && searchProcessosFn ? (
+                      <InlineAutocomplete
+                        value=""
+                        valueId={demanda.processoId ?? undefined}
+                        placeholder="Adicionar nº do processo"
+                        searchFn={searchProcessosFn}
+                        onQueryChange={onProcessoQueryChange}
+                        isLoading={loadingProcessoSearch}
+                        onSelect={(pid, numero) => onVincularProcesso?.(demanda.id, pid, numero)}
+                        onTextChange={(t) => onProcessoNumeroChange(demanda.id, t)}
+                        icon="briefcase"
+                        className="cursor-pointer rounded-md px-1.5 py-0.5 -ml-1 inline-flex items-center gap-1 transition-colors text-[11px] border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                      />
+                    ) : isProcStub ? (
+                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">sem número</span>
+                    ) : null}
+                  </div>
+                )}
+
+                {/* Linha 3 — ato + prazo (abaixo do processo) */}
                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                   <InlineDropdown
                     value={demanda.ato}
@@ -1339,8 +1380,6 @@ export function DemandaQuickPreview({
                     onChange={(v) => onAtoChange(demanda.id, v)}
                     layout="accordion"
                   />
-                  {/* Chip de prazo — urgência sempre visível. Clique pula/abre
-                      Cronologia & Prazo para editar a data. */}
                   {prazoBadge && prazoBadge.cor !== "none" && (
                     <button
                       type="button"
@@ -1359,54 +1398,6 @@ export function DemandaQuickPreview({
                     </button>
                   )}
                 </div>
-
-                {/* Linha 3 — processo. Número real = chip copiável (tipo cinza +
-                    CNJ). Stub do importador (SN-...) = escondido; no lugar, um
-                    chip "Adicionar nº do processo" que abre o editor inline
-                    (texto livre p/ colar o CNJ, ou buscar e vincular a um
-                    processo existente). */}
-                {(processo || (onProcessoNumeroChange && searchProcessosFn)) && (
-                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    {!isProcStub && processo && (
-                      <button
-                        className="inline-flex items-center gap-1.5 px-1 py-0.5 -ml-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/60 group/proc cursor-pointer transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          copyToClipboard(processo.numero, "Processo copiado!");
-                        }}
-                        title={`Copiar número${processo.tipo ? ` (${processo.tipo})` : ""}`}
-                      >
-                        {processo.tipo && (
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                            {processo.tipo}
-                          </span>
-                        )}
-                        <span className="font-mono text-[10px] tabular-nums text-neutral-500 dark:text-neutral-400 group-hover/proc:text-neutral-700 dark:group-hover/proc:text-neutral-200 transition-colors">{processo.numero}</span>
-                        <Copy className="w-2.5 h-2.5 text-neutral-400 group-hover/proc:text-neutral-600 transition-colors" />
-                      </button>
-                    )}
-                    {/* Editar/vincular só aparece quando NÃO há número real (stub):
-                        evita o "Editar / vincular" poluindo o header de uma
-                        demanda já vinculada. Com número, fica só o chip copiável. */}
-                    {isProcStub && onProcessoNumeroChange && searchProcessosFn ? (
-                      <InlineAutocomplete
-                        value=""
-                        valueId={demanda.processoId ?? undefined}
-                        placeholder="Adicionar nº do processo"
-                        searchFn={searchProcessosFn}
-                        onQueryChange={onProcessoQueryChange}
-                        isLoading={loadingProcessoSearch}
-                        onSelect={(pid, numero) => onVincularProcesso?.(demanda.id, pid, numero)}
-                        onTextChange={(t) => onProcessoNumeroChange(demanda.id, t)}
-                        icon="briefcase"
-                        className="cursor-pointer rounded-md px-1.5 py-0.5 -ml-1 inline-flex items-center gap-1 transition-colors text-[11px] border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-                      />
-                    ) : isProcStub ? (
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500 italic">sem número</span>
-                    ) : null}
-                  </div>
-                )}
               </div>
               {/* Coluna direita: ícones de navegação (Assistido/Drive/Processo).
                   Atribuição voltou pra ser o 3º pill na linha 2 — não compete
@@ -1541,29 +1532,6 @@ export function DemandaQuickPreview({
                 onClose={() => setActiveStagePopover(null)}
               />
             )}
-          </div>
-
-          {/* ===== STATUS — abaixo do pipeline, acima das abas ===== */}
-          <div className="px-5 pb-3 flex items-center gap-2">
-            <InlineDropdown
-              value={demanda.status}
-              compact
-              displayValue={
-                <span
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-semibold transition-colors hover:brightness-95"
-                  style={{
-                    backgroundColor: `${statusColor}14`,
-                    color: statusColor,
-                    boxShadow: `inset 0 0 0 1px ${statusColor}30`,
-                  }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusColor }} />
-                  {statusConfig.label}
-                </span>
-              }
-              options={statusOptions}
-              onChange={(v) => onStatusChange(demanda.id, v)}
-            />
           </div>
 
           {/* ===== MODOS (Fase 4) — navegação interna por abas; cada modo mostra

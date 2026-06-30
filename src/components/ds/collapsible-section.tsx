@@ -74,7 +74,7 @@ export function CollapsibleSection({
       <Collapsible.Trigger asChild>
         <button
           type="button"
-          className="w-full px-4 py-3 flex items-center justify-between gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 cursor-pointer group"
+          className="w-full px-4 py-2.5 flex items-center justify-between gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 cursor-pointer group"
         >
           <div className="flex items-center gap-1.5">
             {Icon && <Icon className="w-3 h-3 text-neutral-400" />}
@@ -91,7 +91,7 @@ export function CollapsibleSection({
           />
         </button>
       </Collapsible.Trigger>
-      <Collapsible.Content className="px-4 pb-4 pt-1 motion-reduce:animate-none">
+      <Collapsible.Content className="px-4 pb-3 pt-0 motion-reduce:animate-none">
         {children}
       </Collapsible.Content>
     </Collapsible.Root>
