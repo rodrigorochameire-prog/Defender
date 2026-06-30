@@ -2,7 +2,7 @@
  * Áreas-mãe do workspace do evento (spec §D).
  *
  * O EventDetailSheet hoje é um scroll monolítico de ~26 seções. A spec pede que
- * ele se organize em 5 "modos de trabalho" — cada seção existente pertence a uma
+ * ele se organize em 6 "modos de trabalho" — cada seção existente pertence a uma
  * área-mãe. Este módulo é só o MAPEAMENTO (dados puros, sem React): a fonte única
  * para o futuro tab bar interno filtrar quais seções aparecem por modo.
  *

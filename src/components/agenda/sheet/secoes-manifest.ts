@@ -83,7 +83,7 @@ export const SECOES_JUSTIFICACAO: SecaoId[] = [
  * AIJ / Sumariante / PAP — instrução completa (ordem do art. 400 CPP).
  *
  * Estrutura em 3 faixas para reduzir a poluição do sheet:
- *  1. Espinha (7): resumo → imputação → denúncia(fatos) → depoentes →
+ *  1. Espinha (8): resumo → imputação → denúncia(fatos) → depoentes → intimação →
  *     depoimentos → laudos → documentos — o fluxo mental da audiência.
  *  2. Preparação: dossie (Roteiro) → teses.
  *  3. Contexto (colapsado ao final): ver {@link GRUPO_CONTEXTO_INSTRUCAO}.

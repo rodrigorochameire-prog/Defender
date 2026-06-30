@@ -141,8 +141,12 @@ export function DepoenteCardV2({ depoente, isOpen, onToggle, onMarcarOuvido, onR
   const pinosDepoimento = (midia?.pinos ?? []) as import("@/lib/agenda/pino").Pino[];
   const offsetDepoimento = midia?.depoimentoTimestampInicioS ?? 0;
 
-  const addPinoMutation = trpc.audiencias.addPino.useMutation();
-  const removePinoMutation = trpc.audiencias.removePino.useMutation();
+  const addPinoMutation = trpc.audiencias.addPino.useMutation({
+    onSuccess: () => utils.audiencias.getDepoenteMidia.invalidate({ depoenteId: depoente.id }),
+  });
+  const removePinoMutation = trpc.audiencias.removePino.useMutation({
+    onSuccess: () => utils.audiencias.getDepoenteMidia.invalidate({ depoenteId: depoente.id }),
+  });
 
   // Termo do IP/delegacia: melhor seção classificada do tipo termo/depoimento.
   const { data: sections } = trpc.drive.sectionsByProcesso.useQuery(
