@@ -91,6 +91,15 @@ Ler `references/midias_e_transcricao.md`. Após baixar os autos, **varrer as ata
 2. **Lifesize** (ex.: VVD Camaçari "Sala 3"): `scripts/baixar_midias_lifesize.py --dest "<pasta>" --scan "<autos>.pdf"` (ou passando as URLs). Método: API `cloudpublicvideo` (header **Origin** obrigatório) → `embed` (cookies CloudFront, expiram em horas) → m3u8 720p → ffmpeg. **PJe Mídias/CNJ** (júri e outras varas): método próprio (login CPF+senha; `audiencia/visualizar?id=` → URL assinada), ver memória `project_juri_nailton_10jun2026`.
 3. **Transcrever**: `scripts/transcrever_midias.py "<pasta>"` (ffmpeg + whisper-cli medium pt → SRT/TXT/JSON em `Mídias AIJ/Transcrições/`; pula o que já tem `.srt`). whisper **não** diariza: montar o `.md` consolidado `[mm:ss] INTERLOCUTOR:` por contexto e **conferir de ouvido** antes de citar literal (`conferencia-depoimentos` + `citacao-depoimentos`).
 
+**5d. Vincular termos do IP (05d_vincular_termos_ip.py)**
+Para cada depoente, busca no PDF do IP/APF a página onde o seu termo de
+depoimento/declaração começa (usa `pdftotext` + correspondência de nome via
+`difflib`, threshold 0.65). Popula `depoentes[].termo_delegacia = {drive_file_id, pagina_inicio}`
+no registro, habilitando o botão "ver termo (IP)" no sheet do OMBUDS.
+
+Requer: `pdftotext` e `pdfinfo` instalados (`brew install poppler`).
+Se o IP/APF não existir para o processo, skipa sem erro.
+
 ### 6. Inferência de tipo de audiência
 Detectar subtipo automaticamente pela classe processual + tipo gravado:
 - Ler `references/tipos_audiencia_vvd.md` (Justificação, Oitiva Especial, AIJ, Custódia, Una, Preliminar).

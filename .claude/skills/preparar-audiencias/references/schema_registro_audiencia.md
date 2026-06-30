@@ -26,7 +26,18 @@ A coluna `registro_audiencia` armazena o estado estruturado da preparação. Uma
         "necessidade_reinquirir": false
       },
       "forma": "presencial|videoconferencia|precatoria|escuta_especial|domiciliar",
-      "observacao": "string (livre)"
+      "observacao": "string (livre)",
+      "termo_delegacia": {
+        "drive_file_id": "string",
+        "pagina_inicio": "number"
+      },
+      "pinos_sugeridos": [
+        {
+          "timestamp_s": "number",
+          "nota": "string",
+          "categoria": "string"
+        }
+      ]
     }
   ],
 
@@ -79,6 +90,20 @@ A coluna `registro_audiencia` armazena o estado estruturado da preparação. Uma
   }
 }
 ```
+
+## Campos `depoentes[]` — Documentação detalhada
+
+### `termo_delegacia` (object|null)
+- **Tipo**: `{drive_file_id: string, pagina_inicio: int}` ou null
+- **Descrição**: Drive file ID do IP/APF e página onde o termo do depoente começa. Populado por `05d_vincular_termos_ip.py`.
+- **Uso**: Habilita o botão "ver termo (IP)" no sheet do OMBUDS. Um clique navega para o PDF no Drive + PDF reader abre na página inicial do depoimento.
+- **Exemplo**: `{"drive_file_id": "1abc2def3ghi4jkl5mno6pqr", "pagina_inicio": 42}`
+
+### `pinos_sugeridos` (array)
+- **Tipo**: array of `{timestamp_s: number, nota: string, categoria: string}`
+- **Descrição**: Pinos sugeridos pela IA (stub — populado quando spec D3 for implementado). O loader (`vincular_testemunhas.mjs`) converte para o formato `Pino` do DB injetando `id` (UUID) e `fonte: "IA"`.
+- **Uso**: Marca instantes críticos do vídeo de depoimento (refutação, pergunta estratégica acertada, etc.) para análise posterior.
+- **Exemplo**: `[{"timestamp_s": 1234, "nota": "Refutação do álibi", "categoria": "defesa"}]`
 
 ## Migração de dados existentes
 
