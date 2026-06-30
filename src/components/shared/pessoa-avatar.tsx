@@ -40,9 +40,14 @@ const PAPEL_AVATAR_MAP: Record<string, PapelTone> = {
   VITIMA:     { ...NEUTRAL_BG, text: "text-rose-700",    ring: "ring-rose-300/60 dark:ring-rose-700/40",       darkText: "dark:text-rose-300" },
   OFENDIDO:   { ...NEUTRAL_BG, text: "text-rose-700",    ring: "ring-rose-300/60 dark:ring-rose-700/40",       darkText: "dark:text-rose-300" },
   TESTEMUNHA: { ...NEUTRAL_BG, text: "text-blue-700",    ring: "ring-blue-300/60 dark:ring-blue-700/40",       darkText: "dark:text-blue-300" },
+  ACUSACAO:     { ...NEUTRAL_BG, text: "text-rose-700",    ring: "ring-rose-300/60 dark:ring-rose-700/40",       darkText: "dark:text-rose-300" },
+  DEFESA:       { ...NEUTRAL_BG, text: "text-emerald-700", ring: "ring-emerald-300/60 dark:ring-emerald-700/40", darkText: "dark:text-emerald-300" },
+  INTERROGANDO: { ...NEUTRAL_BG, text: "text-emerald-700", ring: "ring-emerald-300/60 dark:ring-emerald-700/40", darkText: "dark:text-emerald-300" },
+  INFORMANTE:   { ...NEUTRAL_BG, text: "text-neutral-500", ring: "ring-neutral-200/70 dark:ring-neutral-700/50", darkText: "dark:text-neutral-300" },
+  PERITO:       { ...NEUTRAL_BG, text: "text-indigo-700",  ring: "ring-indigo-300/60 dark:ring-indigo-700/40",   darkText: "dark:text-indigo-300" },
 };
 
-const DEFAULT_TONE: PapelTone = { ...NEUTRAL_BG, text: "text-violet-700", ring: "ring-violet-300/60 dark:ring-violet-700/40", darkText: "dark:text-violet-300" };
+const DEFAULT_TONE: PapelTone = { ...NEUTRAL_BG, text: "text-neutral-500", ring: "ring-neutral-200/70 dark:ring-neutral-700/50", darkText: "dark:text-neutral-300" };
 
 function getPapelTone(papel?: string | null): PapelTone {
   if (!papel) return DEFAULT_TONE;
