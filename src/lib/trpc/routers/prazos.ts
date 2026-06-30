@@ -551,6 +551,9 @@ export const prazosRouter = router({
     .query(async ({ ctx, input }) => {
       const hoje = new Date();
       const hojeStr = hoje.toISOString().split("T")[0];
+      const em7dias = new Date(hoje);
+      em7dias.setDate(hoje.getDate() + 7);
+      const em7diasStr = em7dias.toISOString().split("T")[0];
 
       const conditions: any[] = [
         sql`${demandas.prazo} IS NOT NULL`,
@@ -575,7 +578,7 @@ export const prazosRouter = router({
           total: sql<number>`COUNT(*)::int`,
           vencidos: sql<number>`COUNT(*) FILTER (WHERE ${demandas.prazo} < ${hojeStr})::int`,
           vencendoHoje: sql<number>`COUNT(*) FILTER (WHERE ${demandas.prazo} = ${hojeStr})::int`,
-          proximosDias: sql<number>`COUNT(*) FILTER (WHERE ${demandas.prazo} > ${hojeStr} AND ${demandas.prazo} <= ${hoje.toISOString().split("T")[0].replace(/\d{2}$/, String(hoje.getDate() + 7).padStart(2, "0"))})::int`,
+          proximosDias: sql<number>`COUNT(*) FILTER (WHERE ${demandas.prazo} > ${hojeStr} AND ${demandas.prazo} <= ${em7diasStr})::int`,
           reuPreso: sql<number>`COUNT(*) FILTER (WHERE ${demandas.reuPreso} = true)::int`,
           reuPresoVencido: sql<number>`COUNT(*) FILTER (WHERE ${demandas.reuPreso} = true AND ${demandas.prazo} < ${hojeStr})::int`,
         })
