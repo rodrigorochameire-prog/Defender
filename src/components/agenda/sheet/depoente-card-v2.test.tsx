@@ -15,6 +15,8 @@ vi.mock("@/lib/trpc/client", () => ({
       getDepoenteMidia: {
         useQuery: () => ({ data: undefined }),
       },
+      addPino: { useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })) },
+      removePino: { useMutation: vi.fn(() => ({ mutate: vi.fn(), isPending: false })) },
     },
     drive: {
       sectionsByProcesso: {
