@@ -1,6 +1,6 @@
-const NOISE_LINE = /^(Num\.\s+\d+|Pág\.\s+\d+|https?:\/\/|Assinado eletronicamente|O sistema registrou|Você tomou ciência|TRIBUNAL|VARA |COMARCA|ESTADO DA BAHIA|MINISTÉRIO PÚBLICO)/i;
+const NOISE_LINE = /^(Num\.\s+\d+|Pág\.\s+\d+|https?:\/\/|Assinado eletronicamente|PODER JUDICIÁRIO|TRIBUNAL DE JUSTIÇA|O sistema registrou|Você tomou ciência|VARA |COMARCA|ESTADO DA BAHIA|MINISTÉRIO PÚBLICO)/i;
 
-const NARRATIVE_START = /(No dia|Na data|Na madrugada|Na noite|Nas proximidades|Por volta|O denunciado|O acusado|A vítima|Em \d{2}\/\d{2})/i;
+const NARRATIVE_START = /(No dia|Na data|Na madrugada|Na noite|Na tarde|Na manhã|Nas proximidades|Por volta|O denunciado|O acusado|A vítima|Em \d{2}\/\d{2}|Segundo o|Consta que|Conforme)/i;
 
 export function extrairNarrativaFatos(texto: string): string {
   if (!texto.trim()) return "";

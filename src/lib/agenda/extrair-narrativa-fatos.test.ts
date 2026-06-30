@@ -29,10 +29,10 @@ describe("extrairNarrativaFatos", () => {
     expect(result).not.toContain("Assinado eletronicamente");
   });
 
-  it("retorna texto já limpo inalterado (sem marcador temporal: retorna tudo sem os ruídos)", () => {
-    const alreadyClean = "O denunciado saiu correndo pela rua.";
-    const result = extrairNarrativaFatos(alreadyClean);
-    expect(result).toBe("O denunciado saiu correndo pela rua.");
+  it("safe fallback — sem marcador temporal: retorna tudo sem os ruídos", () => {
+    const noTrigger = "Texto processual sem marcador temporal algum.";
+    const result = extrairNarrativaFatos(noTrigger);
+    expect(result).toBe("Texto processual sem marcador temporal algum.");
   });
 
   it("handles empty string", () => {
