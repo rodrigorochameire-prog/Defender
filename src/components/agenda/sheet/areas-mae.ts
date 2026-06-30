@@ -12,61 +12,56 @@
 
 import type { SecaoId } from "./secoes-manifest";
 
-export type AreaMae = "resumo" | "estrategia" | "prova-oral" | "documentos" | "execucao";
+export type AreaMae = "imputacao" | "depoimentos" | "laudos-docs" | "estrategia" | "execucao";
 
 /** Ordem de exibição das abas no workspace. */
-export const AREA_ORDER: AreaMae[] = ["resumo", "estrategia", "prova-oral", "documentos", "execucao"];
+export const AREA_ORDER: AreaMae[] = ["imputacao", "depoimentos", "laudos-docs", "estrategia", "execucao"];
 
 export const AREA_LABELS: Record<AreaMae, string> = {
-  resumo: "Resumo",
-  estrategia: "Estratégia",
-  "prova-oral": "Prova oral",
-  documentos: "Documentos",
+  imputacao: "Imputação",
+  depoimentos: "Depoimentos",
+  "laudos-docs": "Laudos e documentos",
+  estrategia: "Estratégia e teses",
   execucao: "Execução",
 };
 
 /**
  * Seção → área-mãe. Exaustivo por construção (Record sobre o union SecaoId).
- * Ambíguas resolvidas pelo uso predominante:
- * - medidas/versao → Documentos (artefatos/narrativa)
- * - preventiva/cautelares/investigacao → Execução (decisão/ato processual)
- * - intimacao → Prova oral (intima o depoente)
- * - fatos (denúncia) → Documentos
  */
 export const SECAO_TO_AREA: Record<SecaoId, AreaMae> = {
-  // RESUMO — identidade + contexto do ato
-  resumo: "resumo",
-  "resumo-audiencia": "resumo",
-  "motivo-designacao": "resumo",
-  sintese: "resumo",
+  // IMPUTAÇÃO — contexto do caso, denúncia, rol de testemunhas
+  resumo: "imputacao",
+  "resumo-audiencia": "imputacao",
+  "motivo-designacao": "imputacao",
+  sintese: "imputacao",
+  imputacao: "imputacao",
+  fatos: "imputacao",
+  depoentes: "imputacao",
 
-  // ESTRATÉGIA — preparação jurídica
+  // DEPOIMENTOS — oitiva, intimação, depoimento IP e juízo
+  depoimentos: "depoimentos",
+  intimacao: "depoimentos",
+
+  // LAUDOS E DOCUMENTOS — provas técnicas, relatos, medidas
+  laudos: "laudos-docs",
+  documentos: "laudos-docs",
+  "relato-vitima": "laudos-docs",
+  medidas: "laudos-docs",
+  versao: "laudos-docs",
+  midia: "laudos-docs",
+
+  // ESTRATÉGIA E TESES — preparação jurídica
   dossie: "estrategia",
   "analise-ia": "estrategia",
-  imputacao: "estrategia",
   contradicoes: "estrategia",
   teses: "estrategia",
   "requerimento-defesa": "estrategia",
 
-  // PROVA ORAL — depoentes e oitiva
-  depoentes: "prova-oral",
-  depoimentos: "prova-oral",
-  intimacao: "prova-oral",
-
-  // DOCUMENTOS — peças, autos e contexto documental
-  fatos: "documentos",
-  "relato-vitima": "documentos",
-  laudos: "documentos",
-  documentos: "documentos",
-  medidas: "documentos",
-  versao: "documentos",
-
-  // EXECUÇÃO — condução ao vivo, registro e medidas processuais
+  // EXECUÇÃO — condução ao vivo e medidas processuais
   ata: "execucao",
   "anotacoes-rapidas": "execucao",
   investigacao: "execucao",
   pendencias: "execucao",
-  midia: "execucao",
   preventiva: "execucao",
   cautelares: "execucao",
 };
@@ -114,7 +109,7 @@ export function computeWorkspaceTabs(args: {
   const areasComConteudo = AREA_ORDER.filter((a) => areaCounts[a] > 0);
   const tabAtiva: AreaMae = areasComConteudo.includes(activeTab)
     ? activeTab
-    : (areasComConteudo[0] ?? "resumo");
+    : (areasComConteudo[0] ?? "imputacao");
 
   return {
     areaCounts,

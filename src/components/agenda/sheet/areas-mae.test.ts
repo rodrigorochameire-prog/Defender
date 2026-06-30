@@ -12,7 +12,7 @@ import { SECOES_DEFAULT, SECOES_JUSTIFICACAO, SECOES_INSTRUCAO, type SecaoId } f
 
 describe("áreas-mãe (mapeamento de seções → modos de trabalho)", () => {
   it("define exatamente 5 áreas, na ordem do workspace", () => {
-    expect(AREA_ORDER).toEqual(["resumo", "estrategia", "prova-oral", "documentos", "execucao"]);
+    expect(AREA_ORDER).toEqual(["imputacao", "depoimentos", "laudos-docs", "estrategia", "execucao"]);
   });
 
   it("tem rótulo legível para cada área", () => {
@@ -36,17 +36,17 @@ describe("áreas-mãe (mapeamento de seções → modos de trabalho)", () => {
   });
 
   it("areaDaSecao resolve a área de uma seção", () => {
-    expect(areaDaSecao("depoentes")).toBe("prova-oral");
+    expect(areaDaSecao("depoentes")).toBe("imputacao");
     expect(areaDaSecao("teses")).toBe("estrategia");
-    expect(areaDaSecao("documentos")).toBe("documentos");
+    expect(areaDaSecao("documentos")).toBe("laudos-docs");
     expect(areaDaSecao("ata")).toBe("execucao");
-    expect(areaDaSecao("resumo")).toBe("resumo");
+    expect(areaDaSecao("resumo")).toBe("imputacao");
   });
 
   it("secoesDaArea filtra preservando a ordem de entrada", () => {
     const visiveis: SecaoId[] = ["resumo", "depoentes", "teses", "depoimentos", "documentos"];
-    expect(secoesDaArea("prova-oral", visiveis)).toEqual(["depoentes", "depoimentos"]);
-    expect(secoesDaArea("resumo", visiveis)).toEqual(["resumo"]);
+    expect(secoesDaArea("imputacao", visiveis)).toEqual(["resumo", "depoentes"]);
+    expect(secoesDaArea("depoimentos", visiveis)).toEqual(["depoimentos"]);
     expect(secoesDaArea("execucao", visiveis)).toEqual([]);
   });
 
@@ -62,25 +62,25 @@ describe("computeWorkspaceTabs (partição do workspace)", () => {
       secoesVisiveis: ["resumo", "depoentes", "depoimentos", "documentos"],
       espinhaVisiveis: ["resumo", "depoentes", "depoimentos", "documentos"],
       contextoIds: [],
-      activeTab: "resumo",
+      activeTab: "imputacao",
     });
-    expect(r.areaCounts.resumo).toBe(1);
-    expect(r.areaCounts["prova-oral"]).toBe(2);
-    expect(r.areaCounts.documentos).toBe(1);
+    expect(r.areaCounts.imputacao).toBe(2);
+    expect(r.areaCounts.depoimentos).toBe(1);
+    expect(r.areaCounts["laudos-docs"]).toBe(1);
     expect(r.areaCounts.estrategia).toBe(0);
     // estratégia e execução não têm conteúdo → fora das abas
-    expect(r.areasComConteudo).toEqual(["resumo", "prova-oral", "documentos"]);
+    expect(r.areasComConteudo).toEqual(["imputacao", "depoimentos", "laudos-docs"]);
   });
 
   it("mantém a aba pedida quando ela tem conteúdo", () => {
     const r = computeWorkspaceTabs({
-      secoesVisiveis: ["resumo", "depoentes"],
-      espinhaVisiveis: ["resumo", "depoentes"],
+      secoesVisiveis: ["resumo", "depoentes", "depoimentos"],
+      espinhaVisiveis: ["resumo", "depoentes", "depoimentos"],
       contextoIds: [],
-      activeTab: "prova-oral",
+      activeTab: "depoimentos",
     });
-    expect(r.tabAtiva).toBe("prova-oral");
-    expect(r.espinhaDaTab).toEqual(["depoentes"]);
+    expect(r.tabAtiva).toBe("depoimentos");
+    expect(r.espinhaDaTab).toEqual(["depoimentos"]);
   });
 
   it("cai na 1ª aba com conteúdo quando a pedida está vazia", () => {
@@ -90,30 +90,30 @@ describe("computeWorkspaceTabs (partição do workspace)", () => {
       contextoIds: [],
       activeTab: "estrategia", // vazia
     });
-    expect(r.tabAtiva).toBe("prova-oral"); // 1ª com conteúdo na ordem
+    expect(r.tabAtiva).toBe("imputacao"); // 1ª com conteúdo na ordem
   });
 
   it("preserva o split espinha/Contexto do AIJ dentro da aba ativa", () => {
-    // documentos: 'fatos' na espinha, 'laudos' no Contexto
+    // imputacao: 'fatos' na espinha, 'resumo' no Contexto
     const r = computeWorkspaceTabs({
-      secoesVisiveis: ["fatos", "laudos", "teses"],
+      secoesVisiveis: ["fatos", "resumo", "laudos", "teses"],
       espinhaVisiveis: ["fatos", "teses"],
-      contextoIds: ["laudos"],
-      activeTab: "documentos",
+      contextoIds: ["resumo", "laudos"],
+      activeTab: "imputacao",
     });
     expect(r.espinhaDaTab).toEqual(["fatos"]);
-    expect(r.contextoDaTab).toEqual(["laudos"]);
+    expect(r.contextoDaTab).toEqual(["resumo"]);
   });
 
-  it("dia/ato sem seções: aba 'resumo', listas vazias, sem crash", () => {
+  it("dia/ato sem seções: aba 'imputacao', listas vazias, sem crash", () => {
     const r = computeWorkspaceTabs({
       secoesVisiveis: [],
       espinhaVisiveis: [],
       contextoIds: [],
-      activeTab: "resumo",
+      activeTab: "imputacao",
     });
     expect(r.areasComConteudo).toEqual([]);
-    expect(r.tabAtiva).toBe("resumo");
+    expect(r.tabAtiva).toBe("imputacao");
     expect(r.espinhaDaTab).toEqual([]);
     expect(r.contextoDaTab).toEqual([]);
   });
