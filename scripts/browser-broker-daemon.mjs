@@ -243,6 +243,15 @@ function runWorker(interpreter, argv, timeoutMs) {
 // um objeto JSON no stdout, guardamos como resultado estruturado; senão, um resumo.
 function buildResultado(stdout) {
   const tail = stdout.slice(-4000)
+  // Preferir marcador explícito (à prova de chaves em logs anteriores, ex: erros PostgREST)
+  const markerMatch = stdout.match(/__VARREDURA_RESULT__\s*(\{[\s\S]*?\})\s*$/m)
+  if (markerMatch) {
+    try {
+      return { ok: true, parsed: JSON.parse(markerMatch[1]), stdoutTail: tail }
+    } catch {
+      /* marcador presente mas payload inválido — cai no fallback abaixo */
+    }
+  }
   const match = stdout.match(/\{[\s\S]*\}\s*$/)
   if (match) {
     try {

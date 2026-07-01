@@ -220,7 +220,7 @@ class Supabase:
         try:
             self._req("POST", "/rest/v1/audit_logs", payload, prefer="return=minimal")
         except Exception as e:
-            log(f"  ⚠ falha audit_write: {e}")
+            log(f"  ⚠ falha audit_write: {str(e)[:200]}")
 
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
@@ -1357,7 +1357,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         sb.audit_write(build_audit_payload("demanda", demanda["id"], "update", changes,
                         DEFENSOR_ID, DEFENSOR_NOME or f"Defensor #{DEFENSOR_ID}", JOB_ID))
     except Exception as e:
-        log(f"  ⚠ audit demanda: {e}")
+        log(f"  ⚠ audit demanda: {str(e)[:200]}")
 
     proc_id = demanda.get("processo_id")
     assistido_id = demanda.get("assistido_id")
@@ -1932,7 +1932,7 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
         "nao_painel": stats["not_found"], "erros": stats["errors"],
         "atos": counts,
     }
-    print(json.dumps(result_json, ensure_ascii=False))  # última linha → browser-broker buildResultado captura
+    print("__VARREDURA_RESULT__ " + json.dumps(result_json, ensure_ascii=False))  # última linha → browser-broker buildResultado captura (marcador único, à prova de chaves em logs anteriores)
 
 
 def print_report(stats: dict, counts: dict) -> None:
