@@ -49,10 +49,10 @@ describe("computeVisibleActions", () => {
   });
 
   it("derruba a menor prioridade primeiro, preservando a ordem visual dos visíveis", () => {
-    // total 120 > 100; budget = 100 - 40 = 60 → derruba até caber
+    // total 120 > 100; budget 60 → caem a (p10) e c (p20)
     const r = computeVisibleActions([item("a", 10), item("b", 30), item("c", 20)], 100, 40);
-    expect(r.overflowIds).toEqual(["a"]); // prioridade 10 cai primeiro
-    expect(r.visibleIds).toEqual(["b", "c"]); // ordem original preservada
+    expect(r.visibleIds).toEqual(["b"]);
+    expect(r.overflowIds).toEqual(["a", "c"]); // ordem original entre os que caíram
   });
 
   it("derruba vários até caber", () => {
@@ -62,7 +62,7 @@ describe("computeVisibleActions", () => {
       40,
     ); // total 160, budget 60 → sobra 1 item de 40 + reserva
     expect(r.visibleIds).toEqual(["d"]);
-    expect(r.overflowIds).toEqual(["a", "c", "b"]); // ordem original entre os que caíram
+    expect(r.overflowIds).toEqual(["a", "b", "c"]); // ordem original, não ordem de queda
   });
 
   it("empate de prioridade: o item mais à direita cai primeiro", () => {
