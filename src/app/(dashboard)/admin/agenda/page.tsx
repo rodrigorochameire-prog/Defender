@@ -14,17 +14,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
-import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { AgendaFilters } from "@/components/agenda/agenda-filters";
 import { PrepararAudienciasModal } from "@/components/agenda/preparar-audiencias-modal";
 import { prepararAudienciasActions } from "@/hooks/use-preparar-audiencias";
@@ -69,12 +63,10 @@ import {
   Lock,
   Shield,
   Scale,
-  MoreHorizontal,
   Filter,
   Target,
   ChevronDown,
   Zap,
-  FileUp,
   FileDown,
   Settings,
   RefreshCw,
@@ -1527,6 +1519,171 @@ export default function AgendaPage() {
     </div>
   );
 
+  // Controle rico: busca (usado como render da action "search" e movido sem alterações internas)
+  const searchControl = isSearchOpen ? (
+    <div className="relative animate-in slide-in-from-right-2 duration-200">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+      <Input
+        ref={searchInputRef}
+        autoFocus
+        placeholder="Buscar..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
+        onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
+        className="pl-8 pr-7 h-7 w-40 text-[11px] bg-black/[0.15] ring-1 ring-white/[0.08] text-white/90 border-0 rounded-lg placeholder:text-white/35"
+      />
+      <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
+        <XCircle className="w-3 h-3" />
+      </button>
+    </div>
+  ) : (
+    <button
+      onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
+      className={cn(
+        "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+        searchTerm && "bg-white/[0.14] text-white"
+      )}
+      title="Buscar"
+    >
+      <Search className="w-[13px] h-[13px]" />
+    </button>
+  );
+
+  // Controle rico: filtros (botão + popover, movido sem alterações internas)
+  const filtersControl = (
+    <div className="relative">
+      <button
+        onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+        className={cn(
+          "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+          (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
+        )}
+        title="Filtros"
+      >
+        <Filter className="w-[13px] h-[13px]" />
+        {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-white" />
+          </span>
+        )}
+      </button>
+      {isFiltersExpanded && (
+        <>
+          <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
+          <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
+            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
+            {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
+              <button
+                key={tipo}
+                onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <span className="flex-1 capitalize">{tipo}</span>
+                {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
+            {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <span className="flex-1 capitalize">{status}</span>
+                {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
+            {["urgente", "alta", "normal", "baixa"].map((prio) => (
+              <button
+                key={prio}
+                onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <span className="flex-1 capitalize">{prio}</span>
+                {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <button
+              onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
+              <span className="flex-1">Cancelados/Redesignados</span>
+              {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+              <>
+                <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+                <button
+                  onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
+                  className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
+                >
+                  Limpar filtros
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // Ações do header (barra + overflow "…") — Task 6
+  const headerActions: HeaderAction[] = [
+    {
+      id: "view",
+      label: "Visualização",
+      priority: 20,
+      render: (
+        <ViewModeDropdown
+          options={AGENDA_VIEW_OPTIONS}
+          value={viewMode}
+          onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
+          variant="dark"
+        />
+      ),
+      overflowItems: AGENDA_VIEW_OPTIONS.map((opt) => ({
+        id: `view-${opt.value}`,
+        label: opt.label,
+        icon: opt.icon,
+        onSelect: () => { setViewMode(opt.value as "calendar" | "week" | "list"); setSelectedPeriodo(null); },
+      })),
+    },
+    {
+      id: "search",
+      label: "Buscar",
+      icon: Search,
+      priority: 15,
+      render: searchControl,
+      onSelect: () => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); },
+    },
+    {
+      id: "filters",
+      label: "Filtros",
+      icon: Filter,
+      priority: 15,
+      render: filtersControl,
+      onSelect: () => setIsFiltersExpanded(true),
+    },
+    { id: "refresh", label: "Atualizar pauta", icon: RefreshCw, priority: 40, hideLabel: true, onSelect: () => setIsAtualizarPautaOpen(true) },
+    { id: "pje", label: "PJe", icon: Download, priority: 50, onSelect: () => setIsPJeImportModalOpen(true) },
+    { id: "novo", label: "Novo", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => setIsCreateModalOpen(true) },
+    // ── nasce no "…" (priority 0) ──
+    { id: "preparar", label: "Preparar audiências", icon: Target, priority: 0, group: "acoes", onSelect: () => prepararAudienciasActions.open() },
+    { id: "config", label: "Configurações", icon: Settings, priority: 0, group: "admin", onSelect: () => setIsGoogleConfigModalOpen(true) },
+    { id: "registros", label: "Buscar Registros", icon: Database, priority: 0, group: "admin", onSelect: () => setIsBuscaRegistrosModalOpen(true) },
+    { id: "escalas", label: "Configurar Escalas", icon: UserCog, priority: 0, group: "admin", onSelect: () => setIsEscalaModalOpen(true) },
+    { id: "import-seeu", label: "Importar do SEEU", icon: Lock, priority: 0, group: "importar", onSelect: () => setIsSEEUImportModalOpen(true) },
+    { id: "import-ical", label: "Importar iCal", icon: Upload, priority: 0, group: "importar", onSelect: () => setIsICalImportModalOpen(true) },
+    { id: "sync-google", label: "Sincronizar Google", icon: RefreshCw, priority: 0, group: "importar", onSelect: () => setIsGoogleSyncModalOpen(true) },
+    { id: "export", label: "Exportar Agenda", icon: FileDown, priority: 0, group: "exportar", onSelect: () => setIsExportModalOpen(true) },
+  ];
+
   // Loading state
   if (isLoading) {
     return (
@@ -1579,256 +1736,31 @@ export default function AgendaPage() {
         </TooltipProvider>,
         headerSlot
       )}
-      {/* ====== CHARCOAL HEADER (modo merged: utility + page header numa só linha) ====== */}
-      <CollapsiblePageHeader
+      {/* ====== GLASS HEADER (vidro em duas camadas) ====== */}
+      <GlassHeaderShell
         title="Agenda"
         icon={CalendarIcon}
-        mergeUtilityRow
-      >
-        {/* Linha única: título compacto + filtros centrais + cluster de ações */}
-        <div className="flex items-center gap-2.5">
-          {/* Título compacto — inline */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <CalendarIcon className="w-4 h-4 text-white/70" />
-            <h1 className="text-white text-[13px] font-semibold tracking-tight leading-none">
-              Agenda
-            </h1>
-            <span className="text-[10px] text-white/55 tabular-nums leading-none">
-              {stats.hoje} · {stats.semana}
-            </span>
-          </div>
-
-          <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-          {/* Centro — pills de atribuição (encolhe/scrolla) */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-dark-subtle">
-            <AtribuicaoPills
-              variant="dark"
-              options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
-              selectedValues={Array.from(areaFilters)}
-              onToggle={handleAreaFilterToggle}
-              onClear={() => setAreaFilters(new Set(["all"]))}
-              counts={Object.fromEntries(
-                AGENDA_ATRIBUICAO_PILL_OPTIONS
-                  .filter(o => o.value !== "all")
-                  .map(o => [o.label, countByArea[o.value] ?? 0])
-              )}
-              iconOnly
-            />
-          </div>
-
-          {/* Direita — view + busca + filtros + ações */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* ViewModeDropdown — oculto abaixo de lg (fica no menu "...") */}
-            <div className="hidden lg:flex items-center gap-1.5">
-              <ViewModeDropdown
-                options={AGENDA_VIEW_OPTIONS}
-                value={viewMode}
-                onChange={(v) => { setViewMode(v as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
-                variant="dark"
-              />
-
-              <div className="w-px h-5 bg-white/[0.10]" />
-            </div>
-
-            {/* Search + Filter — ocultos abaixo de md (ficam no menu "...") */}
-            <div className="hidden md:flex items-center gap-1.5">
-              {/* Search toggle */}
-              {isSearchOpen ? (
-                <div className="relative animate-in slide-in-from-right-2 duration-200">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-                  <Input
-                    ref={searchInputRef}
-                    autoFocus
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onBlur={() => { if (!searchTerm) setIsSearchOpen(false); }}
-                    onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
-                    className="pl-8 pr-7 h-7 w-40 text-[11px] bg-black/[0.15] ring-1 ring-white/[0.08] text-white/90 border-0 rounded-lg placeholder:text-white/35"
-                  />
-                  <button onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 cursor-pointer">
-                    <XCircle className="w-3 h-3" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                  className={cn(
-                    "w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
-                    searchTerm && "bg-white/[0.14] text-white"
-                  )}
-                  title="Buscar"
-                >
-                  <Search className="w-[13px] h-[13px]" />
-                </button>
-              )}
-
-              <div className="relative">
-                <button
-                  onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-                  className={cn(
-                    "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
-                    (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
-                  )}
-                  title="Filtros"
-                >
-                  <Filter className="w-[13px] h-[13px]" />
-                  {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    </span>
-                  )}
-                </button>
-                {isFiltersExpanded && (
-                  <>
-                    <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
-                    <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
-                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
-                      {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
-                        <button
-                          key={tipo}
-                          onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                        >
-                          <span className="flex-1 capitalize">{tipo}</span>
-                          {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                        </button>
-                      ))}
-                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
-                      {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                        >
-                          <span className="flex-1 capitalize">{status}</span>
-                          {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                        </button>
-                      ))}
-                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                      <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
-                      {["urgente", "alta", "normal", "baixa"].map((prio) => (
-                        <button
-                          key={prio}
-                          onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                        >
-                          <span className="flex-1 capitalize">{prio}</span>
-                          {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                        </button>
-                      ))}
-                      <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                      <button
-                        onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                      >
-                        {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
-                        <span className="flex-1">Cancelados/Redesignados</span>
-                        {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                      </button>
-                      {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-                        <>
-                          <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                          <button
-                            onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
-                            className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
-                          >
-                            Limpar filtros
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="w-px h-5 bg-white/[0.10]" />
-
-            {/* Overflow menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  title="Mais opções"
-                  className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-                >
-                  <MoreHorizontal className="w-[15px] h-[15px]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {/* Visualização — visível só abaixo de lg */}
-                {AGENDA_VIEW_OPTIONS.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={opt.value}
-                      className="lg:hidden"
-                      onClick={() => { setViewMode(opt.value as "calendar" | "week" | "list"); setSelectedPeriodo(null); }}
-                    >
-                      {Icon && <Icon className="w-4 h-4 mr-2" />}
-                      {opt.label}
-                    </DropdownMenuItem>
-                  );
-                })}
-                {/* Buscar — visível só abaixo de md */}
-                <DropdownMenuItem
-                  className="md:hidden"
-                  onClick={() => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); }}
-                >
-                  <Search className="w-4 h-4 mr-2" />Buscar
-                </DropdownMenuItem>
-                {/* Filtros — visível só abaixo de md */}
-                <DropdownMenuItem
-                  className="md:hidden"
-                  onClick={() => setIsFiltersExpanded(true)}
-                >
-                  <Filter className="w-4 h-4 mr-2" />Filtros
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="md:hidden" />
-                <DropdownMenuItem onClick={() => prepararAudienciasActions.open()}><Target className="w-4 h-4 mr-2" />Preparar audiências</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsGoogleConfigModalOpen(true)}><Settings className="w-4 h-4 mr-2" />Configuracoes</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsBuscaRegistrosModalOpen(true)}><Database className="w-4 h-4 mr-2" />Buscar Registros</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsEscalaModalOpen(true)}><UserCog className="w-4 h-4 mr-2" />Configurar Escalas</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsPJeImportModalOpen(true)}><FileUp className="w-4 h-4 mr-2" />Importar do PJe</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsSEEUImportModalOpen(true)}><Lock className="w-4 h-4 mr-2" />Importar do SEEU</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsICalImportModalOpen(true)}><Upload className="w-4 h-4 mr-2" />Importar iCal</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsGoogleSyncModalOpen(true)}><RefreshCw className="w-4 h-4 mr-2" />Sincronizar Google</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsExportModalOpen(true)}><FileDown className="w-4 h-4 mr-2" />Exportar Agenda</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {/* Atalho: Atualizar pauta (automático do PJe) */}
-            <button
-              onClick={() => setIsAtualizarPautaOpen(true)}
-              title="Atualizar pauta"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-            >
-              <RefreshCw className="w-[15px] h-[15px]" />
-            </button>
-            {/* Atalho de uso frequente: Importar do PJe */}
-            <button
-              onClick={() => setIsPJeImportModalOpen(true)}
-              title="Importar do PJe"
-              className="h-8 px-2.5 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Download className="w-[15px] h-[15px]" />
-              <span className="hidden sm:inline">PJe</span>
-            </button>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              title="Novo Evento"
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Novo</span>
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+        stats={
+          <span className="text-[11px] text-white/55 tabular-nums leading-none">
+            {stats.hoje} · {stats.semana}
+          </span>
+        }
+        filters={(collapsed) => (
+          <AtribuicaoSwitchWell
+            collapsed={collapsed}
+            options={AGENDA_ATRIBUICAO_PILL_OPTIONS}
+            selectedValues={Array.from(areaFilters)}
+            onToggle={handleAreaFilterToggle}
+            onClear={() => setAreaFilters(new Set(["all"]))}
+            counts={Object.fromEntries(
+              AGENDA_ATRIBUICAO_PILL_OPTIONS
+                .filter(o => o.value !== "all")
+                .map(o => [o.label, countByArea[o.value] ?? 0])
+            )}
+          />
+        )}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3">
