@@ -102,11 +102,16 @@ export function AtribuicaoSwitchWell({
           const hex = getAtribuicaoHex(opt.label);
           const isActive = selectedValues.includes(opt.value);
           return (
-            <DropdownMenuItem key={opt.value} onClick={() => onToggle(opt.value)}>
+            <DropdownMenuItem
+              key={opt.value}
+              onClick={() => onToggle(opt.value)}
+              // Multi-select: mantém o menu aberto para alternar várias atribuições
+              onSelect={singleSelect ? undefined : (e) => e.preventDefault()}
+            >
               {Icon && <Icon className="w-4 h-4 mr-2" style={{ color: hex }} />}
               {opt.label}
               {counts?.[opt.label] !== undefined && (
-                <span className="ml-2 text-[10px] tabular-nums text-muted-foreground">
+                <span className="ml-2 text-[11px] tabular-nums text-muted-foreground">
                   {counts[opt.label]}
                 </span>
               )}
