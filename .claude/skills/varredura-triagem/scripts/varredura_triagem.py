@@ -78,7 +78,7 @@ _DEMANDA_SELECT = (
     "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
     "assistidos!inner(nome)"
 )
-CDP_URL = "http://127.0.0.1:9222"
+CDP_URL = os.environ.get("VARREDURA_CDP_URL", "http://127.0.0.1:9222")
 PAGE_LIMIT = 8
 
 # Navegação em árvore do painel (situação → comarca → vara), portada do worker de
@@ -1501,15 +1501,31 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
     counts: dict[str, int] = {}
     pending_ai_ids: list[int] = []  # demandas p/ enriquecimento IA (fase 2)
 
+    # EP-only: rodada só de Execução Penal. NÃO fazer login/navegação no PJe —
+    # isso reaproveitaria/navegaria a aba e destruiria a Mesa do SEEU já logada
+    # pelo usuário. O leitor SEEU (read_seeu_expediente) acha sua própria aba do
+    # SEEU em ctx.pages, então o caminho EP não usa `page`.
+    ep_only = (atribuicao == "EXECUCAO_PENAL") or (
+        bool(demandas) and all(
+            ((d.get("processos") or {}).get("atribuicao")) == "EXECUCAO_PENAL"
+            for d in demandas
+        )
+    )
+
     async with async_playwright() as p:
         if modo == "cdp":
             try:
                 browser = await p.chromium.connect_over_cdp(CDP_URL)
                 ctx = browser.contexts[0]
-                # Procurar a página do painel
-                # Garante sessão logada — abre o login e espera se necessário.
-                page = await _ensure_logged_in(ctx)
-                log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
+                if ep_only:
+                    # SEEU já logado; não navegar (preserva a aba da Mesa do SEEU).
+                    page = next((pg for pg in ctx.pages if "seeu" in (pg.url or "")),
+                                ctx.pages[0] if ctx.pages else await ctx.new_page())
+                    log(f"CDP attached (EP/SEEU) — {len(ctx.pages)} abas")
+                else:
+                    # Garante sessão logada no PJe — abre o login e espera se necessário.
+                    page = await _ensure_logged_in(ctx)
+                    log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
             except Exception as e:
                 sys.exit(f"ERRO CDP: {e}\nDica: lance Chromium com --remote-debugging-port=9222")
         else:  # direct
