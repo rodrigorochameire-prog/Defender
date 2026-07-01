@@ -526,7 +526,7 @@ function DemandaGridCard({
     <div className="group relative bg-white dark:bg-neutral-900/95 rounded-2xl border border-neutral-200/80 dark:border-neutral-800/80 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-neutral-200/50 dark:hover:shadow-black/30 hover:border-neutral-300 dark:hover:border-neutral-700 hover:-translate-y-0.5">
       {/* TOP BAR INDICATOR - appears on hover (like assistidos/processos) */}
       <div
-        className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300"
         style={{
           background: `linear-gradient(to right, transparent, ${atribuicaoBorderColor}, transparent)`
         }}
@@ -534,7 +534,7 @@ function DemandaGridCard({
 
       {/* Background gradient on hover */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none rounded-2xl transition-opacity duration-500"
+        className="absolute inset-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 pointer-events-none rounded-2xl transition-opacity duration-500"
         style={{
           background: `linear-gradient(to bottom right, ${atribuicaoBorderColor}15 0%, ${atribuicaoBorderColor}08 30%, transparent 60%)`
         }}
@@ -618,7 +618,7 @@ function DemandaGridCard({
           </div>
           <button
             onClick={() => setShowQuickActions(true)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all opacity-0 group-hover:opacity-100"
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
           >
             <Zap className="w-3.5 h-3.5" />
           </button>

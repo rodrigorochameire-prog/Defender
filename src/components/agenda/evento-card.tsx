@@ -159,7 +159,7 @@ export function EventoCard({
       {/* Quick Actions no hover */}
       <div className={cn(
         "absolute top-2 right-2 flex items-center gap-1 z-10",
-        "opacity-0 group-hover:opacity-100 transition-all duration-200"
+        "opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200"
       )}>
         <Tooltip>
           <TooltipTrigger asChild>

@@ -167,7 +167,7 @@ export function TabDepoentes({
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleRemoveDepoente(depoente.id); }}
-                    className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-rose-600 hover:text-rose-700 transition-opacity cursor-pointer"
+                    className="absolute top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-rose-600 hover:text-rose-700 transition-opacity cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>

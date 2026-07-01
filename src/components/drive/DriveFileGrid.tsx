@@ -128,7 +128,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
       <div
         className={cn(
           "absolute top-1.5 left-1.5 z-10 transition-opacity duration-150",
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          isSelected ? "opacity-100" : "opacity-100 md:opacity-0 md:group-hover:opacity-100"
         )}
         onClick={(e) => { e.stopPropagation(); ctx.toggleFileSelection(file.id); }}
       >
@@ -144,7 +144,7 @@ function FileGridCard({ file }: { file: DriveFile }) {
         <div
           className={cn(
             "absolute top-1.5 right-1.5 z-10 transition-opacity duration-150",
-            "opacity-0 group-hover:opacity-100"
+            "opacity-100 md:opacity-0 md:group-hover:opacity-100"
           )}
           onClick={(e) => e.stopPropagation()}
         >

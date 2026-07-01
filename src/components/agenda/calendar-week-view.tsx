@@ -624,7 +624,7 @@ export function CalendarWeekView({
                     </div>
                     {/* Quick-create ghost placeholder on empty slots */}
                     {isEmpty && onCreateClick && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded bg-emerald-50/30 dark:bg-emerald-950/20 border border-dashed border-emerald-300/50 dark:border-emerald-700/40">
+                      <div className="absolute inset-0 flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity pointer-events-none rounded bg-emerald-50/30 dark:bg-emerald-950/20 border border-dashed border-emerald-300/50 dark:border-emerald-700/40">
                         <div className="flex items-center gap-0.5">
                           <Plus className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 ml-1">Nova audiência</span>

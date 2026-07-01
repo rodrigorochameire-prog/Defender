@@ -279,7 +279,7 @@ export function SpeakerLabelsEditor({ fileDbId, assistidoId }: SpeakerLabelsEdit
               )}
               <button
                 onClick={() => startEdit(item)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto cursor-pointer"
+                className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-150 ml-auto cursor-pointer"
                 title="Editar"
               >
                 <Pencil className="w-3 h-3 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />

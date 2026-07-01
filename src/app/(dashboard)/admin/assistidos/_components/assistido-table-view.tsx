@@ -332,7 +332,7 @@ export function AssistidoTableView({
                     "h-7 w-7 inline-flex items-center justify-center rounded-md transition-all shrink-0",
                     isPinned
                       ? "text-amber-500"
-                      : "text-neutral-300 dark:text-neutral-600 opacity-0 group-hover:opacity-100 hover:text-amber-500",
+                      : "text-neutral-300 dark:text-neutral-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-amber-500",
                   )}
                   onClick={(e) => { e.stopPropagation(); onTogglePin(assistido.id); }}
                 >
@@ -345,7 +345,7 @@ export function AssistidoTableView({
                     <Link
                       href={`/admin/assistidos/${assistido.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-neutral-300 dark:text-neutral-600 opacity-0 group-hover:opacity-100 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
+                      className="h-7 w-7 inline-flex items-center justify-center rounded-md text-neutral-300 dark:text-neutral-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-all"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </Link>

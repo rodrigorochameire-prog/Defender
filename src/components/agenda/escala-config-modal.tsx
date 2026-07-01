@@ -288,7 +288,7 @@ export function EscalaConfigModal({ isOpen, onClose, onSave, currentConfig }: Es
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveDefensor(defensor.id)}
-                      className="opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs h-7 px-2"
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 text-neutral-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs h-7 px-2"
                     >
                       Remover
                     </Button>
