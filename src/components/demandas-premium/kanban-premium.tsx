@@ -63,6 +63,7 @@ import { InlineDropdown } from "@/components/shared/inline-dropdown";
 import { getAtoOptionsAgrupados } from "@/config/atos-por-atribuicao";
 import { rotuloDelegacaoChip } from "./delegacao-chip";
 import { wipHealth, WIP_LIMITS } from "./kanban-wip";
+import { AnaliseResumoFields, type AnaliseData } from "./AnaliseResumo";
 
 // Context para edição do ato direto no card do kanban. Evita threadar
 // onAtoChange por todos os níveis (colunas, listas, agrupamentos) — o
@@ -121,6 +122,8 @@ interface KanbanDemanda {
   providenciaResumo?: string | null;
   /** Prévia do registro "Resumo e providências" (IA) — para glancear no card. */
   analiseResumo?: string | null;
+  /** JSON estruturado `{objeto,decidido,providencia,prazo,recurso,_status,_fonte}` do registro de análise IA. */
+  analiseData?: AnaliseData | null;
   lastEvento?: EventoLine | null;
   pendenteEvento?: EventoLine | null;
   data?: string | null;
@@ -501,17 +504,10 @@ function KanbanCard({
   const isAlta = !isUrgente && demanda.prioridade === "ALTA";
   // Registros (ciência/diligência/anotação) criados pela varredura nível 2.
   const registrosCount = typeof demanda.registrosCount === "number" ? demanda.registrosCount : 0;
-  // Prévia da análise IA: extrai a "Providência/Prazo" (o que fazer) do registro
-  // "Resumo e providências"; fallback p/ "Objeto". Glanceável no card.
-  const analisePreview = (() => {
-    const raw = (demanda.analiseResumo || "").slice(0, 450);
-    if (!raw) return null;
-    // Tolera formato antigo (**Label:**) e novo (Label:).
-    const prov = raw.match(/\*{0,2}Provid[êe]ncia[^:]*:\*{0,2}\s*([^\n]+)/i);
-    const obj = raw.match(/\*{0,2}Objeto:\*{0,2}\s*([^\n]+)/i);
-    const txt = (prov?.[1] || obj?.[1] || raw).replace(/\*\*/g, "").trim();
-    return txt || null;
-  })();
+  // Prévia da análise IA — glanceável no card. `analiseData` (JSON de contrato)
+  // é a fonte preferencial; `analiseResumo` (texto legado) só entra como fallback
+  // via AnaliseResumoFields quando ainda não há JSON estruturado no registro.
+  const temAnalise = Boolean(demanda.analiseData) || Boolean((demanda.analiseResumo || "").trim());
   const isPreso = demanda.estadoPrisional === "preso" || demanda.reuPreso;
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
@@ -978,15 +974,15 @@ function KanbanCard({
         {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável. Neutra
             (sem cor própria) pra não competir com a cor funcional do status
             logo acima — o ícone Sparkles já comunica "vem da IA" pela forma. */}
-        {analisePreview && (
+        {temAnalise && (
           <div
             className="flex items-start gap-1 mb-1 px-1.5 py-1 rounded-md bg-neutral-50 dark:bg-neutral-800/40"
             title={demanda.analiseResumo ?? undefined}
           >
             <Sparkles className="w-2.5 h-2.5 text-neutral-400 dark:text-neutral-500 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
-            <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2 min-w-0">
-              {analisePreview}
-            </span>
+            <div className="min-w-0 flex-1 [&_p]:line-clamp-2 [&_p]:!text-[10px]">
+              <AnaliseResumoFields data={demanda.analiseData ?? null} resumo={demanda.analiseResumo ?? null} />
+            </div>
           </div>
         )}
 

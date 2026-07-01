@@ -357,6 +357,7 @@ export const demandas = pgTable("demandas", {
     artigos?: string[];
     qualificadoras?: string[];
     fase_processual?: string;
+    motivo?: string;
     atribuicao_detectada?: string;
     reu_preso_detectado?: boolean;
     intimado?: string;
@@ -374,6 +375,7 @@ export const demandas = pgTable("demandas", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   syncedAt: timestamp("synced_at"),
+  analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
 }, (table) => [
   index("demandas_processo_id_idx").on(table.processoId),
   index("demandas_assistido_id_idx").on(table.assistidoId),

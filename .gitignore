@@ -126,6 +126,7 @@ logs/
 !.claude/skills-cowork/transcrever-depoimento/
 !.claude/skills-cowork/vvd/
 !.claude/skills-cowork/analise-acordao/
+!.claude/skills-cowork/varredura-triagem/
 # Lixo dentro das skills versionadas (artefatos Finder, backups) segue ignorado
 .claude/skills-cowork/**/Icon?
 .claude/skills-cowork/**/*.bak

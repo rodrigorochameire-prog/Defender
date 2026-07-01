@@ -27,6 +27,7 @@ import { documentsRouter } from "./documents";
 import { whatsappRouter } from "./whatsapp";
 import { whatsappChatRouter } from "./whatsapp-chat";
 import { auditLogsRouter } from "./auditLogs";
+import { auditoriaRouter } from "./auditoria";
 import { delegacaoRouter } from "./delegacao";
 import { activityLogsRouter } from "./activity-logs";
 import { juradosRouter } from "./jurados";
@@ -138,7 +139,8 @@ export const appRouter = router({
   documents: documentsRouter,
   whatsapp: whatsappRouter,
   auditLogs: auditLogsRouter,
-  
+  auditoria: auditoriaRouter,
+
   // ==========================================
   // SISTEMA DE EQUIPE
   // ==========================================

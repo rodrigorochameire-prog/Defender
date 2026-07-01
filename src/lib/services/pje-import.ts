@@ -52,6 +52,7 @@ export interface ImportResult {
   skipped: number;
   errors: string[];
   assistidosSemSolar: number;
+  rows: Array<{ pjeDocumentoId: string | null; demandaId: number; action: "imported" | "updated" | "skipped" }>;
 }
 
 // ============================================================================
@@ -179,6 +180,7 @@ export async function importarDemandas(
     skipped: 0,
     errors: [],
     assistidosSemSolar: 0,
+    rows: [],
   };
 
   const assistidoIdsImportados = new Set<number>();
@@ -489,16 +491,19 @@ export async function importarDemandas(
               .set(patch as any)
               .where(eq(demandas.id, existingDemanda.id));
             results.updated++;
+            results.rows.push({ pjeDocumentoId: existingDemanda.pjeDocumentoId ?? (row.idDocumentoPje || null), demandaId: existingDemanda.id, action: "updated" });
           } else {
             results.skipped++;
+            results.rows.push({ pjeDocumentoId: existingDemanda.pjeDocumentoId ?? (row.idDocumentoPje || null), demandaId: existingDemanda.id, action: "skipped" });
           }
         } else {
           results.skipped++;
+          results.rows.push({ pjeDocumentoId: existingDemanda.pjeDocumentoId ?? (row.idDocumentoPje || null), demandaId: existingDemanda.id, action: "skipped" });
         }
         continue;
       }
 
-      await db.insert(demandas).values({
+      const [inserted] = await db.insert(demandas).values({
         processoId: processo.id,
         assistidoId: assistido.id,
         ato: row.ato,
@@ -522,10 +527,11 @@ export async function importarDemandas(
           id_documento_pje: row.idDocumentoPje || undefined,
           vara: row.vara || undefined,
         } as any : undefined,
-      });
+      }).returning({ id: demandas.id });
 
       atribuicoesAfetadas.add(String(targetAtribuicao));
       results.imported++;
+      results.rows.push({ pjeDocumentoId: row.idDocumentoPje || null, demandaId: inserted.id, action: "imported" });
     } catch (error) {
       results.errors.push(`${row.assistido}: ${(error as Error).message}`);
     }
