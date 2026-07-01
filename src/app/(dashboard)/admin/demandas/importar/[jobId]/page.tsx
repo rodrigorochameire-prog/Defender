@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { useSearchParams } from "next/navigation";
 import { IntimacoesStagingView } from "@/components/demandas-premium/intimacoes-staging-view";
 
 export default function ImportarIntimacoesPage({
@@ -9,5 +10,7 @@ export default function ImportarIntimacoesPage({
   params: Promise<{ jobId: string }>;
 }) {
   const { jobId } = use(params);
-  return <IntimacoesStagingView jobId={Number(jobId)} />;
+  const searchParams = useSearchParams();
+  const system = searchParams.get("system") === "seeu" ? "seeu" : "pje";
+  return <IntimacoesStagingView jobId={Number(jobId)} system={system} />;
 }

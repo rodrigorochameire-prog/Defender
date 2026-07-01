@@ -28,6 +28,7 @@ const AdminConfigModal = dynamic(() => import("@/components/demandas-premium/adm
 const SheetsImportModal = dynamic(() => import("@/components/demandas-premium/sheets-import-modal").then(m => ({ default: m.SheetsImportModal })), { ssr: false });
 const SEEUImportModal = dynamic(() => import("@/components/demandas-premium/seeu-import-modal").then(m => ({ default: m.SEEUImportModal })), { ssr: false });
 const IntimacoesImportModal = dynamic(() => import("@/components/demandas-premium/intimacoes-import-modal").then(m => ({ default: m.IntimacoesImportModal })), { ssr: false });
+const SeeuIntimacoesImportModal = dynamic(() => import("@/components/demandas-premium/seeu-intimacoes-import-modal").then(m => ({ default: m.SeeuIntimacoesImportModal })), { ssr: false });
 const VarreduraTriggerModal = dynamic(() => import("@/components/demandas-premium/varredura-trigger-modal").then(m => ({ default: m.VarreduraTriggerModal })), { ssr: false });
 const DuplicatesModal = dynamic(() => import("@/components/demandas-premium/duplicates-modal").then(m => ({ default: m.DuplicatesModal })), { ssr: false });
 const DelegacaoModal = dynamic(() => import("@/components/demandas/delegacao-modal").then(m => ({ default: m.DelegacaoModal })), { ssr: false });
@@ -766,6 +767,7 @@ export default function Demandas() {
   const [isSheetsImportModalOpen, setIsSheetsImportModalOpen] = useState(false);
   const [isSEEUImportModalOpen, setIsSEEUImportModalOpen] = useState(false);
   const [isIntimacoesImportOpen, setIsIntimacoesImportOpen] = useState(false);
+  const [isIntimacoesSEEUOpen, setIsIntimacoesSEEUOpen] = useState(false);
   const [isVarreduraModalOpen, setIsVarreduraModalOpen] = useState(false);
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
@@ -3193,6 +3195,23 @@ export default function Demandas() {
                 </div>
               </button>
 
+              <button
+                onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesSEEUOpen(true); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 mt-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+                style={{ width: "calc(100% - 0.5rem)" }}
+              >
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <Gavel className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações SEEU (Execução Penal)</span>
+                    <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
+                  </div>
+                  <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto da Mesa do Defensor (SEEU)</span>
+                </div>
+              </button>
+
               <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
               <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
               <button
@@ -4027,6 +4046,10 @@ export default function Demandas() {
       <IntimacoesImportModal
         isOpen={isIntimacoesImportOpen}
         onClose={() => setIsIntimacoesImportOpen(false)}
+      />
+      <SeeuIntimacoesImportModal
+        isOpen={isIntimacoesSEEUOpen}
+        onClose={() => setIsIntimacoesSEEUOpen(false)}
       />
       <VarreduraTriggerModal
         isOpen={isVarreduraModalOpen}
