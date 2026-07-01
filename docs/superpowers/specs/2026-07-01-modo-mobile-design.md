@@ -8,16 +8,16 @@
 
 ## 1. Contexto e problema
 
-O OMBUDS é um app Next.js 15 (App Router, PWA via Serwist) com ~86 rotas sob `(dashboard)/admin`. Já existe **infraestrutura mobile parcial e inconsistente**:
+O OMBUDS é um app Next.js 15 (App Router, PWA via Serwist) com **~86 seções de topo** (≈140 arquivos `page.tsx` no total, contando subpáginas) sob `(dashboard)/admin`. Já existe **infraestrutura mobile parcial e inconsistente**:
 
 - `useIsMobile()` (`src/hooks/use-mobile.ts`, breakpoint 768px) e `useMediaQuery()`.
 - `MobileBottomNav` (`src/components/shared/mobile-bottom-nav.tsx`) — 5 tabs fixos, montado no `admin-sidebar.tsx`.
 - Drawer mobile via `Sheet` (estado `openMobile`) no sidebar.
 - Espaçamento `pb-16 md:pb-0` no container de scroll para dar lugar à bottom nav.
 - `ui/sheet.tsx` (bottom sheets já usados em ~9 arquivos), `shared/command-palette.tsx` (cmdk), `ui/table`, `ui/tabs`, `ui/scroll-area`, `shared/floating-dock.tsx`.
-- **24 arquivos** já fazem responsividade ad-hoc (`md:hidden` etc.) — inconsistente.
+- Responsividade ad-hoc espalhada: ~12 arquivos usam `md:hidden`, ~34 importam `ui/sheet`, ~14 usam `Sheet side="bottom"` — sem padronização.
 
-**Problema:** apenas um punhado das ~86 rotas tem tratamento mobile real. O resto quebra no celular (overflow horizontal, tabelas espremidas, diálogos maiores que a viewport, alvos de toque pequenos). Não há biblioteca de padrões compartilhada → cada correção vira um hack pontual.
+**Problema:** apenas um punhado das ~86 seções tem tratamento mobile real. O resto quebra no celular (overflow horizontal, tabelas espremidas, diálogos maiores que a viewport, alvos de toque pequenos). Não há biblioteca de padrões compartilhada → cada correção vira um hack pontual.
 
 ## 2. Objetivos
 
@@ -40,7 +40,7 @@ O OMBUDS é um app Next.js 15 (App Router, PWA via Serwist) com ~86 rotas sob `(
 | Intenção central | Correção de baseline em **todas** as páginas (amplitude), mas com biblioteca de padrões que a torne **polida e coesa** |
 | Páginas hostis | **View mobile sob medida** para cada uma (não apenas degradação) |
 | Navegação mobile | **Blend**: bottom bar com 4 tabs fixos + **Mais** (launcher em bottom sheet) + **busca sutil** (ícone de lupa no header + campo dentro do launcher). O ☰ left-drawer **se aposenta no celular** |
-| Tabs fixos (default) | Home · Agenda · Demandas · Assistidos · **Mais** (reordenáveis conforme uso real) |
+| Tabs fixos (default) | Home · Agenda · Demandas · Assistidos · **Mais** (reordenáveis conforme uso real). **Drive sai da barra** e passa para dentro do launcher "Mais" (hoje é um dos 5 tabs) |
 | Busca | Reutiliza o `command-palette.tsx` existente (cmdk); nunca um search bar permanente ocupando tela |
 
 ## 4. Arquitetura — três camadas
@@ -120,14 +120,15 @@ Este design captura a visão completa. Cada fase é um sub-projeto com seu próp
 
 Entregáveis concretos:
 
-1. `MobileBottomNav` refatorado (config-driven, 4 tabs + Mais).
-2. `MobileMoreSheet` (launcher em grade agrupada, sourcing do registro de rotas do sidebar).
-3. `MobileSearchOverlay` (wrapper do command-palette; lupa no header + campo no launcher).
-4. Aposentadoria do ☰ left-drawer no mobile.
-5. `ResponsiveDialog`, `DataCards`/`ResponsiveTable`, `MobileActionBar`, `FilterSheet`, `MobilePageShell`.
-6. Tokens/utilitários: breakpoint, 44px, safe-area.
-7. Checklist de auditoria mobile por página (documento) + smoke test Playwright base.
-8. **Sem** rollout em massa nas 86 páginas (isso é Fase 1) — apenas 1–2 páginas piloto para validar os primitivos ponta-a-ponta.
+1. **Extrair o registro de rotas** hoje inline no `admin-sidebar.tsx` (2084 linhas, sem módulo exportável) para um módulo compartilhado (ex.: `src/components/layouts/nav-registry.ts`) consumido tanto pelo sidebar quanto pelo `MobileMoreSheet`. Trabalho **greenfield**, não reuso — evita duplicar a fonte de verdade das rotas.
+2. `MobileBottomNav` refatorado (config-driven, 4 tabs + Mais), consumindo o registro do item 1.
+3. `MobileMoreSheet` (launcher em grade agrupada, sourcing do mesmo registro de rotas).
+4. `MobileSearchOverlay` (wrapper do command-palette; lupa no header + campo no launcher).
+5. Aposentadoria do ☰ left-drawer no mobile.
+6. `ResponsiveDialog`, `DataCards`/`ResponsiveTable`, `MobileActionBar`, `FilterSheet`, `MobilePageShell`.
+7. Tokens/utilitários: breakpoint, 44px, safe-area.
+8. Checklist de auditoria mobile por página (documento) + smoke test Playwright base.
+9. **Sem** rollout em massa nas ~86 seções (isso é Fase 1) — apenas 1–2 páginas piloto para validar os primitivos ponta-a-ponta.
 
 ## 10. Riscos
 
