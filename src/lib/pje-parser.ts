@@ -1405,13 +1405,17 @@ export function parseSEEUIntimacoes(
       }
     }
 
-    // Extrair o bloco de texto para este processo
-    // Incluir um pouco antes para pegar o Seq
-    const inicioBloco = Math.max(0, posicaoProcesso - 50);
-    const blocoTexto = texto.substring(inicioBloco, fimBloco);
+    // Bloco = do próprio processo até o próximo (SEM lookback de 50 chars, que
+    // capturava a data da linha anterior e trocava dataEnvio/ultimoDia — bug 1).
+    const blocoTexto = texto.substring(posicaoProcesso, fimBloco);
 
-    // Extrair dados do bloco
-    const intimacao = extrairDadosBlocoSEEU(blocoTexto, numeroProcesso, tipoManifestacao, contadorOrdem++);
+    // Seq: número imediatamente ANTES do processo (só whitespace/tab/newline entre
+    // eles). Janela curta e ancorada no fim evita pegar o ano da data anterior.
+    const preWindow = texto.substring(Math.max(0, posicaoProcesso - 40), posicaoProcesso);
+    const seqMatch = preWindow.match(/(\d{3,4})[\s\t\n]*$/);
+    const seq = seqMatch ? parseInt(seqMatch[1], 10) : undefined;
+
+    const intimacao = extrairDadosBlocoSEEU(blocoTexto, numeroProcesso, tipoManifestacao, contadorOrdem++, seq);
     if (intimacao) {
       intimacoes.push(intimacao);
     }
@@ -1432,12 +1436,9 @@ function extrairDadosBlocoSEEU(
   bloco: string,
   numeroProcesso: string,
   tipoManifestacao: string,
-  ordemOriginal: number
+  ordemOriginal: number,
+  seq: number | undefined
 ): IntimacaoSEEU | null {
-  // Extrair Seq (número antes do processo)
-  const matchSeq = bloco.match(/(\d{3,4})\s*[\t\n]?\s*\d{7}-/);
-  const seq = matchSeq ? parseInt(matchSeq[1]) : undefined;
-
   // Extrair classe processual
   let classeProcessual = '';
   if (bloco.includes('Execução da Pena')) {
@@ -1459,7 +1460,12 @@ function extrairDadosBlocoSEEU(
   let assistido = '';
 
   // Tentar padrão "Executado:\n NOME" ou "Deprecado:\n NOME"
-  const matchExecutado = bloco.match(/(?:Executado|Deprecado):\s*\n?\s*([A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+)/i);
+  // Nome do Executado/Deprecado: linha em MAIÚSCULAS logo após o rótulo.
+  // Sem /i (evita casar minúsculas) e a classe usa espaço literal, não \s —
+  // assim para na quebra de linha e não invade "Terceiro:"/"Polo Ativo:" (bug 2).
+  const matchExecutado = bloco.match(
+    /(?:Executado|Deprecado):\s*\n\s*([A-ZÀÁÂÃÉÊÍÓÔÕÚÇÑ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇÑ'.\- ]+)/,
+  );
   if (matchExecutado) {
     assistido = matchExecutado[1].trim();
   }
@@ -1475,7 +1481,9 @@ function extrairDadosBlocoSEEU(
           // Verificar se é um nome (maiúsculas, pelo menos 2 palavras)
           if (linha && /^[A-ZÀÁÂÃÉÊÍÓÔÕÚÇ][A-ZÀÁÂÃÉÊÍÓÔÕÚÇ\s]+$/.test(linha) && linha.split(' ').length >= 2) {
             // Filtrar termos que não são nomes
-            if (!linha.includes('ESTADO') && !linha.includes('MINISTÉRIO') && !linha.includes('BAHIA')) {
+            if (!linha.includes('ESTADO') && !linha.includes('MINISTÉRIO') &&
+                !linha.includes('BAHIA') && !linha.includes('Dispensar') &&
+                !linha.includes('Terceiro') && !linha.includes('Polo')) {
               assistido = linha;
               break;
             }
