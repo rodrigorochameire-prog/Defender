@@ -38,18 +38,18 @@ export function computeVisibleActions(
     );
 
   const dropped = new Set<string>();
-  const droppedInOrder: string[] = [];
   let total = totalAll;
   for (const { it } of dropOrder) {
     if (total <= budget) break;
     if (!Number.isFinite(it.priority)) continue;
     dropped.add(it.id);
-    droppedInOrder.push(it.id);
     total -= it.width;
   }
 
+  // Ambas as listas preservam a ordem original de `items` — o menu "…"
+  // exibe as ações na ordem declarada, não na ordem em que caíram.
   return {
     visibleIds: items.filter((i) => !dropped.has(i.id)).map((i) => i.id),
-    overflowIds: droppedInOrder,
+    overflowIds: items.filter((i) => dropped.has(i.id)).map((i) => i.id),
   };
 }
