@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAssignment, type UserRole } from "@/contexts/assignment-context";
 import { getLauncherGroups } from "@/components/layouts/nav-registry";
 import { openCommandPalette } from "@/lib/events/command-palette";
@@ -32,6 +32,7 @@ export function MobileMoreSheet({
         side="bottom"
         className="h-[85vh] rounded-t-2xl p-0 md:hidden"
       >
+        <SheetTitle className="sr-only">Mais opções</SheetTitle>
         <div className="flex h-full flex-col">
           {/* Subtle search entry — opens the command palette */}
           <div className="p-4 pb-2">

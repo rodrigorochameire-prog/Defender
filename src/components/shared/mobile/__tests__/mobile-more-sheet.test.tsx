@@ -42,5 +42,6 @@ describe("MobileMoreSheet", () => {
     fireEvent.click(screen.getByText(/Buscar seção/i));
     expect(openSpy).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange.mock.invocationCallOrder[0]).toBeLessThan(openSpy.mock.invocationCallOrder[0]);
   });
 });
