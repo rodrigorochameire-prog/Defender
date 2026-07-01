@@ -7,8 +7,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ConflictBadge } from "@/components/conflict-badge";
 import { chatPanelActions } from "@/hooks/use-chat-panel";
-import { MessageSquare, Search } from "lucide-react";
-import { openCommandPalette } from "@/lib/events/command-palette";
+import { MessageSquare } from "lucide-react";
+import { MobileHeaderOverflow } from "@/components/layouts/mobile-header-overflow";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import type { ReactNode } from "react";
@@ -26,16 +26,19 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
     <div className="flex h-11 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-        <SidebarTrigger className="hidden md:inline-flex h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+        {/* ☰ — abre a sidebar (drawer no mobile); alvo maior no mobile */}
+        <SidebarTrigger className="inline-flex h-8 w-8 md:h-6 md:w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
-        {/* Separator */}
-        <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+        {/* Separator (desktop) */}
+        <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
 
-        {/* Breadcrumbs */}
-        <Breadcrumbs />
+        {/* Breadcrumbs (desktop) */}
+        <div className="hidden md:flex items-center min-w-0">
+          <Breadcrumbs />
+        </div>
 
-        {/* Slot for page-injected content */}
-        <div id="header-slot" className="flex items-center" />
+        {/* Slot for page-injected content (título+stats) — visível em ambos */}
+        <div id="header-slot" className="flex items-center min-w-0" />
       </div>
 
       {/* Right: Indicator + Date + Controls */}
@@ -63,35 +66,37 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
         {/* Separator */}
         <div className="hidden lg:block h-4 w-px bg-white/[0.08]" />
 
-        {/* Conflict badge */}
-        <ConflictBadge />
+        {/* Conflict badge (desktop; no mobile vai pro ⋯) */}
+        <div className="hidden md:flex"><ConflictBadge /></div>
 
         {/* Extra slot (server-rendered badges, e.g. TriagemBadge) */}
-        {extra && <div className="text-white/80">{extra}</div>}
+        {extra && <div className="hidden md:block text-white/80">{extra}</div>}
 
         {/* Controls — alertas de prazos/audiências foram movidos p/ o sino
             (NotificationsPopover): cabeçalho mais limpo, detalhe a 1 clique. */}
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => openCommandPalette()}
-            aria-label="Buscar"
-            className="md:hidden inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
-          >
-            <Search className="h-4 w-4" />
-          </button>
+          {/* Desktop: busca (Cmd+K) + tema inline */}
           <span className="hidden md:inline-flex">
             <CommandPalette />
           </span>
-          <ThemeToggle />
+          <span className="hidden md:inline-flex">
+            <ThemeToggle />
+          </span>
+
+          {/* Sino — sempre visível */}
           <NotificationsPopover />
+
+          {/* Chat — desktop inline (no mobile vai pro ⋯) */}
           <button
             onClick={handleChatToggle}
             title="Assistente OMBUDS"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+            className="hidden md:inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
           >
             <MessageSquare className="h-3.5 w-3.5" />
           </button>
+
+          {/* Mobile: overflow ⋯ (busca, conflitos, tema, chat) */}
+          <MobileHeaderOverflow />
         </div>
       </div>
     </div>
