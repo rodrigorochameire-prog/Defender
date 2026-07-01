@@ -205,8 +205,16 @@ fallback quando `seq` ausente (não deve ocorrer, mas defende).
 ## 6. Worker `seeu-intimacoes-import`
 
 Nova skill em `.claude/skills/seeu-intimacoes-import/` (SKILL.md + `scripts/seeu_intimacoes_import.py`),
-espelhando `pje-intimacoes-import`. Reusa utilidades já provadas (load_env, SupabaseExt,
-`connect_over_cdp`, dedup Layer-A, `compute_content_hash`).
+espelhando `pje-intimacoes-import`. Reusa utilidades já provadas (SupabaseExt,
+`connect_over_cdp`, `compute_content_hash`, carregamento de `.env`).
+
+> **Dedup NÃO é reuso drop-in.** O `decide_layer_a` do PJe indexa só por `pjeDocumentoId`
+> (`by_doc`) e `content_hash` (`by_hash`). O SEEU não tem doc-id; sua chave forte é
+> `(processoNumero, seq)`. O worker SEEU precisa de:
+> (a) um `load_ledger_index` variante que monte um índice `by_processo_seq` a partir do
+>     `seeu_ledger`, e
+> (b) um `decide_layer_a` que consulte primeiro `by_processo_seq`, com `by_hash` de
+>     fallback. Orçar isso no plano como código novo (pequeno, mas não é cópia direta).
 
 ### CLI
 ```
@@ -268,8 +276,12 @@ Espelha `intimacoes.ts`, apontando para as tabelas SEEU:
 - Novo item no dropdown de importação → `seeu-import-modal` **assíncrono** (espelho de
   `intimacoes-import-modal.tsx`, não o copy-paste antigo), que dispara `criarImportJob` e
   navega para `/admin/demandas/importar/[taskId]`.
-- A página de revisão existente é reusada/generalizada para ler do router SEEU quando o job
-  for SEEU (discriminar por `skill` da task).
+- **Página de revisão — decisão:** *parametrizar*, não bifurcar. A página
+  `/admin/demandas/importar/[taskId]` lê a `claude_code_tasks` e, pelo `skill` da task
+  (`pje-intimacoes-import` vs `seeu-intimacoes-import`), escolhe qual router chamar
+  (`intimacoes.*` vs `seeuIntimacoes.*`). As colunas exibidas são quase idênticas (a linha
+  parseada tem a mesma forma); campos extras do SEEU (`seq`, `classeProcessual`) entram como
+  colunas opcionais. Evita duplicar a página e mantém um só fluxo de revisão para o usuário.
 
 ---
 
