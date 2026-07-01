@@ -103,6 +103,7 @@ import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
 import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getOfflineProcessos } from "@/lib/offline/queries";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -1535,6 +1536,9 @@ function FilterSectionProcessos({
 export default function ProcessosPage() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // No celular a tabela ("list") não cabe — força a visão em cards ("grid").
+  const isMobile = useIsMobile();
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
   const [searchTerm, setSearchTerm] = useState("");
   const [areaFilter, setAreaFilter] = useState("all");
   const [situacaoFilter, setSituacaoFilter] = useState("ativo");
@@ -2011,7 +2015,7 @@ export default function ProcessosPage() {
               }}
               variant={searchTerm ? "search" : "default"}
             />
-          ) : viewMode === "grid" ? (
+          ) : effectiveViewMode === "grid" ? (
             // Grid com agrupamento
             groupBy !== "none" && groupedProcessos ? (
               <div className="space-y-6">
