@@ -32,6 +32,7 @@ import {
   Undo2,
   Sparkles,
   AlertCircle,
+  FileSearch,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -74,6 +75,10 @@ const KanbanAtoContext = React.createContext<{
   onAnalisar?: (id: number) => void;
   /** True enquanto há um job de análise em andamento (desabilita o gatilho). */
   analisando?: boolean;
+  /** Dispara a Análise Profunda (Fase 2c: baixa autos + análise completa). */
+  onAnaliseProfunda?: (id: number) => void;
+  /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
+  analiseProfundaAtiva?: boolean;
 }>({});
 
 // ==========================================
@@ -149,6 +154,10 @@ interface KanbanPremiumProps {
   onAnalisar?: (id: number) => void;
   /** True enquanto há um job de análise em andamento (desabilita o gatilho). */
   analisando?: boolean;
+  /** Dispara a Análise Profunda (Fase 2c: baixa autos + análise completa) para 1 demanda. */
+  onAnaliseProfunda?: (id: number) => void;
+  /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
+  analiseProfundaAtiva?: boolean;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
   /** Atalho hover no card → abre o preview já no modo "novo registro" */
@@ -512,7 +521,8 @@ function KanbanCard({
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
   // Edição de ato direto no card (via context, evita threadar props)
-  const { onAtoChange, onAnalisar, analisando } = React.useContext(KanbanAtoContext);
+  const { onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva } =
+    React.useContext(KanbanAtoContext);
   const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
 
   // Status popover state
@@ -703,6 +713,18 @@ function KanbanCard({
             }}
           >
             <Search className="w-3 h-3" />
+          </button>
+        )}
+        {onAnaliseProfunda && (
+          <button
+            type="button"
+            disabled={analiseProfundaAtiva}
+            onClick={(e) => { e.stopPropagation(); onAnaliseProfunda(parseInt(String(demanda.id), 10)); }}
+            aria-label="Análise profunda (baixa autos + análise completa)"
+            title="Análise profunda — baixa autos e roda a análise completa"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <FileSearch className="w-3 h-3" />
           </button>
         )}
         {/* "Agendar audiência" removido do card — já disponível no sheet da
@@ -1821,6 +1843,8 @@ export function KanbanPremium({
   onAtoChange,
   onAnalisar,
   analisando,
+  onAnaliseProfunda,
+  analiseProfundaAtiva,
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
@@ -2152,7 +2176,7 @@ export function KanbanPremium({
   }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
 
   return (
-    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando }}>
+    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva }}>
     <div className="space-y-2">
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">
