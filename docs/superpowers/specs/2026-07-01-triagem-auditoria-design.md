@@ -18,7 +18,11 @@ Estado atual (investigado no código):
   1. `pje_intimacoes_ledger.demanda_id` é **sempre null** — `confirmarImport` (`intimacoes.ts:373`) chama `importarDemandas` (`src/lib/services/pje-import.ts`), que retorna **apenas contadores agregados**; comentário explícito em `intimacoes.ts:379-381,454` ("não temos como vincular per-row sem refatorar importarDemandas").
   2. A varredura **não grava `resultado` estruturado**: o script `varredura_triagem.py` só faz `print_report` (stdout); o `claude_code_tasks.resultado` guarda um `stdoutTail` bruto, não `{total, ok, …}`. Não há **`ultimaVarredura`** (só `statusVarredura(jobId)`).
   3. Demandas não têm `analyzed_at` — "quando foi classificada" só é inferível pelos efeitos colaterais (registros/`updated_at`).
-  4. **Não há UI de histórico** de importações/varreduras (só rotas por-job) e a tabela genérica `audit_logs` **é um stub**: `src/lib/trpc/routers/auditLogs.ts` tem `// TODO: Implementar quando tabela audit_logs existir`; nada lê/escreve nela.
+  4. **Não há UI de histórico** de importações/varreduras (só rotas por-job).
+
+**Estado real do `audit_logs` (corrigido após revisão de spec):** a tabela **JÁ EXISTE e está populada** (~719 linhas no prod, crescendo; criada em `drizzle/0000_purple_spencer_smythe.sql`, reasserida em `0029_eager_vargas.sql`). É escrita **hoje** pelo helper app-level `src/lib/audit.ts` `logAudit()` a partir de ~8 sítios em `src/lib/trpc/routers/demandas.ts` (create/update/status_change/delete/import) e `vida-funcional.ts` — com `user_id` real, diff curado (`diffFields`) e ações semânticas. O que é **stub** é apenas o *router de leitura* `src/lib/trpc/routers/auditLogs.ts` (`// TODO: Implementar quando tabela audit_logs existir`), e existe uma página órfã `src/app/(dashboard)/admin/audit-logs/page.tsx` que consome `trpc.auditLogs.list/stats` (renderiza vazio) e cujos campos esperados (`success`, `error_code`, `ip_address`, ações `promote_admin`/`login`) **não batem** com o schema real (`audit.ts`).
+
+**Lacuna real do audit trail:** as escritas **automáticas** que ocorrem FORA do tRPC — a **varredura** (script Python via PostgREST) e a **importação via `intimacoes.confirmarImport`** — **não** passam por `logAudit()`, então não deixam rastro em `audit_logs`. As mutações da UI de demandas já deixam.
 
 ## 2. Objetivo
 
@@ -30,11 +34,11 @@ Dar visibilidade e proveniência completas às importações e varreduras: **que
 
 | Decisão | Escolha |
 |---|---|
-| População do `audit_logs` | **Triggers de banco (abrangente)** — capturam toda escrita, inclusive varredura/daemon/PostgREST; ator via *join* com a execução |
-| Tela de histórico | **Read-only + drill-down** |
+| População do `audit_logs` | **Estender o `logAudit()` explícito aos caminhos automáticos** (varredura/importação escrevem `audit_logs` com o ator EXATO — `system: varredura #<job>` — e metadados do job). **Sem triggers** → sem log duplicado, sem adivinhação por janela de tempo, atribuição exata, sem custo em `registros`. |
+| Tela de histórico | **Read-only + drill-down**, numa **nova rota `/admin/auditoria`**; a página órfã `/admin/audit-logs` é redirecionada/removida (uma só superfície de auditoria) |
 | Backfill de proveniência | **Futuro + backfill histórico best-effort** (match por `pje_documento_id`) |
-| Nível do diff no trigger | Diff só das **colunas alteradas**; ruído filtrado na UI |
-| Tabelas auditadas | `demandas`, `registros`, `audiencias` |
+| Entidades auditadas pelos caminhos automáticos | `demandas`, `registros`, `audiencias` (as que a varredura muta) — via escrita explícita, não trigger |
+| `audit_logs` schema | Reusar o **schema real** (`src/lib/db/schema/audit.ts`): `user_id, user_name, entity_type, entity_id, action, changes jsonb, metadata jsonb, created_at` |
 
 ## 4. Design
 
@@ -43,37 +47,38 @@ Dar visibilidade e proveniência completas às importações e varreduras: **que
 - **`importarDemandas` (`src/lib/services/pje-import.ts`)** passa a retornar, além dos contadores, um **mapa por linha**: `rows: Array<{ pjeDocumentoId: string, demandaId: number, action: 'imported'|'updated'|'skipped' }>`. Interface: mantém o objeto de retorno atual e **adiciona** `rows`.
 - **`confirmarImport` (`intimacoes.ts`)** usa `result.rows` para preencher `pje_intimacoes_ledger.demanda_id` no upsert do ledger (hoje deixado null em `:454`). Match por `pje_documento_id`.
 - **Coluna `demandas.analyzed_at` (timestamptz, nullable)** — carimbada pela varredura em `apply_classification` (junto de `revisao_pendente=false`) toda vez que uma demanda é classificada. Migração DDL.
-- **Backfill (script único, `scripts/audit/backfill_ledger_demanda.mjs`)**: para cada `pje_intimacoes_ledger` com `demanda_id IS NULL`, faz match `ledger.pje_documento_id = demandas.pje_documento_id` (chave estável) e grava `demanda_id`. Idempotente; loga quantos casaram / não casaram.
+- **Backfill (script único, `scripts/audit/backfill_ledger_demanda.mjs`)**: para cada `pje_intimacoes_ledger` com `demanda_id IS NULL`, faz match `ledger.pje_documento_id = demandas.pje_documento_id` e grava `demanda_id`. Idempotente; loga quantos casaram / não casaram. **Nota:** `demandas.pje_documento_id` **não tem unique constraint** no banco (0 duplicatas hoje, mas nada impede no futuro) — o backfill deve **tratar match múltiplo** (escolher determinístico: menor/maior `id`, ou marcar "ambíguo" e pular), não assumir 1:1.
 
 ### B2 · Observabilidade das execuções
 
-- **Resultado estruturado da varredura:** `varredura_triagem.py` passa a montar um dict `{atribuicao, since, limit, total, ok, manual_review, nao_painel, erros, atos: {<ato>: n}}` a partir das mesmas `stats`/`counts` de `print_report`, e a **gravar em `claude_code_tasks.resultado`** via o cliente `Supabase` (mesmo padrão do worker de importação, que já carimba seu `resultado`). Requer o **`job_id`** no script — passar via `--job-id` (como o worker de importação recebe); confirmar o plumbing na implementação. Se o `job_id` não estiver disponível, o script imprime um marcador `[[VARREDURA_RESULT]]{json}` na última linha para o daemon extrair (fallback).
-- **`ultimaVarredura`** (nova query em `intimacoes.ts`, espelha `ultimaImportacao`): retorna o último `claude_code_tasks` `completed` com `skill='varredura-triagem'` — `finishedAt`, `resultado` (contadores), `atribuicoes`, `created_by`.
+- **Resultado estruturado da varredura.** Hoje o `claude_code_tasks.resultado` da varredura **já é preenchido** — mas com `{ok, stdoutTail}` (texto bruto capturado pelo daemon), não contadores. A melhoria: `varredura_triagem.py` monta um dict `{atribuicao, since, limit, total, ok, manual_review, nao_painel, erros, atos:{<ato>:n}}` a partir das mesmas `stats`/`counts` de `print_report`. Como o argparse do script **não tem `--job-id` hoje** (só `--atribuicao/--since/--limit/--modo/--defensor-id/--demanda-ids`), duas rotas: (i) **preferida** — adicionar `--job-id`, passado pelo daemon, e o script faz `PATCH claude_code_tasks.resultado` via o cliente `Supabase` (como o worker de importação já faz com o seu); (ii) **fallback** — o script imprime `[[VARREDURA_RESULT]]{json}` na última linha e o daemon (`claude-code-daemon.mjs`) extrai para `resultado`. **O `--job-id` é pré-requisito compartilhado com B3** (a escrita de audit também precisa dele) — decidir e implementar uma vez.
+  > Não confundir: `enqueue_ai_task()` (script ~:404) cria uma linha `claude_code_tasks` **diferente** (`skill='analise-intimacao'`, `lane='ai'`, `instrucao_adicional.demanda_ids` em snake_case) — é a task de enriquecimento downstream, não a metadata da própria varredura.
+- **`ultimaVarredura`** (nova query em `intimacoes.ts`, espelha `ultimaImportacao`): último `claude_code_tasks` `completed` com `skill='varredura-triagem'` — `finishedAt`, `resultado` (contadores), `atribuicao`, `created_by`.
 
-### B3 · Trilha de auditoria (triggers)
+### B3 · Trilha de auditoria (escrita explícita nos caminhos automáticos — SEM triggers)
 
-- **Migração** cria/confirma a tabela `audit_logs` (schema já em `src/lib/db/schema/audit.ts`: `id, user_id, user_name, entity_type, entity_id, action, changes jsonb, metadata jsonb, created_at`).
-- **Função de trigger `fn_audit_row()`** (PL/pgSQL): em `AFTER INSERT/UPDATE/DELETE`, insere uma linha em `audit_logs` com `entity_type = TG_TABLE_NAME`, `entity_id = COALESCE(NEW.id, OLD.id)`, `action` mapeada (`create`/`update`/`delete`), e `changes` = **diff apenas das colunas que mudaram** (para UPDATE: `{col: {old, new}}` só onde `NEW.col IS DISTINCT FROM OLD.col`; para INSERT: snapshot enxuto; para DELETE: chave + snapshot). `user_id/user_name` = NULL para escritas automáticas (ator reconstruído por join na UI — B4).
-- **Triggers** anexados a `demandas`, `registros`, `audiencias`.
-- **Controle de ruído:** o trigger grava o diff bruto; a **query da UI** filtra para mudanças significativas (ex.: em `demandas`, campos `status`/`ato`/`tipo_ato`/`prazo`/`analyzed_at`; ignora `updated_at`/`synced_at` puros). Alternativa considerada e rejeitada: whitelist de colunas no trigger (menos flexível; perde histórico se a whitelist mudar).
-- **Perf:** `registros` recebe muitos INSERTs por varredura; a função é mínima (um diff + um INSERT), sem SELECTs. Aceitável para os volumes atuais (dezenas por execução).
-- Implementar o router stub `auditLogs.list`/`stats` contra a tabela real (`auditLogs.ts`).
+Rejeitado (na revisão): triggers de banco — duplicariam cada escrita da UI que o `logAudit()` já registra (ator NULL + diff full-column vs. ator real + diff curado) e forçariam adivinhação de ator por janela de tempo (há execuções de varredura concorrentes/sobrepostas no prod — tasks #1351/#1352). Em vez disso, **instrumentar explicitamente os caminhos que hoje escapam do `logAudit`**, com o **ator exato** já conhecido (o job).
+
+- **Varredura (`varredura_triagem.py`):** ao classificar cada demanda em `apply_classification`, além dos efeitos atuais, insere uma linha em `audit_logs` (via cliente `Supabase`/PostgREST) com `entity_type='demandas'`, `entity_id=demanda_id`, `action='update'`, `changes` = diff curado (`ato`/`prioridade`/`prazo`/`analyzed_at` que mudaram), `user_id = job.created_by`, `user_name` do defensor, `metadata = {source:'varredura', job_id, skill:'varredura-triagem'}`. Idem para os registros criados (`entity_type='registros'`) e audiências agendadas (`entity_type='audiencias'`). Escrita em `try/except` (nunca quebra a varredura). Um **helper Python `audit_write(sb, ...)`** encapsula o shape (paridade com `logAudit`).
+- **Importação (`intimacoes.confirmarImport`):** o caminho de importação de intimações não passa pelo `logAudit` de `demandas.ts`; adicionar uma chamada `logAudit()` (TS, ator = `ctx.user`) por demanda importada/atualizada, `action='import'`, `metadata={source:'pje-import', job_id, import_batch_id}`.
+- **Shape do diff:** só colunas que mudaram (`{col:{old,new}}`), reusando a semântica de `diffFields`/`logAudit` para consistência com as linhas já existentes.
+- **Sem migração de audit_logs** (a tabela já existe — ver B-migrations). Apenas **validar drift** do schema real vs. `audit.ts` antes de escrever.
+- Implementar o router `auditLogs.list`/`stats` contra a tabela **real** (schema `audit.ts`), e **corrigir/rota a página órfã** `/admin/audit-logs` (redirect p/ `/admin/auditoria` ou remoção) para não reviver com campos inexistentes.
 
 ### B4 · Tela de histórico (read-only)
 
 - **Rota** `src/app/(dashboard)/admin/auditoria/page.tsx`.
 - **Lista de execuções:** `claude_code_tasks` com `skill IN ('pje-intimacoes-import','varredura-triagem')`, ordenado `id DESC`, exibindo: skill (rótulo amigável), **quem** (`created_by` → `users.name`), `started_at`/`completed_at`, `status`, e os contadores de `resultado`.
-- **Drill-down** (ao abrir uma execução): demandas afetadas + mudanças do `audit_logs` na janela da execução.
-  - Varredura: demandas via `instrucao_adicional.demandaIds` quando presente; senão por janela de tempo (`audit_logs.created_at ∈ [started_at, completed_at]` nas entidades `demandas`/`registros`).
-  - Importação: demandas via `import_batch_id` (já em `demandas`) e/ou ledger rows do job (`pje_intimacoes_ledger.job_id`).
-- **Atribuição de ator (via join):** para linhas de `audit_logs` com `user_id` nulo, a UI infere o ator correlacionando `created_at` à execução ativa naquele intervalo (a que tem o `started_at`/`completed_at` envolvendo o timestamp), exibindo "por <run> (<created_by>)".
-- **Novas queries tRPC:** `auditoria.listRuns`, `auditoria.runDetail(taskId)`; e `auditLogs.list`/`stats` implementadas.
+- **Drill-down** (ao abrir uma execução): demandas afetadas + mudanças do `audit_logs`, **filtrando por `metadata.job_id`** (ligação exata, sem janela de tempo). A varredura/importação carimbam `metadata.job_id` nas linhas de `audit_logs` (B3), então o drill-down é uma query direta `WHERE metadata->>'job_id' = <task.id>` — robusto mesmo com execuções concorrentes/sobrepostas.
+- **Atribuição de ator:** direta — as linhas de audit já trazem `user_id`/`user_name` reais (varredura = `job.created_by`; importação = `ctx.user`). Sem inferência por janela.
+- **Novas queries tRPC:** `auditoria.listRuns`, `auditoria.runDetail(taskId)` (une o `claude_code_tasks` da execução às linhas de `audit_logs` por `metadata.job_id`); e `auditLogs.list`/`stats` implementadas contra o schema real.
 
-## 5. Impacto em dados (DDL — diferente de A)
+## 5. Impacto em dados (DDL — mínimo)
 
-- **Migração(ões)**: (a) coluna `demandas.analyzed_at timestamptz`; (b) tabela `audit_logs` (se ainda não existir no banco) conforme `audit.ts`; (c) função `fn_audit_row()` + 3 triggers (`demandas`, `registros`, `audiencias`).
-- **Deploy:** gerar arquivos de migração Drizzle; observar que este projeto já aplicou schema **direto no prod** em alguns casos (ex.: `registros.prazo`, tabelas carreira) — a implementação deve documentar se as triggers vão por arquivo de migração + `db:push` ou aplicação direta, e confirmar antes de rodar no prod.
-- **Sem alteração** de dados existentes exceto o **backfill** best-effort de `pje_intimacoes_ledger.demanda_id` (só preenche nulos).
+- **Única DDL nova:** coluna `demandas.analyzed_at timestamptz` (nullable) + tipagem em `schema/*.ts`. **Sem triggers, sem nova tabela** (`audit_logs` já existe).
+- **Validação de drift (não é DDL):** antes de escrever em `audit_logs`, confirmar que o schema real no prod (719+ linhas) bate com `src/lib/db/schema/audit.ts` — colunas/tipos/vocabulário de `action`. Corrigir `audit.ts` se houver divergência (não alterar a tabela às cegas).
+- **Deploy:** gerar arquivo de migração Drizzle para `analyzed_at`; este projeto já aplicou schema **direto no prod** em alguns casos (ex.: `registros.prazo`) — confirmar a via (migration file + `db:push` vs. direto) antes de rodar.
+- **Alteração de dados existentes:** apenas o **backfill** best-effort de `pje_intimacoes_ledger.demanda_id` (só preenche nulos).
 
 ## 6. Arquivos afetados (previsão)
 
@@ -81,21 +86,25 @@ Dar visibilidade e proveniência completas às importações e varreduras: **que
 |---|---|
 | `src/lib/services/pje-import.ts` | `importarDemandas` retorna `rows[]` (mapa pje_documento_id→demanda_id) |
 | `src/lib/trpc/routers/intimacoes.ts` | `confirmarImport` preenche `ledger.demanda_id`; nova query `ultimaVarredura` |
-| `.claude/skills-cowork/varredura-triagem/scripts/varredura_triagem.py` | resultado estruturado → `claude_code_tasks.resultado`; carimba `demandas.analyzed_at` em `apply_classification` |
-| `drizzle/00NN_audit_triggers.sql` (+ snapshot) | `demandas.analyzed_at`, `audit_logs`, `fn_audit_row()`, triggers |
-| `src/lib/db/schema/*.ts` | tipar `demandas.analyzedAt`; garantir `audit_logs` no schema |
-| `src/lib/trpc/routers/auditLogs.ts` | implementar `list`/`stats` contra a tabela real |
-| `src/lib/trpc/routers/auditoria.ts` (novo) | `listRuns`, `runDetail` |
+| `.claude/skills-cowork/varredura-triagem/scripts/varredura_triagem.py` | `--job-id`; resultado estruturado → `claude_code_tasks.resultado`; carimba `demandas.analyzed_at`; **`audit_write()`** por demanda/registro/audiência afetada |
+| `scripts/claude-code-daemon.mjs` (e/ou browser-broker) | passar `--job-id` ao script (e/ou extrair `[[VARREDURA_RESULT]]`) |
+| `drizzle/00NN_demandas_analyzed_at.sql` (+ snapshot) | só `demandas.analyzed_at` |
+| `src/lib/db/schema/*.ts` | tipar `demandas.analyzedAt`; validar `audit_logs` vs. prod (drift) |
+| `src/lib/audit.ts` / `src/lib/trpc/routers/intimacoes.ts` | `confirmarImport` chama `logAudit()` por demanda importada; nova query `ultimaVarredura` |
+| `src/lib/services/pje-import.ts` | `importarDemandas` retorna `rows[]` |
+| `src/lib/trpc/routers/auditLogs.ts` | implementar `list`/`stats` contra o schema real (`audit.ts`) |
+| `src/lib/trpc/routers/auditoria.ts` (novo) | `listRuns`, `runDetail` (join por `metadata.job_id`) |
 | `src/app/(dashboard)/admin/auditoria/page.tsx` (novo) + componentes | tela read-only + drill-down |
-| `scripts/audit/backfill_ledger_demanda.mjs` (novo) | backfill único de `demanda_id` |
-| Testes (TS + Python + SQL) | mapa de importarDemandas, linkage do ledger, função de trigger, ultimaVarredura/listRuns, matching do backfill, componentes da UI |
+| `src/app/(dashboard)/admin/audit-logs/page.tsx` | redirect p/ `/admin/auditoria` ou remoção (evitar superfície órfã) |
+| `scripts/audit/backfill_ledger_demanda.mjs` (novo) | backfill único de `demanda_id` (com tie-break p/ `pje_documento_id` sem unique) |
+| Testes (TS + Python) | mapa de importarDemandas, linkage do ledger, `audit_write` (shape), ultimaVarredura/listRuns/runDetail, matching do backfill, componentes da UI |
 
 ## 7. Testes
 
 - **B1:** unit de `importarDemandas` (retorna `rows` corretos por `pje_documento_id`); `confirmarImport` grava `demanda_id` (mock do serviço); matching do backfill.
 - **B2:** parsing do resultado estruturado da varredura (função pura testável, padrão standalone Python); `ultimaVarredura` (SQL/tRPC).
-- **B3:** teste SQL da função de trigger — em transação: INSERT/UPDATE/DELETE numa demanda → asserta 1 linha em `audit_logs` com `action` e `changes` (diff só das colunas alteradas). Rollback ao fim.
-- **B4:** `listRuns`/`runDetail` (SQL/builder); componentes da lista e do drill-down (@testing-library) com dados mock; atribuição de ator por janela.
+- **B3:** teste do shape de `audit_write` (função pura Python: dado rule+diff → payload de `audit_logs` com `entity_type/action/changes/user_id/metadata.job_id` corretos); teste TS de que `confirmarImport` chama `logAudit` com `action='import'` + `job_id` (mock de `logAudit`). Não há função de trigger para testar (abordagem sem triggers).
+- **B4:** `listRuns`/`runDetail` (SQL/builder — o join por `metadata.job_id`); componentes da lista e do drill-down (@testing-library) com dados mock; que a página órfã `/admin/audit-logs` redireciona.
 
 ## 8. Critérios de aceitação
 
@@ -103,9 +112,9 @@ Dar visibilidade e proveniência completas às importações e varreduras: **que
 2. O backfill preenche `demanda_id` para linhas históricas que casam por `pje_documento_id`, e loga os que não casaram.
 3. Uma demanda classificada pela varredura recebe `analyzed_at`.
 4. Uma execução de varredura concluída tem `claude_code_tasks.resultado` estruturado (`{total, ok, manual_review, nao_painel, erros, atos}`), e `ultimaVarredura` o retorna.
-5. INSERT/UPDATE/DELETE em `demandas`/`registros`/`audiencias` gera linha em `audit_logs` com o diff das colunas alteradas; um UPDATE que só toca `updated_at` não polui a UI (filtrado).
-6. A tela `/admin/auditoria` lista execuções (import + varredura) com quem/quando/status/contadores e permite drill-down para demandas afetadas + mudanças, atribuindo o ator por janela quando `user_id` é nulo.
-7. Sem regressão em A nem no fluxo de importação/varredura; migrações reversíveis (drop triggers/função/coluna).
+5. Cada demanda classificada pela varredura e cada demanda importada geram linha(s) em `audit_logs` com `user_id`/`user_name` REAIS (varredura = `job.created_by`; import = `ctx.user`), `changes` = diff das colunas alteradas, e `metadata.job_id` = id da execução. Nenhuma linha duplicada é criada para escritas que o `logAudit` da UI já cobre (não há triggers).
+6. A tela `/admin/auditoria` lista execuções (import + varredura) com quem/quando/status/contadores e drill-down por `metadata.job_id` (robusto sob execuções concorrentes); a rota órfã `/admin/audit-logs` redireciona para ela.
+7. Sem regressão em A nem no fluxo de importação/varredura; a única DDL (`demandas.analyzed_at`) é reversível (drop column); a varredura nunca quebra por falha de `audit_write` (try/except).
 
 ## 9. Sequência maior (contexto)
 
