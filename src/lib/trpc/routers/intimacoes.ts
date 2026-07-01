@@ -45,6 +45,31 @@ export function ledgerDemandaMap(
 }
 
 /**
+ * parseVarreduraResultado — Lê o payload estruturado (`resultado.parsed`)
+ * gravado pelo browser-broker ao final de uma varredura de triagem. Retorna
+ * null quando não há payload estruturado (ex.: resultado só com stdoutTail).
+ */
+export function parseVarreduraResultado(resultado: unknown): {
+  total: number;
+  ok: number;
+  manual_review: number;
+  nao_painel: number;
+  erros: number;
+  atos: Record<string, number>;
+} | null {
+  const p = (resultado as { parsed?: Record<string, unknown> } | null)?.parsed;
+  if (!p || typeof p.total !== "number") return null;
+  return {
+    total: p.total as number,
+    ok: (p.ok as number) ?? 0,
+    manual_review: (p.manual_review as number) ?? 0,
+    nao_painel: (p.nao_painel as number) ?? 0,
+    erros: (p.erros as number) ?? 0,
+    atos: (p.atos as Record<string, number>) ?? {},
+  };
+}
+
+/**
  * Índice em memória: nome-de-assistido normalizado → ids[] dos assistidos vivos.
  * Construído UMA vez por `listStaging` (1 query) e reusado no match por linha,
  * evitando N queries. >1 id no mesmo nome ⇒ homônimos ("multiplo").
@@ -380,6 +405,44 @@ export const intimacoesRouter = router({
       atribuicoes: Array.isArray(r.atribuicoes) ? r.atribuicoes : [],
       proximoSince,
       maxExpedicaoImportada: proximoSince,
+    };
+  }),
+
+  /**
+   * ultimaVarredura — Retorna a última varredura de triagem concluída (skill
+   * varredura-triagem), com os contadores estruturados do resultado.
+   */
+  ultimaVarredura: protectedProcedure.query(async () => {
+    const [job] = await db
+      .select({
+        id: claudeCodeTasks.id,
+        completedAt: claudeCodeTasks.completedAt,
+        createdAt: claudeCodeTasks.createdAt,
+        resultado: claudeCodeTasks.resultado,
+        createdBy: claudeCodeTasks.createdBy,
+        meta: claudeCodeTasks.instrucaoAdicional,
+      })
+      .from(claudeCodeTasks)
+      .where(
+        and(
+          eq(claudeCodeTasks.skill, "varredura-triagem"),
+          eq(claudeCodeTasks.status, "completed"),
+        ),
+      )
+      .orderBy(desc(claudeCodeTasks.id))
+      .limit(1);
+
+    if (!job) return null;
+    const meta =
+      (typeof job.meta === "string"
+        ? JSON.parse(job.meta)
+        : job.meta) ?? {};
+    return {
+      jobId: job.id,
+      finishedAt: (job.completedAt ?? job.createdAt)?.toISOString() ?? null,
+      resultado: parseVarreduraResultado(job.resultado),
+      atribuicao: meta.atribuicao ?? null,
+      createdBy: job.createdBy ?? null,
     };
   }),
 
