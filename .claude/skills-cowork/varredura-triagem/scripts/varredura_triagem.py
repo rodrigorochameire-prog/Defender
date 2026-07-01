@@ -562,6 +562,55 @@ RULES_EP = [
 ]
 
 
+# ───── Regras Júri (atribuicao contém "JURI") ────────────────────────────────
+# Tupla de 9 (como MPU): (pattern, ato, prioridade, prazo_dias, registro_tipo,
+# fase, motivo, side_effects, extras). Texto NORMALIZADO. Primeira que casa vence.
+# Aplicadas ANTES de RULES_BASE quando is_juri; se nada casar → fallback RULES_BASE.
+# Vocabulário fase/motivo: spec §A1.1. Impronúncia ANTES de pronúncia (substring).
+RULES_JURI = [
+    (r"impronunci",
+     "Analisar impronúncia", "ALTA", None, "diligencia",
+     "pronuncia", "decisao_impronuncia", [], {}),
+    (r"desclassific",
+     "Ciência de desclassificação", "NORMAL", None, "ciencia",
+     "pronuncia", "decisao_desclassificacao", [], {}),
+    # 422/preclusão ANTES da regra genérica de pronúncia — evita colisão de
+    # substring quando o texto traz "preclusa a pronúncia" (contém "pronunci").
+    (r"art\.?\s*422|(preclu|transitad).{0,40}pronuncia|diligencias.{0,20}(plenario|422)|rol.{0,20}testemunhas.{0,20}plenario|prepara\w*.{0,20}plenario",
+     "Diligências do 422", "ALTA", 5, "diligencia",
+     "preparacao_plenario", "diligencias_422", [], {}),
+    (r"\bpronunci",
+     "Analisar pronúncia (RESE)", "URGENTE", 5, "diligencia",
+     "pronuncia", "decisao_pronuncia", [], {}),
+    (r"sessao de julgamento.{0,30}(tribunal do juri|plenario)|design\w*.{0,20}plenario|sessao.{0,15}plenario",
+     "Ciência sessão de plenário", "ALTA", None, "ciencia",
+     "plenario", "designacao_plenario", ["agendar_audiencia"], {"tipo_audiencia": "JURI"}),
+    (r"(alegacoes finais|memoriais).{0,40}(sumario|primeira fase|1a fase)|(primeira fase|sumario).{0,40}(alegacoes finais|memoriais)",
+     "Alegações finais (sumário)", "URGENTE", 5, "diligencia",
+     "sumario_culpa", "alegacoes_finais_sumario", [], {}),
+    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao)",
+     "Ciência designação de AIJ", "NORMAL", None, "ciencia",
+     "sumario_culpa", "designacao_aij_1a_fase", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
+    # Distância ampliada p/ 60 no 2º/3º ramo — cobre "condenado ... tribunal do
+    # júri" (condenação antes da menção ao órgão, ordem inversa do 1º ramo).
+    (r"(conselho de sentenca|tribunal do juri).{0,60}conden|conden\w*.{0,60}(juri|plenario)|sentenca.{0,40}(plenario|conselho de sentenca)",
+     "Analisar apelação (art. 593 III)", "URGENTE", 5, "diligencia",
+     "pos_julgamento", "intimacao_sentenca_plenario", [], {}),
+    (r"contrarraz",
+     "Contrarrazões", "URGENTE", 8, "diligencia",
+     "pos_julgamento", "contrarrazoes", [], {}),
+    (r"\bapel",
+     "Analisar apelação", "URGENTE", 5, "diligencia",
+     "pos_julgamento", "apelacao", [], {}),
+    (r"precatoria",
+     "Cumprir precatória", "NORMAL", None, "diligencia",
+     None, "precatoria", [], {}),
+    (r"tomar ciencia|intimacao|\bciencia\b",
+     "Ciência", "BAIXA", None, "ciencia",
+     None, None, [], {}),
+]
+
+
 def _decide_by_titulo(titulo: str, text: str) -> dict | None:
     """Sinal PRIMÁRIO: tipo do documento na timeline do PJe (Acórdão/Sentença/
     Decisão/Despacho/Intimação). Mais confiável que keyword no texto, porque o
@@ -765,6 +814,11 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
     RULES_EP vem antes de RULES_BASE — atos específicos da execução; se nenhuma
     regra EP casar, faz fallback para o título genérico + RULES_BASE.
 
+    Quando a atribuição é Júri (`"JURI" in atribuicao`), RULES_JURI vem antes
+    de RULES_BASE — pronúncia/impronúncia/desclassificação/plenário/422/
+    alegações do sumário/apelação pós-júri; se nenhuma regra Júri casar, faz
+    fallback para o título genérico + RULES_BASE.
+
     `movimentos` (designações extraídas da timeline via
     extrair_movimentos_audiencia) é um sinal ESTRUTURADO: quando o título é
     fraco/ausente, uma audiência designada/redesignada na timeline tem
@@ -795,6 +849,13 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
                     "registro_tipo": tipo, "side_effects": fx, "extras": ex,
                 }
         # nenhuma regra EP casou → fallback para título genérico + RULES_BASE
+    if "JURI" in (atribuicao or ""):
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_JURI:
+            if re.search(pat, n):
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
+        # nenhuma regra Júri casou → fallback título + RULES_BASE
     titulo_rule = _decide_by_titulo(titulo, text) if titulo else None
     if titulo_rule and titulo_rule["ato"] not in _TITULO_WEAK_ATOS:
         return titulo_rule
