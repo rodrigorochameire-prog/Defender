@@ -180,7 +180,7 @@ export function buildJobMeta(input: CriarImportJobInput) {
     atribuicoes: input.atribuicoes,
     since: input.since,
     until: input.until,
-    limit: input.limit ?? 80,
+    limit: input.limit ?? 500,
     distribuir: input.distribuir ?? false,
   };
 }
