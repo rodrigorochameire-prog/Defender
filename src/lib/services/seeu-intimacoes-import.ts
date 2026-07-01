@@ -49,7 +49,7 @@ export function seeuStagingRowToImportRow(row: SeeuImportStaging): ImportRow {
     ...base,
     assistido: pick("assistidoNome", base.assistido),
     processoNumero: pick("processoNumero", base.processoNumero),
-    ato: pick("ato", base.ato),
+    ato: pick("ato", row.ato ?? base.ato),
     prazo: pick("prazo", base.prazo),
     atribuicao: pick("atribuicao", base.atribuicao),
     assistidoMatchId: pick<number | undefined>("assistidoMatchId", undefined),

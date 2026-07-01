@@ -156,6 +156,11 @@ _CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 # preservando as datas/prazo que vêm DEPOIS do CNJ e ANTES do próximo Seq.
 _SEQ_CNJ_RE = re.compile(r"(\d{3,4})\s*\n\s*(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})")
 
+# "N registro(s) encontrado(s), exibindo de X até Y" — usado só para detectar
+# under-capture (SEEU não pagina nesta Fase 1; se o total exceder os blocos
+# extraídos, há página seguinte não lida e expedientes ficam de fora em silêncio).
+_TOTAL_REGISTROS_RE = re.compile(r"(\d+)\s+registro\(s\)\s+encontrado")
+
 
 def _split_blocos_por_processo(texto_tabela: str) -> list[tuple[int, str, str]]:
     """Fatia a tabela em blocos, um por expediente, delimitados pelo marcador
@@ -179,14 +184,23 @@ def _split_blocos_por_processo(texto_tabela: str) -> list[tuple[int, str, str]]:
 async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status_cb):
     """Anexa via CDP a um SEEU já logado, troca entre as abas suportadas
     (Manifestação/Ciência/Razões) e extrai o texto cru de cada bloco por
-    processo. Fail-loud: sem CDP ou sem a Mesa aberta, levanta RuntimeError
-    com mensagem lida pelo daemon/UI ('Abra o SEEU logado...')."""
+    processo. Fail-loud na conexão: sem CDP ou sem a Mesa aberta, levanta
+    RuntimeError com mensagem lida pelo daemon/UI ('Abra o SEEU logado...').
+
+    Por-aba é resiliente: uma exceção (ex.: frame RichFaces desanexado durante
+    o clique/submit) é logada e a aba é pulada — não aborta as demais abas nem
+    perde o que já foi capturado. Também detecta under-capture (mais registros
+    anunciados pela tabela do que blocos extraídos — sinal de paginação não
+    implementada) e devolve os avisos junto com os resultados.
+
+    Retorna (results, warnings)."""
     try:
         from patchright.async_api import async_playwright  # type: ignore
     except ImportError:
         raise RuntimeError("patchright não instalado — ative o .venv do enrichment-engine")
 
     results: list[dict] = []
+    warnings: list[str] = []
     async with async_playwright() as p:
         if modo != "cdp":
             raise RuntimeError("SEEU só suporta modo cdp (login manual via Keycloak)")
@@ -206,30 +220,47 @@ async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status
             label, ato = ABAS_SUPORTADAS[aba]
             if status_cb:
                 status_cb(f"Abrindo aba {label}…")
-            frame = _find_mesa_frame(page)
-            if frame is None:
+            try:
+                frame = _find_mesa_frame(page)
+                if frame is None:
+                    continue
+                await frame.evaluate(JS_CLICK_ABA, label)
+                await page.wait_for_timeout(2500)
+                frame = _find_mesa_frame(page)  # re-resolve após o submit do form
+                if frame is None:
+                    continue
+                texto = await frame.evaluate(JS_TABLE_TEXT)
+                blocos = _split_blocos_por_processo(texto)
+
+                m = _TOTAL_REGISTROS_RE.search(texto or "")
+                if m and int(m.group(1)) > len(blocos):
+                    expected = int(m.group(1))
+                    aviso = f"aba {label}: capturados {len(blocos)}/{expected} — possível paginação"
+                    warnings.append(aviso)
+                    if status_cb:
+                        status_cb(f"⚠ {aviso}")
+
+                for seq, cnj_str, bloco in blocos:
+                    results.append({
+                        "aba": aba,
+                        "ato": ato,
+                        "processoNumero": cnj_str,
+                        "seq": seq,
+                        # Sentinela "Mesa do Defensor" garante que isSEEU detecte o
+                        # sistema mesmo num bloco isolado (sem o cabeçalho da aba),
+                        # roteando parseIntimacoesUnificado para SEEU. Prefixo
+                        # constante → content_hash determinístico (dedup estável).
+                        "conteudo": "Mesa do Defensor\n" + bloco,
+                    })
+                    if len(results) >= limit:
+                        return results, warnings
+            except Exception as e:
+                aviso = f"aba {label} falhou: {e}"
+                warnings.append(aviso)
+                if status_cb:
+                    status_cb(f"⚠ {aviso}")
                 continue
-            await frame.evaluate(JS_CLICK_ABA, label)
-            await page.wait_for_timeout(2500)
-            frame = _find_mesa_frame(page)  # re-resolve após o submit do form
-            if frame is None:
-                continue
-            texto = await frame.evaluate(JS_TABLE_TEXT)
-            for seq, cnj_str, bloco in _split_blocos_por_processo(texto):
-                results.append({
-                    "aba": aba,
-                    "ato": ato,
-                    "processoNumero": cnj_str,
-                    "seq": seq,
-                    # Sentinela "Mesa do Defensor" garante que isSEEU detecte o
-                    # sistema mesmo num bloco isolado (sem o cabeçalho da aba),
-                    # roteando parseIntimacoesUnificado para SEEU. Prefixo
-                    # constante → content_hash determinístico (dedup estável).
-                    "conteudo": "Mesa do Defensor\n" + bloco,
-                })
-                if len(results) >= limit:
-                    return results
-    return results
+    return results, warnings
 
 
 # > Nota de captura: o `conteudo` cru vai inteiro para o staging; o parsing
@@ -277,7 +308,7 @@ def run(args) -> None:
     set_etapa(sb, args.job_id, "Conectando ao SEEU…")
     ledger_index = load_seeu_ledger_index(sb)
 
-    expedientes = asyncio.run(_async_scrape_mesa(
+    expedientes, avisos = asyncio.run(_async_scrape_mesa(
         env, abas, args.modo, args.limit,
         status_cb=lambda msg: set_etapa(sb, args.job_id, msg),
     ))
@@ -306,7 +337,7 @@ def run(args) -> None:
 
     sb.update("claude_code_tasks", {"id": "eq.%d" % args.job_id}, {
         "status": "completed", "etapa": "Concluído",
-        "resultado": {"raspadas": total, "abas": abas, "atribuicao": atrib},
+        "resultado": {"raspadas": total, "abas": abas, "atribuicao": atrib, "avisos": avisos},
     })
     print(f"[ok] {total} expediente(s) SEEU importados para staging.", flush=True)
 

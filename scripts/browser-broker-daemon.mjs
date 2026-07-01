@@ -158,6 +158,30 @@ const SKILL_REGISTRY = {
     },
   },
 
+  // Importação de intimações SEEU (Execução Penal) para staging (idem PJe, mas
+  // Mesa do Procurador do SEEU). Requer --job-id, --atribuicoes CSV e flags opcionais.
+  'seeu-intimacoes-import': {
+    label: 'Importar intimações SEEU / Execução Penal (staging)',
+    // Exige login manual no SEEU (Keycloak) → só roda em broker interativo
+    // (máquina do defensor). Brokers de servidor ignoram sem travar o lock.
+    interactive: true,
+    build: (meta) => {
+      if (!meta.atribuicoes?.length) throw new Error('meta.atribuicoes é obrigatório para seeu-intimacoes-import');
+      return {
+        interpreter: VENV_PYTHON,
+        argv: [
+          resolve(PROJECT_DIR, '.claude/skills/seeu-intimacoes-import/scripts/seeu_intimacoes_import.py'),
+          '--job-id', String(meta.jobId),
+          '--atribuicoes', (meta.atribuicoes || ['EXECUCAO_PENAL']).join(','),
+          ...(meta.abas?.length ? ['--abas', meta.abas.join(',')] : []),
+          ...(meta.limit ? ['--limit', String(meta.limit)] : []),
+          '--modo', meta.modo || 'cdp',
+        ],
+        timeoutMs: 30 * 60_000,
+      };
+    },
+  },
+
   // Importação da pauta de audiências PJe para staging (pauta_import_staging).
   // Requer --job-id e --atribuicoes CSV; --since/--until opcionais (default no worker).
   'importar-pauta': {

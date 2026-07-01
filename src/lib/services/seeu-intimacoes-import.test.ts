@@ -52,6 +52,12 @@ describe("parseSeeuRow / seeuStagingRowToImportRow (forçado, não auto-detecta)
     expect(ir.status).toBe("analisar");
   });
 
+  it("aba razoes → ImportRow preserva o ato 'Razões' do worker (não vira 'Manifestação')", () => {
+    const ir = seeuStagingRowToImportRow(row({ tab: "razoes", conteudo: BLOCO_MEDIDAS_ALT, ato: "Razões" }));
+    expect(ir.ato).toBe("Razões");
+    expect(ir.status).toBe("analisar");
+  });
+
   it("edições em revisao vencem o parse (assistido)", () => {
     const ir = seeuStagingRowToImportRow(
       row({ tab: "manifestacao", conteudo: BLOCO_MEDIDAS_ALT, revisao: { assistidoNome: "Nome Editado" } }),
