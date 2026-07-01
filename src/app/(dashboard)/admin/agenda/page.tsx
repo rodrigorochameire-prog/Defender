@@ -1589,11 +1589,11 @@ export default function AgendaPage() {
         <div className="flex items-center gap-2.5">
           {/* Título compacto — inline */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <CalendarIcon className="w-4 h-4 text-white/70" />
-            <h1 className="text-white text-[13px] font-semibold tracking-tight leading-none">
+            <CalendarIcon className="w-4 h-4 md:w-4 md:h-4 text-white/70" />
+            <h1 className="text-white text-sm md:text-[13px] font-semibold tracking-tight leading-none">
               Agenda
             </h1>
-            <span className="text-[10px] text-white/55 tabular-nums leading-none">
+            <span className="text-[11px] md:text-[10px] text-white/55 tabular-nums leading-none">
               {stats.hoje} · {stats.semana}
             </span>
           </div>
