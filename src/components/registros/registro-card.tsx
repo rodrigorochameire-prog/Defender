@@ -189,7 +189,7 @@ export function RegistroCard({ registro, onEdit, onDelete, showPrazo }: Props) {
 
       {registro.autor?.name && (
         <div className="mt-2 flex items-center gap-1">
-          <span className="text-[9.5px] text-neutral-400 dark:text-neutral-500 truncate">
+          <span className="text-[9px] text-neutral-400 dark:text-neutral-500 truncate">
             {autorIniciais}
           </span>
         </div>

@@ -733,6 +733,9 @@ function KanbanCard({
             <Upload className="w-3 h-3" />
           </button>
         )}
+        {onToggleUrgent && (onAnalisar || onStatusChange) && (
+          <div className="w-px h-3 bg-neutral-300/60 dark:bg-neutral-600/60 mx-0.5" aria-hidden />
+        )}
         {onToggleUrgent && (
           <button
             type="button"
@@ -776,55 +779,64 @@ function KanbanCard({
       </div>
 
       <div className={cn("px-3 py-2.5", isSelectMode && "pl-7")}>
-        {/* Row 1: Nome + Flags — pr-24 reserva espaço pra toolbar absoluta de ações */}
-        <div className="flex items-start gap-1.5 mb-0.5 pr-24">
-          <p className="text-[12px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2 min-w-0 break-words">
+        {/* Row 1: Nome + flags críticos (não podem passar despercebidos) —
+            pr-24 reserva espaço pra toolbar absoluta de ações */}
+        <div className="flex items-start gap-1.5 mb-1 pr-24">
+          <p className="text-[12.5px] font-semibold text-neutral-900 dark:text-neutral-100 flex-1 leading-tight line-clamp-2 min-w-0 break-words">
             {demanda.assistido}
           </p>
           {isPreso && (
-            <Lock className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+            <Lock className="w-2.5 h-2.5 text-amber-500 shrink-0 mt-[1px]" />
           )}
           {isUrgente && (
-            <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0" />
+            <Flame className="w-2.5 h-2.5 text-rose-500 shrink-0 mt-[1px]" />
           )}
           {isAlta && (
-            <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" aria-label="Prioridade alta" />
+            <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0 mt-[1px]" aria-label="Prioridade alta" />
           )}
-          {demanda.revisaoPendente && (
-            <span
-              className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400"
-              title="Revisão pendente — classificação do ato com baixa confiança da IA"
-              aria-label="Revisão pendente"
-            >
-              <AlertCircle className="w-2.5 h-2.5" />
-              revisar
-            </span>
-          )}
-          {registrosCount > 0 && (
-            <span
-              className="shrink-0 inline-flex items-center gap-0.5 text-[8px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500"
-              title={`${registrosCount} registro${registrosCount > 1 ? "s" : ""} (ciência/diligência/anotação)`}
-            >
-              <FileText className="w-2.5 h-2.5" />
-              {registrosCount}
-            </span>
-          )}
-          {showAtribBadge && demanda.atribuicao && (() => {
-            const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";
-            return (
-              <span
-                className="text-[7px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shrink-0"
-                style={{
-                  color: atribColor,
-                  borderColor: `${atribColor}33`,
-                  backgroundColor: `${atribColor}12`,
-                }}
-              >
-                {demanda.atribuicao}
-              </span>
-            );
-          })()}
         </div>
+
+        {/* Row 1b: Meta-tags — revisar / registros / atribuição, mesmo peso
+            visual (9px), agrupadas fora da linha do nome pra não competir
+            com a toolbar de ações que flutua no hover. */}
+        {(demanda.revisaoPendente || registrosCount > 0 || (showAtribBadge && demanda.atribuicao)) && (
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {demanda.revisaoPendente && (
+              <span
+                className="inline-flex items-center gap-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400"
+                title="Revisão pendente — classificação do ato com baixa confiança da IA"
+                aria-label="Revisão pendente"
+              >
+                <AlertCircle className="w-2.5 h-2.5" />
+                revisar
+              </span>
+            )}
+            {registrosCount > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 text-[9px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500"
+                title={`${registrosCount} registro${registrosCount > 1 ? "s" : ""} (ciência/diligência/anotação)`}
+              >
+                <FileText className="w-2.5 h-2.5" />
+                {registrosCount}
+              </span>
+            )}
+            {showAtribBadge && demanda.atribuicao && (() => {
+              const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";
+              return (
+                <span
+                  className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border"
+                  style={{
+                    color: atribColor,
+                    borderColor: `${atribColor}33`,
+                    backgroundColor: `${atribColor}12`,
+                  }}
+                >
+                  {demanda.atribuicao}
+                </span>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Row 1b: Status badge — logo abaixo do nome, antes do processo */}
         {(() => {
@@ -973,7 +985,7 @@ function KanbanCard({
             const minutos = Math.max(1, Math.floor((Date.now() - upd) / 60000));
             return (
               <span
-                className="shrink-0 ml-auto inline-flex items-center gap-0.5 text-[8px] text-amber-500/80"
+                className="shrink-0 ml-auto inline-flex items-center gap-0.5 text-[9px] text-amber-500/80"
                 title={`Não sincronizado há ${minutos}min (última edição ${new Date(demanda.updatedAt).toLocaleString("pt-BR")})`}
               >
                 <CloudOff className="w-2.5 h-2.5" />
@@ -981,16 +993,21 @@ function KanbanCard({
             );
           })()}
           {demanda.data && (
-            <span className="text-[8px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
+            <span className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
               {demanda.data}
             </span>
           )}
         </div>
 
-        {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável */}
+        {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável. Contida em
+            um chip próprio (em vez de ícone solto) pra não competir com a
+            cor funcional do status logo acima. */}
         {analisePreview && (
-          <div className="flex items-start gap-1 mb-1" title={demanda.analiseResumo ?? undefined}>
-            <Sparkles className="w-2.5 h-2.5 text-violet-400 dark:text-violet-300 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
+          <div
+            className="flex items-start gap-1 mb-1 px-1.5 py-1 rounded-md bg-violet-50/70 dark:bg-violet-950/20"
+            title={demanda.analiseResumo ?? undefined}
+          >
+            <Sparkles className="w-2.5 h-2.5 text-violet-400 dark:text-violet-400 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
             <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2 min-w-0">
               {analisePreview}
             </span>
