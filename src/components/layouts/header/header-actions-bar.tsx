@@ -46,6 +46,7 @@ export interface HeaderAction {
 }
 
 const OVERFLOW_RESERVE = 40; // largura do botão "…" + gap
+const ITEM_GAP_PX = 6; // = gap-1.5 usado no container visível e na régua de medição
 
 function BarButton({ action }: { action: HeaderAction }) {
   if (action.render) return <>{action.render}</>;
@@ -86,10 +87,11 @@ export function HeaderActionsBar({
     const measure = measureRef.current;
     if (!container || !measure) return;
     const children = Array.from(measure.children) as HTMLElement[];
+    if (children.length !== barCandidates.length) return;
     const items = children.map((el, i) => ({
       id: barCandidates[i].id,
       priority: barCandidates[i].priority,
-      width: el.offsetWidth + 6, // gap-1.5
+      width: el.offsetWidth + ITEM_GAP_PX,
     }));
     const { visibleIds: ids } = computeVisibleActions(
       items,
@@ -117,7 +119,7 @@ export function HeaderActionsBar({
   return (
     <div
       ref={containerRef}
-      className={cn("flex flex-1 items-center justify-end gap-1.5 min-w-0", className)}
+      className={cn("relative flex flex-1 items-center justify-end gap-1.5 min-w-0", className)}
     >
       {/* Régua de medição invisível — todos os candidatos, sempre montados */}
       <div
@@ -126,9 +128,9 @@ export function HeaderActionsBar({
         className="absolute -top-[999px] left-0 flex items-center gap-1.5 invisible pointer-events-none"
       >
         {barCandidates.map((a) => (
-          <Fragment key={a.id}>
+          <span key={a.id} className="inline-flex shrink-0">
             <BarButton action={a} />
-          </Fragment>
+          </span>
         ))}
       </div>
 
