@@ -2065,7 +2065,7 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
             {/* userRole is briefly undefined while the session query resolves;
                 fall back to the least-privileged role so the launcher never
                 over-exposes items during that window. */}
-            <MobileBottomNav role={userRole ?? "estagiario"} />
+            <MobileBottomNav />
 
             {/* Floating dock — agenda + demandas */}
             <FloatingDock />
