@@ -1041,6 +1041,36 @@ def create_manual_review(sb: Supabase, demanda: dict) -> None:
     sb.update_demanda(demanda["id"], {"revisao_pendente": True})
 
 
+def create_ep_fallback_review(sb: Supabase, demanda: dict, content_text: str) -> bool:
+    """Execução Penal SEM match determinístico no RULES_EP: cria um registro base
+    COM `enrichment_data.raw_text` para o analise-intimacao (lane=ai) resumir mesmo
+    assim — garante que TODO expediente de EP em triagem ganhe o resumo de contexto
+    (decisão do usuário). Marca revisao_pendente. Retorna True (vai p/ a fila de IA).
+
+    Idempotente: não recria a anotação com o mesmo título (re-runs não duplicam);
+    fetch_pending só devolve registros enrichment_status='pending', então já-done
+    não volta para a IA."""
+    titulo = "Triagem EP — resumir e classificar"
+    if not sb.registro_exists(demanda["id"], titulo):
+        conteudo = (content_text[:1500] + ("..." if len(content_text) > 1500 else "")) \
+            or "(sem conteúdo lido)"
+        sb.insert_registro({
+            "assistido_id": demanda.get("assistido_id"),
+            "processo_id": demanda.get("processo_id"),
+            "demanda_id": demanda["id"],
+            "data_registro": datetime.now().isoformat(),
+            "tipo": "anotacao",
+            "titulo": titulo,
+            "conteudo": conteudo,
+            "status": "realizado",
+            "enrichment_status": "pending",
+            "enrichment_data": {"raw_text": (content_text or "")[:12000]},
+            "autor_id": DEFENSOR_ID,
+        })
+    sb.update_demanda(demanda["id"], {"revisao_pendente": True})
+    return True
+
+
 def _ato_administrativo(rule: dict) -> bool:
     """Ato de mera ciência administrativa (remessa/juntada/baixa) — sem valor
     interpretativo, então NÃO vai para a IA (enrichment_status='skipped')."""
@@ -1590,8 +1620,15 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 if not rule:
                     # .get: o dict do leitor SEEU não tem default_len/best_len (só PJe) —
                     # sem isso um EP-sem-match levantaria KeyError (contaria como erro, não manual).
-                    log(f"  → sem match (default={content.get('default_len', 0)}b best={content.get('best_len', 0)}b) — manual-review")
-                    create_manual_review(sb, d)
+                    if atrib_demanda == "EXECUCAO_PENAL":
+                        # EP sempre ganha resumo da IA, mesmo sem match determinístico
+                        # (decisão do usuário): cria registro base c/ raw_text e enfileira.
+                        log(f"  → sem match determinístico — EP: resumo IA mesmo assim")
+                        if create_ep_fallback_review(sb, d, texto):
+                            pending_ai_ids.append(d["id"])
+                    else:
+                        log(f"  → sem match (default={content.get('default_len', 0)}b best={content.get('best_len', 0)}b) — manual-review")
+                        create_manual_review(sb, d)
                     stats["manual"] += 1
                     continue
 
