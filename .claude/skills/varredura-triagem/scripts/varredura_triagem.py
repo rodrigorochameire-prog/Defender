@@ -1322,6 +1322,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         "ato": rule["ato"],
         "prioridade": rule["prioridade"],
         "revisao_pendente": False,
+        "analyzed_at": datetime.now().isoformat(),
     }
     if rule["prazo_dias"] is not None:
         fields["prazo"] = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
