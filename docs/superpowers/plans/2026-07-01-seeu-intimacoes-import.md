@@ -32,7 +32,7 @@
 
 **Interfaces:**
 - Consumes: `parseIntimacoesUnificado(texto): { intimacoes: IntimacaoSEEU[]; sistema }` (existente).
-- Produces: `IntimacaoSEEU` com `dataEnvio`/`ultimoDia` corretos por linha e `assistido` sem vazamento — consumido por Tasks 5/6 via `parseStagingRow`.
+- Produces: `IntimacaoSEEU` com `dataEnvio`/`ultimoDia` corretos por linha e `assistido` sem vazamento — consumido por Tasks 5/6 via `parseSeeuRow` (que força `parseSEEUIntimacoes`).
 
 - [ ] **Step 1: Criar as fixtures reais**
 
@@ -868,8 +868,14 @@ git commit -m "feat(seeu-worker): captura da Mesa do Defensor (Manifestação/Ci
 - Create: `src/lib/services/seeu-intimacoes-import.test.ts`
 
 **Interfaces:**
-- Consumes: `SeeuImportStaging` (Task 2); `stagingRowToImportRow` de `pje-intimacoes-import.ts` (reuso — `SeeuImportStaging` é estruturalmente compatível com `PjeImportStaging`).
-- Produces: `buildSeeuLedgerUpserts(rows, selectedIds, jobId): SeeuLedgerUpsert[]` — consumido pelo router (Task 6).
+- Consumes: `SeeuImportStaging` (Task 2); `parseSEEUIntimacoes` de `pje-parser.ts`; `intimacaoToImportRow` de `pje-intimacoes-import.ts` (reuso do mapeamento SEEU→ImportRow).
+- Produces:
+  - `buildSeeuLedgerUpserts(rows, selectedIds, jobId): SeeuLedgerUpsert[]`
+  - `parseSeeuRow(row): IntimacaoSEEU | null` — **força** `parseSEEUIntimacoes(conteudo, tabOverride)`; `tab==='ciencia'`→`'ciencia'`, senão `'manifestacao'`.
+  - `seeuStagingRowToImportRow(row): ImportRow` — parse forçado → `intimacaoToImportRow(int, atrib, jobId, "SEEU")` + edições `revisao`.
+  - Todos consumidos pelo router (Task 6).
+
+> **CRÍTICO (decisão validada ao vivo):** NÃO usar `stagingRowToImportRow`/`parseStagingRow` (auto-detecção via `isSEEU`) para linhas SEEU. Um bloco isolado de "Execução de **Medidas Alternativas**" não contém o indicador "Execução da Pena" e cai abaixo do limiar do `isSEEU` → seria roteado erroneamente para o parser do PJe; e um bloco isolado não tem o cabeçalho "Ciência (" → o `ato` sairia sempre como "Manifestação". Como a origem é sabidamente SEEU e a aba dá o `ato`, **forçamos** `parseSEEUIntimacoes(conteudo, tabOverride)`. Verificado ao vivo: 11/11 corretos (assistido, ambas as datas, `ato` Ciência/Manifestação por aba).
 
 - [ ] **Step 1: Escrever o teste que falha**
 
@@ -877,7 +883,11 @@ Criar `src/lib/services/seeu-intimacoes-import.test.ts`:
 
 ```ts
 import { describe, it, expect } from "vitest";
-import { buildSeeuLedgerUpserts } from "@/lib/services/seeu-intimacoes-import";
+import {
+  buildSeeuLedgerUpserts,
+  parseSeeuRow,
+  seeuStagingRowToImportRow,
+} from "@/lib/services/seeu-intimacoes-import";
 import type { SeeuImportStaging } from "@/lib/db/schema/seeu-import";
 
 function row(over: Partial<SeeuImportStaging>): SeeuImportStaging {
@@ -891,6 +901,48 @@ function row(over: Partial<SeeuImportStaging>): SeeuImportStaging {
     createdAt: new Date(), ...over,
   } as SeeuImportStaging;
 }
+
+// Blocos reais capturados (com a sentinela "Mesa do Defensor" que o worker prefixa).
+// O de "Medidas Alternativas" NÃO contém "Execução da Pena" → provaria o misroute
+// sob auto-detecção; aqui deve parsear porque forçamos SEEU.
+const BLOCO_MEDIDAS_ALT =
+  "Mesa do Defensor\n812\t\n2000108-91.2022.8.05.0039 \tExecução de Medidas Alternativas no Juízo Comum\n" +
+  "(Acordo de Não Persecução Penal)\t\nPolo Ativo:\t\nMinistério Público do Estado da Bahia\n\n\n" +
+  "Executado:\t\nRENATO DIAS DE FREITAS\n\t\t30/06/2026\n10/07/2026\t5 dias corridos\t\nAnalisar\n";
+const BLOCO_CIENCIA =
+  "Mesa do Defensor\n1000\t\n2000124-11.2023.8.05.0039 \tExecução da Pena\n(Pena Privativa de Liberdade)\t\n" +
+  "Autoridade:\t\nEstado da Bahia\n\n\nExecutado:\t\nFRANKLIN LEITE DOS SANTOS\n" +
+  "\t\t30/06/2026\n10/07/2026\t5 dias corridos\t\nAnalisar\n\n[ Dispensar Juntada ]\t\n";
+
+describe("parseSeeuRow / seeuStagingRowToImportRow (forçado, não auto-detecta)", () => {
+  it("parseSeeuRow parsa bloco 'Medidas Alternativas' que o auto-detect erraria", () => {
+    const int = parseSeeuRow(row({ tab: "manifestacao", conteudo: BLOCO_MEDIDAS_ALT }));
+    expect(int?.assistido).toBe("Renato Dias de Freitas");
+    expect(int?.dataEnvio).toBe("30/06/2026");
+    expect(int?.ultimoDia).toBe("10/07/2026");
+  });
+
+  it("aba ciencia → ImportRow com ato 'Ciência' e status de ciência", () => {
+    const ir = seeuStagingRowToImportRow(row({ tab: "ciencia", conteudo: BLOCO_CIENCIA, ato: "Ciência" }));
+    expect(ir.assistido).toBe("Franklin Leite dos Santos");
+    expect(ir.ato).toBe("Ciência");
+    expect(ir.status).toBe("ciencia");
+    expect(ir.atribuicao).toBe("EXECUCAO_PENAL");
+  });
+
+  it("aba manifestacao → ImportRow com ato 'Manifestação' e status analisar", () => {
+    const ir = seeuStagingRowToImportRow(row({ tab: "manifestacao", conteudo: BLOCO_MEDIDAS_ALT, ato: "Manifestação" }));
+    expect(ir.ato).toBe("Manifestação");
+    expect(ir.status).toBe("analisar");
+  });
+
+  it("edições em revisao vencem o parse (assistido)", () => {
+    const ir = seeuStagingRowToImportRow(
+      row({ tab: "manifestacao", conteudo: BLOCO_MEDIDAS_ALT, revisao: { assistidoNome: "Nome Editado" } }),
+    );
+    expect(ir.assistido).toBe("Nome Editado");
+  });
+});
 
 describe("buildSeeuLedgerUpserts", () => {
   it("marca imported quando selecionado, preservando processo+seq", () => {
@@ -924,6 +976,62 @@ Criar `src/lib/services/seeu-intimacoes-import.ts`:
 
 ```ts
 import type { SeeuImportStaging } from "@/lib/db/schema/seeu-import";
+import type { ImportRow } from "@/lib/services/pje-import";
+import { parseSEEUIntimacoes, type IntimacaoSEEU } from "@/lib/pje-parser";
+import { intimacaoToImportRow } from "@/lib/services/pje-intimacoes-import";
+
+/**
+ * Reparseia o `conteudo` cru de uma linha SEEU FORÇANDO o parser SEEU (a origem é
+ * sabidamente SEEU — não dependemos de `isSEEU`, que erra em blocos isolados). O
+ * `tab` da linha define o tipoManifestacao (aba Ciência → 'ciencia'; senão
+ * 'manifestacao'), garantindo o `ato` correto mesmo sem o cabeçalho da aba no bloco.
+ * Retorna a 1ª intimação, ou null se não parseável.
+ */
+export function parseSeeuRow(row: SeeuImportStaging): IntimacaoSEEU | null {
+  if (!row.conteudo) return null;
+  const override = row.tab === "ciencia" ? "ciencia" : "manifestacao";
+  try {
+    const r = parseSEEUIntimacoes(row.conteudo, override);
+    return (r.intimacoes[0] as IntimacaoSEEU) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Converte uma linha de staging SEEU → ImportRow. Fonte única de parsing: o parser
+ * SEEU forçado (parseSeeuRow) → `intimacaoToImportRow(..., "SEEU")` (que roteia por
+ * `intimacaoSEEUToDemanda`). Fallback para as colunas best-effort se não parseável.
+ * Edições do usuário (`revisao`) têm precedência sobre o parse e o fallback.
+ */
+export function seeuStagingRowToImportRow(row: SeeuImportStaging): ImportRow {
+  const rev = (row.revisao ?? {}) as Record<string, unknown>;
+  const pick = <T>(k: string, fallback: T): T =>
+    (rev[k] as T | undefined) ?? fallback;
+  const atrib = (row.atribuicao as string | null) ?? "";
+
+  const int = parseSeeuRow(row);
+  const base: ImportRow = int
+    ? intimacaoToImportRow(int, atrib, String(row.jobId), "SEEU")
+    : {
+        assistido: row.assistidoNome ?? "",
+        processoNumero: row.processoNumero ?? undefined,
+        ato: row.ato ?? "",
+        prazo: row.prazo ?? undefined,
+        atribuicao: atrib || undefined,
+        importBatchId: String(row.jobId),
+      };
+
+  return {
+    ...base,
+    assistido: pick("assistidoNome", base.assistido),
+    processoNumero: pick("processoNumero", base.processoNumero),
+    ato: pick("ato", base.ato),
+    prazo: pick("prazo", base.prazo),
+    atribuicao: pick("atribuicao", base.atribuicao),
+    assistidoMatchId: pick<number | undefined>("assistidoMatchId", undefined),
+  };
+}
 
 export type SeeuLedgerUpsert = {
   processoNumero: string | null;
@@ -986,7 +1094,7 @@ git commit -m "feat(seeu): buildSeeuLedgerUpserts (chave forte processo+seq)"
 - Create: `src/lib/trpc/routers/seeuIntimacoes.test.ts`
 
 **Interfaces:**
-- Consumes: `seeuImportStaging`/`seeuLedger` (Task 2); `stagingRowToImportRow` (reuso), `buildSeeuLedgerUpserts` (Task 5); `importarDemandas`.
+- Consumes: `seeuImportStaging`/`seeuLedger` (Task 2); `parseSeeuRow`, `seeuStagingRowToImportRow`, `buildSeeuLedgerUpserts` (Task 5); `enrichStagingWithLiveDedup` (reuso, Layer-B); `importarDemandas`.
 - Produces: procedures `criarImportJob`, `listStaging`, `confirmarImport` sob `trpc.seeuIntimacoes.*` — consumidas pela UI (Task 7).
 
 - [ ] **Step 1: Localizar o root router e o padrão de registro**
@@ -1026,7 +1134,7 @@ Expected: FAIL — módulo não existe.
 
 - [ ] **Step 4: Implementar o router**
 
-Criar `src/lib/trpc/routers/seeuIntimacoes.ts` (espelha `intimacoes.ts`, apontando para as tabelas SEEU; enriquecimento reusa `comCamposParseados` via re-export ou cópia mínima — aqui usamos `parseStagingRow` diretamente para os campos essenciais):
+Criar `src/lib/trpc/routers/seeuIntimacoes.ts` (espelha `intimacoes.ts`, apontando para as tabelas SEEU; usa `parseSeeuRow`/`seeuStagingRowToImportRow` da Task 5 — parse SEEU **forçado**, nunca auto-detecção — para os campos de exibição e a promoção):
 
 ```ts
 import { z } from "zod";
@@ -1037,12 +1145,12 @@ import { claudeCodeTasks } from "@/lib/db/schema/casos";
 import { seeuImportStaging, seeuLedger } from "@/lib/db/schema/seeu-import";
 import { demandas } from "@/lib/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
+import { enrichStagingWithLiveDedup } from "@/lib/services/pje-intimacoes-import";
 import {
-  stagingRowToImportRow,
-  parseStagingRow,
-  enrichStagingWithLiveDedup,
-} from "@/lib/services/pje-intimacoes-import";
-import { buildSeeuLedgerUpserts } from "@/lib/services/seeu-intimacoes-import";
+  buildSeeuLedgerUpserts,
+  parseSeeuRow,
+  seeuStagingRowToImportRow,
+} from "@/lib/services/seeu-intimacoes-import";
 import { importarDemandas } from "@/lib/services/pje-import";
 import type { SeeuImportStaging } from "@/lib/db/schema/seeu-import";
 import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
@@ -1064,8 +1172,8 @@ export function buildSeeuJobMeta(input: CriarSeeuImportJobInput) {
   };
 }
 
-// SeeuImportStaging é superconjunto estrutural de PjeImportStaging → os helpers
-// de serviço (stagingRowToImportRow, enrichStagingWithLiveDedup) aceitam via cast.
+// SeeuImportStaging é superconjunto estrutural de PjeImportStaging → o helper
+// enrichStagingWithLiveDedup (Layer-B) aceita via cast.
 const asPje = (rows: SeeuImportStaging[]) => rows as unknown as PjeImportStaging[];
 
 export const seeuIntimacoesRouter = router({
@@ -1110,9 +1218,17 @@ export const seeuIntimacoesRouter = router({
         .where(eq(seeuImportStaging.jobId, input.jobId))
         .orderBy(seeuImportStaging.id);
 
+      // Parse FORÇADO SEEU (não auto-detecta) para os campos de exibição. Também
+      // injeta o assistido derivado em `assistidoNome` (o worker deixa a coluna
+      // nula) para o Layer-B ter nome com que casar contra demandas vivas.
+      const comAssistido = (rows: SeeuImportStaging[]) =>
+        rows.map((r) => {
+          const int = parseSeeuRow(r);
+          return int?.assistido ? { ...r, assistidoNome: int.assistido } : r;
+        });
       const withParsed = (rows: SeeuImportStaging[]) =>
         rows.map((r) => {
-          const int = parseStagingRow(r as unknown as PjeImportStaging)?.int;
+          const int = parseSeeuRow(r);
           return {
             ...r,
             assistidoParsed: int?.assistido ?? null,
@@ -1121,12 +1237,13 @@ export const seeuIntimacoesRouter = router({
           };
         });
 
+      const base = comAssistido(stagingRows);
       if (task.status === "completed") {
         const demandasVivas = await db.select().from(demandas).where(isNull(demandas.deletedAt));
-        const enriched = enrichStagingWithLiveDedup(asPje(stagingRows), demandasVivas) as unknown as SeeuImportStaging[];
+        const enriched = enrichStagingWithLiveDedup(asPje(base), demandasVivas) as unknown as SeeuImportStaging[];
         return { status: task.status, etapa: task.etapa ?? null, rows: withParsed(enriched) };
       }
-      return { status: task.status, etapa: task.etapa ?? null, rows: withParsed(stagingRows) };
+      return { status: task.status, etapa: task.etapa ?? null, rows: withParsed(base) };
     }),
 
   confirmarImport: protectedProcedure
@@ -1146,7 +1263,7 @@ export const seeuIntimacoesRouter = router({
       });
       const importRows = withEdits
         .filter((r) => selectedSet.has(r.id))
-        .map((r) => stagingRowToImportRow(r as unknown as PjeImportStaging));
+        .map((r) => seeuStagingRowToImportRow(r));
       const result = await importarDemandas(importRows, ctx.user.id, false);
 
       const upserts = buildSeeuLedgerUpserts(withEdits, selectedSet, input.jobId);
