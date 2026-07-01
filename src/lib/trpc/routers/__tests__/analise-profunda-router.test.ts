@@ -33,6 +33,10 @@ describe("analiseProfunda router — contract", () => {
     expect(src).toContain('"concluida"');
     expect(src).toMatch(/completed/);
   });
+  it("status deriva erro tanto para failed quanto para needs_review", () => {
+    expect(src).toContain("needs_review");
+    expect(src).toMatch(/"failed"[\s\S]*?needs_review/);
+  });
   it("está registrado no appRouter", () => {
     const index = read("index.ts");
     expect(index).toContain("analiseProfundaRouter");

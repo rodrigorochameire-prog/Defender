@@ -16,7 +16,6 @@ export function useAnaliseProfundaJob() {
 
   const criar = trpc.analiseProfunda.criar.useMutation({
     onSuccess: (res) => {
-      setDemandaId((prev) => prev ?? null);
       toast.success(res.existing ? "Análise profunda já em andamento." : "Análise profunda iniciada.");
     },
     onError: (e) => toast.error(e.message),

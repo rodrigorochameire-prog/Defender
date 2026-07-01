@@ -11,7 +11,7 @@ com --remote-debugging-port=9222 e de um processo real no PJe. Sua validação �
 a etapa de aceite ao vivo (ver task-5-report.md). O gate aqui é estrutural:
 test_worker_structure.py + `--help` sem erro de import.
 """
-import argparse, asyncio, json, os, shutil, subprocess, sys
+import argparse, asyncio, json, shutil, subprocess, sys
 from pathlib import Path
 
 
@@ -43,12 +43,6 @@ def build_analise_autos_task(row: dict, demanda_id: int, created_by: int) -> dic
         "status": "pending",
         "created_by": created_by,
     }
-
-
-def autos_pdf_no_drive_path(assistido_nome: str, cnj: str) -> str:
-    """Caminho determinístico do PDF dos autos na pasta do assistido (resume-safe)."""
-    safe = "".join(c for c in assistido_nome if c.isalnum() or c in " -_").strip()
-    return f"{safe}/Autos/autos-{cnj}.pdf"
 
 
 # ───── Fluxo CDP (browser-broker-daemon) ──────────────────────────────────────
@@ -125,6 +119,12 @@ def _distribuir_para_assistido(pdf_path: str, cnj: str) -> dict:
             f"distribuir_autos.py saiu com código {r.returncode}: "
             f"{(r.stderr or r.stdout or '')[:200]}"
         )
+    # Sucesso (código 0) normalmente MOVE o arquivo para fora do inbox. Se ele
+    # ainda estiver lá, o CNJ não bateu com o regex do script (falha parcial
+    # silenciosa) — a análise não pode seguir como se os autos tivessem sido
+    # distribuídos.
+    if dest.exists():
+        raise RuntimeError(f"autos não distribuídos (arquivo ainda no inbox: {dest})")
     return {"invoked": True, "inbox_file": str(dest)}
 
 

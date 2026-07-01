@@ -63,7 +63,7 @@ export const analiseProfundaRouter = router({
       const [proc] = await db
         .select({ atribuicao: processos.atribuicao, numeroAutos: processos.numeroAutos })
         .from(processos)
-        .where(eq(processos.id, d.processoId))
+        .where(and(eq(processos.id, d.processoId), isNull(processos.deletedAt)))
         .limit(1);
       const [reg] = await db
         .select({ enrichment: registros.enrichmentData })
@@ -128,7 +128,7 @@ export const analiseProfundaRouter = router({
           .from(claudeCodeTasks)
           .where(eq(claudeCodeTasks.id, d.taskId))
           .limit(1);
-        if (t?.tstatus === "failed") { status = "erro"; erro = t.terro ?? null; }
+        if (t?.tstatus === "failed" || t?.tstatus === "needs_review") { status = "erro"; erro = t.terro ?? null; }
         else if (t?.tstatus === "completed" && t.tlane === "ai") {
           status = "concluida";
           await db.update(demandas).set({ analiseProfundaStatus: "concluida" }).where(eq(demandas.id, input.demandaId));
