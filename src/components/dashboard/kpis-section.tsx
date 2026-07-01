@@ -1479,10 +1479,10 @@ function RelatorioDetailTable({
             </span>
           </div>
 
-          {/* Table */}
-          <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-700/30 overflow-hidden">
+          {/* Table — rola horizontalmente no mobile (colunas fixas não cabem em 375px) */}
+          <div className="rounded-lg border border-neutral-200/60 dark:border-neutral-700/30 overflow-x-auto">
             {/* Header row */}
-            <div className="grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-200/60 dark:border-neutral-700/30 px-3 py-1.5">
+            <div className="grid grid-cols-[1fr_repeat(6,48px)_56px] min-w-[540px] gap-0 bg-neutral-50 dark:bg-neutral-800/30 border-b border-neutral-200/60 dark:border-neutral-700/30 px-3 py-1.5">
               <span className="text-[9px] font-semibold uppercase tracking-wider text-neutral-400">
                 Atividade
               </span>
@@ -1504,7 +1504,7 @@ function RelatorioDetailTable({
               <div
                 key={cat.categoria}
                 className={cn(
-                  "grid grid-cols-[1fr_repeat(6,48px)_56px] gap-0 px-3 py-1.5 text-[11px]",
+                  "grid grid-cols-[1fr_repeat(6,48px)_56px] min-w-[540px] gap-0 px-3 py-1.5 text-[11px]",
                   idx % 2 === 0
                     ? "bg-white dark:bg-transparent"
                     : "bg-neutral-50/50 dark:bg-neutral-800/10",

@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc/client";
 import { DriveFilters } from "./DriveFilters";
 import { DriveFileGrid } from "./DriveFileGrid";
 import { DriveFileList } from "./DriveFileList";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { DriveFileCompact } from "./DriveFileCompact";
 import { DriveBatchActions } from "./DriveBatchActions";
 import { DriveOverviewDashboard } from "./DriveOverviewDashboard";
@@ -20,6 +21,10 @@ const AUDIO_VIDEO_MIMES = ["audio/", "video/", "application/ogg"];
 
 export function DriveContentArea() {
   const ctx = useDriveContext();
+  // No celular a lista (colunas fixas) trunca os nomes — usa sempre a grade,
+  // que empilha 2-up e mostra os nomes. Desktop mantém a escolha do usuário.
+  const isMobile = useIsMobile();
+  const effectiveViewMode = isMobile ? "grid" : ctx.viewMode;
   const utils = trpc.useUtils();
   const [isTranscribingAll, setIsTranscribingAll] = useState(false);
 
@@ -190,9 +195,9 @@ export function DriveContentArea() {
 
       {/* File List / Grid / Compact */}
       <div className="flex-1 overflow-y-auto p-4">
-        {ctx.viewMode === "list" ? (
+        {effectiveViewMode === "list" ? (
           <DriveFileList files={filteredFiles as any[]} isLoading={isLoading} />
-        ) : ctx.viewMode === "grid" ? (
+        ) : effectiveViewMode === "grid" ? (
           <DriveFileGrid files={filteredFiles as any[]} isLoading={isLoading} />
         ) : (
           <DriveFileCompact files={filteredFiles as any[]} isLoading={isLoading} />
