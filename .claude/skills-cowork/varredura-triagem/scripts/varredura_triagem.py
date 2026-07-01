@@ -336,6 +336,30 @@ class Supabase:
         rows = self._req("POST", "/rest/v1/registros", registro, prefer="return=representation")
         return rows[0]["id"] if isinstance(rows, list) and rows else None
 
+    def upsert_analise_registro(self, demanda_id: int, base: dict, payload: dict) -> None:
+        """Cria/atualiza o ÚNICO registro de análise (tipo='analise',
+        titulo='Resumo e providências'). Select-then-update (sem ON CONFLICT).
+        `base` = campos comuns (assistido_id, processo_id, demanda_id, autor_id)."""
+        from urllib.parse import quote
+        titulo = "Resumo e providências"
+        rows = self._req(
+            "GET",
+            f"/rest/v1/registros?demanda_id=eq.{demanda_id}"
+            f"&titulo=eq.{quote(titulo)}&tipo=eq.analise&select=id&limit=1",
+        )
+        conteudo = _analise_conteudo(payload)
+        if isinstance(rows, list) and rows:
+            self._req("PATCH", f"/rest/v1/registros?id=eq.{rows[0]['id']}",
+                      {"conteudo": conteudo, "enrichment_data": payload},
+                      prefer="return=minimal")
+        else:
+            self._req("POST", "/rest/v1/registros", {
+                **base, "tipo": "analise", "titulo": titulo,
+                "data_registro": datetime.now().isoformat(),
+                "status": "realizado", "conteudo": conteudo,
+                "enrichment_data": payload,
+            }, prefer="return=minimal")
+
     def link_registro_audiencia(self, registro_id: int, audiencia_id: int) -> None:
         self._req("PATCH", f"/rest/v1/registros?id=eq.{registro_id}",
                   {"audiencia_id": audiencia_id}, prefer="return=minimal")
@@ -1187,6 +1211,38 @@ def fase_motivo_patch(rule: dict) -> dict:
     return patch
 
 
+def build_fase1_analise(rule: dict, content_ok: bool) -> dict:
+    """Payload determinístico do registro de análise (contrato spec §A2.2).
+    A chave 'objeto' é SEMPRE incluída — é o marcador que a query do card usa."""
+    ato = rule.get("ato") or ""
+    prazo = ""
+    if rule.get("prazo_dias") is not None:
+        prazo = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
+    return {
+        "objeto": ato,                 # refinado pela fase 2
+        "decidido": "",
+        "providencia": ato,
+        "prazo": prazo,
+        "recurso": "",
+        "_status": "pendente" if content_ok else "nao_lido",
+        "_fonte": "fase1",
+    }
+
+
+def _analise_conteudo(payload: dict) -> str:
+    """Texto puro rotulado para a timeline, a partir do payload de contrato."""
+    linhas = []
+    if payload.get("objeto"): linhas.append(f"Objeto: {payload['objeto']}")
+    if payload.get("decidido"): linhas.append(f"O que foi decidido: {payload['decidido']}")
+    if payload.get("providencia"): linhas.append(f"Providência/Prazo: {payload['providencia']}")
+    if payload.get("recurso"): linhas.append(f"Cabe recurso?: {payload['recurso']}")
+    if payload.get("_status") == "nao_lido":
+        linhas.append("(documento não lido — revisão manual)")
+    elif payload.get("_status") == "pendente":
+        linhas.append("(análise IA pendente)")
+    return "\n".join(linhas) or "(análise pendente)"
+
+
 def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) -> bool:
     """Aplica a classificação + executa os side-effects determinísticos
     (agenda, medidas MPU, contato), persiste o texto p/ a IA e marca o
@@ -1272,6 +1328,18 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
     # ── Side-effect: MPU — medidas deferidas ───────────────────────────────────
     if is_mpu and proc_id:
         _aplicar_medidas_mpu(sb, demanda, content)
+
+    # ── Registro de análise (contrato §A2.2) — card nunca em branco ────────────
+    try:
+        content_ok = bool((content or "").strip()) and not _ato_administrativo(rule)
+        sb.upsert_analise_registro(demanda["id"], {
+            "assistido_id": assistido_id,
+            "processo_id": proc_id,
+            "demanda_id": demanda["id"],
+            "autor_id": DEFENSOR_ID,
+        }, build_fase1_analise(rule, content_ok))
+    except Exception as e:
+        log(f"  ⚠ falha registro de análise (demanda={demanda['id']}): {e}")
 
     return not skip_ai
 
