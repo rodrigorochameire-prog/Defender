@@ -71,18 +71,22 @@ export default function AdminAuditLogsPage() {
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="title">Bem-sucedidas</span>
+            <span className="title">Tipos de Ação</span>
             <UserPlus className="icon text-green-500" />
           </div>
-          <div className="stat-card-value">{stats?.successful || 0}</div>
+          <div className="stat-card-value">{stats?.byAction?.length || 0}</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-card-header">
-            <span className="title">Com Erro</span>
+            <span className="title">Ação mais Frequente</span>
             <AlertCircle className="icon text-rose-500" />
           </div>
-          <div className="stat-card-value">{stats?.failed || 0}</div>
+          <div className="stat-card-value">
+            {stats?.byAction && stats.byAction.length > 0
+              ? [...stats.byAction].sort((a, b) => b.n - a.n)[0].action
+              : "-"}
+          </div>
         </div>
 
         <div className="stat-card">
@@ -125,8 +129,7 @@ export default function AdminAuditLogsPage() {
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Administrador</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>IP</TableHead>
+                    <TableHead>Entidade</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,8 +144,8 @@ export default function AdminAuditLogsPage() {
                     return (
                       <TableRow key={log.id || index}>
                         <TableCell className="font-mono text-xs">
-                          {log.created_at 
-                            ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
+                          {log.createdAt
+                            ? format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })
                             : "-"
                           }
                         </TableCell>
@@ -150,7 +153,7 @@ export default function AdminAuditLogsPage() {
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium">
-                              Usuário #{log.user_id || "?"}
+                              {log.userName || `Usuário #${log.userId || "?"}`}
                             </span>
                           </div>
                         </TableCell>
@@ -160,19 +163,8 @@ export default function AdminAuditLogsPage() {
                             {config.label}
                           </Badge>
                         </TableCell>
-                        <TableCell>
-                          {log.success ? (
-                            <Badge variant="outline" className="text-green-600">
-                              Sucesso
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-red-600">
-                              {log.error_code || "Erro"}
-                            </Badge>
-                          )}
-                        </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
-                          {log.ip_address || "-"}
+                          {log.entityType} #{log.entityId}
                         </TableCell>
                       </TableRow>
                     );

@@ -1,7 +1,9 @@
 import { router, adminProcedure } from "../init";
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { auditLogs } from "@/lib/db/schema";
+import { and, eq, desc, sql, count } from "drizzle-orm";
 
-// Placeholder para audit logs - será implementado quando a tabela existir
 export const auditLogsRouter = router({
   /**
    * Lista logs de auditoria (admin)
@@ -11,21 +13,33 @@ export const auditLogsRouter = router({
       z.object({
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
+        entityType: z.string().optional(),
+        entityId: z.number().optional(),
+        action: z.string().optional(),
+        jobId: z.number().optional(),
       })
     )
-    .query(async () => {
-      // TODO: Implementar quando tabela audit_logs existir
-      return {
-        logs: [],
-        total: 0,
-      };
+    .query(async ({ input }) => {
+      const conds = [] as any[];
+      if (input.entityType) conds.push(eq(auditLogs.entityType, input.entityType));
+      if (input.entityId) conds.push(eq(auditLogs.entityId, input.entityId));
+      if (input.action) conds.push(eq(auditLogs.action, input.action));
+      if (input.jobId) conds.push(sql`${auditLogs.metadata}->>'job_id' = ${String(input.jobId)}`);
+      const where = conds.length ? and(...conds) : undefined;
+      const logs = await db.select().from(auditLogs).where(where)
+        .orderBy(desc(auditLogs.id)).limit(input.limit).offset(input.offset);
+      const [{ total }] = await db.select({ total: count() }).from(auditLogs).where(where);
+      return { logs, total };
     }),
 
   /**
    * Estatísticas de auditoria
    */
   stats: adminProcedure.query(async () => {
-    // TODO: Implementar quando tabela audit_logs existir
-    return { total: 0, successful: 0, failed: 0, uniqueUsers: 0 };
+    const byAction = await db.select({ action: auditLogs.action, n: count() })
+      .from(auditLogs).groupBy(auditLogs.action);
+    const [{ total }] = await db.select({ total: count() }).from(auditLogs);
+    const [{ users }] = await db.select({ users: sql<number>`count(distinct ${auditLogs.userId})::int` }).from(auditLogs);
+    return { total, byAction, uniqueUsers: users };
   }),
 });
