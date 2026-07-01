@@ -42,6 +42,7 @@ export function ResponsiveDialogTrigger(
 export function ResponsiveDialogContent({
   className,
   children,
+  hideClose,
   ...props
 }: React.ComponentProps<typeof DialogContent>) {
   const isMobile = useIsMobile();
@@ -57,7 +58,7 @@ export function ResponsiveDialogContent({
     );
   }
   return (
-    <DialogContent className={className} {...props}>
+    <DialogContent className={className} hideClose={hideClose} {...props}>
       {children}
     </DialogContent>
   );

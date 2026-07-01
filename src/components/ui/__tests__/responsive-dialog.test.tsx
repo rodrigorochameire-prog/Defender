@@ -28,12 +28,16 @@ function renderOpen() {
 describe("ResponsiveDialog", () => {
   it("renders content on desktop", () => {
     isMobile.mockReturnValue(false);
-    renderOpen();
+    const { baseElement } = renderOpen();
     expect(screen.getByText("Título")).toBeInTheDocument();
+    // DialogContent/SheetContent render via Radix Portal into document.body,
+    // so we query baseElement (document.body) rather than RTL's `container`.
+    expect(baseElement.querySelector(".rounded-t-2xl")).toBeNull();
   });
   it("renders content on mobile (as bottom sheet)", () => {
     isMobile.mockReturnValue(true);
-    renderOpen();
+    const { baseElement } = renderOpen();
     expect(screen.getByText("Título")).toBeInTheDocument();
+    expect(baseElement.querySelector(".rounded-t-2xl")).toBeTruthy();
   });
 });
