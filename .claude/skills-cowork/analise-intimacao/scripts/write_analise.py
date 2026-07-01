@@ -117,9 +117,21 @@ def _strip_label(value, *labels) -> str:
     return v.replace("**", "").strip()
 
 
+# Enum fechado de peças sugeridas (sinal p/ o pipeline profundo — SEEU Fase 2a/2c).
+# Valor fora da lista → tratado como ausente (não dispara requer_analise_profunda).
+_PECAS_VALIDAS = {
+    "memoriais", "resposta_acusacao", "apelacao", "rese",
+    "manifestacao_ep", "contrarrazoes",
+}
+
+
 def build_fase2_enrichment(r: dict) -> dict:
     """Contrato JSON (spec §A2.2) da fase 2, a partir do payload da IA.
-    'objeto' SEMPRE presente (marcador da query do card)."""
+    'objeto' SEMPRE presente (marcador da query do card).
+
+    Inclui também o SINAL do pipeline profundo (SEEU Fase 2a): `peca_sugerida`
+    (enum fechado) e `requer_analise_profunda == (peca_sugerida is not None)` —
+    coexistindo com o contrato de paridade (objeto/decidido/providencia/_status)."""
     cr = (r.get("cabe_recurso") or "").lower()
     recurso = ""
     if cr in ("sim", "talvez"):
@@ -128,6 +140,8 @@ def build_fase2_enrichment(r: dict) -> dict:
         recurso = f"{cr} · {rec}{fund}"
     elif cr == "nao":
         recurso = "não"
+    peca = (r.get("peca_sugerida") or "").strip()
+    peca = peca if peca in _PECAS_VALIDAS else None
     return {
         "objeto": _strip_label(r.get("resumo_objeto") or "", "objeto"),
         "decidido": _strip_label(r.get("o_que_decidido") or "", "o que foi decidido"),
@@ -135,6 +149,8 @@ def build_fase2_enrichment(r: dict) -> dict:
                                     "providencia/prazo", "providência", "providencia"),
         "prazo": "",
         "recurso": recurso,
+        "peca_sugerida": peca,
+        "requer_analise_profunda": peca is not None,
         "_status": "concluido",
         "_fonte": "fase2",
     }

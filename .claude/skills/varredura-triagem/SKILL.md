@@ -9,6 +9,21 @@ Esta skill **complementa** o cron de import (`/api/cron/pje-import`). O import s
 
 > **Princípio:** após a varredura, qualquer demanda em triagem deve ter (a) `ato` preciso, (b) registro tipo `ciencia`/`anotacao`/`diligencia` resumindo o que foi lido e o que vem a seguir, e (c) — se cabível — audiência criada e sincronizada com o GCal.
 
+> **Card nunca em branco:** a fase 1 (esta skill, scraping) sempre
+> grava/atualiza um registro único `tipo='analise'`,
+> `titulo='Resumo e providências'` por demanda (`upsert_analise_registro` +
+> `build_fase1_analise`, ambos em `scripts/varredura_triagem.py`), com payload
+> determinístico `{objeto, decidido, providencia, prazo, recurso, _status,
+> _fonte}` — `_status='pendente'` se o conteúdo foi lido com sucesso,
+> `_status='nao_lido'` caso contrário (ex.: PDF sem `pdftotext`/OCR
+> aproveitável) e `_fonte='fase1'`. A fase 2 (skill `analise-intimacao`,
+> `scripts/write_analise.py::build_fase2_enrichment`) roda depois, por IA, e
+> faz `PATCH` no **mesmo** registro (mesma chave `demanda_id` +
+> `titulo='Resumo e providências'`), preenchendo `objeto`/`decidido`/
+> `providencia`/`recurso` reais e marcando `_status='concluido'`,
+> `_fonte='fase2'`. Isso garante que o card de triagem sempre tem algo a
+> mostrar, mesmo antes da IA rodar.
+
 ---
 
 ## Quando usar

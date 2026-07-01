@@ -68,6 +68,8 @@ ENV_PATH = Path("/Users/rodrigorochameire/Projetos/Defender/.env.local")
 PJE_BASE = "https://pje.tjba.jus.br/pje"
 PANEL_URL = f"{PJE_BASE}/Painel/painel_usuario/advogado.seam"
 DEFENSOR_ID = 1
+DEFENSOR_NOME: str | None = None  # setado por --defensor-nome no main()
+JOB_ID: int | None = None  # setado por --job-id no main()
 RELOGIN_EVERY = 8
 
 # Colunas/embeds PostgREST das demandas — fonte única usada por list_demandas
@@ -212,6 +214,13 @@ class Supabase:
         except urllib.error.HTTPError as e:
             err = e.read().decode()
             raise RuntimeError(f"{method} {path[:80]} → {e.code}: {err[:300]}")
+
+    def audit_write(self, payload: dict) -> None:
+        """Insere uma linha em audit_logs. NUNCA quebra a varredura — falha é logada."""
+        try:
+            self._req("POST", "/rest/v1/audit_logs", payload, prefer="return=minimal")
+        except Exception as e:
+            log(f"  ⚠ falha audit_write: {str(e)[:200]}")
 
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
@@ -1259,6 +1268,21 @@ def _ato_administrativo(rule: dict) -> bool:
     return bool((rule.get("extras") or {}).get("nota"))
 
 
+def build_audit_payload(entity_type: str, entity_id: int, action: str,
+                        changes: dict | None, defensor_id: int, defensor_nome: str,
+                        job_id: int | None) -> dict:
+    """Payload de audit_logs (paridade com logAudit TS). entity_type SINGULAR."""
+    return {
+        "user_id": defensor_id,
+        "user_name": defensor_nome,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "action": action,
+        "changes": changes or None,
+        "metadata": {"source": "varredura", "job_id": job_id, "skill": "varredura-triagem"},
+    }
+
+
 def fase_motivo_patch(rule: dict) -> dict:
     """Monta o patch genérico de fase/motivo para demandas.enrichment_data.
     Vale para TODA atribuição (o destino processos_vvd é separado e gateado)."""
@@ -1322,10 +1346,18 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         "ato": rule["ato"],
         "prioridade": rule["prioridade"],
         "revisao_pendente": False,
+        "analyzed_at": datetime.now().isoformat(),
     }
     if rule["prazo_dias"] is not None:
         fields["prazo"] = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
     sb.update_demanda(demanda["id"], fields)
+
+    try:
+        changes = {"ato": {"old": demanda.get("ato"), "new": rule["ato"]}}
+        sb.audit_write(build_audit_payload("demanda", demanda["id"], "update", changes,
+                        DEFENSOR_ID, DEFENSOR_NOME or f"Defensor #{DEFENSOR_ID}", JOB_ID))
+    except Exception as e:
+        log(f"  ⚠ audit demanda: {str(e)[:200]}")
 
     proc_id = demanda.get("processo_id")
     assistido_id = demanda.get("assistido_id")
@@ -1894,6 +1926,14 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
     print_report(stats, counts)
 
+    result_json = {
+        "atribuicao": atribuicao, "total": sum(stats.values()),
+        "ok": stats["ok"], "manual_review": stats["manual"],
+        "nao_painel": stats["not_found"], "erros": stats["errors"],
+        "atos": counts,
+    }
+    print("__VARREDURA_RESULT__ " + json.dumps(result_json, ensure_ascii=False))  # última linha → browser-broker buildResultado captura (marcador único, à prova de chaves em logs anteriores)
+
 
 def print_report(stats: dict, counts: dict) -> None:
     print()
@@ -1921,13 +1961,19 @@ def main():
                         help="ID do defensor (filtro + autor dos registros). Default: DEFENSOR_ID do módulo.")
     parser.add_argument("--demanda-ids", default=None,
                         help="CSV de IDs de demanda. Analisa SÓ essas, em qualquer coluna (ignora filtro de status). Exclusivo com --atribuicao/--since.")
+    parser.add_argument("--job-id", type=int, default=None,
+                        help="ID do job (metadata.job_id nos audit_logs).")
+    parser.add_argument("--defensor-nome", default=None,
+                        help="Nome do defensor (user_name nos audit_logs). Default: 'Defensor #{id}'.")
     args = parser.parse_args()
 
     # Defensor do job (vem do ctx.user.id pela UI) — sobrepõe o default hardcoded,
     # senão o filtro defensor_id ignora as demandas de outro defensor.
-    global DEFENSOR_ID
+    global DEFENSOR_ID, DEFENSOR_NOME, JOB_ID
     if args.defensor_id:
         DEFENSOR_ID = args.defensor_id
+    DEFENSOR_NOME = args.defensor_nome
+    JOB_ID = args.job_id
 
     env = load_env()
     sb_url = env.get("NEXT_PUBLIC_SUPABASE_URL")

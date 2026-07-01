@@ -68,6 +68,8 @@ ENV_PATH = Path("/Users/rodrigorochameire/Projetos/Defender/.env.local")
 PJE_BASE = "https://pje.tjba.jus.br/pje"
 PANEL_URL = f"{PJE_BASE}/Painel/painel_usuario/advogado.seam"
 DEFENSOR_ID = 1
+DEFENSOR_NOME: str | None = None  # setado por --defensor-nome no main()
+JOB_ID: int | None = None  # setado por --job-id no main()
 RELOGIN_EVERY = 8
 
 # Colunas/embeds PostgREST das demandas — fonte única usada por list_demandas
@@ -213,6 +215,13 @@ class Supabase:
             err = e.read().decode()
             raise RuntimeError(f"{method} {path[:80]} → {e.code}: {err[:300]}")
 
+    def audit_write(self, payload: dict) -> None:
+        """Insere uma linha em audit_logs. NUNCA quebra a varredura — falha é logada."""
+        try:
+            self._req("POST", "/rest/v1/audit_logs", payload, prefer="return=minimal")
+        except Exception as e:
+            log(f"  ⚠ falha audit_write: {str(e)[:200]}")
+
     def list_demandas(self, atribuicao: str | None, since: str | None, limit: int) -> list[dict]:
         params = [
             _DEMANDA_SELECT,
@@ -234,6 +243,16 @@ class Supabase:
 
     def update_demanda(self, demanda_id: int, fields: dict) -> None:
         self._req("PATCH", f"/rest/v1/demandas?id=eq.{demanda_id}", fields)
+
+    def merge_demanda_enrichment(self, demanda_id: int, patch: dict) -> None:
+        """Faz merge (não overwrite) de chaves em demandas.enrichment_data.
+        Lê o jsonb atual, mescla e regrava. No-op se patch vazio."""
+        if not patch:
+            return
+        rows = self._req("GET", f"/rest/v1/demandas?id=eq.{demanda_id}&select=enrichment_data&limit=1")
+        cur = (rows[0].get("enrichment_data") if isinstance(rows, list) and rows else None) or {}
+        self._req("PATCH", f"/rest/v1/demandas?id=eq.{demanda_id}",
+                  {"enrichment_data": {**cur, **patch}}, prefer="return=minimal")
 
     def insert_registro(self, registro: dict) -> None:
         self._req("POST", "/rest/v1/registros", registro, prefer="return=minimal")
@@ -325,6 +344,30 @@ class Supabase:
         """Insere e retorna o id (para vincular audiencia_id no registro base)."""
         rows = self._req("POST", "/rest/v1/registros", registro, prefer="return=representation")
         return rows[0]["id"] if isinstance(rows, list) and rows else None
+
+    def upsert_analise_registro(self, demanda_id: int, base: dict, payload: dict) -> None:
+        """Cria/atualiza o ÚNICO registro de análise (tipo='analise',
+        titulo='Resumo e providências'). Select-then-update (sem ON CONFLICT).
+        `base` = campos comuns (assistido_id, processo_id, demanda_id, autor_id)."""
+        from urllib.parse import quote
+        titulo = "Resumo e providências"
+        rows = self._req(
+            "GET",
+            f"/rest/v1/registros?demanda_id=eq.{demanda_id}"
+            f"&titulo=eq.{quote(titulo)}&tipo=eq.analise&select=id&limit=1",
+        )
+        conteudo = _analise_conteudo(payload)
+        if isinstance(rows, list) and rows:
+            self._req("PATCH", f"/rest/v1/registros?id=eq.{rows[0]['id']}",
+                      {"conteudo": conteudo, "enrichment_data": payload},
+                      prefer="return=minimal")
+        else:
+            self._req("POST", "/rest/v1/registros", {
+                **base, "tipo": "analise", "titulo": titulo,
+                "data_registro": datetime.now().isoformat(),
+                "status": "realizado", "conteudo": conteudo,
+                "enrichment_data": payload,
+            }, prefer="return=minimal")
 
     def link_registro_audiencia(self, registro_id: int, audiencia_id: int) -> None:
         self._req("PATCH", f"/rest/v1/registros?id=eq.{registro_id}",
@@ -513,42 +556,137 @@ RULES_MPU = [
 
 
 # ───── Regras Execução Penal (atribuicao = EXECUCAO_PENAL) ───────────────────
-# Mesmo formato de RULES_BASE: (pattern, ato, prioridade, prazo_dias,
-# registro_tipo, side_effects, extras). Texto NORMALIZADO (sem acento, minúsculo).
+# Tupla de 9 (como MPU/Júri): (pattern, ato, prioridade, prazo_dias, registro_tipo,
+# fase, motivo, side_effects, extras). Texto NORMALIZADO (sem acento, minúsculo).
 # Primeira regra que casa vence. Aplicadas ANTES de RULES_BASE quando a
 # atribuição é Execução Penal; se nenhuma casar → fallback p/ RULES_BASE.
 # Atos espelham src/config/atos-por-atribuicao.ts (Execução Penal). Ver
-# references/fluxo-atos-por-atribuicao.md.
+# references/fluxo-atos-por-atribuicao.md. Vocabulário fase/motivo: spec §A1.1.
 RULES_EP = [
-    (r"extin(c|ç).{0,20}punibilidade|pena.{0,10}cumprida|prescri(c|ç)",
-     "Extinção da punibilidade", "ALTA", 5, "diligencia", [], {}),
+    (r"extin\w*.{0,20}punibilidade|pena.{0,10}cumprida|prescri(c|ç)",
+     "Extinção da punibilidade", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "extincao_punibilidade", [], {}),
     (r"reconvers",
-     "Manifestação contra reconversão", "ALTA", 5, "diligencia", [], {}),
+     "Manifestação contra reconversão", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "incidente_falta_grave", [], {}),
     (r"regress.{0,20}regime|falta grave",
-     "Manifestação contra regressão", "URGENTE", 5, "diligencia", [], {}),
+     "Manifestação contra regressão", "URGENTE", 5, "diligencia",
+     "execucao_definitiva", "incidente_falta_grave", [], {}),
     (r"rescis.{0,20}anpp|descumpr.{0,20}anpp",
-     "Impugnação à rescisão de ANPP", "URGENTE", 5, "diligencia", [], {}),
+     "Impugnação à rescisão de ANPP", "URGENTE", 5, "diligencia",
+     "execucao_provisoria", "incidente_falta_grave", [], {}),
     (r"sursis",
-     "Alteração de condição do SURSIS", "NORMAL", 5, "diligencia", [], {}),
+     "Alteração de condição do SURSIS", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"livramento condicional",
-     "Livramento condicional", "NORMAL", 5, "diligencia", [], {}),
+     "Livramento condicional", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "livramento_condicional", [], {}),
     (r"remi(c|ç)",
-     "Remição de pena", "NORMAL", 5, "diligencia", [], {}),
+     "Remição de pena", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "remicao", [], {}),
     (r"progress.{0,20}regime|requisit.{0,20}progress|calculo.{0,15}pena|atestado.{0,15}pena",
-     "Requerimento de progressão", "NORMAL", 5, "diligencia", [], {}),
+     "Requerimento de progressão", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"sa(i|í)da tempor",
-     "Saída temporária", "NORMAL", 5, "diligencia", [], {}),
+     "Saída temporária", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "saida_temporaria", [], {}),
     (r"permiss.{0,15}sa(i|í)da",
-     "Permissão de saída", "NORMAL", 5, "diligencia", [], {}),
+     "Permissão de saída", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "saida_temporaria", [], {}),
     (r"prisao domiciliar|domiciliar",
-     "Prisão domiciliar", "URGENTE", 5, "diligencia", [], {}),
+     "Prisão domiciliar", "URGENTE", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"indulto|comuta(c|ç)",
-     "Indulto", "ALTA", 5, "diligencia", [], {}),
+     "Indulto", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "extincao_punibilidade", [], {}),
     (r"transfer.{0,20}(unidade|autos|presidio)",
-     "Transferência de unidade", "NORMAL", 5, "diligencia", [], {}),
+     "Transferência de unidade", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "unificacao_soma_penas", [], {}),
+    (r"unifica(c|ç).{0,20}pena|soma.{0,10}pena",
+     "Unificação/soma de penas", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "unificacao_soma_penas", [], {}),
     # fallback EP: decisão genérica de execução → analisar; senão None → RULES_BASE
     (r"\bdecisao\b",
-     "Analisar decisão", "NORMAL", None, "diligencia", [], {}),
+     "Analisar decisão", "NORMAL", None, "diligencia",
+     "execucao_definitiva", "calculo_pena", [], {}),
+]
+
+
+# ───── Regras Júri (atribuicao contém "JURI") ────────────────────────────────
+# Tupla de 9 (como MPU): (pattern, ato, prioridade, prazo_dias, registro_tipo,
+# fase, motivo, side_effects, extras). Texto NORMALIZADO. Primeira que casa vence.
+# Aplicadas ANTES de RULES_BASE quando is_juri; se nada casar → fallback RULES_BASE.
+# Vocabulário fase/motivo: spec §A1.1. Impronúncia ANTES de pronúncia (substring).
+RULES_JURI = [
+    (r"impronunci",
+     "Analisar impronúncia", "ALTA", None, "diligencia",
+     "pronuncia", "decisao_impronuncia", [], {}),
+    (r"desclassific",
+     "Ciência de desclassificação", "NORMAL", None, "ciencia",
+     "pronuncia", "decisao_desclassificacao", [], {}),
+    # 422/preclusão ANTES da regra genérica de pronúncia — evita colisão de
+    # substring quando o texto traz "preclusa a pronúncia" (contém "pronunci").
+    (r"art\.?\s*422|(preclu|transitad).{0,40}pronuncia|diligencias.{0,20}(plenario|422)|rol.{0,20}testemunhas.{0,20}plenario|prepara\w*.{0,20}plenario",
+     "Diligências do 422", "ALTA", 5, "diligencia",
+     "preparacao_plenario", "diligencias_422", [], {}),
+    (r"\bpronunci",
+     "Analisar pronúncia (RESE)", "URGENTE", 5, "diligencia",
+     "pronuncia", "decisao_pronuncia", [], {}),
+    (r"sessao de julgamento.{0,30}(tribunal do juri|plenario)|design\w*.{0,20}plenario|sessao.{0,15}plenario",
+     "Ciência sessão de plenário", "ALTA", None, "ciencia",
+     "plenario", "designacao_plenario", ["agendar_audiencia"], {"tipo_audiencia": "JURI"}),
+    (r"(alegacoes finais|memoriais).{0,40}(sumario|primeira fase|1a fase)|(primeira fase|sumario).{0,40}(alegacoes finais|memoriais)",
+     "Alegações finais (sumário)", "URGENTE", 5, "diligencia",
+     "sumario_culpa", "alegacoes_finais_sumario", [], {}),
+    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao)",
+     "Ciência designação de AIJ", "NORMAL", None, "ciencia",
+     "sumario_culpa", "designacao_aij_1a_fase", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
+    # Distância ampliada p/ 60 no 1º/3º ramo — cobre "condenado ... tribunal do
+    # júri" (condenação antes da menção ao órgão, ordem inversa do 1º ramo).
+    # 2º ramo exige a frase específica "conselho de sentenca"/"tribunal do juri"
+    # (não bare "juri"/"plenario") p/ evitar falso-positivo por condenação
+    # pretérita não relacionada mencionada perto dessas palavras soltas.
+    (r"(conselho de sentenca|tribunal do juri).{0,60}conden|conden\w*.{0,40}(conselho de sentenca|tribunal do juri)|sentenca.{0,40}(plenario|conselho de sentenca)",
+     "Analisar apelação (art. 593 III)", "URGENTE", 5, "diligencia",
+     "pos_julgamento", "intimacao_sentenca_plenario", [], {}),
+    (r"contrarraz",
+     "Contrarrazões", "URGENTE", 8, "diligencia",
+     "pos_julgamento", "contrarrazoes", [], {}),
+    (r"\bapel",
+     "Analisar apelação", "URGENTE", 5, "diligencia",
+     "pos_julgamento", "apelacao", [], {}),
+    (r"precatoria",
+     "Cumprir precatória", "NORMAL", None, "diligencia",
+     None, "precatoria", [], {}),
+    (r"tomar ciencia|intimacao|\bciencia\b",
+     "Ciência", "BAIXA", None, "ciencia",
+     None, None, [], {}),
+]
+
+
+# ───── Regras Criminal comum (atribuicao contém "CRIMINAL") ──────────────────
+# AUTORADA, PORÉM INERTE: ATRIB_UNIDADE não mapeia CRIMINAL_CAMACARI (embora o
+# CLI aceite o token), então o scraping ainda não a alimenta. Fica pronta p/
+# quando a unidade for adicionada. Tupla de 9 como Júri/MPU. Vocabulário §A1.1.
+RULES_CRIMINAL = [
+    (r"resposta a acusacao|arts?\.?\s*396",
+     "Resposta à Acusação", "URGENTE", 10, "diligencia",
+     "resposta_acusacao", "citacao_resposta_acusacao", [], {}),
+    (r"(alegacoes finais|memoriais)",
+     "Alegações finais (memoriais)", "URGENTE", 5, "diligencia",
+     "alegacoes_finais", "alegacoes_finais_memoriais", [], {}),
+    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao)",
+     "Ciência designação de AIJ", "NORMAL", None, "ciencia",
+     "instrucao", "designacao_aij", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
+    (r"\bsentenca\b",
+     "Analisar sentença", "URGENTE", 5, "diligencia",
+     "sentenca", "intimacao_sentenca", [], {}),
+    (r"\bapel|recurso em sentido estrito|\brese\b",
+     "Analisar recurso", "URGENTE", 5, "diligencia",
+     "recurso", "prazo_recurso", [], {}),
+    (r"tomar ciencia|intimacao|\bciencia\b",
+     "Ciência", "BAIXA", None, "ciencia",
+     None, None, [], {}),
 ]
 
 
@@ -755,6 +893,18 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
     RULES_EP vem antes de RULES_BASE — atos específicos da execução; se nenhuma
     regra EP casar, faz fallback para o título genérico + RULES_BASE.
 
+    Quando a atribuição é Júri (`"JURI" in atribuicao`), RULES_JURI vem antes
+    de RULES_BASE — pronúncia/impronúncia/desclassificação/plenário/422/
+    alegações do sumário/apelação pós-júri; se nenhuma regra Júri casar, faz
+    fallback para o título genérico + RULES_BASE.
+
+    Quando a atribuição é Criminal comum (`"CRIMINAL" in atribuicao`),
+    RULES_CRIMINAL vem antes de RULES_BASE — resposta à acusação/alegações
+    finais/AIJ/sentença/recurso; se nenhuma regra Criminal casar, faz fallback
+    para o título genérico + RULES_BASE. AUTORADA PORÉM INERTE: ATRIB_UNIDADE
+    ainda não mapeia nenhuma unidade Criminal, então esse ramo só é alcançado
+    quando `atribuicao` é passado manualmente (ex.: testes).
+
     `movimentos` (designações extraídas da timeline via
     extrair_movimentos_audiencia) é um sinal ESTRUTURADO: quando o título é
     fraco/ausente, uma audiência designada/redesignada na timeline tem
@@ -778,13 +928,26 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
             return mv
         # se MPU mas nada matcheou, cai no RULES_BASE como último recurso
     if "EXECUCAO_PENAL" in (atribuicao or ""):
-        for pat, ato, prio, prazo, tipo, fx, ex in RULES_EP:
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_EP:
             if re.search(pat, n):
-                return {
-                    "ato": ato, "prioridade": prio, "prazo_dias": prazo,
-                    "registro_tipo": tipo, "side_effects": fx, "extras": ex,
-                }
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
         # nenhuma regra EP casou → fallback para título genérico + RULES_BASE
+    if "JURI" in (atribuicao or ""):
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_JURI:
+            if re.search(pat, n):
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
+        # nenhuma regra Júri casou → fallback título + RULES_BASE
+    if "CRIMINAL" in (atribuicao or ""):
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_CRIMINAL:
+            if re.search(pat, n):
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
+        # nenhuma regra Criminal casou → fallback título + RULES_BASE
     titulo_rule = _decide_by_titulo(titulo, text) if titulo else None
     if titulo_rule and titulo_rule["ato"] not in _TITULO_WEAK_ATOS:
         return titulo_rule
@@ -1007,6 +1170,65 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
         await autos.close()
 
 
+def extract_pdf_text(pdf_path: str) -> str:
+    """Extrai texto de um PDF. Tenta pdftotext (rápido, PDFs nativos); se vier
+    vazio (PDF digitalizado), faz OCR: pdftoppm → PNG(s) → tesseract -l por.
+    NUNCA lança — qualquer erro/ausência de binário retorna ''."""
+    import subprocess, tempfile, os
+    def _run(cmd, **kw):
+        try:
+            return subprocess.run(cmd, capture_output=True, timeout=120, **kw)
+        except Exception:
+            return None
+    if not pdf_path or not os.path.exists(pdf_path):
+        return ""
+    r = _run(["pdftotext", "-layout", pdf_path, "-"])
+    if r and r.returncode == 0:
+        txt = (r.stdout or b"").decode("utf-8", "ignore").strip()
+        if len(txt) >= 20:
+            return txt
+    # OCR fallback
+    with tempfile.TemporaryDirectory() as td:
+        base = os.path.join(td, "pg")
+        if not _run(["pdftoppm", "-r", "200", "-png", pdf_path, base]):
+            return ""
+        out = []
+        for png in sorted(Path(td).glob("pg*.png")):
+            o = _run(["tesseract", str(png), "-", "-l", "por"])
+            if o and o.returncode == 0:
+                out.append((o.stdout or b"").decode("utf-8", "ignore"))
+        return "\n".join(out).strip()
+
+
+async def baixar_pdf_autos(ctx: BrowserContext, autos_url: str) -> str | None:
+    """Baixa o PDF do documento a partir da visão de AUTOS COMPLETOS
+    (listProcessoCompletoAdvogado.seam). NUNCA usa visualizarExpediente.seam /
+    TOMAR CIÊNCIA. Retorna caminho do PDF salvo em /tmp ou None.
+
+    Trava anti-ciência IDÊNTICA à de read_doc_content (mesma lógica de
+    rejeição): só aceita links de autos completos."""
+    full = f"https://pje.tjba.jus.br{autos_url}" if autos_url.startswith("/") else autos_url
+    low = (full or "").lower()
+    if "visualizarexpediente.seam" in low or "tomarciencia" in low \
+       or "listprocessocompletoadvogado.seam" not in low:
+        log("  ⚠ PDF: link não é o de autos completos — recusado (anti-ciência)")
+        return None
+    page = await ctx.new_page()
+    try:
+        async with page.expect_download(timeout=60000) as dl_info:
+            await page.goto(full, wait_until="domcontentloaded", timeout=60000)
+        dl = await dl_info.value
+        import tempfile, os
+        dest = os.path.join(tempfile.gettempdir(), f"autos_{abs(hash(full)) % 10**8}.pdf")
+        await dl.save_as(dest)
+        return dest
+    except Exception as e:
+        log(f"  ⚠ PDF download falhou: {str(e)[:120]}")
+        return None
+    finally:
+        await page.close()
+
+
 # ───── Pipeline ──────────────────────────────────────────────────────────────
 
 def create_manual_review(sb: Supabase, demanda: dict) -> None:
@@ -1046,6 +1268,76 @@ def _ato_administrativo(rule: dict) -> bool:
     return bool((rule.get("extras") or {}).get("nota"))
 
 
+def build_audit_payload(entity_type: str, entity_id: int, action: str,
+                        changes: dict | None, defensor_id: int, defensor_nome: str,
+                        job_id: int | None) -> dict:
+    """Payload de audit_logs (paridade com logAudit TS). entity_type SINGULAR."""
+    return {
+        "user_id": defensor_id,
+        "user_name": defensor_nome,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "action": action,
+        "changes": changes or None,
+        "metadata": {"source": "varredura", "job_id": job_id, "skill": "varredura-triagem"},
+    }
+
+
+def fase_motivo_patch(rule: dict) -> dict:
+    """Monta o patch genérico de fase/motivo para demandas.enrichment_data.
+    Vale para TODA atribuição (o destino processos_vvd é separado e gateado)."""
+    patch: dict = {}
+    if rule.get("fase"):
+        patch["fase_processual"] = rule["fase"]
+    if rule.get("motivo"):
+        patch["motivo"] = rule["motivo"]
+    return patch
+
+
+def build_fase1_analise(rule: dict, content_ok: bool, is_admin: bool = False) -> dict:
+    """Payload determinístico do registro de análise (contrato spec §A2.2).
+    A chave 'objeto' é SEMPRE incluída — é o marcador que a query do card usa.
+
+    _status:
+    - 'concluido'  → ato administrativo (nota terminal, skip_ai): FOI lido, mas
+                     é ciência de baixa deliberadamente sem IA. Sem badge no card.
+    - 'pendente'   → não-administrativo + conteúdo lido: IA vai enriquecer.
+    - 'nao_lido'   → não-administrativo + corpo vazio: revisão manual mesmo."""
+    ato = rule.get("ato") or ""
+    prazo = ""
+    if rule.get("prazo_dias") is not None:
+        prazo = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
+    if is_admin:
+        status = "concluido"
+    elif content_ok:
+        status = "pendente"
+    else:
+        status = "nao_lido"
+    return {
+        "objeto": ato,                 # refinado pela fase 2
+        "decidido": "",
+        "providencia": ato,
+        "prazo": prazo,
+        "recurso": "",
+        "_status": status,
+        "_fonte": "fase1",
+    }
+
+
+def _analise_conteudo(payload: dict) -> str:
+    """Texto puro rotulado para a timeline, a partir do payload de contrato."""
+    linhas = []
+    if payload.get("objeto"): linhas.append(f"Objeto: {payload['objeto']}")
+    if payload.get("decidido"): linhas.append(f"O que foi decidido: {payload['decidido']}")
+    if payload.get("providencia"): linhas.append(f"Providência/Prazo: {payload['providencia']}")
+    if payload.get("recurso"): linhas.append(f"Cabe recurso?: {payload['recurso']}")
+    if payload.get("_status") == "nao_lido":
+        linhas.append("(documento não lido — revisão manual)")
+    elif payload.get("_status") == "pendente":
+        linhas.append("(análise IA pendente)")
+    return "\n".join(linhas) or "(análise pendente)"
+
+
 def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) -> bool:
     """Aplica a classificação + executa os side-effects determinísticos
     (agenda, medidas MPU, contato), persiste o texto p/ a IA e marca o
@@ -1054,10 +1346,18 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
         "ato": rule["ato"],
         "prioridade": rule["prioridade"],
         "revisao_pendente": False,
+        "analyzed_at": datetime.now().isoformat(),
     }
     if rule["prazo_dias"] is not None:
         fields["prazo"] = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
     sb.update_demanda(demanda["id"], fields)
+
+    try:
+        changes = {"ato": {"old": demanda.get("ato"), "new": rule["ato"]}}
+        sb.audit_write(build_audit_payload("demanda", demanda["id"], "update", changes,
+                        DEFENSOR_ID, DEFENSOR_NOME or f"Defensor #{DEFENSOR_ID}", JOB_ID))
+    except Exception as e:
+        log(f"  ⚠ audit demanda: {str(e)[:200]}")
 
     proc_id = demanda.get("processo_id")
     assistido_id = demanda.get("assistido_id")
@@ -1065,9 +1365,14 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
     extras = rule.get("extras") or {}
     is_mpu = _is_mpu(demanda)
 
-    # ── processos_vvd: fase/motivo (regras MPU) ────────────────────────────────
+    # ── fase/motivo GENÉRICO → demandas.enrichment_data (toda atribuição) ──────
+    try:
+        sb.merge_demanda_enrichment(demanda["id"], fase_motivo_patch(rule))
+    except Exception as e:
+        log(f"  ⚠ falha merge enrichment (demanda={demanda['id']}): {e}")
+    # ── processos_vvd: fase/motivo — SÓ VVD/MPU (evita linha espúria) ──────────
     fase, motivo = rule.get("fase"), rule.get("motivo")
-    if (fase or motivo) and proc_id:
+    if is_mpu and (fase or motivo) and proc_id:
         pvvd: dict = {}
         if fase: pvvd["fase_procedimento"] = fase
         if motivo: pvvd["motivo_ultima_intimacao"] = motivo
@@ -1126,6 +1431,19 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
     # ── Side-effect: MPU — medidas deferidas ───────────────────────────────────
     if is_mpu and proc_id:
         _aplicar_medidas_mpu(sb, demanda, content)
+
+    # ── Registro de análise (contrato §A2.2) — card nunca em branco ────────────
+    try:
+        content_ok = bool((content or "").strip())
+        is_admin = _ato_administrativo(rule)
+        sb.upsert_analise_registro(demanda["id"], {
+            "assistido_id": assistido_id,
+            "processo_id": proc_id,
+            "demanda_id": demanda["id"],
+            "autor_id": DEFENSOR_ID,
+        }, build_fase1_analise(rule, content_ok, is_admin=is_admin))
+    except Exception as e:
+        log(f"  ⚠ falha registro de análise (demanda={demanda['id']}): {e}")
 
     return not skip_ai
 
@@ -1552,6 +1870,22 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
                 # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
                 texto = _clean_decisao_text(content["text"])
+                # PDF-fallback: se a leitura por frame veio vazia (doc só-PDF,
+                # ex. peças de Júri escaneadas), baixa o PDF de DENTRO dos autos
+                # completos (mesma URL já validada por find_in_panel/read_doc_content
+                # — não efetiva ciência) e extrai por pdftotext/OCR. baixar_pdf_autos
+                # reaplica a mesma trava anti-ciência de read_doc_content (só
+                # listProcessoCompletoAdvogado.seam) como segunda barreira.
+                if not (texto or "").strip():
+                    try:
+                        pdf_path = await baixar_pdf_autos(ctx, autos_url)
+                        if pdf_path:
+                            ocr = extract_pdf_text(pdf_path)
+                            if ocr:
+                                texto = ocr
+                                log(f"  ⤷ texto via PDF/OCR ({len(ocr)}b)")
+                    except Exception as e:
+                        log(f"  ⚠ falha PDF/OCR: {str(e)[:120]}")
                 # Atribuição POR-DEMANDA (não a global da rodada): no modo
                 # --demanda-ids a seleção pode misturar atribuições, então cada
                 # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
@@ -1592,6 +1926,14 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
 
     print_report(stats, counts)
 
+    result_json = {
+        "atribuicao": atribuicao, "total": sum(stats.values()),
+        "ok": stats["ok"], "manual_review": stats["manual"],
+        "nao_painel": stats["not_found"], "erros": stats["errors"],
+        "atos": counts,
+    }
+    print("__VARREDURA_RESULT__ " + json.dumps(result_json, ensure_ascii=False))  # última linha → browser-broker buildResultado captura (marcador único, à prova de chaves em logs anteriores)
+
 
 def print_report(stats: dict, counts: dict) -> None:
     print()
@@ -1619,13 +1961,19 @@ def main():
                         help="ID do defensor (filtro + autor dos registros). Default: DEFENSOR_ID do módulo.")
     parser.add_argument("--demanda-ids", default=None,
                         help="CSV de IDs de demanda. Analisa SÓ essas, em qualquer coluna (ignora filtro de status). Exclusivo com --atribuicao/--since.")
+    parser.add_argument("--job-id", type=int, default=None,
+                        help="ID do job (metadata.job_id nos audit_logs).")
+    parser.add_argument("--defensor-nome", default=None,
+                        help="Nome do defensor (user_name nos audit_logs). Default: 'Defensor #{id}'.")
     args = parser.parse_args()
 
     # Defensor do job (vem do ctx.user.id pela UI) — sobrepõe o default hardcoded,
     # senão o filtro defensor_id ignora as demandas de outro defensor.
-    global DEFENSOR_ID
+    global DEFENSOR_ID, DEFENSOR_NOME, JOB_ID
     if args.defensor_id:
         DEFENSOR_ID = args.defensor_id
+    DEFENSOR_NOME = args.defensor_nome
+    JOB_ID = args.job_id
 
     env = load_env()
     sb_url = env.get("NEXT_PUBLIC_SUPABASE_URL")

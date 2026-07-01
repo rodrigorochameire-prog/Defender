@@ -44,9 +44,17 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
   "ato_sugerido": "ato do vocabulário canônico da atribuicao_label|null",
   "ato_confianca": "alta|media|baixa",
   "relato_vitima": "só MPU: relato da suposta vítima resumido|null",
-  "termos_pronuncia": "só pronúncia: crime, qualificadoras, fundamentos|null"
+  "termos_pronuncia": "só pronúncia: crime, qualificadoras, fundamentos|null",
+  "peca_sugerida": "memoriais|resposta_acusacao|apelacao|rese|manifestacao_ep|contrarrazoes|null"
 }
 ```
+
+**`peca_sugerida`** — enum FECHADO. Preencha quando o expediente pede uma peça
+substantiva (não mera ciência); é o sinal que aciona (manualmente) o pipeline
+profundo. `null` para mera ciência/certidão/despacho de expediente. Para **Execução
+Penal**, use `manifestacao_ep` quando houver manifestação sobre incidente, cálculo,
+progressão/livramento/remição/indulto/falta grave, resposta de ofício, etc. O write
+deriva `requer_analise_profunda = (peca_sugerida != null)` — não calcule esse campo.
 > `assistido_id`/`processo_id` podem ficar null — o write resolve pelo registro base.
 > Use os ids exatos vindos do fetch (`registro_id`, `demanda_id`).
 > A anotação "Resumo e providências" é montada pelo write em seções curtas, cada
