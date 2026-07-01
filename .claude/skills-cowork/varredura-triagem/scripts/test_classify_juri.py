@@ -46,6 +46,16 @@ CASES = [
      "Cumprir precatória", "NORMAL", None, "precatoria"),
 ]
 
+# Casos negativos: texto NÃO deve casar com "Analisar apelação (art. 593 III)".
+# Regressão do falso-positivo de "conden...juri/plenario" por proximidade solta
+# (ex.: despacho com narrativa de fundo mencionando condenação pretérita não
+# relacionada ao apelo pós-júri deste processo).
+NEG_CASES = [
+    ("conden_antecedente_nao_relacionado", "Despacho",
+     "O reu foi condenado por furto em outro processo relacionado ao feito do juri",
+     "Analisar apelação (art. 593 III)"),
+]
+
 def main():
     fails = 0
     for cid, tit, txt, ato, prio, fase, motivo in CASES:
@@ -55,6 +65,14 @@ def main():
         if r["ato"] != ato or r["prioridade"] != prio or r.get("fase") != fase or r.get("motivo") != motivo:
             print(f"FAIL [{cid}] -> ato={r['ato']!r} prio={r['prioridade']!r} "
                   f"fase={r.get('fase')!r} motivo={r.get('motivo')!r}"); fails += 1
+
+    for cid, tit, txt, forbidden_ato in NEG_CASES:
+        r = classify(txt, titulo=tit, atribuicao=A)
+        matched_ato = r["ato"] if r else None
+        if matched_ato == forbidden_ato:
+            print(f"FAIL [{cid}] falso-positivo -> ato={matched_ato!r} (esperado != {forbidden_ato!r})")
+            fails += 1
+
     print("OK" if not fails else f"{fails} FALHAS")
     sys.exit(1 if fails else 0)
 

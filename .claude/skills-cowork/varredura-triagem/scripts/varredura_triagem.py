@@ -591,9 +591,12 @@ RULES_JURI = [
     (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao)",
      "Ciência designação de AIJ", "NORMAL", None, "ciencia",
      "sumario_culpa", "designacao_aij_1a_fase", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
-    # Distância ampliada p/ 60 no 2º/3º ramo — cobre "condenado ... tribunal do
+    # Distância ampliada p/ 60 no 1º/3º ramo — cobre "condenado ... tribunal do
     # júri" (condenação antes da menção ao órgão, ordem inversa do 1º ramo).
-    (r"(conselho de sentenca|tribunal do juri).{0,60}conden|conden\w*.{0,60}(juri|plenario)|sentenca.{0,40}(plenario|conselho de sentenca)",
+    # 2º ramo exige a frase específica "conselho de sentenca"/"tribunal do juri"
+    # (não bare "juri"/"plenario") p/ evitar falso-positivo por condenação
+    # pretérita não relacionada mencionada perto dessas palavras soltas.
+    (r"(conselho de sentenca|tribunal do juri).{0,60}conden|conden\w*.{0,40}(conselho de sentenca|tribunal do juri)|sentenca.{0,40}(plenario|conselho de sentenca)",
      "Analisar apelação (art. 593 III)", "URGENTE", 5, "diligencia",
      "pos_julgamento", "intimacao_sentenca_plenario", [], {}),
     (r"contrarraz",
