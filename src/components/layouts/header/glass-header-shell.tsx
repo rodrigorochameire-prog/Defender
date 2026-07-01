@@ -41,11 +41,22 @@ export function GlassHeaderShell({
   const { setHasPageHeader } = usePageHeader();
   const [condensed, setCondensed] = useState(false);
   const [wellCollapsed, setWellCollapsed] = useState(false);
+  const [dateLabel, setDateLabel] = useState("");
 
   useEffect(() => {
     setHasPageHeader(true);
     return () => setHasPageHeader(false);
   }, [setHasPageHeader]);
+
+  useEffect(() => {
+    setDateLabel(
+      new Date().toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "short",
+      }),
+    );
+  }, []);
 
   // Colapso do poço por largura do próprio shell (determinístico, documentado na spec §4)
   useEffect(() => {
@@ -99,6 +110,7 @@ export function GlassHeaderShell({
       <div className={HEADER_GLASS.shell}>
         {/* ── Faixa utilitária (recolhe ao rolar) ── */}
         <div
+          inert={condensed || undefined}
           className={cn(
             HEADER_GLASS.utilityRow,
             "transition-[height,opacity] duration-200 motion-reduce:transition-none overflow-hidden",
@@ -112,13 +124,7 @@ export function GlassHeaderShell({
             <span className="font-medium">Online</span>
           </div>
           <div className="flex-1 min-w-0" />
-          <span className="hidden lg:inline capitalize">
-            {new Date().toLocaleDateString("pt-BR", {
-              weekday: "long",
-              day: "2-digit",
-              month: "short",
-            })}
-          </span>
+          <span className="hidden lg:inline capitalize">{dateLabel}</span>
           <ConflictBadge />
           <div className="flex items-center">
             <span className="hidden md:inline-flex">
