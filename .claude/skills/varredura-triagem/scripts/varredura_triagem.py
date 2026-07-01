@@ -1588,7 +1588,9 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
                                 atribuicao=atrib_demanda, movimentos=movimentos)
                 if not rule:
-                    log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
+                    # .get: o dict do leitor SEEU não tem default_len/best_len (só PJe) —
+                    # sem isso um EP-sem-match levantaria KeyError (contaria como erro, não manual).
+                    log(f"  → sem match (default={content.get('default_len', 0)}b best={content.get('best_len', 0)}b) — manual-review")
                     create_manual_review(sb, d)
                     stats["manual"] += 1
                     continue
