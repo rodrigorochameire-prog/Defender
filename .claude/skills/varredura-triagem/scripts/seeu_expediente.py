@@ -40,18 +40,88 @@ def parse_pena_context(texto: str) -> dict:
     }
 
 
+ROOT = "https://seeu.pje.jus.br"
+
+# Cache de sessão: {cnj_só_dígitos: href visualizacaoProcesso}. A Mesa lista os
+# expedientes pendentes (que é o alvo da triagem) com links tokenizados válidos.
+# Colhido UMA vez por rodada (o form de busca por CNJ do SEEU é instável); o
+# reader abre o processo a partir daqui. READ-ONLY.
+_mesa_cache: dict[str, str] = {}
+
+_ABAS_MESA = ("Manifestação", "Ciência", "Razões")
+
+# JS: colhe {cnj, href} das linhas da aba atual da Mesa (links visualizacaoProcesso).
+_JS_HARVEST = r"""() => {
+  const o=[];
+  document.querySelectorAll('a').forEach(a=>{
+    const h=a.getAttribute('href')||''; const t=(a.innerText||'').trim();
+    if(h.includes('visualizacaoProcesso') && /\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/.test(t)) o.push({cnj:t,h});
+  });
+  return o;
+}"""
+
+
+def _norm_cnj(s: str) -> str:
+    return re.sub(r"\D", "", s or "")
+
+
+def _find_mesa_frame(pages):
+    """Acha o frame da Mesa do Defensor entre as abas abertas (sem navegar)."""
+    for pg in pages:
+        for f in pg.frames:
+            if "mesaDefensor" in (f.url or ""):
+                return pg, f
+    return None, None
+
+
+async def _ensure_mesa_cache(ctx) -> None:
+    """Popula _mesa_cache a partir da Mesa (Manifestação/Ciência/Razões), uma vez.
+    Requer a Mesa já aberta e logada numa aba do SEEU (login manual)."""
+    if _mesa_cache:
+        return
+    pg, frame = _find_mesa_frame(ctx.pages)
+    if frame is None:
+        raise RuntimeError("Abra o SEEU logado na Mesa do Defensor — frame não encontrado")
+    for aba in _ABAS_MESA:
+        try:
+            await frame.evaluate(
+                "(n)=>{const a=[...document.querySelectorAll('a')].find(a=>(a.innerText||'').trim().startsWith(n));if(a)a.click();}",
+                aba,
+            )
+            await pg.wait_for_timeout(2200)
+            _, frame = _find_mesa_frame(ctx.pages)  # re-resolve após o submit do form
+            if frame is None:
+                break
+            rows = await frame.evaluate(_JS_HARVEST)
+            for r in rows:
+                _mesa_cache.setdefault(_norm_cnj(r["cnj"]), r["h"])
+        except Exception:
+            continue  # aba pode não existir/estar vazia — segue
+
+
 async def read_seeu_expediente(ctx, cnj: str) -> dict:
-    """Abre o processo no SEEU e lê o documento-alvo da intimação. Devolve o mesmo
-    formato que read_doc_content (PJe): {text, top_titulo, pena_context, panel_text}.
-    Fallback (§7 do spec): se o teor não abrir, usa tipo do movimento + pena como text."""
-    page = next((pg for pg in ctx.pages if "seeu" in (pg.url or "")), None)
-    if page is None:
-        raise RuntimeError("Abra o SEEU logado — nenhuma aba do SEEU no browser CDP")
-    # abre a busca por CNJ → visualizacaoProcesso (mecanismo de teor finalizado no Step 4)
-    proc_text = await _abrir_processo_por_cnj(page, cnj)
-    alvo = parse_movimento_alvo(proc_text)
-    pena = parse_pena_context(proc_text)
-    teor = await _ler_teor_do_movimento(page, alvo) if alvo else None
+    """Abre o processo do CNJ no SEEU (via link da Mesa) e lê o documento-alvo da
+    intimação. Devolve o mesmo formato que read_doc_content (PJe):
+    {text, top_titulo, pena_context, panel_text}. Fallback (§7 do spec): se o teor
+    não abrir, usa tipo do movimento + pena como text. READ-ONLY."""
+    await _ensure_mesa_cache(ctx)
+    href = _mesa_cache.get(_norm_cnj(cnj))
+    if not href:
+        raise RuntimeError(f"CNJ {cnj} não encontrado na Mesa do SEEU (pendências)")
+    url = href if href.startswith("http") else ROOT + href
+    proc_page = await ctx.new_page()
+    try:
+        await proc_page.goto(url, wait_until="domcontentloaded", timeout=40000)
+        await proc_page.wait_for_timeout(3200)
+        proc_text = await proc_page.evaluate("()=>document.body?document.body.innerText:''")
+        alvo = parse_movimento_alvo(proc_text)
+        pena = parse_pena_context(proc_text)
+        teor = await _ler_teor_do_movimento(proc_page, alvo) if alvo else None
+    finally:
+        try:
+            await proc_page.close()
+        except Exception:
+            pass
     top_titulo = alvo["tipo"] if alvo else None
     text = teor or _fallback_text(alvo, pena)
     return {"text": text, "top_titulo": top_titulo, "pena_context": pena,
@@ -68,15 +138,32 @@ def _fallback_text(alvo: dict | None, pena: dict) -> str:
     return "\n".join(partes) or "(sem teor legível)"
 
 
-async def _abrir_processo_por_cnj(page, cnj: str) -> str:
-    """Navega até visualizacaoProcesso do CNJ informado e devolve o innerText.
-    READ-ONLY. Corpo finalizado pelo controller no Step 4 via probe ao vivo
-    (Busca Execução Penal → visualizacaoProcesso)."""
-    raise NotImplementedError("controller finaliza no Step 4")
-
-
 async def _ler_teor_do_movimento(page, alvo: dict | None) -> str | None:
-    """Abre o documento do movimento-alvo na timeline 'Movimentações' e devolve o
-    texto, ou None (cai no fallback). READ-ONLY. Corpo finalizado pelo controller
-    no Step 4 via probe ao vivo."""
-    raise NotImplementedError("controller finaliza no Step 4")
+    """Expande o movimento-alvo na timeline 'Movimentações' (showDetail) e lê o
+    teor (sub-eventos: remessa/prazo/decisão). Devolve o texto ou None (→ fallback).
+    READ-ONLY: só dispara o expand inline, nunca 'Juntar'/assinar/peticionar."""
+    if not alvo or not alvo.get("tipo"):
+        return None
+    tipo = alvo["tipo"]
+    try:
+        await page.evaluate(
+            r"""(tipo)=>{
+              const rows=[...document.querySelectorAll('tr')];
+              const row=rows.find(r=>(r.innerText||'').includes(tipo) && /^\s*\d+\s/.test(r.innerText||''));
+              if(!row) return;
+              const op=[...row.querySelectorAll('[onclick]')].find(e=>/showDetail/.test(e.getAttribute('onclick')||''));
+              if(op) op.click();
+            }""",
+            tipo,
+        )
+        await page.wait_for_timeout(1600)
+        blocks = await page.evaluate(
+            r"""()=>[...new Set([...document.querySelectorAll('td')]
+              .map(e=>(e.innerText||'').replace(/\s+/g,' ').trim())
+              .filter(t=>/REMETIDOS|MANIFEST|prazo|defiro|indefiro|despacho|cumpra|vista|decis/i.test(t)
+                         && t.length>40 && t.length<500))].slice(0,4)"""
+        )
+        joined = "\n".join(blocks or [])
+        return joined or None
+    except Exception:
+        return None
