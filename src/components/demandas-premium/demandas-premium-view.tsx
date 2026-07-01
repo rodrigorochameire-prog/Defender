@@ -2857,7 +2857,7 @@ export default function Demandas() {
               onChange={(e) => setSearchTerm(e.target.value)}
               onBlur={() => { if (!searchTerm) setSearchOpen(false); }}
               placeholder="Buscar..."
-              className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-7 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+              className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-7 text-[16px] md:text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
             />
             <button
               type="button"
@@ -3926,7 +3926,7 @@ export default function Demandas() {
       {/* Mobile FAB — floating "+" button */}
       <button
         onClick={() => setIsCreateModalOpen(true)}
-        className="sm:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-neutral-900 dark:bg-neutral-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white shadow-lg shadow-neutral-900/30 dark:shadow-black/50 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer"
+        className="sm:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 w-12 h-12 rounded-full bg-neutral-900 dark:bg-neutral-700 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white shadow-lg shadow-neutral-900/30 dark:shadow-black/50 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer"
         title="Nova Demanda"
       >
         <Plus className="w-5 h-5" />

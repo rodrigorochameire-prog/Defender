@@ -16,7 +16,7 @@ function DrivePageInner() {
   useKeyboardShortcuts();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-neutral-50 dark:bg-[#0f0f11]">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] bg-neutral-50 dark:bg-[#0f0f11]">
       {/* Padrão Defender v5 seamless — título na utility bar, ações + status no bottomRow.
           DriveTopBar (row2 + row1-actions) compartilha state via React Query dedup. */}
       <HeaderSlotTitle

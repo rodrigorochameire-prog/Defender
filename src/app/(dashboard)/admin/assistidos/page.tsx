@@ -1151,6 +1151,19 @@ export default function AssistidosPage() {
         }
       />
 
+      {/* Busca mobile — full-width (as buscas do header/sticky são hidden sm:block) */}
+      <div className="sm:hidden px-4 pt-2 pb-1">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por nome, CPF ou processo..."
+            className="pl-9 w-full h-11 text-base bg-muted rounded-lg"
+          />
+        </div>
+      </div>
+
       {/* Sticky Summary Bar */}
       {showStickyBar && (
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm animate-in slide-in-from-top duration-200">
