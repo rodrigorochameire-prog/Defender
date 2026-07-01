@@ -88,7 +88,10 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutGrid,
+  X,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   isToday,
   isTomorrow,
@@ -592,6 +595,7 @@ export default function AgendaPage() {
   // Padrão: ESCONDIDOS (agenda limpa = só audiências ativas). O toggle revela-os
   // riscados/foscos para conferência. Ficam sempre gravados no banco/detalhe.
   const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(false);
+  const isMobile = useIsMobile();
   // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
   const [showPastEventsInList, setShowPastEventsInList] = useState(false);
 
@@ -1829,6 +1833,78 @@ export default function AgendaPage() {
           </div>
         </div>
       </CollapsiblePageHeader>
+
+      {/* Busca mobile — o campo do header é hidden md:flex; aqui é a versão do telefone */}
+      {isSearchOpen && (
+        <div className="md:hidden px-4 py-2 bg-[#303032] border-b border-white/[0.06]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <input
+              autoFocus
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") { setSearchTerm(""); setIsSearchOpen(false); } }}
+              placeholder="Buscar na agenda..."
+              className="w-full bg-black/[0.2] ring-1 ring-white/[0.08] rounded-lg py-2.5 pl-9 pr-11 text-[16px] text-white/90 placeholder:text-white/35 outline-none focus:ring-white/[0.16]"
+            />
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(""); setIsSearchOpen(false); }}
+              aria-label="Fechar busca"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-white/50 hover:text-white/90"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros mobile — o painel do header é hidden md:flex; aqui é um bottom sheet */}
+      <Sheet open={isFiltersExpanded && isMobile} onOpenChange={setIsFiltersExpanded}>
+        <SheetContent side="bottom" className="md:hidden rounded-t-2xl max-h-[80vh] overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+          <SheetTitle className="mb-3 text-sm">Filtros</SheetTitle>
+          <div className="flex flex-col gap-0.5">
+            <div className="px-1 pt-1 pb-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">Tipo</div>
+            {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
+              <button key={tipo} onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left hover:bg-accent text-sm min-h-[44px]">
+                <span className="flex-1 capitalize">{tipo}</span>
+                {selectedTipo === tipo && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="px-1 pt-2 pb-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">Status</div>
+            {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
+              <button key={status} onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left hover:bg-accent text-sm min-h-[44px]">
+                <span className="flex-1 capitalize">{status}</span>
+                {selectedStatus === status && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="px-1 pt-2 pb-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">Prioridade</div>
+            {["urgente", "alta", "normal", "baixa"].map((prio) => (
+              <button key={prio} onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left hover:bg-accent text-sm min-h-[44px]">
+                <span className="flex-1 capitalize">{prio}</span>
+                {selectedPrioridade === prio && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+              </button>
+            ))}
+            <button onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+              className="w-full flex items-center gap-2 px-3 py-2.5 mt-2 rounded-lg text-left hover:bg-accent text-sm min-h-[44px]">
+              {showCanceladosRedesignados ? <Eye className="w-4 h-4 text-muted-foreground" /> : <EyeOff className="w-4 h-4 text-amber-500" />}
+              <span className="flex-1">Cancelados/Redesignados</span>
+              {showCanceladosRedesignados && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+            </button>
+            {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+              <button
+                onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
+                className="w-full text-center text-[13px] text-muted-foreground hover:text-rose-500 py-3 mt-1 cursor-pointer transition-colors"
+              >
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="px-5 md:px-8 py-3 md:py-4 flex-1 min-h-0 flex flex-col gap-3">
