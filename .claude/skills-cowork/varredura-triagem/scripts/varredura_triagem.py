@@ -1270,20 +1270,32 @@ def fase_motivo_patch(rule: dict) -> dict:
     return patch
 
 
-def build_fase1_analise(rule: dict, content_ok: bool) -> dict:
+def build_fase1_analise(rule: dict, content_ok: bool, is_admin: bool = False) -> dict:
     """Payload determinístico do registro de análise (contrato spec §A2.2).
-    A chave 'objeto' é SEMPRE incluída — é o marcador que a query do card usa."""
+    A chave 'objeto' é SEMPRE incluída — é o marcador que a query do card usa.
+
+    _status:
+    - 'concluido'  → ato administrativo (nota terminal, skip_ai): FOI lido, mas
+                     é ciência de baixa deliberadamente sem IA. Sem badge no card.
+    - 'pendente'   → não-administrativo + conteúdo lido: IA vai enriquecer.
+    - 'nao_lido'   → não-administrativo + corpo vazio: revisão manual mesmo."""
     ato = rule.get("ato") or ""
     prazo = ""
     if rule.get("prazo_dias") is not None:
         prazo = (date.today() + timedelta(days=rule["prazo_dias"])).isoformat()
+    if is_admin:
+        status = "concluido"
+    elif content_ok:
+        status = "pendente"
+    else:
+        status = "nao_lido"
     return {
         "objeto": ato,                 # refinado pela fase 2
         "decidido": "",
         "providencia": ato,
         "prazo": prazo,
         "recurso": "",
-        "_status": "pendente" if content_ok else "nao_lido",
+        "_status": status,
         "_fonte": "fase1",
     }
 
@@ -1390,13 +1402,14 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
 
     # ── Registro de análise (contrato §A2.2) — card nunca em branco ────────────
     try:
-        content_ok = bool((content or "").strip()) and not _ato_administrativo(rule)
+        content_ok = bool((content or "").strip())
+        is_admin = _ato_administrativo(rule)
         sb.upsert_analise_registro(demanda["id"], {
             "assistido_id": assistido_id,
             "processo_id": proc_id,
             "demanda_id": demanda["id"],
             "autor_id": DEFENSOR_ID,
-        }, build_fase1_analise(rule, content_ok))
+        }, build_fase1_analise(rule, content_ok, is_admin=is_admin))
     except Exception as e:
         log(f"  ⚠ falha registro de análise (demanda={demanda['id']}): {e}")
 
