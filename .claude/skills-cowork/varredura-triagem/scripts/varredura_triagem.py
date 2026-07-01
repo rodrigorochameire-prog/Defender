@@ -1161,6 +1161,65 @@ async def read_doc_content(ctx: BrowserContext, autos_url: str) -> dict:
         await autos.close()
 
 
+def extract_pdf_text(pdf_path: str) -> str:
+    """Extrai texto de um PDF. Tenta pdftotext (rápido, PDFs nativos); se vier
+    vazio (PDF digitalizado), faz OCR: pdftoppm → PNG(s) → tesseract -l por.
+    NUNCA lança — qualquer erro/ausência de binário retorna ''."""
+    import subprocess, tempfile, os
+    def _run(cmd, **kw):
+        try:
+            return subprocess.run(cmd, capture_output=True, timeout=120, **kw)
+        except Exception:
+            return None
+    if not pdf_path or not os.path.exists(pdf_path):
+        return ""
+    r = _run(["pdftotext", "-layout", pdf_path, "-"])
+    if r and r.returncode == 0:
+        txt = (r.stdout or b"").decode("utf-8", "ignore").strip()
+        if len(txt) >= 20:
+            return txt
+    # OCR fallback
+    with tempfile.TemporaryDirectory() as td:
+        base = os.path.join(td, "pg")
+        if not _run(["pdftoppm", "-r", "200", "-png", pdf_path, base]):
+            return ""
+        out = []
+        for png in sorted(Path(td).glob("pg*.png")):
+            o = _run(["tesseract", str(png), "-", "-l", "por"])
+            if o and o.returncode == 0:
+                out.append((o.stdout or b"").decode("utf-8", "ignore"))
+        return "\n".join(out).strip()
+
+
+async def baixar_pdf_autos(ctx: BrowserContext, autos_url: str) -> str | None:
+    """Baixa o PDF do documento a partir da visão de AUTOS COMPLETOS
+    (listProcessoCompletoAdvogado.seam). NUNCA usa visualizarExpediente.seam /
+    TOMAR CIÊNCIA. Retorna caminho do PDF salvo em /tmp ou None.
+
+    Trava anti-ciência IDÊNTICA à de read_doc_content (mesma lógica de
+    rejeição): só aceita links de autos completos."""
+    full = f"https://pje.tjba.jus.br{autos_url}" if autos_url.startswith("/") else autos_url
+    low = (full or "").lower()
+    if "visualizarexpediente.seam" in low or "tomarciencia" in low \
+       or "listprocessocompletoadvogado.seam" not in low:
+        log("  ⚠ PDF: link não é o de autos completos — recusado (anti-ciência)")
+        return None
+    page = await ctx.new_page()
+    try:
+        async with page.expect_download(timeout=60000) as dl_info:
+            await page.goto(full, wait_until="domcontentloaded", timeout=60000)
+        dl = await dl_info.value
+        import tempfile, os
+        dest = os.path.join(tempfile.gettempdir(), f"autos_{abs(hash(full)) % 10**8}.pdf")
+        await dl.save_as(dest)
+        return dest
+    except Exception as e:
+        log(f"  ⚠ PDF download falhou: {str(e)[:120]}")
+        return None
+    finally:
+        await page.close()
+
+
 # ───── Pipeline ──────────────────────────────────────────────────────────────
 
 def create_manual_review(sb: Supabase, demanda: dict) -> None:
@@ -1766,6 +1825,22 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
                 # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
                 texto = _clean_decisao_text(content["text"])
+                # PDF-fallback: se a leitura por frame veio vazia (doc só-PDF,
+                # ex. peças de Júri escaneadas), baixa o PDF de DENTRO dos autos
+                # completos (mesma URL já validada por find_in_panel/read_doc_content
+                # — não efetiva ciência) e extrai por pdftotext/OCR. baixar_pdf_autos
+                # reaplica a mesma trava anti-ciência de read_doc_content (só
+                # listProcessoCompletoAdvogado.seam) como segunda barreira.
+                if not (texto or "").strip():
+                    try:
+                        pdf_path = await baixar_pdf_autos(ctx, autos_url)
+                        if pdf_path:
+                            ocr = extract_pdf_text(pdf_path)
+                            if ocr:
+                                texto = ocr
+                                log(f"  ⤷ texto via PDF/OCR ({len(ocr)}b)")
+                    except Exception as e:
+                        log(f"  ⚠ falha PDF/OCR: {str(e)[:120]}")
                 # Atribuição POR-DEMANDA (não a global da rodada): no modo
                 # --demanda-ids a seleção pode misturar atribuições, então cada
                 # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
