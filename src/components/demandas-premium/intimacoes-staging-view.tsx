@@ -105,9 +105,27 @@ function loadPrefs(): Partial<Prefs> {
   }
 }
 
-export function IntimacoesStagingView({ jobId }: { jobId: number }) {
+export function IntimacoesStagingView({
+  jobId,
+  system = "pje",
+}: {
+  jobId: number;
+  system?: "pje" | "seeu";
+}) {
   const utils = trpc.useUtils();
-  const query = trpc.intimacoes.listStaging.useQuery({ jobId }, { refetchInterval: 0 });
+  const isSeeu = system === "seeu";
+  // Ambas as queries são declaradas incondicionalmente (regras de hooks) — só a
+  // ativa (via `enabled`) de fato busca dados. As duas produzem o mesmo shape
+  // (status/etapa/rows), então o resto do componente não precisa saber qual é.
+  const pjeQuery = trpc.intimacoes.listStaging.useQuery(
+    { jobId },
+    { refetchInterval: 0, enabled: !isSeeu },
+  );
+  const seeuQuery = trpc.seeuIntimacoes.listStaging.useQuery(
+    { jobId },
+    { refetchInterval: 0, enabled: isSeeu },
+  );
+  const query = isSeeu ? seeuQuery : pjeQuery;
 
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -154,14 +172,17 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
         { event: "*", schema: "public", table: "claude_code_tasks" },
         (payload) => {
           const row = payload.new as { id?: number } | null;
-          if (row?.id === jobId) void utils.intimacoes.listStaging.invalidate({ jobId });
+          if (row?.id === jobId) {
+            if (isSeeu) void utils.seeuIntimacoes.listStaging.invalidate({ jobId });
+            else void utils.intimacoes.listStaging.invalidate({ jobId });
+          }
         },
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [jobId, utils]);
+  }, [jobId, utils, isSeeu]);
 
   const allRows = useMemo(
     () => (query.data?.rows ?? []) as unknown as Row[],
@@ -175,10 +196,15 @@ export function IntimacoesStagingView({ jobId }: { jobId: number }) {
     }
   }, [allRows]);
 
-  const confirmar = trpc.intimacoes.confirmarImport.useMutation({
+  const pjeConfirmar = trpc.intimacoes.confirmarImport.useMutation({
     onSuccess: (res) => toast.success(`${res.imported} importadas, ${res.skipped} puladas`),
     onError: (e) => toast.error("Erro: " + e.message),
   });
+  const seeuConfirmar = trpc.seeuIntimacoes.confirmarImport.useMutation({
+    onSuccess: (res) => toast.success(`${res.imported} importadas, ${res.skipped} puladas`),
+    onError: (e) => toast.error("Erro: " + e.message),
+  });
+  const confirmar = isSeeu ? seeuConfirmar : pjeConfirmar;
 
   const status = query.data?.status ?? "pending";
   const running = status === "pending" || status === "processing";

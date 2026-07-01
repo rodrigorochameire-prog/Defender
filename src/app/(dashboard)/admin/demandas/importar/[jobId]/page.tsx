@@ -1,7 +1,14 @@
 "use client";
 
-import { use } from "react";
+import { Suspense, use } from "react";
+import { useSearchParams } from "next/navigation";
 import { IntimacoesStagingView } from "@/components/demandas-premium/intimacoes-staging-view";
+
+function ImportarIntimacoesInner({ jobId }: { jobId: number }) {
+  const searchParams = useSearchParams();
+  const system = searchParams.get("system") === "seeu" ? "seeu" : "pje";
+  return <IntimacoesStagingView jobId={jobId} system={system} />;
+}
 
 export default function ImportarIntimacoesPage({
   params,
@@ -9,5 +16,9 @@ export default function ImportarIntimacoesPage({
   params: Promise<{ jobId: string }>;
 }) {
   const { jobId } = use(params);
-  return <IntimacoesStagingView jobId={Number(jobId)} />;
+  return (
+    <Suspense fallback={null}>
+      <ImportarIntimacoesInner jobId={Number(jobId)} />
+    </Suspense>
+  );
 }

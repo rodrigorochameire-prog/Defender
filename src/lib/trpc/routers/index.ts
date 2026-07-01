@@ -98,6 +98,7 @@ import { promocaoRouter } from "./promocao";
 import { vidaFuncionalRouter } from "./vida-funcional";
 import { carreiraRouter } from "./carreira";
 import { intimacoesRouter } from "./intimacoes";
+import { seeuIntimacoesRouter } from "./seeuIntimacoes";
 import { pautaRouter } from "./pauta";
 import { feriasRouter } from "./ferias";
 import { pedidosAdministrativosRouter } from "./pedidos-administrativos";
@@ -479,6 +480,10 @@ export const appRouter = router({
   // INTIMACOES — importação de intimações PJe (lane browser)
   // ==========================================
   intimacoes: intimacoesRouter,
+  // ==========================================
+  // SEEU INTIMACOES — importação de intimações SEEU (Execução Penal, lane browser)
+  // ==========================================
+  seeuIntimacoes: seeuIntimacoesRouter,
   // ==========================================
   // SIGA — importação de carreira (licenças, férias, afastamentos)
   // ==========================================
