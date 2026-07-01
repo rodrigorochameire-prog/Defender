@@ -3,6 +3,7 @@
   "framework": "nextjs",
   "regions": ["gru1"],
   "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "NODE_OPTIONS=--max-old-space-size=8192 next build",
   "functions": {
     "src/app/api/**/*": {
       "maxDuration": 60
