@@ -357,6 +357,7 @@ export const demandas = pgTable("demandas", {
     artigos?: string[];
     qualificadoras?: string[];
     fase_processual?: string;
+    motivo?: string;
     atribuicao_detectada?: string;
     reu_preso_detectado?: boolean;
     intimado?: string;

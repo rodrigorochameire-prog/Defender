@@ -1137,6 +1137,7 @@ export default function Demandas() {
       providencias: d.providencias || "",
       providenciaResumo: d.providenciaResumo || "",
       analiseResumo: d.analiseResumo ?? null,
+      analiseData: d.analiseData ?? null,
       registrosCount: d.registrosCount ?? 0,
       atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
       atribuicaoEnum: d.processo?.atribuicao || null,

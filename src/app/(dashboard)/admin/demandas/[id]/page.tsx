@@ -34,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { UI_STATUS_TO_DB, ALL_STATUS_OPTIONS, getStatusConfig } from "@/config/demanda-status";
 import { REGISTRO_TIPOS, TIPO_KEYS, type TipoRegistro } from "@/components/registros/registro-tipo-config";
+import { AnaliseResumoFields, type AnaliseData } from "@/components/demandas-premium/AnaliseResumo";
 
 // ─── Títulos de registros gerados pela análise de IA (skill analise-intimacao) ───
 // Exibidos em card destacado próprio; excluídos da listagem por tipo.
@@ -619,34 +620,45 @@ export default function DemandaDetailPage({ params }: { params: Promise<{ id: st
             </span>
           </div>
           <div className="space-y-4">
-            {iaRegistros.map((r) => (
-              <div key={r.id}>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/80 mb-1">
-                  {r.titulo}
-                </p>
-                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed space-y-0.5">
-                  {(r.conteudo ?? "")
-                    .replace(/\*\*/g, "")
-                    .split("\n")
-                    .filter((l) => l.trim())
-                    .map((linha, i) => {
-                      const m = linha.match(/^([^:]{2,40}):\s*(.*)$/);
-                      return m ? (
-                        <p key={i} className="whitespace-pre-wrap">
-                          <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                            {m[1]}:
-                          </span>{" "}
-                          {m[2]}
-                        </p>
-                      ) : (
-                        <p key={i} className="whitespace-pre-wrap">
-                          {linha}
-                        </p>
-                      );
-                    })}
+            {iaRegistros.map((r) => {
+              // Registros novos (contrato JSON — skill analise-intimacao pós-refatoração)
+              // carregam {objeto,decidido,providencia,prazo,recurso,_status,_fonte} em
+              // enrichment_data; registros antigos (pré-contrato) só têm texto livre em
+              // `conteudo` e degradam pro parser de linhas "Label: valor" abaixo.
+              const analiseJson = r.enrichmentData as AnaliseData | null | undefined;
+              return (
+                <div key={r.id}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600/90 dark:text-violet-300/80 mb-1">
+                    {r.titulo}
+                  </p>
+                  {analiseJson?.objeto ? (
+                    <AnaliseResumoFields expanded data={analiseJson} resumo={r.conteudo ?? null} />
+                  ) : (
+                    <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed space-y-0.5">
+                      {(r.conteudo ?? "")
+                        .replace(/\*\*/g, "")
+                        .split("\n")
+                        .filter((l) => l.trim())
+                        .map((linha, i) => {
+                          const m = linha.match(/^([^:]{2,40}):\s*(.*)$/);
+                          return m ? (
+                            <p key={i} className="whitespace-pre-wrap">
+                              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                                {m[1]}:
+                              </span>{" "}
+                              {m[2]}
+                            </p>
+                          ) : (
+                            <p key={i} className="whitespace-pre-wrap">
+                              {linha}
+                            </p>
+                          );
+                        })}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
