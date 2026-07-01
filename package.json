@@ -21,6 +21,7 @@
     "db:migrate-food": "node scripts/migrate-food-tables.mjs",
     "import:csv": "tsx scripts/import-csv.ts",
     "typecheck": "tsc --noEmit",
+    "check:mobile": "node scripts/check-mobile-ux.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
