@@ -365,7 +365,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     </div>
                     <button
                       onClick={() => handleDeleteStatus(status.value)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     </button>
@@ -438,7 +438,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                           </span>
                           <button
                             onClick={() => handleDeleteAto(atoConfig.atribuicao, ato)}
-                            className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 ml-2 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                           >
                             <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
                           </button>
@@ -503,7 +503,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     </div>
                     <button
                       onClick={() => handleDeleteAtribuicao(attr.value)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     </button>
@@ -561,7 +561,7 @@ export function AdminConfigModal({ isOpen, onClose }: AdminConfigModalProps) {
                     </div>
                     <button
                       onClick={() => handleDeleteProcesso(proc.tipo)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                      className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     </button>

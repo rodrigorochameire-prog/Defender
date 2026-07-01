@@ -724,7 +724,7 @@ export function DemandaCreateModal({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeProcesso(index)}
-                          className="h-9 w-9 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                          className="h-9 w-9 p-0 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
