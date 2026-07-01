@@ -4,6 +4,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import dynamic from "next/dynamic";
 import { trpc } from "@/lib/trpc/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ─── Dynamic import of react-pdf (client-only, no SSR) ────────────
 // react-pdf accesses DOMMatrix at import time, which doesn't exist in Node.js.
@@ -2190,6 +2191,9 @@ export function PdfViewerModal({
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [showIndex, setShowIndex] = useState(true);
+  const isMobile = useIsMobile();
+  // No celular o painel de índice (w-72) não deixa espaço para a página — começa fechado.
+  useEffect(() => { if (isMobile) setShowIndex(false); }, [isMobile]);
   const [indexSearch, setIndexSearch] = useState("");
   const [selectedSection, setSelectedSection] = useState<ReactPdfDocumentSection | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -3304,8 +3308,8 @@ export function PdfViewerModal({
             annotationMode === "underline" && "pdf-underline-mode"
           )}
         >
-          {/* ── Top Bar — Enlarged & Enhanced ── */}
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 flex-shrink-0">
+          {/* ── Top Bar — Enlarged & Enhanced (rola no mobile em vez de cortar) ── */}
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 flex-shrink-0 overflow-x-auto scrollbar-none">
             {/* Left: Toggle index */}
             <Tooltip>
               <TooltipTrigger asChild>
