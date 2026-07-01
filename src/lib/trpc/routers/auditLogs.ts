@@ -4,6 +4,24 @@ import { db } from "@/lib/db";
 import { auditLogs } from "@/lib/db/schema";
 import { and, eq, desc, sql, count } from "drizzle-orm";
 
+/**
+ * Constrói as condições WHERE do `list` de auditLogs a partir do input.
+ * Extraído como helper puro/exportado para ser testável sem DB (render SQL via PgDialect).
+ */
+export function auditListConditions(input: {
+  entityType?: string;
+  entityId?: number;
+  action?: string;
+  jobId?: number;
+}) {
+  const conds = [] as any[];
+  if (input.entityType) conds.push(eq(auditLogs.entityType, input.entityType));
+  if (input.entityId !== undefined) conds.push(eq(auditLogs.entityId, input.entityId));
+  if (input.action) conds.push(eq(auditLogs.action, input.action));
+  if (input.jobId !== undefined) conds.push(sql`${auditLogs.metadata}->>'job_id' = ${String(input.jobId)}`);
+  return conds;
+}
+
 export const auditLogsRouter = router({
   /**
    * Lista logs de auditoria (admin)
@@ -20,11 +38,7 @@ export const auditLogsRouter = router({
       })
     )
     .query(async ({ input }) => {
-      const conds = [] as any[];
-      if (input.entityType) conds.push(eq(auditLogs.entityType, input.entityType));
-      if (input.entityId) conds.push(eq(auditLogs.entityId, input.entityId));
-      if (input.action) conds.push(eq(auditLogs.action, input.action));
-      if (input.jobId) conds.push(sql`${auditLogs.metadata}->>'job_id' = ${String(input.jobId)}`);
+      const conds = auditListConditions(input);
       const where = conds.length ? and(...conds) : undefined;
       const logs = await db.select().from(auditLogs).where(where)
         .orderBy(desc(auditLogs.id)).limit(input.limit).offset(input.offset);

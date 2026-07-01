@@ -14,7 +14,7 @@ async function main() {
   try {
     const rows = await sql`SELECT id, pje_documento_id FROM pje_intimacoes_ledger WHERE demanda_id IS NULL AND pje_documento_id IS NOT NULL`;
     for (const r of rows) {
-      const matches = await sql`SELECT id FROM demandas WHERE pje_documento_id = ${r.pje_documento_id}`;
+      const matches = await sql`SELECT id FROM demandas WHERE pje_documento_id = ${r.pje_documento_id} AND deleted_at IS NULL ORDER BY id`;
       const did = pickDemandaId(matches);
       if (did === null) { unmatched++; continue; }
       if (matches.length > 1) ambiguous++;
