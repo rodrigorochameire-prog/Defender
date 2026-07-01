@@ -61,6 +61,7 @@ from designacao_parse import (  # noqa: E402
     detectar_designacao_audiencia, extrair_movimentos_audiencia,
 )
 from mpu_parse import parse_decisao_mpu  # noqa: E402
+from seeu_expediente import read_seeu_expediente  # noqa: E402  # leitor EP/SEEU (Task 2)
 
 # ───── Config ────────────────────────────────────────────────────────────────
 
@@ -1509,7 +1510,7 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
         # Modo --demanda-ids: navegação usa UMA vara por rodada (a de demandas[0]);
         # demandas de outra vara caem no fallback manual-review. Lote homogêneo por
         # vara é o suportado — seleção em lote da UI é escopada por atribuição.
-        if modo in ("cdp", "direct"):
+        if modo in ("cdp", "direct") and atrib_alvo and atrib_alvo != "EXECUCAO_PENAL":
             if atrib_alvo:
                 try:
                     # Recarrega o painel p/ estado limpo da árvore (a aba pode estar
@@ -1531,38 +1532,59 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 numero = (d.get("processos") or {}).get("numero_autos") or "?"
                 log(f"[{i+1}/{len(demandas)}] {assistido} | {numero}")
 
-                autos_url = await find_in_panel(page, doc_id, numero)
-                if not autos_url:
-                    log(f"  ⚠ não encontrado no painel — fallback manual-review")
-                    create_manual_review(sb, d)
-                    stats["not_found"] += 1
-                    continue
-
-                content = await read_doc_content(ctx, autos_url)
-                # Buscar título do "best item" da timeline pra classify
-                best_titulo = content.get("top_titulo")
-                if not best_titulo and content.get("best_id"):
-                    for it in content.get("timeline", []):
-                        if it.get("id") == content["best_id"]:
-                            best_titulo = it.get("titulo")
-                            break
-                is_mpu_demanda = _is_mpu(d)
-                if is_mpu_demanda:
-                    log(f"  [MPU] detectado — usando regras defensivas")
-                # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
-                # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
-                texto = _clean_decisao_text(content["text"])
                 # Atribuição POR-DEMANDA (não a global da rodada): no modo
                 # --demanda-ids a seleção pode misturar atribuições, então cada
                 # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
                 # Fallback p/ atrib_alvo quando a demanda não traz processo.
                 atrib_demanda = (d.get("processos") or {}).get("atribuicao") or atrib_alvo
-                # Sinal estruturado: audiências (re)designadas nos MOVIMENTOS da
-                # timeline — pega o objeto da intimação mesmo quando o doc intimado
-                # é um despacho vago sem data (caso André Chaves, 8016157-03).
-                movimentos = extrair_movimentos_audiencia(content.get("panel_text", ""))
-                if movimentos:
-                    log(f"  ⤷ {len(movimentos)} movimento(s) de audiência na timeline")
+                if atrib_demanda == "EXECUCAO_PENAL":
+                    # EP não está no PJe — leitor dedicado no SEEU (Task 2).
+                    cnj = (d.get("processos") or {}).get("numero_autos") or ""
+                    if not cnj or cnj == "?":
+                        log("  ⚠ demanda EP sem CNJ — manual-review")
+                        create_manual_review(sb, d); stats["not_found"] += 1; continue
+                    try:
+                        content = await read_seeu_expediente(ctx, cnj)
+                    except Exception as e:
+                        log(f"  ⚠ SEEU: {str(e)[:90]} — manual-review")
+                        create_manual_review(sb, d); stats["not_found"] += 1; continue
+                    # raw_text p/ o analise-intimacao inclui o contexto de pena
+                    pena = content.get("pena_context") or {}
+                    peninfo = ", ".join(f"{k}={v}" for k, v in pena.items() if v)
+                    texto = _clean_decisao_text(content["text"])
+                    if peninfo:
+                        texto = f"[Execução: {peninfo}]\n{texto}"
+                    best_titulo = content.get("top_titulo")
+                    movimentos = []  # EP não usa a timeline de audiências do PJe
+                else:
+                    autos_url = await find_in_panel(page, doc_id, numero)
+                    if not autos_url:
+                        log(f"  ⚠ não encontrado no painel — fallback manual-review")
+                        create_manual_review(sb, d)
+                        stats["not_found"] += 1
+                        continue
+
+                    content = await read_doc_content(ctx, autos_url)
+                    # Buscar título do "best item" da timeline pra classify
+                    best_titulo = content.get("top_titulo")
+                    if not best_titulo and content.get("best_id"):
+                        for it in content.get("timeline", []):
+                            if it.get("id") == content["best_id"]:
+                                best_titulo = it.get("titulo")
+                                break
+                    # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
+                    # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
+                    texto = _clean_decisao_text(content["text"])
+                    # Sinal estruturado: audiências (re)designadas nos MOVIMENTOS da
+                    # timeline — pega o objeto da intimação mesmo quando o doc intimado
+                    # é um despacho vago sem data (caso André Chaves, 8016157-03).
+                    movimentos = extrair_movimentos_audiencia(content.get("panel_text", ""))
+                    if movimentos:
+                        log(f"  ⤷ {len(movimentos)} movimento(s) de audiência na timeline")
+
+                is_mpu_demanda = _is_mpu(d)
+                if is_mpu_demanda:
+                    log(f"  [MPU] detectado — usando regras defensivas")
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
                                 atribuicao=atrib_demanda, movimentos=movimentos)
                 if not rule:
