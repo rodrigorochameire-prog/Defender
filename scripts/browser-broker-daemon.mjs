@@ -127,6 +127,7 @@ const SKILL_REGISTRY = {
         ...(meta.since ? ['--since', String(meta.since)] : []),
         ...(meta.limit ? ['--limit', String(meta.limit)] : []),
         ...(meta.defensorId ? ['--defensor-id', String(meta.defensorId)] : []),
+        ...(meta.jobId ? ['--job-id', String(meta.jobId)] : []),
       ],
       timeoutMs: 30 * 60_000,
     }),
