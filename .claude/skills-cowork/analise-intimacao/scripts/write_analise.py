@@ -110,6 +110,35 @@ def _strip_label(value, *labels) -> str:
     return v.replace("**", "").strip()
 
 
+def sinal_2c(r: dict) -> dict:
+    """Sinal determinístico p/ o pipeline profundo (2c). requer_analise_profunda
+    é verdadeiro sse, e só se, houver peça sugerida."""
+    peca = r.get("peca_sugerida") or None
+    return {"peca_sugerida": peca, "requer_analise_profunda": peca is not None}
+
+
+def build_corpo(r: dict) -> list:
+    """Monta as linhas 'Label: valor' da anotação de resumo (texto puro)."""
+    corpo = []
+    if r.get("resumo_objeto"):
+        corpo.append(f"Objeto: {_strip_label(r['resumo_objeto'], 'objeto')}")
+    if r.get("o_que_decidido"):
+        corpo.append(f"O que foi decidido: {_strip_label(r['o_que_decidido'], 'o que foi decidido')}")
+    if r.get("o_que_fazer"):
+        corpo.append(f"Providência/Prazo: {_strip_label(r['o_que_fazer'], 'providência/prazo', 'providencia/prazo', 'providência', 'providencia')}")
+    cr = (r.get("cabe_recurso") or "").lower()
+    if cr in ("sim", "talvez"):
+        rec = r.get("recurso_cabivel") or "recurso"
+        fund = f" — {r['fundamento_recurso'].strip()}" if r.get("fundamento_recurso") else ""
+        corpo.append(f"Cabe recurso? (análise preliminar — revisar): {cr} · {rec}{fund}")
+    elif cr == "nao":
+        corpo.append("Cabe recurso? (análise preliminar — revisar): não")
+    peca = r.get("peca_sugerida") or None
+    if peca:
+        corpo.append(f"Cabe peça: {peca} (revisar — aciona análise profunda)")
+    return corpo
+
+
 def resolve_ctx(r) -> tuple:
     """Resolve (assistido_id, processo_id) — usa os do resultado se vierem; senão
     busca no registro base (registro_id) ou na própria demanda. registros.assistido_id
@@ -175,26 +204,14 @@ def main():
         # --- Anotação principal: resumo ESTRUTURADO (+ recurso preliminar, se houver) ---
         # Texto puro (sem markdown) com rótulo "Label: valor". _strip_label evita
         # rótulo duplicado quando a IA já prefixa o valor (ex.: "Objeto: Objeto: ...").
-        corpo = []
-        if r.get("resumo_objeto"):
-            corpo.append(f"Objeto: {_strip_label(r['resumo_objeto'], 'objeto')}")
-        if r.get("o_que_decidido"):
-            corpo.append(f"O que foi decidido: {_strip_label(r['o_que_decidido'], 'o que foi decidido')}")
-        if r.get("o_que_fazer"):
-            corpo.append(f"Providência/Prazo: {_strip_label(r['o_que_fazer'], 'providência/prazo', 'providencia/prazo', 'providência', 'providencia')}")
-        cr = (r.get("cabe_recurso") or "").lower()
-        if cr in ("sim", "talvez"):
-            rec = r.get("recurso_cabivel") or "recurso"
-            fund = f" — {r['fundamento_recurso'].strip()}" if r.get("fundamento_recurso") else ""
-            corpo.append(f"Cabe recurso? (análise preliminar — revisar): {cr} · {rec}{fund}")
-        elif cr == "nao":
-            corpo.append("Cabe recurso? (análise preliminar — revisar): não")
+        corpo = build_corpo(r)
         if ato_ajuste:
             corpo.append(f"Ato ajustado: {ato_ajuste[0]} → {ato_ajuste[1]}")
         titulo = "Resumo e providências"
         if corpo and not registro_exists(demanda_id, titulo):
             insert_registro({**base, "tipo": "analise", "titulo": titulo,
-                             "conteudo": "\n".join(corpo)})
+                             "conteudo": "\n".join(corpo),
+                             "enrichment_data": sinal_2c(r)})
             n_anota += 1
             # Aplica a troca do ato junto com a 1ª gravação (idempotente: re-runs
             # pulam a anotação já existente e, portanto, não re-aplicam).

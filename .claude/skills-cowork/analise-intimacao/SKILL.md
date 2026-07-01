@@ -44,7 +44,9 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
   "ato_sugerido": "ato do vocabulário canônico da atribuicao_label|null",
   "ato_confianca": "alta|media|baixa",
   "relato_vitima": "só MPU: relato da suposta vítima resumido|null",
-  "termos_pronuncia": "só pronúncia: crime, qualificadoras, fundamentos|null"
+  "termos_pronuncia": "só pronúncia: crime, qualificadoras, fundamentos|null",
+  "peca_sugerida": "memoriais|resposta_acusacao|apelacao|rese|manifestacao_ep|contrarrazoes|null",
+  "requer_analise_profunda": "IGNORE — derivado pelo write (peca_sugerida != null)"
 }
 ```
 > `assistido_id`/`processo_id` podem ficar null — o write resolve pelo registro base.
@@ -91,6 +93,27 @@ o(a) Defensor(a): o que é a intimação e o que precisa ser feito.
   Se o texto mandar **apresentar resposta à acusação** (CPP arts. 396/396-A, em
   regra 10 dias) → `ato_sugerido="Resposta à Acusação"`, `ato_confianca="alta"`.
   Não confunda com mera ciência de decisão: aqui há prazo para uma **peça**.
+- **Execução Penal** (`atribuicao_label="Execução Penal"`): fale a língua da
+  execução — progressão de regime, livramento condicional, remição, indulto/
+  comutação, falta grave (Súmulas 534/535-STJ), detração, prescrição da pena
+  privativa de liberdade. Use o `pena_context` (se vier embutido no `raw_text`)
+  para calcular frações/lapsos quando o texto trouxer os dados necessários;
+  caso falte dado, diga isso em `o_que_fazer` em vez de estimar.
+
+## `peca_sugerida` — sinal para o pipeline profundo (2c)
+
+- Enum fechado: `memoriais | resposta_acusacao | apelacao | rese |
+  manifestacao_ep | contrarrazoes | null`. Nunca invente outro valor.
+- Preencha **somente** quando o expediente exigir uma peça substantiva da
+  defesa (não mera ciência/despacho/juntada). Em caso de dúvida, `null`.
+- Para **Execução Penal**, use `manifestacao_ep` quando o expediente pedir
+  manifestação substantiva (ex.: sobre cálculo de pena, parecer do MP em
+  progressão, cota em incidente de falta grave). Mero despacho/ciência de
+  juntada → `null`.
+- `requer_analise_profunda` é **derivado** pelo `write_analise.py`
+  (`sinal_2c`) a partir de `peca_sugerida` — não o calcule, apenas devolva
+  `peca_sugerida` corretamente (o campo no schema é só para documentar o
+  contrato; o write ignora o que vier da IA e recalcula).
 
 ## Princípios inegociáveis
 
