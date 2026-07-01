@@ -28,7 +28,6 @@ import {
   Upload,
   Eye,
   CheckCircle2,
-  CloudOff,
   UserPlus,
   Undo2,
   Sparkles,
@@ -655,6 +654,29 @@ function KanbanCard({
         );
       })()}
 
+      {/* Badges de status (revisar/registros) — mesmo canto da toolbar de
+          ações, visíveis em repouso e substituídos por ela no hover (crossfade).
+          Reaproveita o espaço já reservado pelo pr-24 da Row 1 em vez de criar
+          uma linha extra que ampliaria todo card que tiver "revisar" ou anexos. */}
+      {(demanda.revisaoPendente || registrosCount > 0) && (
+        <div className="absolute top-1.5 right-1.5 z-[9] flex items-center gap-1.5 opacity-100 group-hover/kcard:opacity-0 transition-opacity duration-150 pointer-events-none">
+          {demanda.revisaoPendente && (
+            <span title="Revisão pendente — classificação do ato com baixa confiança da IA">
+              <AlertCircle className="w-3 h-3 text-amber-500" aria-label="Revisão pendente" />
+            </span>
+          )}
+          {registrosCount > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 text-[9px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500"
+              title={`${registrosCount} registro${registrosCount > 1 ? "s" : ""} (ciência/diligência/anotação)`}
+            >
+              <FileText className="w-3 h-3" />
+              {registrosCount}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Hover actions — toolbar discreta com cor do grupo */}
       <div
         className="
@@ -794,49 +816,22 @@ function KanbanCard({
           {isAlta && (
             <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0 mt-[1px]" aria-label="Prioridade alta" />
           )}
+          {showAtribBadge && demanda.atribuicao && (() => {
+            const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";
+            return (
+              <span
+                className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shrink-0"
+                style={{
+                  color: atribColor,
+                  borderColor: `${atribColor}33`,
+                  backgroundColor: `${atribColor}12`,
+                }}
+              >
+                {demanda.atribuicao}
+              </span>
+            );
+          })()}
         </div>
-
-        {/* Row 1b: Meta-tags — revisar / registros / atribuição, mesmo peso
-            visual (9px), agrupadas fora da linha do nome pra não competir
-            com a toolbar de ações que flutua no hover. */}
-        {(demanda.revisaoPendente || registrosCount > 0 || (showAtribBadge && demanda.atribuicao)) && (
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            {demanda.revisaoPendente && (
-              <span
-                className="inline-flex items-center gap-0.5 text-[9px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400"
-                title="Revisão pendente — classificação do ato com baixa confiança da IA"
-                aria-label="Revisão pendente"
-              >
-                <AlertCircle className="w-2.5 h-2.5" />
-                revisar
-              </span>
-            )}
-            {registrosCount > 0 && (
-              <span
-                className="inline-flex items-center gap-0.5 text-[9px] font-medium tabular-nums text-neutral-400 dark:text-neutral-500"
-                title={`${registrosCount} registro${registrosCount > 1 ? "s" : ""} (ciência/diligência/anotação)`}
-              >
-                <FileText className="w-2.5 h-2.5" />
-                {registrosCount}
-              </span>
-            )}
-            {showAtribBadge && demanda.atribuicao && (() => {
-              const atribColor = getAtribuicaoHex(demanda.atribuicao as string) || "#71717a";
-              return (
-                <span
-                  className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border"
-                  style={{
-                    color: atribColor,
-                    borderColor: `${atribColor}33`,
-                    backgroundColor: `${atribColor}12`,
-                  }}
-                >
-                  {demanda.atribuicao}
-                </span>
-              );
-            })()}
-          </div>
-        )}
 
         {/* Row 1b: Status badge — logo abaixo do nome, antes do processo */}
         {(() => {
@@ -973,25 +968,6 @@ function KanbanCard({
               {demanda.ato}
             </span>
           )}
-          {(() => {
-            // Indicador de não-sincronização: updatedAt mais novo que
-            // syncedAt por mais de 5min = algo ficou fora do ciclo.
-            // Se syncedAt nunca foi preenchido, não dá pra afirmar divergência;
-            // tratamos como "sistema não sabe" e não mostramos o badge.
-            if (!demanda.updatedAt || !demanda.syncedAt) return null;
-            const upd = new Date(demanda.updatedAt).getTime();
-            const syn = new Date(demanda.syncedAt).getTime();
-            if (upd - syn <= 5 * 60 * 1000) return null;
-            const minutos = Math.max(1, Math.floor((Date.now() - upd) / 60000));
-            return (
-              <span
-                className="shrink-0 ml-auto inline-flex items-center gap-0.5 text-[9px] text-amber-500/80"
-                title={`Não sincronizado há ${minutos}min (última edição ${new Date(demanda.updatedAt).toLocaleString("pt-BR")})`}
-              >
-                <CloudOff className="w-2.5 h-2.5" />
-              </span>
-            );
-          })()}
           {demanda.data && (
             <span className="text-[9px] font-mono tabular-nums text-neutral-300 dark:text-neutral-600 shrink-0 ml-auto">
               {demanda.data}
@@ -999,15 +975,15 @@ function KanbanCard({
           )}
         </div>
 
-        {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável. Contida em
-            um chip próprio (em vez de ícone solto) pra não competir com a
-            cor funcional do status logo acima. */}
+        {/* Row 3b: Prévia da análise IA (o que fazer) — glanceável. Neutra
+            (sem cor própria) pra não competir com a cor funcional do status
+            logo acima — o ícone Sparkles já comunica "vem da IA" pela forma. */}
         {analisePreview && (
           <div
-            className="flex items-start gap-1 mb-1 px-1.5 py-1 rounded-md bg-violet-50/70 dark:bg-violet-950/20"
+            className="flex items-start gap-1 mb-1 px-1.5 py-1 rounded-md bg-neutral-50 dark:bg-neutral-800/40"
             title={demanda.analiseResumo ?? undefined}
           >
-            <Sparkles className="w-2.5 h-2.5 text-violet-400 dark:text-violet-400 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
+            <Sparkles className="w-2.5 h-2.5 text-neutral-400 dark:text-neutral-500 shrink-0 mt-[1.5px]" aria-label="Análise IA" />
             <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-snug line-clamp-2 min-w-0">
               {analisePreview}
             </span>
