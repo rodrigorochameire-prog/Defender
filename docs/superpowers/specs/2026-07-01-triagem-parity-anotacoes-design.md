@@ -37,8 +37,9 @@ O card busca o resumo por **match exato de título**: `src/lib/trpc/routers/dema
 - Schema `demandas`: `src/lib/db/schema/core.ts:313-391` (`enrichment_data` já tem chave tipada `fase_processual`)
 - Schema `registros`: `src/lib/db/schema/agenda.ts:179-238`
 - `processos_vvd` fase/motivo: `src/lib/db/schema/vvd.ts:166-174`
-- Consumidores do `analiseResumo` (demandas.ts:155): **`src/components/demandas-premium/kanban-premium.tsx:507` e `:984`** (não o `DemandaCard.tsx`).
-- Seção IA própria do card: `src/components/demandas-premium/DemandaCard.tsx:609`, que itera a lista de registros filtrando `r.tipo === 'analise' || IA_TITULOS.has(titulo)` (constantes em `:38, :147`).
+- Consumidores do `analiseResumo` (demandas.ts:155) — o resumo exibido na face do card do kanban: **`src/components/demandas-premium/kanban-premium.tsx:507` e `:984`**.
+- Seção IA com campos rotulados/filtro por título: **`src/app/(dashboard)/admin/demandas/[id]/page.tsx:40, :147, :157`** (constante `IA_TITULOS` em `:40`; filtro `r.tipo === 'analise' || IA_TITULOS.has(titulo)` em `:147/:157`). **Não** está em `DemandaCard.tsx`.
+- `src/components/demandas-premium/DemandaCard.tsx` renderiza apenas `demanda.providencias` e o badge `registrosCount` — **não** tem seção IA nem `IA_TITULOS`.
 - Escritor fase 2: `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py:179-196` — **grava três** registros `tipo='analise'` por demanda, em ordem crescente de `id`: `"Resumo e providências"` (196), `"Relato da suposta vítima"` (211), `"Termos da pronúncia"` (218). A inserção é guardada por `registro_exists(demanda_id, titulo)` (195) — se o título já existe, **pula** (não sobrescreve).
 - Anotações manuais em outras telas também usam `tipo='analise'` (`admin/demandas/[id]/page.tsx`, `painel-servidor.tsx`, `delegacao.ts`).
 
@@ -119,7 +120,7 @@ Fonte única de verdade do resumo do card, para as fases 1 e 2 não colidirem:
 - **Identidade:** exatamente **um** registro por demanda com `tipo='analise'` **e** `titulo='Resumo e providências'`. É o único registro tratado como "o resumo".
 - **Marcador:** seu `enrichment_data` sempre contém a chave **`objeto`** — este é o discriminador que a query do card usa (ver A4). Os outros registros `tipo='analise'` da fase 2 (`"Relato da suposta vítima"`, `"Termos da pronúncia"`) e as anotações manuais **não** têm essa chave e portanto **não** são confundidos com o resumo.
 - **Payload:** `enrichment_data = { objeto, decidido, providencia, prazo, recurso, _status }`, com `_status ∈ { 'pendente', 'concluido', 'nao_lido' }` e `_fonte ∈ { 'fase1', 'fase2' }`.
-- **Semântica de escrita — upsert, não insert-skip:** substitui-se a guarda `registro_exists(...)` → *pula* de `write_analise.py:195` por **update-in-place** para este título específico. Fase 1 faz `INSERT ... ON CONFLICT (demanda_id, titulo) DO UPDATE`; fase 2 faz `UPDATE` do mesmo registro. (Os demais títulos da fase 2 continuam com `insert-if-not-exists` como hoje.)
+- **Semântica de escrita — select-then-update em nível de aplicação (sem DDL):** não há índice único em `registros(demanda_id, titulo)` (`agenda.ts:179-238` só tem PK serial), então **não** se usa `ON CONFLICT`. Em vez disso, para este título específico: `SELECT id FROM registros WHERE demanda_id=? AND tipo='analise' AND titulo='Resumo e providências' LIMIT 1` → se existe, `UPDATE`; senão, `INSERT` (mesmo padrão do `registro_exists` atual, mas com *update* no ramo "existe" em vez de *skip*). Fase 1 cria; fase 2 atualiza. (Os demais títulos da fase 2 continuam com `insert-if-not-exists` como hoje.) A rigor há uma janela de corrida teórica entre SELECT e INSERT, mitigada porque fase 1 e fase 2 da mesma demanda não rodam concorrentemente (fase 2 é enfileirada ao fim da fase 1).
 
 ### A3 · Card nunca em branco
 
@@ -129,7 +130,7 @@ A **fase 1** passa a **criar/atualizar o registro de análise** (contrato A2.2) 
 
 - A fase 2 (`write_analise.py`) grava o JSON `{ objeto, decidido, providencia, prazo, recurso }` no `enrichment_data` do registro de análise (A2.2), via `UPDATE`. O `conteudo` markdown permanece para a timeline.
 - **Query do card** (`demandas.ts:155`): em vez de match por título exato, seleciona **o registro `tipo='analise'` mais recente cujo `enrichment_data ? 'objeto'`** (o marcador do contrato). Isso evita pegar `"Termos da pronúncia"`/`"Relato da suposta vítima"` (que têm `id` maior) e anotações manuais (sem a chave). Fallback de compatibilidade para registros antigos: se nenhum registro com a chave `objeto` existir, cair para `titulo = 'Resumo e providências'` como hoje.
-- **Consumidores a alterar:** `kanban-premium.tsx:507` e `:984` (que renderizam `analiseResumo`) e a seção IA de `DemandaCard.tsx:609` (que hoje filtra `r.tipo === 'analise' || IA_TITULOS.has(titulo)`, constantes em `:38, :147`). A renderização estruturada nova deve **integrar-se à lógica `IA_TITULOS` existente** — quando o registro tiver o JSON de contrato, renderizar os campos rotulados; senão, manter o render atual do `conteudo`.
+- **Consumidores a alterar:** (a) a face do card do kanban de triagem — `kanban-premium.tsx:507` e `:984`, que renderizam `analiseResumo`; (b) a seção IA da tela de detalhe — `admin/demandas/[id]/page.tsx:40/:147/:157`, que hoje filtra `r.tipo === 'analise' || IA_TITULOS.has(titulo)`. A renderização estruturada nova deve **integrar-se à lógica `IA_TITULOS` existente** nessa tela de detalhe — quando o registro tiver o JSON de contrato, renderizar os campos rotulados; senão, manter o render atual do `conteudo`. `DemandaCard.tsx` (que só mostra `providencias`/`registrosCount`) não precisa mudar para o resumo.
 - **Layout:** face do card mostra `Objeto → Providência · Prazo`; expandido revela **Objeto / O que foi decidido / Providência / Prazo / Cabe recurso?** a partir do JSON (sem parsing de markdown). Degradação graciosa para registros sem JSON.
 
 ### A5 · Testes, segurança e fronteiras
@@ -155,10 +156,10 @@ A **fase 1** passa a **criar/atualizar o registro de análise** (contrato A2.2) 
 |---|---|
 | `.claude/skills-cowork/varredura-triagem/scripts/varredura_triagem.py` | `RULES_JURI`, `RULES_CRIMINAL` (inerte), ampliar `RULES_EP`; dispatch por atribuição; **rotear fase/motivo para `demandas.enrichment_data`** e gatear `processos_vvd` a VVD/MPU; leitura PDF+OCR pela rota segura (autos completos); sempre enfileirar fase 2; upsert do registro de análise (contrato A2.2) com `_status`/`_fonte` |
 | `.claude/skills-cowork/varredura-triagem/references/heuristicas-classificacao.md` | Alinhar doc ↔ código (Júri/EP/Criminal) + vocabulário A1.1 |
-| `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py` | Gravar JSON de contrato `{objeto,decidido,providencia,prazo,recurso,_status,_fonte}` via **UPDATE-in-place** do registro `'Resumo e providências'` (substituir o `registro_exists`→skip apenas para esse título) |
+| `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py` | Gravar JSON de contrato `{objeto,decidido,providencia,prazo,recurso,_status,_fonte}` via **select-then-update** (nível app, sem `ON CONFLICT`) do registro `'Resumo e providências'` |
 | `src/lib/trpc/routers/demandas.ts` | Query do resumo: registro `tipo='analise'` mais recente com `enrichment_data ? 'objeto'`, fallback para título exato |
-| `src/components/demandas-premium/kanban-premium.tsx` | Consumir o resumo estruturado no card do kanban (`:507`, `:984`) |
-| `src/components/demandas-premium/DemandaCard.tsx` | Integrar à seção IA (`:609`, `IA_TITULOS` em `:38/:147`): bloco expansível com campos rotulados a partir do JSON; badges "IA pendente" / "documento não lido" |
+| `src/components/demandas-premium/kanban-premium.tsx` | Consumir o resumo estruturado na face do card do kanban (`:507`, `:984`); badges "IA pendente" / "documento não lido" |
+| `src/app/(dashboard)/admin/demandas/[id]/page.tsx` | Integrar à seção IA (`IA_TITULOS` em `:40`; filtro em `:147/:157`): bloco expansível com campos rotulados a partir do JSON |
 | `src/lib/db/schema/core.ts` | Adicionar chave `motivo` ao tipo do `enrichment_data` |
 | Testes (Python + TS) | Classificador (tabela por vocabulário A1.1), extração PDF/OCR, discriminador da query (não pegar "Termos da pronúncia"/anotação manual) |
 
