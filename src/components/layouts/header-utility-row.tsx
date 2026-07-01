@@ -7,7 +7,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsPopover } from "@/components/notifications-popover";
 import { ConflictBadge } from "@/components/conflict-badge";
 import { chatPanelActions } from "@/hooks/use-chat-panel";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Search } from "lucide-react";
+import { openCommandPalette } from "@/lib/events/command-palette";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import type { ReactNode } from "react";
@@ -25,7 +26,7 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
     <div className="flex h-11 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-        <SidebarTrigger className="h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+        <SidebarTrigger className="hidden md:inline-flex h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
         {/* Separator */}
         <div className="h-4 w-px bg-white/[0.08] shrink-0" />
@@ -71,7 +72,17 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
         {/* Controls — alertas de prazos/audiências foram movidos p/ o sino
             (NotificationsPopover): cabeçalho mais limpo, detalhe a 1 clique. */}
         <div className="flex items-center gap-1">
-          <CommandPalette />
+          <button
+            type="button"
+            onClick={() => openCommandPalette()}
+            aria-label="Buscar"
+            className="md:hidden inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+          <span className="hidden md:inline-flex">
+            <CommandPalette />
+          </span>
           <ThemeToggle />
           <NotificationsPopover />
           <button

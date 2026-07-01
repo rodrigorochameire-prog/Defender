@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { matchSkill } from "@/lib/skills/matcher";
 import { entityFromPathname } from "@/lib/skills/palette-context";
+import { onOpenCommandPalette } from "@/lib/events/command-palette";
 import { PaletteAiActions } from "@/components/shared/palette-ai-actions";
 import { PaletteHojeCard } from "@/components/shared/palette-hoje-card";
 import { PalettePrazosCard } from "@/components/shared/palette-prazos-card";
@@ -135,6 +136,11 @@ export function CommandPalette() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Open on the global event (mobile magnifier, launcher search field, etc.)
+  useEffect(() => {
+    return onOpenCommandPalette(() => setOpen(true));
   }, []);
 
   // Quick action shortcuts when dialog is open
