@@ -275,13 +275,13 @@ function AtendimentosNavBadge({ collapsed }: { collapsed: boolean }) {
   if (n === 0) return null;
   if (collapsed) {
     return (
-      <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center leading-none">
+      <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center leading-none">
         {n > 9 ? "9+" : n}
       </span>
     );
   }
   return (
-    <span className="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full bg-amber-500/90 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+    <span className="ml-auto min-w-[18px] h-[18px] px-1.5 rounded-full bg-amber-500/90 text-white text-[11px] font-bold flex items-center justify-center leading-none">
       {n}
     </span>
   );
@@ -317,7 +317,7 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
           <Link href={item.path} prefetch={true} onClick={onNavigate}>
             {isActive && <div className="absolute left-0 top-2 bottom-2 w-[2px] rounded-full bg-emerald-400" />}
             <Icon className={cn(
-              "h-[18px] w-[18px] transition-colors duration-150",
+              "h-5 w-5 transition-colors duration-150",
               isActive ? "text-emerald-400" : ""
             )} strokeWidth={isActive ? 2.2 : 1.8} />
             {item.path === "/admin/atendimentos" && <AtendimentosNavBadge collapsed />}
@@ -343,10 +343,10 @@ function NavItem({ item, isActive, isCollapsed, onNavigate, userRole }: {
         <Link href={item.path} prefetch={true} onClick={onNavigate}>
           {isActive && <div className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-emerald-400" />}
           <Icon className={cn(
-            "h-[15px] w-[15px] mr-2.5 transition-colors duration-150 flex-shrink-0",
+            "h-5 w-5 mr-2.5 transition-colors duration-150 flex-shrink-0",
             isActive ? "text-emerald-400" : "text-white/50 group-hover/item:text-white/70"
           )} strokeWidth={isActive ? 2.2 : 1.8} />
-          <span className="text-[12px] font-medium truncate">{item.label}</span>
+          <span className="text-sm font-medium truncate">{item.label}</span>
           {item.path === "/admin/atendimentos" && <AtendimentosNavBadge collapsed={false} />}
           {item.isPremium && (
             <Sparkles className="h-3 w-3 text-emerald-400 ml-auto" />
@@ -526,7 +526,7 @@ function SidebarPopoverMenu({
                       href={item.path}
                       onClick={() => { setOpen(false); onNavigate(); }}
                       className={cn(
-                        "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-150 relative group/popitem",
+                        "flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm transition-all duration-150 relative group/popitem",
                         isActive
                           ? cn(theme.activeBg, theme.activeText, "font-medium")
                           : cn("text-neutral-300 hover:text-white", theme.hoverBg)
@@ -544,7 +544,7 @@ function SidebarPopoverMenu({
                       {/* Badge sutil */}
                       {typeof item.badge === "number" && item.badge > 0 && (
                         <span className={cn(
-                          "ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md text-[10px] font-semibold tabular-nums",
+                          "ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-md text-[11px] font-semibold tabular-nums",
                           item.badge > 50
                             ? "bg-white/[0.08] text-neutral-300 ring-1 ring-white/[0.06]"
                             : "bg-white/[0.08] text-neutral-300 ring-1 ring-white/[0.06]"
@@ -610,11 +610,11 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           >
             <div className="mr-2.5 transition-all duration-200">
               <MoreHorizontal className={cn(
-                "h-[18px] w-[18px] transition-all duration-200",
+                "h-5 w-5 transition-all duration-200",
                 hasActiveItem ? "text-emerald-500" : "text-neutral-800 dark:text-neutral-400 group-hover/item:text-neutral-900 dark:group-hover/item:text-neutral-200"
               )} />
             </div>
-            <span className="text-[13px] font-medium">Mais</span>
+            <span className="text-sm font-medium">Mais</span>
             <ChevronRight className={cn(
               "h-4 w-4 ml-auto transition-transform duration-200",
               open && "rotate-90"
@@ -626,7 +626,7 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
           align="start"
           className="w-52 p-2 glass-dark shadow-xl shadow-black/30"
         >
-          <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider px-2 pb-2">
+          <p className="text-[11px] font-bold text-white/30 uppercase tracking-wider px-2 pb-2">
             Mais opções
           </p>
           {items.map((item) => {
@@ -641,7 +641,7 @@ function MoreMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                 href={item.path}
                 onClick={() => { setOpen(false); onNavigate(); }}
                 className={cn(
-                  "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200",
+                  "flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-sm transition-all duration-200",
                   isActive
                     ? "bg-emerald-500/15 text-emerald-400 font-medium"
                     : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
@@ -707,11 +707,11 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
         >
           <div className="mr-2.5 transition-all duration-200">
             <Rss className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">News</span>
+          <span className="text-sm font-medium">News</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -748,17 +748,17 @@ function NewsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-semibold bg-amber-500 text-white">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     )}
                     {item.path === "/admin/institucional" && (
-                      <span className="ml-auto text-[9px] font-semibold text-neutral-400 dark:text-neutral-600 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="ml-auto text-[11px] font-semibold text-neutral-400 dark:text-neutral-600 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-full leading-none">
                         breve
                       </span>
                     )}
@@ -825,11 +825,11 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "mr-2.5 transition-all duration-200"
           )}>
             <Puzzle className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Ferramentas</span>
+          <span className="text-sm font-medium">Ferramentas</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -872,12 +872,12 @@ function ToolsMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-amber-500 text-white">
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-semibold bg-amber-500 text-white">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     )}
@@ -947,11 +947,11 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "mr-2.5 transition-all duration-200"
           )}>
             <Home className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Principal</span>
+          <span className="text-sm font-medium">Principal</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -994,12 +994,12 @@ function PrincipalMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-200",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-200",
                       isActive ? "text-emerald-400" : "text-neutral-500 dark:text-neutral-400 group-hover/subitem:text-neutral-700 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                     {typeof item.badge === "number" && item.badge > 0 && (
-                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold text-white">
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[11px] font-bold text-white">
                         {item.badge > 99 ? "99+" : item.badge}
                       </span>
                     )}
@@ -1066,11 +1066,11 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "mr-2.5 transition-all duration-200"
           )}>
             <BookUser className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Cadastros</span>
+          <span className="text-sm font-medium">Cadastros</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -1113,10 +1113,10 @@ function CadastrosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1174,11 +1174,11 @@ function CarreiraMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
         >
           <div className="mr-2.5 transition-all duration-200">
             <Briefcase className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Carreira</span>
+          <span className="text-sm font-medium">Carreira</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -1217,10 +1217,10 @@ function CarreiraMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1284,11 +1284,11 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
             "mr-2.5 transition-all duration-200"
           )}>
             <FolderOpen className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Documentos</span>
+          <span className="text-sm font-medium">Documentos</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -1331,10 +1331,10 @@ function DocumentosMenu({ items, pathname, onNavigate, userRole, isCollapsed }: 
                       isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                     )} />
                     <Icon className={cn(
-                      "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                      "h-[18px] w-[18px] mr-2 transition-all duration-300",
                       isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                     )} />
-                    <span className="text-[12px] truncate">{item.label}</span>
+                    <span className="text-sm truncate">{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -1399,11 +1399,11 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
             "mr-2.5 transition-all duration-200"
           )}>
             <Users2 className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
-          <span className="text-[13px] font-medium">Cowork</span>
+          <span className="text-sm font-medium">Cowork</span>
           {hasActiveItem && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 ml-1.5" />}
           <ChevronDown className={cn(
             "h-4 w-4 ml-auto transition-transform duration-300",
@@ -1450,10 +1450,10 @@ function CoworkMenu({ items, pathname, onNavigate, userRole, isCollapsed }: {
                         isActive ? "bg-emerald-500/50" : "bg-black/[0.06] dark:bg-white/[0.06]"
                       )} />
                       <Icon className={cn(
-                        "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                        "h-[18px] w-[18px] mr-2 transition-all duration-300",
                         isActive ? "text-emerald-400" : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                       )} />
-                      <span className="text-[12px] truncate">{item.label}</span>
+                      <span className="text-sm truncate">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1566,7 +1566,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
               key={esp.id}
               onClick={() => setEspecialidade(esp.id)}
               className={cn(
-                "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
+                "py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
                 isSelected
                   ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
                   : "text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.06] px-2"
@@ -1611,7 +1611,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
             "mr-2.5 transition-all duration-200"
           )}>
             <Target className={cn(
-              "h-[18px] w-[18px] transition-all duration-200",
+              "h-5 w-5 transition-all duration-200",
               hasActiveItem ? "text-emerald-500" : "text-neutral-900 dark:text-neutral-400 group-hover/item:text-neutral-950 dark:group-hover/item:text-neutral-200"
             )} />
           </div>
@@ -1653,7 +1653,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                   key={esp.id}
                   onClick={() => setEspecialidade(esp.id)}
                   className={cn(
-                    "py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
+                    "py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer",
                     isSelected
                       ? `${esp.colors.bg} ${esp.colors.text} ring-1 ${esp.colors.ring} px-3`
                       : "text-neutral-500 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] px-2"
@@ -1671,7 +1671,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
               {section.title && (
                 <div className="flex items-center gap-2 pr-2 pt-2.5 pb-0.5">
                   <div className="h-px flex-1 bg-neutral-200/60 dark:bg-neutral-700/30" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-600 select-none whitespace-nowrap">
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-400 dark:text-neutral-600 select-none whitespace-nowrap">
                     {section.title}
                   </span>
                   <div className="h-px flex-1 bg-neutral-200/60 dark:bg-neutral-700/30" />
@@ -1708,7 +1708,7 @@ function EspecialidadesMenu({ pathname, onNavigate, userRole, isCollapsed, avail
                             : "bg-black/[0.06] dark:bg-white/[0.06]"
                         )} />
                         <Icon className={cn(
-                          "h-3.5 w-3.5 mr-2 transition-all duration-300",
+                          "h-[18px] w-[18px] mr-2 transition-all duration-300",
                           isActive ? activeColor.text : "text-neutral-400 dark:text-neutral-500 group-hover/subitem:text-neutral-600 dark:group-hover/subitem:text-neutral-300"
                         )} />
                         <span className="text-xs truncate">{item.label}</span>
@@ -2033,12 +2033,12 @@ function AdminSidebarContent({ children, setSidebarWidth, userName, userEmail, h
               </Avatar>
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-white/90 truncate tracking-tight">
+                  <p className="text-sm font-medium text-white/90 truncate tracking-tight">
                     {userName}
                   </p>
                   <button
                     onClick={handleLogout}
-                    className="text-[10px] flex items-center gap-1 mt-0.5 text-white/40 hover:text-red-400 transition-colors font-medium"
+                    className="text-[11px] flex items-center gap-1 mt-0.5 text-white/40 hover:text-red-400 transition-colors font-medium"
                   >
                     <LogOut className="w-2.5 h-2.5" />
                     Sair
