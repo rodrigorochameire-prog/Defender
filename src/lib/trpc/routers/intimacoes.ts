@@ -29,6 +29,20 @@ import {
   ASSISTIDO_A_IDENTIFICAR,
 } from "@/lib/pje-parser";
 import type { PjeImportStaging } from "@/lib/db/schema/pje-import";
+import { logAudit } from "@/lib/audit";
+
+/**
+ * Mapa pjeDocumentoId → demandaId a partir das linhas retornadas por
+ * `importarDemandas`. Ignora linhas sem pjeDocumentoId (staging sem doc PJe,
+ * ex.: registros manuais). Usado para preencher `pje_intimacoes_ledger.demanda_id`.
+ */
+export function ledgerDemandaMap(
+  rows: Array<{ pjeDocumentoId: string | null; demandaId: number; action: string }>,
+): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const r of rows) if (r.pjeDocumentoId) m.set(r.pjeDocumentoId, r.demandaId);
+  return m;
+}
 
 /**
  * Índice em memória: nome-de-assistido normalizado → ids[] dos assistidos vivos.
@@ -376,9 +390,10 @@ export const intimacoesRouter = router({
    * Ledger upsert: usa SELECT-then-UPDATE/INSERT para contornar a limitação do
    * Drizzle com onConflictDoUpdate em partial unique indexes.
    *
-   * Nota: importarDemandas retorna apenas contadores agregados (imported/updated/
-   * skipped/errors), sem IDs por linha. Por isso demandaId fica null no ledger —
-   * não temos como vincular per-row sem refatorar importarDemandas.
+   * `importarDemandas` retorna `rows` com `demandaId` por linha (pjeDocumentoId →
+   * demandaId), usado via `ledgerDemandaMap` para preencher `demanda_id` no
+   * ledger. Cada linha imported/updated também é auditada via `logAudit` —
+   * o import via intimações não passa pelo logAudit da UI.
    */
   confirmarImport: protectedProcedure
     .input(
@@ -406,6 +421,7 @@ export const intimacoesRouter = router({
       const importRows = rowsToImport.map(stagingRowToImportRow);
 
       const result = await importarDemandas(importRows, ctx.user.id, false);
+      const docMap = ledgerDemandaMap(result.rows);
 
       // Ledger: grava TODOS os itens staged (imported/skipped/duplicate).
       // Usa SELECT-then-UPDATE/INSERT para contornar partial-index onConflict.
@@ -438,10 +454,17 @@ export const intimacoesRouter = router({
               .limit(1);
           }
 
+          const linkedDemandaId = u.pjeDocumentoId ? docMap.get(u.pjeDocumentoId) : undefined;
+
           if (existing) {
             await tx
               .update(pjeIntimacoesLedger)
-              .set({ decisao: u.decisao, lastSeenAt: new Date(), jobId: u.jobId })
+              .set({
+                decisao: u.decisao,
+                lastSeenAt: new Date(),
+                jobId: u.jobId,
+                ...(linkedDemandaId !== undefined ? { demandaId: linkedDemandaId } : {}),
+              })
               .where(eq(pjeIntimacoesLedger.id, existing.id));
           } else {
             await tx.insert(pjeIntimacoesLedger).values({
@@ -451,13 +474,26 @@ export const intimacoesRouter = router({
               atribuicao: u.atribuicao as never,
               decisao: u.decisao,
               jobId: u.jobId,
-              // demandaId: null — importarDemandas não retorna IDs por linha.
+              demandaId: linkedDemandaId ?? null,
             });
           }
 
           ledgerWritten++;
         }
       });
+
+      // Import via intimações não passa pelo logAudit da UI — registrar aqui.
+      for (const r of result.rows) {
+        if (r.action === "skipped") continue;
+        await logAudit({
+          userId: ctx.user.id,
+          userName: ctx.user.name,
+          entityType: "demanda",
+          entityId: r.demandaId,
+          action: "import",
+          metadata: { source: "pje-import", jobId: input.jobId },
+        });
+      }
 
       return { ...result, ledgerWritten };
     }),
