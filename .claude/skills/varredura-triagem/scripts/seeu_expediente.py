@@ -50,6 +50,14 @@ _mesa_cache: dict[str, str] = {}
 
 _ABAS_MESA = ("Manifestação", "Ciência", "Razões")
 
+# Situações que exigem ação (radio name=situacao): 0=Recebidas e não Lidas,
+# 1=Lidas e Aguardando Análise. (2=Aguardando Assinatura já foi trabalhada.)
+_SITUACOES = (0, 1)
+_JS_SELECT_SITUACAO = (
+    "(idx)=>{const r=document.querySelectorAll('input[type=radio][name=situacao]')[idx];"
+    " if(r && !r.checked){r.click(); return true;} return false;}"
+)
+
 # JS: colhe {cnj, href} das linhas da aba atual da Mesa (links visualizacaoProcesso).
 _JS_HARVEST = r"""() => {
   const o=[];
@@ -92,9 +100,19 @@ async def _ensure_mesa_cache(ctx) -> None:
             _, frame = _find_mesa_frame(ctx.pages)  # re-resolve após o submit do form
             if frame is None:
                 break
-            rows = await frame.evaluate(_JS_HARVEST)
-            for r in rows:
-                _mesa_cache.setdefault(_norm_cnj(r["cnj"]), r["h"])
+            # Itera as Situações que exigem ação (radio name=situacao, onclick=enviaForm):
+            # 0=Recebidas e não Lidas, 1=Lidas e Aguardando Análise. A contagem da aba
+            # é o TOTAL das situações — sem iterar, só a 1ª página/situação é capturada.
+            for sit in _SITUACOES:
+                changed = await frame.evaluate(_JS_SELECT_SITUACAO, sit)
+                if changed:
+                    await pg.wait_for_timeout(2600)  # enviaForm() recarrega a tabela
+                    _, frame = _find_mesa_frame(ctx.pages)
+                    if frame is None:
+                        break
+                rows = await frame.evaluate(_JS_HARVEST)
+                for r in rows:
+                    _mesa_cache.setdefault(_norm_cnj(r["cnj"]), r["h"])
         except Exception:
             continue  # aba pode não existir/estar vazia — segue
 
