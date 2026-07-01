@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ledgerDemandaMap, parseVarreduraResultado } from "./intimacoes";
+import { importAuditMetadata, ledgerDemandaMap, parseVarreduraResultado } from "./intimacoes";
 
 describe("ledgerDemandaMap", () => {
   it("mapeia pjeDocumentoId→demandaId, ignora null", () => {
@@ -11,6 +11,14 @@ describe("ledgerDemandaMap", () => {
     expect(m.get("a")).toBe(1);
     expect(m.get("b")).toBe(3);
     expect(m.size).toBe(2);
+  });
+});
+
+describe("importAuditMetadata", () => {
+  it("usa a chave snake_case job_id (bate com metadata->>'job_id')", () => {
+    const m = importAuditMetadata(1352);
+    expect(m).toEqual({ source: "pje-import", job_id: 1352 });
+    expect("jobId" in m).toBe(false); // não camelCase — senão o drill-down fica vazio
   });
 });
 

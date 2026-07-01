@@ -45,6 +45,18 @@ export function ledgerDemandaMap(
 }
 
 /**
+ * importAuditMetadata — Metadata gravado no audit log da importação de
+ * intimações. A chave DEVE ser `job_id` (snake_case) para casar com o JSON
+ * path `metadata->>'job_id'` usado tanto por `runDetailChangesSql`
+ * (auditoria.ts) quanto por `auditListConditions` (auditLogs.ts) — a
+ * varredura já grava `metadata.job_id`. Usar `jobId` (camelCase) aqui
+ * quebra silenciosamente o drill-down por job de importação.
+ */
+export function importAuditMetadata(jobId: number | null | undefined) {
+  return { source: "pje-import", job_id: jobId ?? null };
+}
+
+/**
  * parseVarreduraResultado — Lê o payload estruturado (`resultado.parsed`)
  * gravado pelo browser-broker ao final de uma varredura de triagem. Retorna
  * null quando não há payload estruturado (ex.: resultado só com stdoutTail).
@@ -554,7 +566,7 @@ export const intimacoesRouter = router({
           entityType: "demanda",
           entityId: r.demandaId,
           action: "import",
-          metadata: { source: "pje-import", jobId: input.jobId },
+          metadata: importAuditMetadata(input.jobId),
         });
       }
 
