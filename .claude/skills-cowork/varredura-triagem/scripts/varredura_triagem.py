@@ -523,42 +523,59 @@ RULES_MPU = [
 
 
 # ───── Regras Execução Penal (atribuicao = EXECUCAO_PENAL) ───────────────────
-# Mesmo formato de RULES_BASE: (pattern, ato, prioridade, prazo_dias,
-# registro_tipo, side_effects, extras). Texto NORMALIZADO (sem acento, minúsculo).
+# Tupla de 9 (como MPU/Júri): (pattern, ato, prioridade, prazo_dias, registro_tipo,
+# fase, motivo, side_effects, extras). Texto NORMALIZADO (sem acento, minúsculo).
 # Primeira regra que casa vence. Aplicadas ANTES de RULES_BASE quando a
 # atribuição é Execução Penal; se nenhuma casar → fallback p/ RULES_BASE.
 # Atos espelham src/config/atos-por-atribuicao.ts (Execução Penal). Ver
-# references/fluxo-atos-por-atribuicao.md.
+# references/fluxo-atos-por-atribuicao.md. Vocabulário fase/motivo: spec §A1.1.
 RULES_EP = [
-    (r"extin(c|ç).{0,20}punibilidade|pena.{0,10}cumprida|prescri(c|ç)",
-     "Extinção da punibilidade", "ALTA", 5, "diligencia", [], {}),
+    (r"extin\w*.{0,20}punibilidade|pena.{0,10}cumprida|prescri(c|ç)",
+     "Extinção da punibilidade", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "extincao_punibilidade", [], {}),
     (r"reconvers",
-     "Manifestação contra reconversão", "ALTA", 5, "diligencia", [], {}),
+     "Manifestação contra reconversão", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "incidente_falta_grave", [], {}),
     (r"regress.{0,20}regime|falta grave",
-     "Manifestação contra regressão", "URGENTE", 5, "diligencia", [], {}),
+     "Manifestação contra regressão", "URGENTE", 5, "diligencia",
+     "execucao_definitiva", "incidente_falta_grave", [], {}),
     (r"rescis.{0,20}anpp|descumpr.{0,20}anpp",
-     "Impugnação à rescisão de ANPP", "URGENTE", 5, "diligencia", [], {}),
+     "Impugnação à rescisão de ANPP", "URGENTE", 5, "diligencia",
+     "execucao_provisoria", "incidente_falta_grave", [], {}),
     (r"sursis",
-     "Alteração de condição do SURSIS", "NORMAL", 5, "diligencia", [], {}),
+     "Alteração de condição do SURSIS", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"livramento condicional",
-     "Livramento condicional", "NORMAL", 5, "diligencia", [], {}),
+     "Livramento condicional", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "livramento_condicional", [], {}),
     (r"remi(c|ç)",
-     "Remição de pena", "NORMAL", 5, "diligencia", [], {}),
+     "Remição de pena", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "remicao", [], {}),
     (r"progress.{0,20}regime|requisit.{0,20}progress|calculo.{0,15}pena|atestado.{0,15}pena",
-     "Requerimento de progressão", "NORMAL", 5, "diligencia", [], {}),
+     "Requerimento de progressão", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"sa(i|í)da tempor",
-     "Saída temporária", "NORMAL", 5, "diligencia", [], {}),
+     "Saída temporária", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "saida_temporaria", [], {}),
     (r"permiss.{0,15}sa(i|í)da",
-     "Permissão de saída", "NORMAL", 5, "diligencia", [], {}),
+     "Permissão de saída", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "saida_temporaria", [], {}),
     (r"prisao domiciliar|domiciliar",
-     "Prisão domiciliar", "URGENTE", 5, "diligencia", [], {}),
+     "Prisão domiciliar", "URGENTE", 5, "diligencia",
+     "execucao_definitiva", "progressao_regime", [], {}),
     (r"indulto|comuta(c|ç)",
-     "Indulto", "ALTA", 5, "diligencia", [], {}),
+     "Indulto", "ALTA", 5, "diligencia",
+     "execucao_definitiva", "extincao_punibilidade", [], {}),
     (r"transfer.{0,20}(unidade|autos|presidio)",
-     "Transferência de unidade", "NORMAL", 5, "diligencia", [], {}),
+     "Transferência de unidade", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "unificacao_soma_penas", [], {}),
+    (r"unifica(c|ç).{0,20}pena|soma.{0,10}pena",
+     "Unificação/soma de penas", "NORMAL", 5, "diligencia",
+     "execucao_definitiva", "unificacao_soma_penas", [], {}),
     # fallback EP: decisão genérica de execução → analisar; senão None → RULES_BASE
     (r"\bdecisao\b",
-     "Analisar decisão", "NORMAL", None, "diligencia", [], {}),
+     "Analisar decisão", "NORMAL", None, "diligencia",
+     "execucao_definitiva", "calculo_pena", [], {}),
 ]
 
 
@@ -608,6 +625,32 @@ RULES_JURI = [
     (r"precatoria",
      "Cumprir precatória", "NORMAL", None, "diligencia",
      None, "precatoria", [], {}),
+    (r"tomar ciencia|intimacao|\bciencia\b",
+     "Ciência", "BAIXA", None, "ciencia",
+     None, None, [], {}),
+]
+
+
+# ───── Regras Criminal comum (atribuicao contém "CRIMINAL") ──────────────────
+# AUTORADA, PORÉM INERTE: ATRIB_UNIDADE não mapeia CRIMINAL_CAMACARI (embora o
+# CLI aceite o token), então o scraping ainda não a alimenta. Fica pronta p/
+# quando a unidade for adicionada. Tupla de 9 como Júri/MPU. Vocabulário §A1.1.
+RULES_CRIMINAL = [
+    (r"resposta a acusacao|arts?\.?\s*396",
+     "Resposta à Acusação", "URGENTE", 10, "diligencia",
+     "resposta_acusacao", "citacao_resposta_acusacao", [], {}),
+    (r"(alegacoes finais|memoriais)",
+     "Alegações finais (memoriais)", "URGENTE", 5, "diligencia",
+     "alegacoes_finais", "alegacoes_finais_memoriais", [], {}),
+    (r"(designo|designada|fica designada).{0,40}(audiencia|aij|instrucao)",
+     "Ciência designação de AIJ", "NORMAL", None, "ciencia",
+     "instrucao", "designacao_aij", ["agendar_audiencia"], {"tipo_audiencia": "INSTRUCAO"}),
+    (r"\bsentenca\b",
+     "Analisar sentença", "URGENTE", 5, "diligencia",
+     "sentenca", "intimacao_sentenca", [], {}),
+    (r"\bapel|recurso em sentido estrito|\brese\b",
+     "Analisar recurso", "URGENTE", 5, "diligencia",
+     "recurso", "prazo_recurso", [], {}),
     (r"tomar ciencia|intimacao|\bciencia\b",
      "Ciência", "BAIXA", None, "ciencia",
      None, None, [], {}),
@@ -822,6 +865,13 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
     alegações do sumário/apelação pós-júri; se nenhuma regra Júri casar, faz
     fallback para o título genérico + RULES_BASE.
 
+    Quando a atribuição é Criminal comum (`"CRIMINAL" in atribuicao`),
+    RULES_CRIMINAL vem antes de RULES_BASE — resposta à acusação/alegações
+    finais/AIJ/sentença/recurso; se nenhuma regra Criminal casar, faz fallback
+    para o título genérico + RULES_BASE. AUTORADA PORÉM INERTE: ATRIB_UNIDADE
+    ainda não mapeia nenhuma unidade Criminal, então esse ramo só é alcançado
+    quando `atribuicao` é passado manualmente (ex.: testes).
+
     `movimentos` (designações extraídas da timeline via
     extrair_movimentos_audiencia) é um sinal ESTRUTURADO: quando o título é
     fraco/ausente, uma audiência designada/redesignada na timeline tem
@@ -845,12 +895,11 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
             return mv
         # se MPU mas nada matcheou, cai no RULES_BASE como último recurso
     if "EXECUCAO_PENAL" in (atribuicao or ""):
-        for pat, ato, prio, prazo, tipo, fx, ex in RULES_EP:
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_EP:
             if re.search(pat, n):
-                return {
-                    "ato": ato, "prioridade": prio, "prazo_dias": prazo,
-                    "registro_tipo": tipo, "side_effects": fx, "extras": ex,
-                }
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
         # nenhuma regra EP casou → fallback para título genérico + RULES_BASE
     if "JURI" in (atribuicao or ""):
         for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_JURI:
@@ -859,6 +908,13 @@ def _classify_core(text: str, titulo: str | None = None, is_mpu: bool = False,
                         "registro_tipo": tipo, "fase": fase, "motivo": motivo,
                         "side_effects": fx, "extras": ex}
         # nenhuma regra Júri casou → fallback título + RULES_BASE
+    if "CRIMINAL" in (atribuicao or ""):
+        for pat, ato, prio, prazo, tipo, fase, motivo, fx, ex in RULES_CRIMINAL:
+            if re.search(pat, n):
+                return {"ato": ato, "prioridade": prio, "prazo_dias": prazo,
+                        "registro_tipo": tipo, "fase": fase, "motivo": motivo,
+                        "side_effects": fx, "extras": ex}
+        # nenhuma regra Criminal casou → fallback título + RULES_BASE
     titulo_rule = _decide_by_titulo(titulo, text) if titulo else None
     if titulo_rule and titulo_rule["ato"] not in _TITULO_WEAK_ATOS:
         return titulo_rule
