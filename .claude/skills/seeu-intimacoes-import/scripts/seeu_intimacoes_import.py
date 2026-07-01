@@ -152,30 +152,26 @@ JS_TABLE_TEXT = r"""() => {
 
 _CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 
+# Marcador de expediente: "Seq\n<CNJ>". Delimita cada bloco (Seq→próximo Seq),
+# preservando as datas/prazo que vêm DEPOIS do CNJ e ANTES do próximo Seq.
+_SEQ_CNJ_RE = re.compile(r"(\d{3,4})\s*\n\s*(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})")
 
-def _split_blocos_por_processo(texto_tabela: str) -> list[str]:
-    """Devolve fatias de texto, uma por processo CNJ encontrado (com o Seq
-    imediatamente antes incluído). Reusa a mesma heurística CNJ do parser TS —
-    cada fatia é conteúdo cru, do fim do CNJ anterior (menos margem) até o
-    início do próximo."""
-    cnj_iter = list(_CNJ_RE.finditer(texto_tabela))
-    blocos = []
-    for i, m in enumerate(cnj_iter):
-        ini = max(0, m.start() - 40)  # inclui o Seq imediatamente antes
-        fim = cnj_iter[i + 1].start() - 40 if i + 1 < len(cnj_iter) else len(texto_tabela)
-        fim = max(fim, m.end())
-        blocos.append(texto_tabela[ini:fim])
+
+def _split_blocos_por_processo(texto_tabela: str) -> list[tuple[int, str, str]]:
+    """Fatia a tabela em blocos, um por expediente, delimitados pelo marcador
+    Seq+CNJ. Cada bloco vai do seu próprio Seq até o Seq do próximo expediente
+    (ou o fim do texto), preservando as datas/prazo que aparecem DEPOIS do CNJ e
+    ANTES do próximo Seq. Devolve (seq, cnj, bloco_cru).
+
+    Substitui a heurística `-40` anterior, que truncava a última data do bloco e
+    ainda vazava a cauda do bloco anterior (bug crítico visto ao vivo)."""
+    ms = list(_SEQ_CNJ_RE.finditer(texto_tabela))
+    blocos: list[tuple[int, str, str]] = []
+    for i, m in enumerate(ms):
+        ini = m.start()
+        fim = ms[i + 1].start() if i + 1 < len(ms) else len(texto_tabela)
+        blocos.append((int(m.group(1)), m.group(2), texto_tabela[ini:fim]))
     return blocos
-
-
-def _seq_before_cnj(bloco: str, cnj_str: str | None) -> int | None:
-    """Extrai o Seq (3-4 dígitos) imediatamente antes do CNJ do processo dentro
-    do bloco. Retorna None se não houver CNJ ou nenhum número imediatamente
-    anterior a ele (separado só por espaço/tab/quebra de linha)."""
-    if not cnj_str:
-        return None
-    m = re.search(r"(\d{3,4})[\s\t\n]*" + re.escape(cnj_str), bloco)
-    return int(m.group(1)) if m else None
 
 
 # ─── Scraper assíncrono por aba (Playwright — importado lazily) ─────────────
@@ -219,15 +215,17 @@ async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status
             if frame is None:
                 continue
             texto = await frame.evaluate(JS_TABLE_TEXT)
-            for bloco in _split_blocos_por_processo(texto):
-                cnj = _CNJ_RE.search(bloco)
-                cnj_str = cnj.group(0) if cnj else None
+            for seq, cnj_str, bloco in _split_blocos_por_processo(texto):
                 results.append({
                     "aba": aba,
                     "ato": ato,
                     "processoNumero": cnj_str,
-                    "seq": _seq_before_cnj(bloco, cnj_str),
-                    "conteudo": bloco,
+                    "seq": seq,
+                    # Sentinela "Mesa do Defensor" garante que isSEEU detecte o
+                    # sistema mesmo num bloco isolado (sem o cabeçalho da aba),
+                    # roteando parseIntimacoesUnificado para SEEU. Prefixo
+                    # constante → content_hash determinístico (dedup estável).
+                    "conteudo": "Mesa do Defensor\n" + bloco,
                 })
                 if len(results) >= limit:
                     return results
