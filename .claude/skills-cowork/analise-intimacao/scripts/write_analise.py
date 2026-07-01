@@ -110,10 +110,23 @@ def _strip_label(value, *labels) -> str:
     return v.replace("**", "").strip()
 
 
+# Enum fechado de peças (espelha o SKILL.md). Valor fora da lista → tratado como
+# ausente, para não disparar requer_analise_profunda com lixo do modelo.
+_PECAS_VALIDAS = {
+    "memoriais", "resposta_acusacao", "apelacao", "rese",
+    "manifestacao_ep", "contrarrazoes",
+}
+
+
+def _peca_valida(r: dict) -> str | None:
+    peca = (r.get("peca_sugerida") or "").strip()
+    return peca if peca in _PECAS_VALIDAS else None
+
+
 def sinal_2c(r: dict) -> dict:
     """Sinal determinístico p/ o pipeline profundo (2c). requer_analise_profunda
-    é verdadeiro sse, e só se, houver peça sugerida."""
-    peca = r.get("peca_sugerida") or None
+    é verdadeiro sse, e só se, houver peça sugerida VÁLIDA (enum fechado)."""
+    peca = _peca_valida(r)
     return {"peca_sugerida": peca, "requer_analise_profunda": peca is not None}
 
 
@@ -133,7 +146,7 @@ def build_corpo(r: dict) -> list:
         corpo.append(f"Cabe recurso? (análise preliminar — revisar): {cr} · {rec}{fund}")
     elif cr == "nao":
         corpo.append("Cabe recurso? (análise preliminar — revisar): não")
-    peca = r.get("peca_sugerida") or None
+    peca = _peca_valida(r)
     if peca:
         corpo.append(f"Cabe peça: {peca} (revisar — aciona análise profunda)")
     return corpo

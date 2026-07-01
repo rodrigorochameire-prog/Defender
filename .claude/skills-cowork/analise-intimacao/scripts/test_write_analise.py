@@ -28,3 +28,13 @@ def test_enrichment_sinal_deriva_de_peca():
     assert wa.sinal_2c({"peca_sugerida": None}) == {
         "peca_sugerida": None, "requer_analise_profunda": False}
     assert wa.sinal_2c({}) == {"peca_sugerida": None, "requer_analise_profunda": False}
+
+
+def test_peca_fora_do_enum_e_ignorada():
+    # valor inválido do modelo → não dispara requer_analise_profunda
+    assert wa.sinal_2c({"peca_sugerida": "habeas_corpus"}) == {
+        "peca_sugerida": None, "requer_analise_profunda": False}
+    assert wa.sinal_2c({"peca_sugerida": " apelacao "}) == {
+        "peca_sugerida": "apelacao", "requer_analise_profunda": True}
+    # e não aparece a linha "Cabe peça" no corpo
+    assert not any(l.startswith("Cabe peça") for l in wa.build_corpo({"peca_sugerida": "xyz"}))
