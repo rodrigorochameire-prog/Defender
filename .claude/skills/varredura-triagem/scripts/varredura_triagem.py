@@ -61,6 +61,7 @@ from designacao_parse import (  # noqa: E402
     detectar_designacao_audiencia, extrair_movimentos_audiencia,
 )
 from mpu_parse import parse_decisao_mpu  # noqa: E402
+from seeu_expediente import read_seeu_expediente  # noqa: E402  # leitor EP/SEEU (Task 2)
 
 # ───── Config ────────────────────────────────────────────────────────────────
 
@@ -77,7 +78,7 @@ _DEMANDA_SELECT = (
     "processos!inner(numero_autos,atribuicao,vara,classe_processual,processosVvd:processos_vvd(tipo_processo,mpu_ativa)),"
     "assistidos!inner(nome)"
 )
-CDP_URL = "http://127.0.0.1:9222"
+CDP_URL = os.environ.get("VARREDURA_CDP_URL", "http://127.0.0.1:9222")
 PAGE_LIMIT = 8
 
 # Navegação em árvore do painel (situação → comarca → vara), portada do worker de
@@ -1040,6 +1041,36 @@ def create_manual_review(sb: Supabase, demanda: dict) -> None:
     sb.update_demanda(demanda["id"], {"revisao_pendente": True})
 
 
+def create_ep_fallback_review(sb: Supabase, demanda: dict, content_text: str) -> bool:
+    """Execução Penal SEM match determinístico no RULES_EP: cria um registro base
+    COM `enrichment_data.raw_text` para o analise-intimacao (lane=ai) resumir mesmo
+    assim — garante que TODO expediente de EP em triagem ganhe o resumo de contexto
+    (decisão do usuário). Marca revisao_pendente. Retorna True (vai p/ a fila de IA).
+
+    Idempotente: não recria a anotação com o mesmo título (re-runs não duplicam);
+    fetch_pending só devolve registros enrichment_status='pending', então já-done
+    não volta para a IA."""
+    titulo = "Triagem EP — resumir e classificar"
+    if not sb.registro_exists(demanda["id"], titulo):
+        conteudo = (content_text[:1500] + ("..." if len(content_text) > 1500 else "")) \
+            or "(sem conteúdo lido)"
+        sb.insert_registro({
+            "assistido_id": demanda.get("assistido_id"),
+            "processo_id": demanda.get("processo_id"),
+            "demanda_id": demanda["id"],
+            "data_registro": datetime.now().isoformat(),
+            "tipo": "anotacao",
+            "titulo": titulo,
+            "conteudo": conteudo,
+            "status": "realizado",
+            "enrichment_status": "pending",
+            "enrichment_data": {"raw_text": (content_text or "")[:12000]},
+            "autor_id": DEFENSOR_ID,
+        })
+    sb.update_demanda(demanda["id"], {"revisao_pendente": True})
+    return True
+
+
 def _ato_administrativo(rule: dict) -> bool:
     """Ato de mera ciência administrativa (remessa/juntada/baixa) — sem valor
     interpretativo, então NÃO vai para a IA (enrichment_status='skipped')."""
@@ -1470,15 +1501,31 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
     counts: dict[str, int] = {}
     pending_ai_ids: list[int] = []  # demandas p/ enriquecimento IA (fase 2)
 
+    # EP-only: rodada só de Execução Penal. NÃO fazer login/navegação no PJe —
+    # isso reaproveitaria/navegaria a aba e destruiria a Mesa do SEEU já logada
+    # pelo usuário. O leitor SEEU (read_seeu_expediente) acha sua própria aba do
+    # SEEU em ctx.pages, então o caminho EP não usa `page`.
+    ep_only = (atribuicao == "EXECUCAO_PENAL") or (
+        bool(demandas) and all(
+            ((d.get("processos") or {}).get("atribuicao")) == "EXECUCAO_PENAL"
+            for d in demandas
+        )
+    )
+
     async with async_playwright() as p:
         if modo == "cdp":
             try:
                 browser = await p.chromium.connect_over_cdp(CDP_URL)
                 ctx = browser.contexts[0]
-                # Procurar a página do painel
-                # Garante sessão logada — abre o login e espera se necessário.
-                page = await _ensure_logged_in(ctx)
-                log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
+                if ep_only:
+                    # SEEU já logado; não navegar (preserva a aba da Mesa do SEEU).
+                    page = next((pg for pg in ctx.pages if "seeu" in (pg.url or "")),
+                                ctx.pages[0] if ctx.pages else await ctx.new_page())
+                    log(f"CDP attached (EP/SEEU) — {len(ctx.pages)} abas")
+                else:
+                    # Garante sessão logada no PJe — abre o login e espera se necessário.
+                    page = await _ensure_logged_in(ctx)
+                    log(f"CDP attached — {len(ctx.pages)} abas, painel em {page.url[:60]}")
             except Exception as e:
                 sys.exit(f"ERRO CDP: {e}\nDica: lance Chromium com --remote-debugging-port=9222")
         else:  # direct
@@ -1509,7 +1556,7 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
         # Modo --demanda-ids: navegação usa UMA vara por rodada (a de demandas[0]);
         # demandas de outra vara caem no fallback manual-review. Lote homogêneo por
         # vara é o suportado — seleção em lote da UI é escopada por atribuição.
-        if modo in ("cdp", "direct"):
+        if modo in ("cdp", "direct") and atrib_alvo and atrib_alvo != "EXECUCAO_PENAL":
             if atrib_alvo:
                 try:
                     # Recarrega o painel p/ estado limpo da árvore (a aba pode estar
@@ -1531,43 +1578,73 @@ async def varredura(sb: Supabase, demandas: list[dict], modo: str, env: dict[str
                 numero = (d.get("processos") or {}).get("numero_autos") or "?"
                 log(f"[{i+1}/{len(demandas)}] {assistido} | {numero}")
 
-                autos_url = await find_in_panel(page, doc_id, numero)
-                if not autos_url:
-                    log(f"  ⚠ não encontrado no painel — fallback manual-review")
-                    create_manual_review(sb, d)
-                    stats["not_found"] += 1
-                    continue
-
-                content = await read_doc_content(ctx, autos_url)
-                # Buscar título do "best item" da timeline pra classify
-                best_titulo = content.get("top_titulo")
-                if not best_titulo and content.get("best_id"):
-                    for it in content.get("timeline", []):
-                        if it.get("id") == content["best_id"]:
-                            best_titulo = it.get("titulo")
-                            break
-                is_mpu_demanda = _is_mpu(d)
-                if is_mpu_demanda:
-                    log(f"  [MPU] detectado — usando regras defensivas")
-                # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
-                # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
-                texto = _clean_decisao_text(content["text"])
                 # Atribuição POR-DEMANDA (não a global da rodada): no modo
                 # --demanda-ids a seleção pode misturar atribuições, então cada
                 # demanda precisa ativar seu próprio conjunto de regras (ex.: EP).
                 # Fallback p/ atrib_alvo quando a demanda não traz processo.
                 atrib_demanda = (d.get("processos") or {}).get("atribuicao") or atrib_alvo
-                # Sinal estruturado: audiências (re)designadas nos MOVIMENTOS da
-                # timeline — pega o objeto da intimação mesmo quando o doc intimado
-                # é um despacho vago sem data (caso André Chaves, 8016157-03).
-                movimentos = extrair_movimentos_audiencia(content.get("panel_text", ""))
-                if movimentos:
-                    log(f"  ⤷ {len(movimentos)} movimento(s) de audiência na timeline")
+                if atrib_demanda == "EXECUCAO_PENAL":
+                    # EP não está no PJe — leitor dedicado no SEEU (Task 2).
+                    cnj = (d.get("processos") or {}).get("numero_autos") or ""
+                    if not cnj or cnj == "?":
+                        log("  ⚠ demanda EP sem CNJ — manual-review")
+                        create_manual_review(sb, d); stats["not_found"] += 1; continue
+                    try:
+                        content = await read_seeu_expediente(ctx, cnj)
+                    except Exception as e:
+                        log(f"  ⚠ SEEU: {str(e)[:90]} — manual-review")
+                        create_manual_review(sb, d); stats["not_found"] += 1; continue
+                    # raw_text p/ o analise-intimacao inclui o contexto de pena
+                    pena = content.get("pena_context") or {}
+                    peninfo = ", ".join(f"{k}={v}" for k, v in pena.items() if v)
+                    texto = _clean_decisao_text(content["text"])
+                    if peninfo:
+                        texto = f"[Execução: {peninfo}]\n{texto}"
+                    best_titulo = content.get("top_titulo")
+                    movimentos = []  # EP não usa a timeline de audiências do PJe
+                else:
+                    autos_url = await find_in_panel(page, doc_id, numero)
+                    if not autos_url:
+                        log(f"  ⚠ não encontrado no painel — fallback manual-review")
+                        create_manual_review(sb, d)
+                        stats["not_found"] += 1
+                        continue
+
+                    content = await read_doc_content(ctx, autos_url)
+                    # Buscar título do "best item" da timeline pra classify
+                    best_titulo = content.get("top_titulo")
+                    if not best_titulo and content.get("best_id"):
+                        for it in content.get("timeline", []):
+                            if it.get("id") == content["best_id"]:
+                                best_titulo = it.get("titulo")
+                                break
+                    # Limpa o texto (remove cabeçalho/rodapé/formatação, prioriza o
+                    # dispositivo) antes de classificar, resumir (IA) e parsear medidas.
+                    texto = _clean_decisao_text(content["text"])
+                    # Sinal estruturado: audiências (re)designadas nos MOVIMENTOS da
+                    # timeline — pega o objeto da intimação mesmo quando o doc intimado
+                    # é um despacho vago sem data (caso André Chaves, 8016157-03).
+                    movimentos = extrair_movimentos_audiencia(content.get("panel_text", ""))
+                    if movimentos:
+                        log(f"  ⤷ {len(movimentos)} movimento(s) de audiência na timeline")
+
+                is_mpu_demanda = _is_mpu(d)
+                if is_mpu_demanda:
+                    log(f"  [MPU] detectado — usando regras defensivas")
                 rule = classify(texto, titulo=best_titulo, is_mpu=is_mpu_demanda,
                                 atribuicao=atrib_demanda, movimentos=movimentos)
                 if not rule:
-                    log(f"  → sem match (default={content['default_len']}b best={content['best_len']}b) — manual-review")
-                    create_manual_review(sb, d)
+                    # .get: o dict do leitor SEEU não tem default_len/best_len (só PJe) —
+                    # sem isso um EP-sem-match levantaria KeyError (contaria como erro, não manual).
+                    if atrib_demanda == "EXECUCAO_PENAL":
+                        # EP sempre ganha resumo da IA, mesmo sem match determinístico
+                        # (decisão do usuário): cria registro base c/ raw_text e enfileira.
+                        log(f"  → sem match determinístico — EP: resumo IA mesmo assim")
+                        if create_ep_fallback_review(sb, d, texto):
+                            pending_ai_ids.append(d["id"])
+                    else:
+                        log(f"  → sem match (default={content.get('default_len', 0)}b best={content.get('best_len', 0)}b) — manual-review")
+                        create_manual_review(sb, d)
                     stats["manual"] += 1
                     continue
 
