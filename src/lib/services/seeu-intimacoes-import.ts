@@ -53,6 +53,8 @@ export function seeuStagingRowToImportRow(row: SeeuImportStaging): ImportRow {
     prazo: pick("prazo", base.prazo),
     atribuicao: pick("atribuicao", base.atribuicao),
     assistidoMatchId: pick<number | undefined>("assistidoMatchId", undefined),
+    // SEEU: tudo em triagem (decisão do usuário); o ato distingue Ciência.
+    status: base.status === "ciencia" ? "triagem" : base.status,
   };
 }
 

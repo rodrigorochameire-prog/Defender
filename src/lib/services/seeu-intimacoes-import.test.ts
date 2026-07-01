@@ -38,11 +38,12 @@ describe("parseSeeuRow / seeuStagingRowToImportRow (forçado, não auto-detecta)
     expect(int?.ultimoDia).toBe("10/07/2026");
   });
 
-  it("aba ciencia → ImportRow com ato 'Ciência' e status de ciência", () => {
+  it("aba ciencia → ImportRow em triagem, mas ato 'Ciência' preservado (decisão do usuário)", () => {
     const ir = seeuStagingRowToImportRow(row({ tab: "ciencia", conteudo: BLOCO_CIENCIA, ato: "Ciência" }));
     expect(ir.assistido).toBe("Franklin Leite dos Santos");
     expect(ir.ato).toBe("Ciência");
-    expect(ir.status).toBe("ciencia");
+    // SEEU manda tudo p/ 5_TRIAGEM; ciência NÃO cai em 7_CIENCIA. O ato distingue.
+    expect(ir.status).toBe("triagem");
     expect(ir.atribuicao).toBe("EXECUCAO_PENAL");
   });
 
