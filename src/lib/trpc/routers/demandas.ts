@@ -16,6 +16,7 @@ import {
   limparCalendarSupersedidas,
 } from "@/lib/registros/aplicar-designacao-audiencia";
 import { triggerReorder } from "@/lib/services/reorder-trigger";
+import { analiseResumoSql, analiseDataSql } from "./_analise-resumo-sql";
 
 
 import {
@@ -152,7 +153,10 @@ export const demandasRouter = router({
           registrosCount: sql<number>`(SELECT count(*)::int FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id})`,
           // Prévia da análise IA ("Resumo e providências") para o card glancear o
           // "o que fazer" sem abrir a demanda. left() limita o payload da lista.
-          analiseResumo: sql<string | null>`(SELECT left(${registros.conteudo}, 450) FROM ${registros} WHERE ${registros.demandaId} = ${demandas.id} AND ${registros.titulo} = ${'Resumo e providências'} ORDER BY ${registros.id} DESC LIMIT 1)`,
+          // Discriminador: jsonb_exists(enrichment_data,'objeto') isola o registro
+          // de resumo entre os 3 tipo='analise' que a IA fase-2 grava (Tasks 4/6/7).
+          analiseResumo: analiseResumoSql(registros, demandas),
+          analiseData: analiseDataSql(registros, demandas),
           processo: {
             id: processos.id,
             numeroAutos: processos.numeroAutos,
