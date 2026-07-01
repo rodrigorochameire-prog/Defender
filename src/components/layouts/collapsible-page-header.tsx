@@ -12,6 +12,7 @@ import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePageHeader } from "@/components/layouts/page-header-context";
 import { HeaderUtilityRow } from "@/components/layouts/header-utility-row";
+import { MobileHeaderOverflow } from "@/components/layouts/mobile-header-overflow";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 
 interface CollapsiblePageHeaderProps {
@@ -140,32 +141,36 @@ export function CollapsiblePageHeader({
       >
         <div className="flex h-12 items-center px-3 gap-2.5 w-full">
           {/* Esquerda — sidebar + breadcrumbs + slot de header (avatares de defensores etc.) */}
-          <SidebarTrigger className="h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
-          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
-          <div className="shrink-0">
+          <SidebarTrigger className="inline-flex h-8 w-8 md:h-6 md:w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+          <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
+          {/* Breadcrumbs — desktop (no mobile: só o título/conteúdo da página) */}
+          <div className="hidden md:block shrink-0">
             <Breadcrumbs />
           </div>
+          {/* slot do header (G-R-J) — visível em ambos */}
           <div id="header-slot" className="flex items-center shrink-0" />
 
-          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+          <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
 
           {/* Centro — children da página (título, filtros, ações) */}
           <div className="flex-1 min-w-0">{children}</div>
 
-          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+          <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
 
-          {/* Direita — utility controls */}
-          <ConflictBadge />
-          <CommandPalette />
-          <ThemeToggle />
+          {/* Direita — utility controls (desktop inline; no mobile recolhidos no ⋯) */}
+          <div className="hidden md:flex"><ConflictBadge /></div>
+          <span className="hidden md:inline-flex"><CommandPalette /></span>
+          <span className="hidden md:inline-flex"><ThemeToggle /></span>
           <NotificationsPopover />
           <button
             onClick={() => chatPanelActions.toggle()}
             title="Assistente OMBUDS"
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+            className="hidden md:inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
           >
             <MessageSquare className="h-3.5 w-3.5" />
           </button>
+          {/* Mobile: overflow ⋯ (busca, conflitos, tema, chat) */}
+          <MobileHeaderOverflow />
         </div>
       </div>
     );
