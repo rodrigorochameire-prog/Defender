@@ -39,7 +39,7 @@ describe("isTabActive", () => {
 
 describe("getLauncherGroups", () => {
   const modules: MenuSection[] = [
-    { title: "Plenário", items: [{ label: "Sessões", path: "/admin/juri", icon: "Gavel" }] },
+    { id: "test-plenario", title: "Plenário", items: [{ label: "Sessões", path: "/admin/juri", icon: "Gavel" }] },
   ];
   it("prepends the assignment modules, then global + system groups", () => {
     const groups = getLauncherGroups(modules, "defensor");
@@ -50,6 +50,7 @@ describe("getLauncherGroups", () => {
   it("filters items whose requiredRoles exclude the current role", () => {
     const restricted: MenuSection[] = [
       {
+        id: "test-restrito",
         title: "Restrito",
         items: [
           { label: "Só admin", path: "/admin/x", icon: "Lock", requiredRoles: ["admin"] },
@@ -63,18 +64,32 @@ describe("getLauncherGroups", () => {
   });
   it("drops groups left empty after role filtering", () => {
     const restricted: MenuSection[] = [
-      { title: "VazioPraEstagiario", items: [{ label: "X", path: "/admin/x", icon: "Lock", requiredRoles: ["admin"] }] },
+      { id: "test-vazio", title: "VazioPraEstagiario", items: [{ label: "X", path: "/admin/x", icon: "Lock", requiredRoles: ["admin"] }] },
     ];
     const groups = getLauncherGroups(restricted, "estagiario");
     expect(groups.some((g) => g.title === "VazioPraEstagiario")).toBe(false);
   });
   it("dedupes items by path across groups (first wins)", () => {
     const dup: MenuSection[] = [
-      { title: "A", items: [{ label: "Assistidos", path: "/admin/assistidos", icon: "Users" }] },
+      { id: "test-dup", title: "A", items: [{ label: "Assistidos", path: "/admin/assistidos", icon: "Users" }] },
     ];
     const groups = getLauncherGroups(dup, "defensor");
     const allPaths = groups.flatMap((g) => g.items.map((i) => i.path));
     const occurrences = allPaths.filter((p) => p === "/admin/assistidos").length;
     expect(occurrences).toBe(1);
+  });
+  it("flattens UTILITIES_MENU into well-formed leaf items (guards against the Sistema-group regression)", () => {
+    const groups = getLauncherGroups(modules, "defensor");
+    expect(groups.length).toBeGreaterThan(0);
+    for (const group of groups) {
+      expect(typeof group.title).toBe("string");
+      expect(group.title.length).toBeGreaterThan(0);
+      for (const item of group.items) {
+        expect(typeof item.label).toBe("string");
+        expect(item.label.length).toBeGreaterThan(0);
+        expect(typeof item.path).toBe("string");
+        expect(item.path.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

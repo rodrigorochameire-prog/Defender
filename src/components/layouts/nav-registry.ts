@@ -46,7 +46,7 @@ export function getLauncherGroups(
   const sourceGroups: LauncherGroup[] = [
     ...modules.map((m) => ({ title: m.title, items: m.items })),
     ...COLLAPSIBLE_MENU_GROUPS.map((g) => ({ title: g.title, items: g.items })),
-    { title: "Sistema", items: UTILITIES_MENU },
+    ...UTILITIES_MENU.map((g) => ({ title: g.title, items: g.items })),
   ];
 
   const seen = new Set<string>();
