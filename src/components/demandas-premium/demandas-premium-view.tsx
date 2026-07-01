@@ -72,9 +72,16 @@ import { useOfflineMutation } from "@/hooks/use-offline-mutation";
 import { useProgressiveList } from "@/hooks/use-progressive-list";
 import { useColumnWidths } from "@/hooks/use-column-widths";
 import { useRealtimeDemandaEventos } from "@/hooks/use-realtime-demanda-eventos";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getOfflineDemandas } from "@/lib/offline/queries";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -850,6 +857,9 @@ export default function Demandas() {
     }
     return "compact";
   });
+  const isMobile = useIsMobile();
+  // No mobile, a tabela larga não cabe na tela — usa o modo compacto (cards) em seu lugar.
+  const effectiveViewMode = isMobile && viewMode === "table" ? "compact" : viewMode;
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
@@ -3429,8 +3439,8 @@ export default function Demandas() {
               </div>
             )}
 
-            <div className={`${viewMode === "table" ? "p-0" : viewMode === "cards" ? "p-4 space-y-3" : viewMode === "compact" ? "p-0" : "p-4"} ${viewMode === "compact" ? "" : "max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto"} scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700`}>
-              {viewMode === "table" ? (
+            <div className={`${effectiveViewMode === "table" ? "p-0" : effectiveViewMode === "cards" ? "p-4 space-y-3" : effectiveViewMode === "compact" ? "p-0" : "p-4"} ${effectiveViewMode === "compact" ? "" : "max-h-[calc(100vh-180px)] min-h-[500px] overflow-y-auto"} scrollbar-thin scrollbar-thumb-neutral-200 dark:scrollbar-thumb-neutral-700`}>
+              {effectiveViewMode === "table" ? (
                 /* ========== MODO PLANILHA (PADRÃO) ========== */
                 <DemandaTableView
                   demandas={demandasOrdenadas}
@@ -3451,7 +3461,7 @@ export default function Demandas() {
                   selectedIds={selectedIds}
                   onToggleSelect={handleToggleSelect}
                 />
-              ) : viewMode === "cards" ? (
+              ) : effectiveViewMode === "cards" ? (
                 /* ========== MODO CARDS HORIZONTAIS ========== */
                 <>
                   {loadingDemandas && demandasDB.length === 0 ? (
@@ -3501,7 +3511,7 @@ export default function Demandas() {
                     })
                   )}
                 </>
-              ) : viewMode === "compact" ? (
+              ) : effectiveViewMode === "compact" ? (
                 /* ========== MODO COMPACTO - PLANILHA EDITÁVEL ========== */
                 <DemandaCompactView
                   demandas={demandasOrdenadas}
@@ -4055,19 +4065,19 @@ export default function Demandas() {
 
       {/* Seletor de pessoa — abre ao dropar card na coluna "Delegação" */}
       {pessoaSelectorOpen && pessoaSelectorDemanda && (
-        <Dialog open onOpenChange={(o) => {
+        <ResponsiveDialog open onOpenChange={(o) => {
           if (!o) {
             setPessoaSelectorOpen(false);
             setPessoaSelectorDemanda(null);
           }
         }}>
-          <DialogContent className="sm:max-w-[440px]">
-            <DialogHeader>
-              <DialogTitle className="text-base">Para quem?</DialogTitle>
-              <DialogDescription className="text-xs">
+          <ResponsiveDialogContent className="sm:max-w-[440px]">
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle className="text-base">Para quem?</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription className="text-xs">
                 Escolha um membro da equipe para delegar ou um colega defensor para transferir/compartilhar.
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
 
             <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto">
               {(membrosEquipeQuery?.length ?? 0) > 0 && (
@@ -4155,8 +4165,8 @@ export default function Demandas() {
                 </p>
               )}
             </div>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
       )}
 
       {/* Modal de Delegação - Aparece ao selecionar status de delegação (amanda, emilly, taissa) */}
@@ -4191,14 +4201,14 @@ export default function Demandas() {
 
       {/* Mini-menu de escolha após drop em colega defensor */}
       {colegaDropContext && colegaModalTipo === null && (
-        <Dialog open onOpenChange={(o) => { if (!o) setColegaDropContext(null); }}>
-          <DialogContent className="sm:max-w-[380px]">
-            <DialogHeader>
-              <DialogTitle className="text-base">Para {colegaDropContext.destinatarioNome}</DialogTitle>
-              <DialogDescription className="text-xs">
+        <ResponsiveDialog open onOpenChange={(o) => { if (!o) setColegaDropContext(null); }}>
+          <ResponsiveDialogContent className="sm:max-w-[380px]">
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle className="text-base">Para {colegaDropContext.destinatarioNome}</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription className="text-xs">
                 O que você quer fazer com este caso?
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
             <div className="space-y-2 py-2">
               <button
                 type="button"
@@ -4240,8 +4250,8 @@ export default function Demandas() {
                 </div>
               </button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
       )}
 
       {/* Modal de encaminhamento aberto após escolha no mini-menu */}
