@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Standard page container. On mobile it adds horizontal padding and bottom
- * clearance for the fixed bottom nav; on desktop (md+) those are removed.
+ * Standard page container. On mobile it adds horizontal padding; on desktop
+ * (md+) padding is removed. Bottom-nav clearance is handled globally by the
+ * admin layout via pb-16 md:pb-0.
  */
 export function MobilePageShell({
   children,
@@ -12,6 +13,6 @@ export function MobilePageShell({
   className?: string;
 }) {
   return (
-    <div className={cn("px-4 pb-20 md:px-0 md:pb-0", className)}>{children}</div>
+    <div className={cn("px-4 md:px-0", className)}>{children}</div>
   );
 }

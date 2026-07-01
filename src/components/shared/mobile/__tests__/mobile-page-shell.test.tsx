@@ -12,10 +12,11 @@ describe("MobilePageShell", () => {
     render(<MobilePageShell><p>conteúdo</p></MobilePageShell>);
     expect(screen.getByText("conteúdo")).toBeInTheDocument();
   });
-  it("applies bottom-nav clearance only below md", () => {
+  it("applies horizontal padding and does not include bottom padding", () => {
     const { container } = render(<MobilePageShell>x</MobilePageShell>);
-    expect(container.firstElementChild?.className).toContain("pb-20");
-    expect(container.firstElementChild?.className).toContain("md:pb-0");
+    expect(container.firstElementChild?.className).toContain("px-4");
+    expect(container.firstElementChild?.className).toContain("md:px-0");
+    expect(container.firstElementChild?.className).not.toContain("pb-20");
   });
   it("merges a custom className", () => {
     const { container } = render(<MobilePageShell className="bg-red-500">x</MobilePageShell>);
