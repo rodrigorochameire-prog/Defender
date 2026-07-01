@@ -86,6 +86,13 @@ def registro_exists(demanda_id, titulo) -> bool:
     return bool(rows)
 
 
+def get_registro_id(demanda_id, titulo):
+    """id do registro de análise com este título (ou None)."""
+    rows = req("GET", f"/rest/v1/registros?demanda_id=eq.{demanda_id}"
+                      f"&titulo=eq.{quote(titulo)}&tipo=eq.analise&select=id&limit=1")
+    return rows[0]["id"] if isinstance(rows, list) and rows else None
+
+
 def insert_registro(reg):
     req("POST", "/rest/v1/registros", reg, prefer="return=minimal")
 
@@ -108,6 +115,29 @@ def _strip_label(value, *labels) -> str:
                 break
             v = nv.strip().lstrip("*").strip()
     return v.replace("**", "").strip()
+
+
+def build_fase2_enrichment(r: dict) -> dict:
+    """Contrato JSON (spec §A2.2) da fase 2, a partir do payload da IA.
+    'objeto' SEMPRE presente (marcador da query do card)."""
+    cr = (r.get("cabe_recurso") or "").lower()
+    recurso = ""
+    if cr in ("sim", "talvez"):
+        rec = r.get("recurso_cabivel") or "recurso"
+        fund = f" — {r['fundamento_recurso'].strip()}" if r.get("fundamento_recurso") else ""
+        recurso = f"{cr} · {rec}{fund}"
+    elif cr == "nao":
+        recurso = "não"
+    return {
+        "objeto": _strip_label(r.get("resumo_objeto") or "", "objeto"),
+        "decidido": _strip_label(r.get("o_que_decidido") or "", "o que foi decidido"),
+        "providencia": _strip_label(r.get("o_que_fazer") or "", "providência/prazo",
+                                    "providencia/prazo", "providência", "providencia"),
+        "prazo": "",
+        "recurso": recurso,
+        "_status": "concluido",
+        "_fonte": "fase2",
+    }
 
 
 def resolve_ctx(r) -> tuple:
@@ -192,12 +222,17 @@ def main():
         if ato_ajuste:
             corpo.append(f"Ato ajustado: {ato_ajuste[0]} → {ato_ajuste[1]}")
         titulo = "Resumo e providências"
-        if corpo and not registro_exists(demanda_id, titulo):
-            insert_registro({**base, "tipo": "analise", "titulo": titulo,
-                             "conteudo": "\n".join(corpo)})
+        if corpo:
+            enr = build_fase2_enrichment(r)
+            rid = get_registro_id(demanda_id, titulo)
+            if rid:  # registro da fase 1 (ou re-run) → ATUALIZA in-place
+                req("PATCH", f"/rest/v1/registros?id=eq.{rid}",
+                    {"conteudo": "\n".join(corpo), "enrichment_data": enr},
+                    prefer="return=minimal")
+            else:
+                insert_registro({**base, "tipo": "analise", "titulo": titulo,
+                                 "conteudo": "\n".join(corpo), "enrichment_data": enr})
             n_anota += 1
-            # Aplica a troca do ato junto com a 1ª gravação (idempotente: re-runs
-            # pulam a anotação já existente e, portanto, não re-aplicam).
             if ato_ajuste:
                 try:
                     update_demanda_ato(demanda_id, ato_ajuste[1])
