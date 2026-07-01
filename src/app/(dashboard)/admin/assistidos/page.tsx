@@ -11,12 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Tooltip,
   TooltipContent,
@@ -263,6 +264,9 @@ export default function AssistidosPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">(
     (searchParams.get("view") as "grid" | "list") || "list"
   );
+  // No celular a lista em tabela não cabe — força a visão em cards ("grid").
+  const isMobile = useIsMobile();
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all");
   const [areaFilter, setAreaFilter] = useState("all");
@@ -1333,7 +1337,7 @@ export default function AssistidosPage() {
           variant={searchTerm ? "search" : "default"}
         />
         </div>
-      ) : viewMode === "grid" ? (
+      ) : effectiveViewMode === "grid" ? (
         groupedAssistidos ? (
           // Exibicao agrupada
           <div className="space-y-6">
@@ -1501,18 +1505,18 @@ export default function AssistidosPage() {
       />
 
       {/* Batch Solar Export Results Dialog */}
-      <Dialog open={batchResultOpen} onOpenChange={setBatchResultOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-sm">
+      <ResponsiveDialog open={batchResultOpen} onOpenChange={setBatchResultOpen}>
+        <ResponsiveDialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle className="flex items-center gap-2 text-sm">
               <Sun className="h-4 w-4 text-amber-600" />
               Resultado da Exportacao ao Solar
-            </DialogTitle>
-            <DialogDescription className="text-xs">
+            </ResponsiveDialogTitle>
+            <ResponsiveDialogDescription className="text-xs">
               {batchResults.filter((r) => r.success).length} exportados com sucesso /{" "}
               {batchResults.filter((r) => !r.success).length} com falha
-            </DialogDescription>
-          </DialogHeader>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <div className="space-y-2 mt-2">
             {batchResults.map((r) => (
               <div
@@ -1561,8 +1565,8 @@ export default function AssistidosPage() {
               </div>
             ))}
           </div>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       </div>
     </div>
