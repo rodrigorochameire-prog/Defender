@@ -36,15 +36,15 @@ Este é um **refinamento v2 da Fase 0**: ajusta decisões da Fase 0 (remove o la
 | Foco | Sidebar desktop (legibilidade) **+** trazer a sidebar de volta no mobile |
 | Nav mobile | **Drawer ☰ (sidebar completa) + bottom nav (4 tabs)**; **remover "Mais"** |
 | Header mobile | Essencial visível = **☰ · título da página · 🔔 · ⋯**; resto no overflow ⋯ |
-| Dentro do ⋯ | busca, peer switcher (G/R/J), ConflictBadge (⚠45), ThemeToggle, chat, sync/refresh |
-| Peer switcher | Recolhido no ⋯ (não fica visível no mobile) |
+| Dentro do ⋯ | busca, ConflictBadge (⚠45), ThemeToggle, chat, sync/refresh |
+| Peer switcher | **Acessível pelo drawer ☰** (fica no topo da sidebar, que o shadcn já renderiza no `Sheet` mobile) — **NÃO duplicar no ⋯** |
 | Busca | Vai para o ⋯ — **remove a lupa avulsa** adicionada na Fase 0 |
 
 ## 4. Arquitetura — três partes
 
 ### Parte 1 — Sidebar desktop: legibilidade (`admin-sidebar.tsx`)
 
-Passe de escala/densidade aplicado **uniformemente** às ~6 variantes de item (item principal, `MoreMenu`, `NewsMenu`, `ToolsMenu`, itens de contexto/atuação, itens de popover):
+Passe de escala/densidade aplicado **uniformemente** aos ~9 sites de render de item (item principal, `MoreMenu`, `NewsMenu`, `ToolsMenu`, seções Cadastros/Carreira/Documentos/Cowork/Ferramentas, itens de contexto/atuação, itens de popover):
 
 | Aspecto | De | Para |
 |---|---|---|
@@ -75,7 +75,9 @@ Renderização condicionada por breakpoint (Tailwind `md:` / `useIsMobile()`):
 - **Mobile mostra apenas:** `☰` · **título da página** (com seus stat-chips, ex.: "Agenda 0·11") · `🔔` (NotificationsPopover) · `⋯` (novo botão de overflow).
   - Breadcrumbs ocultos no mobile (o título os substitui).
   - O título vem do `#header-slot` (via `HeaderSlotTitle`, que já portala título+ícone+stats). Mantido.
-- **Novo componente `MobileHeaderOverflow`** (bottom sheet, `ui/sheet` side="bottom", aberto pelo ⋯) reúne os controles globais da utility bar: **busca** (dispara `openCommandPalette`), **peer switcher** (G/R/J — reusar o componente de `peer-switcher-section`/`context-control`), **ConflictBadge**, **ThemeToggle**, **chat** (toggle do `chatPanelActions`), **sync/refresh** (se presente).
+- **Novo componente `MobileHeaderOverflow`** (bottom sheet, `ui/sheet` side="bottom", aberto pelo ⋯) reúne os controles globais da utility bar: **busca** (dispara `openCommandPalette`), **ConflictBadge**, **ThemeToggle**, **chat** (toggle do `chatPanelActions`), **sync/refresh** (se presente).
+  - **Peer switcher NÃO entra no ⋯:** o `ContextControl` (que envolve `PeerSwitcherSection`) já é renderizado no topo do `SidebarContent` (`admin-sidebar.tsx:1906`), e o `Sidebar` do shadcn renderiza os mesmos filhos dentro do `Sheet` no mobile (`ui/sidebar.tsx`) — logo, ao restaurar o drawer (Parte 2), o peer switcher volta "de graça" no topo do drawer. Duplicá-lo no ⋯ seria redundante.
+  - **Slot `extra`/`headerExtra` (TriagemBadge):** hoje é código morto (o layout condiciona a `user.workspaceId`, e `workspaces` foram removidos do sistema) — **fora de escopo**, não incluir no ⋯.
 - **Desktop inalterado:** todos os controles seguem inline (o overflow ⋯ e o recolhimento são `md:hidden`; os controles inline ficam `hidden md:flex`).
 - **Controles injetados por página:** a maioria das páginas coloca ações no próprio corpo (`CollapsiblePageHeader`), não na utility bar — logo o `#header-slot` carrega essencialmente **título+stats** (mantidos). Caso alguma página injete **ações** extras no slot, essas ações colapsam para uma **segunda linha** abaixo da utility bar no mobile (fallback), em vez de disputar espaço na linha principal. Confirmar sites de injeção de ação no slot durante o plano (`demandas-premium-view`, `atendimentos-view`, `assistidos`, `vvd`, `dashboard`, `instancia-superior`).
 
@@ -118,4 +120,4 @@ Puramente apresentacional. Header/nav decidem layout por breakpoint (`md:` CSS +
 - **Regressão desktop** ao mexer no header/sidebar → gates `md:` estritos; overflow é `md:hidden`.
 - **Remoções órfãs** (Mais launcher) deixando imports quebrados → `tsc` como gate.
 - **Sidebar 2084 linhas**: mudança de dimensionamento ampla; mitigar com constantes compartilhadas + revisão diff-a-diff.
-- **Peer switcher** dentro do ⋯: garantir que o componente reusado funcione fora do seu contexto original (props/estado).
+- **Peer switcher:** risco eliminado — não será reusado fora de contexto; permanece no drawer (sidebar), onde já funciona.
