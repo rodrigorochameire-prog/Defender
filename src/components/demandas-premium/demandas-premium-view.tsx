@@ -861,7 +861,9 @@ export default function Demandas() {
   });
   const isMobile = useIsMobile();
   // No mobile, a tabela larga não cabe na tela — usa o modo compacto (cards) em seu lugar.
-  const effectiveViewMode = isMobile && viewMode === "table" ? "compact" : viewMode;
+  // No celular usa sempre a lista de cards (DemandaCard tem layout mobile dedicado);
+  // a compact/table são densas demais para o telefone. Desktop mantém a escolha do usuário.
+  const effectiveViewMode = isMobile ? "cards" : viewMode;
 
   // ==========================================
   // BUSCA DADOS REAIS DO BANCO DE DADOS
