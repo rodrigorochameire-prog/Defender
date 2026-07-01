@@ -37,9 +37,10 @@ O card busca o resumo por **match exato de título**: `src/lib/trpc/routers/dema
 - Schema `demandas`: `src/lib/db/schema/core.ts:313-391` (`enrichment_data` já tem chave tipada `fase_processual`)
 - Schema `registros`: `src/lib/db/schema/agenda.ts:179-238`
 - `processos_vvd` fase/motivo: `src/lib/db/schema/vvd.ts:166-174`
-- Card: `src/components/demandas-premium/DemandaCard.tsx:329-348, 434-503, 723-791`
-- Filtro de título do resumo: `src/lib/trpc/routers/demandas.ts:155`
-- Escritor fase 2: `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py:179-196`
+- Consumidores do `analiseResumo` (demandas.ts:155): **`src/components/demandas-premium/kanban-premium.tsx:507` e `:984`** (não o `DemandaCard.tsx`).
+- Seção IA própria do card: `src/components/demandas-premium/DemandaCard.tsx:609`, que itera a lista de registros filtrando `r.tipo === 'analise' || IA_TITULOS.has(titulo)` (constantes em `:38, :147`).
+- Escritor fase 2: `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py:179-196` — **grava três** registros `tipo='analise'` por demanda, em ordem crescente de `id`: `"Resumo e providências"` (196), `"Relato da suposta vítima"` (211), `"Termos da pronúncia"` (218). A inserção é guardada por `registro_exists(demanda_id, titulo)` (195) — se o título já existe, **pula** (não sobrescreve).
+- Anotações manuais em outras telas também usam `tipo='analise'` (`admin/demandas/[id]/page.tsx`, `painel-servidor.tsx`, `delegacao.ts`).
 
 ---
 
@@ -76,30 +77,60 @@ Adicionar dispatch por atribuição em `varredura_triagem.py`, espelhando o padr
 
 - **`RULES_JURI`** — implementa as heurísticas hoje só documentadas: pronúncia, impronúncia, **desclassificação**, sessão de julgamento/plenário, diligências 422, intimação para debates/alegações finais do sumário, apelação pós-júri, precatória. Cada regra emite `ato` + `prioridade` + `prazo` + `fase` + `motivo`.
 - **`RULES_EP`** — ampliada agora para atos SEEU (progressão, livramento condicional, remição, saída temporária, incidentes, unificação/soma de penas), além dos atos EP que aparecem pela vara "Júri e Execuções" do PJe. Passa a valer plenamente quando a importação SEEU existir.
-- **`RULES_CRIMINAL`** — criminal comum genérico: resposta à acusação, AIJ, alegações finais, sentença, recurso, RSE.
+- **`RULES_CRIMINAL`** — criminal comum genérico: resposta à acusação, AIJ, alegações finais, sentença, recurso, RSE. **Autorada agora, porém inerte até existir uma atribuição Criminal:** hoje `ATRIB_UNIDADE` (varredura_triagem.py:87-91) só mapeia `VVD_CAMACARI`, `JURI_CAMACARI` e `EXECUCAO_PENAL` — não há token/unidade Criminal. Portanto `RULES_CRIMINAL` fica escrita e testada, mas só passa a despachar quando um token Criminal for adicionado ao pipeline de importação (mesmo tratamento dado ao EP/SEEU).
 - **Refactor:** toda regra passa a carregar `fase`/`motivo` estruturados (não só MPU), fechando a paridade.
 
-**Interface da regra:** contrato uniforme `{ ato, prioridade, prazo, fase, motivo }`. `classify` ganha ramos `if is_juri(atribuicao)` e `if is_criminal(atribuicao)` análogos aos existentes.
+**Detecção de atribuição:** `is_juri` = `"JURI" in atribuicao` e `is_ep` = `"EXECUCAO_PENAL" in atribuicao` (ambos distinguíveis mesmo compartilhando a vara "Júri e Execuções"). `is_criminal` só existirá quando o token Criminal for criado; até lá o ramo é inalcançável por dispatch.
+
+**Interface da regra:** contrato uniforme `{ ato, prioridade, prazo, fase, motivo }`. `classify` ganha ramos `if is_juri(atribuicao)` (ativo agora) e `if is_criminal(atribuicao)` (autorado, inerte).
+
+**Roteamento de `fase`/`motivo` (correção de destino):** hoje `apply_classification` grava `fase`/`motivo` **exclusivamente** em `processos_vvd` (:1069-1077, `upsert_processo_vvd`). Emitir `fase`/`motivo` para Júri/EP/Criminal **sem rewire criaria linhas espúrias em `processos_vvd`** para processos não-VVD. Correção: `apply_classification` passa a gravar `fase`/`motivo` genéricos em **`demandas.enrichment_data`** para toda atribuição, e **restringe** a escrita em `processos_vvd` a VVD/MPU (`if is_mpu`/VVD).
+
+### A1.1 · Vocabulário de `fase`/`motivo` por atribuição
+
+O único enum existente hoje (`vvd.ts:167-174`) é específico de VVD. Para tornar as regras e os testes concretos, este design define os vocabulários iniciais (valores em `snake_case`; a lista final é fechada na implementação):
+
+**Júri — `fase`:** `sumario_culpa`, `pronuncia`, `preparacao_plenario`, `plenario`, `pos_julgamento`.
+**Júri — `motivo`:** `designacao_aij_1a_fase`, `alegacoes_finais_sumario`, `decisao_pronuncia`, `decisao_impronuncia`, `decisao_desclassificacao`, `diligencias_422`, `designacao_plenario`, `intimacao_sentenca_plenario`, `apelacao`, `contrarrazoes`, `precatoria`.
+
+**EP (SEEU) — `fase`:** `execucao_provisoria`, `execucao_definitiva`.
+**EP — `motivo`:** `calculo_pena`, `progressao_regime`, `livramento_condicional`, `remicao`, `saida_temporaria`, `incidente_falta_grave`, `unificacao_soma_penas`, `extincao_punibilidade`.
+
+**Criminal (inerte) — `fase`:** `recebimento_denuncia`, `resposta_acusacao`, `instrucao`, `alegacoes_finais`, `sentenca`, `recurso`.
+**Criminal — `motivo`:** `citacao_resposta_acusacao`, `designacao_aij`, `alegacoes_finais_memoriais`, `intimacao_sentenca`, `prazo_recurso`.
 
 ### A2 · Legibilidade garantida (eliminar o PDF-skip)
 
 Redesenhar a etapa de leitura para nunca pular um ato substantivo por falta de texto:
 
 1. Tentar a leitura por frame de texto (atual).
-2. Se vazio **e** o ato não for meramente administrativo → **baixar o PDF do documento** pela sessão browser/CDP já existente da varredura, rodar `pdftotext`; se o PDF for digitalizado/vazio → **OCR com tesseract** (ambos já presentes no stack: poppler + tesseract). O guard anti-ciência (`:922-925`) ganha um caminho ciente de Júri para buscar o documento real (viewer diferente de `listProcessoCompletoAdvogado.seam`).
-3. Guardar o texto extraído em `enrichment_data.raw_text` do registro base. **Qualquer que seja o resultado, um ato não-administrativo é sempre enfileirado para a fase 2** — acaba o skip silencioso.
+2. Se vazio **e** o ato não for meramente administrativo → obter o PDF **sem efetivar ciência**.
 
-**Dependências:** `pdftotext` (poppler) e `tesseract` disponíveis localmente no Mac (lane browser). Falha de OCR não interrompe a varredura (ver A5).
+**Invariante de ciência (crítico):** o guard em `:922-925` rejeita qualquer URL que não seja `listProcessoCompletoAdvogado.seam` justamente porque `visualizarExpediente.seam` / o popup "TOMAR CIÊNCIA" **efetiva a ciência e dispara o prazo de 10 dias**. A correção **não** é "usar outro viewer do expediente" — isso é exatamente o que o guard existe para impedir. A rota segura é: **baixar o asset PDF de dentro dos autos completos** (`listProcessoCompletoAdvogado.seam`, que já é a única navegação permitida e **não** efetiva ciência) — abrir os autos do processo e extrair o documento correspondente ali. O popup do expediente (`visualizarExpediente.seam` / "TOMAR CIÊNCIA") **permanece proibido**. Sobre o PDF obtido: rodar `pdftotext`; se digitalizado/vazio → **OCR com tesseract**.
+
+3. Guardar o texto extraído em `enrichment_data.raw_text` do registro de análise (ver A3). **Qualquer que seja o resultado, um ato não-administrativo é sempre enfileirado para a fase 2** — acaba o skip silencioso. Se nem os autos completos expuserem o documento de forma segura, o ato **não** é forçado por popup de ciência: cai no estado "documento não lido — revisão manual" (A3).
+
+**Dependências:** `pdftotext` (poppler) e `tesseract` já instalados no Mac em `/opt/homebrew/bin` (hoje usados só por `preparar-audiencias`; passam a ser usados pela varredura na lane browser). Falha de extração/OCR não interrompe a varredura (ver A5).
+
+### A2.2 · Contrato do registro de análise (compartilhado fase 1 ↔ fase 2)
+
+Fonte única de verdade do resumo do card, para as fases 1 e 2 não colidirem:
+
+- **Identidade:** exatamente **um** registro por demanda com `tipo='analise'` **e** `titulo='Resumo e providências'`. É o único registro tratado como "o resumo".
+- **Marcador:** seu `enrichment_data` sempre contém a chave **`objeto`** — este é o discriminador que a query do card usa (ver A4). Os outros registros `tipo='analise'` da fase 2 (`"Relato da suposta vítima"`, `"Termos da pronúncia"`) e as anotações manuais **não** têm essa chave e portanto **não** são confundidos com o resumo.
+- **Payload:** `enrichment_data = { objeto, decidido, providencia, prazo, recurso, _status }`, com `_status ∈ { 'pendente', 'concluido', 'nao_lido' }` e `_fonte ∈ { 'fase1', 'fase2' }`.
+- **Semântica de escrita — upsert, não insert-skip:** substitui-se a guarda `registro_exists(...)` → *pula* de `write_analise.py:195` por **update-in-place** para este título específico. Fase 1 faz `INSERT ... ON CONFLICT (demanda_id, titulo) DO UPDATE`; fase 2 faz `UPDATE` do mesmo registro. (Os demais títulos da fase 2 continuam com `insert-if-not-exists` como hoje.)
 
 ### A3 · Card nunca em branco
 
-A fase 1 passa a gravar sempre uma **pré-análise determinística** que o card pode ler de imediato: `ato` + `fase`/`motivo` + `prazo` + badge **"análise IA pendente"**. Quando a fase 2 (`analise-intimacao`) conclui, ela **sobrescreve** com a versão rica. Se o OCR ainda assim não conseguiu ler o documento, o card mostra a pré-análise + estado **"documento não lido — revisão manual"** (em vez de parecer vazio-mas-ok). Tudo envolto em try/except para a varredura nunca quebrar.
+A **fase 1** passa a **criar/atualizar o registro de análise** (contrato A2.2) já com os campos determinísticos que possui — `objeto` (≈ tipo de documento/título do ato), `providencia` (≈ `ato`), `prazo`, mais `fase`/`motivo` — e `_status='pendente'` + `_fonte='fase1'`. O card então nunca fica em branco: mostra esse conteúdo com badge **"análise IA pendente"**. Se a extração/OCR não conseguiu ler o documento, a fase 1 grava `_status='nao_lido'` e o card mostra **"documento não lido — revisão manual"**. Quando a **fase 2** (`analise-intimacao`) conclui, faz `UPDATE` do mesmo registro com a versão rica e `_status='concluido'` + `_fonte='fase2'`. Tudo envolto em try/except para a varredura nunca quebrar.
 
 ### A4 · Exibição estruturada no card
 
-- A fase 2 (`analise-intimacao` / `write_analise.py`) passa a emitir também um **JSON** em `registros.enrichment_data`: `{ objeto, decidido, providencia, prazo, recurso }`. O `conteudo` markdown permanece para a timeline.
-- A query do card em `demandas.ts:155` **deixa de exigir o título exato** `'Resumo e providências'` e passa a puxar o **registro `tipo='analise'` mais recente** — assim o resumo da IA, o fallback da fase 1 e (depois, em C) o resumo de sentença/acórdão aparecem de forma uniforme.
-- `DemandaCard.tsx` renderiza um bloco expansível: a face do card mostra um resumo conciso `Objeto → Providência · Prazo`; expandido revela os campos rotulados **Objeto / O que foi decidido / Providência / Prazo / Cabe recurso?** — a partir do JSON, sem parsing de markdown. Fallback: se o registro não tiver JSON (registros antigos), renderiza o `conteudo` como hoje.
+- A fase 2 (`write_analise.py`) grava o JSON `{ objeto, decidido, providencia, prazo, recurso }` no `enrichment_data` do registro de análise (A2.2), via `UPDATE`. O `conteudo` markdown permanece para a timeline.
+- **Query do card** (`demandas.ts:155`): em vez de match por título exato, seleciona **o registro `tipo='analise'` mais recente cujo `enrichment_data ? 'objeto'`** (o marcador do contrato). Isso evita pegar `"Termos da pronúncia"`/`"Relato da suposta vítima"` (que têm `id` maior) e anotações manuais (sem a chave). Fallback de compatibilidade para registros antigos: se nenhum registro com a chave `objeto` existir, cair para `titulo = 'Resumo e providências'` como hoje.
+- **Consumidores a alterar:** `kanban-premium.tsx:507` e `:984` (que renderizam `analiseResumo`) e a seção IA de `DemandaCard.tsx:609` (que hoje filtra `r.tipo === 'analise' || IA_TITULOS.has(titulo)`, constantes em `:38, :147`). A renderização estruturada nova deve **integrar-se à lógica `IA_TITULOS` existente** — quando o registro tiver o JSON de contrato, renderizar os campos rotulados; senão, manter o render atual do `conteudo`.
+- **Layout:** face do card mostra `Objeto → Providência · Prazo`; expandido revela **Objeto / O que foi decidido / Providência / Prazo / Cabe recurso?** a partir do JSON (sem parsing de markdown). Degradação graciosa para registros sem JSON.
 
 ### A5 · Testes, segurança e fronteiras
 
@@ -111,8 +142,9 @@ A fase 1 passa a gravar sempre uma **pré-análise determinística** que o card 
 
 ## 5. Impacto em dados
 
-- **Sem migração de schema.** `demandas.enrichment_data` (jsonb) já tem a chave tipada `fase_processual`; adiciona-se `motivo` (e mantém-se `ato`). `registros.enrichment_data` (jsonb) já existe e passa a carregar o JSON estruturado da análise.
-- `processos_vvd.fase_procedimento`/`motivo_ultima_intimacao` continuam sendo escritos para VVD (compat).
+- **Sem migração de schema (DDL).** `demandas.enrichment_data` (jsonb) já tem a chave tipada `fase_processual`; **adiciona-se a chave `motivo` ao tipo TS** em `core.ts` (é só tipagem do jsonb, não coluna). `registros.enrichment_data` (jsonb) já existe e passa a carregar o JSON de contrato da análise (A2.2).
+- **Correção de destino:** `fase`/`motivo` genéricos passam a ser gravados em `demandas.enrichment_data` para toda atribuição; a escrita em `processos_vvd.fase_procedimento`/`motivo_ultima_intimacao` fica **restrita a VVD/MPU** (evita linhas espúrias em `processos_vvd`). VVD mantém as colunas dedicadas por compat.
+- **Índice (opcional, perf):** avaliar índice GIN parcial em `registros.enrichment_data` para o predicado `? 'objeto'` se a query do card ficar quente; caso contrário, o filtro roda sobre o conjunto já reduzido por `demanda_id`.
 - Registros antigos sem JSON continuam renderizando via `conteudo` (degradação graciosa).
 
 ---
@@ -121,12 +153,14 @@ A fase 1 passa a gravar sempre uma **pré-análise determinística** que o card 
 
 | Arquivo | Mudança |
 |---|---|
-| `.claude/skills-cowork/varredura-triagem/scripts/varredura_triagem.py` | `RULES_JURI`, `RULES_CRIMINAL`, ampliar `RULES_EP`; dispatch por atribuição; fase/motivo uniformes; leitura PDF+OCR; sempre enfileirar fase 2; pré-análise determinística |
-| `.claude/skills-cowork/varredura-triagem/references/heuristicas-classificacao.md` | Alinhar doc ↔ código (Júri/EP/Criminal) |
-| `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py` | Emitir JSON `{objeto,decidido,providencia,prazo,recurso}` em `registros.enrichment_data` |
-| `src/lib/trpc/routers/demandas.ts` | Query do resumo: último `tipo='analise'` em vez de título exato |
-| `src/components/demandas-premium/DemandaCard.tsx` | Bloco expansível com campos rotulados a partir do JSON; badges "IA pendente" / "documento não lido" |
-| Testes (Python + TS) | Classificador, extração PDF/OCR, fallback da query |
+| `.claude/skills-cowork/varredura-triagem/scripts/varredura_triagem.py` | `RULES_JURI`, `RULES_CRIMINAL` (inerte), ampliar `RULES_EP`; dispatch por atribuição; **rotear fase/motivo para `demandas.enrichment_data`** e gatear `processos_vvd` a VVD/MPU; leitura PDF+OCR pela rota segura (autos completos); sempre enfileirar fase 2; upsert do registro de análise (contrato A2.2) com `_status`/`_fonte` |
+| `.claude/skills-cowork/varredura-triagem/references/heuristicas-classificacao.md` | Alinhar doc ↔ código (Júri/EP/Criminal) + vocabulário A1.1 |
+| `.claude/skills-cowork/analise-intimacao/scripts/write_analise.py` | Gravar JSON de contrato `{objeto,decidido,providencia,prazo,recurso,_status,_fonte}` via **UPDATE-in-place** do registro `'Resumo e providências'` (substituir o `registro_exists`→skip apenas para esse título) |
+| `src/lib/trpc/routers/demandas.ts` | Query do resumo: registro `tipo='analise'` mais recente com `enrichment_data ? 'objeto'`, fallback para título exato |
+| `src/components/demandas-premium/kanban-premium.tsx` | Consumir o resumo estruturado no card do kanban (`:507`, `:984`) |
+| `src/components/demandas-premium/DemandaCard.tsx` | Integrar à seção IA (`:609`, `IA_TITULOS` em `:38/:147`): bloco expansível com campos rotulados a partir do JSON; badges "IA pendente" / "documento não lido" |
+| `src/lib/db/schema/core.ts` | Adicionar chave `motivo` ao tipo do `enrichment_data` |
+| Testes (Python + TS) | Classificador (tabela por vocabulário A1.1), extração PDF/OCR, discriminador da query (não pegar "Termos da pronúncia"/anotação manual) |
 
 As cópias locais/mirror das skills devem ser sincronizadas conforme a skill `evolucao-skills`.
 
@@ -134,13 +168,13 @@ As cópias locais/mirror das skills devem ser sincronizadas conforme a skill `ev
 
 ## 7. Critérios de aceitação
 
-1. Uma intimação de **Júri** (pronúncia, impronúncia, desclassificação, sessão de plenário, diligências 422, alegações finais do sumário, apelação) recebe `ato`/`fase`/`motivo`/`prioridade` corretos na fase 1.
-2. Um documento de Júri **somente-PDF/digitalizado** é lido via `pdftotext`/OCR e **enfileirado para a fase 2** (não mais pulado).
-3. Nenhum card de triagem fica em branco: enquanto a IA está pendente, o card mostra a pré-análise + badge "análise IA pendente"; se o documento não foi lido, mostra "documento não lido — revisão manual".
-4. Ao concluir a fase 2, o card exibe, em campos rotulados expansíveis, **Objeto / O que foi decidido / Providência / Prazo / Cabe recurso?**.
-5. **Paridade:** EP e Criminal também emitem `ato`/`fase`/`motivo` (EP fica plenamente ativo quando a importação SEEU existir).
-6. A query do card exibe o resumo a partir do registro `tipo='analise'` mais recente, sem depender do título exato.
-7. Nenhuma regressão em VVD/MPU; varredura nunca lança exceção não tratada.
+1. Uma intimação de **Júri** (pronúncia, impronúncia, desclassificação, sessão de plenário, diligências 422, alegações finais do sumário, apelação) recebe, na fase 1, `ato`/`prioridade`/`prazo` e `fase`/`motivo` **dentro do vocabulário A1.1** (asseríveis por valor exato na tabela de testes).
+2. Um documento de Júri **somente-PDF/digitalizado** é obtido pela **rota segura dos autos completos** (sem efetivar ciência), lido via `pdftotext`/OCR e **enfileirado para a fase 2** (não mais pulado). Nenhuma navegação a `visualizarExpediente.seam`/"TOMAR CIÊNCIA" ocorre.
+3. Nenhum card de triagem fica em branco: a fase 1 grava o registro de análise (contrato A2.2) com `_status='pendente'` (badge "análise IA pendente") ou `_status='nao_lido'` (estado "documento não lido — revisão manual").
+4. Ao concluir a fase 2, o **mesmo** registro de análise é atualizado in-place (não duplicado) com `_status='concluido'`, e o card exibe, em campos rotulados expansíveis, **Objeto / O que foi decidido / Providência / Prazo / Cabe recurso?**.
+5. **Discriminador da query:** dada uma demanda com registro `'Resumo e providências'` (com chave `objeto`) **e** um registro posterior `'Termos da pronúncia'` (sem a chave) **e** uma anotação manual `tipo='analise'`, o card exibe o **resumo**, não os outros dois.
+6. **Paridade:** EP emite `ato`/`fase`/`motivo` (plenamente ativo quando a importação SEEU existir); `RULES_CRIMINAL` está escrita e testada, mas permanece inerte até existir um token de atribuição Criminal.
+7. **Sem regressão:** VVD/MPU continuam gravando `processos_vvd.fase/motivo`; nenhuma linha `processos_vvd` é criada para Júri/EP/Criminal; a varredura nunca lança exceção não tratada.
 
 ---
 
