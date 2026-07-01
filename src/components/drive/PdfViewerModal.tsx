@@ -1092,7 +1092,7 @@ function SectionIndexPanel({
                           onExtract?.(section.id);
                         }}
                         disabled={extractingId === section.id}
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all flex-shrink-0"
+                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-all flex-shrink-0"
                       >
                         {extractingId === section.id ? (
                           <Loader2 className="w-3 h-3 animate-spin text-neutral-400" />
@@ -1504,7 +1504,7 @@ function AnnotationsPanel({
                       onSaveAsRegistro(a);
                     }}
                     title="Salvar como registro no OMBUDS"
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200"
                   >
                     <BookOpen className="w-3 h-3 text-emerald-500" />
                   </button>
@@ -1514,7 +1514,7 @@ function AnnotationsPanel({
                     e.stopPropagation();
                     onDelete(a.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
                 >
                   <Trash2 className="w-3 h-3 text-red-400" />
                 </button>
@@ -1703,7 +1703,7 @@ function BookmarksPanel({
                 </>
               )}
             </div>
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1881,7 +1881,7 @@ function CasoPanel({
 
                 {/* Actions */}
                 {status === "pending" && (
-                  <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex flex-col gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button
                       onClick={(e) => { e.stopPropagation(); onApprove(section.id); }}
                       disabled={isApproving}
@@ -2138,7 +2138,7 @@ const NoteIndicator = memo(function NoteIndicator({
           </div>
 
           {/* Note preview on hover */}
-          <div className="absolute left-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+          <div className="absolute left-8 top-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
             <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 px-2.5 py-1.5 max-w-[180px]">
               <div className="flex items-center gap-1 mb-0.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: noteColor.hex }} />
@@ -2158,7 +2158,7 @@ const NoteIndicator = memo(function NoteIndicator({
               e.stopPropagation();
               onDelete(note.id);
             }}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-110"
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-200 flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-110"
           >
             <X className="w-2.5 h-2.5" />
           </button>

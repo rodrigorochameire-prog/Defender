@@ -261,7 +261,7 @@ function FileRow({ file }: { file: DriveFile }) {
         {!file.isFolder ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-white/60 dark:hover:bg-zinc-800 transition-all">
+              <button className="h-6 w-6 flex items-center justify-center rounded opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-white/60 dark:hover:bg-zinc-800 transition-all">
                 <MoreVertical className="h-4 w-4 text-zinc-400" />
               </button>
             </DropdownMenuTrigger>

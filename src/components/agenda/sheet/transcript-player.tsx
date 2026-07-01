@@ -188,7 +188,7 @@ export function TranscriptPlayer({
                     e.stopPropagation();
                     onAddPino(offsetS + s.start);
                   }}
-                  className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-opacity cursor-pointer"
+                  className="opacity-100 md:opacity-0 md:group-hover:opacity-100 shrink-0 p-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-opacity cursor-pointer"
                 >
                   <Pin className="h-2.5 w-2.5 text-neutral-400 group-hover:text-amber-500" />
                 </span>

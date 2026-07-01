@@ -218,7 +218,7 @@ export function EventosCompartilhados({
                   </div>
 
                   {/* Hover action */}
-                  <Eye className="w-4 h-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Eye className="w-4 h-4 text-neutral-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" />
                 </div>
               </Link>
             );

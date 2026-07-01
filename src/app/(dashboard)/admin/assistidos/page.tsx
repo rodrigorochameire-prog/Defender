@@ -1257,7 +1257,7 @@ export default function AssistidosPage() {
           <span className="text-xs text-amber-700 dark:text-amber-400 tabular-nums">
             {naoIdentificadosCount} a identificar
           </span>
-          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             Triagem <ChevronRight className="w-3 h-3" />
           </span>
         </Link>

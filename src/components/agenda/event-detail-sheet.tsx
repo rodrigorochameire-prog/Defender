@@ -646,7 +646,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                     type="button"
                     aria-label="Estruturar anotação"
                     title="Detectar evento de audiência (redesignação/suspensão)"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-amber-600 cursor-pointer p-1"
                     onClick={() => {
                       const d = parseAnotacaoAudiencia(n.texto);
                       if (d) setDeteccaoPendente(d);
@@ -658,7 +658,7 @@ export function EventDetailSheet({ evento, open, onOpenChange, onOpenRegistro, o
                   <button
                     type="button"
                     aria-label="Apagar anotação"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 cursor-pointer p-1"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500 cursor-pointer p-1"
                     disabled={actions.removeNote.isPending || !audienciaIdNum}
                     onClick={() =>
                       audienciaIdNum &&
