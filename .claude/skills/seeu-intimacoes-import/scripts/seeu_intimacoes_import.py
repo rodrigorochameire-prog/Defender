@@ -150,6 +150,15 @@ JS_TABLE_TEXT = r"""() => {
   return t ? (t.innerText || '') : (document.body ? document.body.innerText : '');
 }"""
 
+# Situações que exigem ação (radio name=situacao, onclick=enviaForm): 0=Recebidas
+# e não Lidas, 1=Lidas e Aguardando Análise. A contagem da aba é o TOTAL das
+# situações — sem iterar, só a situação padrão (0) é capturada.
+SITUACOES = (0, 1)
+JS_SELECT_SITUACAO = (
+    "(idx)=>{const r=document.querySelectorAll('input[type=radio][name=situacao]')[idx];"
+    " if(r && !r.checked){r.click(); return true;} return false;}"
+)
+
 _CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 
 # Marcador de expediente: "Seq\n<CNJ>". Delimita cada bloco (Seq→próximo Seq),
@@ -229,31 +238,43 @@ async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status
                 frame = _find_mesa_frame(page)  # re-resolve após o submit do form
                 if frame is None:
                     continue
-                texto = await frame.evaluate(JS_TABLE_TEXT)
-                blocos = _split_blocos_por_processo(texto)
+                # Itera as situações (Recebidas + Lidas e Aguardando) — cada uma
+                # recarrega a tabela via enviaForm(). Ao trocar de aba a situação
+                # volta p/ 0 (default), então sit=0 já vem selecionada (changed=False).
+                for sit in SITUACOES:
+                    changed = await frame.evaluate(JS_SELECT_SITUACAO, sit)
+                    if changed:
+                        await page.wait_for_timeout(2600)
+                        frame = _find_mesa_frame(page)
+                        if frame is None:
+                            break
+                    texto = await frame.evaluate(JS_TABLE_TEXT)
+                    blocos = _split_blocos_por_processo(texto)
 
-                m = _TOTAL_REGISTROS_RE.search(texto or "")
-                if m and int(m.group(1)) > len(blocos):
-                    expected = int(m.group(1))
-                    aviso = f"aba {label}: capturados {len(blocos)}/{expected} — possível paginação"
-                    warnings.append(aviso)
-                    if status_cb:
-                        status_cb(f"⚠ {aviso}")
+                    # Reconciliação POR situação: "N registro(s) encontrado(s)" é o
+                    # total daquela situação; se exceder os blocos, há página não lida.
+                    m = _TOTAL_REGISTROS_RE.search(texto or "")
+                    if m and int(m.group(1)) > len(blocos):
+                        expected = int(m.group(1))
+                        aviso = f"aba {label} sit={sit}: capturados {len(blocos)}/{expected} — possível paginação"
+                        warnings.append(aviso)
+                        if status_cb:
+                            status_cb(f"⚠ {aviso}")
 
-                for seq, cnj_str, bloco in blocos:
-                    results.append({
-                        "aba": aba,
-                        "ato": ato,
-                        "processoNumero": cnj_str,
-                        "seq": seq,
-                        # Sentinela "Mesa do Defensor" garante que isSEEU detecte o
-                        # sistema mesmo num bloco isolado (sem o cabeçalho da aba),
-                        # roteando parseIntimacoesUnificado para SEEU. Prefixo
-                        # constante → content_hash determinístico (dedup estável).
-                        "conteudo": "Mesa do Defensor\n" + bloco,
-                    })
-                    if len(results) >= limit:
-                        return results, warnings
+                    for seq, cnj_str, bloco in blocos:
+                        results.append({
+                            "aba": aba,
+                            "ato": ato,
+                            "processoNumero": cnj_str,
+                            "seq": seq,
+                            # Sentinela "Mesa do Defensor" garante que isSEEU detecte o
+                            # sistema mesmo num bloco isolado (sem o cabeçalho da aba),
+                            # roteando parseIntimacoesUnificado para SEEU. Prefixo
+                            # constante → content_hash determinístico (dedup estável).
+                            "conteudo": "Mesa do Defensor\n" + bloco,
+                        })
+                        if len(results) >= limit:
+                            return results, warnings
             except Exception as e:
                 aviso = f"aba {label} falhou: {e}"
                 warnings.append(aviso)
