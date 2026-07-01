@@ -114,19 +114,23 @@ label da aba (ex.: "Manifestação"). O clique dispara o submit interno do
 recriar o frame).
 
 Extração: `JS_TABLE_TEXT` captura o innerText cru de `table.resultTable`
-(fallback: `document.body`). `_split_blocos_por_processo` fatia esse texto em
-blocos, um por CNJ encontrado, incluindo os ~40 caracteres anteriores (onde
-mora o Seq). `_seq_before_cnj` extrai o Seq (3-4 dígitos) imediatamente antes
-do CNJ dentro do bloco — `None` se ausente.
+(fallback: `document.body`). `_split_blocos_por_processo` localiza o marcador
+`_SEQ_CNJ_RE` (Seq seguido de CNJ) e fatia o texto em blocos Seq→próximo Seq:
+cada bloco começa no seu próprio Seq e vai até o Seq do expediente seguinte
+(ou o fim do texto), preservando as datas/prazo (dataEnvio + ultimoDia) que
+aparecem depois do CNJ e antes do próximo Seq. Devolve uma lista de tuplas
+`(seq, cnj, bloco_cru)`. Cada `conteudo` gravado é prefixado com o sentinela
+constante `"Mesa do Defensor\n"`, garantindo que `isSEEU` detecte o sistema
+mesmo num bloco isolado e que o `content_hash` seja determinístico.
 
 | O quê | Como | Status |
 |-------|------|--------|
 | Frame da Mesa | URL contém `mesaDefensor1Grau.do` | Validado ao vivo |
 | Abas | `<a>` cujo texto começa com "Manifestação"/"Ciência"/"Razões" | Validado ao vivo |
 | Lista | `table.resultTable` | Validado ao vivo |
-| `processo_numero` | CNJ via regex no bloco | Confirmado |
-| `seq` | 3-4 dígitos imediatamente antes do CNJ | Confirmado |
-| `conteudo` gravado | bloco cru (innerText, sem colapsar) | Confirmado |
+| `processo_numero` | CNJ via `_SEQ_CNJ_RE` no marcador do bloco | Confirmado |
+| `seq` | 3-4 dígitos capturados pelo mesmo marcador, antes do CNJ | Confirmado |
+| `conteudo` gravado | bloco Seq→próximo Seq, prefixado com `"Mesa do Defensor\n"` | Confirmado |
 
 ## Hash de conteúdo
 
