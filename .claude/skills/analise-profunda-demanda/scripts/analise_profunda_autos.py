@@ -72,6 +72,88 @@ def extrair_associados_autos(pdf_path, cnj_principal: str = "") -> list:
         return []
 
 
+_SECOES_ASSOC = ["Dependência", "Prevenção", "Desmembramento", "Vinculação Direta"]
+
+
+def cnj_dv_ok(cnj) -> bool:
+    d = re.sub(r"\D", "", cnj or "")
+    if len(d) != 20:
+        return False
+    return f"{98 - ((int(d[:7] + d[9:])) * 100 % 97):02d}" == d[7:9]
+
+
+def parse_associados_panel(panel_text: str, cnj_principal: str = "") -> list:
+    """Painel 'Associados' (4 accordions) → [{cnj,tipo,classe,assunto,sigilo,comarca}]. Puro."""
+    principal = re.sub(r"\D", "", cnj_principal or "")
+    txt = panel_text or ""
+    out = []
+    for i, sec in enumerate(_SECOES_ASSOC):
+        a = txt.find(sec)
+        if a < 0:
+            continue
+        b = len(txt)
+        for other in _SECOES_ASSOC[i + 1:]:
+            j = txt.find(other, a + len(sec))
+            if j >= 0:
+                b = min(b, j)
+        seg = txt[a:b]
+        seen = set()
+        for m in CNJ_RE.finditer(seg):
+            cnj = m.group(0)
+            dig = re.sub(r"\D", "", cnj)
+            if dig == principal or dig in seen:
+                continue
+            seen.add(dig)
+            ls = seg.rfind("\n", 0, m.start()) + 1
+            le = seg.find("\n", m.end())
+            le = le if le >= 0 else len(seg)
+            linha = seg[ls:le]
+            before = linha[:m.start() - ls].strip()
+            classe = before.split()[-1] if before else ""
+            after = linha[m.end() - ls:]
+            am = re.search(r"-\s*(.+)", after)
+            assunto = am.group(1).strip() if am else ""
+            bloco = seg[m.start():m.start() + 250]
+            out.append({
+                "cnj": cnj, "tipo": sec, "classe": classe, "assunto": assunto,
+                "sigilo": "sigilos" in bloco.lower(), "comarca": dig[16:20],
+            })
+    return out
+
+
+def classificar_relacionado(item: dict) -> dict:
+    it = dict(item)
+    d = re.sub(r"\D", "", it.get("cnj", ""))
+    it["dv_ok"] = cnj_dv_ok(it.get("cnj", ""))
+    if len(d) == 20 and d[16:20] == "0000":
+        grau = "2ª inst"
+    elif len(d) == 20 and d[13:16] == "805":
+        grau = "1º grau"
+    else:
+        grau = "outra corte"
+    it["grau"] = grau
+    it["baixavel"] = bool(it["dv_ok"] and not it.get("sigilo") and grau == "1º grau")
+    return it
+
+
+def merge_relacionados(aba: list, texto_cnjs: list, cnj_principal: str = "") -> list:
+    """União classificada: aba (primário) + CNJs do texto que faltam (fonte 'texto'/'citado')."""
+    principal = re.sub(r"\D", "", cnj_principal or "")
+    by = {}
+    for it in (aba or []):
+        d = re.sub(r"\D", "", it.get("cnj", ""))
+        if d and d != principal and d not in by:
+            x = dict(it); x["fonte"] = "aba"
+            by[d] = classificar_relacionado(x)
+    for c in (texto_cnjs or []):
+        d = re.sub(r"\D", "", c)
+        if d and d != principal and d not in by:
+            x = {"cnj": c, "tipo": "citado", "classe": "", "assunto": "",
+                 "sigilo": False, "comarca": d[16:20], "fonte": "texto"}
+            by[d] = classificar_relacionado(x)
+    return sorted(by.values(), key=lambda x: (x["fonte"] != "aba", not x.get("baixavel"), x["cnj"]))
+
+
 def _cap(s, n):
     s = (s or "")
     if not isinstance(s, str):
@@ -80,7 +162,7 @@ def _cap(s, n):
     return s[:n] if len(s) > n else s
 
 
-def format_dossie(sections: list, registros: list, analises: list, associados: list = None, midias: list = None) -> str:
+def format_dossie(sections: list, registros: list, analises: list, associados: list = None, midias: list = None, relacionados: list = None) -> str:
     """Monta um bloco markdown COMPACTO (só resumos, capados) com o contexto
     do assistido além dos autos. Retorna '' se não houver nada. Função pura."""
     parts = []
@@ -164,6 +246,17 @@ def format_dossie(sections: list, registros: list, analises: list, associados: l
         assoc_lines = [f"- {c}" for c in associados[:MAX_ASSOCIADOS]]
         parts.append("### Processos associados/conexos (citados nos autos)\n" + "\n".join(assoc_lines))
 
+    # Processos relacionados (aba Associados do PJe + citados nos autos, classificados)
+    if relacionados:
+        rl = []
+        for r in relacionados[:MAX_ASSOCIADOS]:
+            cl = r.get("classe") or ""
+            label = f"{r.get('tipo','')}/{cl}" if cl else r.get("tipo", "")
+            ass = f" — {r['assunto']}" if r.get("assunto") else ""
+            extra = " 🔒 sigiloso" if r.get("sigilo") else ""
+            rl.append(f"- [{label}] {r['cnj']}{ass} ({r.get('grau','')}){extra}")
+        parts.append("### Processos relacionados (associados na aba + citados nos autos)\n" + "\n".join(rl))
+
     if not parts:
         return ""
     body = "## Dossiê do assistido (contexto além dos autos)\n\n" + "\n\n".join(parts)
@@ -223,16 +316,16 @@ def fetch_dossie_data(sb, assistido_id: int):
     return sections, registros, analises, midias
 
 
-def build_dossie_assistido(sb, assistido_id, associados: list = None) -> str:
+def build_dossie_assistido(sb, assistido_id, associados: list = None, relacionados: list = None) -> str:
     """fetch + format. NUNCA levanta — retorna '' em qualquer erro (a Fase 2c
     nunca quebra por causa do dossiê)."""
     try:
-        if not assistido_id and not associados:
+        if not assistido_id and not associados and not relacionados:
             return ""
         sections, registros, analises, midias = ([], [], [], [])
         if assistido_id:
             sections, registros, analises, midias = fetch_dossie_data(sb, assistido_id)
-        return format_dossie(sections, registros, analises, associados=associados, midias=midias)
+        return format_dossie(sections, registros, analises, associados=associados, midias=midias, relacionados=relacionados)
     except Exception:
         return ""
 
