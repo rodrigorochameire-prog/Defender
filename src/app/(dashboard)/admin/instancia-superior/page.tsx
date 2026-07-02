@@ -101,9 +101,10 @@ export default function InstanciaSuperiorPage() {
   // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
   // HeaderSlotTitle (total+pendentes+emPauta) e o badge de collapsedStats
   // (mesmo `stats.total`, formato "N recursos") duplicavam o total — mantido
-  // só o formato rico do HeaderSlotTitle em `stats`. accentHex (ACCENT) não
-  // tem equivalente no shell ainda — perdido/deferido ao Lote E. O subtítulo
-  // descritivo (subtituloDoModo) + badge "Visão institucional/Meus recursos"
+  // só o formato rico do HeaderSlotTitle em `stats`. accentHex (ACCENT =
+  // "#7c8aa0", ds.ts) restaurado via `iconClassName="text-slate-400"` do
+  // shell (tom institucional azul-acinzentado mais próximo — Lote E). O
+  // subtítulo descritivo (subtituloDoModo) + badge "Visão institucional/Meus recursos"
   // (headerContext, Row 1) não têm slot equivalente — removidos sem
   // substituto (mesmo padrão de perda documentado em admin/vvd na Lote C);
   // o estado do escopo já fica visível no próprio DarkEscopoSwitch abaixo.
@@ -164,6 +165,7 @@ export default function InstanciaSuperiorPage() {
       <GlassHeaderShell
         title="Instância Superior"
         icon={Landmark}
+        iconClassName="text-slate-400"
         stats={headerStats}
         filters={
           <div className="max-w-[30vw] overflow-x-auto scrollbar-none">

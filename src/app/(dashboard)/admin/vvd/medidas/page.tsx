@@ -298,6 +298,7 @@ export default function MonitoramentoMPUPage() {
       <GlassHeaderShell
         title="Monitoramento de MPUs"
         icon={ShieldCheck}
+        iconClassName="text-amber-400"
         stats={
           <span className="text-[11px] text-white/55 hidden sm:inline">
             Medidas Protetivas de Urgência — Acompanhamento e Histórico

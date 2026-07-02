@@ -10,7 +10,7 @@ import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { MessageSquare } from "lucide-react";
 import { MobileHeaderOverflow } from "@/components/layouts/mobile-header-overflow";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { HEADER_GLASS } from "@/lib/config/design-tokens";
 import type { ReactNode } from "react";
 
 interface HeaderUtilityRowProps {
@@ -23,7 +23,7 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
   const handleChatToggle = chatToggle ?? (() => chatPanelActions.toggle());
 
   const content = (
-    <div className="flex h-11 shrink-0 items-center w-full">
+    <div className="flex h-10 shrink-0 items-center w-full">
       {/* Left: Toggle + Breadcrumbs */}
       <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
         {/* ☰ — abre a sidebar (drawer no mobile); alvo maior no mobile */}
@@ -103,15 +103,16 @@ export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRo
   );
 
   if (variant === "standalone") {
+    // Faixa utilitária glass flush — mesmos tokens HEADER_GLASS do
+    // GlassHeaderShell (wrapper sticky + shell com blur + faixa utilitária
+    // em camada superior), sem depender de HEADER_STYLE (Lote E).
     return (
-      <header
-        className={cn(
-          "sticky top-0 z-30 shrink-0",
-          HEADER_STYLE.utilityRow,
-          HEADER_STYLE.shellShadow,
-        )}
-      >
-        {content}
+      <header className={cn(HEADER_GLASS.wrapper, "shrink-0")}>
+        <div className={HEADER_GLASS.shell}>
+          <div className={cn(HEADER_GLASS.utilityRow, "h-10 px-0")}>
+            {content}
+          </div>
+        </div>
       </header>
     );
   }

@@ -225,7 +225,8 @@ export default function AtendimentosView() {
   // rico em `stats`. collapsedSearch (versão mini do campo) MORRE — o campo
   // único do bottomRow assume larguras responsivas via Tailwind (w-28→w-60),
   // sem precisar de um segundo componente para telas estreitas. accentHex
-  // ("#10b981") não tem equivalente no shell — perdido/deferido ao Lote E.
+  // ("#10b981" = emerald-500) restaurado via `iconClassName="text-emerald-500"`
+  // do shell (Lote E).
   const searchControl = (
     <div className="relative w-28 sm:w-44 md:w-60 shrink-0">
       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
@@ -389,6 +390,7 @@ export default function AtendimentosView() {
       <GlassHeaderShell
         title="Atendimentos"
         icon={Handshake}
+        iconClassName="text-emerald-500"
         stats={headerStats}
         actions={<HeaderActionsBar actions={headerActions} />}
       />

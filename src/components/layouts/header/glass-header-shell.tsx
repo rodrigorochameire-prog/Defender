@@ -17,6 +17,8 @@ import { HEADER_GLASS } from "@/lib/config/design-tokens";
 interface GlassHeaderShellProps {
   title: string;
   icon?: React.ElementType;
+  /** Classe de cor do ícone do título (ex.: "text-amber-400"). Default: text-white/70. */
+  iconClassName?: string;
   /** Stats inline ao lado do título (ex.: "0 · 11"). */
   stats?: ReactNode;
   /** Conteúdo do poço (switch de atribuições). Função recebe `collapsed`. */
@@ -31,6 +33,7 @@ interface GlassHeaderShellProps {
 export function GlassHeaderShell({
   title,
   icon: Icon,
+  iconClassName,
   stats,
   filters,
   actions,
@@ -156,7 +159,7 @@ export function GlassHeaderShell({
             />
           )}
           <div className="flex items-center gap-1.5 shrink-0 pl-1">
-            {Icon && <Icon className="w-4 h-4 text-white/70" />}
+            {Icon && <Icon className={cn("w-4 h-4", iconClassName ?? "text-white/70")} />}
             <h1 className="text-white text-[13px] font-semibold tracking-tight leading-none">
               {title}
             </h1>

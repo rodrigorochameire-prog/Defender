@@ -389,7 +389,7 @@ export default function CosmovisaoPage() {
     { id: "back", label: "Voltar", icon: ArrowLeft, priority: 15, hideLabel: true, onSelect: () => router.push("/admin/juri") },
     { id: "periodo", label: "Período", priority: Infinity, render: periodoControl },
     ...(periodo === "custom"
-      ? [{ id: "custom-dates", label: "Datas", priority: 25, render: customDateControl } as HeaderAction]
+      ? [{ id: "custom-dates", label: "Datas", priority: Infinity, render: customDateControl } as HeaderAction]
       : []),
   ];
 

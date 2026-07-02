@@ -143,8 +143,8 @@ export default function VVDPage() {
   // ── Header rico (GlassHeaderShell + HeaderActionsBar) ──────────────────
   // Row 1 do CollapsiblePageHeader tinha só subtítulo descritivo (sem dado) +
   // 2 botões (Atualizar/Importar PJe) → viram HeaderAction[]. HeaderSlotTitle
-  // não carregava chips, só title+accentHex (âmbar) — accentHex não tem
-  // equivalente no shell ainda (prop `iconClassName` é item do Lote E).
+  // não carregava chips, só title+accentHex (âmbar) — restaurado via prop
+  // `iconClassName="text-amber-400"` do shell (Lote E).
   const headerActions: HeaderAction[] = [
     {
       id: "refresh",
@@ -173,6 +173,7 @@ export default function VVDPage() {
       <GlassHeaderShell
         title="Violência Doméstica"
         icon={Shield}
+        iconClassName="text-amber-400"
         actions={<HeaderActionsBar actions={headerActions} />}
       />
 
