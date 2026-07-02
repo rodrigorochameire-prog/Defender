@@ -32,8 +32,10 @@ export function FloatingDock() {
       {/* Dock — pílula vertical unificada, Padrão Defender v5 */}
       <div
         className={cn(
-          "fixed z-[51] flex flex-col items-stretch",
-          "bottom-[5rem] right-4 md:bottom-6 md:right-6",
+          // No mobile o dock (Agenda/Demandas) é redundante com a bottom nav e
+          // sobrepunha os cards — some abaixo de md; permanece no desktop.
+          "fixed z-[51] hidden md:flex flex-col items-stretch",
+          "md:bottom-6 md:right-6",
           "rounded-2xl p-1 gap-0.5",
           "bg-white/90 dark:bg-neutral-800/90 backdrop-blur-md",
           "shadow-lg shadow-black/[0.10]",
