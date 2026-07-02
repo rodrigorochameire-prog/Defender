@@ -152,6 +152,27 @@ def build_sentenca_task(demanda: dict, rule: dict, content: str, doc_id: str) ->
     }
 
 
+def sentenca_ja_processada(sb, processo_id, doc_id) -> bool:
+    """True se já há sentença processada (linha em `sentencas`) ou captura em curso
+    (task analise-sentenca pending/processing) p/ este processo+doc.
+    Fail-open: qualquer erro → False (deixa enfileirar; preserva o comportamento atual)."""
+    try:
+        if processo_id and doc_id:
+            row = sb._req("GET",
+                f"/rest/v1/sentencas?processo_id=eq.{processo_id}&pje_documento_id=eq.{doc_id}&select=id&limit=1")
+            if row:
+                return True
+        if processo_id:
+            pend = sb._req("GET",
+                f"/rest/v1/claude_code_tasks?skill=eq.analise-sentenca&processo_id=eq.{processo_id}"
+                f"&status=in.(pending,processing)&select=id&limit=1")
+            if pend:
+                return True
+        return False
+    except Exception:
+        return False
+
+
 # Linhas de puro cabeçalho/rodapé/formatação do PJe — removidas antes de classificar,
 # resumir (IA) e parsear medidas. NÃO removem keywords jurídicas (designo, defiro,
 # sentença, condeno, medida protetiva…), só boilerplate.
@@ -1497,7 +1518,7 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
 
     # ── Auto-roteamento sentença (C1): ciência de sentença → captura+análise ────
     _doc_id = demanda.get("pje_documento_id") or (demanda.get("enrichment_data") or {}).get("id_documento_pje")
-    if is_sentenca_ato(rule["ato"]) and _doc_id:
+    if is_sentenca_ato(rule["ato"]) and _doc_id and not sentenca_ja_processada(sb, proc_id, str(_doc_id)):
         try:
             sb._req("POST", "/rest/v1/claude_code_tasks",
                     build_sentenca_task(demanda, rule, content, str(_doc_id)),
