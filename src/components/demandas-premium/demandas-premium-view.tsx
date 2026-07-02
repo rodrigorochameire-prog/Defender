@@ -2883,9 +2883,9 @@ export default function Demandas() {
             onClick={() => setSearchOpen(true)}
             title="Buscar"
             aria-label="Buscar"
-            className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+            className="h-9 w-9 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -3336,7 +3336,7 @@ export default function Demandas() {
         title="Demandas"
         accentHex={headerAccentHex}
         stats={
-          <>
+          <span className="hidden md:flex items-center gap-2">
             <span className="text-white/85 font-semibold">
               {demandas.filter(d => !d.arquivado).length}
             </span>
@@ -3358,7 +3358,7 @@ export default function Demandas() {
                 <span className="font-medium">{deadlineStats.vencidas}</span>
               </span>
             )}
-          </>
+          </span>
         }
       />
 
