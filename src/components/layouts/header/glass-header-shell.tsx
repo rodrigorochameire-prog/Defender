@@ -114,7 +114,7 @@ export function GlassHeaderShell({
           className={cn(
             HEADER_GLASS.utilityRow,
             "transition-[height,opacity] duration-200 motion-reduce:transition-none overflow-hidden",
-            condensed ? "h-0 opacity-0 border-b-0" : "h-[26px] opacity-100",
+            condensed ? "h-0 opacity-0 border-b-0" : "h-8 opacity-100",
           )}
         >
           <Breadcrumbs />
@@ -126,7 +126,7 @@ export function GlassHeaderShell({
           <div className="flex-1 min-w-0" />
           <span className="hidden lg:inline capitalize">{dateLabel}</span>
           <ConflictBadge />
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <span className="hidden md:inline-flex">
               <CommandPalette />
             </span>
