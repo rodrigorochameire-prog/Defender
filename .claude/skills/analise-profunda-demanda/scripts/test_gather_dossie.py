@@ -59,6 +59,47 @@ def main():
     t0 = build_task({"assistido_id": 7, "processo_id": 9}, 5, 13)
     if "Dossiê" in t0["prompt"] or "demanda 5" not in t0["prompt"]:
         print("FAIL default deveria ser título puro"); f += 1
+    # 8b. MAX_SECTIONS: 40 sections → ≤30 bullets do Drive renderizados
+    MAX_SECTIONS = ns["MAX_SECTIONS"]
+    many_secs = [{"titulo": f"doc{i}", "resumo": f"resumo {i}"} for i in range(40)]
+    dsec = format_dossie(many_secs, [], [])
+    if dsec.count("- **") > MAX_SECTIONS:
+        print(f"FAIL MAX_SECTIONS: {dsec.count('- **')} > {MAX_SECTIONS}"); f += 1
+    # 8c. MAX_REGISTROS: 60 registros em 20 tipos distintos (≤3 cada, dentro do
+    # cap por tipo) → ≤40 bullets de atendimento renderizados (cap total manda)
+    MAX_REGISTROS = ns["MAX_REGISTROS"]
+    many_regs = [
+        {"tipo": f"tipo{t}", "data_registro": "2026-06-01", "conteudo": f"conteudo {t}-{j}"}
+        for t in range(20) for j in range(3)
+    ]
+    dreg = format_dossie([], many_regs, [])
+    if dreg.count("conteudo ") > MAX_REGISTROS:
+        print(f"FAIL MAX_REGISTROS: {dreg.count('conteudo ')} > {MAX_REGISTROS}"); f += 1
+    # 9. build_dossie_assistido engole erro → "" (sb que levanta)
+    build_dossie = ns["build_dossie_assistido"]
+    class BoomSB:
+        def _req(self, *a, **k):
+            raise RuntimeError("boom")
+    if build_dossie(BoomSB(), 7) != "":
+        print("FAIL build_dossie_assistido deveria engolir erro e retornar ''"); f += 1
+    # 10. build_dossie_assistido monta a partir de um sb fake que devolve dados
+    class FakeSB:
+        def _req(self, method, path):
+            if "drive_document_sections" in path:
+                return [{"titulo": "Laudo", "resumo": "sem vestígios"}]
+            if "registros" in path and "tipo=eq.analise" in path:
+                return [{"enrichment_data": {"resumo": "tese anterior"}, "data_registro": "2026-05-01"}]
+            if path.startswith("/rest/v1/registros"):
+                return [{"tipo": "atendimento", "conteudo": "relato do assistido"}]
+            if "assistidos?" in path:
+                return [{"analysis_data": {"resumo": "análise assistido"}}]
+            if "processos?" in path:
+                return [{"analysis_data": {"resumo": "análise processo"}}]
+            return []
+    d = build_dossie(FakeSB(), 7)
+    for needle in ["Laudo", "sem vestígios", "relato do assistido", "análise"]:
+        if needle not in d:
+            print(f"FAIL build_dossie sem {needle!r}"); f += 1
     print("OK" if not f else f"{f} FALHAS")
     sys.exit(1 if f else 0)
 

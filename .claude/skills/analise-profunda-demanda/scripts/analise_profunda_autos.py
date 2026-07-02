@@ -120,6 +120,61 @@ def format_dossie(sections: list, registros: list, analises: list) -> str:
     return body
 
 
+def _norm_analises(assistido_rows, processo_rows, registro_rows) -> list:
+    """Normaliza análises anteriores em [{origem, resumo}]."""
+    out = []
+    for r in (assistido_rows or []):
+        ad = r.get("analysis_data") or {}
+        if isinstance(ad, dict) and ad.get("resumo"):
+            out.append({"origem": "assistido", "resumo": ad["resumo"]})
+    for r in (processo_rows or []):
+        ad = r.get("analysis_data") or {}
+        if isinstance(ad, dict) and ad.get("resumo"):
+            out.append({"origem": "processo", "resumo": ad["resumo"]})
+    for r in (registro_rows or []):
+        en = r.get("enrichment_data") or {}
+        if isinstance(en, dict):
+            res = en.get("resumo") or en.get("objeto")
+            if res:
+                out.append({"origem": "análise anterior", "resumo": res})
+    return out
+
+
+def fetch_dossie_data(sb, assistido_id: int):
+    """GETs PostgREST (select= explícito). Retorna (sections, registros, analises)."""
+    aid = int(assistido_id)
+    sections = sb._req(
+        "GET",
+        f"/rest/v1/drive_document_sections?select=tipo,titulo,resumo,texto_extraido,review_status,drive_files!inner(assistido_id)"
+        f"&drive_files.assistido_id=eq.{aid}&review_status=neq.rejected&order=updated_at.desc&limit=30",
+    ) or []
+    registros = sb._req(
+        "GET",
+        f"/rest/v1/registros?select=data_registro,tipo,subtipo,conteudo,dossie_atendimento,transcricao_resumo,enrichment_data"
+        f"&assistido_id=eq.{aid}&order=data_registro.desc&limit=60",
+    ) or []
+    a_rows = sb._req("GET", f"/rest/v1/assistidos?select=analysis_data&id=eq.{aid}") or []
+    p_rows = sb._req("GET", f"/rest/v1/processos?select=analysis_data&assistido_id=eq.{aid}") or []
+    an_rows = sb._req(
+        "GET",
+        f"/rest/v1/registros?select=enrichment_data,data_registro&assistido_id=eq.{aid}&tipo=eq.analise&order=data_registro.desc&limit=10",
+    ) or []
+    analises = _norm_analises(a_rows, p_rows, an_rows)
+    return sections, registros, analises
+
+
+def build_dossie_assistido(sb, assistido_id) -> str:
+    """fetch + format. NUNCA levanta — retorna '' em qualquer erro (a Fase 2c
+    nunca quebra por causa do dossiê)."""
+    try:
+        if not assistido_id:
+            return ""
+        sections, registros, analises = fetch_dossie_data(sb, assistido_id)
+        return format_dossie(sections, registros, analises)
+    except Exception:
+        return ""
+
+
 def build_analise_autos_task(row: dict, demanda_id: int, created_by: int, dossie: str = "") -> dict:
     """Values da task lane=ai `analise-autos` (mesmo caminho do coworkAnalise),
     com demandaId embutido p/ o fechamento de estado ser derivável na leitura.
@@ -353,9 +408,10 @@ async def main_async(meta: dict) -> dict:
         )
 
         # 4. enfileira a análise (lane ai) + estado analisando.
+        dossie = build_dossie_assistido(sb, row["assistido_id"])
         task = build_analise_autos_task(
             {"assistido_id": row["assistido_id"], "processo_id": row["processo_id"]},
-            demanda_id=demanda_id, created_by=meta["defensor_id"],
+            demanda_id=demanda_id, created_by=meta["defensor_id"], dossie=dossie,
         )
         ai_id = insert_claude_code_task(sb, task)
         sb.update_demanda(demanda_id, {
