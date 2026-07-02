@@ -123,7 +123,7 @@ export function GlassHeaderShell({
         >
           <SidebarTrigger
             title="Abrir/fechar menu lateral (⌘B)"
-            className="hidden md:inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
+            className="inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
           />
           <div className="h-4 w-px bg-white/[0.08] shrink-0" />
           <Breadcrumbs />
@@ -155,7 +155,7 @@ export function GlassHeaderShell({
           {condensed && (
             <SidebarTrigger
               title="Abrir/fechar menu lateral (⌘B)"
-              className="hidden md:inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
+              className="inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
             />
           )}
           <div className="flex items-center gap-1.5 shrink-0 pl-1">
