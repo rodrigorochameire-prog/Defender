@@ -59,7 +59,7 @@ function BarButton({ action }: { action: HeaderAction }) {
       aria-label={action.label}
       className={cn(
         action.variant === "primary" ? HEADER_GLASS.primaryBtn : HEADER_GLASS.ghostBtn,
-        action.variant !== "primary" && (action.hideLabel ? "w-8" : "px-2.5 text-[11px] font-semibold"),
+        action.variant !== "primary" && (action.hideLabel ? "w-9 md:w-8" : "px-2.5 text-[11px] font-semibold"),
         "shrink-0",
       )}
     >
@@ -153,7 +153,7 @@ export function HeaderActionsBar({
               type="button"
               title="Mais opções"
               aria-label="Mais opções"
-              className={cn(HEADER_GLASS.ghostBtn, "w-8 shrink-0")}
+              className={cn(HEADER_GLASS.ghostBtn, "w-9 md:w-8 shrink-0")}
             >
               <MoreHorizontal className="w-[15px] h-[15px]" />
             </button>

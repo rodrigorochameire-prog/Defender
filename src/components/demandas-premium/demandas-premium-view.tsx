@@ -2986,6 +2986,8 @@ export default function Demandas() {
       <GlassHeaderShell
         title="Demandas"
         icon={ListTodo}
+        // 7 atribuições = switcher denso; colapsa p/ pill rotulado já em telas médias/mobile
+        wellCollapseAt={900}
         stats={
           <>
             <span className="text-[11px] text-white/55 tabular-nums leading-none">
