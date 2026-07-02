@@ -1,0 +1,57 @@
+Número do processo
+	
+Exibir somentes processo do mesmo órgão julgador
+«
+Dependência 
+Processos
+	
+Associação
+
+
+3 resultados encontrados
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+AuPrFl 8003770-53.2025.8.05.0039 - Feminicídio
+ALANA FRANCA SANTANA e outros (1) X FRANCISCO LIMA DOS SANTOS OLIVEIRA
+Distribuído em: 02/04/2025
+	
+Dependência (Pendente)
+
+
+8004193-13.2025.8.05.0039
+(Este processo é sigiloso e você não tem permissão para visualizá-lo)
+	
+Dependência (Pendente)
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+RelPri 8004943-15.2025.8.05.0039 - Feminicídio
+FRANCISCO LIMA DOS SANTOS OLIVEIRA X Ministério Público do Estado da Bahia
+Distribuído em: 11/04/2025
+	
+Dependência (Pendente)
+«
+Prevenção 
+Processos
+	
+Associação
+
+
+0 resultados encontrados
+«
+Desmembramento 
+Processos
+	
+Associação
+
+
+0 resultados encontrados
+«
+Vinculação Direta 
+Processos
+	
+Associação
+
+
+resultados encontrados

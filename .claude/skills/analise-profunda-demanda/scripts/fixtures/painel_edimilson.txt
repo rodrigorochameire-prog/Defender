@@ -1,0 +1,69 @@
+Número do processo
+	
+Exibir somentes processo do mesmo órgão julgador
+«
+Dependência 
+Processos
+	
+Associação
+
+
+2 resultados encontrados
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+IP 0500594-24.2020.8.05.0039 - Competência do MP
+Ministério Público do Estado da Bahia e outros (2) X EDIMILSON DA SILVA BIZERRA e outros (3)
+Distribuído em: 03/06/2020
+	
+Dependência (Pendente)
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+IP 0500594-24.2020.8.05.0039 - Competência do MP
+Ministério Público do Estado da Bahia e outros (2) X EDIMILSON DA SILVA BIZERRA e outros (3)
+Distribuído em: 03/06/2020
+	
+Dependência (Prevento)
+«
+Prevenção 
+Processos
+	
+Associação
+
+
+1 resultados encontrados
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+APri 8116550-16.2026.8.05.0001 - Homicídio Simples
+COORDENACAO DE POLICIA INTERESTADUAL-POLINTER X MARCIO DA CONCEICAO ALVES
+Distribuído em: 15/06/2026
+	
+Prevenção (Prevento)
+Confirmação da Prevenção em: 15/06/2026
+Registrado em: 15/06/2026
+«
+Desmembramento 
+Processos
+	
+Associação
+
+
+1 resultados encontrados
+
+
+/VARA DO JÚRI E EXECUÇÕES PENAIS DA COMARCA DE CAMAÇARI
+Ministério Público do Estado da Bahia X FELIPE TAVARES DE JESUS e outros (1)
+Juri 8013686-77.2026.8.05.0039 - Homicídio Simples
+Distribuído em: 16/06/2026
+	
+Desmembramento (Pendente)
+«
+Vinculação Direta 
+Processos
+	
+Associação
+
+
+resultados encontrados
