@@ -3,8 +3,9 @@
 
 import { cn } from "@/lib/utils";
 import { useVarreduraJob } from "@/hooks/use-varredura-job";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
 import { AudienciaConfirmModal, type AudienciaConfirmData } from "@/components/demandas-premium/audiencia-confirm-modal";
 import { isAtoAudiencia } from "@/lib/audiencia-parser";
@@ -91,7 +92,7 @@ import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
 import { DemandaCompactView } from "@/components/demandas-premium/DemandaCompactView";
-import { AtribuicaoPills, MUTIRAO_PROTEGE_ICON } from "@/components/demandas-premium/AtribuicaoPills";
+import { MUTIRAO_PROTEGE_ICON } from "@/components/demandas-premium/AtribuicaoPills";
 import { arrayMove } from "@dnd-kit/sortable";
 // KPICardPremium/KPIGrid removed — stats now inline in charcoal header
 import { useProfissional } from "@/contexts/profissional-context";
@@ -166,7 +167,6 @@ import {
   BarChart3,
   List,
   ArrowLeftRight,
-  MoreHorizontal,
   ScanSearch,
   type LucideIcon,
 } from "lucide-react";
@@ -2790,120 +2790,74 @@ export default function Demandas() {
     return () => document.removeEventListener("keydown", handler);
   }, [activeTab, demandasOrdenadas, focusedDemandaIndex, setPreviewDemandaId]);
 
-  // Toolbar do header consolidada — agora vive no bottomRow do
-  // CollapsiblePageHeader (em vez de topbar separada + linha utility).
-  // Esquerda: atribuições + MPU. Direita: ViewMode + busca + filtros +
-  // chips ativos + atalho atrasadas/hoje + menu ⋯ (export/sort/group/admin).
-  const headerToolbarLeft = (
-    <div className="flex items-center gap-2 min-w-0 overflow-x-auto scrollbar-none">
-      <AtribuicaoPills
-        variant="dark"
-        options={atribuicaoOptions}
-        selectedValues={selectedAtribuicoes}
-        onToggle={handleAtribuicaoToggle}
-        onClear={handleClearAtribuicoes}
-        counts={atribuicaoCounts}
-        iconOnly
+  // Controles ricos do header (GlassHeaderShell + HeaderActionsBar) — Task 1.
+  // Movidos do antigo headerToolbarLeft/Right sem mudanças internas; a
+  // visibilidade na barra passa a ser decidida por medição (overflow "…").
+  const mpuChip = (tipoProcessoCounts["MPU"] ?? 0) > 0 && (
+    <>
+      <span className="hidden sm:block h-4 w-px bg-white/[0.10] shrink-0" aria-hidden />
+      {(() => {
+        const mpuCount = tipoProcessoCounts["MPU"] ?? 0;
+        const isOnly = mpuFilter === "only_mpu";
+        const isWithout = mpuFilter === "without_mpu";
+        const tooltip =
+          mpuFilter === "all"
+            ? `MPU: mostrando tudo (${mpuCount} MPU). Clique pra ver só MPU.`
+            : isOnly
+              ? `MPU: só MPU. Clique pra excluir MPU.`
+              : `MPU: sem MPU. Clique pra voltar a mostrar tudo.`;
+        return (
+          <button
+            type="button"
+            onClick={cycleMpuFilter}
+            title={tooltip}
+            aria-label={tooltip}
+            className={cn(
+              "hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer ring-1 ring-inset shrink-0",
+              isOnly && "bg-rose-500/20 text-rose-200 ring-rose-400/40",
+              isWithout && "bg-white/[0.06] text-white/70 ring-white/[0.10] line-through decoration-rose-300/70 decoration-[1.5px]",
+              !isOnly && !isWithout && "ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]",
+            )}
+          >
+            <span>MPU</span>
+            <span className={cn("tabular-nums font-semibold", isOnly ? "text-rose-100" : "text-white/40")}>
+              {mpuCount}
+            </span>
+          </button>
+        );
+      })()}
+    </>
+  );
+
+  // Controle rico: busca — consolidada num único input (a variante mobile
+  // com botão-lupa foi removida; o "…" de overflow foca via setSearchOpen(true)).
+  const searchControl = (
+    <div className="relative w-[140px] lg:w-[200px] shrink-0">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+      <input
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Buscar..."
+        className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
       />
-      {(tipoProcessoCounts["MPU"] ?? 0) > 0 && (
-        <>
-          <span className="hidden sm:block h-4 w-px bg-white/[0.10] shrink-0" aria-hidden />
-          {(() => {
-            const mpuCount = tipoProcessoCounts["MPU"] ?? 0;
-            const isOnly = mpuFilter === "only_mpu";
-            const isWithout = mpuFilter === "without_mpu";
-            const tooltip =
-              mpuFilter === "all"
-                ? `MPU: mostrando tudo (${mpuCount} MPU). Clique pra ver só MPU.`
-                : isOnly
-                  ? `MPU: só MPU. Clique pra excluir MPU.`
-                  : `MPU: sem MPU. Clique pra voltar a mostrar tudo.`;
-            return (
-              <button
-                type="button"
-                onClick={cycleMpuFilter}
-                title={tooltip}
-                aria-label={tooltip}
-                className={cn(
-                  "hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all duration-150 cursor-pointer ring-1 ring-inset shrink-0",
-                  isOnly && "bg-rose-500/20 text-rose-200 ring-rose-400/40",
-                  isWithout && "bg-white/[0.06] text-white/70 ring-white/[0.10] line-through decoration-rose-300/70 decoration-[1.5px]",
-                  !isOnly && !isWithout && "ring-white/[0.06] text-white/60 hover:text-white hover:bg-white/[0.06]",
-                )}
-              >
-                <span>MPU</span>
-                <span className={cn("tabular-nums font-semibold", isOnly ? "text-rose-100" : "text-white/40")}>
-                  {mpuCount}
-                </span>
-              </button>
-            );
-          })()}
-        </>
-      )}
     </div>
   );
 
-  const headerToolbarRight = (
-    <div className="flex items-center gap-1.5 shrink-0">
-      {/* Busca responsiva (abaixo de md): botão com lupa que revela o input */}
-      <div className="flex md:hidden items-center shrink-0">
-        {searchOpen ? (
-          <div className="relative w-[150px]">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-            <input
-              autoFocus
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onBlur={() => { if (!searchTerm) setSearchOpen(false); }}
-              placeholder="Buscar..."
-              className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-7 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
-            />
-            <button
-              type="button"
-              onClick={() => { setSearchTerm(""); setSearchOpen(false); }}
-              title="Fechar busca"
-              aria-label="Fechar busca"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 cursor-pointer"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            title="Buscar"
-            aria-label="Buscar"
-            className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-          >
-            <Search className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-
-      {/* Busca — esconde abaixo de md (no responsivo menor usa o botão acima) */}
-      <div className="hidden md:flex relative w-[140px] lg:w-[200px] shrink-0">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-        <input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar..."
-          className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
-        />
-      </div>
-
-      {/* (chips de pillFilters consolidados na ActiveFiltersBar — fonte única) */}
-      {/* Menu ⋯ — visualização + filtros + exportar + ordenação + agrupar + modos + admin */}
-      <div className="relative">
-        <button
-          ref={filtersBtnRef}
-          onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
-          className="relative h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-          title="Mais opções"
-          aria-label="Mais opções"
-        >
-          <MoreHorizontal className="w-3.5 h-3.5" />
-          {(() => {
+  // Controle rico: menu de exibição e filtros (visualização + filtros +
+  // exportar + ordenação + agrupar + modos + admin) — movido sem mudanças,
+  // exceto ícone (MoreHorizontal → SlidersHorizontal) e title: o "…" genérico
+  // do HeaderActionsBar passa a ser o único overflow de ações do header.
+  const viewFilterMenu = (
+    <div className="relative">
+      <button
+        ref={filtersBtnRef}
+        onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+        className="relative h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+        title="Exibição e filtros"
+        aria-label="Exibição e filtros"
+      >
+        <SlidersHorizontal className="w-3.5 h-3.5" />
+        {(() => {
             const count =
               pillFilters.size +
               [selectedStatusGroup, selectedEstadoPrisional, selectedTipoAto, groupBy, showColumnFilters, showArchived].filter(Boolean).length;
@@ -3134,130 +3088,113 @@ export default function Demandas() {
           document.body
         )}
       </div>
+  );
 
-      <div className="h-5 w-px bg-white/[0.08] mx-0.5 shrink-0" />
-
-      {/* Selecionar — só no Kanban */}
-      {activeTab === "kanban" && (
-        <button
-          type="button"
-          onClick={() => isSelectMode ? handleExitSelectMode() : setIsSelectMode(true)}
-          aria-pressed={isSelectMode}
-          title={isSelectMode ? `Sair do modo seleção (${selectedIds.size})` : "Selecionar demandas"}
-          aria-label={isSelectMode ? "Sair do modo seleção" : "Selecionar demandas"}
-          className={cn(
-            "h-7 w-7 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
-            isSelectMode
-              ? "bg-emerald-500/20 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/30"
-              : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
-          )}
-        >
-          <CheckSquare className="w-3.5 h-3.5" />
-          {isSelectMode && selectedIds.size > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-emerald-400 text-neutral-900 flex items-center justify-center">
-              {selectedIds.size}
-            </span>
-          )}
-        </button>
+  // Controle rico: botão Selecionar (só no Kanban) — guard de aba preservado.
+  const selecionarBtn = activeTab === "kanban" && (
+    <button
+      type="button"
+      onClick={() => isSelectMode ? handleExitSelectMode() : setIsSelectMode(true)}
+      aria-pressed={isSelectMode}
+      title={isSelectMode ? `Sair do modo seleção (${selectedIds.size})` : "Selecionar demandas"}
+      aria-label={isSelectMode ? "Sair do modo seleção" : "Selecionar demandas"}
+      className={cn(
+        "h-7 w-7 rounded-lg ring-1 transition-all duration-150 cursor-pointer flex items-center justify-center relative",
+        isSelectMode
+          ? "bg-emerald-500/20 text-emerald-200 ring-emerald-400/30 hover:bg-emerald-500/30"
+          : "bg-white/[0.08] text-white/70 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white",
       )}
+    >
+      <CheckSquare className="w-3.5 h-3.5" />
+      {isSelectMode && selectedIds.size > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-emerald-400 text-neutral-900 flex items-center justify-center">
+          {selectedIds.size}
+        </span>
+      )}
+    </button>
+  );
 
-      {/* Analisar triagem (Varredura Nível 2 — leitura profunda dos autos no PJe) */}
+  // Controle rico: ImportDropdown — movido sem mudanças.
+  const importControl = (
+    <div className="relative">
       <button
-        onClick={() => setIsVarreduraModalOpen(true)}
+        ref={importBtnRef}
+        onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
         className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-        title="Analisar triagem (leitura profunda no PJe)"
-        aria-label="Analisar triagem"
+        title="Importar"
+        aria-label="Importar"
       >
-        <ScanSearch className="w-3.5 h-3.5" />
+        <Download className="w-3.5 h-3.5" />
       </button>
-
-      {/* Importar */}
-      <div className="relative">
-        <button
-          ref={importBtnRef}
-          onClick={() => setIsImportDropdownOpen(!isImportDropdownOpen)}
-          className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-          title="Importar"
-          aria-label="Importar"
-        >
-          <Download className="w-3.5 h-3.5" />
-        </button>
-        {isImportDropdownOpen && createPortal(
-          <>
-            <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
-            <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
-              {/* Destaque — importação automática direto do PJe */}
-              <button
-                onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
-                style={{ width: "calc(100% - 0.5rem)" }}
-              >
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                  <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+      {isImportDropdownOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
+          <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+            {/* Destaque — importação automática direto do PJe */}
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              style={{ width: "calc(100% - 0.5rem)" }}
+            >
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
+                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
-                    <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
-                  </div>
-                  <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto do Painel do Defensor</span>
-                </div>
-              </button>
+                <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto do Painel do Defensor</span>
+              </div>
+            </button>
 
-              <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-              <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
-              <button
-                onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <FileText className="w-3.5 h-3.5 text-neutral-400" />
-                <span>PJe (copiar/colar)</span>
-              </button>
-              <button
-                onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Excel</span>
-              </button>
-              <button
-                onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Google Sheets</span>
-              </button>
-              <button
-                onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Gavel className="w-3.5 h-3.5 text-neutral-400" />
-                <span>SEEU</span>
-              </button>
-            </div>
-          </>,
-          document.body
-        )}
-      </div>
-
-      {/* Nova demanda — CTA primário */}
-      <button
-        onClick={() => setIsCreateModalOpen(true)}
-        className="h-7 w-7 rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center justify-center"
-        title="Nova demanda"
-        aria-label="Nova demanda"
-      >
-        <Plus className="w-4 h-4" />
-      </button>
+            <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-neutral-400" />
+              <span>PJe (copiar/colar)</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Excel</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Google Sheets</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Gavel className="w-3.5 h-3.5 text-neutral-400" />
+              <span>SEEU</span>
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 
-  const headerBottomRow = (
-    <div className="flex items-center justify-between gap-3">
-      {headerToolbarLeft}
-      {headerToolbarRight}
-    </div>
-  );
+  // Ações do header (barra + overflow "…") — Task 1
+  const headerActions: HeaderAction[] = [
+    { id: "mpu", label: "Filtro MPU", priority: 18, render: mpuChip },
+    { id: "search", label: "Buscar", icon: Search, priority: 25, render: searchControl, onSelect: () => setSearchOpen(true) },
+    { id: "view-filters", label: "Exibição e filtros", icon: SlidersHorizontal, priority: 24, render: viewFilterMenu, onSelect: () => setIsFiltersDropdownOpen(true) },
+    { id: "selecionar", label: "Selecionar", priority: 15, render: selecionarBtn, onSelect: () => setIsSelectMode(true) },
+    { id: "varredura", label: "Analisar triagem", icon: ScanSearch, priority: 30, hideLabel: true, onSelect: () => setIsVarreduraModalOpen(true) },
+    { id: "importar", label: "Importar", icon: DownloadCloud, priority: 40, render: importControl, onSelect: () => setIsImportDropdownOpen(true) },
+    { id: "nova", label: "Nova demanda", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => setIsCreateModalOpen(true) },
+  ];
 
   // Fase 2: chips de filtro ativo + limpeza por chip / tudo (estado filtrado
   // compreensível e limpável num lance, em qualquer view).
@@ -3305,90 +3242,26 @@ export default function Demandas() {
 
   return (
     <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
-      <HeaderSlotTitle
-        icon={ListTodo}
+      {/* ====== GLASS HEADER (padrão Fase A) ====== */}
+      <GlassHeaderShell
         title="Demandas"
-        accentHex={headerAccentHex}
+        icon={ListTodo}
         stats={
-          <>
-            <span className="text-white/85 font-semibold">
-              {demandas.filter(d => !d.arquivado).length}
-            </span>
-            {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
-              <span
-                className="flex items-center gap-1 text-white/55"
-                title={`${deadlineStats.hoje + deadlineStats.semana} urgentes`}
-              >
-                <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
-                <span className="font-medium">{deadlineStats.hoje + deadlineStats.semana}</span>
-              </span>
-            )}
-            {deadlineStats.vencidas > 0 && (
-              <span
-                className="flex items-center gap-1 text-white/55"
-                title={`${deadlineStats.vencidas} atrasadas`}
-              >
-                <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
-                <span className="font-medium">{deadlineStats.vencidas}</span>
-              </span>
-            )}
-          </>
+          <span className="text-[11px] text-white/55 tabular-nums leading-none">
+            {demandas.filter(d => !d.arquivado).length} total
+          </span>
         }
-      />
-
-      {/* ====== CHARCOAL HEADER ====== */}
-      <CollapsiblePageHeader
-        title="Demandas"
-        icon={ListTodo}
-        collapsedStats={
-          <>
-            <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-              {demandas.filter(d => !d.arquivado).length} total
-            </span>
-          </>
-        }
-        collapsedPill={
-          selectedAtribuicoes.length === 0 ? null : selectedAtribuicoes.length <= 3 ? (
-            <div className="flex items-center gap-1">
-              {selectedAtribuicoes.map((attr) => {
-                const hex = ATRIBUICAO_BORDER_COLORS[attr] ?? "#71717a";
-                const short = attr === "Tribunal do Júri" ? "Júri"
-                  : attr === "Grupo Especial do Júri" ? "Júri Esp"
-                  : attr === "Violência Doméstica" ? "VVD"
-                  : attr === "Execução Penal" ? "EP"
-                  : attr === "Substituição Criminal" ? "Subst"
-                  : attr === "Curadoria Especial" ? "Curad"
-                  : attr;
-                return (
-                  <span
-                    key={attr}
-                    className="text-[8px] font-semibold px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${hex}33`, color: hex }}
-                  >
-                    {short}
-                  </span>
-                );
-              })}
-            </div>
-          ) : (
-            <span className="text-[8px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300">
-              {selectedAtribuicoes.length} áreas
-            </span>
-          )
-        }
-        collapsedSearch={
-          <div className="relative w-[140px]">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar..."
-              className="w-full bg-[#3a3a3c] border border-[#505052] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none"
-            />
-          </div>
-        }
-        bottomRow={headerBottomRow}
-        seamless
+        filters={(collapsed) => (
+          <AtribuicaoSwitchWell
+            collapsed={collapsed}
+            options={atribuicaoOptions}
+            selectedValues={selectedAtribuicoes}
+            onToggle={handleAtribuicaoToggle}
+            onClear={handleClearAtribuicoes}
+            counts={atribuicaoCounts}
+          />
+        )}
+        actions={<HeaderActionsBar actions={headerActions} />}
       />
 
 
