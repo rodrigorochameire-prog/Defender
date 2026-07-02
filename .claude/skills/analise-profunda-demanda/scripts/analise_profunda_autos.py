@@ -32,15 +32,107 @@ def parse_args_meta(argv: list[str]) -> dict:
     }
 
 
-def build_analise_autos_task(row: dict, demanda_id: int, created_by: int) -> dict:
+MAX_DOSSIE_CHARS = 18000
+SECTION_TEXT_CAP = 2000
+ATEND_TEXT_CAP = 1500
+MAX_REGISTROS = 40
+MAX_POR_TIPO = 3
+MAX_SECTIONS = 30
+MAX_KEY_POINTS = 5
+
+
+def _cap(s, n):
+    s = (s or "")
+    if not isinstance(s, str):
+        s = str(s)
+    s = s.strip()
+    return s[:n] if len(s) > n else s
+
+
+def format_dossie(sections: list, registros: list, analises: list) -> str:
+    """Monta um bloco markdown COMPACTO (só resumos, capados) com o contexto
+    do assistido além dos autos. Retorna '' se não houver nada. Função pura."""
+    parts = []
+
+    # Drive (resumos de peças)
+    drive_lines = []
+    for sec in (sections or [])[:MAX_SECTIONS]:
+        titulo = sec.get("titulo") or sec.get("tipo") or "documento"
+        resumo = _cap(sec.get("resumo"), SECTION_TEXT_CAP)
+        if not resumo:
+            resumo = _cap(sec.get("texto_extraido"), SECTION_TEXT_CAP)
+        if resumo:
+            drive_lines.append(f"- **{titulo}**: {resumo}")
+    if drive_lines:
+        parts.append("### Documentos no Drive (resumos)\n" + "\n".join(drive_lines))
+
+    # Atendimentos (≤MAX_POR_TIPO por tipo, ≤MAX_REGISTROS total)
+    atend_lines = []
+    per_tipo = {}
+    total = 0
+    for r in (registros or []):
+        if total >= MAX_REGISTROS:
+            break
+        tipo = r.get("tipo") or "registro"
+        if per_tipo.get(tipo, 0) >= MAX_POR_TIPO:
+            continue
+        dossie_at = r.get("dossie_atendimento") or {}
+        resumo = ""
+        if isinstance(dossie_at, dict):
+            rs = dossie_at.get("resumo")
+            if isinstance(rs, list):
+                rs = " ".join(str(x) for x in rs)
+            resumo = _cap(rs, ATEND_TEXT_CAP)
+        if not resumo:
+            resumo = _cap(r.get("transcricao_resumo"), ATEND_TEXT_CAP)
+        if not resumo:
+            resumo = _cap(r.get("conteudo"), ATEND_TEXT_CAP)
+        if not resumo:
+            continue
+        data = _cap(r.get("data_registro"), 10)
+        subtipo = r.get("subtipo") or ""
+        tag = f"{tipo}/{subtipo}" if subtipo else tipo
+        line = f"- {data} [{tag}]: {resumo}"
+        enr = r.get("enrichment_data") or {}
+        kp = enr.get("key_points") if isinstance(enr, dict) else None
+        if isinstance(kp, list) and kp:
+            line += "\n  - pontos-chave: " + "; ".join(str(x) for x in kp[:MAX_KEY_POINTS])
+        atend_lines.append(line)
+        per_tipo[tipo] = per_tipo.get(tipo, 0) + 1
+        total += 1
+    if atend_lines:
+        parts.append("### Atendimentos (o que o assistido relatou)\n" + "\n".join(atend_lines))
+
+    # Análises anteriores (já normalizadas em {origem, resumo})
+    an_lines = []
+    for a in (analises or []):
+        resumo = _cap(a.get("resumo"), SECTION_TEXT_CAP)
+        if resumo:
+            an_lines.append(f"- ({a.get('origem', 'análise')}) {resumo}")
+    if an_lines:
+        parts.append("### Análises anteriores\n" + "\n".join(an_lines))
+
+    if not parts:
+        return ""
+    body = "## Dossiê do assistido (contexto além dos autos)\n\n" + "\n\n".join(parts)
+    if len(body) > MAX_DOSSIE_CHARS:
+        body = body[:MAX_DOSSIE_CHARS] + "\n\n[…dossiê truncado]"
+    return body
+
+
+def build_analise_autos_task(row: dict, demanda_id: int, created_by: int, dossie: str = "") -> dict:
     """Values da task lane=ai `analise-autos` (mesmo caminho do coworkAnalise),
-    com demandaId embutido p/ o fechamento de estado ser derivável na leitura."""
+    com demandaId embutido p/ o fechamento de estado ser derivável na leitura.
+    `dossie` (opcional) = contexto do assistido, concatenado ao prompt."""
+    prompt = f"Análise profunda dos autos — demanda {demanda_id}"
+    if dossie:
+        prompt += "\n\n" + dossie
     return {
         "assistido_id": row["assistido_id"],
         "processo_id": row["processo_id"],
         "skill": "analise-autos",
         "lane": "ai",
-        "prompt": f"Análise profunda dos autos — demanda {demanda_id}",
+        "prompt": prompt,
         "instrucao_adicional": json.dumps({"demandaId": demanda_id, "fonte": "fase2c"}),
         "status": "pending",
         "created_by": created_by,
