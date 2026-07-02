@@ -83,3 +83,4 @@ export * from "./ferias";
 export * from "./pedidos-administrativos";
 export * from "./ausencias";
 export * from "./diarias";
+export * from "./sentencas";

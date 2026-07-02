@@ -106,6 +106,7 @@ import { pedidosAdministrativosRouter } from "./pedidos-administrativos";
 import { ausenciasRouter } from "./ausencias";
 import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
+import { sentencasRouter } from "./sentencas";
 
 
 export const appRouter = router({
@@ -493,6 +494,10 @@ export const appRouter = router({
   // PAUTA — importação de pauta de audiências PJe (lane browser)
   // ==========================================
   pauta: pautaRouter,
+  // ==========================================
+  // SENTENÇAS (1º grau — persistência da análise IA)
+  // ==========================================
+  sentencas: sentencasRouter,
 });
 
 export type AppRouter = typeof appRouter;
