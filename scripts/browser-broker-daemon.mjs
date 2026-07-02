@@ -318,6 +318,19 @@ async function processTask(task) {
     return
   }
 
+  // Gate de skill DESCONHECIDA (ANTES do lock): um broker de servidor
+  // (não-interativo) rodando um checkout atrasado não conhece skills novas que o
+  // frontend em produção já enfileira. Se ele travasse o lock, marcaria a tarefa
+  // como 'failed' ("não registrada") ANTES de o broker atualizado (a máquina do
+  // defensor, interativa) poder pegá-la. Então: skill desconhecida + broker
+  // não-interativo → NÃO trava o lock, deixa p/ um broker que a conheça. Brokers
+  // interativos ainda reivindicam+falham skills desconhecidas (typo visível na
+  // máquina do defensor). Ver gotcha_browser_broker_two_daemon_race.
+  if (!preSkill.entry && !INTERACTIVE) {
+    console.log(`${LOG_PREFIX} Task ${task.id} (skill: ${task.skill}) desconhecida neste broker não-interativo — ignorando (deixa p/ um broker atualizado)`)
+    return
+  }
+
   console.log(`${LOG_PREFIX} Processing task ${task.id} (skill: ${task.skill})`)
 
   // Lock otimista — trava status E lane p/ não competir com o daemon de IA.

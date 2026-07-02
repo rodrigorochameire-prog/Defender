@@ -15,3 +15,17 @@ describe("browser-broker SKILL_REGISTRY — fase2c", () => {
     expect(src).toMatch(/--demanda-id/);
   });
 });
+
+describe("browser-broker gate — skill desconhecida num broker não-interativo", () => {
+  it("defere (retorna sem travar o lock) skill desconhecida quando !INTERACTIVE", () => {
+    // Guarda contra o bug do broker de servidor atrasado que reivindicava+falhava
+    // jobs de skills novas antes do broker atualizado pegar. Ver gotcha.
+    expect(src).toMatch(/if \(!preSkill\.entry && !INTERACTIVE\)/);
+  });
+  it("o defer acontece ANTES do lock otimista (update status=processing)", () => {
+    const gateIdx = src.indexOf("!preSkill.entry && !INTERACTIVE");
+    const lockIdx = src.indexOf("status: 'processing'");
+    expect(gateIdx).toBeGreaterThan(0);
+    expect(gateIdx).toBeLessThan(lockIdx);
+  });
+});
