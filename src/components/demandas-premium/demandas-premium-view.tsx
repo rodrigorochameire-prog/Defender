@@ -2490,7 +2490,6 @@ export default function Demandas() {
     }
     return { vencidas, hoje: hojeCnt, semana: semanaCnt, total: vencidas + hojeCnt + semanaCnt };
   }, [demandas]);
-  const [deadlineBannerDismissed, setDeadlineBannerDismissed] = useState(false);
 
   // Atribuição counts for pills
   const atribuicaoCounts = useMemo(() => {
@@ -2502,14 +2501,6 @@ export default function Demandas() {
     }
     return counts;
   }, [demandas]);
-
-  // Cor accent do icon-square baseada na atribuição ativa (echo visual com switcher)
-  const headerAccentHex = useMemo(() => {
-    if (selectedAtribuicoes.length === 1) {
-      return ATRIBUICAO_BORDER_COLORS[selectedAtribuicoes[0]] ?? null;
-    }
-    return null;
-  }, [selectedAtribuicoes]);
 
   // Contagem por tipo de processo dentro da atribuição/arquivado atual.
   // Base: respeita atribuição + arquivado, ignora o próprio tipoProcesso —
@@ -2793,7 +2784,7 @@ export default function Demandas() {
   // Controles ricos do header (GlassHeaderShell + HeaderActionsBar) — Task 1.
   // Movidos do antigo headerToolbarLeft/Right sem mudanças internas; a
   // visibilidade na barra passa a ser decidida por medição (overflow "…").
-  const mpuChip = (tipoProcessoCounts["MPU"] ?? 0) > 0 && (
+  const mpuChip = (
     <>
       <span className="hidden sm:block h-4 w-px bg-white/[0.10] shrink-0" aria-hidden />
       {(() => {
@@ -2868,230 +2859,12 @@ export default function Demandas() {
             ) : null;
           })()}
         </button>
-        {isFiltersDropdownOpen && createPortal(
-          <>
-            <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
-            <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[75vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
-              {/* ───── Visualização (tabs) ───── */}
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Visualização</div>
-              {DEMANDAS_VIEW_OPTIONS.map((opt) => {
-                const TabIcon = opt.icon;
-                const active = activeTab === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setActiveTab(opt.value as any); setIsFiltersDropdownOpen(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
-                      active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
-                    )}
-                  >
-                    {TabIcon && <TabIcon className={cn("w-3.5 h-3.5", active ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-500")} />}
-                    <span className="flex-1">{opt.label}</span>
-                    {active && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                  </button>
-                );
-              })}
-
-              {/* ───── Filtros de prazo / expedição / outros ───── */}
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 flex items-center justify-between">
-                <span>Filtrar por</span>
-                {pillFilters.size > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => clearPills()}
-                    className="text-[10px] normal-case font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
-                  >
-                    Limpar
-                  </button>
-                )}
-              </div>
-              {(["prazo", "expedicao", "outros"] as const).map((groupKey) => {
-                const groupItems = PILL_CONFIG.filter((p) => p.group === groupKey);
-                if (groupItems.length === 0) return null;
-                const groupLabel =
-                  groupKey === "prazo" ? "Por prazo" :
-                  groupKey === "expedicao" ? "Por expedição" : "Outros";
-                return (
-                  <div key={groupKey}>
-                    <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-300 dark:text-neutral-600">
-                      {groupLabel}
-                    </div>
-                    {groupItems.map(({ key, label }) => {
-                      const active = pillFilters.has(key);
-                      const count = pillCounts[key];
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => togglePill(key)}
-                          className={cn(
-                            "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
-                            active
-                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                              : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
-                                active
-                                  ? "bg-emerald-500 border-emerald-500 text-white"
-                                  : "border-neutral-300 dark:border-neutral-600",
-                              )}
-                            >
-                              {active && (
-                                <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="2 6 5 9 10 3" />
-                                </svg>
-                              )}
-                            </span>
-                            <span>{label}</span>
-                          </span>
-                          <span
-                            className={cn(
-                              "text-[11px] tabular-nums",
-                              active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
-                              count === 0 && "opacity-40",
-                            )}
-                          >
-                            {count}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-
-              {/* ───── Exportar ───── */}
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Exportar</div>
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); setIsExportModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Excel</span>
-              </button>
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); handleExportSheets(); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Google Sheets</span>
-              </button>
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); handleReorderSheets(); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Reordenar planilha</span>
-              </button>
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); setIsDuplicatesModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Copy className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Encontrar duplicatas</span>
-              </button>
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
-              <button
-                onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span className="flex-1">Apenas presos</span>
-                {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-              <button
-                onClick={() => setShowArchived(!showArchived)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Archive className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Ver arquivados</span>
-                {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-              <button
-                onClick={() => setShowColumnFilters(!showColumnFilters)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Filtros por coluna</span>
-                {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
-              <button
-                onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Recentes / Status</span>
-              </button>
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
-              <button
-                onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Layers className="w-3.5 h-3.5 text-blue-500" />
-                <span className="flex-1">Status</span>
-                {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-              <button
-                onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Layers className="w-3.5 h-3.5 text-violet-500" />
-                <span className="flex-1">Atribuição</span>
-                {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
-              {([
-                { value: "compact" as const, label: "Planilha", icon: List },
-                { value: "table" as const, label: "Tabela", icon: Table2 },
-                { value: "cards" as const, label: "Cards", icon: LayoutList },
-                { value: "grid" as const, label: "Grid", icon: LayoutGrid },
-              ] as const).map(({ value, label, icon: ModeIcon }) => (
-                <button
-                  key={value}
-                  onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-                >
-                  <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="flex-1">{label}</span>
-                  {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                </button>
-              ))}
-              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Gráficos</span>
-              </button>
-              <button
-                onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <Settings className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="flex-1">Configurações</span>
-              </button>
-            </div>
-          </>,
-          document.body
-        )}
-      </div>
+    </div>
   );
 
-  // Controle rico: botão Selecionar (só no Kanban) — guard de aba preservado.
-  const selecionarBtn = activeTab === "kanban" && (
+  // Controle rico: botão Selecionar. Guard de aba não fica mais aqui — a
+  // inclusão da action "selecionar" no array `headerActions` já é o guard.
+  const selecionarBtn = (
     <button
       type="button"
       onClick={() => isSelectMode ? handleExitSelectMode() : setIsSelectMode(true)}
@@ -3126,71 +2899,22 @@ export default function Demandas() {
       >
         <Download className="w-3.5 h-3.5" />
       </button>
-      {isImportDropdownOpen && createPortal(
-        <>
-          <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
-          <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
-            {/* Destaque — importação automática direto do PJe */}
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
-              style={{ width: "calc(100% - 0.5rem)" }}
-            >
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
-                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
-                </div>
-                <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto do Painel do Defensor</span>
-              </div>
-            </button>
-
-            <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-            <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5 text-neutral-400" />
-              <span>PJe (copiar/colar)</span>
-            </button>
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Excel</span>
-            </button>
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
-              <span>Google Sheets</span>
-            </button>
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-            >
-              <Gavel className="w-3.5 h-3.5 text-neutral-400" />
-              <span>SEEU</span>
-            </button>
-          </div>
-        </>,
-        document.body
-      )}
     </div>
   );
 
-  // Ações do header (barra + overflow "…") — Task 1
+  // Ações do header (barra + overflow "…") — Task 1.
+  // Actions que só fazem sentido condicionalmente (MPU, Selecionar) entram
+  // no array via spread condicional — a INCLUSÃO é o guard, não um `render`
+  // falsy (que o HeaderActionsBar tratava como "cai pro botão genérico").
   const headerActions: HeaderAction[] = [
-    { id: "mpu", label: "Filtro MPU", priority: 18, render: mpuChip },
+    ...((tipoProcessoCounts["MPU"] ?? 0) > 0
+      ? [{ id: "mpu", label: "Filtro MPU", priority: 18, render: mpuChip } as HeaderAction]
+      : []),
     { id: "search", label: "Buscar", icon: Search, priority: 25, render: searchControl, onSelect: () => setSearchOpen(true) },
     { id: "view-filters", label: "Exibição e filtros", icon: SlidersHorizontal, priority: 24, render: viewFilterMenu, onSelect: () => setIsFiltersDropdownOpen(true) },
-    { id: "selecionar", label: "Selecionar", priority: 15, render: selecionarBtn, onSelect: () => setIsSelectMode(true) },
+    ...(activeTab === "kanban"
+      ? [{ id: "selecionar", label: "Selecionar", priority: 15, render: selecionarBtn, onSelect: () => setIsSelectMode(true) } as HeaderAction]
+      : []),
     { id: "varredura", label: "Analisar triagem", icon: ScanSearch, priority: 30, hideLabel: true, onSelect: () => setIsVarreduraModalOpen(true) },
     { id: "importar", label: "Importar", icon: DownloadCloud, priority: 40, render: importControl, onSelect: () => setIsImportDropdownOpen(true) },
     { id: "nova", label: "Nova demanda", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => setIsCreateModalOpen(true) },
@@ -3247,9 +2971,29 @@ export default function Demandas() {
         title="Demandas"
         icon={ListTodo}
         stats={
-          <span className="text-[11px] text-white/55 tabular-nums leading-none">
-            {demandas.filter(d => !d.arquivado).length} total
-          </span>
+          <>
+            <span className="text-[11px] text-white/55 tabular-nums leading-none">
+              {demandas.filter(d => !d.arquivado).length} total
+            </span>
+            {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
+              <span
+                className="flex items-center gap-1 text-[11px] text-amber-300 tabular-nums leading-none"
+                title={`${deadlineStats.hoje + deadlineStats.semana} urgentes (hoje + 7 dias)`}
+              >
+                <span className="w-1 h-1 rounded-full bg-amber-300/70 shrink-0" />
+                <span className="font-medium">{deadlineStats.hoje + deadlineStats.semana}</span>
+              </span>
+            )}
+            {deadlineStats.vencidas > 0 && (
+              <span
+                className="flex items-center gap-1 text-[11px] text-rose-300 tabular-nums leading-none"
+                title={`${deadlineStats.vencidas} atrasadas`}
+              >
+                <span className="w-1 h-1 rounded-full bg-rose-300/70 shrink-0" />
+                <span className="font-medium">{deadlineStats.vencidas}</span>
+              </span>
+            )}
+          </>
         }
         filters={(collapsed) => (
           <AtribuicaoSwitchWell
@@ -3264,6 +3008,282 @@ export default function Demandas() {
         actions={<HeaderActionsBar actions={headerActions} />}
       />
 
+      {isFiltersDropdownOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
+          <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[75vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); if (!r || r.bottom < 0) return { top: 64, right: 16 }; return { top: r.bottom + 4, right: window.innerWidth - r.right }; })()}>
+            {/* ───── Visualização (tabs) ───── */}
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Visualização</div>
+            {DEMANDAS_VIEW_OPTIONS.map((opt) => {
+              const TabIcon = opt.icon;
+              const active = activeTab === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => { setActiveTab(opt.value as any); setIsFiltersDropdownOpen(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
+                    active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "hover:bg-neutral-50 dark:hover:bg-neutral-800",
+                  )}
+                >
+                  {TabIcon && <TabIcon className={cn("w-3.5 h-3.5", active ? "text-emerald-600 dark:text-emerald-400" : "text-neutral-500")} />}
+                  <span className="flex-1">{opt.label}</span>
+                  {active && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                </button>
+              );
+            })}
+
+            {/* ───── Filtros de prazo / expedição / outros ───── */}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400 flex items-center justify-between">
+              <span>Filtrar por</span>
+              {pillFilters.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => clearPills()}
+                  className="text-[10px] normal-case font-medium text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+            {(["prazo", "expedicao", "outros"] as const).map((groupKey) => {
+              const groupItems = PILL_CONFIG.filter((p) => p.group === groupKey);
+              if (groupItems.length === 0) return null;
+              const groupLabel =
+                groupKey === "prazo" ? "Por prazo" :
+                groupKey === "expedicao" ? "Por expedição" : "Outros";
+              return (
+                <div key={groupKey}>
+                  <div className="px-3 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-300 dark:text-neutral-600">
+                    {groupLabel}
+                  </div>
+                  {groupItems.map(({ key, label }) => {
+                    const active = pillFilters.has(key);
+                    const count = pillCounts[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => togglePill(key)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-[13px] cursor-pointer",
+                          active
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                            : "hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200",
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={cn(
+                              "w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors",
+                              active
+                                ? "bg-emerald-500 border-emerald-500 text-white"
+                                : "border-neutral-300 dark:border-neutral-600",
+                            )}
+                          >
+                            {active && (
+                              <svg viewBox="0 0 12 12" className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="2 6 5 9 10 3" />
+                              </svg>
+                            )}
+                          </span>
+                          <span>{label}</span>
+                        </span>
+                        <span
+                          className={cn(
+                            "text-[11px] tabular-nums",
+                            active ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-neutral-400",
+                            count === 0 && "opacity-40",
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+
+            {/* ───── Exportar ───── */}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Exportar</div>
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); setIsExportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Upload className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Excel</span>
+            </button>
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); handleExportSheets(); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Google Sheets</span>
+            </button>
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); handleReorderSheets(); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Reordenar planilha</span>
+            </button>
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); setIsDuplicatesModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Copy className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Encontrar duplicatas</span>
+            </button>
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Filtros</div>
+            <button
+              onClick={() => setSelectedEstadoPrisional(selectedEstadoPrisional === "preso" ? null : "preso")}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="flex-1">Apenas presos</span>
+              {selectedEstadoPrisional === "preso" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Archive className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Ver arquivados</span>
+              {showArchived && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            <button
+              onClick={() => setShowColumnFilters(!showColumnFilters)}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Filtros por coluna</span>
+              {showColumnFilters && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Ordenar</div>
+            <button
+              onClick={() => setSortStack(prev => [{ column: prev[0]?.column === "recentes" ? "status" : "recentes", direction: "asc" }])}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <ArrowUpDown className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Recentes / Status</span>
+            </button>
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Agrupar por</div>
+            <button
+              onClick={() => setGroupBy(groupBy === "status" ? null : "status")}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Layers className="w-3.5 h-3.5 text-blue-500" />
+              <span className="flex-1">Status</span>
+              {groupBy === "status" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            <button
+              onClick={() => setGroupBy(groupBy === "atribuicao" ? null : "atribuicao")}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Layers className="w-3.5 h-3.5 text-violet-500" />
+              <span className="flex-1">Atribuição</span>
+              {groupBy === "atribuicao" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+            </button>
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Modo de exibição</div>
+            {([
+              { value: "compact" as const, label: "Planilha", icon: List },
+              { value: "table" as const, label: "Tabela", icon: Table2 },
+              { value: "cards" as const, label: "Cards", icon: LayoutList },
+              { value: "grid" as const, label: "Grid", icon: LayoutGrid },
+            ] as const).map(({ value, label, icon: ModeIcon }) => (
+              <button
+                key={value}
+                onClick={() => { setViewMode(value); localStorage.setItem("defender_demandas_view_mode", value); }}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              >
+                <ModeIcon className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="flex-1">{label}</span>
+                {viewMode === value && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              </button>
+            ))}
+            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); setIsChartConfigModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Gráficos</span>
+            </button>
+            <button
+              onClick={() => { setIsFiltersDropdownOpen(false); setIsAdminConfigModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="flex-1">Configurações</span>
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
+      {isImportDropdownOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
+          <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); if (!r || r.bottom < 0) return { top: 64, right: 16 }; return { top: r.bottom + 4, right: window.innerWidth - r.right }; })()}>
+            {/* Destaque — importação automática direto do PJe */}
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              style={{ width: "calc(100% - 0.5rem)" }}
+            >
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
+                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
+                </div>
+                <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto do Painel do Defensor</span>
+              </div>
+            </button>
+
+            <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+            <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsPJeImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-neutral-400" />
+              <span>PJe (copiar/colar)</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Excel</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsSheetsImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Google Sheets</span>
+            </button>
+            <button
+              onClick={() => { setIsImportDropdownOpen(false); setIsSEEUImportModalOpen(true); }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+            >
+              <Gavel className="w-3.5 h-3.5 text-neutral-400" />
+              <span>SEEU</span>
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
 
       {/* Conteúdo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-2 md:space-y-3">

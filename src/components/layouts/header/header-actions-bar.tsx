@@ -49,7 +49,7 @@ const OVERFLOW_RESERVE = 40; // largura do botão "…" + gap
 const ITEM_GAP_PX = 6; // = gap-1.5 usado no container visível e na régua de medição
 
 function BarButton({ action }: { action: HeaderAction }) {
-  if (action.render) return <>{action.render}</>;
+  if ("render" in action) return action.render ? <>{action.render}</> : null;
   const Icon = action.icon;
   return (
     <button
