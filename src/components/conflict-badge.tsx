@@ -36,7 +36,7 @@ export function ConflictBadge() {
           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[11px] font-medium text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           title={`${count} conflito${count > 1 ? "s" : ""} de sincronização`}
         >
-          <AlertTriangle className="h-3 w-3 text-orange-500/80" />
+          <AlertTriangle className="h-3 w-3 opacity-60" />
           <span className="tabular-nums">{count}</span>
         </button>
       </DialogTrigger>
