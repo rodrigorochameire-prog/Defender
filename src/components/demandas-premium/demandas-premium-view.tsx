@@ -3283,41 +3283,35 @@ export default function Demandas() {
       {isImportDropdownOpen && createPortal(
         <>
           <div className="fixed inset-0 z-[9998]" onClick={() => setIsImportDropdownOpen(false)} />
-          <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); if (!r || r.bottom < 0) return { top: 64, right: 16 }; return { top: r.bottom + 4, right: window.innerWidth - r.right }; })()}>
-            {/* Destaque — importação automática direto do PJe */}
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
-              style={{ width: "calc(100% - 0.5rem)" }}
-            >
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
-                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
+          <div className="fixed z-[9999] w-64 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1.5" style={(() => { const r = importBtnRef.current?.getBoundingClientRect(); if (!r || r.bottom < 0) return { top: 64, right: 16 }; return { top: r.bottom + 4, right: window.innerWidth - r.right }; })()}>
+            {/* Automático — busca direta nos sistemas (recomendado) */}
+            <div className="px-3 pt-0.5 pb-1 text-[9px] font-semibold uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">Automático</div>
+            <div className="mx-1.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/25 ring-1 ring-emerald-500/15 overflow-hidden divide-y divide-emerald-500/10">
+              <button
+                onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesImportOpen(true); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <DownloadCloud className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto do Painel do Defensor</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesSEEUOpen(true); }}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 mx-1 mt-1 rounded-lg text-left bg-emerald-50/80 dark:bg-emerald-950/30 ring-1 ring-emerald-500/20 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
-              style={{ width: "calc(100% - 0.5rem)" }}
-            >
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <Gavel className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações SEEU (Execução Penal)</span>
-                  <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-px rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">auto</span>
+                <div className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do PJe</span>
+                  <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Painel do Defensor</span>
                 </div>
-                <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Busca direto da Mesa do Defensor (SEEU)</span>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={() => { setIsImportDropdownOpen(false); setIsIntimacoesSEEUOpen(true); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <Gavel className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">Intimações do SEEU</span>
+                  <span className="block text-[10px] text-neutral-400 dark:text-neutral-500 truncate">Execução Penal · Mesa do Defensor</span>
+                </div>
+              </button>
+            </div>
 
             <div className="my-1.5 mx-3 h-px bg-neutral-200/60 dark:bg-neutral-800/60" />
             <div className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Manual</div>
@@ -3347,7 +3341,7 @@ export default function Demandas() {
               className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
             >
               <Gavel className="w-3.5 h-3.5 text-neutral-400" />
-              <span>SEEU</span>
+              <span>SEEU (copiar/colar)</span>
             </button>
           </div>
         </>,
