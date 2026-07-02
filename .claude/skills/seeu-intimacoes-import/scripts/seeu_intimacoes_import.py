@@ -188,6 +188,29 @@ def _split_blocos_por_processo(texto_tabela: str) -> list[tuple[int, str, str]]:
     return blocos
 
 
+# Tabela sem itens (caso usual das Pendências de Incidentes).
+_TABELA_VAZIA_RE = re.compile(r"nenhum registro|não há|nao ha|sem pend[êe]ncias", re.IGNORECASE)
+
+
+def parse_pendencias(texto: str) -> list:
+    """Parser DEFENSIVO da aba Pendências de Incidentes (layout distinto e raro).
+    Tenta o padrão Seq→CNJ das outras abas; se não casar mas houver conteúdo real,
+    devolve UM item cru (seq=None, cnj=None) para não perder o incidente; tabela
+    vazia → []. Nunca lança.
+    Retorna list[tuple[int|None, str|None, str]] = (seq, cnj, bloco)."""
+    t = (texto or "").strip()
+    if not t or _TABELA_VAZIA_RE.search(t):
+        return []
+    try:
+        blocos = _split_blocos_por_processo(t)
+    except Exception:
+        blocos = []
+    if blocos:
+        return blocos
+    # Conteúdo fora do padrão conhecido → captura defensiva (1 item cru).
+    return [(None, None, t)]
+
+
 # ─── Scraper assíncrono por aba (Playwright — importado lazily) ─────────────
 
 async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status_cb):
