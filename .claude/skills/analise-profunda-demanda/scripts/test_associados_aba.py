@@ -20,6 +20,8 @@ def main():
     a = by.get("8003770-53.2025.8.05.0039")
     if not a or a["classe"] != "AuPrFl" or a["tipo"] != "Dependência" or a["assunto"] != "Feminicídio":
         print(f"FAIL AuPrFl: {a}"); f += 1
+    if not a or a.get("sigilo"):
+        print(f"FAIL AuPrFl não deveria ser sigiloso: {a}"); f += 1
     sig = by.get("8004193-13.2025.8.05.0039")
     if not sig or sig["classe"] != "" or not sig["sigilo"]:
         print(f"FAIL sigiloso (classe deve ser '' e sigilo True): {sig}"); f += 1

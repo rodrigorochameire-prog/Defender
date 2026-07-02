@@ -98,7 +98,8 @@ def parse_associados_panel(panel_text: str, cnj_principal: str = "") -> list:
                 b = min(b, j)
         seg = txt[a:b]
         seen = set()
-        for m in CNJ_RE.finditer(seg):
+        matches = list(CNJ_RE.finditer(seg))
+        for k, m in enumerate(matches):
             cnj = m.group(0)
             dig = re.sub(r"\D", "", cnj)
             if dig == principal or dig in seen:
@@ -113,7 +114,8 @@ def parse_associados_panel(panel_text: str, cnj_principal: str = "") -> list:
             after = linha[m.end() - ls:]
             am = re.search(r"-\s*(.+)", after)
             assunto = am.group(1).strip() if am else ""
-            bloco = seg[m.start():m.start() + 250]
+            entry_end = matches[k + 1].start() if k + 1 < len(matches) else len(seg)
+            bloco = seg[m.start():entry_end]
             out.append({
                 "cnj": cnj, "tipo": sec, "classe": classe, "assunto": assunto,
                 "sigilo": "sigilos" in bloco.lower(), "comarca": dig[16:20],
