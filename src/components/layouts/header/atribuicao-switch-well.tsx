@@ -58,7 +58,9 @@ export function AtribuicaoSwitchWell({
   const isAll = active.length === 0;
   const first = active[0];
   const ActiveIcon = first ? (ATRIBUICAO_PILL_ICONS[first.label] ?? LayoutGrid) : LayoutGrid;
-  const activeHex = first ? getAtribuicaoHex(first.label) : undefined;
+  // Cor só com UMA atribuição ativa — multi-seleção fica neutra (a cor de
+  // uma não revela as outras; feedback do usuário no mobile).
+  const activeHex = first && active.length === 1 ? getAtribuicaoHex(first.label) : undefined;
 
   return (
     <DropdownMenu>
