@@ -56,7 +56,15 @@ Sigiloso:
 ## 4. Design (componentes) — em `.claude/skills/analise-profunda-demanda/scripts/`
 
 ### 4.1 `parse_associados_panel(panel_text, cnj_principal) -> list[dict]` (PURO, testável)
-Divide o texto do painel pelas 4 seções (`Dependência`/`Prevenção`/`Desmembramento`/`Vinculação Direta`); em cada, para cada CNJ (≠ principal): extrai `classe` (token antes do CNJ), `assunto` (após " - "), `sigilo` (regex "sigilos" próximo), `data` ("Distribuído em: …"), `tipo`=label do accordion. Retorna `[{cnj, tipo, classe, assunto, sigilo, comarca}]` (comarca = os 4 dígitos finais do CNJ). Nunca lança.
+Divide o texto do painel pelas 4 seções (`Dependência`/`Prevenção`/`Desmembramento`/`Vinculação Direta`). **Dentro de cada seção, quebra em BLOCOS por entrada** (grupos separados por linhas em branco / terminando na linha `<Tipo> (<status>)`) — NÃO usar lookback de N chars (vaza pra entrada anterior). Por bloco:
+- `cnj`: o 1º CNJ do bloco (≠ principal). **Dedup por dígitos, por seção** (`dict.fromkeys`) — Edimilson lista o mesmo CNJ 2× (Pendente/Prevento).
+- `classe`: a palavra **imediatamente antes do CNJ na MESMA linha**; se o CNJ inicia a linha (caso **sigiloso**), `classe=""`. (Corrige o bug do lookback que dava `classe="(Pendente)"` no sigiloso.)
+- `assunto`: após " - " na linha do CNJ.
+- `sigilo`: `True` se "sigilos" no bloco.
+- `tipo`: o label do accordion.
+- `comarca`: os 4 dígitos finais do CNJ.
+
+Fixtures reais (`fixtures/painel_francisco.txt`, `painel_edimilson.txt`) cobrem: classe-antes-do-CNJ (AuPrFl/IP/APri/RelPri), classe-depois-das-partes (Desmembramento "Juri"), sigiloso (classe=""), CNJ duplicado (dedup), comarca 0001 vs 0039, seção vazia ("0 resultados"). Retorna `[]` p/ painel vazio. Nunca lança.
 
 ### 4.2 `cnj_dv_ok(cnj) -> bool` (PURO) — dígito verificador CNJ (mod-97).
 
@@ -68,10 +76,13 @@ Divide o texto do painel pelas 4 seções (`Dependência`/`Prevenção`/`Desmemb
 ### 4.4 `merge_relacionados(aba, texto_cnjs, cnj_principal) -> list[dict]` (PURO)
 União: começa da aba (fonte primária, com metadados); adiciona os CNJs do texto que não estão na aba como `{cnj, fonte:'texto', tipo:'citado', classe:'', ...}`; dedup por dígitos; DV+classificação em todos; ordena (aba antes de texto, baixáveis antes). Exclui o principal.
 
-### 4.5 `read_associados_aba(ctx, cnj) -> list[dict]` (BROWSER — live-validated; nunca lança)
-Porta a lógica validada do `diag_associados2.py`: nova página → `get_ca` → `listProcessoCompleto.seam` → click `navbar:linkAbaAssociados` → expande os 4 accordions → pega o innerText → `parse_associados_panel`. try/except → `[]`. Fecha a página no fim.
+### 4.5 `read_associados_aba(cnj) -> list[dict]` (BROWSER SÍNCRONO — live-validated; nunca lança)
+**Mantém a lógica SÍNCRONA validada** do `diag_associados2.py` (evita re-validar uma port async). Abre a **própria** conexão CDP: `sync_playwright().connect_over_cdp("http://127.0.0.1:9222")` → `_pick_pje_page` → `pd.get_ca(ctx, page, cnj)` (sync, já existe) → `goto(listProcessoCompleto.seam?id=&ca=)` → click `#navbar:linkAbaAssociados` → expande os 4 headers `.rich-stglpanel-header` → `innerText` → `parse_associados_panel`. **NÃO usa o `ctx` do worker** (própria conexão) — some com o problema de ctx morto. try/except → `[]`. Fecha a página.
+
+**Chamada do worker (async):** como o worker roda em loop asyncio e `sync_playwright()` não pode rodar dentro do loop, chamar via **`await asyncio.to_thread(read_associados_aba, cnj)`** (thread sem loop → sync ok). Reusa código já validado ao vivo, sem port async.
 
 ### 4.6 `format_dossie(..., relacionados=None)` — nova seção classificada
+**Coexistência com 2a:** o param `associados` (2a) e seus 5 testes **ficam INTOCADOS** (critério §7.6). Adiciona-se um param NOVO `relacionados: list = None`. O worker passa `relacionados` (a união classificada, que já inclui os CNJs do texto que a 2a extraía) e **para de passar `associados`**. A seção de `associados` (2a) fica no código p/ compat de teste, mas é superada pela de `relacionados`.
 Renderiza (se houver): `### Processos relacionados citados/associados`:
 ```
 - [Dependência/AuPrFl] 8003770-53.2025.8.05.0039 — Feminicídio (1º grau)
@@ -80,19 +91,21 @@ Renderiza (se houver): `### Processos relacionados citados/associados`:
 ```
 (Substitui a seção crua de "associados" da 2a por esta classificada.)
 
-### 4.7 Wire no `main_async` (ramo PJe, após o download)
+### 4.7 Wire no `main_async` — INSIDE o ramo PJe (reusa o texto já extraído; guarda SEEU)
+No ramo PJe (`else`, não-SEEU), já existe (2a, ~L467) `associados = extrair_associados_autos(pdf_path, cnj)`. **Reusar** esse resultado (não re-extrair). Logo depois, ainda no `else`:
 ```python
-relacionados = []
-try:
-    aba = read_associados_aba(ctx, cnj)                 # browser
-    texto = extrair_associados_autos(pdf_path, cnj)     # 2a (já existe)
-    relacionados = merge_relacionados(aba, texto, cnj)
-except Exception:
-    relacionados = []
-...
-dossie = build_dossie_assistido(sb, row["assistido_id"], relacionados=relacionados)
+    associados = extrair_associados_autos(pdf_path, cnj)   # 2a, já existe (texto)
+    try:
+        aba = await asyncio.to_thread(read_associados_aba, cnj)   # aba (sync em thread)
+    except Exception:
+        aba = []
+    relacionados = merge_relacionados(aba, associados, cnj)
 ```
-(EP/SEEU: `relacionados=[]`.)
+Fora dos ramos (comum, ~L476), inicializar `relacionados = []` cedo (cobre SEEU, que não entra no `else`). Na chamada (~L476):
+```python
+    dossie = build_dossie_assistido(sb, row["assistido_id"], relacionados=relacionados)
+```
+(EP/SEEU: `relacionados` fica `[]` — não lê aba nem texto. `associados` do 2a deixa de ser passado.)
 
 ## 5. Tratamento de erro
 - Cada função browser/parse em try/except → `[]`. A Fase 2c nunca quebra. Se a aba falhar, cai só no texto; se ambos falharem, dossiê sem a seção.
@@ -114,6 +127,7 @@ dossie = build_dossie_assistido(sb, row["assistido_id"], relacionados=relacionad
 6. Testes existentes verdes; `ast.parse` ok. Sem migração/daemon/skill.
 
 ## 8. Deferidos
+- **Verificação viva da integração no worker:** o leitor isolado foi validado ao vivo (5 casos). O uso DENTRO da Fase 2c abre uma 2ª conexão CDP (sync, em thread) enquanto a do worker (async) está aberta — CDP aceita múltiplos clientes, mas o leitor deve usar **página própria** (não sequestrar a do download); confirmar ao vivo num run real da Fase 2c.
 - **2b:** baixar os `baixavel=True` (não-sigilosos, 1º grau) via o fluxo de download (fila Área de Download) + roteamento no Drive.
 - Verificação viva end-to-end da Fase 2c com a aba integrada (a leitura da aba já foi validada isolada).
 - Polir o parser de partes/data (não essencial p/ o dossiê).
