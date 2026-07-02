@@ -67,6 +67,7 @@ import { useOfflineQuery } from "@/hooks/use-offline-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import { onlyDigits, formatCnj, isValidCnj } from "@/lib/format/cnj";
 import { PrazoCockpitBar } from "./PrazoCockpitBar";
+import { IntimacoesImportCard } from "./IntimacoesImportCard";
 import { ActiveFiltersBar } from "./ActiveFiltersBar";
 import { buildActiveFilterChips } from "./active-filters";
 import { DemandasEmptyState } from "./DemandasEmptyState";
@@ -3802,6 +3803,9 @@ export default function Demandas() {
                 );
               })}
             </div>
+
+            {/* Intimações importadas — série semanal (ledger PJe) */}
+            <IntimacoesImportCard />
 
             {/* Infográficos */}
             {selectedCharts.length > 0 && (
