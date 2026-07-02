@@ -48,6 +48,7 @@ import { STATUS_GROUPS, DEMANDA_STATUS } from "@/config/demanda-status";
 import { calcularPrazo, prazoTextoCurto } from "@/lib/prazo";
 import { AssistidoAvatar } from "@/components/demandas-premium/assistido-avatar";
 import { CopyProcessButton } from "@/components/demandas-premium/CopyProcessButton";
+import { copyToClipboard as copyProcNumero } from "@/lib/clipboard";
 import { StatusPipelineSelector } from "@/components/demandas-premium/StatusPipelineSelector";
 import { InlineDropdown } from "@/components/shared/inline-dropdown";
 
@@ -331,9 +332,9 @@ export function DemandaCard({
                     <InlineDropdown
                       value={demanda.ato}
                       displayValue={
-                        <span className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1">
+                        <span className="text-base font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1">
                           {demanda.ato || <span className="opacity-60 italic normal-case">Definir ato</span>}
-                          <Edit className="w-3 h-3 opacity-50" />
+                          <Edit className="w-3.5 h-3.5 opacity-50" />
                         </span>
                       }
                       options={atoOptions.filter((ato) => ato.value !== "Todos")}
@@ -342,7 +343,7 @@ export function DemandaCard({
                     />
                   </div>
                 ) : (
-                  <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                  <p className="text-base font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide">
                     {demanda.ato}
                   </p>
                 )}
@@ -358,8 +359,8 @@ export function DemandaCard({
             {/* Atribuição */}
             {AtribuicaoIcon && (
               <div className="flex items-center gap-2 p-2.5 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg">
-                <AtribuicaoIcon className={`w-4 h-4 ${atribuicaoColors[demanda.atribuicao]} flex-shrink-0`} />
-                <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 truncate">
+                <AtribuicaoIcon className={`w-5 h-5 ${atribuicaoColors[demanda.atribuicao]} flex-shrink-0`} />
+                <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
                   {demanda.atribuicao}
                 </span>
               </div>
@@ -377,7 +378,7 @@ export function DemandaCard({
                     ? "text-emerald-500 dark:text-emerald-400"
                     : "text-neutral-400 dark:text-neutral-500"
                 }`} />
-                <span className={`text-xs font-medium ${
+                <span className={`text-sm font-semibold ${
                   prazoInfo.cor === "red"
                     ? "text-red-600 dark:text-red-400"
                     : prazoInfo.cor === "amber"
@@ -405,9 +406,14 @@ export function DemandaCard({
                 <span className="inline-flex items-center px-2 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-xs font-bold text-neutral-700 dark:text-neutral-300 flex-shrink-0">
                   {proc.tipo}
                 </span>
-                <p className="text-xs font-mono text-muted-foreground truncate flex-1 min-w-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); copyProcNumero(proc.numero); }}
+                  title="Tocar para copiar o número"
+                  className="text-sm font-mono text-muted-foreground truncate flex-1 min-w-0 text-left active:text-emerald-600 dark:active:text-emerald-400 cursor-pointer"
+                >
                   {proc.numero}
-                </p>
+                </button>
                 <CopyProcessButton processo={proc.numero} />
               </div>
             ))}
