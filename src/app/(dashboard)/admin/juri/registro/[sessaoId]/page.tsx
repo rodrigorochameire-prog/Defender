@@ -34,7 +34,8 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import Link from "next/link";
 import { format } from "date-fns";
 import { trpc } from "@/lib/trpc/client";
@@ -1427,27 +1428,26 @@ export default function RegistroPage({
 
   const assistidoNome = registro.assistidoNome || registro.processo?.assistido?.nome || "Reu";
 
+  const headerActions: HeaderAction[] = [
+    { id: "back", label: "Voltar", icon: ArrowLeft, priority: 40, hideLabel: true, onSelect: () => router.push("/admin/juri") },
+    {
+      id: "step-indicator",
+      label: "Progresso",
+      priority: Infinity,
+      render: <StepIndicator current={step} />,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Registro de Sessão" icon={FileEdit}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/admin/juri">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-            </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <FileEdit className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Registro de Sessão</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">{assistidoNome}</p>
-            </div>
-          </div>
-          <StepIndicator current={step} />
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Registro de Sessão"
+        icon={FileEdit}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">{assistidoNome}</span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Content */}
       <div className="px-5 md:px-8 py-3 md:py-4 max-w-4xl mx-auto">

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { useParams, useRouter } from "next/navigation";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { trpc } from "@/lib/trpc/client";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -193,8 +193,9 @@ const initialArgumentos = {
 
 export default function AvaliacaoJuriPage() {
   const params = useParams();
+  const router = useRouter();
   const sessaoId = params.sessaoId;
-  
+
   const [activeTab, setActiveTab] = useState("contexto");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -522,34 +523,35 @@ export default function AvaliacaoJuriPage() {
     }));
   };
 
+  const headerActions: HeaderAction[] = [
+    { id: "back", label: "Voltar", icon: ArrowLeft, priority: 40, hideLabel: true, onSelect: () => router.push("/admin/juri/avaliacao") },
+    {
+      id: "salvar",
+      label: "Salvar",
+      priority: 50,
+      render: (
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+        >
+          <Save className="h-3.5 w-3.5" />
+          {isSaving ? "Salvando..." : "Salvar"}
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Avaliação do Júri" icon={ClipboardCheck}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/admin/juri/avaliacao">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-            </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <ClipboardCheck className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Avaliação do Júri</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">Formulário de observação comportamental</p>
-            </div>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
-          >
-            <Save className="h-3.5 w-3.5" />
-            {isSaving ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Avaliação do Júri"
+        icon={ClipboardCheck}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">Formulário de observação comportamental</span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 

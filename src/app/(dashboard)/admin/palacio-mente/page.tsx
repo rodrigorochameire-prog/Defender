@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -267,156 +268,162 @@ export default function PalacioMentePage() {
 
   const casoSelecionado = casos?.find(c => c.id.toString() === selectedCasoId);
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "seletor-caso",
+      label: "Selecionar caso",
+      priority: 30,
+      render: (
+        <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
+          <SelectTrigger className="w-[220px] h-8 text-[11px] bg-white/[0.08] text-white border-white/[0.12] hover:bg-white/[0.14] focus:ring-0">
+            <SelectValue placeholder="Selecione um caso..." />
+          </SelectTrigger>
+          <SelectContent>
+            {casos?.map((caso) => (
+              <SelectItem key={caso.id} value={caso.id.toString()}>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{caso.titulo}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {caso.fase || "ativo"}
+                  </Badge>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+    },
+    {
+      id: "novo-diagrama",
+      label: "Novo Diagrama",
+      priority: Infinity,
+      render: (
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <button
+              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+              disabled={!selectedCasoId}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Novo Diagrama</span>
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Criar Novo Diagrama</DialogTitle>
+              <DialogDescription>
+                Escolha o tipo de diagrama para visualizar o caso
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              {/* Título */}
+              <div className="grid gap-2">
+                <Label htmlFor="titulo">Título do Diagrama</Label>
+                <Input
+                  id="titulo"
+                  value={novoDiagrama.titulo}
+                  onChange={(e) => setNovoDiagrama(prev => ({ ...prev, titulo: e.target.value }))}
+                  placeholder="Ex: Cronologia dos Fatos"
+                  className="bg-white dark:bg-muted"
+                />
+              </div>
+
+              {/* Descrição */}
+              <div className="grid gap-2">
+                <Label htmlFor="descricao">Descrição (opcional)</Label>
+                <Textarea
+                  id="descricao"
+                  value={novoDiagrama.descricao}
+                  onChange={(e) => setNovoDiagrama(prev => ({ ...prev, descricao: e.target.value }))}
+                  placeholder="Descreva o propósito deste diagrama..."
+                  className="bg-white dark:bg-muted min-h-[80px]"
+                />
+              </div>
+
+              {/* Tipo de Diagrama */}
+              <div className="grid gap-2">
+                <Label>Tipo de Diagrama</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIPOS_DIAGRAMA.map((tipo) => {
+                    const Icon = tipo.icon;
+                    const isSelected = novoDiagrama.tipo === tipo.id;
+                    return (
+                      <button
+                        key={tipo.id}
+                        type="button"
+                        onClick={() => setNovoDiagrama(prev => ({ ...prev, tipo: tipo.id }))}
+                        className={cn(
+                          "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
+                          isSelected
+                            ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                            : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-neutral-600"
+                        )}
+                      >
+                        <div className={cn(
+                          "p-1.5 rounded-md",
+                          isSelected
+                            ? "bg-purple-500 text-white"
+                            : "bg-neutral-100 dark:bg-muted text-neutral-600 dark:text-muted-foreground"
+                        )}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(
+                            "text-sm font-medium",
+                            isSelected ? "text-purple-700 dark:text-purple-300" : "text-neutral-700 dark:text-foreground/80"
+                          )}>
+                            {tipo.label}
+                          </p>
+                          <p className="text-xs text-neutral-500 dark:text-muted-foreground truncate">
+                            {tipo.descricao}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateDiagrama}
+                disabled={!novoDiagrama.titulo.trim() || createMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Diagrama
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Palácio da Mente" icon={Brain}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Brain className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Palácio da Mente</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">Visualize e conecte as peças do quebra-cabeça</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Seletor de Caso */}
-            <Select value={selectedCasoId} onValueChange={setSelectedCasoId}>
-              <SelectTrigger className="w-[220px] h-8 text-[11px] bg-white/[0.08] text-white border-white/[0.12] hover:bg-white/[0.14] focus:ring-0">
-                <SelectValue placeholder="Selecione um caso..." />
-              </SelectTrigger>
-              <SelectContent>
-                {casos?.map((caso) => (
-                  <SelectItem key={caso.id} value={caso.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{caso.titulo}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {caso.fase || "ativo"}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Botão Criar Diagrama */}
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <button
-                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
-                  disabled={!selectedCasoId}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Novo Diagrama</span>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Diagrama</DialogTitle>
-                  <DialogDescription>
-                    Escolha o tipo de diagrama para visualizar o caso
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="grid gap-4 py-4">
-                  {/* Título */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="titulo">Título do Diagrama</Label>
-                    <Input
-                      id="titulo"
-                      value={novoDiagrama.titulo}
-                      onChange={(e) => setNovoDiagrama(prev => ({ ...prev, titulo: e.target.value }))}
-                      placeholder="Ex: Cronologia dos Fatos"
-                      className="bg-white dark:bg-muted"
-                    />
-                  </div>
-
-                  {/* Descrição */}
-                  <div className="grid gap-2">
-                    <Label htmlFor="descricao">Descrição (opcional)</Label>
-                    <Textarea
-                      id="descricao"
-                      value={novoDiagrama.descricao}
-                      onChange={(e) => setNovoDiagrama(prev => ({ ...prev, descricao: e.target.value }))}
-                      placeholder="Descreva o propósito deste diagrama..."
-                      className="bg-white dark:bg-muted min-h-[80px]"
-                    />
-                  </div>
-
-                  {/* Tipo de Diagrama */}
-                  <div className="grid gap-2">
-                    <Label>Tipo de Diagrama</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {TIPOS_DIAGRAMA.map((tipo) => {
-                        const Icon = tipo.icon;
-                        const isSelected = novoDiagrama.tipo === tipo.id;
-                        return (
-                          <button
-                            key={tipo.id}
-                            type="button"
-                            onClick={() => setNovoDiagrama(prev => ({ ...prev, tipo: tipo.id }))}
-                            className={cn(
-                              "flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all",
-                              isSelected
-                                ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                                : "border-neutral-200 dark:border-border hover:border-neutral-300 dark:hover:border-neutral-600"
-                            )}
-                          >
-                            <div className={cn(
-                              "p-1.5 rounded-md",
-                              isSelected
-                                ? "bg-purple-500 text-white"
-                                : "bg-neutral-100 dark:bg-muted text-neutral-600 dark:text-muted-foreground"
-                            )}>
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className={cn(
-                                "text-sm font-medium",
-                                isSelected ? "text-purple-700 dark:text-purple-300" : "text-neutral-700 dark:text-foreground/80"
-                              )}>
-                                {tipo.label}
-                              </p>
-                              <p className="text-xs text-neutral-500 dark:text-muted-foreground truncate">
-                                {tipo.descricao}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleCreateDiagrama}
-                    disabled={!novoDiagrama.titulo.trim() || createMutation.isPending}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {createMutation.isPending ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Criando...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Criar Diagrama
-                      </>
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Palácio da Mente"
+        icon={Brain}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">Visualize e conecte as peças do quebra-cabeça</span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Conteúdo Principal */}
       <div className="px-5 md:px-8 py-3 md:py-4">
