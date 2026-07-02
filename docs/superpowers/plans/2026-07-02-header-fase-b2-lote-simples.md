@@ -43,3 +43,8 @@ Receita por página simples:
 ## Fora do lote (B3)
 
 18 páginas complexas (bottomRow/collapsed*/seamless/HeaderSlotTitle), `EntityPageHeader`, dedupe do título de Assistidos, remoção do `CollapsiblePageHeader`/`HeaderSlotTitle`/tokens `HEADER_STYLE`.
+
+## Adendo (pós-reviews)
+
+- Botões "voltar" usam `HeaderAction + onSelect: () => router.push(...)` (idioma estabelecido nos lotes) — a regra "Links vão em render" vale para links de conteúdo (Templates, Abrir Drive etc.), não para navegação de retorno.
+- `variant: "primary"` é inerte em actions com `render` (o render estiliza) — usar só como documentação de intenção nesses casos.
