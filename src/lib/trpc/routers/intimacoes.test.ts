@@ -2,10 +2,10 @@ import { describe, it, expect } from "vitest";
 import { buildJobMeta } from "./intimacoes";
 
 describe("buildJobMeta", () => {
-  it("defaults limit to 80 and keeps selected atribuições", () => {
+  it("defaults limit to 500 and keeps selected atribuições", () => {
     const m = buildJobMeta({ atribuicoes: ["VVD_CAMACARI", "JURI_CAMACARI"] });
     expect(m.atribuicoes).toEqual(["VVD_CAMACARI", "JURI_CAMACARI"]);
-    expect(m.limit).toBe(80);
+    expect(m.limit).toBe(500);
     expect(m.since).toBeUndefined();
   });
   it("passes through interval and limit", () => {
