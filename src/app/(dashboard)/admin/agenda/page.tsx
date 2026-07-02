@@ -596,6 +596,9 @@ export default function AgendaPage() {
   // riscados/foscos para conferência. Ficam sempre gravados no banco/detalhe.
   const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(false);
   const isMobile = useIsMobile();
+  // No celular as grades de mês/semana (7-8 colunas) viram slivers ilegíveis —
+  // usa sempre a visão em lista (agenda vertical). Desktop mantém a escolha.
+  const effectiveViewMode = isMobile ? "list" : viewMode;
   // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
   const [showPastEventsInList, setShowPastEventsInList] = useState(false);
 
@@ -2034,7 +2037,7 @@ export default function AgendaPage() {
       {/* Visualização padrão (calendário, semana ou lista) */}
       {!selectedPeriodo && (
         <>
-          {viewMode === "calendar" ? (
+          {effectiveViewMode === "calendar" ? (
             <div className="flex-1 min-h-0 flex flex-col pb-4">
               <CalendarMonthView
                 eventos={eventosFiltrados}
@@ -2055,7 +2058,7 @@ export default function AgendaPage() {
                 headerRight={calendarHeaderRight}
               />
             </div>
-          ) : viewMode === "week" ? (
+          ) : effectiveViewMode === "week" ? (
             <div className="flex-1 min-h-0 overflow-y-auto">
               <CalendarWeekView
                 eventos={eventosFiltrados}
