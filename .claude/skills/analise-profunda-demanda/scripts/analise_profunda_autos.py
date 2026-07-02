@@ -39,6 +39,8 @@ MAX_REGISTROS = 40
 MAX_POR_TIPO = 3
 MAX_SECTIONS = 30
 MAX_KEY_POINTS = 5
+MAX_MIDIAS = 10
+MIDIA_TEXT_CAP = 1200
 
 CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 MAX_ASSOCIADOS = 30
@@ -78,7 +80,7 @@ def _cap(s, n):
     return s[:n] if len(s) > n else s
 
 
-def format_dossie(sections: list, registros: list, analises: list, associados: list = None) -> str:
+def format_dossie(sections: list, registros: list, analises: list, associados: list = None, midias: list = None) -> str:
     """Monta um bloco markdown COMPACTO (só resumos, capados) com o contexto
     do assistido além dos autos. Retorna '' se não houver nada. Função pura."""
     parts = []
@@ -132,6 +134,22 @@ def format_dossie(sections: list, registros: list, analises: list, associados: l
     if atend_lines:
         parts.append("### Atendimentos (o que o assistido relatou)\n" + "\n".join(atend_lines))
 
+    # Mídias (áudio/vídeo já transcrito) — resumo preferido, senão transcrição capada
+    midia_lines = []
+    for m in (midias or [])[:MAX_MIDIAS]:
+        enr = m.get("enrichment_data") or {}
+        resumo = ""
+        if isinstance(enr, dict):
+            resumo = _cap(enr.get("summary"), MIDIA_TEXT_CAP)
+            if not resumo:
+                resumo = _cap(enr.get("transcript_plain") or enr.get("transcript"), MIDIA_TEXT_CAP)
+        if not resumo:
+            continue
+        nome = m.get("name") or "mídia"
+        midia_lines.append(f"- **{nome}**: {resumo}")
+    if midia_lines:
+        parts.append("### Mídias (áudio/vídeo transcrito)\n" + "\n".join(midia_lines))
+
     # Análises anteriores (já normalizadas em {origem, resumo})
     an_lines = []
     for a in (analises or []):
@@ -175,12 +193,20 @@ def _norm_analises(assistido_rows, processo_rows, registro_rows) -> list:
 
 
 def fetch_dossie_data(sb, assistido_id: int):
-    """GETs PostgREST (select= explícito). Retorna (sections, registros, analises)."""
+    """GETs PostgREST (select= explícito). Retorna (sections, registros, analises, midias)."""
     aid = int(assistido_id)
     sections = sb._req(
         "GET",
         f"/rest/v1/drive_document_sections?select=tipo,titulo,resumo,texto_extraido,review_status,drive_files!inner(assistido_id)"
         f"&drive_files.assistido_id=eq.{aid}&review_status=neq.rejected&order=updated_at.desc&limit=30",
+    ) or []
+    # Mídias do assistido (áudio/vídeo) já transcritas — resumo/transcrição vivem
+    # em drive_files.enrichment_data (jsonb). Filtra por mime_type de mídia.
+    midias = sb._req(
+        "GET",
+        f"/rest/v1/drive_files?select=name,mime_type,enrichment_data"
+        f"&assistido_id=eq.{aid}&or=(mime_type.like.audio*,mime_type.like.video*)"
+        f"&order=last_modified_time.desc&limit=20",
     ) or []
     registros = sb._req(
         "GET",
@@ -194,7 +220,7 @@ def fetch_dossie_data(sb, assistido_id: int):
         f"/rest/v1/registros?select=enrichment_data,data_registro&assistido_id=eq.{aid}&tipo=eq.analise&order=data_registro.desc&limit=10",
     ) or []
     analises = _norm_analises(a_rows, p_rows, an_rows)
-    return sections, registros, analises
+    return sections, registros, analises, midias
 
 
 def build_dossie_assistido(sb, assistido_id, associados: list = None) -> str:
@@ -203,10 +229,10 @@ def build_dossie_assistido(sb, assistido_id, associados: list = None) -> str:
     try:
         if not assistido_id and not associados:
             return ""
-        sections, registros, analises = ([], [], [])
+        sections, registros, analises, midias = ([], [], [], [])
         if assistido_id:
-            sections, registros, analises = fetch_dossie_data(sb, assistido_id)
-        return format_dossie(sections, registros, analises, associados=associados)
+            sections, registros, analises, midias = fetch_dossie_data(sb, assistido_id)
+        return format_dossie(sections, registros, analises, associados=associados, midias=midias)
     except Exception:
         return ""
 

@@ -159,6 +159,43 @@ def main():
     finally:
         vt_mod.extract_pdf_text = _orig
 
+    # === C2 fatia 4: mídias ===
+    MIDIA_TEXT_CAP = ns["MIDIA_TEXT_CAP"]
+    MAX_MIDIAS = ns["MAX_MIDIAS"]
+    # 17. seção mídias; summary tem prioridade sobre transcript_plain
+    mids = [{"name": "audiencia.mp4", "mime_type": "video/mp4",
+             "enrichment_data": {"summary": "vítima confirma agressão", "transcript_plain": "T-LONGA"}}]
+    dm = format_dossie([], [], [], midias=mids)
+    if "Mídias (áudio/vídeo transcrito)" not in dm or "audiencia.mp4" not in dm or "vítima confirma agressão" not in dm:
+        print("FAIL format_dossie seção mídias"); f += 1
+    if "T-LONGA" in dm:
+        print("FAIL mídias: summary deveria ter prioridade sobre transcript_plain"); f += 1
+    # 18. sem summary → transcript_plain capado
+    mids2 = [{"name": "call.m4a", "mime_type": "audio/mp4",
+              "enrichment_data": {"transcript_plain": "z" * 3000}}]
+    dm2 = format_dossie([], [], [], midias=mids2)
+    if ("z" * MIDIA_TEXT_CAP) not in dm2 or ("z" * (MIDIA_TEXT_CAP + 1)) in dm2:
+        print("FAIL mídias transcript_plain cap"); f += 1
+    # 19. mídia sem texto ignorada; None → sem seção
+    if "Mídias" in format_dossie([], [], [], midias=[{"name": "x.mp4", "enrichment_data": {}}]):
+        print("FAIL mídia sem texto deveria ser ignorada"); f += 1
+    if "Mídias" in format_dossie([], [], [], midias=None):
+        print("FAIL midias None → sem seção"); f += 1
+    # 20. cap MAX_MIDIAS
+    manym = [{"name": f"m{i}.mp3", "enrichment_data": {"summary": f"resumo m {i}"}} for i in range(20)]
+    if format_dossie([], [], [], midias=manym).count("resumo m ") > MAX_MIDIAS:
+        print(f"FAIL MAX_MIDIAS excedido"); f += 1
+    # 21. build_dossie_assistido puxa mídias do drive_files
+    class MidiaSB:
+        def _req(self, method, path):
+            if "drive_files?" in path and "mime_type.like" in path:
+                return [{"name": "dep.mp4", "mime_type": "video/mp4",
+                         "enrichment_data": {"summary": "depoimento gravado"}}]
+            return []
+    dmb = build_dossie(MidiaSB(), 7)
+    if "depoimento gravado" not in dmb or "dep.mp4" not in dmb:
+        print("FAIL build_dossie não puxou mídias"); f += 1
+
     print("OK" if not f else f"{f} FALHAS")
     sys.exit(1 if f else 0)
 
