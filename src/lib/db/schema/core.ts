@@ -381,6 +381,10 @@ export const demandas = pgTable("demandas", {
   // (browser enquanto baixando_autos; ai depois de enfileirada a análise).
   analiseProfundaStatus: varchar("analise_profunda_status", { length: 20 }),
   analiseProfundaTaskId: integer("analise_profunda_task_id"),
+  // Fase 2c.2/B — rascunho de peça guiado por linhas mestras.
+  rascunhoStatus: varchar("rascunho_status", { length: 20 }),
+  rascunhoTaskId: integer("rascunho_task_id"),
+  rascunhoDriveUrl: text("rascunho_drive_url"),
 }, (table) => [
   index("demandas_processo_id_idx").on(table.processoId),
   index("demandas_assistido_id_idx").on(table.assistidoId),
