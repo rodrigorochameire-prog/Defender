@@ -57,7 +57,7 @@ export function FloatingDock() {
             "ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
           )}
         >
-          {/* Feedback — sempre presente */}
+          {/* Feedback — sempre presente (inclusive no mobile) */}
           <DockButton
             icon={feedbackOpen ? X : MessageSquarePlus}
             label={feedbackOpen ? "Fechar feedback" : "Enviar feedback"}
@@ -65,26 +65,30 @@ export function FloatingDock() {
             onClick={() => setFeedbackOpen((v) => !v)}
           />
 
-          {!hideDemandas && (
-            <>
-              <div className="mx-2 h-px bg-neutral-200/80 dark:bg-neutral-700/60" />
-              <DockButton
-                icon={ListTodo}
-                label="Demandas"
-                onClick={() => setActive("demandas")}
-              />
-            </>
-          )}
-          {!hideAgenda && (
-            <>
-              <div className="mx-2 h-px bg-neutral-200/80 dark:bg-neutral-700/60" />
-              <DockButton
-                icon={Calendar}
-                label="Agenda"
-                onClick={() => setActive("agenda")}
-              />
-            </>
-          )}
+          {/* Agenda/Demandas — só no desktop: no mobile são redundantes com a
+              bottom nav e sobrepunham os cards (decisão do #331 mobile-leftovers). */}
+          <div className="hidden md:flex md:flex-col md:items-stretch md:gap-0.5">
+            {!hideDemandas && (
+              <>
+                <div className="mx-2 h-px bg-neutral-200/80 dark:bg-neutral-700/60" />
+                <DockButton
+                  icon={ListTodo}
+                  label="Demandas"
+                  onClick={() => setActive("demandas")}
+                />
+              </>
+            )}
+            {!hideAgenda && (
+              <>
+                <div className="mx-2 h-px bg-neutral-200/80 dark:bg-neutral-700/60" />
+                <DockButton
+                  icon={Calendar}
+                  label="Agenda"
+                  onClick={() => setActive("agenda")}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
