@@ -8,30 +8,27 @@ import { DriveContentArea } from "@/components/drive/DriveContentArea";
 import { DriveDetailPanel } from "@/components/drive/DriveDetailPanel";
 import { DriveCommandPalette } from "@/components/drive/DriveCommandPalette";
 import { useKeyboardShortcuts } from "@/components/drive/useKeyboardShortcuts";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 
 function DrivePageInner() {
   const { detailPanelFileId } = useDriveContext();
   useKeyboardShortcuts();
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-4rem)] bg-neutral-50 dark:bg-[#0f0f11]">
-      {/* Padrão Defender v5 seamless — título na utility bar, ações + status no bottomRow.
-          DriveTopBar (row2 + row1-actions) compartilha state via React Query dedup. */}
-      <HeaderSlotTitle
-        icon={FolderOpen}
-        title="Drive"
-        stats={<span className="text-white/55">7ª Regional · Camaçari</span>}
-      />
-
-      <CollapsiblePageHeader
+    <div className="flex flex-col h-[calc(100dvh-4rem)] bg-neutral-50 dark:bg-background">
+      {/* Header rico (Lote D) — DriveTopBar mantido como bloco único no `actions`
+          do shell (decisão documentada no report: dissolução total em
+          HeaderAction[] arriscaria regressão, DriveTopBar já tem responsividade
+          e overflow próprios — SyncHealthDot, OverflowMenu, busca expansível).
+          row2 (status/contadores/busca/view toggle) + row1-actions (Processar/
+          Upload/Nova Pasta/Overflow) seguem intocados, só remontados aqui. */}
+      <GlassHeaderShell
         title="Drive"
         icon={FolderOpen}
-        seamless
-        bottomRow={
-          <div className="flex items-center justify-between gap-3 min-w-0">
-            <div className="flex-1 min-w-0">
+        stats={<span className="text-white/55 text-[11px] hidden sm:inline whitespace-nowrap">7ª Regional · Camaçari</span>}
+        actions={
+          <div className="flex items-center justify-end gap-3 min-w-0 flex-1">
+            <div className="flex-1 min-w-0 max-w-xl">
               <DriveTopBar variant="row2" />
             </div>
             <DriveTopBar variant="row1-actions" />

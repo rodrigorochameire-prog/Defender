@@ -23,7 +23,6 @@ import {
 import { getAtosPorAtribuicao } from "@/config/atos-por-atribuicao";
 import { DEMANDA_STATUS, isStatusConcluido } from "@/config/demanda-status";
 import { getAtribuicaoColors, ATRIBUICAO_OPTIONS, areaMatchesFilter } from "@/lib/config/atribuicoes";
-import { AtribuicaoPills } from "@/components/demandas-premium/AtribuicaoPills";
 import { toast } from "sonner";
 import {
   Users,
@@ -98,9 +97,9 @@ import {
 // Avatar removido — busca agora usa dots de atribuição
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { KpisSection } from "@/components/dashboard/kpis-section";
 import { AnimatePresence } from "motion/react";
 import { trpc } from "@/lib/trpc/client";
@@ -836,77 +835,66 @@ export default function DashboardJuriPage() {
   // DASHBOARD PRINCIPAL (Defensores)
   // ==========================================
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // HeaderSlotTitle (total+venceHoje+vencidos) e collapsedStats (contagem
+  // "N demandas" não-arquivadas) duplicavam o total de demandas em dois
+  // formatos — mantido só o formato rico (com prazos) em `stats`. AtribuicaoPills
+  // (bottomRow) já tinha o shape 1:1 de AtribuicaoSwitchWell (onToggle/onClear/
+  // counts) — migrado direto. O branch "all"/"Todas" do onToggle era morto
+  // (atribuicaoOptions nunca inclui esses valores) — removido na migração.
+  const headerStats = (
+    <span className="text-white/55 text-[11px] ml-1.5">
+      <span className="text-white/85 font-semibold tabular-nums">{demandasFiltradas.length}</span>
+      <span className="text-white/40"> · </span>
+      <span className="tabular-nums">{estatisticasPrazos.venceHoje}</span>
+      <span className="text-white/40"> hoje · </span>
+      <span className="tabular-nums">{estatisticasPrazos.vencidos}</span>
+      <span className="text-white/40"> vencidas</span>
+    </span>
+  );
+
+  const kpisBtn = (
+    <button
+      onClick={toggleKpis}
+      title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
+      className={cn(
+        "h-9 md:h-8 px-2.5 rounded-lg text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
+        showKpis ? "bg-emerald-600 hover:bg-emerald-700" : "bg-emerald-500 hover:bg-emerald-600",
+      )}
+    >
+      <BarChart3 className="w-3.5 h-3.5" />
+      KPIs
+    </button>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "kpis", label: "KPIs", icon: BarChart3, priority: Infinity, render: kpisBtn, onSelect: toggleKpis },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
 
-      <HeaderSlotTitle
-        icon={LayoutDashboard}
-        title="Dashboard"
-        stats={
-          <span className="text-white/55">
-            <span className="text-white/85 font-semibold tabular-nums">{demandasFiltradas.length}</span>
-            <span className="text-white/40"> · </span>
-            <span className="tabular-nums">{estatisticasPrazos.venceHoje}</span>
-            <span className="text-white/40"> hoje · </span>
-            <span className="tabular-nums">{estatisticasPrazos.vencidos}</span>
-            <span className="text-white/40"> vencidas</span>
-          </span>
-        }
-      />
-
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Dashboard"
         icon={LayoutDashboard}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
-            {demandasFiltradas.filter((d: any) => !d.arquivado).length} demandas
-          </span>
-        }
-        seamless
-        bottomRow={
-          <div className="flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0 overflow-x-auto scrollbar-none">
-              <AtribuicaoPills
-                variant="dark"
-                options={atribuicaoOptions}
-                selectedValues={dashboardAreaFilter.length > 0 ? dashboardAreaFilter : ["all"]}
-                onToggle={(value) => {
-                  if (value === "all" || value === "Todas") {
-                    setDashboardAreaFilter([]);
-                  } else {
-                    setDashboardAreaFilter(prev => {
-                      if (prev.includes(value)) {
-                        const next = prev.filter(v => v !== value);
-                        return next;
-                      }
-                      return [...prev, value];
-                    });
-                  }
-                }}
-                onClear={() => setDashboardAreaFilter([])}
-                iconOnly
-                counts={Object.fromEntries(
-                  atribuicaoOptions
-                    .filter(o => o.value !== "all" && o.value !== "Todas")
-                    .map(o => [o.label, demandas.filter((d: any) => !d.arquivado && areaMatchesFilter(d.processo?.atribuicao, o.value)).length])
-                )}
-              />
-            </div>
-            <button
-              onClick={toggleKpis}
-              title={showKpis ? "Ocultar KPIs" : "Mostrar KPIs"}
-              className={cn(
-                "h-7 px-2.5 rounded-lg text-white shadow-sm transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0",
-                showKpis
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-emerald-500 hover:bg-emerald-600",
-              )}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              KPIs
-            </button>
-          </div>
-        }
+        stats={headerStats}
+        filters={(collapsed) => (
+          <AtribuicaoSwitchWell
+            collapsed={collapsed}
+            options={atribuicaoOptions}
+            selectedValues={dashboardAreaFilter}
+            onToggle={(value) => {
+              setDashboardAreaFilter(prev =>
+                prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+              );
+            }}
+            onClear={() => setDashboardAreaFilter([])}
+            counts={Object.fromEntries(
+              atribuicaoOptions.map(o => [o.label, demandas.filter((d: any) => !d.arquivado && areaMatchesFilter(d.processo?.atribuicao, o.value)).length])
+            )}
+          />
+        )}
+        actions={<HeaderActionsBar actions={headerActions} />}
       />
 
       {/* CONTEÚDO PRINCIPAL */}

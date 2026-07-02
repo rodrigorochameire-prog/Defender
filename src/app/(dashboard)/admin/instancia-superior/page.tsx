@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { Landmark, Plus, Layers, BarChart3, Scale, Building2 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
-import { ACCENT, TIPO_LABELS, STATUS_CONFIG, DIMENSOES, type Dimensao } from "@/components/instancia-superior/ds";
-import { subtituloDoModo, type EscopoModo } from "@/components/instancia-superior/logic";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { TIPO_LABELS, STATUS_CONFIG, DIMENSOES, type Dimensao } from "@/components/instancia-superior/ds";
+import { type EscopoModo } from "@/components/instancia-superior/logic";
 import { DarkEscopoSwitch, DarkTribunalPills } from "@/components/instancia-superior/header-controls";
 import { SuperiorKpiRow } from "@/components/instancia-superior/kpi-strip";
 import { CarteiraActiveFilters, type FilterChipItem } from "@/components/instancia-superior/carteira-active-filters";
@@ -98,105 +98,72 @@ export default function InstanciaSuperiorPage() {
     dimFilter && { id: "dim", label: `${DIMENSOES.find(d => d.key === dimFilter.dimensao)?.label} · ${dimFilter.valor}`, onRemove: () => setDimFilter(null) },
   ].filter(Boolean) as FilterChipItem[];
 
-  // ── Faixa A — Contexto (Row 1 do charcoal): subtítulo por modo + escopo ──
-  const headerContext = (
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-[12px] text-white/65 leading-snug truncate">
-          {subtituloDoModo(effectiveModo)}
-        </p>
-      </div>
-      {podeInstitucional && (
-        <span className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] ring-1 ring-white/[0.06] px-2 py-1 text-[10px] font-medium text-white/70">
-          <span className={cn("w-1.5 h-1.5 rounded-full", effectiveModo === "todos" ? "bg-slate-400/80" : "bg-emerald-400/70")} />
-          {effectiveModo === "todos" ? "Visão institucional" : "Meus recursos"}
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // HeaderSlotTitle (total+pendentes+emPauta) e o badge de collapsedStats
+  // (mesmo `stats.total`, formato "N recursos") duplicavam o total — mantido
+  // só o formato rico do HeaderSlotTitle em `stats`. accentHex (ACCENT) não
+  // tem equivalente no shell ainda — perdido/deferido ao Lote E. O subtítulo
+  // descritivo (subtituloDoModo) + badge "Visão institucional/Meus recursos"
+  // (headerContext, Row 1) não têm slot equivalente — removidos sem
+  // substituto (mesmo padrão de perda documentado em admin/vvd na Lote C);
+  // o estado do escopo já fica visível no próprio DarkEscopoSwitch abaixo.
+  const headerStats = (
+    <span className="flex items-center gap-2 text-[11px] ml-1.5">
+      <span className="text-white/85 font-semibold tabular-nums">{stats?.total ?? 0}</span>
+      {(stats?.pendentes ?? 0) > 0 && (
+        <span className="flex items-center gap-1 text-white/55" title={`${stats?.pendentes} pendentes`}>
+          <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
+          <span className="font-medium tabular-nums">{stats?.pendentes}</span>
         </span>
       )}
-    </div>
+      {(stats?.emPauta ?? 0) > 0 && (
+        <span className="flex items-center gap-1 text-orange-300/80" title={`${stats?.emPauta} em pauta`}>
+          <span className="w-1 h-1 rounded-full bg-orange-400/50 shrink-0" />
+          <span className="font-medium tabular-nums">{stats?.emPauta}</span>
+        </span>
+      )}
+    </span>
   );
 
-  // ── Toolbar (vive no bottomRow do charcoal header — padrão Demandas) ──
-  const headerBottomRow = (
-    <div className="flex items-center justify-between gap-3">
-      {/* Left: tabs + tribunal */}
-      <div className="flex items-center gap-2 min-w-0 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-0.5 shrink-0">
-          {visibleTabs.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer shrink-0",
-                tab === t.key ? "bg-white/90 text-neutral-800 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
-              )}
-            >
-              <t.icon className="w-3 h-3" />
-              {t.label}
-              {t.key === "recursos" && (
-                <span className={cn("tabular-nums text-[10px]", tab === t.key ? "text-neutral-500" : "text-white/40")}>{total}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <span className="h-4 w-px bg-white/[0.10] shrink-0" aria-hidden />
-
-        <DarkTribunalPills value={tribunal} onChange={setTribunal} porTribunal={stats?.porTribunal as any[] | undefined} />
-      </div>
-
-      {/* Right: escopo + novo */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {podeInstitucional && <DarkEscopoSwitch value={escopoModo} onChange={changeEscopo} />}
+  // Tabs → HeaderAction render, priority Infinity (navegação primária, nunca colapsa).
+  const tabsControl = (
+    <div className="flex items-center gap-0.5 shrink-0">
+      {visibleTabs.map(t => (
         <button
-          onClick={() => setCreateOpen(true)}
-          title="Novo recurso"
-          className="h-7 pl-2 pr-2.5 rounded-lg bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center gap-1 text-[11px] font-medium shrink-0"
+          key={t.key}
+          onClick={() => setTab(t.key)}
+          className={cn(
+            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer shrink-0",
+            tab === t.key ? "bg-white/90 text-neutral-800 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+          )}
         >
-          <Plus className="w-3.5 h-3.5" />
-          Novo
+          <t.icon className="w-3 h-3" />
+          {t.label}
+          {t.key === "recursos" && (
+            <span className={cn("tabular-nums text-[10px]", tab === t.key ? "text-neutral-500" : "text-white/40")}>{total}</span>
+          )}
         </button>
-      </div>
+      ))}
     </div>
   );
+
+  const headerActions: HeaderAction[] = [
+    { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
+    ...(podeInstitucional
+      ? [{ id: "escopo", label: "Escopo", priority: Infinity, render: <DarkEscopoSwitch value={escopoModo} onChange={changeEscopo} /> }]
+      : []),
+    { id: "novo", label: "Novo recurso", icon: Plus, priority: Infinity, variant: "primary" as const, onSelect: () => setCreateOpen(true) },
+  ];
 
   return (
-    <div className="w-full min-h-screen bg-[#f5f5f5] dark:bg-[#0f0f11]">
-      <HeaderSlotTitle
-        icon={Landmark}
+    <div className="w-full min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="Instância Superior"
-        accentHex={ACCENT}
-        stats={
-          <>
-            <span className="text-white/85 font-semibold">{stats?.total ?? 0}</span>
-            {(stats?.pendentes ?? 0) > 0 && (
-              <span className="flex items-center gap-1 text-white/55" title={`${stats?.pendentes} pendentes`}>
-                <span className="w-1 h-1 rounded-full bg-white/40 shrink-0" />
-                <span className="font-medium">{stats?.pendentes}</span>
-              </span>
-            )}
-            {(stats?.emPauta ?? 0) > 0 && (
-              <span className="flex items-center gap-1 text-orange-300/80" title={`${stats?.emPauta} em pauta`}>
-                <span className="w-1 h-1 rounded-full bg-orange-400/50 shrink-0" />
-                <span className="font-medium">{stats?.emPauta}</span>
-              </span>
-            )}
-          </>
-        }
+        icon={Landmark}
+        stats={headerStats}
+        filters={<DarkTribunalPills value={tribunal} onChange={setTribunal} porTribunal={stats?.porTribunal as any[] | undefined} />}
+        actions={<HeaderActionsBar actions={headerActions} />}
       />
-
-      <CollapsiblePageHeader
-        title="Instância Superior"
-        icon={Landmark}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-            {stats?.total ?? 0} recursos
-          </span>
-        }
-        bottomRow={headerBottomRow}
-        seamless
-      >
-        {headerContext}
-      </CollapsiblePageHeader>
 
       {/* Conteúdo */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-3">
