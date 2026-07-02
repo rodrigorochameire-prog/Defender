@@ -1007,8 +1007,10 @@ export default function AssistidosPage() {
     { id: "analytics", label: "Analytics", priority: 20, render: analyticsToggle, onSelect: () => setActiveTab(activeTab === "analytics" ? "lista" : "analytics") },
     { id: "search", label: "Buscar", icon: Search, priority: 25, render: searchControl },
     { id: "quick-filters", label: "Filtros rápidos", priority: 18, render: quickFilters },
+    // Infinity: a barra de batch é um MODO ativo (contador + Exportar + sair) —
+    // nunca pode colapsar pro "…" no meio de uma exportação.
     ...(batchSelectMode
-      ? [{ id: "batch", label: "Exportação em lote", priority: 17, render: batchBar } as HeaderAction]
+      ? [{ id: "batch", label: "Exportação em lote", priority: Infinity, render: batchBar } as HeaderAction]
       : []),
     { id: "ferramentas", label: "Filtros e ferramentas", icon: SlidersHorizontal, priority: 30, render: ferramentasMenu, onSelect: () => setIsOverflowOpen(true) },
     { id: "novo", label: "Novo", priority: Infinity, render: novoCta },
