@@ -54,7 +54,7 @@ acertar `processoNumero` e `seq` — a chave de dedup.
 python3 seeu_intimacoes_import.py \
   --job-id 42 \
   --atribuicoes EXECUCAO_PENAL \
-  --abas manifestacao,ciencia,razoes \
+  --abas manifestacao,ciencia,razoes,pendencias \
   [--modo cdp] \
   [--limit 300]
 ```
@@ -63,7 +63,7 @@ python3 seeu_intimacoes_import.py \
 |-----------|-------------|-----------|
 | `--job-id` | sim | ID do registro `claude_code_tasks` que monitora este job |
 | `--atribuicoes` | não | Atribuição gravada em staging (default: `EXECUCAO_PENAL`) — só a primeira do CSV é usada |
-| `--abas` | não | CSV de abas suportadas (default: `manifestacao,ciencia,razoes`) |
+| `--abas` | não | CSV de abas suportadas (default: `manifestacao,ciencia,razoes,pendencias`). `pendencias` = Pendências de Incidentes (fluxo próprio: itera o `<select>` de Juízo; geralmente vazia) |
 | `--limit` | não | Máximo de expedientes capturados no total (default: 300) |
 | `--modo` | não | Só `cdp` (SEEU exige login manual via Keycloak) |
 
