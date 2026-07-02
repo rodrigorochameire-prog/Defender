@@ -59,6 +59,17 @@ def associados_from_text(text: str, cnj_principal: str = "") -> list:
     return [c for c in extract_cnjs(text) if _cnj_digits(c) != main]
 
 
+def extrair_associados_autos(pdf_path, cnj_principal: str = "") -> list:
+    """Extrai CNJs de associados do TEXTO dos autos (pdftotext). Nunca levanta."""
+    try:
+        if not pdf_path:
+            return []
+        texto = vt.extract_pdf_text(pdf_path)
+        return associados_from_text(texto or "", cnj_principal)
+    except Exception:
+        return []
+
+
 def _cap(s, n):
     s = (s or "")
     if not isinstance(s, str):
@@ -380,6 +391,7 @@ async def main_async(meta: dict) -> dict:
         # Roteamento da fonte de autos (2b): EXECUCAO_PENAL vem do SEEU; o resto
         # (Júri/VVD/Criminal) do PJe. Determina se tocamos ou não o PJe SSO.
         fonte = sa.escolhe_fonte_autos(atribuicao)
+        associados = []
 
         async with vt.async_playwright() as p:
             # Conexão CDP inline — mesmo padrão de varredura() (não há um
@@ -426,6 +438,8 @@ async def main_async(meta: dict) -> dict:
                     sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
                     return {"ok": False, "erro": "autos não baixados (sigilo/sem link)"}
 
+                associados = extrair_associados_autos(pdf_path, cnj)
+
         # 3. organiza no Drive (distribuir-autos por CNJ → <assistido>/Autos/).
         distribuido = (
             _distribuir_autos_multiplos(pdf_paths, cnj) if fonte == "seeu"
@@ -433,7 +447,7 @@ async def main_async(meta: dict) -> dict:
         )
 
         # 4. enfileira a análise (lane ai) + estado analisando.
-        dossie = build_dossie_assistido(sb, row["assistido_id"])
+        dossie = build_dossie_assistido(sb, row["assistido_id"], associados=associados)
         task = build_analise_autos_task(
             {"assistido_id": row["assistido_id"], "processo_id": row["processo_id"]},
             demanda_id=demanda_id, created_by=meta["defensor_id"], dossie=dossie,

@@ -138,6 +138,27 @@ def main():
     d2 = build_dossie(EmptySB(), 7, associados=["8000002-22.2026.8.05.0039"])
     if "Processos associados/conexos" not in d2:
         print("FAIL build_dossie não repassou associados"); f += 1
+    # 16. extrair_associados_autos: monkeypatch vt.extract_pdf_text
+    extrair = ns["extrair_associados_autos"]
+    vt_mod = ns["vt"]
+    principal2 = "8000010-11.2026.8.05.0039"
+    _orig = vt_mod.extract_pdf_text
+    try:
+        vt_mod.extract_pdf_text = lambda p: f"Processo referência: {principal2}. Assoc 8000011-22.2026.8.05.0039"
+        r = extrair("/tmp/qualquer.pdf", principal2)
+        if r != ["8000011-22.2026.8.05.0039"]:
+            print(f"FAIL extrair_associados_autos: {r}"); f += 1
+        # levanta → [] (engolido)
+        def _boom(p): raise RuntimeError("x")
+        vt_mod.extract_pdf_text = _boom
+        if extrair("/tmp/qualquer.pdf", principal2) != []:
+            print("FAIL extrair deveria engolir erro"); f += 1
+        # pdf_path vazio → []
+        if extrair("", principal2) != []:
+            print("FAIL extrair pdf_path vazio → []"); f += 1
+    finally:
+        vt_mod.extract_pdf_text = _orig
+
     print("OK" if not f else f"{f} FALHAS")
     sys.exit(1 if f else 0)
 
