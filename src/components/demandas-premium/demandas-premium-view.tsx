@@ -3,6 +3,7 @@
 
 import { cn } from "@/lib/utils";
 import { useVarreduraJob } from "@/hooks/use-varredura-job";
+import { useAnaliseProfundaJob } from "@/hooks/use-analise-profunda-job";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
@@ -888,6 +889,10 @@ export default function Demandas() {
   // Gate inclui isPending (mutação em voo) além de isRunning (job já criado),
   // senão um duplo-clique rápido dispara dois jobs antes de isRunning virar true.
   const analisando = isRunning || isPending;
+
+  // Análise Profunda (Fase 2c) — baixa autos + análise completa. Instanciado
+  // uma vez no nível da view, igual ao useVarreduraJob acima.
+  const ap = useAnaliseProfundaJob();
 
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
@@ -3845,6 +3850,8 @@ export default function Demandas() {
               onAtoChange={handleAtoChange}
               onAnalisar={(id) => analisar([id])}
               analisando={analisando}
+              onAnaliseProfunda={(id) => ap.iniciar(id)}
+              analiseProfundaAtiva={ap.isRunning}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}

@@ -106,6 +106,7 @@ import { pedidosAdministrativosRouter } from "./pedidos-administrativos";
 import { ausenciasRouter } from "./ausencias";
 import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
+import { analiseProfundaRouter } from "./analise-profunda";
 
 
 export const appRouter = router({
@@ -493,6 +494,10 @@ export const appRouter = router({
   // PAUTA — importação de pauta de audiências PJe (lane browser)
   // ==========================================
   pauta: pautaRouter,
+  // ==========================================
+  // ANALISE PROFUNDA — Fase 2c (autos → análise por demanda, lane browser)
+  // ==========================================
+  analiseProfunda: analiseProfundaRouter,
 });
 
 export type AppRouter = typeof appRouter;

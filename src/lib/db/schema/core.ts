@@ -376,6 +376,11 @@ export const demandas = pgTable("demandas", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   syncedAt: timestamp("synced_at"),
   analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
+  // Fase 2c — pipeline de análise profunda por demanda (autos→análise).
+  // baixando_autos → analisando → concluida | erro. taskId aponta a task CORRENTE
+  // (browser enquanto baixando_autos; ai depois de enfileirada a análise).
+  analiseProfundaStatus: varchar("analise_profunda_status", { length: 20 }),
+  analiseProfundaTaskId: integer("analise_profunda_task_id"),
 }, (table) => [
   index("demandas_processo_id_idx").on(table.processoId),
   index("demandas_assistido_id_idx").on(table.assistidoId),
