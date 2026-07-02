@@ -79,43 +79,6 @@ export const CARD_STYLE = {
 } as const;
 
 // ============================================
-// HEADER (v5 — cinza neutro, luminâncias harmonizadas)
-// ============================================
-// Hue HSL 240 2% — imperceptível, mantém o caráter de "cinza puro" que o usuário
-// prefere (sem azulado). Luminâncias ajustadas: sidebar (l=25) mais próxima do utility
-// (l=28), com Row 1 (l=26) entre as duas. Bordas white/[0.08] e shell shadow garantem
-// aresta crisp sem precisar de hue shift.
-
-export const HEADER_STYLE = {
-  /** Page Header — card
-   *  Light: HSL 240 2% 28% (#464649) — alinhado com o utility row (mesmo cinza)
-   *  Dark:  HSL 240 2% 12% (#1e1e20) — alinhado com o utility row (cinzas harmonizados)
-   *  Border sutil mantém aresta crisp sem hue shift. */
-  container: "rounded-xl bg-[#464649] dark:bg-[#1e1e20] dark:border dark:border-white/[0.06]",
-  text: "text-white font-sans text-lg font-semibold tracking-tight",
-  label: "text-white/70 text-[9px] uppercase tracking-wider font-semibold",
-  value: "text-white font-mono tracking-wide",
-  separator: "w-[1.5px] h-3.5 bg-white/[0.10] rounded-full",
-  /** Bottom row (token legado, não usado em CollapsiblePageHeader) */
-  bottomRow: "bg-white/[0.06] rounded-lg px-3.5 py-2.5",
-  stat: "text-white/90 font-semibold",
-  statLabel: "text-white/60",
-  /** Utility Bar — acima do page header
-   *  Light: HSL 240 2% 28% (#464649)
-   *  Dark:  HSL 240 2% 12% (#1e1e20) — quase funde com bg, borda dá aresta */
-  utilityRow: "bg-[#464649] dark:bg-[#1e1e20] border-b border-white/[0.08]",
-  utilityText: "text-white/60 text-[10px]",
-  utilityButton: "w-7 h-7 rounded-md flex items-center justify-center hover:bg-white/[0.08] transition-colors cursor-pointer",
-  utilityIcon: "w-[13px] h-[13px] text-white/50",
-  /** Collapsed — mesmo tom do utility */
-  collapsedBar: "bg-[#464649] dark:bg-[#1e1e20] border-b border-white/[0.08]",
-  collapsedText: "text-white/90 text-[11px] font-semibold",
-  /** Shell shadow — top inset highlight + subtle drop shadow
-   *  Dark: sombra mais sutil, inset mais visível */
-  shellShadow: "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05),0_2px_12px_-4px_rgba(15,23,42,0.10)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03),0_2px_8px_-4px_rgba(0,0,0,0.30)]",
-} as const;
-
-// ============================================
 // HEADER GLASS (v6 — vidro em duas camadas, colado nas margens)
 // ============================================
 // Barra de vidro translúcida com blur, borda a borda (o conteúdo passa por

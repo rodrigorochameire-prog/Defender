@@ -42,7 +42,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { format } from "date-fns";

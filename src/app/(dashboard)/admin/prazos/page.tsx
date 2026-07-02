@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { format } from "date-fns";

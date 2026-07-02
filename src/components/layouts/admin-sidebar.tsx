@@ -232,7 +232,7 @@ function ConditionalHeader({ extra }: { extra?: ReactNode }) {
 
   if (hasPageHeader) return null;
 
-  return <HeaderUtilityRow variant="standalone" extra={extra} />;
+  return <HeaderUtilityRow extra={extra} />;
 }
 
 export function AdminSidebar({ children, userName, userEmail, headerExtra }: AdminSidebarProps) {

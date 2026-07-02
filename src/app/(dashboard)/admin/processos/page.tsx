@@ -98,7 +98,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";

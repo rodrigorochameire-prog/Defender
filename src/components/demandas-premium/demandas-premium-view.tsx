@@ -90,7 +90,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { getAtribuicaoHex } from "@/lib/config/atribuicoes";
 import { DemandaCard } from "@/components/demandas-premium/DemandaCard";
 import { DemandaTableView } from "@/components/demandas-premium/DemandaTableView";
