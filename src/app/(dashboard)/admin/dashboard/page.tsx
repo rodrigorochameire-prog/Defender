@@ -57,7 +57,6 @@ import {
   Eye,
   CheckSquare,
   Microscope,
-  Pen,
   FileEdit,
   BookOpen,
   Shield,
@@ -694,7 +693,7 @@ export default function DashboardJuriPage() {
 
   const tiposRegistro = [
     { id: "atendimento", label: "Atendimento", icon: MessageSquare, color: "text-emerald-600", bgActive: "bg-emerald-100 dark:bg-emerald-900/30 border-emerald-300" },
-    { id: "diligencia", label: "Diligência", icon: Search, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "diligencia", label: "Diligência", icon: ClipboardList, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "peticao", label: "Petição", icon: FileText, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "anotacao", label: "Nota", icon: PenLine, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "delegacao", label: "Delegar", icon: UserPlus, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
@@ -702,7 +701,7 @@ export default function DashboardJuriPage() {
     { id: "providencia", label: "Providência", icon: CheckSquare, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "investigacao", label: "Investigação", icon: Microscope, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "pesquisa", label: "Pesquisa", icon: BookOpen, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
-    { id: "elaboracao", label: "Elaboração", icon: Pen, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
+    { id: "elaboracao", label: "Elaboração", icon: FileEdit, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "busca", label: "Busca", icon: Search, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
     { id: "transferencia", label: "Transferência", icon: ArrowRightLeft, color: "text-muted-foreground", bgActive: "bg-muted border-border" },
   ] as const;
@@ -1262,8 +1261,8 @@ export default function DashboardJuriPage() {
               )}
             </div>
 
-            {/* Tipo de Registro — linha cheia: 2-col (mobile) · 3-col (sm/md) · 6-col (lg+) sem truncar rótulos */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+            {/* Tipo de Registro — barra de ícones: 6-col (mobile, 2 linhas) · 12-col (sm+, linha única simétrica). Rótulo via tooltip. */}
+            <div className="grid grid-cols-6 sm:grid-cols-12 gap-1.5">
               {tiposRegistro.map((tipo) => {
                 const Icon = tipo.icon;
                 const isSelected = atendimentoRapido.tipo === tipo.id;
@@ -1279,7 +1278,7 @@ export default function DashboardJuriPage() {
                       }
                     }}
                     className={cn(
-                      "flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200",
+                      "flex items-center justify-center h-10 rounded-lg cursor-pointer transition-all duration-200",
                       isDelegacao
                         ? cn(
                             "border border-rose-200 dark:border-rose-800/50",
@@ -1301,19 +1300,14 @@ export default function DashboardJuriPage() {
                             )
                     )}
                     title={tipo.label}
+                    aria-label={tipo.label}
                   >
                     <Icon className={cn(
-                      "w-3.5 h-3.5 flex-shrink-0",
+                      "w-[18px] h-[18px] flex-shrink-0",
                       isDelegacao ? "text-rose-500 dark:text-rose-400"
                         : isSelected ? "text-emerald-600 dark:text-emerald-400"
                         : "text-muted-foreground"
                     )} />
-                    <span className={cn(
-                      "text-[11.5px] font-medium truncate",
-                      isDelegacao ? "text-rose-600 dark:text-rose-400"
-                        : isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold"
-                        : "text-muted-foreground"
-                    )}>{tipo.label}</span>
                   </button>
                 );
               })}
