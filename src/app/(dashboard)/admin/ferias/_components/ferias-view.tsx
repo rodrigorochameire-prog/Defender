@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plane, CalendarClock, PlayCircle, FolderOpen, Plus } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,22 +67,18 @@ export function FeriasView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Férias"
         icon={Plane}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-            {kpis.disponiveis}d disponíveis
-          </span>
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={Plane} label="Dias disponíveis" value={kpis.disponiveis} />
+            <KpiChip icon={CalendarClock} label="Parcelas programadas" value={kpis.programadas} />
+            <KpiChip icon={PlayCircle} label="Em fruição" value={kpis.emFruicao} />
+            <KpiChip icon={FolderOpen} label="Períodos abertos" value={kpis.abertos} />
+          </div>
         }
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={Plane} label="Dias disponíveis" value={kpis.disponiveis} />
-          <KpiChip icon={CalendarClock} label="Parcelas programadas" value={kpis.programadas} />
-          <KpiChip icon={PlayCircle} label="Em fruição" value={kpis.emFruicao} />
-          <KpiChip icon={FolderOpen} label="Períodos abertos" value={kpis.abertos} />
-        </div>
-      </CollapsiblePageHeader>
+      />
 
       <div className="p-4 space-y-4">
         {/* Novo período */}

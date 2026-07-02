@@ -2,7 +2,7 @@
 "use client";
 
 import { CalendarClock, Briefcase, FileText, Plane, FolderOpen } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO } from "@/lib/config/design-tokens";
@@ -25,22 +25,18 @@ export function CarreiraCockpit() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Carreira — meu dia a dia"
         icon={Briefcase}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-            {kpis?.substituicoesAtivas ?? 0} subst. ativas
-          </span>
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={CalendarClock} label="Próximo prazo" value={kpis?.proximoPrazo?.prazo ?? "—"} />
+            <KpiChip icon={Briefcase} label="Substituições ativas" value={kpis?.substituicoesAtivas ?? 0} />
+            <KpiChip icon={FileText} label="Pedidos pendentes" value={kpis?.pedidosPendentes ?? 0} />
+            <KpiChip icon={Plane} label="Férias agendadas" value={kpis?.feriasAgendadas ?? 0} />
+          </div>
         }
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={CalendarClock} label="Próximo prazo" value={kpis?.proximoPrazo?.prazo ?? "—"} />
-          <KpiChip icon={Briefcase} label="Substituições ativas" value={kpis?.substituicoesAtivas ?? 0} />
-          <KpiChip icon={FileText} label="Pedidos pendentes" value={kpis?.pedidosPendentes ?? 0} />
-          <KpiChip icon={Plane} label="Férias agendadas" value={kpis?.feriasAgendadas ?? 0} />
-        </div>
-      </CollapsiblePageHeader>
+      />
 
       <div className="p-4 space-y-4">
         {/* Agora & Próximos */}

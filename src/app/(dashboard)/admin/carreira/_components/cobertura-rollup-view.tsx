@@ -2,7 +2,7 @@
 "use client";
 
 import { Users, Briefcase, AlertTriangle, FileSignature, Shield, CheckCircle, BarChart2 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { CARD_STYLE, TYPO, COLORS } from "@/lib/config/design-tokens";
@@ -16,22 +16,18 @@ export function CoberturaRollupView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Carreira — cobertura da regional"
         icon={Users}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-            {k?.afastadosHoje ?? 0} afastados hoje
-          </span>
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={Users} label="Afastados hoje" value={k?.afastadosHoje ?? 0} />
+            <KpiChip icon={Briefcase} label="Substituições abertas" value={k?.substituicoesAbertas ?? 0} />
+            <KpiChip icon={AlertTriangle} label="Sem cobertura" value={k?.semCobertura ?? 0} />
+            <KpiChip icon={FileSignature} label="A oficiar / a pagar" value={`${k?.gratificacoesAOficiar ?? 0} / ${k?.gratificacoesAPagar ?? 0}`} />
+          </div>
         }
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={Users} label="Afastados hoje" value={k?.afastadosHoje ?? 0} />
-          <KpiChip icon={Briefcase} label="Substituições abertas" value={k?.substituicoesAbertas ?? 0} />
-          <KpiChip icon={AlertTriangle} label="Sem cobertura" value={k?.semCobertura ?? 0} />
-          <KpiChip icon={FileSignature} label="A oficiar / a pagar" value={`${k?.gratificacoesAOficiar ?? 0} / ${k?.gratificacoesAPagar ?? 0}`} />
-        </div>
-      </CollapsiblePageHeader>
+      />
 
       <div className="p-4 space-y-4">
         {/* Cobertura */}
