@@ -73,7 +73,7 @@ def is_sentenca_ato(ato: str) -> bool:
 **Coexistência (verificada no landing map):** `analise-intimacao` é enfileirada UMA vez, em lote, `lane=ai`, ao fim do loop. O hook de sentença enfileira por-demanda, `lane=browser`. Skills e lanes diferentes → não colidem. Uma demanda de sentença legitimamente recebe **ambos**: o resumo da intimação (ai) e a captura+análise da sentença (browser). Intencional.
 
 ## 5. Impacto em dados
-- **DDL:** migração `0070` cria `magistrados` + `sentencas` (aditivo, `IF NOT EXISTS`, FKs já existentes). Reversível (drop tables).
+- **DDL:** a migração de sentença (nº = próximo livre no merge, provavelmente `0071`) cria `magistrados` + `sentencas` (aditivo, `IF NOT EXISTS`, FKs já existentes). Reversível (drop tables).
 - `SYSTEM_USER_ID` = 1 no `created_by` da task; confirmar que o usuário id=1 existe no ambiente e o FK `claude_code_tasks.createdBy` aceita.
 - Sem alteração de dados existentes.
 
@@ -87,7 +87,7 @@ def is_sentenca_ato(ato: str) -> bool:
 | (cherry-pick) `.claude/skills/analise-sentenca/**` | skill + capturar_sentenca.py |
 | (cherry-pick) `src/config/system-user.ts`, `src/lib/trpc/defensor-scope.ts` + `__tests__/detail-scope.test.ts` | SYSTEM_USER_ID, getSentencaDetailScope (+ seu teste) |
 | (cherry-pick) `9f1180a5` — hunks de `SKILL.md` (payload snake_case + `dataSentenca`, e fix lane→browser) e `sentencas.ts` (`dataSentenca`); **descartar** seu hunk em `varredura_triagem.py` | fecha gaps de review; 15º commit aditivo |
-| rename `drizzle/0067_sentenca_intelligence.sql` → `0070_...` | migração |
+| rename `drizzle/0067_sentenca_intelligence.sql` → `00NN_...` (próximo livre no merge, ~`0071`) | migração |
 | `.claude/skills/varredura-triagem/scripts/varredura_triagem.py` + espelho cowork | hook (2 hunks) |
 | Testes | `sentenca/*` (vêm no cherry-pick) + novo standalone Python p/ `is_sentenca_ato` + shape do enqueue |
 
@@ -100,7 +100,7 @@ def is_sentenca_ato(ato: str) -> bool:
 
 ## 8. Critérios de aceitação
 1. Cherry-pick traz o pipeline (schema/router/helpers/skill) sem conflito; `tsc` e `next build` limpos.
-2. Migração renomeada para `0070`; aplicada no prod (deferido) cria `magistrados`+`sentencas`.
+2. Migração renomeada para o próximo número livre no merge (~`0071`, não `0070` que está tomado); aplicada no prod (deferido) cria `magistrados`+`sentencas`.
 3. `is_sentenca_ato` dispara em atos de sentença e **exclui acórdão** (teste).
 4. Numa varredura, uma demanda cujo `ato` é de sentença **e** com `doc_id` do PJe enfileira uma task `claude_code_tasks` `skill='analise-sentenca'`, `lane='browser'`, com o payload completo — sem quebrar a varredura nem o agendamento de audiência.
 5. EP (sem doc PJe) **não** enfileira `analise-sentenca`.
@@ -109,6 +109,6 @@ def is_sentenca_ato(ato: str) -> bool:
 
 ## 9. Deferidos
 - **Verificação viva** de `capturar_sentenca.py` (abre PJe → PDF → Drive → `upsertFromAnalysis`) — precisa de sessão PJe autenticada; inspection-verified, live-deferred.
-- **Aplicar `0070` no prod** — com confirmação (como o `0069` do B).
+- **Aplicar a migração de sentença no prod** (o número final definido no merge) — com confirmação (como o `0069` do B).
 - **C1b:** acórdão-auto (captura/criação de recurso+acordao + hook). **C2:** modal "produzir peça".
 - **UI de sentenças / dashboard de magistrados** — o branch não entrega; futuro.
