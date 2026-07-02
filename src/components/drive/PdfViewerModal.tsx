@@ -2931,6 +2931,63 @@ export function PdfViewerModal({
     return () => { cancelAnimationFrame(raf); observer.disconnect(); };
   }, [isOpen, viewMode, showIndex]);
 
+  // ─── Pinch-to-zoom (mobile / iPhone) ──────────────────────────────
+  // Dois dedos sobre a página ajustam o scale de RENDER do PDF (fica nítido,
+  // não é zoom-blur). Um dedo continua rolando normalmente. rAF-throttle p/
+  // suavidade; clamp igual aos botões (0.5–3.0). Re-attach quando o modal abre.
+  const effectiveScaleRef = useRef(effectiveScale);
+  useEffect(() => { effectiveScaleRef.current = effectiveScale; }, [effectiveScale]);
+  useEffect(() => {
+    const el = pageContainerRef.current;
+    if (!el || !isOpen) return;
+    let startDist = 0;
+    let startScale = 1;
+    let pinching = false;
+    let raf = 0;
+    let pending = 1;
+    const dist = (touches: TouchList) => {
+      const a = touches[0];
+      const b = touches[1];
+      if (!a || !b) return 0;
+      return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    };
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return;
+      pinching = true;
+      startDist = dist(e.touches);
+      startScale = effectiveScaleRef.current || 1;
+      e.preventDefault();
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!pinching || e.touches.length !== 2) return;
+      e.preventDefault();
+      const d = dist(e.touches);
+      if (!startDist || !d) return;
+      pending = Math.max(0.5, Math.min(3.0, startScale * (d / startDist)));
+      if (!raf) {
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          setViewMode("custom");
+          setScale(pending);
+        });
+      }
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinching = false;
+    };
+    el.addEventListener("touchstart", onStart, { passive: false });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isOpen]);
+
   // Fullscreen
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement && containerRef.current) {
