@@ -2926,7 +2926,16 @@ export default function Demandas() {
         {isFiltersDropdownOpen && createPortal(
           <>
             <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltersDropdownOpen(false)} />
-            <div className="fixed z-[9999] w-60 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[75vh] overflow-y-auto" style={(() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}>
+            <div
+              className={cn(
+                "fixed z-[9999] bg-white dark:bg-neutral-900 shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] overflow-y-auto",
+                // Mobile: bottom sheet full-width (o popover w-60 posicionado é do desktop)
+                isMobile
+                  ? "inset-x-0 bottom-0 w-full rounded-t-2xl py-2 max-h-[80vh] pb-[calc(env(safe-area-inset-bottom)+0.5rem)] animate-in slide-in-from-bottom duration-200"
+                  : "w-60 rounded-xl py-1 max-h-[75vh]",
+              )}
+              style={isMobile ? undefined : (() => { const r = filtersBtnRef.current?.getBoundingClientRect(); return r ? { top: r.bottom + 4, right: window.innerWidth - r.right } : {}; })()}
+            >
               {/* ───── Visualização (tabs) ───── */}
               <div className="px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider text-neutral-400">Visualização</div>
               {DEMANDAS_VIEW_OPTIONS.map((opt) => {
