@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1205,25 +1206,55 @@ export default function DistribuicaoPage() {
     return { pending, completed, failed };
   }, [pendingFiles, history]);
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "split",
+      label: "Split",
+      priority: 30,
+      render: (
+        <button
+          onClick={() => setViewMode("split")}
+          className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "split" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
+        >
+          <SplitSquareVertical className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Split</span>
+        </button>
+      ),
+    },
+    {
+      id: "lista",
+      label: "Lista",
+      priority: 25,
+      render: (
+        <button
+          onClick={() => setViewMode("list")}
+          className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "list" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
+        >
+          <List className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Lista</span>
+        </button>
+      ),
+    },
+    {
+      id: "atualizar",
+      label: "Atualizar",
+      icon: RefreshCw,
+      priority: 20,
+      onSelect: () => refetchFiles(),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Distribuição" icon={FolderInput}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <FolderInput className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Distribuição
-              </h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">
-                Distribuição automática de documentos com IA
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div className="hidden md:flex items-center gap-3 mr-2">
+      <GlassHeaderShell
+        title="Distribuição"
+        icon={FolderInput}
+        stats={
+          <span className="flex items-center gap-3">
+            <span className="text-[11px] text-white/55 hidden sm:inline">
+              Distribuição automática de documentos com IA
+            </span>
+            <span className="hidden md:flex items-center gap-3">
               <span className="text-[11px] text-white/60 flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                 {stats.pending} pendentes
@@ -1232,31 +1263,11 @@ export default function DistribuicaoPage() {
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 {stats.completed} distribuídos
               </span>
-            </div>
-            <button
-              onClick={() => setViewMode("split")}
-              className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "split" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
-            >
-              <SplitSquareVertical className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Split</span>
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`h-8 px-3 rounded-xl ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 ${viewMode === "list" ? "bg-white/[0.16] text-white" : "bg-white/[0.08] text-white/80"}`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Lista</span>
-            </button>
-            <button
-              onClick={() => refetchFiles()}
-              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Atualizar</span>
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+            </span>
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-hidden px-5 md:px-8 py-3 md:py-4">

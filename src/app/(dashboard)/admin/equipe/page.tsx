@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -446,45 +447,50 @@ export default function EquipePage() {
     );
   }
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "busca",
+      label: "Buscar",
+      priority: 40,
+      render: (
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+          <Input
+            placeholder="Buscar..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 w-[140px] h-7 text-xs bg-black/[0.15] ring-1 ring-white/[0.08] border-0 text-white/90 placeholder:text-white/35 rounded-lg"
+          />
+        </div>
+      ),
+    },
+    {
+      id: "exportar",
+      label: "Exportar",
+      icon: Download,
+      hideLabel: true,
+      priority: 20,
+    },
+    {
+      id: "novo-membro",
+      label: "Novo Membro",
+      icon: UserPlus,
+      priority: Infinity,
+      variant: "primary",
+      onSelect: () => { resetForm(); setAddModalOpen(true); },
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Equipe" icon={Users}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Equipe</h1>
-              <p className="text-[10px] text-white/55">Gestão de membros e delegações</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-              <Input
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 w-[140px] h-7 text-xs bg-black/[0.15] ring-1 ring-white/[0.08] border-0 text-white/90 placeholder:text-white/35 rounded-lg"
-              />
-            </div>
-            <button
-              title="Exportar"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-            >
-              <Download className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => { resetForm(); setAddModalOpen(true); }}
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Novo Membro
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Equipe"
+        icon={Users}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">Gestão de membros e delegações</span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Content */}
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">

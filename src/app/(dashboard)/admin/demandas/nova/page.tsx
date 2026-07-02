@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -320,30 +321,29 @@ export default function NovaDemandaPage() {
     });
   };
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "back",
+      label: "Voltar",
+      icon: ArrowLeft,
+      priority: 40,
+      hideLabel: true,
+      onSelect: () => router.push("/admin/demandas"),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Nova Demanda" icon={Plus}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/admin/demandas">
-              <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Plus className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Nova Demanda
-              </h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">
-                Registre uma nova demanda com cálculo automático de prazo
-              </p>
-            </div>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Nova Demanda"
+        icon={Plus}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">
+            Registre uma nova demanda com cálculo automático de prazo
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Formulário */}
