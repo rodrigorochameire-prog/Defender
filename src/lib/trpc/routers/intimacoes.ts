@@ -689,4 +689,47 @@ export const intimacoesRouter = router({
         resultado: task.resultado ?? null,
       };
     }),
+
+  /**
+   * serieSemanal — Série histórica de intimações importadas (lane PJe).
+   *
+   * Lê o `pje_intimacoes_ledger` (memória permanente de toda intimação já vista),
+   * agrupando por semana via `firstSeenAt`. Sem migração: usa colunas existentes.
+   * Nota: SEEU não tem staging/ledger no schema atual → série é só do PJe.
+   */
+  serieSemanal: protectedProcedure
+    .input(z.object({ semanas: z.number().int().min(4).max(52).default(12) }).optional())
+    .query(async ({ input }) => {
+      const semanas = input?.semanas ?? 12;
+      const semanaExpr = sql<string>`to_char(date_trunc('week', ${pjeIntimacoesLedger.firstSeenAt}), 'YYYY-MM-DD')`;
+
+      const serie = await db
+        .select({ semana: semanaExpr, total: sql<number>`count(*)::int` })
+        .from(pjeIntimacoesLedger)
+        .where(
+          sql`${pjeIntimacoesLedger.firstSeenAt} >= date_trunc('week', now()) - make_interval(weeks => ${semanas - 1})`,
+        )
+        .groupBy(semanaExpr)
+        .orderBy(semanaExpr);
+
+      const porAtribuicao = await db
+        .select({
+          atribuicao: pjeIntimacoesLedger.atribuicao,
+          total: sql<number>`count(*)::int`,
+        })
+        .from(pjeIntimacoesLedger)
+        .groupBy(pjeIntimacoesLedger.atribuicao)
+        .orderBy(sql`count(*) desc`);
+
+      const total = porAtribuicao.reduce((s, r) => s + Number(r.total), 0);
+
+      return {
+        semanas: serie.map((r) => ({ semana: r.semana, total: Number(r.total) })),
+        porAtribuicao: porAtribuicao.map((r) => ({
+          atribuicao: r.atribuicao ?? "—",
+          total: Number(r.total),
+        })),
+        total,
+      };
+    }),
 });
