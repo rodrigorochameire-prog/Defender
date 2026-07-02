@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """analise_profunda_autos.py — worker BROWSER da Fase 2c.
 
-Dado um demandaId: baixa os autos do PJe (reusa baixar_pdf_autos), organiza no
-Drive (distribuir-autos) e enfileira a task lane=ai `analise-autos` (o caminho do
-coworkAnalise), embutindo o demandaId. Atualiza demandas.analise_profunda_status.
+Dado um demandaId: baixa os autos, organiza no Drive (distribuir-autos) e enfileira
+a task lane=ai `analise-autos` (o caminho do coworkAnalise), embutindo o demandaId.
+Fonte dos autos por atribuição (Fase 2b): EXECUCAO_PENAL → SEEU (baixar_autos_seeu,
+vários PDFs); o resto → PJe (baixar_pdf_autos, um PDF). Atualiza
+demandas.analise_profunda_status.
 Roda no daemon do defensor (CDP :9222). Só as funções puras abaixo são unit-testadas.
 
 O fluxo CDP (main_async/main) NÃO tem unit test — depende de um Chromium logado
@@ -56,6 +58,9 @@ def build_analise_autos_task(row: dict, demanda_id: int, created_by: int) -> dic
 _VT = Path(__file__).resolve().parents[2] / "varredura-triagem" / "scripts"
 sys.path.insert(0, str(_VT))
 import varredura_triagem as vt  # noqa: E402
+# Fase 2b: primitiva de autos do SEEU (roteamento EP→SEEU, resto→PJe). Vive no
+# mesmo dir da 2a (varredura-triagem/scripts). A coleta/download é live-gated.
+import seeu_autos as sa  # noqa: E402
 
 # distribuir-autos vive FORA do repo (skill pessoal, ~/.claude/skills) — é o
 # script real que casa CNJ→pasta do assistido no Drive. Best-effort: se ele não
@@ -128,6 +133,36 @@ def _distribuir_para_assistido(pdf_path: str, cnj: str) -> dict:
     return {"invoked": True, "inbox_file": str(dest)}
 
 
+def _distribuir_autos_multiplos(pdf_paths: list[str], cnj: str) -> dict:
+    """SEEU (2b) devolve VÁRIOS documentos por processo. Copia cada PDF para o
+    inbox do distribuir-autos com o CNJ no nome (p/ o CNJ_RE daquele script casar)
+    e roda o script UMA vez para movê-los à pasta do assistido. Mesma disciplina
+    de falha de _distribuir_para_assistido: se algum ficou no inbox (CNJ não bateu),
+    erra — a análise não segue como se os autos tivessem sido distribuídos."""
+    if not _DISTRIBUIR_SCRIPT.exists():
+        raise RuntimeError(f"distribuir_autos.py não encontrado em {_DISTRIBUIR_SCRIPT}")
+    _DISTRIBUIR_INBOX.mkdir(parents=True, exist_ok=True)
+    dests = []
+    for p in pdf_paths:
+        # prefixa o CNJ no nome (o basename da 2b é <seq>_<tipo>.pdf, sem CNJ)
+        dest = _DISTRIBUIR_INBOX / f"{cnj} - {Path(p).name}"
+        shutil.copy2(p, dest)
+        dests.append(dest)
+    r = subprocess.run(
+        [sys.executable, str(_DISTRIBUIR_SCRIPT), "--apply", "--create-folders", "--quiet"],
+        capture_output=True, text=True, timeout=180,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(
+            f"distribuir_autos.py saiu com código {r.returncode}: "
+            f"{(r.stderr or r.stdout or '')[:200]}"
+        )
+    parados = [str(d) for d in dests if d.exists()]
+    if parados:
+        raise RuntimeError(f"autos não distribuídos (arquivos ainda no inbox: {parados[:3]})")
+    return {"invoked": True, "count": len(dests)}
+
+
 async def main_async(meta: dict) -> dict:
     """Baixa autos → Drive → enfileira análise ai → estado. Retorna dict de
     resultado (o daemon captura o último objeto JSON impresso em stdout)."""
@@ -170,43 +205,60 @@ async def main_async(meta: dict) -> dict:
         if vt.async_playwright is None:
             raise RuntimeError("patchright não instalado — ative .venv do enrichment-engine")
 
+        # Roteamento da fonte de autos (2b): EXECUCAO_PENAL vem do SEEU; o resto
+        # (Júri/VVD/Criminal) do PJe. Determina se tocamos ou não o PJe SSO.
+        fonte = sa.escolhe_fonte_autos(atribuicao)
+
         async with vt.async_playwright() as p:
             # Conexão CDP inline — mesmo padrão de varredura() (não há um
             # `abrir_cdp()` isolado no varredura_triagem.py).
             browser = await p.chromium.connect_over_cdp(vt.CDP_URL)
             ctx = browser.contexts[0]
-            page = await vt._ensure_logged_in(ctx)
 
-            if atribuicao:
-                try:
-                    await page.goto(vt.PANEL_URL, wait_until="domcontentloaded", timeout=30000)
-                    await asyncio.sleep(2)
-                    await vt.navigate_to_unidade(page, atribuicao)
-                except Exception as e:  # noqa: BLE001
-                    # segue mesmo assim: find_in_panel pode falhar se o painel
-                    # não navegou até a vara certa — vira "expediente não
-                    # encontrado" abaixo, que é reportável e re-disparável.
-                    vt.log(f"  ⚠ navegação do painel falhou: {str(e)[:120]}")
+            if fonte == "seeu":
+                # Execução Penal: autos vêm do SEEU (Mesa do Defensor da 2a).
+                # NUNCA navegar para o PJe SSO aqui (gotcha 2a/1.5: isso destrói a
+                # sessão da Mesa do SEEU). baixar_autos_seeu devolve VÁRIOS PDFs.
+                pdf_paths = await sa.baixar_autos_seeu(ctx, cnj)
+                if not pdf_paths:
+                    sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
+                    return {"ok": False, "erro": "autos do SEEU não baixados"}
+            else:
+                page = await vt._ensure_logged_in(ctx)
 
-            # 2. resolve o link de autos completos do processo (find_in_panel —
-            # busca por doc_id e, na falta, por número do processo) e baixa
-            # (baixar_pdf_autos reaplica a trava anti-ciência).
-            doc_id = row.get("pje_documento_id") or (row.get("enrichment_data") or {}).get(
-                "id_documento_pje"
-            )
-            doc_id = str(doc_id) if doc_id else None
-            autos_url = await vt.find_in_panel(page, doc_id, cnj)
-            if not autos_url:
-                sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
-                return {"ok": False, "erro": "expediente não encontrado no painel PJe"}
+                if atribuicao:
+                    try:
+                        await page.goto(vt.PANEL_URL, wait_until="domcontentloaded", timeout=30000)
+                        await asyncio.sleep(2)
+                        await vt.navigate_to_unidade(page, atribuicao)
+                    except Exception as e:  # noqa: BLE001
+                        # segue mesmo assim: find_in_panel pode falhar se o painel
+                        # não navegou até a vara certa — vira "expediente não
+                        # encontrado" abaixo, que é reportável e re-disparável.
+                        vt.log(f"  ⚠ navegação do painel falhou: {str(e)[:120]}")
 
-            pdf_path = await vt.baixar_pdf_autos(ctx, autos_url)
-            if not pdf_path:
-                sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
-                return {"ok": False, "erro": "autos não baixados (sigilo/sem link)"}
+                # 2. resolve o link de autos completos do processo (find_in_panel —
+                # busca por doc_id e, na falta, por número do processo) e baixa
+                # (baixar_pdf_autos reaplica a trava anti-ciência).
+                doc_id = row.get("pje_documento_id") or (row.get("enrichment_data") or {}).get(
+                    "id_documento_pje"
+                )
+                doc_id = str(doc_id) if doc_id else None
+                autos_url = await vt.find_in_panel(page, doc_id, cnj)
+                if not autos_url:
+                    sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
+                    return {"ok": False, "erro": "expediente não encontrado no painel PJe"}
+
+                pdf_path = await vt.baixar_pdf_autos(ctx, autos_url)
+                if not pdf_path:
+                    sb.update_demanda(demanda_id, {"analise_profunda_status": "erro"})
+                    return {"ok": False, "erro": "autos não baixados (sigilo/sem link)"}
 
         # 3. organiza no Drive (distribuir-autos por CNJ → <assistido>/Autos/).
-        distribuido = _distribuir_para_assistido(pdf_path, cnj)
+        distribuido = (
+            _distribuir_autos_multiplos(pdf_paths, cnj) if fonte == "seeu"
+            else _distribuir_para_assistido(pdf_path, cnj)
+        )
 
         # 4. enfileira a análise (lane ai) + estado analisando.
         task = build_analise_autos_task(

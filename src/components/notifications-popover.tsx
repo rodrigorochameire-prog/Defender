@@ -165,18 +165,19 @@ export function NotificationsPopover() {
           className="h-7 w-7 rounded-full bg-transparent hover:bg-white/[0.08] border-none relative transition-all duration-200"
         >
           <Bell className="h-3.5 w-3.5 text-white/50 hover:text-white/70" />
-          {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center shadow-sm animate-pulse">
+          {dotUrgente && unreadCount > 0 ? (
+            // Urgência real (prazo vencido/réu preso) com não-lidas: contagem discreta,
+            // dentro dos limites do botão (não corta) e vermelho dessaturado
+            <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 rounded-full bg-rose-500/80 text-[9px] font-semibold text-white/95 flex items-center justify-center">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
+          ) : dotUrgente ? (
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-rose-500 animate-pulse motion-reduce:animate-none shadow-sm" />
           ) : temAlerta ? (
-            // Sem não-lidas mas há prazo/audiência: dot discreto (vermelho=acionável, âmbar=info)
-            <span
-              className={cn(
-                "absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full shadow-sm",
-                dotUrgente ? "bg-rose-500 animate-pulse" : "bg-amber-400",
-              )}
-            />
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400 shadow-sm" />
+          ) : unreadCount > 0 ? (
+            // Não-lidas sem urgência: ponto neutro discreto (adeus "9+" vermelho)
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-white/60 shadow-sm" />
           ) : null}
           <span className="sr-only">Notificações</span>
         </Button>
