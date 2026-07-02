@@ -591,9 +591,11 @@ export default function AgendaPage() {
   // riscados/foscos para conferência. Ficam sempre gravados no banco/detalhe.
   const [showCanceladosRedesignados, setShowCanceladosRedesignados] = useState(false);
   const isMobile = useIsMobile();
-  // No celular as grades de mês/semana (7-8 colunas) viram slivers ilegíveis —
-  // usa sempre a visão em lista (agenda vertical). Desktop mantém a escolha.
-  const effectiveViewMode = isMobile ? "list" : viewMode;
+  // Mobile tem seu próprio estado de visão (default "lista"), controlado pelo
+  // switcher segmentado do topo. Desktop mantém `viewMode`. No mobile a grade de
+  // mês fica acessível; "Semana" cai numa agenda por dia (não na grade 8-col).
+  const [mobileView, setMobileView] = useState<"calendar" | "week" | "list">("list");
+  const effectiveViewMode = isMobile ? mobileView : viewMode;
   // Filtro para mostrar eventos passados no modo lista (padrão: não mostra)
   const [showPastEventsInList, setShowPastEventsInList] = useState(false);
 
@@ -1412,6 +1414,16 @@ export default function AgendaPage() {
     return sorted;
   }, [eventosFiltrados, sortBy]);
 
+  // Mobile "Semana" = a mesma agenda por dia, mas recortada aos próximos 7 dias
+  // (hoje inclusive). Fora disso (Lista/desktop) mostra tudo que já veio filtrado.
+  const isMobileWeek = isMobile && effectiveViewMode === "week";
+  const eventosLista = useMemo(() => {
+    if (!isMobileWeek) return eventosOrdenados;
+    const hojeStr = format(new Date(), "yyyy-MM-dd");
+    const fimStr = format(addDays(new Date(), 7), "yyyy-MM-dd");
+    return eventosOrdenados.filter((e) => e.data >= hojeStr && e.data <= fimStr);
+  }, [isMobileWeek, eventosOrdenados]);
+
   // Estatísticas
   const stats = useMemo(() => {
     // Adicionar T12:00:00 para evitar problemas de timezone
@@ -1972,6 +1984,34 @@ export default function AgendaPage() {
       {/* Visualização padrão (calendário, semana ou lista) */}
       {!selectedPeriodo && (
         <>
+          {/* Switcher de visão — só no mobile (desktop usa o ViewModeDropdown no header).
+              Ordem: Lista · Semana · Mês. Alvos de 40px, sempre visível. */}
+          <div className="md:hidden mb-3">
+            <div className="flex gap-1 p-1 rounded-xl bg-neutral-100 dark:bg-neutral-800/60">
+              {(["list", "week", "calendar"] as const).map((v) => {
+                const opt = AGENDA_VIEW_OPTIONS.find((o) => o.value === v)!;
+                const Icon = opt.icon;
+                const active = effectiveViewMode === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setMobileView(v)}
+                    aria-pressed={active}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg text-sm font-semibold transition-all cursor-pointer",
+                      active
+                        ? "bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-sm"
+                        : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200",
+                    )}
+                  >
+                    {Icon && <Icon className="w-4 h-4" />}
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           {effectiveViewMode === "calendar" ? (
             <div className="flex-1 min-h-0 flex flex-col pb-4">
               <CalendarMonthView
@@ -1982,6 +2022,7 @@ export default function AgendaPage() {
                 onDateClick={(date) => {
                   setCurrentDate(date);
                   setViewMode("list");
+                  setMobileView("list");
                 }}
                 onCreateClick={handleMonthQuickCreate}
                 onEditEvento={handleEditEvento}
@@ -1993,7 +2034,7 @@ export default function AgendaPage() {
                 headerRight={calendarHeaderRight}
               />
             </div>
-          ) : effectiveViewMode === "week" ? (
+          ) : effectiveViewMode === "week" && !isMobile ? (
             <div className="flex-1 min-h-0 overflow-y-auto">
               <CalendarWeekView
                 eventos={eventosFiltrados}
@@ -2003,6 +2044,7 @@ export default function AgendaPage() {
                 onDateClick={(date) => {
                   setCurrentDate(date);
                   setViewMode("list");
+                  setMobileView("list");
                 }}
                 onCreateClick={handleWeekQuickCreate}
                 onEditEvento={handleEditEvento}
@@ -2017,7 +2059,7 @@ export default function AgendaPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                      {eventosOrdenados.length} evento{eventosOrdenados.length !== 1 && 's'}
+                      {eventosLista.length} evento{eventosLista.length !== 1 && 's'}
                     </p>
                     {!showPastEventsInList && (
                       <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">
@@ -2058,7 +2100,7 @@ export default function AgendaPage() {
 
               {/* Lista de Eventos Agrupada por Dia */}
               <div className="max-h-[600px] overflow-y-auto">
-                {eventosOrdenados.length === 0 ? (
+                {eventosLista.length === 0 ? (
                   <EmptyState
                     icon={CalendarIcon}
                     title="Nenhum evento na pauta"
@@ -2067,7 +2109,7 @@ export default function AgendaPage() {
                 ) : (
                   (() => {
                     // Agrupar eventos por data
-                    const eventosPorDia = eventosOrdenados.reduce((acc, evento) => {
+                    const eventosPorDia = eventosLista.reduce((acc, evento) => {
                       const dataKey = evento.data;
                       if (!acc[dataKey]) acc[dataKey] = [];
                       acc[dataKey].push(evento);
