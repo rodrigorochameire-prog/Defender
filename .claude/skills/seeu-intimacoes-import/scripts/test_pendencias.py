@@ -38,6 +38,21 @@ def main():
         r = parse_pendencias(vazio)
         fails += check(r == [], f"vazio '{vazio[:20]}' deveria dar [], veio {r!r}")
 
+    # (d) texto LONGO (incidente real) que apenas CONTÉM "não há" no meio não pode
+    # ser classificado como vazio — precisa capturar o item cru (nunca perder
+    # incidente silenciosamente).
+    longo = (
+        "Incidente de excesso de execução — o Juízo determinou vista à Defensoria "
+        "para manifestação sobre o pedido de detração. O assistido alega que não há "
+        "nos autos comprovação suficiente do tempo de cumprimento, requerendo a "
+        "juntada de documentos complementares e nova contagem de pena a ser "
+        "realizada pelo cartório da Vara de Execuções Penais desta comarca."
+    )
+    fails += check(len(longo) >= 200, "texto de teste (d) precisa ter >= 200 chars")
+    r = parse_pendencias(longo)
+    fails += check(len(r) == 1 and r[0][0] is None and r[0][1] is None,
+                   f"texto longo contendo 'não há' deveria virar 1 item cru, veio {r!r}")
+
     print("OK" if not fails else f"{fails} FALHAS")
     sys.exit(1 if fails else 0)
 
