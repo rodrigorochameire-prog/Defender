@@ -196,6 +196,14 @@ const DEMANDAS_VIEW_OPTIONS: ViewModeOption[] = [
   { value: "lista", label: "Lista", icon: List },
 ];
 
+// Realce por severidade dos KPIs do painel Analytics (neutral < emerald < amber < rose)
+const KPI_TONE: Record<string, { card: string; chip: string; icon: string }> = {
+  neutral: { card: "border-neutral-200/80 dark:border-neutral-800/80", chip: "bg-neutral-100 dark:bg-neutral-800", icon: "text-neutral-400" },
+  emerald: { card: "border-emerald-200 dark:border-emerald-800/50", chip: "bg-emerald-100 dark:bg-emerald-950/30", icon: "text-emerald-500" },
+  amber: { card: "border-amber-200 dark:border-amber-800/50", chip: "bg-amber-100 dark:bg-amber-950/30", icon: "text-amber-500" },
+  rose: { card: "border-rose-200 dark:border-rose-800/50", chip: "bg-rose-100 dark:bg-rose-950/30", icon: "text-rose-500" },
+};
+
 // Mapeamento de status do banco (enum) para status da UI
 const DB_STATUS_TO_UI: Record<string, string> = {
   "2_ATENDER": "atender",
@@ -2425,72 +2433,29 @@ export default function Demandas() {
   const { visibleItems: visibleDemandas, isComplete: allDemandasRendered } = useProgressiveList(demandasOrdenadas, 20, 20);
 
   // Estatísticas
+  // KPIs do painel Analytics — cobrem demandas, atos processuais, intimações e prazos.
+  // Tudo client-side, derivado do array já carregado (sem backend). Autocontido:
+  // não referencia `deadlineStats` (definido depois — TDZ), recalcula os prazos aqui.
   const statsData = useMemo(() => {
     const demandasAtivas = demandas.filter((d) => !d.arquivado);
+    const totalAtivas = demandasAtivas.length;
+    const pct = (n: number) => (totalAtivas > 0 ? Math.round((n / totalAtivas) * 100) : 0);
 
     const emPreparacao = demandasAtivas.filter((d) =>
       ["elaborar", "elaborando", "revisar", "revisando"].includes(d.status.toLowerCase())
     ).length;
 
-    const prazosCriticos = demandasAtivas.filter((d) => {
-      if (!d.prazo) return false;
-      try {
-        const [dia, mes, ano] = d.prazo.split("/").map(Number);
-        const prazo = new Date(2000 + ano, mes - 1, dia);
-        const hoje = new Date();
-        const diffDays = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-        return diffDays <= 3;
-      } catch {
-        return false;
-      }
-    }).length;
+    const emTriagem = demandasAtivas.filter((d) =>
+      (d.status || "").toLowerCase().includes("triagem")
+    ).length;
 
-    const totalComEstadoPrisional = demandasAtivas.filter((d) => d.estadoPrisional).length;
-    const reusPresos = demandasAtivas.filter((d) => d.estadoPrisional === "preso").length;
-    const percentualPresos =
-      totalComEstadoPrisional > 0 ? Math.round((reusPresos / totalComEstadoPrisional) * 100) : 0;
-
-    const comCautelar = demandasAtivas.filter((d) => d.estadoPrisional === "cautelar").length;
-
-    return [
-      {
-        title: "Em Preparação",
-        value: emPreparacao,
-        subtitle: `${demandasAtivas.length > 0 ? Math.round((emPreparacao / demandasAtivas.length) * 100) : 0}% do total`,
-        icon: FileEdit,
-        gradient: "emerald" as const,
-      },
-      {
-        title: "Prazos Críticos",
-        value: prazosCriticos,
-        subtitle: `${demandasAtivas.length > 0 ? Math.round((prazosCriticos / demandasAtivas.length) * 100) : 0}% do total`,
-        icon: AlertTriangle,
-        gradient: (prazosCriticos > 0 ? "rose" : "zinc") as "rose" | "zinc",
-      },
-      {
-        title: "Réus Presos",
-        value: `${percentualPresos}%`,
-        subtitle: `${reusPresos} de ${totalComEstadoPrisional} réus`,
-        icon: Lock,
-        gradient: (reusPresos > 0 ? "amber" : "zinc") as "amber" | "zinc",
-      },
-      {
-        title: "Cautelares Diversas",
-        value: comCautelar,
-        subtitle: `${totalComEstadoPrisional > 0 ? Math.round((comCautelar / totalComEstadoPrisional) * 100) : 0}% do total`,
-        icon: ShieldCheck,
-        gradient: "zinc" as const,
-      },
-    ];
-  }, [demandas]);
-
-  // Deadline urgency stats
-  const deadlineStats = useMemo(() => {
+    // Prazos — vencidos e a vencer em até 7 dias (mesma lógica do deadlineStats)
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const ativas = demandas.filter(d => !d.arquivado && d.prazo);
-    let vencidas = 0, hojeCnt = 0, semanaCnt = 0;
-    for (const d of ativas) {
+    let vencidas = 0;
+    let prazosProximos = 0;
+    for (const d of demandasAtivas) {
+      if (!d.prazo) continue;
       try {
         const parts = d.prazo.split("/").map(Number);
         if (parts.length < 3) continue;
@@ -2498,13 +2463,34 @@ export default function Demandas() {
         const fullYear = ano < 100 ? 2000 + ano : ano;
         const prazo = new Date(fullYear, mes - 1, dia);
         prazo.setHours(0, 0, 0, 0);
-        const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+        const diff = Math.ceil((prazo.getTime() - hoje.getTime()) / 86_400_000);
         if (diff < 0) vencidas++;
-        else if (diff === 0) hojeCnt++;
-        else if (diff <= 7) semanaCnt++;
-      } catch { /* skip invalid */ }
+        else if (diff <= 7) prazosProximos++;
+      } catch { /* ignora prazo inválido */ }
     }
-    return { vencidas, hoje: hojeCnt, semana: semanaCnt, total: vencidas + hojeCnt + semanaCnt };
+
+    // Atos processuais — demandas ainda sem ato definido (pendentes de decisão)
+    const semAto = demandasAtivas.filter((d) => !d.ato || !d.ato.trim()).length;
+
+    // Intimações (proxy) — entradas recentes nos últimos 7 dias via dataInclusao
+    const seteDiasAtras = Date.now() - 7 * 86_400_000;
+    const novas7d = demandasAtivas.filter((d) => {
+      const t = d.dataInclusao ? Date.parse(d.dataInclusao) : NaN;
+      return !Number.isNaN(t) && t >= seteDiasAtras;
+    }).length;
+
+    const reusPresos = demandasAtivas.filter((d) => d.estadoPrisional === "preso").length;
+
+    return [
+      { title: "Demandas Ativas", value: totalAtivas, subtitle: "total em aberto", icon: ListTodo, gradient: "zinc" as const },
+      { title: "Em Preparação", value: emPreparacao, subtitle: `${pct(emPreparacao)}% do total`, icon: FileEdit, gradient: "emerald" as const },
+      { title: "Em Triagem", value: emTriagem, subtitle: `${pct(emTriagem)}% do total`, icon: ScanSearch, gradient: (emTriagem > 0 ? "amber" : "zinc") as "amber" | "zinc" },
+      { title: "Novas (7 dias)", value: novas7d, subtitle: "intimações recentes", icon: DownloadCloud, gradient: "emerald" as const },
+      { title: "Prazos ≤ 7 dias", value: prazosProximos, subtitle: `${pct(prazosProximos)}% do total`, icon: Clock, gradient: (prazosProximos > 0 ? "amber" : "zinc") as "amber" | "zinc" },
+      { title: "Prazos Vencidos", value: vencidas, subtitle: `${pct(vencidas)}% do total`, icon: AlertTriangle, gradient: (vencidas > 0 ? "rose" : "zinc") as "rose" | "zinc" },
+      { title: "Atos a Definir", value: semAto, subtitle: `${pct(semAto)}% sem ato`, icon: FileText, gradient: (semAto > 0 ? "amber" : "zinc") as "amber" | "zinc" },
+      { title: "Réus Presos", value: reusPresos, subtitle: `${pct(reusPresos)}% do total`, icon: Lock, gradient: (reusPresos > 0 ? "amber" : "zinc") as "amber" | "zinc" },
+    ];
   }, [demandas]);
 
   // Atribuição counts for pills
@@ -2928,6 +2914,7 @@ export default function Demandas() {
       : []),
     { id: "search", label: "Buscar", icon: Search, priority: 25, render: searchControl, onSelect: () => setSearchOpen(true) },
     { id: "view-filters", label: "Exibição e filtros", icon: SlidersHorizontal, priority: 24, render: viewFilterMenu, onSelect: () => setIsFiltersDropdownOpen(true) },
+    { id: "analytics", label: activeTab === "analytics" ? "Voltar ao quadro" : "Analytics", icon: BarChart3, priority: 28, hideLabel: true, onSelect: () => setActiveTab(activeTab === "analytics" ? "kanban" : "analytics") },
     ...(activeTab === "kanban"
       ? [{ id: "selecionar", label: "Selecionar", priority: 15, render: selecionarBtn, onSelect: () => setIsSelectMode(true) } as HeaderAction]
       : []),
@@ -2988,31 +2975,6 @@ export default function Demandas() {
         icon={ListTodo}
         // 7 atribuições = switcher denso; colapsa p/ pill rotulado já em telas médias/mobile
         wellCollapseAt={900}
-        stats={
-          <>
-            <span className="text-[11px] text-white/55 tabular-nums leading-none">
-              {demandas.filter(d => !d.arquivado).length} total
-            </span>
-            {(deadlineStats.hoje + deadlineStats.semana) > 0 && (
-              <span
-                className="flex items-center gap-1 text-[11px] text-amber-300 tabular-nums leading-none"
-                title={`${deadlineStats.hoje + deadlineStats.semana} urgentes (hoje + 7 dias)`}
-              >
-                <span className="w-1 h-1 rounded-full bg-amber-300/70 shrink-0" />
-                <span className="font-medium">{deadlineStats.hoje + deadlineStats.semana}</span>
-              </span>
-            )}
-            {deadlineStats.vencidas > 0 && (
-              <span
-                className="flex items-center gap-1 text-[11px] text-rose-300 tabular-nums leading-none"
-                title={`${deadlineStats.vencidas} atrasadas`}
-              >
-                <span className="w-1 h-1 rounded-full bg-rose-300/70 shrink-0" />
-                <span className="font-medium">{deadlineStats.vencidas}</span>
-              </span>
-            )}
-          </>
-        }
         filters={(collapsed) => (
           <AtribuicaoSwitchWell
             collapsed={collapsed}
@@ -3820,16 +3782,21 @@ export default function Demandas() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {statsData.map((stat, index) => {
                 const Icon = stat.icon;
-                const isAlert = stat.gradient === "rose" || stat.gradient === "amber";
                 const hasValue = Number(String(stat.value).replace('%','')) > 0;
+                // Zera o realce quando o valor é 0 (nada a sinalizar)
+                const tone = !hasValue ? "neutral" : (stat.gradient === "zinc" ? "neutral" : stat.gradient);
+                const t = KPI_TONE[tone] ?? KPI_TONE.neutral;
                 return (
-                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border border-neutral-200/80 dark:border-neutral-800/80 bg-white dark:bg-neutral-900 ${isAlert && hasValue ? 'border-rose-200 dark:border-rose-800/50' : ''}`}>
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${isAlert && hasValue ? 'bg-rose-100 dark:bg-rose-950/30' : 'bg-neutral-100 dark:bg-neutral-800'}`}>
-                      <Icon className={`w-4 h-4 ${isAlert && hasValue ? 'text-rose-500' : 'text-neutral-400'}`} />
+                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border bg-white dark:bg-neutral-900 ${t.card}`}>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${t.chip}`}>
+                      <Icon className={`w-4 h-4 ${t.icon}`} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{stat.value}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{stat.title}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 truncate">{stat.title}</p>
+                      {stat.subtitle && (
+                        <p className="text-[10px] text-neutral-400/70 dark:text-neutral-500/70 truncate">{stat.subtitle}</p>
+                      )}
                     </div>
                   </div>
                 );
