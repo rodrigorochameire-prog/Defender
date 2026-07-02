@@ -166,8 +166,9 @@ export function NotificationsPopover() {
         >
           <Bell className="h-3.5 w-3.5 text-white/50 hover:text-white/70" />
           {dotUrgente && unreadCount > 0 ? (
-            // Urgência real (prazo vencido/réu preso) com não-lidas: contagem vermelha
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center shadow-sm">
+            // Urgência real (prazo vencido/réu preso) com não-lidas: contagem discreta,
+            // dentro dos limites do botão (não corta) e vermelho dessaturado
+            <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 rounded-full bg-rose-500/80 text-[9px] font-semibold text-white/95 flex items-center justify-center">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           ) : dotUrgente ? (

@@ -132,9 +132,9 @@ export const HEADER_GLASS = {
     "flex items-center gap-3 px-4 bg-black/[0.22] border-b border-white/[0.07] text-[11px] text-white/45",
   /** Faixa de trabalho (camada de baixo) */
   workRow: "flex h-12 items-center gap-1.5 px-2.5",
-  /** Poço rebaixado do switch de atribuições */
+  /** Moldura do switch de atribuições — clara, elevada, com brilho sutil no topo */
   well:
-    "inline-flex items-center gap-0.5 p-[3px] rounded-[10px] bg-black/[0.25] shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]",
+    "inline-flex items-center gap-0.5 p-[3px] rounded-[10px] bg-white/[0.06] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.15)]",
   /** Botão fantasma da faixa de trabalho (FOCUS_RING: a11y §10.8) */
   ghostBtn:
     "inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-white/70 hover:bg-white/[0.10] hover:text-white transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",

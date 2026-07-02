@@ -113,16 +113,19 @@ export function GlassHeaderShell({
           inert={condensed || undefined}
           className={cn(
             HEADER_GLASS.utilityRow,
-            "transition-[height,opacity] duration-200 motion-reduce:transition-none overflow-hidden",
-            condensed ? "h-0 opacity-0 border-b-0" : "h-8 opacity-100",
+            "transition-[height,opacity] duration-200 motion-reduce:transition-none",
+            // overflow-hidden só no colapso — expandida, deixa o badge do sino respirar
+            condensed ? "h-0 opacity-0 border-b-0 overflow-hidden" : "h-8 opacity-100",
           )}
         >
+          <SidebarTrigger
+            title="Abrir/fechar menu lateral (⌘B)"
+            className="hidden md:inline-flex h-6 w-6 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
+          />
+          <div className="h-4 w-px bg-white/[0.08] shrink-0" />
           <Breadcrumbs />
+          {/* Slot p/ conteúdo injetado pela página (ex.: avatares da escala) */}
           <div id="header-slot" className="flex items-center" />
-          <div className="hidden md:flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse motion-reduce:animate-none" />
-            <span className="font-medium">Online</span>
-          </div>
           <div className="flex-1 min-w-0" />
           <span className="hidden lg:inline capitalize">{dateLabel}</span>
           <ConflictBadge />
@@ -145,7 +148,13 @@ export function GlassHeaderShell({
 
         {/* ── Faixa de trabalho ── */}
         <div className={HEADER_GLASS.workRow}>
-          <SidebarTrigger className="hidden md:inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+          {/* Toggle da sidebar visível aqui só quando a faixa utilitária recolheu */}
+          {condensed && (
+            <SidebarTrigger
+              title="Abrir/fechar menu lateral (⌘B)"
+              className="hidden md:inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
+            />
+          )}
           <div className="flex items-center gap-1.5 shrink-0 pl-1">
             {Icon && <Icon className="w-4 h-4 text-white/70" />}
             <h1 className="text-white text-[13px] font-semibold tracking-tight leading-none">

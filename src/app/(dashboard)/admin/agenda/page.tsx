@@ -1720,10 +1720,11 @@ export default function AgendaPage() {
                   <button
                     onClick={() => setSelectedDefensor(selectedDefensor === av.id ? null : av.id)}
                     className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all duration-200 cursor-pointer shrink-0",
+                      // Sóbrio p/ o vidro escuro do header (feedback: versão anterior destoava)
+                      "w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold transition-colors duration-200 cursor-pointer shrink-0",
                       selectedDefensor === av.id
-                        ? "bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 ring-2 ring-neutral-400 dark:ring-neutral-500 ring-offset-1 ring-offset-white dark:ring-offset-neutral-900 scale-110"
-                        : "bg-neutral-300 dark:bg-neutral-600 text-neutral-600 dark:text-neutral-300 opacity-60 hover:opacity-100 hover:scale-105"
+                        ? "bg-white/90 text-neutral-900"
+                        : "bg-white/[0.10] text-white/55 hover:bg-white/[0.18] hover:text-white/85"
                     )}
                   >
                     {av.label}
