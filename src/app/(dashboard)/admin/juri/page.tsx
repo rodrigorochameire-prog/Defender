@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useMemo, lazy, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { trpc } from "@/lib/trpc/client";
 import {
   Gavel, Calendar, CheckCircle2, Clock, AlertTriangle, Zap, Eye,
   Users, ChevronLeft, ChevronRight, ClipboardList, Loader2,
 } from "lucide-react";
-import Link from "next/link";
 
 // Lazy-load tab components
 const PautaTab = lazy(() => import("@/components/juri/PautaTab"));
@@ -31,6 +32,7 @@ function TabSpinner() {
 }
 
 export default function JuriPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("pauta");
   const [ano, setAno] = useState(new Date().getFullYear());
 
@@ -53,91 +55,90 @@ export default function JuriPage() {
     return { agendadas, realizadas, proximaDias, pendentesCount: pendentes?.length ?? 0 };
   }, [statsData, proximasSessoes, pendentes]);
 
-  return (
-    <div className="w-full min-h-screen bg-background">
-      <CollapsiblePageHeader
-        title="Tribunal do Júri"
-        icon={Gavel}
-        bottomRow={
-          <div className="flex items-center justify-between">
-            {/* Tabs */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06]">
-              {TABS.map((tab) => {
-                const isActive = activeTab === tab.key;
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                      isActive
-                        ? "px-3 py-1.5 bg-white/[0.14] text-white shadow-sm"
-                        : "px-2.5 py-1.5 text-white/50"
-                    )}
-                  >
-                    <Icon className="w-[15px] h-[15px]" />
-                    {isActive && <span>{tab.label}</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Year selector (Pauta tab) */}
-            {activeTab === "pauta" && (
-              <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06]">
-                <button onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors">
-                  <ChevronLeft className="w-3.5 h-3.5 text-white/50" />
-                </button>
-                <span className="px-3 text-sm font-semibold tabular-nums text-white/90">{ano}</span>
-                <button onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors">
-                  <ChevronRight className="w-3.5 h-3.5 text-white/50" />
-                </button>
-              </div>
-            )}
-          </div>
-        }
-      >
-        <div className="flex items-center gap-2">
-          {/* Stats inline */}
-          <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-white/[0.08]">
-            <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
-            <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
-            {stats.pendentesCount > 0 && (
-              <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
-            )}
-            <div className="w-px h-5 bg-white/10 mx-0.5" />
-            <div className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
-              stats.proximaDias !== null && stats.proximaDias <= 3
-                ? "text-rose-400 bg-rose-950/30"
-                : stats.proximaDias !== null && stats.proximaDias <= 7
-                  ? "text-emerald-400 bg-emerald-950/30"
-                  : "text-white/50"
-            )}>
-              <Zap className="w-3 h-3" />
-              <span className="tabular-nums">
-                {stats.proximaDias === null ? "—"
-                  : stats.proximaDias === 0 ? "Hoje"
-                  : stats.proximaDias === 1 ? "Amanhã"
-                  : `${stats.proximaDias}d`}
-              </span>
-            </div>
-          </div>
-
-          {/* Cockpit button */}
-          <Link
-            href="/admin/juri/cockpit"
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ──────────────────
+  // Tabs (Pauta/Jurados) → render, prioridade Infinity (navegação primária,
+  // nunca colapsa). Seletor de ano (só na aba Pauta) → render condicional
+  // via spread (regra 3: inclusão no array é o guard, nunca `render: cond && jsx`).
+  const tabsControl = (
+    <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06] shrink-0">
+      {TABS.map((tab) => {
+        const isActive = activeTab === tab.key;
+        const Icon = tab.icon;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all shrink-0",
-              "bg-white/[0.08] text-white/90 hover:bg-white/[0.14]"
+              "flex items-center gap-1.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
+              isActive
+                ? "px-3 py-1.5 bg-white/[0.14] text-white shadow-sm"
+                : "px-2.5 py-1.5 text-white/50"
             )}
           >
-            <Zap className="w-3.5 h-3.5" />
-            Cockpit
-          </Link>
-        </div>
-      </CollapsiblePageHeader>
+            <Icon className="w-[15px] h-[15px]" />
+            {isActive && <span>{tab.label}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const anoControl = (
+    <div className="inline-flex items-center gap-1 p-1 rounded-full bg-white/[0.06] shrink-0">
+      <button type="button" onClick={() => setAno(ano - 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors cursor-pointer">
+        <ChevronLeft className="w-3.5 h-3.5 text-white/50" />
+      </button>
+      <span className="px-3 text-sm font-semibold tabular-nums text-white/90">{ano}</span>
+      <button type="button" onClick={() => setAno(ano + 1)} className="p-1.5 rounded-full hover:bg-white/[0.14] transition-colors cursor-pointer">
+        <ChevronRight className="w-3.5 h-3.5 text-white/50" />
+      </button>
+    </div>
+  );
+
+  const headerStats = (
+    <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-white/[0.08] ml-1.5">
+      <StatChip icon={Calendar} value={stats.agendadas} label="Agendadas" />
+      <StatChip icon={CheckCircle2} value={stats.realizadas} label="Realizadas" color="emerald" />
+      {stats.pendentesCount > 0 && (
+        <StatChip icon={ClipboardList} value={stats.pendentesCount} label="Pendentes" color="amber" />
+      )}
+      <div className="w-px h-5 bg-white/10 mx-0.5" />
+      <div className={cn(
+        "flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold",
+        stats.proximaDias !== null && stats.proximaDias <= 3
+          ? "text-rose-400 bg-rose-950/30"
+          : stats.proximaDias !== null && stats.proximaDias <= 7
+            ? "text-emerald-400 bg-emerald-950/30"
+            : "text-white/50"
+      )}>
+        <Zap className="w-3 h-3" />
+        <span className="tabular-nums">
+          {stats.proximaDias === null ? "—"
+            : stats.proximaDias === 0 ? "Hoje"
+            : stats.proximaDias === 1 ? "Amanhã"
+            : `${stats.proximaDias}d`}
+        </span>
+      </div>
+    </div>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
+    ...(activeTab === "pauta"
+      ? [{ id: "ano", label: "Ano", priority: 28, render: anoControl } as HeaderAction]
+      : []),
+    { id: "cockpit", label: "Cockpit", icon: Zap, priority: 25, onSelect: () => router.push("/admin/juri/cockpit") },
+  ];
+
+  return (
+    <div className="w-full min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
+        title="Tribunal do Júri"
+        icon={Gavel}
+        stats={headerStats}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Tab content */}
       <div className="px-4 sm:px-6 md:px-8 pt-4">

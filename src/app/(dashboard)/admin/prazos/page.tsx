@@ -34,7 +34,8 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calcularPrazo } from "@/lib/prazo";
@@ -193,6 +194,15 @@ export default function PrazosPage() {
     return unique.sort();
   }, [prazos]);
 
+  // Counts por atribuição — usado pelo AtribuicaoSwitchWell do header.
+  const atribuicaoCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const atrib of atribuicaoList) {
+      map[atrib as string] = prazos.filter((p: any) => p.atribuicao === atrib).length;
+    }
+    return map;
+  }, [atribuicaoList, prazos]);
+
   // Filtered and sorted prazos
   const filteredPrazos = useMemo(() => {
     return prazos
@@ -236,71 +246,33 @@ export default function PrazosPage() {
     reuPreso: prazos.filter((p: any) => p.reuPreso).length,
   }), [prazos]);
 
+  // ── Header rico (GlassHeaderShell) ──────────────────────────────────────
+  // bottomRow (pills de atribuição dinâmicas) → `filters` (AtribuicaoSwitchWell).
+  // Sem ações/busca no header original — nada migra para HeaderActionsBar.
+  const headerStats = (
+    <span className="text-[11px] text-white/55 tabular-nums leading-none ml-1.5">
+      {stats.vencidos > 0 && `${stats.vencidos} vencidos · `}{prazos.length} total
+    </span>
+  );
+
   return (
-    <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="Prazos"
         icon={Clock}
-        bottomRow={
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setAreaFilter("all")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                areaFilter === "all"
-                  ? "bg-white/20 text-white shadow-sm"
-                  : "text-white/60 hover:bg-white/10"
-              )}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              Todos
-              <span className="ml-1 text-[10px] opacity-70">{prazos.length}</span>
-            </button>
-            {atribuicaoList.map((atrib: string) => {
-              const config = ATRIBUICAO_CONFIG[atrib];
-              if (!config) return null;
-              const isActive = areaFilter === atrib;
-              const count = prazos.filter((p: any) => p.atribuicao === atrib).length;
-              const IconComp = config.icon;
-              return (
-                <button
-                  key={atrib}
-                  onClick={() => setAreaFilter(isActive ? "all" : atrib)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
-                    isActive
-                      ? "text-white shadow-sm ring-1 ring-white/20"
-                      : "text-white/60 hover:bg-white/10"
-                  )}
-                  style={isActive ? { backgroundColor: config.color } : undefined}
-                >
-                  <span
-                    className={cn("w-2.5 h-2.5 rounded-full flex-shrink-0", !isActive && "ring-1 ring-inset ring-white/20")}
-                    style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : config.color }}
-                  />
-                  {config.shortLabel}
-                  <span className="text-[10px] opacity-70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        }
-      >
-        <div className="flex items-center justify-between">
-          {/* Left: icon + title + stats */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Prazos</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {stats.vencidos > 0 && `${stats.vencidos} vencidos · `}{prazos.length} total
-              </p>
-            </div>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+        stats={headerStats}
+        filters={(collapsed) => (
+          <AtribuicaoSwitchWell
+            collapsed={collapsed}
+            options={atribuicaoList.map((atrib) => ({ value: atrib as string, label: atrib as string }))}
+            selectedValues={areaFilter !== "all" ? [areaFilter] : []}
+            onToggle={(value) => setAreaFilter(areaFilter === value ? "all" : value)}
+            onClear={() => setAreaFilter("all")}
+            counts={atribuicaoCounts}
+            singleSelect
+          />
+        )}
+      />
 
       <div className="p-4 md:p-6 space-y-5">
 

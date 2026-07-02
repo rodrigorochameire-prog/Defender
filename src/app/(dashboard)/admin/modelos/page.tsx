@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +43,8 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -125,6 +127,7 @@ const CATEGORIA_CONFIG: Record<ModeloCategoria, {
 // ==========================================
 
 export default function ModelosPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("all");
@@ -166,120 +169,110 @@ export default function ModelosPage() {
     return obj;
   }, [statsCards.porCategoria]);
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ──────────────────
+  // Stats Ribbon → `stats` do shell. Busca/Categoria/Modo de exibição →
+  // HeaderAction[] (render), mesma dissolução do padrão complexas (bottomRow).
+  const headerStats = (
+    <div className="hidden sm:flex items-center gap-1.5 text-xs ml-1.5 overflow-x-auto scrollbar-none max-w-[42vw]">
+      {[
+        { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
+        { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
+        { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
+        { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
+        { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
+      ].map((stat, index) => {
+        const Icon = stat.icon;
+        return (
+          <Fragment key={index}>
+            {index > 0 && <div className="w-px h-3.5 bg-white/10 flex-shrink-0" />}
+            <div className="flex items-center gap-1 whitespace-nowrap px-1.5 py-0.5 rounded-md">
+              <Icon className="w-3 h-3 flex-shrink-0 text-white/40" />
+              <span className="font-bold tabular-nums text-white/90">{stat.value}</span>
+              <span className="text-white/50 font-medium">{stat.label}</span>
+            </div>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+
+  const searchControl = (
+    <div className="relative w-[130px] lg:w-[200px] shrink-0">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar modelos..."
+        className="w-full bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg py-1.5 pl-7 pr-3 text-[16px] md:text-[11px] text-white/90 placeholder:text-white/35 outline-none focus:bg-black/[0.25] focus:ring-white/[0.15] transition-all"
+      />
+    </div>
+  );
+
+  const categoriaControl = (
+    <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+      <SelectTrigger className="w-[130px] lg:w-[180px] shrink-0 h-7 bg-white/[0.08] ring-1 ring-white/[0.06] border-0 rounded-lg text-white/90 text-[11px]">
+        <Filter className="w-3.5 h-3.5 mr-1.5 text-white/40" />
+        <SelectValue placeholder="Categoria" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Todas as Categorias</SelectItem>
+        {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
+          <SelectItem key={key} value={key}>
+            {config.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const viewModeControl = (
+    <div className="flex items-center gap-0.5 p-0.5 bg-white/[0.08] ring-1 ring-white/[0.06] rounded-lg shrink-0">
+      <button
+        type="button"
+        onClick={() => setViewMode("grid")}
+        title="Grade"
+        aria-label="Visualização em grade"
+        className={cn(
+          "p-1.5 rounded-md transition-colors cursor-pointer",
+          viewMode === "grid"
+            ? "bg-white/[0.14] shadow-sm text-white/90"
+            : "text-white/50 hover:bg-white/[0.08]"
+        )}
+      >
+        <LayoutGrid className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setViewMode("list")}
+        title="Lista"
+        aria-label="Visualização em lista"
+        className={cn(
+          "p-1.5 rounded-md transition-colors cursor-pointer",
+          viewMode === "list"
+            ? "bg-white/[0.14] shadow-sm text-white/90"
+            : "text-white/50 hover:bg-white/[0.08]"
+        )}
+      >
+        <List className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "search", label: "Buscar", priority: 25, render: searchControl },
+    { id: "categoria", label: "Categoria", priority: 22, render: categoriaControl },
+    { id: "view-mode", label: "Modo de exibição", priority: 20, render: viewModeControl },
+    { id: "novo", label: "Novo Modelo", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => router.push("/admin/modelos/novo") },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-background">
-      <CollapsiblePageHeader
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="Modelos"
         icon={FileText}
-        bottomRow={
-          <div className="flex items-center gap-2">
-            {/* Stats Ribbon */}
-            <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
-              {[
-                { icon: FileStack, value: statsCards.totalModelos, label: "modelos" },
-                { icon: Building2, value: porCategoriaObj.PROVIDENCIA_ADMINISTRATIVA || 0, label: "administrativos" },
-                { icon: Briefcase, value: porCategoriaObj.PROVIDENCIA_FUNCIONAL || 0, label: "funcionais" },
-                { icon: Scale, value: porCategoriaObj.PECA_PROCESSUAL || 0, label: "peças" },
-                { icon: Sparkles, value: statsCards.totalGerados, label: "gerados" },
-              ].map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <Fragment key={index}>
-                    {index > 0 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
-                    <div className="flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors hover:bg-white/5">
-                      <Icon className="w-3.5 h-3.5 flex-shrink-0 text-white/40" />
-                      <span className="font-bold tabular-nums text-white/90">{stat.value}</span>
-                      <span className="text-white/50 font-medium">{stat.label}</span>
-                    </div>
-                  </Fragment>
-                );
-              })}
-            </div>
-
-            <div className="w-px h-4 bg-white/10 flex-shrink-0" />
-
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                placeholder="Buscar modelos..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 bg-black/[0.15] ring-1 ring-white/[0.08] border-0 rounded-lg py-1.5 text-[11px] text-white/90 placeholder:text-white/40"
-              />
-            </div>
-
-            {/* Filtro de Categoria */}
-            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger className="w-[140px] sm:w-[200px] shrink-0 bg-black/[0.15] ring-1 ring-white/[0.08] border-0 rounded-lg text-white/90">
-                <Filter className="w-4 h-4 mr-2 text-white/40" />
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as Categorias</SelectItem>
-                {Object.entries(CATEGORIA_CONFIG).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>
-                    {config.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 bg-black/[0.15] ring-1 ring-white/[0.08] rounded-lg">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={cn(
-                  "p-2 rounded-md transition-colors",
-                  viewMode === "grid"
-                    ? "bg-white/[0.14] shadow-sm text-white/90"
-                    : "text-white/50 hover:bg-white/[0.08]"
-                )}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "p-2 rounded-md transition-colors",
-                  viewMode === "list"
-                    ? "bg-white/[0.14] shadow-sm text-white/90"
-                    : "text-white/50 hover:bg-white/[0.08]"
-                )}
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        }
-      >
-        <div className="flex items-center justify-between">
-          {/* Left: icon + title + stats */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <FileText className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Modelos</h1>
-              <p className="text-[10px] text-white/55 tabular-nums">
-                {statsCards.totalModelos} modelos · {statsCards.totalGerados} gerados
-              </p>
-            </div>
-          </div>
-
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-1.5">
-            <Link href="/admin/modelos/novo">
-              <button
-                className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-                title="Novo Modelo"
-              >
-                <Plus className="w-[15px] h-[15px]" />
-              </button>
-            </Link>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+        stats={headerStats}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Content */}
       <div className="p-6 space-y-6">
