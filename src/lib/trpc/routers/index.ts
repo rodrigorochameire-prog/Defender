@@ -108,6 +108,7 @@ import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
 import { sentencasRouter } from "./sentencas";
 import { analiseProfundaRouter } from "./analise-profunda";
+import { rascunhoPecaRouter } from "./rascunho-peca";
 
 
 export const appRouter = router({
@@ -503,6 +504,10 @@ export const appRouter = router({
   // ANALISE PROFUNDA — Fase 2c (autos → análise por demanda, lane browser)
   // ==========================================
   analiseProfunda: analiseProfundaRouter,
+  // ==========================================
+  // RASCUNHO DE PEÇA — Fase 2c.2/B (rascunho guiado por linhas mestras, lane ai)
+  // ==========================================
+  rascunhoPeca: rascunhoPecaRouter,
 });
 
 export type AppRouter = typeof appRouter;

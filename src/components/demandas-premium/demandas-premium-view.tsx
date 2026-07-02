@@ -4,6 +4,7 @@
 import { cn } from "@/lib/utils";
 import { useVarreduraJob } from "@/hooks/use-varredura-job";
 import { useAnaliseProfundaJob } from "@/hooks/use-analise-profunda-job";
+import { useRascunhoPecaJob } from "@/hooks/use-rascunho-peca-job";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
@@ -894,6 +895,11 @@ export default function Demandas() {
   // uma vez no nível da view, igual ao useVarreduraJob acima.
   const ap = useAnaliseProfundaJob();
 
+  // Rascunho Guiado de Peça (Fase 2c.2/B) — gera minuta a partir das linhas
+  // mestras informadas pelo defensor. Instanciado uma vez no nível da view,
+  // igual ao useAnaliseProfundaJob acima.
+  const rp = useRascunhoPecaJob();
+
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
   // pausa de digitar. Ver docs/specs/demandas-cnj-ux.md.
@@ -1147,6 +1153,7 @@ export default function Demandas() {
       providenciaResumo: d.providenciaResumo || "",
       analiseResumo: d.analiseResumo ?? null,
       analiseData: d.analiseData ?? null,
+      analiseProfundaStatus: d.analiseProfundaStatus ?? null,
       registrosCount: d.registrosCount ?? 0,
       atribuicao: ATRIBUICAO_ENUM_TO_LABEL[d.processo?.atribuicao] || d.atribuicao || "Substituição Criminal",
       atribuicaoEnum: d.processo?.atribuicao || null,
@@ -3852,6 +3859,11 @@ export default function Demandas() {
               analisando={analisando}
               onAnaliseProfunda={(id) => ap.iniciar(id)}
               analiseProfundaAtiva={ap.isRunning}
+              onRascunharPeca={(id) => {
+                const lm = window.prompt("Linhas mestras da peça (direção estratégica):", "") || "";
+                rp.iniciar(id, lm);
+              }}
+              rascunhoAtivo={rp.isRunning}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}

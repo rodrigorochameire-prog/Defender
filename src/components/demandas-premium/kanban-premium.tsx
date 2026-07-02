@@ -79,6 +79,10 @@ const KanbanAtoContext = React.createContext<{
   onAnaliseProfunda?: (id: number) => void;
   /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
   analiseProfundaAtiva?: boolean;
+  /** Dispara o Rascunho Guiado de Peça (Fase 2c.2/B) para 1 demanda. */
+  onRascunharPeca?: (id: number) => void;
+  /** True enquanto há um job de rascunho de peça em andamento (desabilita o gatilho). */
+  rascunhoAtivo?: boolean;
 }>({});
 
 // ==========================================
@@ -129,6 +133,8 @@ interface KanbanDemanda {
   analiseResumo?: string | null;
   /** JSON estruturado `{objeto,decidido,providencia,prazo,recurso,_status,_fonte}` do registro de análise IA. */
   analiseData?: AnaliseData | null;
+  /** Status da Análise Profunda (Fase 2c) — 'concluida' habilita o "Rascunhar peça". */
+  analiseProfundaStatus?: string | null;
   lastEvento?: EventoLine | null;
   pendenteEvento?: EventoLine | null;
   data?: string | null;
@@ -158,6 +164,10 @@ interface KanbanPremiumProps {
   onAnaliseProfunda?: (id: number) => void;
   /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
   analiseProfundaAtiva?: boolean;
+  /** Dispara o Rascunho Guiado de Peça (Fase 2c.2/B) para 1 demanda. */
+  onRascunharPeca?: (id: number) => void;
+  /** True enquanto há um job de rascunho de peça em andamento (desabilita o gatilho). */
+  rascunhoAtivo?: boolean;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
   /** Atalho hover no card → abre o preview já no modo "novo registro" */
@@ -521,7 +531,7 @@ function KanbanCard({
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
   // Edição de ato direto no card (via context, evita threadar props)
-  const { onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva } =
+  const { onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onRascunharPeca, rascunhoAtivo } =
     React.useContext(KanbanAtoContext);
   const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
 
@@ -725,6 +735,22 @@ function KanbanCard({
             className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <FileSearch className="w-3 h-3" />
+          </button>
+        )}
+        {onRascunharPeca && (
+          <button
+            type="button"
+            disabled={rascunhoAtivo || demanda.analiseProfundaStatus !== "concluida"}
+            onClick={(e) => { e.stopPropagation(); onRascunharPeca(parseInt(String(demanda.id), 10)); }}
+            aria-label="Rascunhar peça (rascunho guiado)"
+            title={
+              demanda.analiseProfundaStatus === "concluida"
+                ? "Rascunhar peça — gera minuta guiada por linhas mestras"
+                : "Rascunhar peça — requer Análise profunda concluída"
+            }
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <FileText className="w-3 h-3" />
           </button>
         )}
         {/* "Agendar audiência" removido do card — já disponível no sheet da
@@ -1845,6 +1871,8 @@ export function KanbanPremium({
   analisando,
   onAnaliseProfunda,
   analiseProfundaAtiva,
+  onRascunharPeca,
+  rascunhoAtivo,
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
@@ -2176,7 +2204,7 @@ export function KanbanPremium({
   }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
 
   return (
-    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva }}>
+    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onRascunharPeca, rascunhoAtivo }}>
     <div className="space-y-2">
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">
