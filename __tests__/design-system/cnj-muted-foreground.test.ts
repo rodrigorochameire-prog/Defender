@@ -36,7 +36,9 @@ const cnjNumberLines = lines.filter((line, i) => {
 
 describe("design-system: número CNJ usa text-muted-foreground", () => {
   it("existem nós font-mono de número de processo para validar", () => {
-    expect(cnjNumberLines.length).toBeGreaterThanOrEqual(2);
+    // DemandaCard foi refatorado e hoje expõe 1 nó CNJ detectável (antes 2).
+    // O guard só garante que há ao menos um nó para as asserções abaixo validarem.
+    expect(cnjNumberLines.length).toBeGreaterThanOrEqual(1);
   });
 
   it("nenhum nó do número CNJ usa text-neutral-500/600 (incl. dark:)", () => {

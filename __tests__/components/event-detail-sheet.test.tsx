@@ -73,11 +73,17 @@ vi.mock("@/lib/trpc/client", () => {
   return { trpc: trpcProxy };
 });
 
-// Mock config module used in sheet
-vi.mock("@/lib/config/atribuicoes", () => ({
-  normalizeAreaToFilter: (v: string) => v,
-  SOLID_COLOR_MAP: {} as Record<string, string>,
-}));
+// Mock config module used in sheet.
+// Partial mock: preserva os exports reais (getAvatarGradient etc. usados pelo
+// AssistidoAvatar) e só sobrescreve o necessário — robusto a novos exports.
+vi.mock("@/lib/config/atribuicoes", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/config/atribuicoes")>();
+  return {
+    ...actual,
+    normalizeAreaToFilter: (v: string) => v,
+    SOLID_COLOR_MAP: {} as Record<string, string>,
+  };
+});
 
 // Mock sonner — no-op toasts in tests
 vi.mock("sonner", () => ({
@@ -99,29 +105,19 @@ describe("EventDetailSheet", () => {
     assistido: "Maria",
   };
 
-  it("renderiza card de depoente exatamente uma vez (regressão bug duplicação)", () => {
-    // DepoenteCardV2 tem data-lado; DepoentesStatusBlock (status agregado, merge 2026-04-16) não.
-    // Bug original duplicava o bloco inteiro de cards. Status block é adição legítima.
+  it("renderiza a seção de depoentes exatamente uma vez (regressão bug duplicação)", () => {
+    // Pós migração F3, os depoentes moram na DepoentesSecao (data-section-id="depoentes")
+    // em vez do DepoenteCardV2 (data-lado, hoje só no card expandido). O guard anti-
+    // duplicação continua valendo: a âncora da seção deve aparecer uma única vez.
     const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    expect(container.querySelectorAll('[data-lado]').length).toBe(1);
+    expect(container.querySelectorAll('[data-section-id="depoentes"]').length).toBe(1);
   });
 
-  it("renderiza bloco Documentos (novo, com tabs Autos/Assistido)", () => {
-    const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    // A nav de seções virou dropdown (menu fechado por padrão, renderizado em
-    // portal só ao abrir), então a checagem canônica é a âncora da seção no
-    // corpo (data-section-id="documentos"). querySelector retorna null quando
-    // ausente, então toBeTruthy é a checagem correta.
-    const documentosSection = container.querySelector('[data-section-id="documentos"]');
-    expect(documentosSection).toBeTruthy();
-  });
-
-  it("renderiza bloco Mídia (empty state quando sem mídia)", () => {
-    const { container } = render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
-    // Idem Documentos: valida a âncora da seção no corpo (data-section-id="midia").
-    const midiaSection = container.querySelector('[data-section-id="midia"]');
-    expect(midiaSection).toBeTruthy();
-  });
+  // NOTA: os testes "renderiza bloco Documentos" e "renderiza bloco Mídia" foram
+  // removidos. Eles assumiam o layout antigo (todas as seções achatadas no DOM).
+  // A refatoração "modos de trabalho" (spec §D) particionou as seções em abas de
+  // área — Documentos/Mídia agora renderizam DENTRO da sua aba (gated por conteúdo),
+  // não no DOM da aba ativa por padrão. Contrato antigo, não regressão.
 
   it("não mostra mais links externos antigos 'Pasta do Assistido' / 'Autos do Processo' (regressão Fase 2)", () => {
     render(<EventDetailSheet evento={evento} open={true} onOpenChange={() => {}} />);
