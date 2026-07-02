@@ -79,10 +79,8 @@ const KanbanAtoContext = React.createContext<{
   onAnaliseProfunda?: (id: number) => void;
   /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
   analiseProfundaAtiva?: boolean;
-  /** Dispara o Rascunho Guiado de Peça (Fase 2c.2/B) para 1 demanda. */
-  onRascunharPeca?: (id: number) => void;
-  /** True enquanto há um job de rascunho de peça em andamento (desabilita o gatilho). */
-  rascunhoAtivo?: boolean;
+  /** Abre o modal "Produzir peça" (wizard: baixa autos → analisa → rascunha) para 1 demanda. */
+  onProduzirPeca?: (id: number) => void;
 }>({});
 
 // ==========================================
@@ -164,10 +162,8 @@ interface KanbanPremiumProps {
   onAnaliseProfunda?: (id: number) => void;
   /** True enquanto há um job de análise profunda em andamento (desabilita o gatilho). */
   analiseProfundaAtiva?: boolean;
-  /** Dispara o Rascunho Guiado de Peça (Fase 2c.2/B) para 1 demanda. */
-  onRascunharPeca?: (id: number) => void;
-  /** True enquanto há um job de rascunho de peça em andamento (desabilita o gatilho). */
-  rascunhoAtivo?: boolean;
+  /** Abre o modal "Produzir peça" (wizard: baixa autos → analisa → rascunha) para 1 demanda. */
+  onProduzirPeca?: (id: number) => void;
   /** Atalho hover no card → abre AudienciaConfirmModal pré-populado */
   onAgendarAudiencia?: (demandaId: string) => void;
   /** Atalho hover no card → abre o preview já no modo "novo registro" */
@@ -531,7 +527,7 @@ function KanbanCard({
   const groupColor = STATUS_GROUPS[group]?.color || "#A1A1AA";
 
   // Edição de ato direto no card (via context, evita threadar props)
-  const { onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onRascunharPeca, rascunhoAtivo } =
+  const { onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onProduzirPeca } =
     React.useContext(KanbanAtoContext);
   const atoOptions = onAtoChange ? getAtoOptionsAgrupados(demanda.atribuicao || "") : [];
 
@@ -737,18 +733,13 @@ function KanbanCard({
             <FileSearch className="w-3 h-3" />
           </button>
         )}
-        {onRascunharPeca && (
+        {onProduzirPeca && (
           <button
             type="button"
-            disabled={rascunhoAtivo || demanda.analiseProfundaStatus !== "concluida"}
-            onClick={(e) => { e.stopPropagation(); onRascunharPeca(parseInt(String(demanda.id), 10)); }}
-            aria-label="Rascunhar peça (rascunho guiado)"
-            title={
-              demanda.analiseProfundaStatus === "concluida"
-                ? "Rascunhar peça — gera minuta guiada por linhas mestras"
-                : "Rascunhar peça — requer Análise profunda concluída"
-            }
-            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={(e) => { e.stopPropagation(); onProduzirPeca(parseInt(String(demanda.id), 10)); }}
+            aria-label="Produzir peça (baixa autos, analisa e rascunha)"
+            title="Produzir peça — baixa autos, roda a análise e gera o rascunho de uma tacada"
+            className="w-5 h-5 rounded flex items-center justify-center cursor-pointer text-neutral-400 dark:text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
           >
             <FileText className="w-3 h-3" />
           </button>
@@ -1871,8 +1862,7 @@ export function KanbanPremium({
   analisando,
   onAnaliseProfunda,
   analiseProfundaAtiva,
-  onRascunharPeca,
-  rascunhoAtivo,
+  onProduzirPeca,
   onAgendarAudiencia,
   onOpenRegistro,
   onToggleUrgent,
@@ -2204,7 +2194,7 @@ export function KanbanPremium({
   }, [visibleCardIds, focusedCardId, onCardClick, onAgendarAudiencia, onStatusChange]);
 
   return (
-    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onRascunharPeca, rascunhoAtivo }}>
+    <KanbanAtoContext.Provider value={{ onAtoChange, onAnalisar, analisando, onAnaliseProfunda, analiseProfundaAtiva, onProduzirPeca }}>
     <div className="space-y-2">
       {/* ===================== MOBILE LAYOUT ===================== */}
       <div className="block sm:hidden space-y-3">

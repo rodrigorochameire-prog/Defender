@@ -4,7 +4,7 @@
 import { cn } from "@/lib/utils";
 import { useVarreduraJob } from "@/hooks/use-varredura-job";
 import { useAnaliseProfundaJob } from "@/hooks/use-analise-profunda-job";
-import { useRascunhoPecaJob } from "@/hooks/use-rascunho-peca-job";
+import { ProduzirPecaModal } from "./ProduzirPecaModal";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
@@ -904,10 +904,9 @@ export default function Demandas() {
   // uma vez no nível da view, igual ao useVarreduraJob acima.
   const ap = useAnaliseProfundaJob();
 
-  // Rascunho Guiado de Peça (Fase 2c.2/B) — gera minuta a partir das linhas
-  // mestras informadas pelo defensor. Instanciado uma vez no nível da view,
-  // igual ao useAnaliseProfundaJob acima.
-  const rp = useRascunhoPecaJob();
+  // C2 fatia 5 — modal unificado "Produzir peça" (wizard: baixa autos → analisa
+  // → rascunha de uma tacada). Substitui o antigo botão "Rascunhar peça" + prompt.
+  const [produzirPecaDemandaId, setProduzirPecaDemandaId] = useState<number | null>(null);
 
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
@@ -3747,11 +3746,7 @@ export default function Demandas() {
               analisando={analisando}
               onAnaliseProfunda={(id) => ap.iniciar(id)}
               analiseProfundaAtiva={ap.isRunning}
-              onRascunharPeca={(id) => {
-                const lm = window.prompt("Linhas mestras da peça (direção estratégica):", "") || "";
-                rp.iniciar(id, lm);
-              }}
-              rascunhoAtivo={rp.isRunning}
+              onProduzirPeca={(id) => setProduzirPecaDemandaId(id)}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}
@@ -3998,6 +3993,13 @@ export default function Demandas() {
         demandasFiltradas={demandasFiltradas}
       />
       <AdminConfigModal isOpen={isAdminConfigModalOpen} onClose={() => setIsAdminConfigModalOpen(false)} />
+
+      {/* C2 fatia 5 — wizard "Produzir peça" */}
+      <ProduzirPecaModal
+        demandaId={produzirPecaDemandaId}
+        open={produzirPecaDemandaId != null}
+        onOpenChange={(o) => { if (!o) setProduzirPecaDemandaId(null); }}
+      />
       <DuplicatesModal
         isOpen={isDuplicatesModalOpen}
         onClose={() => setIsDuplicatesModalOpen(false)}
