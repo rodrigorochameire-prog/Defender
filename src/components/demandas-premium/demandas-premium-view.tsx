@@ -2482,15 +2482,18 @@ export default function Demandas() {
 
     const reusPresos = demandasAtivas.filter((d) => d.estadoPrisional === "preso").length;
 
+    // Agrupados em 2 blocos: "Panorama" (onde estão as demandas) e
+    // "Fluxo & Prazos" (o que exige ação / entrada). A ordem aqui define a ordem
+    // de render dos grupos.
     return [
-      { title: "Demandas Ativas", value: totalAtivas, subtitle: "total em aberto", icon: ListTodo, gradient: "zinc" as const },
-      { title: "Em Preparação", value: emPreparacao, subtitle: `${pct(emPreparacao)}% do total`, icon: FileEdit, gradient: "emerald" as const },
-      { title: "Em Triagem", value: emTriagem, subtitle: `${pct(emTriagem)}% do total`, icon: ScanSearch, gradient: (emTriagem > 0 ? "amber" : "zinc") as "amber" | "zinc" },
-      { title: "Novas (7 dias)", value: novas7d, subtitle: "intimações recentes", icon: DownloadCloud, gradient: "emerald" as const },
-      { title: "Prazos ≤ 7 dias", value: prazosProximos, subtitle: `${pct(prazosProximos)}% do total`, icon: Clock, gradient: (prazosProximos > 0 ? "amber" : "zinc") as "amber" | "zinc" },
-      { title: "Prazos Vencidos", value: vencidas, subtitle: `${pct(vencidas)}% do total`, icon: AlertTriangle, gradient: (vencidas > 0 ? "rose" : "zinc") as "rose" | "zinc" },
-      { title: "Atos a Definir", value: semAto, subtitle: `${pct(semAto)}% sem ato`, icon: FileText, gradient: (semAto > 0 ? "amber" : "zinc") as "amber" | "zinc" },
-      { title: "Réus Presos", value: reusPresos, subtitle: `${pct(reusPresos)}% do total`, icon: Lock, gradient: (reusPresos > 0 ? "amber" : "zinc") as "amber" | "zinc" },
+      { title: "Demandas Ativas", value: totalAtivas, subtitle: "total em aberto", icon: ListTodo, gradient: "zinc" as const, group: "Panorama" },
+      { title: "Em Preparação", value: emPreparacao, subtitle: `${pct(emPreparacao)}% do total`, icon: FileEdit, gradient: "emerald" as const, group: "Panorama" },
+      { title: "Em Triagem", value: emTriagem, subtitle: `${pct(emTriagem)}% do total`, icon: ScanSearch, gradient: (emTriagem > 0 ? "amber" : "zinc") as "amber" | "zinc", group: "Panorama" },
+      { title: "Réus Presos", value: reusPresos, subtitle: `${pct(reusPresos)}% do total`, icon: Lock, gradient: (reusPresos > 0 ? "amber" : "zinc") as "amber" | "zinc", group: "Panorama" },
+      { title: "Novas (7 dias)", value: novas7d, subtitle: "intimações recentes", icon: DownloadCloud, gradient: "emerald" as const, group: "Fluxo & Prazos" },
+      { title: "Atos a Definir", value: semAto, subtitle: `${pct(semAto)}% sem ato`, icon: FileText, gradient: (semAto > 0 ? "amber" : "zinc") as "amber" | "zinc", group: "Fluxo & Prazos" },
+      { title: "Prazos ≤ 7 dias", value: prazosProximos, subtitle: `${pct(prazosProximos)}% do total`, icon: Clock, gradient: (prazosProximos > 0 ? "amber" : "zinc") as "amber" | "zinc", group: "Fluxo & Prazos" },
+      { title: "Prazos Vencidos", value: vencidas, subtitle: `${pct(vencidas)}% do total`, icon: AlertTriangle, gradient: (vencidas > 0 ? "rose" : "zinc") as "rose" | "zinc", group: "Fluxo & Prazos" },
     ];
   }, [demandas]);
 
@@ -3779,30 +3782,35 @@ export default function Demandas() {
           /* ========== TAB ANALYTICS ========== */
           <div className="space-y-6">
 
-            {/* Stats KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {statsData.map((stat, index) => {
-                const Icon = stat.icon;
-                const hasValue = Number(String(stat.value).replace('%','')) > 0;
-                // Zera o realce quando o valor é 0 (nada a sinalizar)
-                const tone = !hasValue ? "neutral" : (stat.gradient === "zinc" ? "neutral" : stat.gradient);
-                const t = KPI_TONE[tone] ?? KPI_TONE.neutral;
-                return (
-                  <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border bg-white dark:bg-neutral-900 ${t.card}`}>
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${t.chip}`}>
-                      <Icon className={`w-4 h-4 ${t.icon}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{stat.value}</p>
-                      <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 truncate">{stat.title}</p>
-                      {stat.subtitle && (
-                        <p className="text-[10px] text-neutral-400/70 dark:text-neutral-500/70 truncate">{stat.subtitle}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {/* Stats KPIs — agrupados por bloco (Panorama · Fluxo & Prazos) */}
+            {Array.from(new Set(statsData.map((s) => s.group))).map((grupo) => (
+              <div key={grupo} className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 px-0.5">{grupo}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {statsData.filter((s) => s.group === grupo).map((stat, index) => {
+                    const Icon = stat.icon;
+                    const hasValue = Number(String(stat.value).replace('%','')) > 0;
+                    // Zera o realce quando o valor é 0 (nada a sinalizar)
+                    const tone = !hasValue ? "neutral" : (stat.gradient === "zinc" ? "neutral" : stat.gradient);
+                    const t = KPI_TONE[tone] ?? KPI_TONE.neutral;
+                    return (
+                      <div key={index} className={`flex items-center gap-3 p-4 rounded-xl border bg-white dark:bg-neutral-900 ${t.card}`}>
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${t.chip}`}>
+                          <Icon className={`w-4 h-4 ${t.icon}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{stat.value}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 truncate">{stat.title}</p>
+                          {stat.subtitle && (
+                            <p className="text-[10px] text-neutral-400/70 dark:text-neutral-500/70 truncate">{stat.subtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
             {/* Intimações importadas — série semanal (ledger PJe) */}
             <IntimacoesImportCard />
