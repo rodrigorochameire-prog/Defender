@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +37,8 @@ import {
   Globe,
   ChevronRight,
 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 
 // ============================================
 // TYPES
@@ -312,6 +313,7 @@ function EmptyState() {
 // ============================================
 
 export default function CosmovisaoPage() {
+  const router = useRouter();
   const [periodo, setPeriodo] = useState<Periodo>("ano");
   const [customInicio, setCustomInicio] = useState("");
   const [customFim, setCustomFim] = useState("");
@@ -345,55 +347,59 @@ export default function CosmovisaoPage() {
 
   const isEmpty = panorama && panorama.total === 0;
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // Back button → onSelect+router.push (regra 7). Subtítulo descritivo (sem
+  // dado) morre — shell já é o título. Seletor de período → render Infinity
+  // (navegação primária, nunca colapsa). Datas custom → só entram no array
+  // quando periodo === "custom" (spread, nunca `render: cond && jsx`).
+  const periodoControl = (
+    <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-white/[0.08] border border-white/[0.06]">
+      {([
+        { key: "mes", label: "Mês" },
+        { key: "trimestre", label: "Trim." },
+        { key: "semestre", label: "Sem." },
+        { key: "ano", label: "Ano" },
+        { key: "tudo", label: "Tudo" },
+      ] as const).map(opt => (
+        <button
+          key={opt.key}
+          onClick={() => setPeriodo(opt.key)}
+          className={cn(
+            "px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all",
+            periodo === opt.key
+              ? "bg-white/[0.15] text-white shadow-sm"
+              : "text-white/55 hover:text-white/80"
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const customDateControl = (
+    <div className="flex items-center gap-1.5">
+      <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
+      <span className="text-[10px] text-white/55">—</span>
+      <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
+    </div>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "back", label: "Voltar", icon: ArrowLeft, priority: 15, hideLabel: true, onSelect: () => router.push("/admin/juri") },
+    { id: "periodo", label: "Período", priority: Infinity, render: periodoControl },
+    ...(periodo === "custom"
+      ? [{ id: "custom-dates", label: "Datas", priority: 25, render: customDateControl } as HeaderAction]
+      : []),
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <HeaderSlotTitle icon={Globe} title="Cosmovisão do Júri" />
-      <CollapsiblePageHeader title="Cosmovisão do Júri" icon={Globe} seamless>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/admin/juri">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-            </Link>
-            <p className="text-[12px] text-white/55 hidden sm:block truncate">Analytics completo do Tribunal do Júri</p>
-          </div>
-
-          {/* Period filter — inline in header */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 p-0.5 rounded-xl bg-white/[0.08] border border-white/[0.06]">
-              {([
-                { key: "mes", label: "Mês" },
-                { key: "trimestre", label: "Trim." },
-                { key: "semestre", label: "Sem." },
-                { key: "ano", label: "Ano" },
-                { key: "tudo", label: "Tudo" },
-              ] as const).map(opt => (
-                <button
-                  key={opt.key}
-                  onClick={() => setPeriodo(opt.key)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all",
-                    periodo === opt.key
-                      ? "bg-white/[0.15] text-white shadow-sm"
-                      : "text-white/55 hover:text-white/80"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {periodo === "custom" && (
-              <div className="flex items-center gap-1.5">
-                <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
-                <span className="text-[10px] text-white/55">—</span>
-                <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)} className="w-32 h-7 text-[10px] bg-white/[0.08] border-white/[0.1] text-white" />
-              </div>
-            )}
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
+        title="Cosmovisão do Júri"
+        icon={Globe}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
 

@@ -42,11 +42,8 @@ import Link from "next/link";
 import { PJeImportModal } from "@/components/demandas-premium/pje-import-modal";
 import { toast } from "sonner";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
-
-// Acento de atribuição VVD (âmbar) — registry src/lib/config/atribuicoes.ts
-const VVD_ACCENT = "#f59e0b";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 
 // Opções de atribuição para o modal (apenas VVD pré-selecionado)
 const atribuicaoOptions = [
@@ -143,34 +140,41 @@ export default function VVDPage() {
     return <Badge variant="outline" className="border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400">{diasRestantes} dias</Badge>;
   };
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ──────────────────
+  // Row 1 do CollapsiblePageHeader tinha só subtítulo descritivo (sem dado) +
+  // 2 botões (Atualizar/Importar PJe) → viram HeaderAction[]. HeaderSlotTitle
+  // não carregava chips, só title+accentHex (âmbar) — accentHex não tem
+  // equivalente no shell ainda (prop `iconClassName` é item do Lote E).
+  const headerActions: HeaderAction[] = [
+    {
+      id: "refresh",
+      label: "Atualizar",
+      icon: RefreshCw,
+      priority: 20,
+      hideLabel: true,
+      onSelect: () => {
+        refetchStats();
+        refetchProcessos();
+        refetchIntimacoes();
+      },
+    },
+    {
+      id: "importar-pje",
+      label: "Importar PJe",
+      icon: Upload,
+      priority: 30,
+      variant: "primary",
+      onSelect: () => setIsPJeImportModalOpen(true),
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <HeaderSlotTitle icon={Shield} title="Violência Doméstica" accentHex={VVD_ACCENT} />
-      <CollapsiblePageHeader title="Violência Doméstica" icon={Shield} seamless>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[12px] text-white/55 truncate">Controle de Medidas Protetivas de Urgência</p>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              title="Atualizar"
-              onClick={() => {
-                refetchStats();
-                refetchProcessos();
-                refetchIntimacoes();
-              }}
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-            >
-              <RefreshCw className="w-[15px] h-[15px]" />
-            </button>
-            <button
-              onClick={() => setIsPJeImportModalOpen(true)}
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              Importar PJe
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
+        title="Violência Doméstica"
+        icon={Shield}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Conteúdo */}
       <div className="p-4 md:p-6 space-y-6">
