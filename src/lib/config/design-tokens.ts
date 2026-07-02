@@ -116,6 +116,34 @@ export const HEADER_STYLE = {
 } as const;
 
 // ============================================
+// HEADER GLASS (v6 — vidro em duas camadas, colado nas margens)
+// ============================================
+// Barra de vidro translúcida com blur, borda a borda (o conteúdo passa por
+// baixo com blur ao rolar). Fallback: sem backdrop-filter, fundo sólido.
+
+export const HEADER_GLASS = {
+  /** Wrapper sticky que deixa o conteúdo passar por baixo do vidro */
+  wrapper: "sticky top-0 z-50",
+  /** O bloco de vidro em si — flush nas margens, só borda inferior */
+  shell:
+    "border-b border-white/[0.09] shadow-[0_8px_24px_rgba(0,0,0,0.18)] bg-[#3a3a3d] dark:bg-[#1b1b1d] supports-[backdrop-filter]:bg-[#303033]/80 dark:supports-[backdrop-filter]:bg-[#171719]/75 supports-[backdrop-filter]:backdrop-blur-xl",
+  /** Faixa utilitária (camada de cima, mais funda) */
+  utilityRow:
+    "flex items-center gap-3 px-4 bg-black/[0.22] border-b border-white/[0.07] text-[11px] text-white/45",
+  /** Faixa de trabalho (camada de baixo) */
+  workRow: "flex h-12 items-center gap-1.5 px-2.5",
+  /** Moldura do switch de atribuições — clara, elevada, com brilho sutil no topo */
+  well:
+    "inline-flex items-center gap-0.5 p-[3px] rounded-[10px] bg-white/[0.06] ring-1 ring-inset ring-white/[0.12] shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_1px_2px_rgba(0,0,0,0.15)]",
+  /** Botão fantasma da faixa de trabalho (FOCUS_RING: a11y §10.8) */
+  ghostBtn:
+    "inline-flex items-center justify-center gap-1.5 h-8 rounded-lg text-white/70 hover:bg-white/[0.10] hover:text-white transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
+  /** Único botão sólido do header */
+  primaryBtn:
+    "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40",
+} as const;
+
+// ============================================
 // SHEET (v5 refinado — sheets laterais adaptáveis)
 // ============================================
 // Tokens compartilhados pelos detail-sheets (Agenda, Demandas, Atendimentos).

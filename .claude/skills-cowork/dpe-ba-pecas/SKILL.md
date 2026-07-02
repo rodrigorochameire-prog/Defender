@@ -189,6 +189,99 @@ Consulte `references/tipos_de_pecas.md` para estrutura detalhada e prompts pré-
 
 ---
 
+## Modo Rascunho Guiado (Fase 2c.2/B)
+
+Quando a skill recebe uma instrução adicional com `fonte="fase2c2b"`, ativa o **modo rascunho guiado por linhas mestras**. Este modo gera uma primeira versão orientada da peça jurídica, pronta para revisão e refinamento pelo defensor.
+
+### Contrato de Interface
+
+A instrução chega com este JSON:
+
+```json
+{
+  "demandaId": "UUID-do-caso",
+  "pecaSugerida": "memoriais|resposta_acusacao|apelacao|rese|contrarrazoes",
+  "atribuicao": "vvd|juri|ep",
+  "linhasMestras": "string com direção estratégica e núcleos de defesa",
+  "fonte": "fase2c2b"
+}
+```
+
+### Fluxo de Processamento
+
+1. **DIREÇÃO MESTRA** — Use `linhasMestras` como guia estratégico da peça. Não é um sumário; é a bússola da argumentação. Todos os parágrafos devem reafirmar ou desenvolver essa direção.
+
+2. **MAPEAMENTO DE TIPO** — Converta `peca_sugerida` + `atribuicao` para a referência modelo:
+
+   | peca_sugerida | atribuicao | Referência |
+   |---|---|---|
+   | memoriais | vvd | `references/vvd_alegacoes_finais.md` |
+   | memoriais | juri | `references/alegacoes_finais_juri.md` |
+   | resposta_acusacao | vvd | `references/vvd_analise_para_ra.md` |
+   | resposta_acusacao | juri | `references/resposta_acusacao_juri.md` |
+   | resposta_acusacao | ep | `references/resposta_acusacao_ep.md` |
+   | apelacao | vvd | `references/vvd_apelacao.md` |
+   | apelacao | juri | `references/apelacao_pos_juri.md` |
+   | apelacao | ep | `references/apelacao_ep.md` |
+   | rese | vvd | `references/vvd_contrarrazoes_rese.md` |
+   | rese | juri | `references/contrarrazoes_rese_juri.md` |
+   | contrarrazoes | vvd | `references/vvd_contrarrazoes_apelacao.md` |
+   | contrarrazoes | juri | `references/contrarrazoes_apelacao_juri.md` |
+
+3. **LEITURA DE CONTEXTO** — Acesse a pasta do assistido no Drive (conforme convenção de paths em Zona 3/Casos):
+   - `analysisData`: análise processual anterior (se existir em `docs/analise/`)
+   - `autos`: peças processuais (varredura de PDFs em `{demanda}/Autos/`)
+   - Contexto do caso: dados do assistido, cronologia dos atos, jurisprudência capturada
+
+4. **GERAÇÃO DO DOCX** — Produza um documento formatado:
+   - Garamond 12pt, justificado, espaçamento 1.5
+   - Timbre DPE-BA (logo em header, rodapé com endereço da 7ª Regional)
+   - Estrutura: Endereçamento → Epígrafe → Qualificação → Preâmbulo → Seções com núcleos de defesa → Fecho + Data → Assinatura
+   - **Nome do arquivo**: `[pecaSugerida] - [Nome do Assistido].docx` (convenção v2)
+   - **Destino**: `Protocolar/` da pasta do assistido
+
+5. **REGISTRO DE CONCLUSÃO** — Após sucesso, execute:
+   ```
+   POST /api/demandas/{demandaId}/rascunho-status
+   {
+     "rascunho_status": "pronto",
+     "rascunho_drive_url": "https://drive.google.com/...link-para-arquivo",
+     "peca_type": "{pecaSugerida}",
+     "atribuicao": "{atribuicao}"
+   }
+   ```
+   Esta chamada atualiza `demandas.rascunho_status` para `'pronto'` e registra a URL para acesso posterior.
+
+6. **NUNCA PROTOCOLAR** — Este modo gera rascunho. Protocolo (assinatura + PJe) fica para a Fase 3 (revisão pelo defensor). A peça é deixada em `Protocolar/` pronta para edição manual.
+
+### Parâmetros de Qualidade
+
+- **Linhas mestras**: devem ser refletidas no início de cada seção e reafirmadas na argumentação final
+- **Estrutura**: mínimo 3 seções (contexto factual, enquadramento jurídico, pedidos); máximo 7 (evitar redundância)
+- **Paragrafação funcional**: cada parágrafo uma unidade de raciocínio completa (ver "Paragrafação funcional" acima)
+- **Rigor linguístico**: aplicar regras de "Linguagem Estratégica da Defesa" (nunca "vítima", condicional para fatos acusatórios, "ilegalidade" vs "nulidade")
+- **Formato**: validar que todas as margens, fonts, espaçamentos coincidem com este padrão antes de gerar o .docx
+
+### Exemplo Mínimo
+
+**Input:**
+```json
+{
+  "demandaId": "12345abc",
+  "pecaSugerida": "memoriais",
+  "atribuicao": "vvd",
+  "linhasMestras": "Defesa baseada em: (1) insuficiência de provas de identificação do agressor; (2) direitos processualísticos violados na colheita do reconhecimento; (3) prevalência da palavra da ofendida sobre perícia inconsistente.",
+  "fonte": "fase2c2b"
+}
+```
+
+**Output:**
+- Arquivo `.docx` em `Protocolar/Memoriais - Maria Silva.docx`
+- POST `{demandaId}/rascunho-status` com status `'pronto'`
+- Documento pronto para revisão, sem protocolo
+
+---
+
 ## Linguagem Estratégica da Defesa
 
 A escolha das palavras numa minuta não é neutra — ela pode reforçar ou desconstruir a narrativa acusatória. Como Defensoria Pública, a peça deve ser tecnicamente rigorosa e, ao mesmo tempo, evitar termos que implicitamente aceitem a versão da acusação. Aplique este critério em todas as minutas.
