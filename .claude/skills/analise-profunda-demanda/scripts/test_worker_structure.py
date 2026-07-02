@@ -8,6 +8,9 @@ def main():
         "def main(", "async def main_async", "baixar_pdf_autos",
         "build_analise_autos_task", "analise_profunda_status",
         "distribuir", "baixando_autos", "analisando", "erro",
+        # Fase 2b: roteamento EP→SEEU
+        "escolhe_fonte_autos", "baixar_autos_seeu", "_distribuir_autos_multiplos",
+        'fonte == "seeu"',
     ]
     for tok in needed:
         if tok not in SRC:

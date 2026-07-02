@@ -1,6 +1,8 @@
 # SEEU Fase 2b — Download de Autos do SEEU (habilita EP no pipeline profundo)
 
 > **Status:** design aprovado (brainstorming 2026-07-01). **Spec build-ready; o build da primitiva de download precisa de UMA passada com o SEEU logado ao vivo** (mapear seletores das "Ações"/esquema de URL do documento). O restante (navegação reusada, staging, wiring, testes puros) é construível sem sessão.
+>
+> **Build 2026-07-02 (sem sessão ao vivo):** feitos ✅ Task 1 (helpers puros `seeu_autos.py` + 13 testes), ✅ Task 3a (roteamento EP→SEEU no worker `analise_profunda_autos.py`), ✅ estrutura de `baixar_autos_seeu` (navegação reusa a Mesa da 2a) e distribuição multi-PDF. **Live-gated (pendente da sessão):** `_coletar_documentos_disponiveis` e `_baixar_documento` levantam `SeeuAutosLiveGated` até o mapa dos seletores (§4). **Elegibilidade EP na 2c permanece FECHADA** com motivo explícito ("pendente de mapeamento ao vivo") em `isElegivel2c` — o FLIP (mover `EXECUCAO_PENAL` p/ `ATRIB_ELEGIVEIS_2C`) é a última linha, feita após o mapa fechar a primitiva, para não expor um botão que sempre erraria.
 > **Contexto:** contrapartida SEEU do `baixar_pdf_autos` do PJe. A Fase 2c (análise profunda) hoje só baixa autos via PJe (Júri/VVD). 2b provê a primitiva de autos do SEEU → **destrava a 2c para Execução Penal**.
 
 ## 1. Objetivo
