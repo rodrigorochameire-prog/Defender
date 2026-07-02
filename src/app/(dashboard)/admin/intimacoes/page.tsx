@@ -423,7 +423,7 @@ export default function SolarHubPage() {
   );
 
   const tabsControl = (
-    <div className="shrink-0 overflow-x-auto scrollbar-none max-w-[70vw]">
+    <div className="min-w-0 overflow-x-auto scrollbar-none max-w-[70vw]">
       <TabsList className="bg-black/[0.15] ring-1 ring-white/[0.05] border-0 h-8 p-[2px] rounded-md min-w-max gap-0">
         <TabsTrigger
           value="caixa"
