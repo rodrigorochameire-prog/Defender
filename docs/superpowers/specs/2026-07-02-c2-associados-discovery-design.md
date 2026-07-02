@@ -28,6 +28,8 @@ Esta fatia (**2a**) entrega a parte determinística e de maior valor-por-risco: 
 | Núcleo testável | `extract_cnjs` (regex+dedup+cap) + `associados_from_text` (exclui principal) + `format_dossie(..., associados)` | puros; a única I/O é o pdftotext (subprocess já usado no repo) |
 | Cap | `MAX_ASSOCIADOS = 30` | bound de tamanho |
 
+**Caveat de precisão (aceitável para 2a):** 2a faz só grep+dedup+exclui-principal — **não** faz a classificação contextual (capa "Processo referência"/certidão = manter; edital de terceiro/cível não-relacionado = descartar) nem o dígito-verificador (contra CNJs-fantasma de digitação) que a auditoria completa descreve. Logo, a lista pode conter **falsos positivos** (CNJs de terceiros citados em editais, processos não-relacionados, eventual lixo de OCR; o `CNJ_RE` também casa CNJs de outros tribunais, não só TJBA). Isso é **aceitável** porque a lista só **informa** a análise (entra no prompt como "processos citados nos autos"), não dispara download automático. A classificação/DV fica para 2b (onde o custo de baixar um associado errado justifica o filtro).
+
 ## 3. Mecanismo (reuso do C2.2)
 
 O C2.2 já injeta um "dossiê do assistido" no `prompt` da task `analise-autos`. 2a **adiciona uma seção** `### Processos associados/conexos (citados nos autos)`. Os associados vêm do **texto do PDF** (não do banco), então são passados **para dentro** do `format_dossie` a partir do worker.
@@ -77,14 +79,19 @@ Testável alimentando um `pdf_path` cujo `vt.extract_pdf_text` é monkeypatchado
 Ganha o param `associados` (default `None`) e o repassa a `format_dossie`.
 
 ### 4.6 Wire no `main_async` (ramo PJe, logo após `baixar_pdf_autos`)
+**Inicializar `associados = []` cedo** (logo após `fonte = sa.escolhe_fonte_autos(atribuicao)`, ~L357) para que o ramo EP/SEEU não dê `NameError` — o `associados` só é sobrescrito dentro do ramo PJe:
 ```python
+fonte = sa.escolhe_fonte_autos(atribuicao)   # já existe (~L357)
+associados = []                              # NOVO — default, cobre o ramo SEEU
+...
+# ramo PJe (else, não-SEEU):
 pdf_path = await vt.baixar_pdf_autos(ctx, autos_url)     # já existe (~L399)
+associados = extrair_associados_autos(pdf_path, cnj)     # NOVO — sobrescreve, logo após o pdf_path
 ...
-associados = extrair_associados_autos(pdf_path, cnj)     # NOVO — logo após ter o pdf_path
-...
+# comum aos dois ramos (~L411):
 dossie = build_dossie_assistido(sb, row["assistido_id"], associados=associados)
 ```
-`pdf_path` é uma string (arquivo local em /tmp) que **sobrevive ao fechamento do bloco `async with async_playwright`** — a extração pode acontecer dentro ou fora do bloco, sem risco de sessão fechada. EP/SEEU: `associados=[]` (não extrai; múltiplos PDFs = follow-up). Demais args do `build_analise_autos_task` intactos.
+`pdf_path` é uma string (arquivo local em /tmp) que **sobrevive ao fechamento do bloco `async with async_playwright`** — a extração pode acontecer dentro ou fora do bloco, sem risco de sessão fechada. EP/SEEU: `associados` fica `[]` (não extrai; múltiplos PDFs = follow-up). Demais args do `build_analise_autos_task` intactos.
 
 ## 5. Fluxo de dados
 worker baixa o principal (`pdf_path`) → `extrair_associados_autos(pdf_path, cnj)` (pdftotext → CNJs − principal) → `build_dossie_assistido(sb, aid, associados=lista)` → `format_dossie` renderiza "Processos associados/conexos" → `prompt` da `analise-autos` → a IA analisa sabendo dos conexos citados nos autos.
