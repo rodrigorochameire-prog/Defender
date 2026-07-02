@@ -259,9 +259,34 @@ export default function ModelosPage() {
   );
 
   const headerActions: HeaderAction[] = [
+    // Sem onSelect natural (não há search-open state nem ref de foco) — some
+    // do "…" quando colapsa (Fix 1, padrão sancionado).
     { id: "search", label: "Buscar", priority: 25, render: searchControl },
-    { id: "categoria", label: "Categoria", priority: 22, render: categoriaControl },
-    { id: "view-mode", label: "Modo de exibição", priority: 20, render: viewModeControl },
+    {
+      id: "categoria",
+      label: "Categoria",
+      priority: 22,
+      render: categoriaControl,
+      overflowItems: [
+        { id: "categoria-all", label: "Todas as Categorias", onSelect: () => setCategoriaFilter("all") },
+        ...Object.entries(CATEGORIA_CONFIG).map(([key, config]) => ({
+          id: `categoria-${key}`,
+          label: config.label,
+          icon: config.icon,
+          onSelect: () => setCategoriaFilter(key),
+        })),
+      ],
+    },
+    {
+      id: "view-mode",
+      label: "Modo de exibição",
+      priority: 20,
+      render: viewModeControl,
+      overflowItems: [
+        { id: "view-mode-grid", label: "Grade", icon: LayoutGrid, onSelect: () => setViewMode("grid") },
+        { id: "view-mode-list", label: "Lista", icon: List, onSelect: () => setViewMode("list") },
+      ],
+    },
     { id: "novo", label: "Novo Modelo", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => router.push("/admin/modelos/novo") },
   ];
 

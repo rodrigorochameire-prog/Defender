@@ -513,9 +513,17 @@ export default function SolarHubPage() {
     // Infinity: navegação primária da página (seções) — nunca pode cair no "…".
     { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
     ...(solarStatus && !solarStatus.authenticated
-      ? [{ id: "reauth", label: "Re-autenticar", priority: 20, render: reautenticarBtn } as HeaderAction]
+      ? [
+          {
+            id: "reauth",
+            label: "Re-autenticar",
+            priority: 20,
+            render: reautenticarBtn,
+            onSelect: handleRefresh,
+          } as HeaderAction,
+        ]
       : []),
-    { id: "atualizar", label: "Atualizar", priority: 30, render: atualizarBtn },
+    { id: "atualizar", label: "Atualizar", priority: 30, render: atualizarBtn, onSelect: handleRefresh },
   ];
 
   return (

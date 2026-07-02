@@ -35,7 +35,13 @@ export interface HeaderAction {
   variant?: "ghost" | "primary";
   /** Handler do clique — usado na barra E no item do "…". */
   onSelect?: () => void;
-  /** Render custom na barra (input de busca, dropdown próprio). */
+  /**
+   * Render custom na barra (input de busca, dropdown próprio).
+   * ATENÇÃO: sem `onSelect`/`overflowItems`, a action NÃO aparece no menu "…"
+   * quando colapsa (evita item morto) — dê um onSelect que abra o equivalente
+   * sempre que existir. NUNCA use `render: cond && jsx` (inclusão condicional
+   * é via spread no array).
+   */
   render?: ReactNode;
   /** Só ícone na barra; o label vira title/aria-label. */
   hideLabel?: boolean;
@@ -119,7 +125,12 @@ export function HeaderActionsBar({
   const isVisible = (a: HeaderAction) =>
     a.priority > 0 && (visibleIds === null || visibleIds.includes(a.id));
   const visible = actions.filter(isVisible);
-  const overflow = actions.filter((a) => !isVisible(a));
+  // Actions com `render` mas sem `onSelect` nem `overflowItems` não têm
+  // equivalente clicável no menu "…" — ficam de fora para não virar item
+  // morto quando colapsam (ver JSDoc de `render` em HeaderAction).
+  const overflow = actions.filter(
+    (a) => !isVisible(a) && !(a.render && !a.onSelect && !a.overflowItems),
+  );
 
   return (
     <div

@@ -125,6 +125,9 @@ export default function JuriPage() {
 
   const headerActions: HeaderAction[] = [
     { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
+    // `ano` é um stepper prev/next (anos ilimitados), não um Select de opções
+    // discretas — sem lista fechada para virar overflowItems. Sem onSelect
+    // natural, some do "…" quando colapsa (Fix 1, padrão sancionado).
     ...(activeTab === "pauta"
       ? [{ id: "ano", label: "Ano", priority: 28, render: anoControl } as HeaderAction]
       : []),
