@@ -156,6 +156,56 @@ def merge_relacionados(aba: list, texto_cnjs: list, cnj_principal: str = "") -> 
     return sorted(by.values(), key=lambda x: (x["fonte"] != "aba", not x.get("baixavel"), x["cnj"]))
 
 
+_DETALHE = "https://pje.tjba.jus.br/pje/Processo/ConsultaProcesso/Detalhe/listProcessoCompleto.seam"
+_ACCORDIONS = ["Dependência", "Prevenção", "Desmembramento", "Vinculação"]
+
+
+def read_associados_aba(cnj: str) -> list:
+    """Lê a aba 'Associados' (4 accordions) do PJe. SÍNCRONO (própria conexão CDP).
+    Nunca lança → []. Chamar do worker async via asyncio.to_thread."""
+    try:
+        import sys as _sys
+        from pathlib import Path as _P
+        _sys.path.insert(0, str(_P(__file__).resolve().parents[4] / "scripts" / "pje-cdp"))
+        from patchright.sync_api import sync_playwright
+        import preparar_download as _pd
+        import time as _t
+        with sync_playwright() as pw:
+            browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
+            ctx = browser.contexts[0]
+            page = next((p for p in ctx.pages if "pje.tjba.jus.br" in (p.url or "")), None)
+            if page is None:
+                return []
+            page.on("dialog", lambda d: d.accept())
+            idp, ca = _pd.get_ca(ctx, page, cnj)
+            if not idp:
+                return []
+            pg = ctx.new_page()
+            pg.on("dialog", lambda d: d.accept())
+            try:
+                pg.goto(f"{_DETALHE}?id={idp}&ca={ca}", wait_until="domcontentloaded", timeout=60000)
+                _t.sleep(6)
+                pg.evaluate(
+                    """() => { const a=[...document.querySelectorAll('a')]
+                        .find(e=>/Associados\\s*\\(\\d+\\)/.test((e.innerText||'').replace(/\\s+/g,' ')));
+                        if(a) a.click(); }""")
+                _t.sleep(4)
+                for lab in _ACCORDIONS:
+                    pg.evaluate(
+                        """(lab)=>{const h=[...document.querySelectorAll('.rich-stglpanel-header,[id*="toggleProcessosAssociados"][id$="_header"]')]
+                            .find(e=>(e.textContent||'').includes(lab)); if(h) h.click();}""", lab)
+                    _t.sleep(1.6)
+                _t.sleep(2)
+                full = pg.evaluate("() => document.body.innerText")
+            finally:
+                pg.close()
+        i0 = full.find("Número do processo")
+        trecho = full[i0:i0 + 5000] if i0 >= 0 else full[:5000]
+        return parse_associados_panel(trecho, cnj)
+    except Exception:
+        return []
+
+
 def _cap(s, n):
     s = (s or "")
     if not isinstance(s, str):
@@ -513,6 +563,7 @@ async def main_async(meta: dict) -> dict:
         # (Júri/VVD/Criminal) do PJe. Determina se tocamos ou não o PJe SSO.
         fonte = sa.escolhe_fonte_autos(atribuicao)
         associados = []
+        relacionados = []
 
         async with vt.async_playwright() as p:
             # Conexão CDP inline — mesmo padrão de varredura() (não há um
@@ -561,6 +612,12 @@ async def main_async(meta: dict) -> dict:
 
                 associados = extrair_associados_autos(pdf_path, cnj)
 
+                try:
+                    aba = await asyncio.to_thread(read_associados_aba, cnj)
+                except Exception:
+                    aba = []
+                relacionados = merge_relacionados(aba, associados, cnj)
+
         # 3. organiza no Drive (distribuir-autos por CNJ → <assistido>/Autos/).
         distribuido = (
             _distribuir_autos_multiplos(pdf_paths, cnj) if fonte == "seeu"
@@ -568,7 +625,7 @@ async def main_async(meta: dict) -> dict:
         )
 
         # 4. enfileira a análise (lane ai) + estado analisando.
-        dossie = build_dossie_assistido(sb, row["assistido_id"], associados=associados)
+        dossie = build_dossie_assistido(sb, row["assistido_id"], relacionados=relacionados)
         task = build_analise_autos_task(
             {"assistido_id": row["assistido_id"], "processo_id": row["processo_id"]},
             demanda_id=demanda_id, created_by=meta["defensor_id"], dossie=dossie,
