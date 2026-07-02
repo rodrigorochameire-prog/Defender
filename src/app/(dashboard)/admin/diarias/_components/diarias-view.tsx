@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Banknote, Wallet, Clock, CalendarDays, Plus } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,14 +66,18 @@ export function DiariasView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Diárias" icon={Banknote}>
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={Wallet} label="A receber" value={brl(kpis.aReceber)} />
-          <KpiChip icon={Banknote} label={`Pago em ${anoAtual}`} value={brl(kpis.pagoAno)} />
-          <KpiChip icon={Clock} label="Pendentes" value={kpis.pendentes} />
-          <KpiChip icon={CalendarDays} label="Diárias" value={kpis.total} />
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Diárias"
+        icon={Banknote}
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={Wallet} label="A receber" value={brl(kpis.aReceber)} />
+            <KpiChip icon={Banknote} label={`Pago em ${anoAtual}`} value={brl(kpis.pagoAno)} />
+            <KpiChip icon={Clock} label="Pendentes" value={kpis.pendentes} />
+            <KpiChip icon={CalendarDays} label="Diárias" value={kpis.total} />
+          </div>
+        }
+      />
 
       <div className="p-4 space-y-4">
         {/* Nova diária */}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarOff, CalendarX, CalendarClock, CalendarCheck, Plus } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,14 +117,18 @@ export function AusenciasView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Ausências" icon={CalendarOff}>
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={CalendarX} label="Licenças" value={kpis.licencas} />
-          <KpiChip icon={CalendarOff} label="Outras" value={kpis.outras} />
-          <KpiChip icon={CalendarClock} label="Solicitadas" value={kpis.solicitadas} />
-          <KpiChip icon={CalendarCheck} label="Em vigor" value={kpis.emVigor} />
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Ausências"
+        icon={CalendarOff}
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={CalendarX} label="Licenças" value={kpis.licencas} />
+            <KpiChip icon={CalendarOff} label="Outras" value={kpis.outras} />
+            <KpiChip icon={CalendarClock} label="Solicitadas" value={kpis.solicitadas} />
+            <KpiChip icon={CalendarCheck} label="Em vigor" value={kpis.emVigor} />
+          </div>
+        }
+      />
 
       <div className="p-4 space-y-4">
         {/* Cabeçalho + filtro + botão novo */}

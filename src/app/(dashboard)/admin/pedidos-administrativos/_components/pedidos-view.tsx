@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FileText, Hourglass, CalendarCheck, CheckCircle2, Plus } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { StatusChip, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,14 +71,18 @@ export function PedidosView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Pedidos administrativos" icon={FileText}>
-        <div className="flex flex-wrap items-center gap-2">
-          <KpiChip icon={Hourglass} label="Pendentes" value={kpis.pendentes} />
-          <KpiChip icon={CalendarCheck} label="Em análise" value={kpis.emAnalise} />
-          <KpiChip icon={CheckCircle2} label="Deferidos" value={kpis.deferidos} />
-          <KpiChip icon={FileText} label="Total" value={kpis.total} />
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Pedidos administrativos"
+        icon={FileText}
+        stats={
+          <div className="flex flex-wrap items-center gap-2">
+            <KpiChip icon={Hourglass} label="Pendentes" value={kpis.pendentes} />
+            <KpiChip icon={CalendarCheck} label="Em análise" value={kpis.emAnalise} />
+            <KpiChip icon={CheckCircle2} label="Deferidos" value={kpis.deferidos} />
+            <KpiChip icon={FileText} label="Total" value={kpis.total} />
+          </div>
+        }
+      />
 
       <div className="p-4 space-y-4">
         {/* Create form */}

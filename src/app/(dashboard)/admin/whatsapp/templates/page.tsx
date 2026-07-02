@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useMemo } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import {
   FileText,
   Search,
@@ -310,32 +311,29 @@ export default function WhatsAppTemplatesPage() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const contentVariables = extractVariables(form.content);
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "novo-template",
+      label: "Novo Template",
+      icon: Plus,
+      priority: Infinity,
+      variant: "primary",
+      onSelect: openCreate,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Templates WhatsApp" icon={FileText}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <FileText className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Templates WhatsApp
-              </h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">
-                Gerencie os templates de mensagens rápidas
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={openCreate}
-            className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Novo Template</span>
-          </button>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Templates WhatsApp"
+        icon={FileText}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">
+            Gerencie os templates de mensagens rápidas
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-6 max-w-7xl mx-auto">
 
