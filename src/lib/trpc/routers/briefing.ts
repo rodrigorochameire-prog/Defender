@@ -27,6 +27,7 @@ import {
   type PessoaInfo,
 } from "@/lib/services/python-backend";
 import { getAccessToken } from "@/lib/services/google-drive";
+import { fetchDossieMarkdown } from "@/lib/services/dossie-assistido";
 import { createOrUpdateDriveFile, readDriveFileFromFolder } from "@/lib/integrations/google";
 
 // ==========================================
@@ -1264,6 +1265,8 @@ Elabore a estratégia de defesa com este formato JSON:
       }
 
       const briefing = lines.join("\n");
+      const dossie = await fetchDossieMarkdown(input.assistidoId, processosDb.map((p) => p.id));
+      const promptFinal = dossie ? `${briefing}\n\n${dossie}` : briefing;
 
       // 3. Mapear funcionalidade → skill que o daemon reconhece.
       // Resolvidos pelo SKILL_ALIASES ou direto como diretório em .claude/skills-cowork/.
@@ -1307,7 +1310,7 @@ Elabore a estratégia de defesa com este formato JSON:
           assistidoId: input.assistidoId,
           processoId: input.processoId,
           skill,
-          prompt: briefing,
+          prompt: promptFinal,
           instrucaoAdicional: `Funcionalidade: ${input.funcionalidade}`,
           status: "pending",
           createdBy: ctx.user.id,
