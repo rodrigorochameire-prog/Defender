@@ -3,8 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
@@ -1020,44 +1018,42 @@ export default function AssistidosPage() {
     { id: "novo", label: "Novo", priority: Infinity, render: novoCta },
   ];
 
+  // Chips clicáveis do título (antigo HeaderSlotTitle) — migrados para o prop
+  // `stats` do shell (dedupe: título/ícone já vêm do shell, não duplica mais
+  // o total). Comportamento de clique idêntico ao original.
+  const headerStatsChips = (
+    <>
+      {[
+        { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); setSmartPreset(null); }, active: statusFilter === "all" && !showPinnedOnly && !smartPreset },
+        ...(stats.audienciasHoje > 0 ? [{ value: stats.audienciasHoje, label: "hoje", onClick: () => applyPreset("audiencias_hoje"), active: smartPreset === "audiencias_hoje", danger: true }] : []),
+        { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
+      ].map((s) => (
+        <button
+          key={s.label}
+          onClick={s.onClick}
+          className={cn(
+            "text-[9px] font-semibold px-1.5 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
+            s.active ? "bg-emerald-500/20 text-emerald-300"
+              : (s as any).danger ? "bg-red-500/15 text-red-300"
+              : "bg-white/[0.08] text-white/70 hover:text-white/90",
+          )}
+        >
+          {s.value} {s.label}
+        </button>
+      ))}
+    </>
+  );
+
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      {/* Título + filtros stats portados pra utility bar. Badges seguem clicáveis. */}
-      <HeaderSlotTitle
-        icon={Users}
-        title="Assistidos"
-        stats={
-          <>
-            {[
-              { value: stats.total - naoIdentificadosCount, label: "total", onClick: () => { setStatusFilter("all"); setShowPinnedOnly(false); setSmartPreset(null); }, active: statusFilter === "all" && !showPinnedOnly && !smartPreset },
-              ...(stats.audienciasHoje > 0 ? [{ value: stats.audienciasHoje, label: "hoje", onClick: () => applyPreset("audiencias_hoje"), active: smartPreset === "audiencias_hoje", danger: true }] : []),
-              { value: stats.monitorados, label: "monit", onClick: () => { setStatusFilter(statusFilter === "MONITORADO" ? "all" : "MONITORADO"); setShowPinnedOnly(false); }, active: statusFilter === "MONITORADO" },
-            ].map((s) => (
-              <button
-                key={s.label}
-                onClick={s.onClick}
-                className={cn(
-                  "text-[9px] font-semibold px-1.5 py-0.5 rounded-full tabular-nums cursor-pointer transition-colors shrink-0",
-                  s.active ? "bg-emerald-500/20 text-emerald-300"
-                    : (s as any).danger ? "bg-red-500/15 text-red-300"
-                    : "bg-white/[0.08] text-white/70 hover:text-white/90",
-                )}
-              >
-                {s.value} {s.label}
-              </button>
-            ))}
-          </>
-        }
-      />
-
       {/* Header — Padrão Defender v5 (GlassHeaderShell + HeaderActionsBar) */}
       <GlassHeaderShell
         title="Assistidos"
         icon={Users}
         stats={
-          <span className="text-[11px] text-white/55 tabular-nums leading-none">
-            {stats.total ?? filteredAssistidos.length}
+          <span className="flex items-center gap-1 ml-1.5">
+            {headerStatsChips}
           </span>
         }
         filters={(collapsed) => (

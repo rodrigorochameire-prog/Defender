@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -11,7 +10,8 @@ import {
   ChevronRight,
   Inbox,
 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -77,25 +77,34 @@ export default function ArquivoDemandasPage() {
     setPage(0);
   };
 
+  // ── Header rico (GlassHeaderShell) ──────────────────────────────────────
+  // collapsedStats duplicava o texto já exibido nos children ("X no
+  // histórico") — dedupe: só o texto completo vai para `stats`. O botão
+  // "Voltar ao Kanban" vira HeaderAction (back = onSelect + router.push).
+  const headerActions: HeaderAction[] = [
+    {
+      id: "back",
+      label: "Voltar ao Kanban",
+      icon: ArrowLeft,
+      priority: 40,
+      onSelect: () => router.push("/admin/demandas"),
+    },
+  ];
+
   return (
-    <div className="space-y-4">
-      <CollapsiblePageHeader
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="Arquivo de Demandas"
         icon={Archive}
-        collapsedStats={<span>{total} no histórico</span>}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-neutral-400">
+        stats={
+          <span className="text-[11px] text-white/55 tabular-nums leading-none ml-1.5">
             {total} {total === 1 ? "demanda" : "demandas"} no histórico
           </span>
-          <Link href="/admin/demandas">
-            <Button variant="outline" size="sm" className="h-8 text-xs">
-              <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
-              Voltar ao Kanban
-            </Button>
-          </Link>
-        </div>
-      </CollapsiblePageHeader>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
+
+      <div className="p-4 space-y-4">
 
       {/* ─── Filtros ─── */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800/80 rounded-xl p-4">
@@ -256,6 +265,7 @@ export default function ArquivoDemandasPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

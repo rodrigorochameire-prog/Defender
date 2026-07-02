@@ -12,8 +12,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc/client";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -219,180 +219,180 @@ export default function AtendimentosView() {
   const filtrosAtivos =
     (subtipoFiltro !== "todos" ? 1 : 0) + (areaFiltro !== "todas" ? 1 : 0);
 
-  return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      {/* Título + contagem portados para a utility row (padrão Demandas) */}
-      <HeaderSlotTitle
-        icon={Handshake}
-        title="Atendimentos"
-        accentHex="#10b981"
-        stats={
-          <>
-            <span className="text-white/85 font-semibold">{visiveis.length}</span>
-            {(kpis?.aRegistrar ?? 0) > 0 && (
-              <span
-                className="flex items-center gap-1"
-                title={`${kpis?.aRegistrar} a registrar`}
-              >
-                <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
-                <span className="font-medium text-amber-300/90">{kpis?.aRegistrar}</span>
-              </span>
-            )}
-          </>
-        }
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // HeaderSlotTitle (visiveis.length+aRegistrar) e collapsedStats ("N na
+  // lista", mesmo visiveis.length) duplicavam o total — mantido só o formato
+  // rico em `stats`. collapsedSearch (versão mini do campo) MORRE — o campo
+  // único do bottomRow assume larguras responsivas via Tailwind (w-28→w-60),
+  // sem precisar de um segundo componente para telas estreitas. accentHex
+  // ("#10b981" = emerald-500) restaurado via `iconClassName="text-emerald-500"`
+  // do shell (Lote E).
+  const searchControl = (
+    <div className="relative w-28 sm:w-44 md:w-60 shrink-0">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
+      <input
+        value={busca}
+        onChange={(e) => setBusca(e.target.value)}
+        placeholder="Buscar assistido, nº SOLAR ou CNJ…"
+        className="w-full h-9 md:h-8 rounded-lg bg-white/10 border border-white/10 pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
       />
+    </div>
+  );
 
-      <CollapsiblePageHeader
+  // Alternador de vista — Lista / Cards / Agenda.
+  const vistaControl = (
+    <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
+      {VISTAS.map((v) => {
+        const Icon = v.icon;
+        const ativa = vista === v.key;
+        return (
+          <button
+            key={v.key}
+            onClick={() => setVista(v.key)}
+            title={v.label}
+            aria-label={v.label}
+            aria-pressed={ativa}
+            className={cn(
+              "h-8 w-8 md:h-7 md:w-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer",
+              ativa ? "bg-white text-neutral-900" : "text-white/65 hover:text-white"
+            )}
+          >
+            <Icon className="w-3.5 h-3.5" />
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  // Filtros secundários agrupados num popover — tira ruído do header.
+  const filtrosControl = (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          title="Filtros"
+          className={cn(
+            "relative h-9 md:h-8 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer shrink-0",
+            filtrosAtivos > 0
+              ? "bg-white/20 border-white/20 text-white"
+              : "bg-white/10 border-white/10 text-white/70 hover:text-white"
+          )}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span className="hidden md:inline">Filtros</span>
+          {filtrosAtivos > 0 && (
+            <span className="ml-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-semibold">
+              {filtrosAtivos}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={6} className="w-60 p-3 rounded-xl space-y-2.5">
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</p>
+          <FiltroSelect
+            variant="light"
+            value={subtipoFiltro}
+            onChange={setSubtipoFiltro}
+            options={[{ value: "todos", label: "Todos" }, ...SUBTIPO_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
+          />
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Área</p>
+          <FiltroSelect
+            variant="light"
+            value={areaFiltro}
+            onChange={setAreaFiltro}
+            options={[{ value: "todas", label: "Todas" }, ...AREA_OPTIONS]}
+          />
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Período</p>
+          <FiltroSelect
+            variant="light"
+            value={periodo}
+            onChange={(v) => setPeriodo(v as PeriodoPreset)}
+            options={PERIODO_OPTIONS}
+          />
+        </div>
+        {filtrosAtivos > 0 && (
+          <button
+            onClick={() => {
+              setSubtipoFiltro("todos");
+              setAreaFiltro("todas");
+            }}
+            className="w-full h-7 rounded-lg text-[11px] font-medium text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+          >
+            Limpar filtros
+          </button>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+
+  // Toggle Insights — painel sobreposto, independente da vista ativa.
+  const insightsBtn = (
+    <button
+      onClick={() => setMostrarInsights((v) => !v)}
+      title="Insights"
+      aria-label="Insights"
+      aria-pressed={mostrarInsights}
+      className={cn(
+        "h-9 w-9 md:h-8 md:w-8 rounded-lg border inline-flex items-center justify-center transition-colors cursor-pointer shrink-0",
+        mostrarInsights
+          ? "bg-emerald-500 border-emerald-400 text-white"
+          : "bg-white/10 border-white/10 text-white/70 hover:text-white"
+      )}
+    >
+      <BarChart3 className="w-3.5 h-3.5" />
+    </button>
+  );
+
+  const headerStats = (
+    <span className="flex items-center gap-1.5 text-[11px] ml-1.5">
+      <span className="text-white/85 font-semibold tabular-nums">{visiveis.length}</span>
+      {(kpis?.aRegistrar ?? 0) > 0 && (
+        <span className="flex items-center gap-1" title={`${kpis?.aRegistrar} a registrar`}>
+          <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0" />
+          <span className="font-medium text-amber-300/90 tabular-nums">{kpis?.aRegistrar}</span>
+        </span>
+      )}
+    </span>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "search", label: "Buscar", icon: Search, priority: Infinity, render: searchControl },
+    { id: "vista", label: "Vista", priority: Infinity, render: vistaControl },
+    { id: "filtros", label: "Filtros", icon: SlidersHorizontal, priority: Infinity, render: filtrosControl },
+    {
+      id: "insights",
+      label: "Insights",
+      icon: BarChart3,
+      priority: 25,
+      render: insightsBtn,
+      onSelect: () => setMostrarInsights((v) => !v),
+    },
+    {
+      id: "novo",
+      label: "Novo atendimento",
+      icon: Plus,
+      priority: Infinity,
+      variant: "primary",
+      hideLabel: true,
+      onSelect: () => {
+        setEditando(null);
+        setModalAberto(true);
+      },
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="Atendimentos"
         icon={Handshake}
-        collapsedStats={
-          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#464649] dark:bg-white/[0.10] text-white/90 tabular-nums">
-            {visiveis.length} na lista
-          </span>
-        }
-        collapsedSearch={
-          <div className="relative w-[140px]">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/40" />
-            <input
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar..."
-              className="w-full bg-[#3a3a3c] border border-[#505052] rounded-md py-1 pl-6 pr-2 text-[9px] text-white/90 placeholder:text-white/40 outline-none focus:ring-1 focus:ring-emerald-400/40"
-            />
-          </div>
-        }
-        bottomRow={
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 min-w-0 max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/40" />
-              <input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Buscar assistido, nº SOLAR ou CNJ…"
-                className="w-full h-8 rounded-lg bg-white/10 border border-white/10 pl-8 pr-3 text-xs text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-emerald-400/50"
-              />
-            </div>
-            {/* Modos (Visão geral · A registrar · Agenda · Histórico) ficam na
-                barra do corpo, com rótulo — aqui no header só busca + render + ações. */}
-
-            {/* Alternador de vista — Lista / Cards / Agenda (relocado para o header) */}
-            <div className="flex items-center rounded-lg bg-white/10 border border-white/10 p-0.5 shrink-0">
-              {VISTAS.map((v) => {
-                const Icon = v.icon;
-                const ativa = vista === v.key;
-                return (
-                  <button
-                    key={v.key}
-                    onClick={() => setVista(v.key)}
-                    title={v.label}
-                    aria-label={v.label}
-                    aria-pressed={ativa}
-                    className={cn(
-                      "h-7 w-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer",
-                      ativa
-                        ? "bg-white text-neutral-900"
-                        : "text-white/65 hover:text-white"
-                    )}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Filtros secundários agrupados num popover — tira ruído do header */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  title="Filtros"
-                  className={cn(
-                    "relative h-8 px-2.5 rounded-lg border inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer shrink-0",
-                    filtrosAtivos > 0
-                      ? "bg-white/20 border-white/20 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 hover:text-white"
-                  )}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Filtros</span>
-                  {filtrosAtivos > 0 && (
-                    <span className="ml-0.5 inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[9px] font-semibold">
-                      {filtrosAtivos}
-                    </span>
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" sideOffset={6} className="w-60 p-3 rounded-xl space-y-2.5">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</p>
-                  <FiltroSelect
-                    variant="light"
-                    value={subtipoFiltro}
-                    onChange={setSubtipoFiltro}
-                    options={[{ value: "todos", label: "Todos" }, ...SUBTIPO_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Área</p>
-                  <FiltroSelect
-                    variant="light"
-                    value={areaFiltro}
-                    onChange={setAreaFiltro}
-                    options={[{ value: "todas", label: "Todas" }, ...AREA_OPTIONS]}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Período</p>
-                  <FiltroSelect
-                    variant="light"
-                    value={periodo}
-                    onChange={(v) => setPeriodo(v as PeriodoPreset)}
-                    options={PERIODO_OPTIONS}
-                  />
-                </div>
-                {filtrosAtivos > 0 && (
-                  <button
-                    onClick={() => {
-                      setSubtipoFiltro("todos");
-                      setAreaFiltro("todas");
-                    }}
-                    className="w-full h-7 rounded-lg text-[11px] font-medium text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  >
-                    Limpar filtros
-                  </button>
-                )}
-              </PopoverContent>
-            </Popover>
-
-            {/* Toggle Insights — painel sobreposto, independente da vista ativa */}
-            <button
-              onClick={() => setMostrarInsights((v) => !v)}
-              title="Insights"
-              aria-label="Insights"
-              aria-pressed={mostrarInsights}
-              className={cn(
-                "h-8 w-8 rounded-lg border inline-flex items-center justify-center transition-colors cursor-pointer shrink-0",
-                mostrarInsights
-                  ? "bg-emerald-500 border-emerald-400 text-white"
-                  : "bg-white/10 border-white/10 text-white/70 hover:text-white"
-              )}
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-            </button>
-
-            <button
-              onClick={() => {
-                setEditando(null);
-                setModalAberto(true);
-              }}
-              title="Novo atendimento"
-              aria-label="Novo atendimento"
-              className="h-8 w-8 rounded-lg bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-colors duration-150 cursor-pointer inline-flex items-center justify-center shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        }
-        seamless
+        iconClassName="text-emerald-500"
+        stats={headerStats}
+        actions={<HeaderActionsBar actions={headerActions} />}
       />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">

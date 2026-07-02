@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useMemo, useEffect, Fragment } from "react";
+import { useState, useMemo, useEffect, useRef, Fragment } from "react";
+import { createPortal } from "react-dom";
 import { Card } from "@/components/ui/card";
 import {
   DataTable,
@@ -86,6 +87,7 @@ import {
   Timer,
   Sparkles,
   ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -96,8 +98,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { AtribuicaoSwitchWell } from "@/components/layouts/header/atribuicao-switch-well";
 import { format, differenceInDays, isToday, isTomorrow, isPast, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { trpc } from "@/lib/trpc/client";
@@ -1545,6 +1548,9 @@ export default function ProcessosPage() {
   const [prazoFilter, setPrazoFilter] = useState<PrazoFilter>("all");
   const [sortBy, setSortBy] = useState<"prioridade" | "recente" | "comarca" | "assistido">("prioridade");
   const [groupBy, setGroupBy] = useState<"none" | "comarca" | "area" | "defensor">("none");
+  // Header rico (GlassHeaderShell) — dropdown "Filtros e ferramentas" (portal).
+  const [isFiltrosDropdownOpen, setIsFiltrosDropdownOpen] = useState(false);
+  const filtrosBtnRef = useRef<HTMLButtonElement>(null);
 
   // Buscar processos do banco de dados (com fallback offline)
   const processosQuery = trpc.processos.list.useQuery({ limit: 100 });
@@ -1730,11 +1736,22 @@ export default function ProcessosPage() {
     })).filter(s => s.value > 0);
   }, [realProcessos]);
 
+  // Contagem por área para o AtribuicaoSwitchWell do header (dissolvido do
+  // seletor de Atribuição do FilterSectionProcessos).
+  const areaCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const opt of ATRIBUICAO_OPTIONS) {
+      if (opt.value === "all") continue;
+      map[opt.label] = realProcessos.filter(p => areaMatchesFilter(p.area, opt.value)).length;
+    }
+    return map;
+  }, [realProcessos]);
+
   // Loading state - Premium Skeleton
   if (isLoading) {
     return (
       <TooltipProvider>
-        <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+        <div className="min-h-screen bg-neutral-50 dark:bg-background">
           {/* Sub-header Skeleton */}
           <div className="px-4 md:px-6 py-3 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
             <div className="flex items-center justify-between">
@@ -1852,61 +1869,121 @@ export default function ProcessosPage() {
     },
   ].filter(Boolean) as Array<{ key: string; label: string; value: string }>;
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ──────────────────
+  // Stats Ribbon (contadores clicáveis) → `stats` do shell (relocada sem
+  // alterar comportamento). Prazo chips + Card de Filtros → portal "Filtros"
+  // (SlidersHorizontal), na mesma régua de fallback usada em outras telas.
+  const headerStats = (
+    <div className="flex items-center gap-1.5 text-xs ml-1.5 overflow-x-auto scrollbar-none max-w-[46vw]">
+      {[
+        { icon: Scale, value: stats.total, label: "total", onClick: undefined, active: false, alert: false },
+        { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
+        { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
+        { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
+        { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
+        { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
+      ].map((stat, index) => {
+        const Icon = stat.icon;
+        return (
+          <Fragment key={index}>
+            {index > 0 && <div className="hidden sm:block w-px h-4 bg-white/[0.10] shrink-0" />}
+            <button
+              onClick={stat.onClick}
+              className={cn(
+                "hidden sm:flex items-center gap-1 whitespace-nowrap px-1.5 py-0.5 rounded-md transition-colors shrink-0",
+                stat.onClick && "cursor-pointer",
+                stat.active ? "bg-emerald-500/20" : "hover:bg-white/5",
+                stat.alert && !stat.active ? "bg-rose-500/20" : "",
+                index === 0 && "flex", // total sempre visível, mesmo em telas pequenas
+              )}
+            >
+              <Icon className={cn("w-3 h-3 flex-shrink-0", stat.alert ? "text-rose-400" : stat.active ? "text-emerald-400" : "text-white/50")} />
+              <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-400" : "text-white/90")}>{stat.value}</span>
+              <span className="text-white/60 font-medium">{stat.label}</span>
+            </button>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+
+  const totalFiltrosAtivos =
+    (situacaoFilter !== "ativo" ? 1 : 0) +
+    (prazoFilter !== "all" ? 1 : 0) +
+    (sortBy !== "prioridade" ? 1 : 0) +
+    (groupBy !== "none" ? 1 : 0);
+
+  const filtrosBtn = (
+    <button
+      type="button"
+      ref={filtrosBtnRef}
+      onClick={() => setIsFiltrosDropdownOpen(!isFiltrosDropdownOpen)}
+      className="relative h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+      title="Filtros e ferramentas"
+      aria-label="Filtros e ferramentas"
+    >
+      <SlidersHorizontal className="w-3.5 h-3.5" />
+      {totalFiltrosAtivos > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-1 text-[9px] tabular-nums font-bold rounded-full bg-emerald-500 text-neutral-900 flex items-center justify-center">
+          {totalFiltrosAtivos}
+        </span>
+      )}
+    </button>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "search", label: "Buscar", icon: Search, priority: 22, hideLabel: true, onSelect: () => setIsFiltrosDropdownOpen(true) },
+    { id: "filtros", label: "Filtros e ferramentas", icon: SlidersHorizontal, priority: 30, render: filtrosBtn, onSelect: () => setIsFiltrosDropdownOpen(true) },
+    { id: "consultar-tjba", label: "Consultar TJ-BA", icon: ExternalLink, priority: 20, hideLabel: true, onSelect: () => window.open("https://esaj.tjba.jus.br/cpopg/open.do", "_blank", "noopener,noreferrer") },
+    { id: "exportar", label: "Exportar", icon: Download, priority: 15, hideLabel: true },
+    { id: "novo", label: "Novo processo", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => router.push("/admin/processos/novo") },
+  ];
+
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-        <CollapsiblePageHeader
+      <div className="min-h-screen bg-neutral-50 dark:bg-background">
+        <GlassHeaderShell
           title="Processos"
           icon={FileText}
-          bottomRow={
-            <div className="space-y-3">
-              {/* Stats Ribbon — compact inline KPIs */}
-              <div className="flex items-center gap-2.5 text-xs overflow-x-auto scrollbar-none">
-                {[
-                  { icon: Scale, value: stats.total, label: "total", sublabel: `${stats.comarcas} comarcas`, onClick: undefined, active: false, alert: false },
-                  { icon: Gavel, value: stats.juri, label: "júri", onClick: () => setAreaFilter(areaFilter === "JURI" ? "all" : "JURI"), active: areaFilter === "JURI", alert: false },
-                  { icon: Lock, value: stats.reuPreso, label: "presos", onClick: undefined, active: false, alert: stats.reuPreso > 0 },
-                  { icon: AlertCircle, value: stats.prazosVencidos, label: "vencidos", onClick: () => setPrazoFilter(prazoFilter === "vencidos" ? "all" : "vencidos"), active: prazoFilter === "vencidos", alert: stats.prazosVencidos > 0 },
-                  { icon: Timer, value: stats.prazosHoje, label: "hoje", onClick: () => setPrazoFilter(prazoFilter === "hoje" ? "all" : "hoje"), active: prazoFilter === "hoje", alert: stats.prazosHoje > 0 },
-                  { icon: CalendarClock, value: stats.prazosUrgentes, label: "urgentes", onClick: () => setPrazoFilter(prazoFilter === "semana" ? "all" : "semana"), active: prazoFilter === "semana", alert: stats.prazosUrgentes > 0 },
-                ].map((stat, index) => {
-                  const Icon = stat.icon;
-                  return (
-                    <Fragment key={index}>
-                      {index > 0 && <div className="w-px h-5 bg-white/[0.10] shrink-0" />}
-                      <button
-                        onClick={stat.onClick}
-                        className={cn(
-                          "flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-lg transition-colors",
-                          stat.onClick && "cursor-pointer",
-                          stat.active ? "bg-emerald-500/20" : "hover:bg-white/5",
-                          stat.alert && !stat.active ? "bg-rose-500/20" : ""
-                        )}
-                      >
-                        <Icon className={cn("w-3.5 h-3.5 flex-shrink-0", stat.alert ? "text-rose-400" : stat.active ? "text-emerald-400" : "text-white/50")} />
-                        <span className={cn("font-bold tabular-nums", stat.alert ? "text-rose-400" : "text-white/90")}>{stat.value}</span>
-                        <span className="text-white/60 font-medium">{stat.label}</span>
-                      </button>
-                    </Fragment>
-                  );
-                })}
-                <div className="flex-1" />
-                <span className="text-white/40 font-mono text-[10px] tabular-nums whitespace-nowrap">{stats.total} processos</span>
-              </div>
+          stats={headerStats}
+          filters={(collapsed) => (
+            <AtribuicaoSwitchWell
+              collapsed={collapsed}
+              options={ATRIBUICAO_OPTIONS.filter((o) => o.value !== "all")}
+              selectedValues={areaFilter !== "all" ? [areaFilter] : []}
+              onToggle={(value) => setAreaFilter(areaFilter === value ? "all" : value)}
+              onClear={() => setAreaFilter("all")}
+              counts={areaCounts}
+              singleSelect
+            />
+          )}
+          actions={<HeaderActionsBar actions={headerActions} />}
+        />
 
+        {isFiltrosDropdownOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-[9998]" onClick={() => setIsFiltrosDropdownOpen(false)} />
+            <div
+              className="fixed z-[9999] w-80 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] p-3 max-h-[80vh] overflow-y-auto"
+              style={(() => {
+                const r = filtrosBtnRef.current?.getBoundingClientRect();
+                if (!r || r.bottom < 0) return { top: 64, right: 16 };
+                return { top: r.bottom + 4, right: window.innerWidth - r.right };
+              })()}
+            >
               {/* Filtros de Prazo - Chips */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <CalendarClock className="w-4 h-4 text-white/50" />
-                    <span className="text-xs font-medium text-white/70">Filtrar por Prazo</span>
+                    <CalendarClock className="w-4 h-4 text-neutral-400" />
+                    <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300">Filtrar por Prazo</span>
                   </div>
                   {prazoFilter !== "all" && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setPrazoFilter("all")}
-                      className="h-6 text-[10px] text-white/40 hover:text-white/70"
+                      className="h-6 text-[10px] text-neutral-400 hover:text-neutral-600"
                     >
                       <XCircle className="w-3 h-3 mr-1" />
                       Limpar
@@ -1920,7 +1997,9 @@ export default function ProcessosPage() {
                 />
               </div>
 
-              {/* Card de Filtros */}
+              <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-3" />
+
+              {/* Card de Filtros (área, situação, busca, ordenação, agrupamento, modo) */}
               <FilterSectionProcessos
                 selectedArea={areaFilter}
                 setSelectedArea={setAreaFilter}
@@ -1936,57 +2015,9 @@ export default function ProcessosPage() {
                 setSearchTerm={setSearchTerm}
               />
             </div>
-          }
-        >
-          <div className="flex items-center justify-between">
-            {/* Left: icon + title + stats */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-                <FileText className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Processos</h1>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[10px] text-white/55 tabular-nums">
-                    {stats.total} total · {stats.comarcas} comarca{stats.comarcas !== 1 ? "s" : ""} · {stats.reuPreso} preso{stats.reuPreso !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: action buttons */}
-            <div className="flex items-center gap-1.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a href="https://esaj.tjba.jus.br/cpopg/open.do" target="_blank" rel="noopener noreferrer">
-                    <button
-                      className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-                      title="Consultar TJ-BA"
-                    >
-                      <ExternalLink className="w-[15px] h-[15px]" />
-                    </button>
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>Consultar TJ-BA</TooltipContent>
-              </Tooltip>
-              <button
-                className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-                title="Exportar"
-              >
-                <Download className="w-[15px] h-[15px]" />
-              </button>
-              <Link href="/admin/processos/novo">
-                <button
-                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-                  title="Novo processo"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Novo
-                </button>
-              </Link>
-            </div>
-          </div>
-        </CollapsiblePageHeader>
+          </>,
+          document.body
+        )}
 
         {/* Conteúdo Principal */}
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">

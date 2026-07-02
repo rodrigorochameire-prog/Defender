@@ -10,111 +10,106 @@ import { chatPanelActions } from "@/hooks/use-chat-panel";
 import { MessageSquare } from "lucide-react";
 import { MobileHeaderOverflow } from "@/components/layouts/mobile-header-overflow";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
+import { HEADER_GLASS } from "@/lib/config/design-tokens";
 import type { ReactNode } from "react";
 
 interface HeaderUtilityRowProps {
-  variant: "standalone" | "embedded";
   chatToggle?: () => void;
   extra?: ReactNode;
 }
 
-export function HeaderUtilityRow({ variant, chatToggle, extra }: HeaderUtilityRowProps) {
+// Faixa utilitária glass flush — mesmos tokens HEADER_GLASS do GlassHeaderShell
+// (wrapper sticky + shell com blur + faixa utilitária em camada superior),
+// sem depender de HEADER_STYLE (Lote E). Único consumidor hoje é o
+// admin-sidebar (variante "standalone"); a antiga variante "embedded" —
+// usada pelo CollapsiblePageHeader — foi removida no Lote F junto com o
+// componente legado.
+export function HeaderUtilityRow({ chatToggle, extra }: HeaderUtilityRowProps) {
   const handleChatToggle = chatToggle ?? (() => chatPanelActions.toggle());
 
-  const content = (
-    <div className="flex h-11 shrink-0 items-center w-full">
-      {/* Left: Toggle + Breadcrumbs */}
-      <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
-        {/* ☰ — abre a sidebar (drawer no mobile); alvo maior no mobile */}
-        <SidebarTrigger className="inline-flex h-8 w-8 md:h-6 md:w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
+  return (
+    <header className={cn(HEADER_GLASS.wrapper, "shrink-0")}>
+      <div className={HEADER_GLASS.shell}>
+        <div className={cn(HEADER_GLASS.utilityRow, "h-10 px-0")}>
+          <div className="flex h-10 shrink-0 items-center w-full">
+            {/* Left: Toggle + Breadcrumbs */}
+            <div className="flex items-center gap-3 px-3 flex-1 min-w-0">
+              {/* ☰ — abre a sidebar (drawer no mobile); alvo maior no mobile */}
+              <SidebarTrigger className="inline-flex h-8 w-8 md:h-6 md:w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0" />
 
-        {/* Separator (desktop) */}
-        <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
+              {/* Separator (desktop) */}
+              <div className="hidden md:block h-4 w-px bg-white/[0.08] shrink-0" />
 
-        {/* Breadcrumbs (desktop) */}
-        <div className="hidden md:flex items-center min-w-0">
-          <Breadcrumbs />
+              {/* Breadcrumbs (desktop) */}
+              <div className="hidden md:flex items-center min-w-0">
+                <Breadcrumbs />
+              </div>
+
+              {/* Slot for page-injected content (título+stats) — visível em ambos */}
+              <div id="header-slot" className="flex items-center min-w-0" />
+            </div>
+
+            {/* Right: Indicator + Date + Controls */}
+            <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3">
+              {/* Online indicator */}
+              <div className="hidden md:flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-white/50 font-medium">Online</span>
+              </div>
+
+              {/* Separator */}
+              <div className="hidden md:block h-4 w-px bg-white/[0.08]" />
+
+              {/* Date */}
+              <div className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/50">
+                <span className="capitalize">
+                  {new Date().toLocaleDateString("pt-BR", {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "short",
+                  })}
+                </span>
+              </div>
+
+              {/* Separator */}
+              <div className="hidden lg:block h-4 w-px bg-white/[0.08]" />
+
+              {/* Conflict badge (desktop; no mobile vai pro ⋯) */}
+              <div className="hidden md:flex"><ConflictBadge /></div>
+
+              {/* Extra slot (server-rendered badges, e.g. TriagemBadge) */}
+              {extra && <div className="hidden md:block text-white/80">{extra}</div>}
+
+              {/* Controls — alertas de prazos/audiências foram movidos p/ o sino
+                  (NotificationsPopover): cabeçalho mais limpo, detalhe a 1 clique. */}
+              <div className="flex items-center gap-1">
+                {/* Desktop: busca (Cmd+K) + tema inline */}
+                <span className="hidden md:inline-flex">
+                  <CommandPalette />
+                </span>
+                <span className="hidden md:inline-flex">
+                  <ThemeToggle />
+                </span>
+
+                {/* Sino — sempre visível */}
+                <NotificationsPopover />
+
+                {/* Chat — desktop inline (no mobile vai pro ⋯) */}
+                <button
+                  onClick={handleChatToggle}
+                  title="Assistente OMBUDS"
+                  className="hidden md:inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Mobile: overflow ⋯ (busca, conflitos, tema, chat) */}
+                <MobileHeaderOverflow />
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Slot for page-injected content (título+stats) — visível em ambos */}
-        <div id="header-slot" className="flex items-center min-w-0" />
       </div>
-
-      {/* Right: Indicator + Date + Controls */}
-      <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3">
-        {/* Online indicator */}
-        <div className="hidden md:flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] text-white/50 font-medium">Online</span>
-        </div>
-
-        {/* Separator */}
-        <div className="hidden md:block h-4 w-px bg-white/[0.08]" />
-
-        {/* Date */}
-        <div className="hidden lg:flex items-center gap-1.5 text-[10px] text-white/50">
-          <span className="capitalize">
-            {new Date().toLocaleDateString("pt-BR", {
-              weekday: "long",
-              day: "2-digit",
-              month: "short",
-            })}
-          </span>
-        </div>
-
-        {/* Separator */}
-        <div className="hidden lg:block h-4 w-px bg-white/[0.08]" />
-
-        {/* Conflict badge (desktop; no mobile vai pro ⋯) */}
-        <div className="hidden md:flex"><ConflictBadge /></div>
-
-        {/* Extra slot (server-rendered badges, e.g. TriagemBadge) */}
-        {extra && <div className="hidden md:block text-white/80">{extra}</div>}
-
-        {/* Controls — alertas de prazos/audiências foram movidos p/ o sino
-            (NotificationsPopover): cabeçalho mais limpo, detalhe a 1 clique. */}
-        <div className="flex items-center gap-1">
-          {/* Desktop: busca (Cmd+K) + tema inline */}
-          <span className="hidden md:inline-flex">
-            <CommandPalette />
-          </span>
-          <span className="hidden md:inline-flex">
-            <ThemeToggle />
-          </span>
-
-          {/* Sino — sempre visível */}
-          <NotificationsPopover />
-
-          {/* Chat — desktop inline (no mobile vai pro ⋯) */}
-          <button
-            onClick={handleChatToggle}
-            title="Assistente OMBUDS"
-            className="hidden md:inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-          </button>
-
-          {/* Mobile: overflow ⋯ (busca, conflitos, tema, chat) */}
-          <MobileHeaderOverflow />
-        </div>
-      </div>
-    </div>
+    </header>
   );
-
-  if (variant === "standalone") {
-    return (
-      <header
-        className={cn(
-          "sticky top-0 z-30 shrink-0",
-          HEADER_STYLE.utilityRow,
-          HEADER_STYLE.shellShadow,
-        )}
-      >
-        {content}
-      </header>
-    );
-  }
-
-  return content;
 }

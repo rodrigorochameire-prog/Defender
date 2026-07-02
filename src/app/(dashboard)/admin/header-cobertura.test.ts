@@ -6,8 +6,11 @@ import { describe, it, expect } from "vitest";
  * F2-B — Cobertura do header canônico.
  *
  * Garante que os módulos VVD, WhatsApp e Cosmovisão roteiam o título da página
- * pelo mecanismo canônico (`HeaderSlotTitle`, que portala o título 12px na
- * topbar) e não mais por um <h1> de página "bespoke".
+ * pelo mecanismo canônico (`GlassHeaderShell`, migração concluída no Lote B3)
+ * e não mais por um <h1> de página "bespoke". O canônico anterior
+ * (`HeaderSlotTitle`, que portalava o título 12px na topbar) foi removido no
+ * Lote F junto com o `CollapsiblePageHeader` — os três módulos já haviam
+ * migrado para `GlassHeaderShell` em lotes anteriores.
  *
  * Lê os arquivos do disco — sem render — para travar a regressão estrutural.
  */
@@ -24,12 +27,12 @@ const TARGETS = {
   cosmovisao: "juri/cosmovisao/page.tsx",
 } as const;
 
-describe("F2-B — header canônico (HeaderSlotTitle)", () => {
+describe("F2-B — header canônico (GlassHeaderShell)", () => {
   for (const [mod, rel] of Object.entries(TARGETS)) {
-    it(`${mod}: importa e usa HeaderSlotTitle`, () => {
+    it(`${mod}: importa e usa GlassHeaderShell`, () => {
       const src = read(rel);
-      expect(src).toContain("header-slot-title");
-      expect(src).toContain("<HeaderSlotTitle");
+      expect(src).toContain("glass-header-shell");
+      expect(src).toContain("<GlassHeaderShell");
     });
   }
 

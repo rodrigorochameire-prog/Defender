@@ -35,9 +35,9 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
-import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { HEADER_GLASS } from "@/lib/config/design-tokens";
 
 // ==========================================
 // COMPONENTES
@@ -667,95 +667,69 @@ export default function WhatsAppPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-background">
-      <HeaderSlotTitle
-        icon={MessageCircle}
-        title="WhatsApp"
-        stats={
-          <span className="text-white/55">
-            {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"}
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // HeaderSlotTitle (contagem de instâncias) + o texto Row 1 ("N instâncias
+  // configuradas") + collapsedStats (totalContacts/unreadMessages) + o
+  // cluster inline do bottomRow (contatos/recebidas/enviadas/não lidas)
+  // duplicavam o mesmo snapshot em 4 formatos — consolidado num único
+  // `stats` compacto (instâncias + status conectado + contatos + não lidas).
+  // recebidas/enviadas não entram no `stats` (compacto demais pro título) —
+  // seguem visíveis no grid <StatsCards> do corpo da página, sem perda real.
+  const headerStats = (
+    <span className="flex items-center gap-2 text-[11px] ml-1.5">
+      <span className="text-white/55 tabular-nums">
+        {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"}
+      </span>
+      {primaryConfig && (
+        <>
+          <span className="text-white/25">·</span>
+          <span className="flex items-center gap-1.5 text-white/50" title="Conectado">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-[11px] text-white/55">Conectado</span>
           </span>
-        }
-      />
-      <CollapsiblePageHeader
+        </>
+      )}
+      {primaryConfig && whatsappStats && (
+        <>
+          <span className="text-white/25">·</span>
+          <span className="tabular-nums text-white/50">
+            <span className="text-white/80 font-semibold">{whatsappStats.totalContacts}</span> contatos
+          </span>
+          {(whatsappStats.unreadMessages ?? 0) > 0 && (
+            <span className="text-emerald-400 tabular-nums font-semibold">
+              {whatsappStats.unreadMessages} não lidas
+            </span>
+          )}
+        </>
+      )}
+    </span>
+  );
+
+  const headerActions: HeaderAction[] = [
+    { id: "refresh", label: "Atualizar", icon: RefreshCw, priority: 20, hideLabel: true, onSelect: () => refetch() },
+    ...(primaryConfig
+      ? [{
+          id: "abrir-chat",
+          label: "Abrir chat",
+          priority: Infinity,
+          render: (
+            <Link href="/admin/whatsapp/chat" className={HEADER_GLASS.primaryBtn}>
+              <MessageSquare className="w-3.5 h-3.5" />
+              Abrir chat
+            </Link>
+          ),
+        }]
+      : []),
+  ];
+
+  return (
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
+      <GlassHeaderShell
         title="WhatsApp"
         icon={MessageCircle}
-        seamless
-        collapsedStats={
-          primaryConfig && whatsappStats ? (
-            <>
-              <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.10] text-white/90 tabular-nums">
-                {whatsappStats.totalContacts} contatos
-              </span>
-              {(whatsappStats.unreadMessages ?? 0) > 0 && (
-                <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 tabular-nums ml-1">
-                  {whatsappStats.unreadMessages} novas
-                </span>
-              )}
-            </>
-          ) : null
-        }
-        bottomRow={primaryConfig ? (
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-x-auto scrollbar-none">
-              {/* Status de conexão */}
-              <div className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-lg bg-white/[0.06] ring-1 ring-white/[0.06]">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-white/60 font-medium">Conectado</span>
-              </div>
-
-              <div className="w-px h-5 bg-white/[0.10] shrink-0" />
-
-              {/* Stats inline */}
-              {whatsappStats && (
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[10px] text-white/50 tabular-nums">
-                    <span className="text-white/80 font-semibold">{whatsappStats.totalContacts}</span> contatos
-                  </span>
-                  <span className="text-[10px] text-white/50 tabular-nums">
-                    <span className="text-white/80 font-semibold">{whatsappStats.inboundMessages}</span> recebidas
-                  </span>
-                  <span className="text-[10px] text-white/50 tabular-nums">
-                    <span className="text-white/80 font-semibold">{whatsappStats.outboundMessages}</span> enviadas
-                  </span>
-                  {(whatsappStats.unreadMessages ?? 0) > 0 && (
-                    <span className="text-[10px] text-emerald-400 tabular-nums font-semibold">
-                      {whatsappStats.unreadMessages} não lidas
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : undefined}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[12px] text-white/55 tabular-nums truncate">
-            {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"} configurada{configs?.length === 1 ? "" : "s"}
-          </p>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              title="Atualizar"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
-              onClick={() => refetch()}
-            >
-              <RefreshCw className="w-[15px] h-[15px]" />
-            </button>
-            {primaryConfig && (
-              <Link href="/admin/whatsapp/chat">
-                <button
-                  title="Abrir chat do WhatsApp"
-                  className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  Abrir chat
-                </button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+        stats={headerStats}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Conteúdo */}
       <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-6">

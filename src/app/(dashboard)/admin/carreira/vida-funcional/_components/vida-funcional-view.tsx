@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Briefcase, Milestone, CalendarClock, Plus, BarChart2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { EmptyState } from "@/components/ds";
 import { trpc } from "@/lib/trpc/client";
 import { dominiosByCluster } from "@/lib/vida-funcional/dominios";
@@ -46,7 +47,12 @@ export function VidaFuncionalView() {
     { key: "produtividade", label: "Produtividade", icon: CalendarClock },
   ];
 
-  const bottomRow = (
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) ───────────────────
+  // bottomRow (tabs Visão/Timeline/Produtividade) → HeaderAction render,
+  // priority Infinity (navegação primária, nunca colapsa) — mesmo padrão de
+  // admin/juri/page.tsx. Badge de ícone + contagem do título → shell nativo
+  // (icon prop) + `stats`.
+  const tabsControl = (
     <div className={TAB_STYLE_V3.bar}>
       {tabs.map((t) => (
         <button
@@ -61,21 +67,24 @@ export function VidaFuncionalView() {
     </div>
   );
 
+  const headerActions: HeaderAction[] = [
+    { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
+  ];
+
+  const headerStats = (
+    <span className="text-[11px] text-white/55 tabular-nums leading-none ml-1.5">
+      {isLoading ? "carregando…" : `${eventos.length} evento(s) · ${marcosCount} marco(s)`}
+    </span>
+  );
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Vida Funcional" icon={Briefcase} seamless bottomRow={bottomRow}>
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-            <Briefcase className="w-4 h-4 text-white" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-white text-[15px] font-semibold">Vida Funcional</h1>
-            <p className="text-[10px] text-white/55 hidden sm:block">
-              {isLoading ? "carregando…" : `${eventos.length} evento(s) · ${marcosCount} marco(s)`}
-            </p>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Vida Funcional"
+        icon={Briefcase}
+        stats={headerStats}
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-4 space-y-6">
         {tab === "visao" && (

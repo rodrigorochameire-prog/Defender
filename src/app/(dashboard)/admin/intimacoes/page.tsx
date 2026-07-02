@@ -21,6 +21,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  Database,
   ExternalLink,
   Eye,
   FileText,
@@ -29,10 +30,12 @@ import {
   Layers,
   Plus,
   RefreshCw,
+  Server,
   Settings,
   Send,
   Shield,
   Users,
+  Wifi,
   WifiOff,
   Zap,
 } from "lucide-react";
@@ -41,8 +44,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
-import { SolarStatusBar } from "@/components/solar/solar-status-bar";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { SolarBatchOperations } from "@/components/solar/solar-batch-operations";
 import { SolarSyncFases } from "@/components/solar/solar-sync-fases";
 import { SolarLogs } from "@/components/solar/solar-logs";
@@ -229,6 +232,14 @@ export default function SolarHubPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Status Solar/SIGAD/Engine — usado no `stats` do header (dissolvido do
+  // antigo SolarStatusBar variant="embedded").
+  const { data: solarStatus, isLoading: loadingSolarStatus } = trpc.solar.status.useQuery(undefined, {
+    retry: false,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
   // ── Mutações ────────────────────────────────────────────────────────────
 
   const darCienciaMutation = trpc.vvd.darCiencia.useMutation({
@@ -359,82 +370,174 @@ export default function SolarHubPage() {
   // Render
   // ──────────────────────────────────────────────────────────────────────────
 
+  // ── Header rico (GlassHeaderShell + HeaderActionsBar) — dissolução das duas
+  // bottomRow antigas: tabs de seção (render, nunca colapsa — é a navegação
+  // primária da página) + ações Atualizar/Re-autenticar (dissolvidas do
+  // antigo SolarStatusBar variant="embedded").
+  const STATUS_DOT: Record<string, string> = {
+    online: "bg-emerald-500",
+    warning: "bg-amber-500",
+    offline: "bg-red-500",
+    unknown: "bg-neutral-400",
+  };
+  const STATUS_TEXT: Record<string, string> = {
+    online: "text-emerald-400",
+    warning: "text-amber-400",
+    offline: "text-red-400",
+    unknown: "text-white/50",
+  };
+  const solarIndicators = solarStatus
+    ? (() => {
+        const sessionMin =
+          solarStatus.session_age_seconds != null ? Math.floor(solarStatus.session_age_seconds / 60) : null;
+        const solarLevel = solarStatus.authenticated ? (sessionMin != null && sessionMin > 30 ? "warning" : "online") : "offline";
+        return [
+          { label: "Solar", level: solarLevel, icon: Wifi },
+          { label: "SIGAD", level: solarStatus.solar_reachable ? "online" : "offline", icon: Database },
+          { label: "Engine", level: solarStatus.configured ? "online" : "offline", icon: Server },
+        ];
+      })()
+    : [];
+
+  const headerStats = (
+    <div className="flex items-center gap-2 ml-1.5">
+      {contadores.vencidas > 0 && (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider bg-red-500/20 text-red-300 ring-1 ring-red-500/30">
+          {contadores.vencidas} vencida{contadores.vencidas > 1 ? "s" : ""}
+        </span>
+      )}
+      {loadingSolarStatus ? (
+        <span className="text-[10px] text-white/50 flex items-center gap-1">
+          <RefreshCw className="h-2.5 w-2.5 animate-spin" />
+          Verificando...
+        </span>
+      ) : (
+        solarIndicators.map((ind) => (
+          <div key={ind.label} className="hidden sm:flex items-center gap-1 text-[10px]">
+            <span className={cn("w-2 h-2 rounded-full shrink-0", STATUS_DOT[ind.level], ind.level === "online" && "animate-[pulse_3s_ease-in-out_infinite]")} />
+            <span className={cn("font-medium", STATUS_TEXT[ind.level])}>{ind.label}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const tabsControl = (
+    <div className="min-w-0 overflow-x-auto scrollbar-none max-w-[70vw]">
+      <TabsList className="bg-black/[0.15] ring-1 ring-white/[0.05] border-0 h-8 p-[2px] rounded-md min-w-max gap-0">
+        <TabsTrigger
+          value="caixa"
+          className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <Inbox className="h-3 w-3" />
+          <span className="hidden sm:inline">Caixa de Entrada</span>
+          <span className="sm:hidden">Caixa</span>
+          {contadores.total > 0 && (
+            <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-[14px] px-1 text-[8px] font-bold rounded-full bg-white/[0.12] text-white/90 tabular-nums">
+              {contadores.total}
+            </span>
+          )}
+        </TabsTrigger>
+        <TabsTrigger
+          value="batch"
+          className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <Layers className="h-3 w-3" />
+          <span className="hidden sm:inline">Operações Batch</span>
+          <span className="sm:hidden">Batch</span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="fases"
+          className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <RefreshCw className="h-3 w-3" />
+          <span className="hidden sm:inline">Fases → Solar</span>
+          <span className="sm:hidden">Fases</span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="logs"
+          className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <Settings className="h-3 w-3" />
+          <span className="hidden sm:inline">Logs & Stats</span>
+          <span className="sm:hidden">Logs</span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="assistidos-sync"
+          className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <Users className="h-3 w-3" />
+          <span className="hidden sm:inline">Assistidos</span>
+          <span className="sm:hidden">Assist.</span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="protocolar"
+          className="text-[11px] font-semibold gap-1.5 rounded-[4px] px-2.5 py-1 text-emerald-400/80 hover:text-emerald-300 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-none"
+        >
+          <Send className="h-3 w-3" />
+          <span className="hidden sm:inline">Protocolar</span>
+          <span className="sm:hidden">Proto</span>
+        </TabsTrigger>
+      </TabsList>
+    </div>
+  );
+
+  const atualizarBtn = (
+    <button
+      type="button"
+      onClick={handleRefresh}
+      disabled={isLoading}
+      title="Atualizar"
+      aria-label="Atualizar"
+      className="h-7 px-2.5 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.06] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold disabled:opacity-50 shrink-0"
+    >
+      <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+      <span className="hidden sm:inline">Atualizar</span>
+    </button>
+  );
+
+  const reautenticarBtn = (
+    <button
+      type="button"
+      onClick={handleRefresh}
+      title="Re-autenticar"
+      aria-label="Re-autenticar"
+      className="h-7 px-2.5 rounded-lg bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40 hover:bg-amber-500/30 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
+    >
+      <WifiOff className="w-3.5 h-3.5" />
+      <span className="hidden sm:inline">Re-autenticar</span>
+    </button>
+  );
+
+  const headerActions: HeaderAction[] = [
+    // Infinity: navegação primária da página (seções) — nunca pode cair no "…".
+    { id: "tabs", label: "Seções", priority: Infinity, render: tabsControl },
+    ...(solarStatus && !solarStatus.authenticated
+      ? [
+          {
+            id: "reauth",
+            label: "Re-autenticar",
+            priority: 20,
+            render: reautenticarBtn,
+            onSelect: handleRefresh,
+          } as HeaderAction,
+        ]
+      : []),
+    { id: "atualizar", label: "Atualizar", priority: 30, render: atualizarBtn, onSelect: handleRefresh },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background">
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
       <Tabs defaultValue="caixa" className="w-full">
 
-        {/* Page header Padrão Defender v5 — SolarStatusBar embedded + tabs em bottomRow */}
-        <CollapsiblePageHeader
+        {/* Header — Padrão Defender v5 (GlassHeaderShell + HeaderActionsBar) */}
+        <GlassHeaderShell
           title="Intimações"
           icon={Inbox}
-          bottomRow={
-            <div className="overflow-x-auto scrollbar-none">
-              <TabsList className="bg-black/[0.15] ring-1 ring-white/[0.05] border-0 h-8 p-[2px] rounded-md w-full min-w-max gap-0">
-                <TabsTrigger
-                  value="caixa"
-                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <Inbox className="h-3 w-3" />
-                  <span className="hidden sm:inline">Caixa de Entrada</span>
-                  <span className="sm:hidden">Caixa</span>
-                  {contadores.total > 0 && (
-                    <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-[14px] px-1 text-[8px] font-bold rounded-full bg-white/[0.12] text-white/90 tabular-nums">
-                      {contadores.total}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="batch"
-                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <Layers className="h-3 w-3" />
-                  <span className="hidden sm:inline">Operações Batch</span>
-                  <span className="sm:hidden">Batch</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="fases"
-                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <RefreshCw className="h-3 w-3" />
-                  <span className="hidden sm:inline">Fases → Solar</span>
-                  <span className="sm:hidden">Fases</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="logs"
-                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <Settings className="h-3 w-3" />
-                  <span className="hidden sm:inline">Logs & Stats</span>
-                  <span className="sm:hidden">Logs</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="assistidos-sync"
-                  className="text-[11px] font-medium gap-1.5 rounded-[4px] px-2.5 py-1 text-white/50 hover:text-white/80 data-[state=active]:bg-white/[0.14] data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <Users className="h-3 w-3" />
-                  <span className="hidden sm:inline">Assistidos</span>
-                  <span className="sm:hidden">Assist.</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="protocolar"
-                  className="text-[11px] font-semibold gap-1.5 rounded-[4px] px-2.5 py-1 text-emerald-400/80 hover:text-emerald-300 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-none"
-                >
-                  <Send className="h-3 w-3" />
-                  <span className="hidden sm:inline">Protocolar</span>
-                  <span className="sm:hidden">Proto</span>
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          }
-        >
-          <SolarStatusBar
-            variant="embedded"
-            onRefresh={handleRefresh}
-            isRefreshing={isLoading}
-            vencidas={contadores.vencidas}
-          />
-        </CollapsiblePageHeader>
+          stats={headerStats}
+          actions={<HeaderActionsBar actions={headerActions} />}
+        />
 
         {/* ── Tab: Caixa de Entrada ──────────────────────────────────────── */}
         <TabsContent value="caixa" className="mt-0">
