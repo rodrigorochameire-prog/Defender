@@ -51,8 +51,16 @@ function getDatabaseUrl(): string {
     );
   }
   
-  // Se estiver usando Supabase com pgbouncer, garante que está configurado corretamente
-  // A URL do Supabase com pooler já vem configurada corretamente
+  // DEV: usar o pooler em SESSION mode (5432) em vez de TRANSACTION mode (6543).
+  // O postgres-js trava (stall até o connect_timeout) quando a fila de queries
+  // excede o pool contra o Supavisor em transaction mode — cada page load do app
+  // dispara 15-30 queries paralelas num pool de 10 e congelava o dev inteiro
+  // (tRPC uniformemente em ~10s/~30s). Em session mode o mesmo cenário responde
+  // em ~1s. Produção (serverless) permanece em transaction mode, que é o correto lá.
+  if (process.env.NODE_ENV !== "production" && url.includes("pooler.supabase.com:6543")) {
+    return url.replace("pooler.supabase.com:6543", "pooler.supabase.com:5432");
+  }
+
   return url;
 }
 
