@@ -145,6 +145,11 @@ export default function OficiosPage() {
       <GlassHeaderShell
         title="Ofícios"
         icon={Mail}
+        stats={
+          <span className="text-[11px] text-white/55 leading-none hidden sm:inline">
+            Gerar, revisar e gerenciar ofícios com IA
+          </span>
+        }
         actions={<HeaderActionsBar actions={headerActions} />}
       />
 

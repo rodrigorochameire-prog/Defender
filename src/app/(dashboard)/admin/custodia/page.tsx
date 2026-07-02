@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 
