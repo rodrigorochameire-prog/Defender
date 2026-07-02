@@ -56,8 +56,8 @@ import {
 import { PedidoTrabalhoModal } from "@/components/cowork/pedido-trabalho-modal";
 import { CopiarRevisaoButton } from "@/components/demandas/copiar-revisao-button";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -479,50 +479,43 @@ export default function DelegacoesPage() {
   const delegacoes = activeTab === "recebidas" ? delegacoesRecebidas : delegacoesEnviadas;
   const isLoading = activeTab === "recebidas" ? loadingRecebidas : loadingEnviadas;
 
+  const headerActions: HeaderAction[] = [
+    {
+      id: "atualizar",
+      label: "Atualizar",
+      icon: RefreshCw,
+      hideLabel: true,
+      priority: 20,
+      onSelect: () => {
+        refetchRecebidas();
+        refetchEnviadas();
+      },
+    },
+    {
+      id: "novo-pedido",
+      label: "Novo Pedido",
+      icon: Send,
+      hideLabel: true,
+      priority: Infinity,
+      variant: "primary",
+      onSelect: () => setPedidoModalOpen(true),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Delegações"
         icon={UserCheck}
-      >
-        <div className="flex items-center justify-between">
-          {/* Left: icon + title + stats */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <UserCheck className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Delegações</h1>
-              {stats && (
-                <p className="text-[10px] text-white/55 tabular-nums">
-                  {stats.pendentes} pendentes · {stats.total} total
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Right: action buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                refetchRecebidas();
-                refetchEnviadas();
-              }}
-              title="Atualizar"
-              className="w-8 h-8 rounded-xl bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setPedidoModalOpen(true)}
-              title="Novo Pedido"
-              className="w-8 h-8 rounded-xl bg-white/90 text-neutral-700 shadow-sm hover:bg-white transition-all duration-150 cursor-pointer flex items-center justify-center"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+        stats={
+          stats ? (
+            <span className="text-[11px] text-white/55 tabular-nums hidden sm:inline">
+              {stats.pendentes} pendentes · {stats.total} total
+            </span>
+          ) : null
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Conteúdo principal */}
       <div className="p-4 md:p-6">

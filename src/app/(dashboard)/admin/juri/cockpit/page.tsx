@@ -92,7 +92,8 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { AnotacoesAprimoradas } from "@/components/juri/cockpit/anotacoes-aprimoradas";
 import { QuickReactionsBar } from "@/components/juri/cockpit/quick-reactions-bar";
 import { PainelEstrategico } from "@/components/juri/cockpit/painel-estrategico";
@@ -1380,6 +1381,104 @@ function PlenarioCockpitContent() {
   // Nome legível da sessão para a barra mínima do modo plenário
   const sessaoNome = sessaoJuriId ? `Sessão do Júri #${sessaoJuriId}` : "Sessão do Júri";
 
+  // Ações do header (escondido em modo plenário — ver GlassHeaderShell abaixo)
+  const headerActions: HeaderAction[] = [
+    { id: "back", label: "Voltar", icon: ArrowLeft, priority: 40, hideLabel: true, onSelect: () => router.push("/admin/juri") },
+    // Indicador de auto-save — só aparece após o carregamento inicial (isLoaded)
+    ...(isLoaded
+      ? [
+          {
+            id: "autosave",
+            label: "Salvando",
+            priority: 25,
+            render: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-[11px] text-emerald-400">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">Salvando</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Dados salvos automaticamente no navegador
+                </TooltipContent>
+              </Tooltip>
+            ),
+          } as HeaderAction,
+        ]
+      : []),
+    {
+      id: "modo-cockpit",
+      label: "Modo do cockpit",
+      priority: 35,
+      render: (
+        <div className="flex items-center bg-white/[0.08] rounded-lg p-0.5">
+          <button
+            onClick={() => { setCockpitMode("registro"); setActiveTab("avaliacao"); }}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200",
+              cockpitMode === "registro"
+                ? "bg-white/[0.15] text-white shadow-sm"
+                : "text-white/50 hover:text-white/80"
+            )}
+          >
+            <NotebookPen className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Registro</span>
+          </button>
+          <button
+            onClick={() => { setCockpitMode("estrategia"); setActiveTab("feed"); }}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200",
+              cockpitMode === "estrategia"
+                ? "bg-white/[0.15] text-white shadow-sm"
+                : "text-white/50 hover:text-white/80"
+            )}
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Estratégia</span>
+          </button>
+        </div>
+      ),
+    },
+    {
+      id: "entrar-plenario",
+      label: "Entrar em modo plenário",
+      priority: Infinity,
+      variant: "primary",
+      render: <EntrarModoPlenarioButton onEntrar={() => setModoPlenario(true)} />,
+    },
+    {
+      id: "encerrar-sessao",
+      label: "Encerrar sessão",
+      priority: 30,
+      render: (
+        <EncerrarSessaoButton
+          sessaoJuriId={sessaoJuriId}
+          isDarkMode={isDarkMode}
+          conselhoSentenca={conselhoSentenca}
+          anotacoes={anotacoes}
+          onSucessoEncerramento={() => router.push("/admin/juri")}
+        />
+      ),
+    },
+    {
+      id: "dark-mode-toggle",
+      label: isDarkMode ? "Modo Claro" : "Modo Escuro",
+      priority: 20,
+      render: (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600"
+          title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
+        >
+          {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <TooltipProvider>
       <div className={cn(containerClass, plenarioContainerClass(modoPlenario))}>
@@ -1404,97 +1503,16 @@ function PlenarioCockpitContent() {
 
         {/* Page-header normal — escondido enquanto em modo plenário */}
         {!modoPlenario && (
-        <CollapsiblePageHeader title="Cockpit do Júri" icon={Target}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <Link href="/admin/juri">
-                <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                </button>
-              </Link>
-              <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-                <Target className="w-4 h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Cockpit do Júri</h1>
-                <p className="text-[10px] text-white/55 hidden sm:block">{juradosAtivos.length}/7 jurados • sessão ao vivo</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Auto-save indicator */}
-              {isLoaded && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1 text-[10px] text-emerald-400">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span className="hidden sm:inline">Salvando</span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">
-                    Dados salvos automaticamente no navegador
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
-              <div className="w-px h-5 bg-white/[0.08]" />
-
-              {/* Mode Toggle */}
-              <div className="flex items-center bg-white/[0.08] rounded-lg p-0.5">
-                <button
-                  onClick={() => { setCockpitMode("registro"); setActiveTab("avaliacao"); }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200",
-                    cockpitMode === "registro"
-                      ? "bg-white/[0.15] text-white shadow-sm"
-                      : "text-white/50 hover:text-white/80"
-                  )}
-                >
-                  <NotebookPen className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Registro</span>
-                </button>
-                <button
-                  onClick={() => { setCockpitMode("estrategia"); setActiveTab("feed"); }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200",
-                    cockpitMode === "estrategia"
-                      ? "bg-white/[0.15] text-white shadow-sm"
-                      : "text-white/50 hover:text-white/80"
-                  )}
-                >
-                  <Crosshair className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Estratégia</span>
-                </button>
-              </div>
-
-              <div className="w-px h-5 bg-white/[0.08]" />
-
-              {/* Entrar em modo plenário (full-screen focus) */}
-              <EntrarModoPlenarioButton onEntrar={() => setModoPlenario(true)} />
-
-              <div className="w-px h-5 bg-white/[0.08]" />
-
-              {/* Encerrar Sessão */}
-              <EncerrarSessaoButton
-                sessaoJuriId={sessaoJuriId}
-                isDarkMode={isDarkMode}
-                conselhoSentenca={conselhoSentenca}
-                anotacoes={anotacoes}
-                onSucessoEncerramento={() => router.push("/admin/juri")}
-              />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="h-7 w-7 p-0 text-neutral-400 hover:text-emerald-600"
-                title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
-              >
-                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-              </Button>
-            </div>
-          </div>
-        </CollapsiblePageHeader>
+          <GlassHeaderShell
+            title="Cockpit do Júri"
+            icon={Target}
+            stats={
+              <span className="text-[11px] text-white/55 hidden sm:inline">
+                {juradosAtivos.length}/7 jurados • sessão ao vivo
+              </span>
+            }
+            actions={<HeaderActionsBar actions={headerActions} />}
+          />
         )}
 
         <div className="px-5 md:px-8 py-3 md:py-4 space-y-4 pb-24">

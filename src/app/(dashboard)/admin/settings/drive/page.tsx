@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -680,55 +681,83 @@ export default function DriveConfigPage() {
 
   const isConfigured = configStatus?.configured === true;
 
-  return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Configurações Drive" icon={Settings}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Settings className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Configurações Drive</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">Gerencie a integração e pastas sincronizadas</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Link href="/admin/distribuicao">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <FolderPlus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Distribuição</span>
-              </button>
-            </Link>
-            <Link href="/admin/drive">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <FolderOpen className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Abrir Drive</span>
-              </button>
-            </Link>
-            {isConfigured && rootLink?.link && (
+  const headerActions: HeaderAction[] = [
+    {
+      id: "distribuicao",
+      label: "Distribuição",
+      priority: 30,
+      render: (
+        <Link href="/admin/distribuicao">
+          <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+            <FolderPlus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Distribuição</span>
+          </button>
+        </Link>
+      ),
+    },
+    {
+      id: "abrir-drive",
+      label: "Abrir Drive",
+      priority: 25,
+      render: (
+        <Link href="/admin/drive">
+          <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Abrir Drive</span>
+          </button>
+        </Link>
+      ),
+    },
+    ...(isConfigured && rootLink?.link
+      ? [
+          {
+            id: "abrir-google",
+            label: "Abrir no Google",
+            priority: 20,
+            render: (
               <a href={rootLink.link} target="_blank" rel="noopener noreferrer">
                 <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Abrir no Google</span>
                 </button>
               </a>
-            )}
-            <button
-              onClick={() => organizeDriveMutation.mutate({ dryRun: false })}
-              disabled={organizeDriveMutation.isPending}
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
-            >
-              {organizeDriveMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <FolderSync className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline">{organizeDriveMutation.isPending ? "Organizando..." : "Organizar PDFs"}</span>
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+            ),
+          } satisfies HeaderAction,
+        ]
+      : []),
+    {
+      id: "organizar-pdfs",
+      label: "Organizar PDFs",
+      priority: Infinity,
+      render: (
+        <button
+          onClick={() => organizeDriveMutation.mutate({ dryRun: false })}
+          disabled={organizeDriveMutation.isPending}
+          className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0 disabled:opacity-50"
+        >
+          {organizeDriveMutation.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <FolderSync className="w-3.5 h-3.5" />
+          )}
+          <span className="hidden sm:inline">{organizeDriveMutation.isPending ? "Organizando..." : "Organizar PDFs"}</span>
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <GlassHeaderShell
+        title="Configurações Drive"
+        icon={Settings}
+        stats={
+          <span className="text-[11px] text-white/55 leading-none hidden sm:inline">
+            Gerencie a integração e pastas sincronizadas
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
       {/* Status da Conexão */}

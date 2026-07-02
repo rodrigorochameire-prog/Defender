@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { DownloadCloud, RefreshCw, CheckSquare, Square } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc/client";
@@ -181,9 +181,7 @@ export function SigaImportView() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Importar SIGA" icon={DownloadCloud}>
-        {stats}
-      </CollapsiblePageHeader>
+      <GlassHeaderShell title="Importar SIGA" icon={DownloadCloud} stats={stats} />
 
       <div className="p-4 space-y-4">
         {/* Painel de controle */}

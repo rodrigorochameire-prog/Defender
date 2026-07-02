@@ -16,7 +16,8 @@ import {
   RefreshCw,
   LayoutTemplate,
 } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -134,41 +135,23 @@ export default function OficiosPage() {
     }
   };
 
+  const headerActions: HeaderAction[] = [
+    { id: "templates", label: "Templates", icon: LayoutTemplate, priority: 30, onSelect: () => router.push("/admin/oficios/templates") },
+    { id: "novo", label: "Novo Ofício", icon: Plus, priority: Infinity, variant: "primary", onSelect: () => setTemplateSelectorOpen(true) },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-background">
-      <CollapsiblePageHeader title="Ofícios" icon={Mail}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Mail className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-                Ofícios
-              </h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">
-                Gerar, revisar e gerenciar ofícios com IA
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => router.push("/admin/oficios/templates")}
-              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <LayoutTemplate className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Templates</span>
-            </button>
-            <button
-              onClick={() => setTemplateSelectorOpen(true)}
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Novo Ofício</span>
-            </button>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Ofícios"
+        icon={Mail}
+        stats={
+          <span className="text-[11px] text-white/55 leading-none hidden sm:inline">
+            Gerar, revisar e gerenciar ofícios com IA
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-6">
 

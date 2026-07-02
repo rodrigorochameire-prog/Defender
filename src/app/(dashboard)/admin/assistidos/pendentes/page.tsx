@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,42 +44,45 @@ export default function AssistidosPendentesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <CollapsiblePageHeader
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
+      <GlassHeaderShell
         icon={AlertTriangle}
         title="Assistidos pendentes de revisão"
-      >
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Placeholders criados quando o scraper do PJe não conseguiu identificar o réu. Renomeie com o nome correto ou vincule a um assistido já cadastrado.
-        </p>
-      </CollapsiblePageHeader>
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">
+            Placeholders criados quando o scraper do PJe não conseguiu identificar o réu. Renomeie com o nome correto ou vincule a um assistido já cadastrado.
+          </span>
+        }
+      />
 
-      {isLoading ? (
-        <div className="grid gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-md" />
-          ))}
-        </div>
-      ) : !data || data.length === 0 ? (
-        <EmptyState
-          icon={Check}
-          title="Nada pendente"
-          description="Todos os assistidos importados foram identificados."
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {data.map((ph) => (
-            <PlaceholderCard
-              key={ph.id}
-              placeholder={ph}
-              onRename={(novoNome) => update.mutateAsync({ id: ph.id, nome: novoNome })}
-              onVincular={(targetId) => vincular.mutateAsync({ placeholderId: ph.id, targetId })}
-              isSaving={update.isPending}
-              isLinking={vincular.isPending}
-            />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-col gap-6 px-5 md:px-8 py-3 md:py-4">
+        {isLoading ? (
+          <div className="grid gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-md" />
+            ))}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={Check}
+            title="Nada pendente"
+            description="Todos os assistidos importados foram identificados."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {data.map((ph) => (
+              <PlaceholderCard
+                key={ph.id}
+                placeholder={ph}
+                onRename={(novoNome) => update.mutateAsync({ id: ph.id, nome: novoNome })}
+                onVincular={(targetId) => vincular.mutateAsync({ placeholderId: ph.id, targetId })}
+                isSaving={update.isPending}
+                isLinking={vincular.isPending}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

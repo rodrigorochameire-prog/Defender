@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,29 +15,37 @@ import {
   Bell,
 } from "lucide-react";
 
+const headerActions: HeaderAction[] = [
+  {
+    id: "back",
+    label: "Voltar",
+    priority: 40,
+    render: (
+      <Link href="/admin">
+        <button
+          title="Voltar"
+          className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+      </Link>
+    ),
+  },
+];
+
 export default function MedidasProtetivasPage() {
   return (
     <div className="min-h-screen bg-muted dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Medidas Socioeducativas" icon={Shield}>
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/admin">
-            <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          </Link>
-          <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">
-              Medidas Socioeducativas
-            </h1>
-            <p className="text-[10px] text-white/55 hidden sm:block">
-              Medidas Protetivas de Urgência
-            </p>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Medidas Socioeducativas"
+        icon={Shield}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">
+            Medidas Protetivas de Urgência
+          </span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4">
         {/* Estado: Em Desenvolvimento */}

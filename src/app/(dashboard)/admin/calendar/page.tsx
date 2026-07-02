@@ -46,9 +46,8 @@ import { CalendarSkeleton } from "@/components/shared/skeletons";
 import { format, startOfMonth, endOfMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { ChevronLeft, ChevronRight, FileText, Bell } from "lucide-react";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 
 // Configuração dos tipos de eventos - contexto jurídico
 const EVENT_TYPE_CONFIG = {
@@ -233,12 +232,17 @@ export default function AdminCalendarPage() {
 
   return (
     <div className="page-container">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Calendário Jurídico"
         icon={Calendar}
-      >
-        <div className="flex items-center gap-2" />
-      </CollapsiblePageHeader>
+        stats={
+          <span className="flex items-center gap-1.5 text-[11px] text-white/55 leading-none hidden sm:inline-flex">
+            <span>{todayEvents.length} hoje</span>
+            <span className="text-white/30">·</span>
+            <span>{upcomingAudiencias.length} audiências</span>
+          </span>
+        }
+      />
 
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">

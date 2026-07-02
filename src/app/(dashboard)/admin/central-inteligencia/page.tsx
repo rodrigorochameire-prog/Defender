@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import type { inferRouterOutputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc/client";
 import type { AppRouter } from "@/lib/trpc/routers";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { KPICardPremium, KPIGrid } from "@/components/shared/kpi-card-premium";
 import { AlertCard } from "@/components/central-inteligencia/alert-card";
 import { VvdFlagCard, type VvdFlagItem } from "@/components/central-inteligencia/vvd-flag-card";
@@ -198,21 +198,15 @@ export default function CentralInteligenciaPage() {
 
   return (
     <div className="flex flex-col">
-      <CollapsiblePageHeader title="Central de Inteligência" icon={Radar}>
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-            <Radar className="h-4 w-4 text-emerald-500" />
-          </div>
-          <div>
-            <h1 className="text-[15px] font-semibold leading-tight text-white">
-              Central de Inteligência
-            </h1>
-            <p className="text-[11px] leading-tight text-white/50">
-              O que precisa de atenção
-            </p>
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Central de Inteligência"
+        icon={Radar}
+        stats={
+          <span className="text-[11px] text-white/55 leading-none hidden sm:inline">
+            O que precisa de atenção
+          </span>
+        }
+      />
 
       <div className="mx-auto w-full max-w-6xl space-y-6 px-3 py-5 sm:px-4 lg:px-5">
         {/* KPI ROW */}

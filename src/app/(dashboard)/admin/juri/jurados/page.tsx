@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { useRouter } from "next/navigation";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,13 +28,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Users,
   Search,
   Plus,
@@ -52,7 +47,6 @@ import {
   Check,
   AlertCircle,
   Trash2,
-  MoreVertical,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -683,6 +677,7 @@ function JuradoCardGrid({ jurado }: { jurado: JuradoPerfil }) {
 // PÁGINA PRINCIPAL
 // ============================================
 export default function JuradosPage() {
+  const router = useRouter();
   const [busca, setBusca] = useState("");
   const [filtroTendencia, setFiltroTendencia] = useState<string>("todos");
   const [filtroPerfil, setFiltroPerfil] = useState<string>("todos");
@@ -877,59 +872,33 @@ export default function JuradosPage() {
     };
   }, [juradosImportados]);
 
+  const headerActions: HeaderAction[] = [
+    { id: "back", label: "Voltar", icon: ArrowLeft, priority: 40, hideLabel: true, onSelect: () => router.push("/admin/juri") },
+    { id: "importar", label: "Importar Lista", icon: Upload, priority: 30, onSelect: () => setImportModalOpen(true) },
+    { id: "novo", label: "Novo Jurado", icon: Plus, priority: Infinity, variant: "primary" },
+    ...(juradosDoSistema.length > 0
+      ? [
+          {
+            id: "limpar",
+            label: "Limpar todos",
+            icon: Trash2,
+            priority: 0,
+            onSelect: () => setShowDeleteAllConfirm(true),
+          } satisfies HeaderAction,
+        ]
+      : []),
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-[#0f0f11]">
-      <CollapsiblePageHeader title="Jurados" icon={Users}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/admin/juri">
-              <button className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0">
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-            </Link>
-            <div className="w-9 h-9 rounded-xl bg-[#525252] flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-white text-[15px] font-semibold tracking-tight leading-tight">Jurados</h1>
-              <p className="text-[10px] text-white/55 hidden sm:block">Análise comportamental</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              onClick={() => setImportModalOpen(true)}
-              className="h-8 px-3 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Importar Lista</span>
-            </button>
-            <button
-              className="h-8 px-3 rounded-xl bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 transition-all duration-150 cursor-pointer flex items-center gap-1.5 text-[11px] font-semibold shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Novo Jurado</span>
-            </button>
-            {juradosDoSistema.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="h-8 w-8 rounded-xl bg-white/[0.08] text-white/80 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0">
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-                    onClick={() => setShowDeleteAllConfirm(true)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Limpar todos
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-      </CollapsiblePageHeader>
+      <GlassHeaderShell
+        title="Jurados"
+        icon={Users}
+        stats={
+          <span className="text-[11px] text-white/55 hidden sm:inline">Análise comportamental</span>
+        }
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       <div className="px-5 md:px-8 py-3 md:py-4 space-y-4">
         {/* Stats */}

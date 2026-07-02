@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { HEADER_STYLE } from "@/lib/config/design-tokens";
-import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
+import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
+import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
 
 // Dados mockados
 const mockCustodias = [
@@ -85,20 +85,17 @@ export default function CustodiaPage() {
   const hoje = filteredCustodias.filter((c) => c.status === "agendada");
   const realizadas = filteredCustodias.filter((c) => c.status === "realizada");
 
+  const headerActions: HeaderAction[] = [
+    { id: "registrar", label: "Registrar Custódia", icon: Plus, priority: Infinity, variant: "primary" },
+  ];
+
   return (
     <div className="page-container">
-      <CollapsiblePageHeader
+      <GlassHeaderShell
         title="Audiências de Custódia"
         icon={AlertTriangle}
-      >
-        <div className="flex items-center gap-2">
-          <Button className="gap-2 h-9 bg-emerald-500 text-white hover:bg-emerald-600">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Registrar Custódia</span>
-            <span className="sm:hidden">Registrar</span>
-          </Button>
-        </div>
-      </CollapsiblePageHeader>
+        actions={<HeaderActionsBar actions={headerActions} />}
+      />
 
       {/* Stats - Padrão Swiss */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
