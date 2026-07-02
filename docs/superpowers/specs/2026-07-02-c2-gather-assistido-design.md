@@ -51,26 +51,36 @@ Recebe as linhas já buscadas do banco e produz um bloco markdown **capado**. Es
 ### Análises anteriores
 - {analysisData.resumo} / {registro tipo=analise → enrichment.objeto/resumo}
 ```
-Caps espelhando o que já existe no repo: `slice(0,2000)` por seção (`intelligence-consolidation.ts:271`), ≤40 registros / ≤3 por tipo (`registros-summary.ts`). **Bound total** do dossiê (ex.: ~18k chars) — se estourar, trunca com aviso `[…dossiê truncado]`. Se tudo vazio → retorna `""`.
+Caps espelhando o que já existe no repo: `slice(0,2000)` por seção (`intelligence-consolidation.ts:271`), ≤40 registros / ≤3 por tipo (`registros-summary.ts`). **Bound total** via constante nomeada `MAX_DOSSIE_CHARS = 18000` (não placeholder) — se estourar, trunca com marcador `[…dossiê truncado]`. Se tudo vazio → retorna `""`.
+
+**Preferência de campo por seção do Drive — desvio INTENCIONAL do precedente:** aqui usa-se `resumo` primeiro, `texto_extraido[:2000]` como fallback (o precedente `intelligence-consolidation.ts:271` faz o inverso, `textoExtraido || resumo`). Para um dossiê COMPACTO o resumo por peça é o campo certo; o texto integral só entra quando não há resumo. Idem atendimentos: `dossieAtendimento.resumo` → `transcricaoResumo` → `conteudo[:1500]`.
 
 ### 4.2 `fetch_dossie_data(sb, assistido_id) -> (sections, registros, analises)`
-GETs PostgREST (o worker já tem `sb = vt.Supabase(url, service_key)`):
-- **Drive**: `drive_document_sections` join `drive_files?assistido_id=eq.{id}` (colunas `tipo,titulo,resumo,texto_extraido`), `review_status != rejected`, ordenado por recência, limit N.
-- **Atendimentos**: `registros?assistido_id=eq.{id}&order=data_registro.desc` (colunas `data_registro,tipo,subtipo,conteudo,dossie_atendimento,transcricao_resumo,enrichment_data`), limit ~60 (o cap fino é no format).
-- **Análises anteriores**: `assistidos?id=eq.{id}` (`analysis_data`) + `processos?assistido_id=eq.{id}` (`analysis_data`) + `registros?assistido_id=eq.{id}&tipo=eq.analise` (`enrichment_data`).
+GETs PostgREST **com `select=` explícito** (evita puxar colunas pesadas não usadas — `transcricao`, `historico_solar` etc.; padrão de join-embed já usado em `varredura_triagem.py:79-81`):
+- **Drive** (join-embed seção↔arquivo): `drive_document_sections?select=tipo,titulo,resumo,texto_extraido,review_status,drive_files!inner(assistido_id)&drive_files.assistido_id=eq.{id}&review_status=neq.rejected&order=updated_at.desc&limit=30`.
+- **Atendimentos**: `registros?select=data_registro,tipo,subtipo,conteudo,dossie_atendimento,transcricao_resumo,enrichment_data&assistido_id=eq.{id}&order=data_registro.desc&limit=60` (o cap fino ≤40/≤3-por-tipo é no `format`).
+- **Análises anteriores**: `assistidos?select=analysis_data&id=eq.{id}` + `processos?select=analysis_data&assistido_id=eq.{id}` + `registros?select=enrichment_data,data_registro&assistido_id=eq.{id}&tipo=eq.analise&order=data_registro.desc&limit=10`.
+(Se o join-embed `drive_files!inner` não filtrar como esperado, fallback em 2 passos: GET `drive_files?select=id&assistido_id=eq.{id}` → GET `drive_document_sections?drive_file_id=in.(...)`.)
 
 ### 4.3 `build_dossie_assistido(sb, assistido_id) -> str`
 `fetch` + `format`, **tudo em try/except → retorna `""`** em qualquer erro (a análise nunca quebra por causa do dossiê).
 
-### 4.4 Wire em `build_analise_autos_task`
+### 4.4 Wire em `build_analise_autos_task` (mantendo-a PURA)
+`build_analise_autos_task` **continua pura** — em vez de receber `sb` (o que forçaria I/O dentro dela e quebraria o teste offline existente `test_analise_profunda_helpers.py:28`, que a chama sem `sb`), ela ganha um param **`dossie: str = ""`** (default vazio → o teste existente segue passando sem mudar a chamada). O fetch acontece no **call-site** em `main_async` (que já faz `sb._req` síncrono):
 ```python
-dossie = build_dossie_assistido(sb, row["assistido_id"])
-prompt = f"Análise profunda dos autos — demanda {demanda_id}"
-if dossie:
-    prompt += "\n\n" + dossie
-# instrucao_adicional INTOCADO: json.dumps({"demandaId": demanda_id, "fonte": "fase2c"})
+# em main_async, antes de enfileirar (call-site :264-267):
+dossie = build_dossie_assistido(sb, row["assistido_id"])   # faz o I/O aqui
+task = build_analise_autos_task(row, demanda_id, created_by, dossie=dossie)
+
+# build_analise_autos_task (PURA):
+def build_analise_autos_task(row, demanda_id, created_by, dossie: str = "") -> dict:
+    prompt = f"Análise profunda dos autos — demanda {demanda_id}"
+    if dossie:
+        prompt += "\n\n" + dossie
+    return {..., "prompt": prompt,
+            "instrucao_adicional": json.dumps({"demandaId": demanda_id, "fonte": "fase2c"}), ...}
 ```
-(A assinatura de `build_analise_autos_task` ganha o `sb` para poder montar o dossiê.)
+`instrucao_adicional` **INTOCADO** (`{demandaId, fonte}`). Assim `build_analise_autos_task` e `format_dossie` são ambas puras/testáveis; só `build_dossie_assistido`/`fetch_dossie_data` fazem I/O (e são engolidas por try/except).
 
 ## 5. Fluxo de dados
 worker resolve demanda→assistido (já faz) → `build_dossie_assistido(sb, assistido_id)` → GETs PostgREST (resumos) → `format_dossie` (capado) → concatena no `prompt` da task `analise-autos` → daemon passa verbatim → a IA analisa os autos JÁ SABENDO do histórico do assistido.
@@ -87,7 +97,8 @@ worker resolve demanda→assistido (já faz) → `build_dossie_assistido(sb, ass
   - aplica caps: ≤3 registros por tipo, ≤40 total; seção `texto_extraido` truncada em 2000.
   - bound total: dossiê gigante → truncado com marcador, tamanho ≤ limite.
   - preferência de campo: usa `dossieAtendimento.resumo` se houver, senão `transcricaoResumo`, senão `conteudo[:1500]`.
-- **Verificação de integração:** `build_analise_autos_task` põe o dossiê no `prompt` e mantém `instrucao_adicional == {"demandaId":…, "fonte":"fase2c"}` (chaves-máquina intactas). `python3 -c ast.parse` no worker.
+- **`build_analise_autos_task` (pura, com `dossie`):** com `dossie="..."` → o `prompt` contém o dossiê; sem `dossie` (default) → prompt = título puro (o teste existente `test_analise_profunda_helpers.py:28`, que chama sem `dossie`, **continua passando**). Em ambos, `instrucao_adicional == {"demandaId":…, "fonte":"fase2c"}` (chaves-máquina intactas).
+- `python3 -c ast.parse` no worker (segue parseável).
 
 ## 8. Critérios de aceitação
 1. `format_dossie` puro, testado (vazio/render/caps/bound/preferência de campo).
