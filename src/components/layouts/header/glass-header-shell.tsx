@@ -164,6 +164,11 @@ export function GlassHeaderShell({
           )}
 
           {actions ?? <div className="flex-1" />}
+          {condensed && (
+            <div className="shrink-0 motion-reduce:transition-none animate-in fade-in duration-200">
+              <NotificationsPopover />
+            </div>
+          )}
         </div>
       </div>
     </div>

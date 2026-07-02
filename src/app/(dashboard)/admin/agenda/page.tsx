@@ -14,6 +14,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
 import { ViewModeDropdown, type ViewModeOption } from "@/components/shared/view-mode-dropdown";
 import { HEADER_STYLE } from "@/lib/config/design-tokens";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
@@ -65,7 +70,6 @@ import {
   Scale,
   Filter,
   Target,
-  ChevronDown,
   Zap,
   FileDown,
   Settings,
@@ -79,7 +83,6 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  LayoutGrid,
 } from "lucide-react";
 import {
   isToday,
@@ -1550,87 +1553,86 @@ export default function AgendaPage() {
     </button>
   );
 
-  // Controle rico: filtros (botão + popover, movido sem alterações internas)
+  // Controle rico: filtros (botão + painel). Portal via Radix DropdownMenu —
+  // o shell do header é overflow-hidden + backdrop-filter, o que clipava o
+  // painel absolute/fixed anterior. Controlado por isFiltersExpanded para o
+  // item "…" (overflow) continuar funcionando via setIsFiltersExpanded(true).
   const filtersControl = (
-    <div className="relative">
-      <button
-        onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
-        className={cn(
-          "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
-          (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
-        )}
-        title="Filtros"
-      >
-        <Filter className="w-[13px] h-[13px]" />
+    <DropdownMenu open={isFiltersExpanded} onOpenChange={setIsFiltersExpanded}>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={cn(
+            "relative w-7 h-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0",
+            (selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && "bg-white/[0.14] text-white"
+          )}
+          title="Filtros"
+        >
+          <Filter className="w-[13px] h-[13px]" />
+          {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
+            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-white" />
+            </span>
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52 max-h-[70vh] overflow-y-auto p-0">
+        <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
+        {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
+          <button
+            key={tipo}
+            onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+          >
+            <span className="flex-1 capitalize">{tipo}</span>
+            {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+          </button>
+        ))}
+        <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+        <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
+        {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
+          <button
+            key={status}
+            onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+          >
+            <span className="flex-1 capitalize">{status}</span>
+            {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+          </button>
+        ))}
+        <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+        <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
+        {["urgente", "alta", "normal", "baixa"].map((prio) => (
+          <button
+            key={prio}
+            onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
+            className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+          >
+            <span className="flex-1 capitalize">{prio}</span>
+            {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+          </button>
+        ))}
+        <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
+        <button
+          onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+        >
+          {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
+          <span className="flex-1">Cancelados/Redesignados</span>
+          {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+        </button>
         {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
-            <span className="w-1.5 h-1.5 rounded-full bg-white" />
-          </span>
-        )}
-      </button>
-      {isFiltersExpanded && (
-        <>
-          <div className="fixed inset-0 z-[90]" onClick={() => setIsFiltersExpanded(false)} />
-          <div className="absolute top-full mt-1 right-0 z-[100] w-52 bg-white dark:bg-neutral-900 rounded-xl shadow-xl shadow-black/[0.12] border border-neutral-200/80 dark:border-neutral-800 ring-1 ring-black/[0.04] py-1 max-h-[70vh] overflow-y-auto">
-            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Tipo</div>
-            {["audiencia", "prazo", "compromisso", "lembrete"].map((tipo) => (
-              <button
-                key={tipo}
-                onClick={() => setSelectedTipo(selectedTipo === tipo ? null : tipo)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <span className="flex-1 capitalize">{tipo}</span>
-                {selectedTipo === tipo && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-            ))}
-            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Status</div>
-            {["pendente", "concluido", "cancelado", "redesignado"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(selectedStatus === status ? null : status)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <span className="flex-1 capitalize">{status}</span>
-                {selectedStatus === status && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-            ))}
-            <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-            <div className="px-3 py-1.5 text-[9px] uppercase tracking-wider text-neutral-400">Prioridade</div>
-            {["urgente", "alta", "normal", "baixa"].map((prio) => (
-              <button
-                key={prio}
-                onClick={() => setSelectedPrioridade(selectedPrioridade === prio ? null : prio)}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
-              >
-                <span className="flex-1 capitalize">{prio}</span>
-                {selectedPrioridade === prio && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-              </button>
-            ))}
+          <>
             <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
             <button
-              onClick={() => setShowCanceladosRedesignados(!showCanceladosRedesignados)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 text-[13px] cursor-pointer"
+              onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
+              className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
             >
-              {showCanceladosRedesignados ? <Eye className="w-3.5 h-3.5 text-neutral-400" /> : <EyeOff className="w-3.5 h-3.5 text-amber-500" />}
-              <span className="flex-1">Cancelados/Redesignados</span>
-              {showCanceladosRedesignados && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+              Limpar filtros
             </button>
-            {(selectedTipo || selectedStatus || selectedAtribuicao || selectedPrioridade || !showCanceladosRedesignados) && (
-              <>
-                <div className="h-px bg-neutral-200 dark:bg-neutral-700 my-1" />
-                <button
-                  onClick={() => { setSelectedTipo(null); setSelectedStatus(null); setSelectedAtribuicao(null); setSelectedPrioridade(null); setShowCanceladosRedesignados(false); }}
-                  className="w-full text-center text-[11px] text-neutral-400 hover:text-rose-500 py-2 cursor-pointer transition-colors"
-                >
-                  Limpar filtros
-                </button>
-              </>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   // Ações do header (barra + overflow "…") — Task 6
@@ -1658,7 +1660,7 @@ export default function AgendaPage() {
       id: "search",
       label: "Buscar",
       icon: Search,
-      priority: 15,
+      priority: 25,
       render: searchControl,
       onSelect: () => { setIsSearchOpen(true); setTimeout(() => searchInputRef.current?.focus(), 50); },
     },
@@ -1666,7 +1668,7 @@ export default function AgendaPage() {
       id: "filters",
       label: "Filtros",
       icon: Filter,
-      priority: 15,
+      priority: 25,
       render: filtersControl,
       onSelect: () => setIsFiltersExpanded(true),
     },

@@ -93,10 +93,15 @@ export function HeaderActionsBar({
       priority: barCandidates[i].priority,
       width: el.offsetWidth + ITEM_GAP_PX,
     }));
+    // O "…" é SEMPRE renderizado quando há alguma action com priority <= 0
+    // (elas nascem direto no overflow). Nesse caso a reserva já deve ser
+    // subtraída do espaço disponível de antemão — computeVisibleActions não
+    // deve subtraí-la de novo (reserve=0), senão o "…" perde largura em dobro.
+    const hasPermanentOverflow = actions.some((a) => a.priority <= 0);
     const { visibleIds: ids } = computeVisibleActions(
       items,
-      container.offsetWidth,
-      OVERFLOW_RESERVE,
+      hasPermanentOverflow ? container.offsetWidth - OVERFLOW_RESERVE : container.offsetWidth,
+      hasPermanentOverflow ? 0 : OVERFLOW_RESERVE,
     );
     setVisibleIds(ids);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,6 +130,7 @@ export function HeaderActionsBar({
       <div
         ref={measureRef}
         aria-hidden
+        inert
         className="absolute -top-[999px] left-0 flex items-center gap-1.5 invisible pointer-events-none"
       >
         {barCandidates.map((a) => (
