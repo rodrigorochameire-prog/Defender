@@ -28,7 +28,7 @@ Trazer o pipeline de inteligência de sentença para o `main` atual e ligar o **
 | Abordagem de landing | **Cherry-pick dos 13 commits aditivos + renumerar migração + re-aplicar o hook à mão** (rebase descartado: 283 commits de divergência conflitariam duro no varredura) |
 | Acórdão | **Fora do C1** (manual via instancia-superior; auto vira C1b) |
 | EP | **Fora do auto-capture** (guarda por `doc_id` do PJe pula EP; segue SEEU→analise-intimacao) |
-| Migração | **`0067` → `0070`** (colide com `0067_seeu_import`; aditiva; sem journal drizzle) |
+| Migração | **`0067` → próximo número livre no momento do merge** (`0067` colide com `0067_seeu_import`; `0070` já está tomado por `worktree-fase2c-analise-profunda` em voo — escanear branches ativas, não hardcodar) |
 | Cópias da skill/varredura | hook espelhado em `.claude/skills/` **e** `.claude/skills-cowork/` (byte-idênticas) |
 
 ## 4. Design
@@ -41,10 +41,14 @@ Trazer de `origin/feat/sentenca-intelligence` os commits que tocam **arquivos no
 - **Skill:** `.claude/skills/analise-sentenca/SKILL.md` + `scripts/capturar_sentenca.py` (browser-lane: abre processo → PDF → Drive → texto).
 - **Config/escopo:** `src/config/system-user.ts` (`SYSTEM_USER_ID`); `src/lib/trpc/defensor-scope.ts` (+`getSentencaDetailScope`).
 
+**Commit `9f1180a5` (correção de review) — atenção:** a branch tem **15** commits aditivos (não 13). O `9f1180a5` toca 3 arquivos: `SKILL.md` (doc do payload camelCase→snake_case + `dataSentenca`), `sentencas.ts` (adiciona o campo `dataSentenca: string|null` ao tipo `AnaliseSentenca`) **e** `varredura_triagem.py` (adiciona `registro_raw_text` ao payload do hook antigo). Como o hook antigo (`6432788b`) NÃO é cherry-pickado, o hunk do `9f1180a5` no `varredura_triagem.py` **não vai aplicar** (sem contexto). Fazer: **cherry-pick do `9f1180a5`**, resolver o conflito no `varredura_triagem.py` **descartando aquele hunk** (superado pelo Hunk B escrito à mão, que já inclui `registro_raw_text`), e **manter** os hunks de `SKILL.md` + `sentencas.ts` (o `dataSentenca` é parte do tipo `AnaliseSentenca` = saída da IA, não do payload de enqueue).
+
+**Correção do frontmatter do `SKILL.md`** (inconsistência pré-existente): o `description:` diz "Lane=ai" mas o corpo (e o hook) usam `lane=browser`. Corrigir o `description:` para `browser` ao cherry-pickar (one-liner).
+
 **Não** cherry-pickar: o commit do hook na varredura (`6432788b` — feito contra o arquivo antigo) nem o de renumeração (`8c78c8f7`).
 
 ### C1.2 · Renumeração da migração
-Renomear `drizzle/0067_sentenca_intelligence.sql` → `drizzle/0070_sentenca_intelligence.sql`. Conteúdo inalterado (`CREATE TABLE IF NOT EXISTS magistrados`/`sentencas`, FKs para `comarcas/processos/assistidos/demandas/defensores_ba`, índice único parcial `sentencas_processo_doc_unique … WHERE pje_documento_id IS NOT NULL`). Sem `drizzle/meta/_journal.json` no main → o rename basta. **Pré-check:** confirmar que o gap `0068` no main não é uma migração meio-aplicada antes de adicionar `0070`.
+Renomear `drizzle/0067_sentenca_intelligence.sql` → **o próximo número livre no momento do merge**. Conteúdo inalterado (`CREATE TABLE IF NOT EXISTS magistrados`/`sentencas`, FKs para `comarcas/processos/assistidos/demandas/defensores_ba`, índice único parcial `sentencas_processo_doc_unique … WHERE pje_documento_id IS NOT NULL`). Sem `drizzle/meta/_journal.json` no main → o rename basta. **Pré-check de número:** o `0067` colide com `0067_seeu_import`; o gap `0068` é reservado por `feat/acordao-intelligence` (não meio-aplicado — ok); e **`0070` já está em uso** por `worktree-fase2c-analise-profunda` (em voo hoje). Portanto: escanear `git branch -a` + os `drizzle/*.sql` das branches ativas e escolher o **maior+1** livre (provavelmente `0071`) na hora de implementar — não fixar o número na spec.
 
 ### C1.3 · Re-aplicação manual do hook (a parte de risco)
 Duas inserções em `varredura_triagem.py` (nas duas cópias, mantendo-as byte-idênticas):
@@ -61,8 +65,9 @@ def is_sentenca_ato(ato: str) -> bool:
 ```
 (Reusar o `normalize()` do módulo — o branch trazia um `_norm_ato` próprio; consolidar no `normalize` existente.)
 
-**Hunk B — enfileiramento**, dentro de `apply_classification`, **imediatamente antes** do bloco `# ── Side-effect: agendar / reagendar audiência` (âncora presente no main atual): monta o payload `{numero_processo, pje_documento_id, assistido_id, atribuicao, demanda_origem_id, registro_raw_text}` e faz `sb._req("POST", "/rest/v1/claude_code_tasks", { skill:"analise-sentenca", lane:"browser", status:"pending", created_by: SYSTEM_USER_ID, assistido_id, processo_id, prompt, instrucao_adicional: json.dumps(payload) })`. Guardas:
+**Hunk B — enfileiramento**, dentro de `apply_classification`, **imediatamente antes** do bloco `# ── Side-effect: agendar / reagendar audiência` (âncora no main atual, linha ~1458). Extrair um **helper puro testável** `build_sentenca_task(demanda, rule, content, doc_id)` que retorna o dict da task (`{skill:"analise-sentenca", lane:"browser", status:"pending", created_by:1, assistido_id, processo_id, prompt, instrucao_adicional: json.dumps({numero_processo, pje_documento_id, assistido_id, atribuicao, demanda_origem_id, registro_raw_text})})`. O call-site faz `sb._req("POST","/rest/v1/claude_code_tasks", build_sentenca_task(...), prefer="return=minimal")`. Guardas:
 - Só dispara se `is_sentenca_ato(rule["ato"])` **e** `doc_id` presente (`pje_documento_id`/`enrichment_data.id_documento_pje`). → EP (SEEU, sem doc) é pulado.
+- `created_by = 1` **literal** (o `SYSTEM_USER_ID` é constante TS, não importável no Python; comentar apontando `src/config/system-user.ts`). Se quiser paridade com o override de env, ler `int(os.environ.get("OMBUDS_SYSTEM_USER_ID", 1))` — mas o literal `1` basta e é o que o commit original faz.
 - Todo em `try/except` que loga e continua (nunca quebra a varredura nem o side-effect de audiência).
 
 **Coexistência (verificada no landing map):** `analise-intimacao` é enfileirada UMA vez, em lote, `lane=ai`, ao fim do loop. O hook de sentença enfileira por-demanda, `lane=browser`. Skills e lanes diferentes → não colidem. Uma demanda de sentença legitimamente recebe **ambos**: o resumo da intimação (ai) e a captura+análise da sentença (browser). Intencional.
@@ -80,7 +85,8 @@ def is_sentenca_ato(ato: str) -> bool:
 | (cherry-pick) `src/lib/trpc/routers/sentencas.ts`, `routers/index.ts` | router + wire |
 | (cherry-pick) `src/lib/sentenca/*` + `__tests__/*` | helpers + testes |
 | (cherry-pick) `.claude/skills/analise-sentenca/**` | skill + capturar_sentenca.py |
-| (cherry-pick) `src/config/system-user.ts`, `src/lib/trpc/defensor-scope.ts` | SYSTEM_USER_ID, getSentencaDetailScope |
+| (cherry-pick) `src/config/system-user.ts`, `src/lib/trpc/defensor-scope.ts` + `__tests__/detail-scope.test.ts` | SYSTEM_USER_ID, getSentencaDetailScope (+ seu teste) |
+| (cherry-pick) `9f1180a5` — hunks de `SKILL.md` (payload snake_case + `dataSentenca`, e fix lane→browser) e `sentencas.ts` (`dataSentenca`); **descartar** seu hunk em `varredura_triagem.py` | fecha gaps de review; 15º commit aditivo |
 | rename `drizzle/0067_sentenca_intelligence.sql` → `0070_...` | migração |
 | `.claude/skills/varredura-triagem/scripts/varredura_triagem.py` + espelho cowork | hook (2 hunks) |
 | Testes | `sentenca/*` (vêm no cherry-pick) + novo standalone Python p/ `is_sentenca_ato` + shape do enqueue |
@@ -88,7 +94,7 @@ def is_sentenca_ato(ato: str) -> bool:
 ## 7. Testes
 - **Helpers `sentenca/*`:** os `__tests__` vêm no cherry-pick — rodar `npm test` neles.
 - **`is_sentenca_ato` (novo standalone Python):** dispara em "Analisar sentença"/"Ciência condenação"/"pronúncia"/"impronúncia"/"desclassificação"; **NÃO** dispara em "Ciência acórdão"/"Analisar acórdão" (exclusão). Padrão standalone das outras suítes da varredura.
-- **Shape do enqueue:** função pura testável que monta o payload/task de `analise-sentenca` (skill/lane/created_by/instrucao_adicional com as chaves certas).
+- **Shape do enqueue:** o helper puro `build_sentenca_task(...)` (C1.3) é testado num standalone Python — asserta `skill='analise-sentenca'`, `lane='browser'`, `created_by=1`, e que o `instrucao_adicional` (JSON) tem as chaves `{numero_processo, pje_documento_id, assistido_id, atribuicao, demanda_origem_id, registro_raw_text}`.
 - **Regressão:** as suítes existentes da varredura (A/B/SEEU) continuam verdes; ambas as cópias byte-idênticas.
 - **`next build` + tsc** limpos com o schema/router novos.
 
