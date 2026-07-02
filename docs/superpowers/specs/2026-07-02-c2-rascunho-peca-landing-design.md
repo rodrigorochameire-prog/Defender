@@ -47,7 +47,7 @@ Numa demanda com `analiseProfundaStatus === "concluida"`, o botão **"Rascunhar 
 ## 5. Dependências (todas satisfeitas no main)
 - Coluna `analiseProfundaStatus` (`core.ts` + migração `0070_analise_profunda_status.sql`) — no main.
 - Fase 2c produz a análise (`registros` tipo=analise, `peca_sugerida`) que o rascunho lê.
-- **`dpe-ba-pecas` deve estar registrado no daemon ai** (`claude-code-daemon.mjs` SKILL_ALIASES) — VERIFICAR na implementação (a branch não mexe em daemon; se o skill não for conhecido, a task não roda).
+- **Skill do daemon ai — JÁ RESOLVÍVEL no main (confirmado na revisão).** O router enfileira `skill: "gerar-peca"` (`rascunho-peca.ts:99`), e o `SKILL_ALIASES.json` do main (+ fallback hardcoded no `claude-code-daemon.mjs` ~linha 129) já mapeia `"gerar-peca" → "dpe-ba-pecas"`; o `SKILL.md` existe no main (a branch só apenda a seção "Modo Rascunho Guiado"). Logo a task roda sem mexer no daemon. O write-back é PostgREST `PATCH` com `SUPABASE_SERVICE_ROLE_KEY` (passa pelo `CHILD_ENV`/`buildMaxOnlyEnv()` do daemon; `claude -p --permission-mode bypassPermissions`).
 
 ## 6. Impacto em dados
 - Migração `0072`: 3 colunas em `demandas` (`rascunho_status varchar(20)`, `rascunho_task_id integer`, `rascunho_drive_url text`), todas `IF NOT EXISTS`. Aditivo, reversível. Sem alteração de dados.
@@ -60,7 +60,7 @@ Numa demanda com `analiseProfundaStatus === "concluida"`, o botão **"Rascunhar 
 1. Merge limpo da branch no worktree C2.1; nenhum dos 3 routers (`analiseProfunda`/`sentencas`/`rascunhoPeca`) perdido.
 2. Migração renomeada `0071_rascunho_peca.sql` → `0072_rascunho_peca.sql`; aplicada no prod (deferido) adiciona as 3 colunas.
 3. Testes da branch verdes (hook/router/schema); `tsc` + `next build` limpos.
-4. `dpe-ba-pecas` é skill conhecido no daemon ai (a task de rascunho será executável).
+4. A task de rascunho é executável no daemon ai — `skill: "gerar-peca"` resolve via alias `→ dpe-ba-pecas` (já no main; nada a mudar no daemon).
 5. O botão "Rascunhar peça" só habilita com `analiseProfundaStatus === "concluida"`; enfileira `dpe-ba-pecas` (ai lane) com as linhas mestras.
 
 ## 9. Deferidos / próximas fatias
