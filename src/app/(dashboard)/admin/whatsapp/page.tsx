@@ -33,11 +33,11 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { GlassHeaderShell } from "@/components/layouts/header/glass-header-shell";
 import { HeaderActionsBar, type HeaderAction } from "@/components/layouts/header/header-actions-bar";
+import { HEADER_GLASS } from "@/lib/config/design-tokens";
 
 // ==========================================
 // COMPONENTES
@@ -635,7 +635,6 @@ function InstanceConfig() {
 // ==========================================
 
 export default function WhatsAppPage() {
-  const router = useRouter();
   const { data: configs, isLoading, refetch } = trpc.whatsappChat.listConfigs.useQuery();
   const primaryConfig = configs?.[0];
 
@@ -681,14 +680,20 @@ export default function WhatsAppPage() {
       <span className="text-white/55 tabular-nums">
         {configs?.length ?? 0} {configs?.length === 1 ? "instância" : "instâncias"}
       </span>
+      {primaryConfig && (
+        <>
+          <span className="text-white/25">·</span>
+          <span className="flex items-center gap-1.5 text-white/50" title="Conectado">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="text-[11px] text-white/55">Conectado</span>
+          </span>
+        </>
+      )}
       {primaryConfig && whatsappStats && (
         <>
           <span className="text-white/25">·</span>
-          <span className="flex items-center gap-1 text-white/50" title="Conectado">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span className="tabular-nums">
-              <span className="text-white/80 font-semibold">{whatsappStats.totalContacts}</span> contatos
-            </span>
+          <span className="tabular-nums text-white/50">
+            <span className="text-white/80 font-semibold">{whatsappStats.totalContacts}</span> contatos
           </span>
           {(whatsappStats.unreadMessages ?? 0) > 0 && (
             <span className="text-emerald-400 tabular-nums font-semibold">
@@ -703,7 +708,17 @@ export default function WhatsAppPage() {
   const headerActions: HeaderAction[] = [
     { id: "refresh", label: "Atualizar", icon: RefreshCw, priority: 20, hideLabel: true, onSelect: () => refetch() },
     ...(primaryConfig
-      ? [{ id: "abrir-chat", label: "Abrir chat", icon: MessageSquare, priority: Infinity, variant: "primary" as const, onSelect: () => router.push("/admin/whatsapp/chat") }]
+      ? [{
+          id: "abrir-chat",
+          label: "Abrir chat",
+          priority: Infinity,
+          render: (
+            <Link href="/admin/whatsapp/chat" className={HEADER_GLASS.primaryBtn}>
+              <MessageSquare className="w-3.5 h-3.5" />
+              Abrir chat
+            </Link>
+          ),
+        }]
       : []),
   ];
 

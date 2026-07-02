@@ -126,24 +126,28 @@ export default function InstanciaSuperiorPage() {
   );
 
   // Tabs → HeaderAction render, priority Infinity (navegação primária, nunca colapsa).
+  // Wrapped em max-w + overflow-x-auto (precedente: admin/intimacoes tabs) como rede de
+  // segurança em viewports estreitos — as 4 abas não têm variante colapsada própria.
   const tabsControl = (
-    <div className="flex items-center gap-0.5 shrink-0">
-      {visibleTabs.map(t => (
-        <button
-          key={t.key}
-          onClick={() => setTab(t.key)}
-          className={cn(
-            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer shrink-0",
-            tab === t.key ? "bg-white/90 text-neutral-800 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
-          )}
-        >
-          <t.icon className="w-3 h-3" />
-          {t.label}
-          {t.key === "recursos" && (
-            <span className={cn("tabular-nums text-[10px]", tab === t.key ? "text-neutral-500" : "text-white/40")}>{total}</span>
-          )}
-        </button>
-      ))}
+    <div className="max-w-[45vw] overflow-x-auto scrollbar-none">
+      <div className="flex items-center gap-0.5 shrink-0">
+        {visibleTabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-150 cursor-pointer shrink-0",
+              tab === t.key ? "bg-white/90 text-neutral-800 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/[0.06]"
+            )}
+          >
+            <t.icon className="w-3 h-3" />
+            {t.label}
+            {t.key === "recursos" && (
+              <span className={cn("tabular-nums text-[10px]", tab === t.key ? "text-neutral-500" : "text-white/40")}>{total}</span>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 
@@ -161,7 +165,11 @@ export default function InstanciaSuperiorPage() {
         title="Instância Superior"
         icon={Landmark}
         stats={headerStats}
-        filters={<DarkTribunalPills value={tribunal} onChange={setTribunal} porTribunal={stats?.porTribunal as any[] | undefined} />}
+        filters={
+          <div className="max-w-[30vw] overflow-x-auto scrollbar-none">
+            <DarkTribunalPills value={tribunal} onChange={setTribunal} porTribunal={stats?.porTribunal as any[] | undefined} />
+          </div>
+        }
         actions={<HeaderActionsBar actions={headerActions} />}
       />
 
