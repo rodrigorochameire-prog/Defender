@@ -115,12 +115,12 @@ export function GlassHeaderShell({
             HEADER_GLASS.utilityRow,
             "transition-[height,opacity] duration-200 motion-reduce:transition-none",
             // overflow-hidden só no colapso — expandida, deixa o badge do sino respirar
-            condensed ? "h-0 opacity-0 border-b-0 overflow-hidden" : "h-8 opacity-100",
+            condensed ? "h-0 opacity-0 border-b-0 overflow-hidden" : "h-10 opacity-100",
           )}
         >
           <SidebarTrigger
             title="Abrir/fechar menu lateral (⌘B)"
-            className="hidden md:inline-flex h-6 w-6 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
+            className="hidden md:inline-flex h-7 w-7 rounded-md text-white/50 hover:text-white/85 hover:bg-white/[0.10] transition-all duration-200 shrink-0"
           />
           <div className="h-4 w-px bg-white/[0.08] shrink-0" />
           <Breadcrumbs />
@@ -139,7 +139,7 @@ export function GlassHeaderShell({
               type="button"
               onClick={() => chatPanelActions.toggle()}
               title="Assistente OMBUDS"
-              className="inline-flex items-center justify-center h-6 w-6 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-white/50 hover:text-white/80 hover:bg-white/[0.08] transition-colors"
             >
               <MessageSquare className="h-3.5 w-3.5" />
             </button>
