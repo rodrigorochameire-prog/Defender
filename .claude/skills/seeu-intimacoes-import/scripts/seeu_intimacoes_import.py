@@ -25,6 +25,7 @@ ABAS_SUPORTADAS: dict[str, tuple[str, str]] = {
     "manifestacao": ("Manifestação", "Manifestação"),
     "ciencia": ("Ciência", "Ciência"),
     "razoes": ("Razões/Contrarrazões", "Razões"),
+    "pendencias": ("Pendências de Incidentes", "Pendência de incidente — verificar"),
 }
 
 
@@ -159,6 +160,35 @@ JS_SELECT_SITUACAO = (
     " if(r && !r.checked){r.click(); return true;} return false;}"
 )
 
+# Pendências de Incidentes: aba com <select> de Juízo (não SITUACOES). Descoberta
+# genérica (sem id fixo): pega os selects visíveis do frame e devolve as options.
+JS_LIST_JUIZOS = r"""() => {
+  const sels = Array.from(document.querySelectorAll('select'));
+  // Heurística: o select de juízo tem várias options com texto (>1). Pega o maior.
+  let best = null, bestN = 1;
+  for (const s of sels) {
+    const opts = Array.from(s.options || []).filter(o => (o.textContent || '').trim());
+    if (opts.length > bestN) { best = s; bestN = opts.length; }
+  }
+  if (!best) return [];
+  return Array.from(best.options).map(o => ({ value: o.value, label: (o.textContent||'').trim() }))
+                                 .filter(o => o.label);
+}"""
+
+JS_SELECT_JUIZO = r"""(value) => {
+  const sels = Array.from(document.querySelectorAll('select'));
+  let best = null, bestN = 1;
+  for (const s of sels) {
+    const opts = Array.from(s.options || []).filter(o => (o.textContent || '').trim());
+    if (opts.length > bestN) { best = s; bestN = opts.length; }
+  }
+  if (!best) return false;
+  best.value = value;
+  best.dispatchEvent(new Event('change', { bubbles: true }));
+  if (typeof best.onchange === 'function') best.onchange();
+  return true;
+}"""
+
 _CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 
 # Marcador de expediente: "Seq\n<CNJ>". Delimita cada bloco (Seq→próximo Seq),
@@ -186,6 +216,29 @@ def _split_blocos_por_processo(texto_tabela: str) -> list[tuple[int, str, str]]:
         fim = ms[i + 1].start() if i + 1 < len(ms) else len(texto_tabela)
         blocos.append((int(m.group(1)), m.group(2), texto_tabela[ini:fim]))
     return blocos
+
+
+# Tabela sem itens (caso usual das Pendências de Incidentes).
+_TABELA_VAZIA_RE = re.compile(r"nenhum registro|não há|nao ha|sem pend[êe]ncias", re.IGNORECASE)
+
+
+def parse_pendencias(texto: str) -> list:
+    """Parser DEFENSIVO da aba Pendências de Incidentes (layout distinto e raro).
+    Tenta o padrão Seq→CNJ das outras abas; se não casar mas houver conteúdo real,
+    devolve UM item cru (seq=None, cnj=None) para não perder o incidente; tabela
+    vazia → []. Nunca lança.
+    Retorna list[tuple[int|None, str|None, str]] = (seq, cnj, bloco)."""
+    t = (texto or "").strip()
+    if not t or (_TABELA_VAZIA_RE.search(t) and len(t) < 200):
+        return []
+    try:
+        blocos = _split_blocos_por_processo(t)
+    except Exception:
+        blocos = []
+    if blocos:
+        return blocos
+    # Conteúdo fora do padrão conhecido → captura defensiva (1 item cru).
+    return [(None, None, t)]
 
 
 # ─── Scraper assíncrono por aba (Playwright — importado lazily) ─────────────
@@ -238,6 +291,45 @@ async def _async_scrape_mesa(env, abas: list[str], modo: str, limit: int, status
                 frame = _find_mesa_frame(page)  # re-resolve após o submit do form
                 if frame is None:
                     continue
+
+                if aba == "pendencias":
+                    # Fluxo próprio: itera o <select> de Juízo (não SITUACOES).
+                    juizos = await frame.evaluate(JS_LIST_JUIZOS)
+                    if not juizos:
+                        if status_cb:
+                            status_cb(f"aba {label}: sem seletor de Juízo (tratando como vazia)")
+                        continue
+                    for j in juizos:
+                        try:
+                            await frame.evaluate(JS_SELECT_JUIZO, j["value"])
+                            await page.wait_for_timeout(2600)
+                            frame = _find_mesa_frame(page)
+                            if frame is None:
+                                break
+                            texto = await frame.evaluate(JS_TABLE_TEXT)
+                            itens = parse_pendencias(texto)
+                            if not itens:
+                                if status_cb:
+                                    status_cb(f"0 pendências em {j['label'][:40]}")
+                                continue
+                            for seq, cnj_str, bloco in itens:
+                                results.append({
+                                    "aba": aba,
+                                    "ato": ato,
+                                    "processoNumero": cnj_str,
+                                    "seq": seq,
+                                    "conteudo": "Mesa do Defensor\n" + bloco,
+                                })
+                                if len(results) >= limit:
+                                    return results, warnings
+                        except Exception as e:
+                            aviso = f"aba {label} juízo {j.get('label','?')[:30]} falhou: {e}"
+                            warnings.append(aviso)
+                            if status_cb:
+                                status_cb(f"⚠ {aviso}")
+                            continue
+                    continue  # aba pendencias concluída; não cai no loop de SITUACOES
+
                 # Itera as situações (Recebidas + Lidas e Aguardando) — cada uma
                 # recarrega a tabela via enviaForm(). Ao trocar de aba a situação
                 # volta p/ 0 (default), então sit=0 já vem selecionada (changed=False).
@@ -296,7 +388,7 @@ def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Importa Mesa do Defensor (SEEU) → seeu_import_staging")
     p.add_argument("--job-id", type=int, required=True)
     p.add_argument("--atribuicoes", default="EXECUCAO_PENAL")
-    p.add_argument("--abas", default="manifestacao,ciencia,razoes")
+    p.add_argument("--abas", default="manifestacao,ciencia,razoes,pendencias")
     p.add_argument("--limit", type=int, default=300)
     p.add_argument("--modo", choices=["cdp"], default="cdp")
     return p.parse_args(argv)

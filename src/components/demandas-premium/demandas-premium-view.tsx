@@ -3,6 +3,7 @@
 
 import { cn } from "@/lib/utils";
 import { useVarreduraJob } from "@/hooks/use-varredura-job";
+import { useAnaliseProfundaJob } from "@/hooks/use-analise-profunda-job";
 import { CollapsiblePageHeader } from "@/components/layouts/collapsible-page-header";
 import { HeaderSlotTitle } from "@/components/layouts/header-slot-title";
 import { DemandaCreateModal, type DemandaFormData } from "@/components/demandas-premium/demanda-create-modal";
@@ -888,6 +889,10 @@ export default function Demandas() {
   // Gate inclui isPending (mutação em voo) além de isRunning (job já criado),
   // senão um duplo-clique rápido dispara dois jobs antes de isRunning virar true.
   const analisando = isRunning || isPending;
+
+  // Análise Profunda (Fase 2c) — baixa autos + análise completa. Instanciado
+  // uma vez no nível da view, igual ao useVarreduraJob acima.
+  const ap = useAnaliseProfundaJob();
 
   // Search queries para autocomplete de vinculação.
   // Debounce (250ms) evita disparar a query a cada tecla — só busca quando o usuário
@@ -2878,9 +2883,9 @@ export default function Demandas() {
             onClick={() => setSearchOpen(true)}
             title="Buscar"
             aria-label="Buscar"
-            className="h-7 w-7 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
+            className="h-9 w-9 rounded-lg bg-white/[0.08] text-white/70 ring-1 ring-white/[0.05] hover:bg-white/[0.14] hover:text-white transition-all duration-150 cursor-pointer flex items-center justify-center shrink-0"
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-4 h-4" />
           </button>
         )}
       </div>
@@ -3331,7 +3336,7 @@ export default function Demandas() {
         title="Demandas"
         accentHex={headerAccentHex}
         stats={
-          <>
+          <span className="hidden md:flex items-center gap-2">
             <span className="text-white/85 font-semibold">
               {demandas.filter(d => !d.arquivado).length}
             </span>
@@ -3353,7 +3358,7 @@ export default function Demandas() {
                 <span className="font-medium">{deadlineStats.vencidas}</span>
               </span>
             )}
-          </>
+          </span>
         }
       />
 
@@ -3845,6 +3850,8 @@ export default function Demandas() {
               onAtoChange={handleAtoChange}
               onAnalisar={(id) => analisar([id])}
               analisando={analisando}
+              onAnaliseProfunda={(id) => ap.iniciar(id)}
+              analiseProfundaAtiva={ap.isRunning}
               onAgendarAudiencia={handleAgendarAudiencia}
               onOpenRegistro={handleOpenRegistro}
               onToggleUrgent={handleToggleUrgent}

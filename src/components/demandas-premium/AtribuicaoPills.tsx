@@ -104,7 +104,7 @@ export function AtribuicaoPills({
               aria-label={allOption.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                iconOnly ? "p-1.5" : "px-2.5 py-1",
+                iconOnly ? "p-2.5 md:p-1.5" : "px-2.5 py-1",
                 isAllActive && !isDark && "shadow-sm",
               )}
               style={
@@ -115,7 +115,7 @@ export function AtribuicaoPills({
                   : { color: isDark ? "rgba(255,255,255,0.50)" : "#9ca3af" }
               }
             >
-              {iconOnly ? <LayoutGrid className="w-[17px] h-[17px]" /> : allOption.label}
+              {iconOnly ? <LayoutGrid className="w-5 h-5 md:w-[17px] md:h-[17px]" /> : allOption.label}
             </button>
           );
           // Só-ícone: tooltip visual no hover/foco reaproveitando o rótulo.
@@ -150,7 +150,7 @@ export function AtribuicaoPills({
               aria-label={opt.label}
               className={cn(
                 "flex items-center gap-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer",
-                iconOnly ? "p-1.5" : isActive ? "px-2.5 py-1" : "px-2 py-1",
+                iconOnly ? "p-2.5 md:p-1.5" : isActive ? "px-2.5 py-1" : "px-2 py-1",
                 isActive && !isDark && "shadow-sm text-white",
               )}
               style={
@@ -163,7 +163,7 @@ export function AtribuicaoPills({
             >
               {Icon && (
                 <Icon
-                  className="w-[17px] h-[17px] flex-shrink-0"
+                  className="w-5 h-5 md:w-[17px] md:h-[17px] flex-shrink-0"
                   style={{
                     color: isActive
                       ? isDark

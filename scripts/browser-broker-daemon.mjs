@@ -133,6 +133,23 @@ const SKILL_REGISTRY = {
     }),
   },
 
+  'analise-profunda-demanda': {
+    label: 'Análise profunda por demanda (Fase 2c)',
+    interactive: true,
+    build: (meta) => ({
+      interpreter: VENV_PYTHON,
+      argv: [
+        resolve(PROJECT_DIR, '.claude/skills/analise-profunda-demanda/scripts/analise_profunda_autos.py'),
+        '--demanda-id', String(meta.demandaId),
+        '--processo-id', String(meta.processoId),
+        '--assistido-id', String(meta.assistidoId),
+        ...(meta.atribuicao ? ['--atribuicao', String(meta.atribuicao)] : []),
+        ...(meta.defensorId ? ['--defensor-id', String(meta.defensorId)] : []),
+      ],
+      timeoutMs: 45 * 60_000,
+    }),
+  },
+
   // Importação de intimações PJe para staging (pje_import_staging).
   // Requer --job-id (id da claude_code_tasks), --atribuicoes CSV e flags opcionais.
   'pje-intimacoes-import': {

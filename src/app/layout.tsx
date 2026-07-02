@@ -111,7 +111,7 @@ const themeScript = `
 // de build antigo só serve bundles cached e impede hot reload. Cleanup
 // agressivo: desregistra TODOS os SWs e limpa todos os caches; recarrega 1x
 // se algo foi removido. Em prod o setup volta ao normal pelo build do Serwist.
-const swUpdateScript = `
+const swDevCleanupScript = `
   (function() {
     if (!('serviceWorker' in navigator)) return;
     try {
@@ -138,6 +138,26 @@ const swUpdateScript = `
   })();
 `;
 
+// Em produção NÃO desregistramos o SW (isso defeatava o cache/offline do PWA e
+// causava churn). Em vez disso: quando um novo service worker assume o controle
+// (novo deploy), recarrega UMA vez para aplicar o bundle novo. Guardas evitam
+// recarregar na 1ª instalação (sem controller prévio) e loops.
+const swProdUpdateScript = `
+  (function() {
+    if (!('serviceWorker' in navigator)) return;
+    var hadController = !!navigator.serviceWorker.controller;
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  })();
+`;
+
+const swScript =
+  process.env.NODE_ENV === "development" ? swDevCleanupScript : swProdUpdateScript;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -147,7 +167,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <script dangerouslySetInnerHTML={{ __html: swUpdateScript }} />
+        <script dangerouslySetInnerHTML={{ __html: swScript }} />
       </head>
       <body className={`${inter.className} ${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} bg-white dark:bg-neutral-950`}>
         <Providers>

@@ -107,6 +107,7 @@ import { ausenciasRouter } from "./ausencias";
 import { sigaRouter } from "./siga";
 import { diariasRouter } from "./diarias";
 import { sentencasRouter } from "./sentencas";
+import { analiseProfundaRouter } from "./analise-profunda";
 
 
 export const appRouter = router({
@@ -498,6 +499,10 @@ export const appRouter = router({
   // SENTENÇAS (1º grau — persistência da análise IA)
   // ==========================================
   sentencas: sentencasRouter,
+  // ==========================================
+  // ANALISE PROFUNDA — Fase 2c (autos → análise por demanda, lane browser)
+  // ==========================================
+  analiseProfunda: analiseProfundaRouter,
 });
 
 export type AppRouter = typeof appRouter;
