@@ -78,13 +78,14 @@ def test_tmp_dir_deterministico_e_sob_tempdir():
     assert "seeu_autos" in str(d1)
 
 
-# ───── live-gate: a coleta/download ainda não foi mapeada ao vivo (§4) ────────
-
-def test_existe_marcador_live_gated():
-    assert hasattr(sa, "SeeuAutosLiveGated")
-    assert issubclass(sa.SeeuAutosLiveGated, RuntimeError)
-
+# ───── contrato assíncrono da primitiva ───────────────────────────────────────
 
 def test_baixar_autos_seeu_e_coroutine():
     import inspect
     assert inspect.iscoroutinefunction(sa.baixar_autos_seeu)
+
+
+def test_coletar_e_baixar_sao_coroutines():
+    import inspect
+    assert inspect.iscoroutinefunction(sa._coletar_documentos_disponiveis)
+    assert inspect.iscoroutinefunction(sa._baixar_documento)

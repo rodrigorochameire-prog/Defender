@@ -5,18 +5,22 @@ de um processo de EP, baixa os documentos (autos) do SEEU e devolve os caminhos 
 /tmp, para a lane ai da Fase 2c analisar. READ-ONLY: navega e baixa; nunca clica
 ação que altera estado no SEEU.
 
-A navegação reusa a Mesa do Defensor da Fase 2a (`seeu_expediente`). A COLETA dos
-documentos na timeline "Movimentações" (coluna "Ações") e o DOWNLOAD em si são
-**live-gated** (§4 do design 2026-07-01-seeu-autos-2b): os seletores/URL exatos só
-podem ser mapeados com o SEEU logado ao vivo. Enquanto não mapeados, essas etapas
-levantam `SeeuAutosLiveGated` — o worker da 2c captura e fecha o estado como 'erro'
-com mensagem clara, sem inventar seletores (Constitution Art. IV — No Invention).
+Mecanismo (mapeado ao vivo 2026-07-02, design §4):
+- A timeline "Movimentações" de `visualizacaoProcesso.do` lista os movimentos; os
+  com documentos carregam a lista de arquivos por AJAX de
+  `/seeu/processo/movimentacaoArquivoDocumento.do?_tj=<token>` (um token por
+  movimento; os tokens estão no HTML da página).
+- Cada documento tem um link `/seeu/arquivo.do?_tj=<token>` que devolve o PDF
+  `application/pdf` inline (Content-Disposition inline — NÃO dispara download do
+  browser). Por isso baixamos via `fetch` in-page (cookies da sessão) → bytes.
 
-As funções puras (roteamento, dedup, nomes, tmp dir) são unit-testadas em
-test_seeu_autos.py e não dependem de browser.
+Funções puras (roteamento, dedup, nomes, tmp dir, parse do fragmento) são
+unit-testadas em test_seeu_autos.py e não dependem de browser.
 """
 from __future__ import annotations
+import base64
 import hashlib
+import os
 import re
 import sys
 import tempfile
@@ -28,11 +32,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import seeu_expediente as se  # noqa: E402
 
-
-class SeeuAutosLiveGated(RuntimeError):
-    """A coleta/download de documentos do SEEU ainda não foi mapeada ao vivo
-    (design §4). Levantada pelas etapas que dependem dos seletores reais até que
-    uma sessão de mapeamento com o SEEU logado feche a primitiva."""
+# Teto de segurança: processos de EP são longos (visto ao vivo: 73 docs em 1 caso).
+# Mantém os N mais recentes (a timeline vem em ordem decrescente de seq). Excedente
+# é logado — nunca truncado em silêncio.
+_MAX_DOCS = int(os.environ.get("SEEU_AUTOS_MAX_DOCS", "80"))
 
 
 def _log(msg: str) -> None:
@@ -86,7 +89,8 @@ def _slug(s: str) -> str:
 
 def nome_arquivo_doc(seq: str, tipo: str | None = None) -> str:
     """Nome do PDF de um documento: seq numérico zero-padded (4) + slug do tipo.
-    seq não-numérico cai no slug (ex.: 'mov-9' → 'mov_9'). Sempre .pdf."""
+    seq não-numérico cai no slug (ex.: 'mov-9' → 'mov_9', '155.1' → '155_1').
+    Sempre .pdf."""
     seq = str(seq or "").strip()
     base = seq.zfill(4) if seq.isdigit() else (_slug(seq) or "doc")
     tipo_slug = _slug(tipo) if tipo else ""
@@ -101,27 +105,84 @@ def tmp_dir_para_cnj(cnj: str) -> Path:
     return Path(tempfile.gettempdir()) / f"seeu_autos_{h}"
 
 
-# ───── Coleta + download (LIVE-GATED — §4) ────────────────────────────────────
+# ───── Coleta + download (mapeado ao vivo — §4) ───────────────────────────────
+
+# JS in-page: acha os tokens das listas de arquivos de cada movimento no HTML da
+# página, busca (fetch com cookies da sessão) cada fragmento e parseia o DOM de
+# cada um — parse via DOM (não regex) porque o fragmento tem <table> aninhada (menu
+# "Versão assinada/original") que separaria o href do seq/Descrição num split cru.
+# O menu de contexto fica display:none → innerText já o exclui. Devolve a lista
+# achatada de {seq, id, tipo, descricao, arquivo_url}. O menu de contexto usa
+# post() em onclick (não href) → só o link principal por documento é colhido.
+_JS_COLLECT_DOCS = r"""async () => {
+  const pageHtml = document.documentElement.innerHTML;
+  const urls = [...new Set((pageHtml.match(
+    /\/seeu\/processo\/movimentacaoArquivoDocumento\.do\?_tj=[0-9a-fA-F]+/g) || []))];
+  const docs = [];
+  for (const u of urls) {
+    let html = '';
+    try { const r = await fetch(u, {credentials: 'include'}); html = await r.text(); }
+    catch (e) { continue; }
+    const box = document.createElement('div'); box.innerHTML = html;
+    box.querySelectorAll('a[href*="/seeu/arquivo.do"]').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      const idm = href.match(/_tj=([0-9a-fA-F]+)/);
+      const row = a.closest('tr');
+      const t = row ? (row.innerText || '').replace(/\s+/g, ' ').trim() : '';
+      const seqm = t.match(/(\d+\.\d+)/);
+      // [^:] em vez de \w* porque JS \w não casa "çã" de "Descrição:".
+      const descm = t.match(/Descri[^:]*:\s*(.+?)(?:\s+\d+\.\d+\s+Tipo|\s+Tipo de Documento)/i);
+      const tipom = t.match(/Tipo de Documento:\s*(.+?)(?:\s+Ass\.?:|$)/i);
+      docs.push({
+        seq: seqm ? seqm[1] : null,
+        id: idm ? idm[1] : null,
+        arquivo_url: href,
+        descricao: descm ? descm[1].trim() : null,
+        tipo: tipom ? tipom[1].trim() : null,
+      });
+    });
+  }
+  return docs;
+}"""
+
+# JS in-page: baixa o PDF de um arquivo.do como base64 (o SEEU serve inline, então
+# expect_download não dispara; fetch+bytes é o caminho).
+_JS_FETCH_BYTES = r"""async (u) => {
+  const r = await fetch(u, {credentials: 'include'});
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  let bin = ''; const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return {status: r.status, ct: r.headers.get('content-type'), b64: btoa(bin)};
+}"""
+
 
 async def _coletar_documentos_disponiveis(proc_page) -> list[dict]:
-    """Lê a timeline "Movimentações" e devolve os documentos disponíveis na
-    coluna "Ações": [{seq, id, tipo}]. LIVE-GATED: os seletores exatos (o que na
-    coluna "Ações" abre o documento — onclick? href? popup? — e se há paginação
-    da timeline) só serão mapeados com o SEEU aberto. NÃO chutar seletores."""
-    raise SeeuAutosLiveGated(
-        "coleta de documentos do SEEU não mapeada ao vivo — ver design §4 "
-        "(mapear a coluna 'Ações' da timeline Movimentações com o SEEU logado)"
-    )
+    """Lê a timeline "Movimentações" (já carregada em proc_page) e devolve os
+    documentos disponíveis: [{seq, id, tipo, descricao, arquivo_url}]. Busca e
+    parseia (via DOM in-page) os fragmentos de arquivos de cada movimento."""
+    return await proc_page.evaluate(_JS_COLLECT_DOCS) or []
 
 
-async def _baixar_documento(proc_page, ctx, doc: dict, out_dir: Path) -> str | None:
-    """Dispara o download de UM documento e salva em out_dir/nome_arquivo_doc(...).
-    LIVE-GATED: falta mapear se o clique dispara `expect_download` (PDF direto) ou
-    abre um viewer/URL estilo /procapi. NÃO chutar o mecanismo."""
-    raise SeeuAutosLiveGated(
-        "download de documento do SEEU não mapeado ao vivo — ver design §4 "
-        "(mapear expect_download vs. URL de documento com o SEEU logado)"
-    )
+async def _baixar_documento(proc_page, doc: dict, out_dir: Path) -> str | None:
+    """Baixa UM documento (arquivo.do) via fetch in-page e salva em
+    out_dir/nome_arquivo_doc(seq, tipo). Devolve o caminho ou None (não-PDF/erro)."""
+    arq = doc.get("arquivo_url")
+    if not arq:
+        return None
+    url = arq if arq.startswith("http") else se.ROOT + arq
+    res = await proc_page.evaluate(_JS_FETCH_BYTES, url)
+    if not res or res.get("status") != 200:
+        _log(f"  ⚠ doc {doc.get('seq')}: HTTP {res.get('status') if res else '?'}")
+        return None
+    data = base64.b64decode(res.get("b64") or "")
+    if data[:4] != b"%PDF":
+        _log(f"  ⚠ doc {doc.get('seq')}: resposta não é PDF (ct={res.get('ct')})")
+        return None
+    dest = out_dir / nome_arquivo_doc(doc.get("seq") or doc.get("id") or "doc", doc.get("tipo"))
+    dest.write_bytes(data)
+    return str(dest)
 
 
 async def baixar_autos_seeu(ctx, cnj: str) -> list[str]:
@@ -129,9 +190,8 @@ async def baixar_autos_seeu(ctx, cnj: str) -> list[str]:
     caminhos dos PDFs em /tmp. Análogo, em papel, ao `baixar_pdf_autos` do PJe.
 
     Navegação reusada da Fase 2a: Mesa do Defensor → href visualizacaoProcesso do
-    CNJ. A coleta/download são live-gated (levantam SeeuAutosLiveGated) até o mapa
-    ao vivo. Defensivo: um documento que falha é logado e pulado (não aborta o
-    lote). READ-ONLY."""
+    CNJ. Defensivo: um documento que falha é logado e pulado (não aborta o lote).
+    READ-ONLY."""
     await se._ensure_mesa_cache(ctx)  # reusa a Mesa da 2a (login manual)
     href = se._mesa_cache.get(se._norm_cnj(cnj))
     if not href:
@@ -144,17 +204,20 @@ async def baixar_autos_seeu(ctx, cnj: str) -> list[str]:
         await proc_page.wait_for_timeout(3200)
 
         docs = dedup_documentos(await _coletar_documentos_disponiveis(proc_page))
+        if len(docs) > _MAX_DOCS:
+            _log(f"  ⚠ {len(docs)} documentos no processo — baixando os {_MAX_DOCS} "
+                 f"mais recentes (SEEU_AUTOS_MAX_DOCS={_MAX_DOCS})")
+            docs = docs[:_MAX_DOCS]
+
         out_dir = tmp_dir_para_cnj(cnj)
         out_dir.mkdir(parents=True, exist_ok=True)
 
         paths: list[str] = []
         for doc in docs:
             try:
-                p = await _baixar_documento(proc_page, ctx, doc, out_dir)
+                p = await _baixar_documento(proc_page, doc, out_dir)
                 if p:
                     paths.append(p)
-            except SeeuAutosLiveGated:
-                raise  # live-gate é do lote inteiro — propaga (não é falha por-doc)
             except Exception as e:  # noqa: BLE001
                 _log(f"  ⚠ doc {doc.get('seq') or doc.get('id')} falhou: {str(e)[:120]}")
                 continue  # documento isolado falhou — pula, segue o lote

@@ -7,27 +7,18 @@ import { demandas, processos } from "@/lib/db/schema/core";
 import { registros } from "@/lib/db/schema/agenda";
 import { claudeCodeTasks } from "@/lib/db/schema/casos";
 
-export const ATRIB_ELEGIVEIS_2C = ["JURI_CAMACARI", "GRUPO_JURI", "VVD_CAMACARI"] as const;
-
-// Fase 2b: EP roteia para o SEEU no worker (escolhe_fonte_autos → baixar_autos_seeu),
-// mas a primitiva de download do SEEU é LIVE-GATED (design §4: os seletores da coluna
-// "Ações" só podem ser mapeados com o SEEU logado ao vivo). Até esse mapa fechar,
-// EP fica inelegível com motivo explícito — em vez de habilitar um botão que sempre
-// erraria. FLIP pós-mapa: mover "EXECUCAO_PENAL" para ATRIB_ELEGIVEIS_2C.
-const ATRIB_SEEU_PENDENTE_LIVE = ["EXECUCAO_PENAL"] as const;
+// Fase 2b: EP entrou na 2c — autos vêm do SEEU (worker: escolhe_fonte_autos →
+// baixar_autos_seeu). A primitiva de download do SEEU foi mapeada e validada ao
+// vivo (2026-07-02, design §4/§8): coleta via movimentacaoArquivoDocumento.do +
+// download inline via arquivo.do.
+export const ATRIB_ELEGIVEIS_2C = ["JURI_CAMACARI", "GRUPO_JURI", "VVD_CAMACARI", "EXECUCAO_PENAL"] as const;
 
 export function isElegivel2c(input: {
   atribuicao: string;
   pecaSugerida: string | null | undefined;
 }): { ok: true } | { ok: false; motivo: string } {
   if (!(ATRIB_ELEGIVEIS_2C as readonly string[]).includes(input.atribuicao)) {
-    if ((ATRIB_SEEU_PENDENTE_LIVE as readonly string[]).includes(input.atribuicao)) {
-      return {
-        ok: false,
-        motivo: "Execução Penal: download de autos do SEEU pendente de mapeamento ao vivo (Fase 2b).",
-      };
-    }
-    return { ok: false, motivo: "Atribuição fora do MVP (só Júri/VVD por ora)." };
+    return { ok: false, motivo: "Atribuição fora do MVP (Júri/VVD/EP por ora)." };
   }
   if (!input.pecaSugerida) {
     return { ok: false, motivo: "Demanda não está marcada como 'cabe peça' (sem peca_sugerida)." };

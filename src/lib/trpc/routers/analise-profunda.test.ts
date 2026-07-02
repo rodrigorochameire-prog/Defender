@@ -11,10 +11,12 @@ describe("isElegivel2c", () => {
     const r = isElegivel2c({ atribuicao: "JURI_CAMACARI", pecaSugerida: null });
     expect(r.ok).toBe(false);
   });
-  it("rejeita EP com motivo live-gated do SEEU (Fase 2b pendente de mapa)", () => {
-    const r = isElegivel2c({ atribuicao: "EXECUCAO_PENAL", pecaSugerida: "manifestacao_ep" });
+  it("aceita EP com peca_sugerida (Fase 2b — autos via SEEU)", () => {
+    expect(isElegivel2c({ atribuicao: "EXECUCAO_PENAL", pecaSugerida: "manifestacao_ep" })).toEqual({ ok: true });
+  });
+  it("rejeita EP sem peca_sugerida", () => {
+    const r = isElegivel2c({ atribuicao: "EXECUCAO_PENAL", pecaSugerida: null });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.motivo).toMatch(/SEEU|ao vivo|Fase 2b/);
   });
   it("rejeita atribuição desconhecida com motivo genérico do MVP", () => {
     const r = isElegivel2c({ atribuicao: "CRIMINAL", pecaSugerida: "resposta_acusacao" });
@@ -31,7 +33,7 @@ describe("buildBrowserTaskMeta", () => {
 });
 
 describe("ATRIB_ELEGIVEIS_2C", () => {
-  it("é exatamente Júri/VVD do MVP", () => {
-    expect([...ATRIB_ELEGIVEIS_2C].sort()).toEqual(["GRUPO_JURI", "JURI_CAMACARI", "VVD_CAMACARI"]);
+  it("é Júri/VVD + EP (Fase 2b)", () => {
+    expect([...ATRIB_ELEGIVEIS_2C].sort()).toEqual(["EXECUCAO_PENAL", "GRUPO_JURI", "JURI_CAMACARI", "VVD_CAMACARI"]);
   });
 });

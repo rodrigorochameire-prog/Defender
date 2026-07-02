@@ -2,7 +2,13 @@
 
 > **Status:** design aprovado (brainstorming 2026-07-01). **Spec build-ready; o build da primitiva de download precisa de UMA passada com o SEEU logado ao vivo** (mapear seletores das "Ações"/esquema de URL do documento). O restante (navegação reusada, staging, wiring, testes puros) é construível sem sessão.
 >
-> **Build 2026-07-02 (sem sessão ao vivo):** feitos ✅ Task 1 (helpers puros `seeu_autos.py` + 13 testes), ✅ Task 3a (roteamento EP→SEEU no worker `analise_profunda_autos.py`), ✅ estrutura de `baixar_autos_seeu` (navegação reusa a Mesa da 2a) e distribuição multi-PDF. **Live-gated (pendente da sessão):** `_coletar_documentos_disponiveis` e `_baixar_documento` levantam `SeeuAutosLiveGated` até o mapa dos seletores (§4). **Elegibilidade EP na 2c permanece FECHADA** com motivo explícito ("pendente de mapeamento ao vivo") em `isElegivel2c` — o FLIP (mover `EXECUCAO_PENAL` p/ `ATRIB_ELEGIVEIS_2C`) é a última linha, feita após o mapa fechar a primitiva, para não expor um botão que sempre erraria.
+> **Build 2026-07-02 — COMPLETO (mapeado ao vivo).** Todas as tasks fechadas:
+> - ✅ Task 1: helpers puros `seeu_autos.py` (roteamento/dedup/nomes/tmp) + 13 testes.
+> - ✅ Task 2 (pós-mapa): `_coletar_documentos_disponiveis` + `_baixar_documento` implementados com os seletores reais.
+> - ✅ Task 3: roteamento EP→SEEU no worker + distribuição multi-PDF + **elegibilidade EP FLIPADA** (`EXECUCAO_PENAL` em `ATRIB_ELEGIVEIS_2C`) + testes atualizados.
+> - ✅ Aceite ao vivo: processo EP real (2002228-90.2023.8.05.0001) → 73 docs coletados → PDFs baixados OK (`%PDF`, nomes slugados).
+>
+> **Mecanismo mapeado (§4 resolvido):** a timeline `visualizacaoProcesso.do` carrega a lista de arquivos de cada movimento por AJAX de `/seeu/processo/movimentacaoArquivoDocumento.do?_tj=<token>` (tokens no HTML da página). Cada documento tem `<a href="/seeu/arquivo.do?_tj=<token>">` que serve o PDF `application/pdf` **inline** (Content-Disposition inline → `expect_download` NÃO dispara). Download = `fetch` in-page (cookies) → bytes. Parse dos fragmentos via DOM in-page (há `<table>` de menu de contexto aninhada). Teto `SEEU_AUTOS_MAX_DOCS` (default 80, recente-first) para processos longos.
 > **Contexto:** contrapartida SEEU do `baixar_pdf_autos` do PJe. A Fase 2c (análise profunda) hoje só baixa autos via PJe (Júri/VVD). 2b provê a primitiva de autos do SEEU → **destrava a 2c para Execução Penal**.
 
 ## 1. Objetivo
