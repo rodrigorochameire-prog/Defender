@@ -1361,7 +1361,7 @@ export default function AgendaPage() {
 
       // Filtro para modo lista: mostrar apenas eventos de hoje em diante (a menos que showPastEventsInList esteja ativo)
       let matchFutureOnly = true;
-      if (viewMode === "list" && !showPastEventsInList && !selectedPeriodo) {
+      if (effectiveViewMode === "list" && !showPastEventsInList && !selectedPeriodo) {
         const eventoDate = new Date(evento.data + "T12:00:00");
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -1392,7 +1392,7 @@ export default function AgendaPage() {
     showCanceladosRedesignados,
     selectedDefensor,
     selectedPeriodo,
-    viewMode,
+    effectiveViewMode,
     showPastEventsInList,
   ]);
 
