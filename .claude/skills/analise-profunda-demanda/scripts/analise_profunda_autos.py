@@ -170,14 +170,20 @@ def read_associados_aba(cnj: str) -> list:
         from patchright.sync_api import sync_playwright
         import preparar_download as _pd
         import time as _t
+        _PAINEL = "https://pje.tjba.jus.br/pje/Painel/painel_usuario/advogado.seam"
         with sync_playwright() as pw:
             browser = pw.chromium.connect_over_cdp("http://127.0.0.1:9222")
             ctx = browser.contexts[0]
-            page = next((p for p in ctx.pages if "pje.tjba.jus.br" in (p.url or "")), None)
-            if page is None:
+            # exige uma sessão PJe-TJBA logada (não roda o Peticionar às cegas)
+            if not any("pje.tjba.jus.br" in (p.url or "") for p in ctx.pages):
                 return []
+            # página PRÓPRIA no painel (não sequestra a aba do usuário nem depende do estado dela)
+            page = ctx.new_page()
             page.on("dialog", lambda d: d.accept())
+            page.goto(_PAINEL, wait_until="domcontentloaded", timeout=60000)
+            _t.sleep(3)
             idp, ca = _pd.get_ca(ctx, page, cnj)
+            page.close()
             if not idp:
                 return []
             pg = ctx.new_page()
@@ -189,7 +195,13 @@ def read_associados_aba(cnj: str) -> list:
                     """() => { const a=[...document.querySelectorAll('a')]
                         .find(e=>/Associados\\s*\\(\\d+\\)/.test((e.innerText||'').replace(/\\s+/g,' ')));
                         if(a) a.click(); }""")
-                _t.sleep(4)
+                try:
+                    pg.wait_for_function(
+                        "() => /resultados encontrados|N[úu]mero do processo|Depend[êe]ncia/.test(document.body.innerText)",
+                        timeout=15000)
+                except Exception:
+                    pass
+                _t.sleep(2)
                 for lab in _ACCORDIONS:
                     pg.evaluate(
                         """(lab)=>{const h=[...document.querySelectorAll('.rich-stglpanel-header,[id*="toggleProcessosAssociados"][id$="_header"]')]
@@ -613,7 +625,8 @@ async def main_async(meta: dict) -> dict:
                 associados = extrair_associados_autos(pdf_path, cnj)
 
                 try:
-                    aba = await asyncio.to_thread(read_associados_aba, cnj)
+                    # timeout duro: a leitura da aba nunca pode travar a Fase 2c
+                    aba = await asyncio.wait_for(asyncio.to_thread(read_associados_aba, cnj), timeout=120)
                 except Exception:
                     aba = []
                 relacionados = merge_relacionados(aba, associados, cnj)

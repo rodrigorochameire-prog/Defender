@@ -127,7 +127,7 @@ Fora dos ramos (comum, ~L476), inicializar `relacionados = []` cedo (cobre SEEU,
 6. Testes existentes verdes; `ast.parse` ok. Sem migração/daemon/skill.
 
 ## 8. Deferidos
-- **Verificação viva da integração no worker:** o leitor isolado foi validado ao vivo (5 casos). O uso DENTRO da Fase 2c abre uma 2ª conexão CDP (sync, em thread) enquanto a do worker (async) está aberta — CDP aceita múltiplos clientes, mas o leitor deve usar **página própria** (não sequestrar a do download); confirmar ao vivo num run real da Fase 2c.
+- **Verificação viva da integração no worker (DEFERIDA — sessão degradou):** o leitor foi validado ao vivo em 5 casos (aba com 3/4/2 associados, tipos corretos). Robustez adicionada depois: (a) **página própria no painel** (`advogado.seam`) em vez de sequestrar tab existente; (b) **poll** (`wait_for_function`) no lugar de sleep fixo; (c) **timeout duro de 120s** na chamada do worker (`asyncio.wait_for(to_thread(...), 120)`) — o leitor NUNCA trava a Fase 2c (pior caso: 120s → `[]`). A re-confirmação end-to-end final ficou pendente porque a sessão CDP degradou após vários runs (o PRÓPRIO diagnóstico validado passou a travar no mesmo caso — logo é ambiente, não o código). Refazer num Chrome/PJe limpo antes de confiar na aba em produção.
 - **2b:** baixar os `baixavel=True` (não-sigilosos, 1º grau) via o fluxo de download (fila Área de Download) + roteamento no Drive.
 - Verificação viva end-to-end da Fase 2c com a aba integrada (a leitura da aba já foi validada isolada).
 - Polir o parser de partes/data (não essencial p/ o dossiê).
