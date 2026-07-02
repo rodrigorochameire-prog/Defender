@@ -195,38 +195,37 @@ Quando a skill recebe uma instrução adicional com `fonte="fase2c2b"`, ativa o 
 
 ### Contrato de Interface
 
-A instrução chega com este JSON:
+A instrução chega com este JSON (payload REAL emitido por `buildRascunhoTaskMeta` em `src/lib/trpc/routers/rascunho-peca.ts` — `atribuicao` é o enum de `processos.atribuicao`, em maiúsculas):
 
 ```json
 {
-  "demandaId": "UUID-do-caso",
+  "demandaId": 12345,
   "pecaSugerida": "memoriais|resposta_acusacao|apelacao|rese|contrarrazoes",
-  "atribuicao": "vvd|juri|ep",
+  "atribuicao": "VVD_CAMACARI|JURI_CAMACARI|GRUPO_JURI",
   "linhasMestras": "string com direção estratégica e núcleos de defesa",
   "fonte": "fase2c2b"
 }
 ```
 
+- `demandaId`: **inteiro** (id de `demandas`, não UUID)
+- `atribuicao`: **maiúsculo** — `VVD_CAMACARI` (VVD) ou `JURI_CAMACARI`/`GRUPO_JURI` (Júri). EP nunca chega aqui (rejeitado upstream por `isElegivelRascunho`)
+- `pecaSugerida`: camelCase no payload da task; corresponde ao campo `peca_sugerida` (snake_case) de `registros.enrichment_data` na 2ª etapa da análise — mesmo valor, convenção de nome diferente por camada
+
 ### Fluxo de Processamento
 
 1. **DIREÇÃO MESTRA** — Use `linhasMestras` como guia estratégico da peça. Não é um sumário; é a bússola da argumentação. Todos os parágrafos devem reafirmar ou desenvolver essa direção.
 
-2. **MAPEAMENTO DE TIPO** — Converta `peca_sugerida` + `atribuicao` para a referência modelo:
+2. **MAPEAMENTO DE TIPO** — Converta `pecaSugerida` + `atribuicao` para a referência modelo, conforme `PECA_SUGERIDA_TO_REFERENCE`/`refParaAtribuicao` em `rascunho-peca.ts` (única fonte da verdade — só estas combinações chegam à skill; qualquer outra é rejeitada antes de enfileirar a task):
 
-   | peca_sugerida | atribuicao | Referência |
+   | pecaSugerida | atribuicao | Referência |
    |---|---|---|
-   | memoriais | vvd | `references/vvd_alegacoes_finais.md` |
-   | memoriais | juri | `references/alegacoes_finais_juri.md` |
-   | resposta_acusacao | vvd | `references/vvd_analise_para_ra.md` |
-   | resposta_acusacao | juri | `references/resposta_acusacao_juri.md` |
-   | resposta_acusacao | ep | `references/resposta_acusacao_ep.md` |
-   | apelacao | vvd | `references/vvd_apelacao.md` |
-   | apelacao | juri | `references/apelacao_pos_juri.md` |
-   | apelacao | ep | `references/apelacao_ep.md` |
-   | rese | vvd | `references/vvd_contrarrazoes_rese.md` |
-   | rese | juri | `references/contrarrazoes_rese_juri.md` |
-   | contrarrazoes | vvd | `references/vvd_contrarrazoes_apelacao.md` |
-   | contrarrazoes | juri | `references/contrarrazoes_apelacao_juri.md` |
+   | memoriais | VVD_CAMACARI | `references/vvd_alegacoes_finais.md` |
+   | memoriais | JURI_CAMACARI / GRUPO_JURI | `references/alegacoes_finais_juri.md` |
+   | resposta_acusacao | VVD_CAMACARI | `references/vvd_analise_para_ra.md` |
+   | apelacao | VVD_CAMACARI | `references/vvd_apelacao.md` |
+   | apelacao | JURI_CAMACARI / GRUPO_JURI | `references/apelacao_pos_juri.md` |
+   | rese | VVD_CAMACARI | `references/vvd_contrarrazoes_rese.md` |
+   | contrarrazoes | VVD_CAMACARI | `references/vvd_contrarrazoes_apelacao.md` |
 
 3. **LEITURA DE CONTEXTO** — Acesse a pasta do assistido no Drive (conforme convenção de paths em Zona 3/Casos):
    - `analysisData`: análise processual anterior (se existir em `docs/analise/`)
@@ -237,20 +236,32 @@ A instrução chega com este JSON:
    - Garamond 12pt, justificado, espaçamento 1.5
    - Timbre DPE-BA (logo em header, rodapé com endereço da 7ª Regional)
    - Estrutura: Endereçamento → Epígrafe → Qualificação → Preâmbulo → Seções com núcleos de defesa → Fecho + Data → Assinatura
-   - **Nome do arquivo**: `[pecaSugerida] - [Nome do Assistido].docx` (convenção v2)
+   - **Nome do arquivo**: `[Unidade] Tipo - Fundamento sucinto - Nome do Assistido (Sufixo).ext` (convenção v2 — Title Case, sem acentos)
    - **Destino**: `Protocolar/` da pasta do assistido
 
-5. **REGISTRO DE CONCLUSÃO** — Após sucesso, execute:
+5. **REGISTRO DE CONCLUSÃO** — Não existe endpoint HTTP de write-back. Como QUALQUER outro job da lane `ai` (ver `Supabase.update_demanda` em `.claude/skills/varredura-triagem/scripts/varredura_triagem.py` e `analise_profunda_autos.py`), grave o resultado com um **PATCH direto no PostgREST do Supabase**:
+
    ```
-   POST /api/demandas/{demandaId}/rascunho-status
+   PATCH {NEXT_PUBLIC_SUPABASE_URL}/rest/v1/demandas?id=eq.{demandaId}
+   Headers:
+     apikey: {SUPABASE_SERVICE_ROLE_KEY}
+     Authorization: Bearer {SUPABASE_SERVICE_ROLE_KEY}
+     Content-Type: application/json
+     Prefer: return=minimal
+   Body (sucesso):
    {
      "rascunho_status": "pronto",
-     "rascunho_drive_url": "https://drive.google.com/...link-para-arquivo",
-     "peca_type": "{pecaSugerida}",
-     "atribuicao": "{atribuicao}"
+     "rascunho_drive_url": "https://drive.google.com/...link-para-arquivo"
    }
    ```
-   Esta chamada atualiza `demandas.rascunho_status` para `'pronto'` e registra a URL para acesso posterior.
+
+   Isso atualiza **ambas** as colunas — `demandas.rascunho_status` para `'pronto'` e `demandas.rascunho_drive_url` com o link do `.docx` gerado no Drive — permitindo que o card na UI acesse o rascunho.
+
+   **Em caso de falha** (pasta do assistido não encontrada no Drive, autos ilegíveis, erro de geração etc.), grave `rascunho_status: 'erro'` (sem `rascunho_drive_url`) com o mesmo PATCH, para destravar o card e permitir novo disparo:
+
+   ```json
+   { "rascunho_status": "erro" }
+   ```
 
 6. **NUNCA PROTOCOLAR** — Este modo gera rascunho. Protocolo (assinatura + PJe) fica para a Fase 3 (revisão pelo defensor). A peça é deixada em `Protocolar/` pronta para edição manual.
 
@@ -267,17 +278,17 @@ A instrução chega com este JSON:
 **Input:**
 ```json
 {
-  "demandaId": "12345abc",
+  "demandaId": 12345,
   "pecaSugerida": "memoriais",
-  "atribuicao": "vvd",
+  "atribuicao": "VVD_CAMACARI",
   "linhasMestras": "Defesa baseada em: (1) insuficiência de provas de identificação do agressor; (2) direitos processualísticos violados na colheita do reconhecimento; (3) prevalência da palavra da ofendida sobre perícia inconsistente.",
   "fonte": "fase2c2b"
 }
 ```
 
 **Output:**
-- Arquivo `.docx` em `Protocolar/Memoriais - Maria Silva.docx`
-- POST `{demandaId}/rascunho-status` com status `'pronto'`
+- Arquivo `.docx` em `Protocolar/[Camacari] Memoriais - Insuficiencia de Provas - Maria Silva (Rascunho).docx`
+- PATCH `{SUPABASE_URL}/rest/v1/demandas?id=eq.12345` com `rascunho_status: 'pronto'` e `rascunho_drive_url` preenchida
 - Documento pronto para revisão, sem protocolo
 
 ---

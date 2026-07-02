@@ -34,6 +34,9 @@ describe("rascunhoPeca router — contract", () => {
     expect(src).toContain('"pronto"');
     expect(src).toMatch(/completed/);
   });
+  it("status derive-on-read → erro quando task ai needs_review (não fica preso em rascunhando)", () => {
+    expect(src).toContain("needs_review");
+  });
   it("está registrado no appRouter", () => {
     const index = read("index.ts");
     expect(index).toContain("rascunhoPecaRouter");

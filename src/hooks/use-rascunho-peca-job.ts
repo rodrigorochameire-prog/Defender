@@ -19,7 +19,10 @@ export function useRascunhoPecaJob() {
     onSuccess: (res) => {
       toast.success(res.existing ? "Rascunho de peça já em andamento." : "Rascunho de peça iniciado.");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      toast.error(e.message);
+      setDemandaId(null);
+    },
   });
 
   const statusQuery = trpc.rascunhoPeca.status.useQuery(

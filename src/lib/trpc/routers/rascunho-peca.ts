@@ -148,7 +148,7 @@ export const rascunhoPecaRouter = router({
           .from(claudeCodeTasks)
           .where(eq(claudeCodeTasks.id, d.taskId))
           .limit(1);
-        if (t?.tstatus === "failed") {
+        if (t?.tstatus === "failed" || t?.tstatus === "needs_review") {
           status = "erro";
           erro = t.terro ?? null;
         } else if (t?.tstatus === "completed") {
