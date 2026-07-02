@@ -100,6 +100,44 @@ def main():
     for needle in ["Laudo", "sem vestígios", "relato do assistido", "análise"]:
         if needle not in d:
             print(f"FAIL build_dossie sem {needle!r}"); f += 1
+    # === C2.2a: associados ===
+    extract_cnjs = ns["extract_cnjs"]
+    associados_from_text = ns["associados_from_text"]
+    # 11. extract_cnjs: dedup, sort, cap, vazio
+    txt = "ref 8000001-11.2026.8.05.0039 e 8000001-11.2026.8.05.0039 e 8000002-22.2026.8.05.0039"
+    cn = extract_cnjs(txt)
+    if cn != ["8000001-11.2026.8.05.0039", "8000002-22.2026.8.05.0039"]:
+        print(f"FAIL extract_cnjs: {cn}"); f += 1
+    if extract_cnjs("") != [] or extract_cnjs(None) != []:
+        print("FAIL extract_cnjs vazio/None"); f += 1
+    if len(extract_cnjs(" ".join(f"800{i:04d}-11.2026.8.05.0039" for i in range(50)))) != 30:
+        print("FAIL extract_cnjs cap 30"); f += 1
+    # 12. associados_from_text: exclui o principal (apesar da máscara)
+    principal = "8000001-11.2026.8.05.0039"
+    t2 = f"Processo referência: {principal}. Associado 8000002-22.2026.8.05.0039 e 8000003-33.2026.8.05.0039"
+    a = associados_from_text(t2, principal)
+    if a != ["8000002-22.2026.8.05.0039", "8000003-33.2026.8.05.0039"]:
+        print(f"FAIL associados_from_text excluir principal: {a}"); f += 1
+    if associados_from_text(f"só o principal {principal}", principal) != []:
+        print("FAIL associados_from_text só principal → []"); f += 1
+    # 13. format_dossie com associados → seção; sem → nada
+    d = format_dossie([], [], [], associados=["8000002-22.2026.8.05.0039"])
+    if "Processos associados/conexos" not in d or "8000002-22.2026.8.05.0039" not in d:
+        print("FAIL format_dossie seção associados"); f += 1
+    if "Processos associados" in format_dossie([], [], [], associados=None):
+        print("FAIL format_dossie None → sem seção"); f += 1
+    if "Processos associados" in format_dossie([], [], []):
+        print("FAIL format_dossie default → sem seção"); f += 1
+    # 14. só associados (sem outras seções) ainda produz dossiê não-vazio
+    if format_dossie([], [], [], associados=["8000002-22.2026.8.05.0039"]) == "":
+        print("FAIL só associados deveria render"); f += 1
+    # 15. build_dossie_assistido repassa associados (FakeSB vazio + associados)
+    build_dossie = ns["build_dossie_assistido"]
+    class EmptySB:
+        def _req(self, *a, **k): return []
+    d2 = build_dossie(EmptySB(), 7, associados=["8000002-22.2026.8.05.0039"])
+    if "Processos associados/conexos" not in d2:
+        print("FAIL build_dossie não repassou associados"); f += 1
     print("OK" if not f else f"{f} FALHAS")
     sys.exit(1 if f else 0)
 

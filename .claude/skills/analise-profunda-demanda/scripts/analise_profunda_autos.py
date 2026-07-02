@@ -13,7 +13,7 @@ com --remote-debugging-port=9222 e de um processo real no PJe. Sua validação �
 a etapa de aceite ao vivo (ver task-5-report.md). O gate aqui é estrutural:
 test_worker_structure.py + `--help` sem erro de import.
 """
-import argparse, asyncio, json, shutil, subprocess, sys
+import argparse, asyncio, json, re, shutil, subprocess, sys
 from pathlib import Path
 
 
@@ -40,6 +40,24 @@ MAX_POR_TIPO = 3
 MAX_SECTIONS = 30
 MAX_KEY_POINTS = 5
 
+CNJ_RE = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
+MAX_ASSOCIADOS = 30
+
+
+def extract_cnjs(text: str) -> list:
+    """CNJs distintos, ordenados, capados. Nunca levanta."""
+    return sorted(set(CNJ_RE.findall(text or "")))[:MAX_ASSOCIADOS]
+
+
+def _cnj_digits(s: str) -> str:
+    return re.sub(r"\D", "", s or "")
+
+
+def associados_from_text(text: str, cnj_principal: str = "") -> list:
+    """CNJs citados no texto dos autos, EXCETO o processo principal."""
+    main = _cnj_digits(cnj_principal)
+    return [c for c in extract_cnjs(text) if _cnj_digits(c) != main]
+
 
 def _cap(s, n):
     s = (s or "")
@@ -49,7 +67,7 @@ def _cap(s, n):
     return s[:n] if len(s) > n else s
 
 
-def format_dossie(sections: list, registros: list, analises: list) -> str:
+def format_dossie(sections: list, registros: list, analises: list, associados: list = None) -> str:
     """Monta um bloco markdown COMPACTO (só resumos, capados) com o contexto
     do assistido além dos autos. Retorna '' se não houver nada. Função pura."""
     parts = []
@@ -112,6 +130,11 @@ def format_dossie(sections: list, registros: list, analises: list) -> str:
     if an_lines:
         parts.append("### Análises anteriores\n" + "\n".join(an_lines))
 
+    # Processos associados/conexos (citados nos autos)
+    if associados:
+        assoc_lines = [f"- {c}" for c in associados[:MAX_ASSOCIADOS]]
+        parts.append("### Processos associados/conexos (citados nos autos)\n" + "\n".join(assoc_lines))
+
     if not parts:
         return ""
     body = "## Dossiê do assistido (contexto além dos autos)\n\n" + "\n\n".join(parts)
@@ -163,14 +186,16 @@ def fetch_dossie_data(sb, assistido_id: int):
     return sections, registros, analises
 
 
-def build_dossie_assistido(sb, assistido_id) -> str:
+def build_dossie_assistido(sb, assistido_id, associados: list = None) -> str:
     """fetch + format. NUNCA levanta — retorna '' em qualquer erro (a Fase 2c
     nunca quebra por causa do dossiê)."""
     try:
-        if not assistido_id:
+        if not assistido_id and not associados:
             return ""
-        sections, registros, analises = fetch_dossie_data(sb, assistido_id)
-        return format_dossie(sections, registros, analises)
+        sections, registros, analises = ([], [], [])
+        if assistido_id:
+            sections, registros, analises = fetch_dossie_data(sb, assistido_id)
+        return format_dossie(sections, registros, analises, associados=associados)
     except Exception:
         return ""
 
