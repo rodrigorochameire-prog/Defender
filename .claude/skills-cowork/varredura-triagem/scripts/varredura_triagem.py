@@ -112,6 +112,46 @@ def normalize(s: str) -> str:
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
 
 
+_SENTENCA_RE = re.compile(r"senten|condena|absolvi|pronuncia|impron|desclassifica")
+_ACORDAO_RE = re.compile(r"acordao")
+
+
+def is_sentenca_ato(ato: str) -> bool:
+    """True se o ato é de sentença (1ª instância). EXCLUI acórdão (2ª instância —
+    fluxo manual via instancia-superior)."""
+    n = normalize(ato or "")
+    if _ACORDAO_RE.search(n):
+        return False
+    return bool(_SENTENCA_RE.search(n))
+
+
+def build_sentenca_task(demanda: dict, rule: dict, content: str, doc_id: str) -> dict:
+    """Task claude_code_tasks p/ a skill analise-sentenca (lane browser: captura o
+    PDF no PJe, analisa, faz upsert em sentencas). created_by=1 (SYSTEM_USER_ID —
+    ver src/config/system-user.ts)."""
+    procs = demanda.get("processos") or {}
+    numero = procs.get("numero_autos") or ""
+    payload = {
+        "numero_processo": numero,
+        "pje_documento_id": doc_id,
+        "assistido_id": demanda.get("assistido_id"),
+        "atribuicao": procs.get("atribuicao"),
+        "demanda_origem_id": demanda["id"],
+        "registro_raw_text": (content or "")[:12000],
+    }
+    return {
+        "skill": "analise-sentenca",
+        "lane": "browser",
+        "status": "pending",
+        "etapa": "Na fila",
+        "created_by": 1,  # SYSTEM_USER_ID — src/config/system-user.ts
+        "assistido_id": demanda.get("assistido_id"),
+        "processo_id": demanda.get("processo_id"),
+        "prompt": (f"Capturar e analisar sentença de {numero or 'processo'}").strip(),
+        "instrucao_adicional": json.dumps(payload, ensure_ascii=False),
+    }
+
+
 # Linhas de puro cabeçalho/rodapé/formatação do PJe — removidas antes de classificar,
 # resumir (IA) e parsear medidas. NÃO removem keywords jurídicas (designo, defiro,
 # sentença, condeno, medida protetiva…), só boilerplate.
@@ -1454,6 +1494,17 @@ def apply_classification(sb: Supabase, demanda: dict, rule: dict, content: str) 
                 "enrichment_status": "pending",
                 "enrichment_data": {"raw_text": (content or "")[:12000]},
             })
+
+    # ── Auto-roteamento sentença (C1): ciência de sentença → captura+análise ────
+    _doc_id = demanda.get("pje_documento_id") or (demanda.get("enrichment_data") or {}).get("id_documento_pje")
+    if is_sentenca_ato(rule["ato"]) and _doc_id:
+        try:
+            sb._req("POST", "/rest/v1/claude_code_tasks",
+                    build_sentenca_task(demanda, rule, content, str(_doc_id)),
+                    prefer="return=minimal")
+            log(f"  ⚖ análise de sentença enfileirada (analise-sentenca) p/ {(demanda.get('processos') or {}).get('numero_autos') or '?'}")
+        except Exception as e:
+            log(f"  ⚠ falha ao enfileirar analise-sentenca (demanda={demanda['id']}): {e}")
 
     # ── Side-effect: agendar / reagendar audiência ─────────────────────────────
     if proc_id and any(fx in ("agendar_audiencia", "reagendar_audiencia") for fx in side_effects):
